@@ -20,9 +20,6 @@ log
 *.swo
 .vscode
 
-#data
-results
-results/data
 
 #run files
 *.err

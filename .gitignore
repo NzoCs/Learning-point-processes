@@ -1,0 +1,36 @@
+# python build
+build
+dist
+easy_tpp.egg-info
+
+# python temp
+*.pyc
+
+#venv
+.venv
+
+# proto
+protoc
+protoc-3.4.0.tar.gz
+*_pb2.py
+
+# misc
+log
+*.swp
+*.swo
+.vscode
+
+#data
+results
+results/data
+
+#run files
+*.err
+*.out
+
+# idea files
+.idea
+
+# Exclure les fichiers de bibliothèque PyTorch volumineux
+.venv/Lib/site-packages/torch/lib/*.lib
+.venv/Lib/site-packages/torch/lib/*.dll

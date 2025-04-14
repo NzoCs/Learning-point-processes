@@ -13,8 +13,8 @@ class BaseSimulator(ABC):
     
     def __init__(self, 
                  dim_process: int,
-                 start_time: float = 0.0,
-                 end_time: float = 100.0,
+                 start_time: float = 100,
+                 end_time: float = 200,
                  output_dir: str = 'data',
                  seed: Optional[int] = None):
         """
@@ -39,36 +39,41 @@ class BaseSimulator(ABC):
         
         self.simulations = None
     
-    def generate_model_from_config(config: Dict) -> 'BaseSimulator':
-        """
-        Génère un simulateur à partir d'une configuration.
-        
-        Args:
-            config (Dict): Configuration du simulateur
-        
-        Returns:
-            BaseSimulator: Instance du simulateur configuré
-        """
-        simulator_type = config.get('simulator_type', 'Hawkes')
-        
-        if simulator_type == 'Hawkes':
-            return HawkesSimulator(**config['simulator_params'])
-        else:
-            raise ValueError(f"Unknown simulator type: {simulator_type}")
-    
     @abstractmethod
-    def simulate(self) -> None:
+    def simulate(self) -> Tuple[List[np.ndarray]]:
         """
         Simule un processus ponctuel temporel.
         
         Returns:
-            Tuple[List[np.ndarray]]: Liste d'arrays de temps d'événements pour chaque dimension
+            Tuple[List[np.ndarray]]: Tuple d'arrays de temps d'événements pour chaque dimension
         """
         pass
-
-    def format_simulations(self):
+    
+    def bulk_simulate(self, num_simulations: int) -> List[Dict]:
         """
-        Format multivariate Hawkes simulations to the Hugging Face dataset format.
+        Génère plusieurs simulations et les formate.
+        
+        Args:
+            num_simulations (int): Nombre de simulations à générer
+            
+        Returns:
+            List[Dict]: Liste des simulations formatées
+        """
+        simulations = []
+        
+        for _ in tqdm(range(num_simulations), desc=f"Simulation de {num_simulations} processus"):
+            simulations.append(self.simulate())
+        
+        # Format simulations for dataset
+        formatted_data = self.format_multivariate_simulations(
+            simulations, self.dim_process, self.start_time
+        )
+        
+        return formatted_data
+
+    def format_multivariate_simulations(self, simulations, dim_process=None, start_time=None):
+        """
+        Format multivariate simulations to the Hugging Face dataset format.
         
         Args:
             simulations (list): List of tuples, each containing arrays of timestamps for each dimension
@@ -78,16 +83,15 @@ class BaseSimulator(ABC):
         Returns:
             list: A list of dictionaries, each representing a sequence
         """
+        if dim_process is None:
+            dim_process = self.dim_process
+            
+        if start_time is None:
+            start_time = self.start_time
+            
         formatted_data = []
         
-        simulations = self.simulations
-        dim_process = self.dim_process
-        start_time = self.start_time
-        
-        if simulations is None:
-            raise ValueError("No simulations to format. Please run the simulate method first.")
-        
-        for seq_idx, sim in enumerate(tqdm(simulations, desc=f"Formatting {dim_process}D simulations")):
+        for seq_idx, sim in enumerate(simulations):
             # Merge timestamps from all dimensions with their type
             all_timestamps = []
             all_types = []
@@ -128,31 +132,40 @@ class BaseSimulator(ABC):
             formatted_data.append(temp_dict)
         
         return formatted_data
-    
-    def bulk_simulate(self, num_simulations: int) -> List[Dict]:
+
+    def split_data(self, data, train_ratio=0.6, test_ratio=0.2, dev_ratio=0.2):
         """
-        Simule plusieurs processus et les formate.
+        Split data into train, test, and dev sets.
         
         Args:
-            num_simulations (int): Nombre de simulations à générer
+            data (list): List of formatted sequences
+            train_ratio, test_ratio, dev_ratio (float): Split ratios
             
         Returns:
-            list: Liste de dictionnaires, chacun représentant une séquence formatée
+            tuple: Train, test, dev data lists
         """
-        formatted_data = []
+        assert abs(train_ratio + test_ratio + dev_ratio - 1.0) < 1e-10, "Ratios must sum to 1"
         
-        for seq_idx in tqdm(range(num_simulations), desc=f"Génération de {num_simulations} simulations {self.dim_process}D"):
-            # Simulation d'un processus
-            sim = self.simulate()
-            
-            # Formatage de la simulation
-            formatted_sim = self.format_simulations(sim)
-            
-            if formatted_sim:
-                formatted_sim['seq_idx'] = seq_idx
-                formatted_data.append(formatted_sim)
+        n = len(data)
+        train_size = int(n * train_ratio)
+        test_size = int(n * test_ratio)
         
-        return formatted_data
+        train_data = data[:train_size]
+        test_data = data[train_size:train_size + test_size]
+        dev_data = data[train_size + test_size:]
+        
+        return train_data, test_data, dev_data
+
+    def save_json(self, data, filepath):
+        """
+        Save data to JSON file.
+        
+        Args:
+            data: Data to save
+            filepath (str): Path to save the JSON file
+        """
+        with open(filepath, 'w') as f:
+            json.dump(data, f, indent=2)
     
     def generate_and_save(self, 
                          num_simulations: int = 1000, 
@@ -195,6 +208,7 @@ class BaseSimulator(ABC):
         
         # Sauvegarde des métadonnées génériques
         self._save_metadata(output_dir, num_simulations, data_splits, splits, formatted_data)
+        
     
     def _save_metadata(self, 
                      output_dir: str, 
@@ -238,7 +252,7 @@ class BaseSimulator(ABC):
             json.dump(metadata, f, indent=2)
         
         print(f"Toutes les données ont été sauvegardées dans {output_dir}")
-    
+
     def get_simulator_metadata(self) -> Dict:
         """
         Renvoie les métadonnées spécifiques au simulateur.

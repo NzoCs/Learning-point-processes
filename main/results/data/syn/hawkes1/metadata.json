@@ -1,0 +1,21 @@
+{
+  "parameters": {
+    "mu": 0.2,
+    "alpha": 0.8,
+    "beta": 1
+  },
+  "simulation_interval": [
+    100,
+    200
+  ],
+  "num_simulations": 15000,
+  "split_info": {
+    "train_size": 9000,
+    "test_size": 3000,
+    "dev_size": 3000,
+    "train_ratio": 0.6,
+    "test_ratio": 0.2,
+    "dev_ratio": 0.2
+  },
+  "total_events": 1506049
+}

@@ -1,0 +1,75 @@
+pipeline_config_id: data_config
+
+H2expi :
+  data_format: json
+  train_dir: ../results/data/syn/H2expi/train.json  
+  valid_dir: ../results/data/syn/H2expi/dev.json 
+  test_dir:  ../results/data/syn/H2expi/test.json 
+  data_specs:
+    num_event_types: 2
+
+H2expi_test :
+  data_format: json
+  train_dir: ../results/data/syn/H2expi_test/train.json  
+  valid_dir: ../results/data/syn/H2expi_test/dev.json 
+  test_dir:  ../results/data/syn/H2expi_test/test.json 
+  data_specs:
+    num_event_types: 2
+  
+H2expc :
+  data_format: json
+  train_dir: ../results/data/syn/H2expc/train.json
+  valid_dir: ../results/data/syn/H2expc/dev.json
+  test_dir:  ../results/data/syn/H2expc/test.json
+  data_specs:
+    num_event_types: 2
+
+H2expc_test :
+  data_format: json
+  train_dir: ../results/data/syn/H2expc_test/train.json  
+  valid_dir: ../results/data/syn/H2expc_test/dev.json 
+  test_dir:  ../results/data/syn/H2expc_test/test.json 
+  data_specs:
+    num_event_types: 2
+
+hawkes1 :
+  data_format: json
+  train_dir: ../results/data/syn/hawkes1/train.json  
+  valid_dir: ../results/data/syn/hawkes1/dev.json 
+  test_dir:  ../results/data/syn/hawkes1/test.json 
+  data_specs:
+    num_event_types: 1
+
+hawkes2 :
+  data_format: json
+  train_dir: ../results/data/syn/hawkes2/train.json  
+  valid_dir: ../results/data/syn/hawkes2/dev.json 
+  test_dir:  ../results/data/syn/hawkes2/test.json 
+  data_specs:
+    num_event_types: 2
+
+hawkes2_cust_test :
+  data_format: json
+  train_dir: ../results/data/syn/hawkes2_cust_test/train.json  
+  valid_dir: ../results/data/syn/hawkes2_cust_test/dev.json 
+  test_dir:  ../results/data/syn/hawkes2_cust_test/test.json 
+  data_specs:
+    num_event_types: 2
+
+self_correcting : 
+  data_format: json
+  train_dir: ../results/data/syn/self_correcting/train.json  
+  valid_dir: ../results/data/syn/self_correcting/dev.json 
+  test_dir:  ../results/data/syn/self_correcting/test.json 
+  data_specs:
+    num_event_types: 1
+
+taxi :
+  data_format: json
+  train_dir:  easytpp/taxi  
+  valid_dir:  easytpp/taxi 
+  test_dir:  easytpp/taxi 
+  data_specs:
+    num_event_types: 10
+    pad_token_id: 10
+    padding_side: right

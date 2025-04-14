@@ -8,11 +8,18 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from datetime import datetime
 import os
+import random
 
 
 class Trainer :
     
-    def __init__(self, config : RunnerConfig):
+    def __init__(self, config : RunnerConfig, **kwargs):
+        
+        """_summary__.
+        Args:
+            config (RunnerConfig): Configuration object containing all the necessary parameters for training.
+            **kwargs: Additional keyword arguments that can be used to override specific configurations.
+        """
         
         #Initialize your configs
         data_config = config.data_config
@@ -51,7 +58,18 @@ class Trainer :
         self.val_freq = trainer_config.val_freq
         self.use_precision_16 = trainer_config.use_precision_16
         
-        self.dirpath = save_model_dir
+        dirpath = save_model_dir
+        experiment_id = kwargs.get('experiment_id', None)
+        
+        if experiment_id is not None:
+            self.dirpath = os.path.join(dirpath, experiment_id)
+        else:
+            # Generate a random funny name
+            adjectives = ['happy', 'sleepy', 'grumpy', 'dancing', 'jumping', 'flying', 'mysterious']
+            animals = ['panda', 'koala', 'penguin', 'octopus', 'unicorn', 'dragon', 'platypus']
+            random_name = f"{random.choice(adjectives)}_{random.choice(animals)}_{random.randint(1, 999)}"
+            self.dirpath = os.path.join(dirpath, f"{random_name}")
+        
         os.makedirs(self.dirpath, exist_ok=True)
         
         try:

@@ -1,5 +1,6 @@
 import numpy as np
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
+from tqdm import tqdm
 
 from easy_tpp.data_gen.base_simulator import BaseSimulator
 
@@ -27,35 +28,59 @@ class SelfCorrecting(BaseSimulator):
             seed (int, optional): Graine pour la reproductibilité
         """
         super().__init__(dim_process, start_time, end_time, seed)
-        self.mu = np.array(mu)
-        self.alpha = np.array(alpha)
         
-    def simulate(self, mu: float, alpha: float, t_end: float) -> np.ndarray:
-        """
-        Génère un processus auto-correctif.
-        
-        Args:
-            mu (float): Paramètre de taux de base
-            alpha (float): Paramètre de réduction après un événement
-            t_end (float): Temps de fin de simulation
+        # Support both scalar and array inputs for mu and alpha
+        if isinstance(mu, (int, float)):
+            self.mu = np.array([mu] * dim_process)
+        else:
+            self.mu = np.array(mu)
             
+        if isinstance(alpha, (int, float)):
+            self.alpha = np.array([alpha] * dim_process)
+        else:
+            self.alpha = np.array(alpha)
+        
+    def simulate(self) -> Tuple[List[np.ndarray]]:
+        """
+        Génère un processus auto-correctif pour chaque dimension.
+        
         Returns:
-            np.ndarray: Array des temps d'événements
+            Tuple[List[np.ndarray]]: Tuple d'arrays de temps d'événements pour chaque dimension
         """
-        t = 0
-        x = 0
-        T = []
+        events = []
         
-        while t < t_end:
-            e = np.random.exponential()
-            tau = np.log(e*mu/np.exp(x) + 1)/mu  # e = (np.exp(mu*tau) - 1)*np.exp(x)/mu
-            t = t + tau
+        for dim in range(self.dim_process):
+            # Simulate each dimension independently
+            t = self.start_time
+            x = 0
+            dim_events = []
             
-            if t >= t_end:
-                break
+            while t < self.end_time:
+                e = np.random.exponential()
+                tau = np.log(e*self.mu[dim]/np.exp(x) + 1)/self.mu[dim]
+                t = t + tau
                 
-            T.append(t)
-            x = x + mu*tau
-            x = x - alpha
+                if t >= self.end_time:
+                    break
+                    
+                dim_events.append(t)
+                x = x + self.mu[dim]*tau
+                x = x - self.alpha[dim]
+            
+            events.append(np.array(dim_events))
         
-        return np.array(T)
+        return tuple(events)
+    
+    def get_simulator_metadata(self) -> Dict:
+        """
+        Renvoie les métadonnées spécifiques au simulateur.
+        
+        Returns:
+            Dict: Métadonnées spécifiques au simulateur
+        """
+        return {
+            'self_correcting_parameters': {
+                'mu': self.mu.tolist(),
+                'alpha': self.alpha.tolist()
+            }
+        }

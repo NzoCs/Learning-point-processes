@@ -1,0 +1,293 @@
+pipeline_config_id: runner_config
+
+data:
+
+  taxi:
+    data_format: json
+    train_dir:  easytpp/taxi  # ./data/taxi/train.json
+    valid_dir:  easytpp/taxi # ./data/taxi/dev.json
+    test_dir:  easytpp/taxi # ./data/taxi/test.json
+    data_specs:
+      num_event_types: 10
+      pad_token_id: 10
+      padding_side: left
+
+  test :
+    data_format: json
+    train_dir:   ../results/data/syn/test_dataset/train.json 
+    valid_dir: ../results/data/syn/test_dataset/dev.json 
+    test_dir:  ../results/data/syn/test_dataset/test.json 
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+      
+  H2expi :
+  data_format: json
+  train_dir: ../results/data/syn/H2expi/train.json  
+  valid_dir: ../results/data/syn/H2expi/dev.json 
+  test_dir:  ../results/data/syn/H2expi/test.json 
+  data_specs:
+    num_event_types: 2
+    pad_token_id: 2
+    padding_side: left
+
+  H2expi_test :
+    data_format: json
+    train_dir: ../results/data/syn/H2expi_test/train.json  
+    valid_dir: ../results/data/syn/H2expi_test/dev.json 
+    test_dir:  ../results/data/syn/H2expi_test/test.json 
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+    
+  H2expc :
+    data_format: json
+    train_dir: ../results/data/syn/H2expc/train.json
+    valid_dir: ../results/data/syn/H2expc/dev.json
+    test_dir:  ../results/data/syn/H2expc/test.json
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  H2expc_test :
+    data_format: json
+    train_dir: ../results/data/syn/H2expc_test/train.json  
+    valid_dir: ../results/data/syn/H2expc_test/dev.json 
+    test_dir:  ../results/data/syn/H2expc_test/test.json 
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  hawkes1 :
+    data_format: json
+    train_dir: ../results/data/syn/hawkes1/train.json  
+    valid_dir: ../results/data/syn/hawkes1/dev.json 
+    test_dir:  ../results/data/syn/hawkes1/test.json 
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+
+  hawkes2 :
+    data_format: json
+    train_dir: ../results/data/syn/hawkes2/train.json  
+    valid_dir: ../results/data/syn/hawkes2/dev.json 
+    test_dir:  ../results/data/syn/hawkes2/test.json 
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  self_correcting : 
+    data_format: json
+    train_dir: ../results/data/syn/self_correcting/train.json  
+    valid_dir: ../results/data/syn/self_correcting/dev.json 
+    test_dir:  ../results/data/syn/self_correcting/test.json 
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+
+NHP_test_train :
+
+  data_loading_specs : 
+    batch_size: 256
+    num_workers: 1
+
+  model_config:
+    model_id : NHP
+    hidden_size : 16
+    loss_integral_num_sample_per_step: 20
+    thinning:
+      num_seq: 10
+      num_sample: 30
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      look_ahead_time: 10
+      patience_counter: 5 # the maximum iteration used in adaptive thinning
+      over_sample_rate: 5
+      num_samples_boundary: 5
+      dtime_max: 5
+      num_step_gen: 1
+      
+  trainer_config : 
+    stage : train
+    dataset_id: test
+    max_epochs : 20
+    val_freq : 5
+    lr : 0.01
+    lr_scheduler : True
+    num_workers : 4
+    save_dir : ../results/trained_models/NHP/test
+    logger_type : tensorboard
+    logger_config :
+      name : tensorboard_logs
+
+NHP_hawkes1_train :
+
+  data_loading_specs : 
+    batch_size: 256
+    num_workers: 4
+
+  model_config:
+    model_id : NHP
+    hidden_size : 16
+    loss_integral_num_sample_per_step: 20
+    thinning:
+      num_seq: 10
+      num_sample: 1
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      look_ahead_time: 10
+      patience_counter: 5 # the maximum iteration used in adaptive thinning
+      over_sample_rate: 5
+      num_samples_boundary: 5
+      dtime_max: 5
+      num_step_gen: 1
+      
+  trainer_config : 
+    stage : train
+    dataset_id: hawkes1
+    max_epochs : 400
+    val_freq : 5
+    lr : 0.01
+    lr_scheduler : True
+    num_workers : 4
+    save_dir : ../results/trained_models/NHP/hawkes1
+    logger_type : tensorboard
+    logger_config :
+      name : tensorboard_logs
+
+NHP_hawkes2_train :
+
+  data_loading_specs : 
+    batch_size: 256
+    num_workers: 1
+
+  model_config:
+    model_id : NHP
+    hidden_size : 16
+    loss_integral_num_sample_per_step: 20
+    thinning:
+      num_seq: 10
+      num_sample: 30
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      look_ahead_time: 10
+      patience_counter: 5 # the maximum iteration used in adaptive thinning
+      over_sample_rate: 5
+      num_samples_boundary: 5
+      dtime_max: 5
+      num_step_gen: 1
+      
+  trainer_config : 
+    stage : train
+    dataset_id: hawkes2
+    max_epochs : 400
+    val_freq : 5
+    lr : 0.01
+    lr_scheduler : True
+    logger_type : tensorboard
+    logger_config :
+      name : tensorboard_logs
+
+NHP_self_correcting_train :
+  
+    data_loading_specs : 
+      batch_size: 256
+  
+    model_config:
+      model_id : NHP
+      hidden_size : 16
+      loss_integral_num_sample_per_step: 20
+      thinning:
+        num_seq: 10
+        num_sample: 1
+        num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+        look_ahead_time: 10
+        patience_counter: 5 # the maximum iteration used in adaptive thinning
+        over_sample_rate: 5
+        num_samples_boundary: 5
+        dtime_max: 5
+        num_step_gen: 1
+        
+    trainer_config : 
+      stage : train
+      dataset_id: self_correcting
+      max_epochs : 400
+      val_freq : 5
+      lr : 0.01
+      lr_scheduler : True
+      save_dir : ../results/trained_models/NHP/self_correcting
+      logger_type : tensorboard
+      logger_config :
+        name : tensorboard_logs
+
+RMTPP_self_correcting_train :
+  
+    
+    data_loading_specs : 
+      batch_size: 256
+  
+    model_config:
+      model_id : RMTPP
+      hidden_size : 16
+      loss_integral_num_sample_per_step: 20
+      simulation : 
+        start_time : 200
+        end_time : 300
+      thinning:
+        num_seq: 10
+        num_sample: 1
+        num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+        look_ahead_time: 10
+        patience_counter: 5 # the maximum iteration used in adaptive thinning
+        over_sample_rate: 5
+        num_samples_boundary: 5
+        dtime_max: 5
+        num_step_gen: 1
+        
+    trainer_config : 
+      stage : train
+      dataset_id: self_correcting
+      max_epochs : 400
+      val_freq : 5
+      lr : 0.01
+      lr_scheduler : True
+      logger_type : tensorboard
+      save_dir : ../results/trained_models/NHP/self_correcting
+      logger_config :
+        name : tensorboard_logs
+
+RMTPP_hawkes1_train :
+
+  data_loading_specs : 
+    batch_size: 256
+
+  model_config:
+    model_id : RMTPP
+    hidden_size : 16
+    loss_integral_num_sample_per_step: 20
+    thinning:
+      num_seq: 10
+      num_sample: 1
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      look_ahead_time: 10
+      patience_counter: 5 # the maximum iteration used in adaptive thinning
+      over_sample_rate: 5
+      num_samples_boundary: 5
+      dtime_max: 5
+      num_step_gen: 1
+      
+  trainer_config : 
+    stage : train
+    dataset_id: hawkes1
+    max_epochs : 400
+    val_freq : 5
+    lr : 0.01
+    lr_scheduler : True
+    save_dir : ../results/trained_models/RMTPP/hawkes1
+    logger_type : tensorboard
+    logger_config :
+      name : tensorboard_logs

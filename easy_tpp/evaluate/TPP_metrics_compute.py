@@ -107,24 +107,22 @@ class TPPMetricsCompute:
         # Unpack the batch according to EasyTPP format
         if len(batch) >= 6:
             # Full EasyTPP format
-            true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask, attention_mask, type_mask = batch
+            true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask, attention_mask, _ = batch
         elif len(batch) >= 5:
             # Simplified format
             true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask, attention_mask = batch
-            type_mask = None
         else:
             # Minimal format
             true_time_seqs, true_time_delta_seqs, true_type_seqs = batch[:3]
             batch_non_pad_mask = (true_type_seqs != self.num_event_types).float()
             attention_mask = self._create_attention_mask(batch_non_pad_mask)
-            type_mask = None
         
         # Unpack predictions
         pred_time_delta_seqs, pred_type_seqs = pred[:2]
         
         # Create mask to extract non-padded elements
         if batch_non_pad_mask is not None:
-            mask = batch_non_pad_mask.bool()
+            mask = batch_non_pad_mask
         else:
             # If no mask, assume all values are valid
             mask = torch.ones_like(true_type_seqs, dtype=torch.bool)
@@ -185,8 +183,9 @@ class TPPMetricsCompute:
         
         if len(true_types) == 0:
             return float('nan')
-            
-        accuracy_metric = torchmetrics.Accuracy(task="multiclass", num_classes=self.num_event_types)
+
+        
+        accuracy_metric = torchmetrics.Accuracy(task = "multiclass", num_classes = self.num_event_types)
         return accuracy_metric(pred_types, true_types).item() * 100
     
     def calculate_f1_score(self, batch, pred, average: str = 'macro') -> float:
@@ -204,7 +203,7 @@ class TPPMetricsCompute:
         if len(true_types) == 0:
             return float('nan')
             
-        f1_metric = torchmetrics.F1Score(task="multiclass", num_classes=self.num_event_types, average=average)
+        f1_metric = torchmetrics.F1Score(task = "multiclass", num_classes = self.num_event_types, average = average)
         return f1_metric(pred_types, true_types).item() * 100
     
     def calculate_recall(self, batch, pred) -> float:
@@ -218,7 +217,7 @@ class TPPMetricsCompute:
         if len(true_types) == 0:
             return float('nan')
             
-        recall_metric = torchmetrics.Recall(task="multiclass", num_classes=self.num_event_types, average='macro')
+        recall_metric = torchmetrics.Recall(task="multiclass", num_classes = self.num_event_types, average = 'macro')
         return recall_metric(pred_types, true_types).item() * 100
     
     def calculate_precision(self, batch, pred) -> float:
@@ -232,7 +231,7 @@ class TPPMetricsCompute:
         if len(true_types) == 0:
             return float('nan')
             
-        precision_metric = torchmetrics.Precision(task="multiclass", num_classes=self.num_event_types, average='macro')
+        precision_metric = torchmetrics.Precision(task = "multiclass", num_classes = self.num_event_types, average = 'macro')
         return precision_metric(pred_types, true_types).item() * 100
     
     def calculate_cross_entropy(self, batch, pred) -> float:

@@ -407,7 +407,7 @@ class EventTokenizer:
             # Process time sequences
             batch_output[self.model_input_names[0]] = self.make_pad_sequence(
                 encoded_inputs[self.model_input_names[0]],
-                self.pad_token_id,
+                0,
                 padding_side=self.padding_side,
                 max_len=max_length
             )
@@ -415,7 +415,7 @@ class EventTokenizer:
             # Process time delta sequences
             batch_output[self.model_input_names[1]] = self.make_pad_sequence(
                 encoded_inputs[self.model_input_names[1]],
-                self.pad_token_id,
+                0,
                 padding_side=self.padding_side,
                 max_len=max_length
             )
@@ -436,9 +436,7 @@ class EventTokenizer:
 
         # Create sequence padding mask based on original sequence lengths
         # True indicates valid tokens, False indicates padding
-        sequence_mask = np.full_like(batch_output[self.model_input_names[2]], fill_value=True, dtype=bool)
-        for idx, seq_len in enumerate(sequence_lengths):
-            sequence_mask[idx, seq_len:] = False
+        sequence_mask = (batch_output[self.model_input_names[2]] != self.pad_token_id)
         batch_output[self.model_input_names[3]] = sequence_mask
 
         if return_attention_mask:

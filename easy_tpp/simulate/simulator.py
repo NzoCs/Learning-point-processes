@@ -7,7 +7,7 @@ class Simulator :
         self.save_dir = simulator_config.get('save_dir', None)
         self.start_time = simulator_config.get('start_time')
         self.end_time = simulator_config.get('end_time')
-        self.history_batch = simulator_config.get('history_batch', None)
+        self.history_data = simulator_config.get('history_data', None)
         self.model = simulator_config.get('pretrained_model', None)
         
 
@@ -25,4 +25,4 @@ class Simulator :
         for batch in data_loader:
             
             simulation = model.simulate(start_time = start_time, end_time = end_time, batch = batch)
-        
+            

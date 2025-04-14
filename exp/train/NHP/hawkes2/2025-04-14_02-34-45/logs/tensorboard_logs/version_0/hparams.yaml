@@ -1,0 +1,33 @@
+lr: 0.01
+lr_scheduler: true
+max_epochs: 400
+model_config: !!python/object:easy_tpp.config_factory.model_config.ModelConfig
+  dropout_rate: 0.0
+  gpu: -1
+  hidden_size: 16
+  is_training: false
+  loss_integral_num_sample_per_step: 20
+  model_id: NHP
+  model_specs: {}
+  num_event_types: 2
+  num_event_types_pad: null
+  num_heads: 2
+  num_layers: 2
+  pad_token_id: null
+  rnn_type: LSTM
+  sharing_param_layer: false
+  simulation_config: {}
+  thinning: !!python/object:easy_tpp.config_factory.model_config.ThinningConfig
+    dtime_max: 5
+    look_ahead_time: 10
+    num_exp: 500
+    num_sample: 20
+    num_samples_boundary: 5
+    num_seq: 10
+    num_step_gen: 1
+    over_sample_rate: 5
+    patience_counter: 5
+  time_emb_size: 16
+  use_ln: false
+  use_mc_samples: true
+num_event_types: 2

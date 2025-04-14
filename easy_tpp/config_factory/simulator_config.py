@@ -4,6 +4,7 @@ from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.config_factory.model_config import ModelConfig
 from easy_tpp.models import BaseModel
 
+
 class SimulatorConfig(Config):
     """
     Configuration class for the simulator.
@@ -39,7 +40,7 @@ class SimulatorConfig(Config):
         
         # Build history batch 
         try :
-            self.history_data_module = TPPDataModule(data_config = history_config, batch_size = 2)
+            self.history_data_module = TPPDataModule(data_config = history_config, batch_size = history_config.batch_size)
         except Exception as e:
             self.history_data_module = None
             

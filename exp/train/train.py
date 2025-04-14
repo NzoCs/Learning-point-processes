@@ -12,7 +12,7 @@ def main():
     parser.add_argument('--config_dir', type=str, required=False, default='./config.yaml',
                         help='Dir of configuration yaml to train and evaluate the model.')
 
-    parser.add_argument('--experiment_id', type=str, required=False, default='NHP_hawkes1_train',
+    parser.add_argument('--experiment_id', type=str, required=False, default='NHP_hawkes2_train',
                         help='Experiment id in the config file.')
 
     args = parser.parse_args()

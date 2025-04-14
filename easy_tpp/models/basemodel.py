@@ -230,8 +230,8 @@ class BaseModel(pl.LightningModule, ABC):
         """
         
         batch = batch.values()
-        loss,_ = self.loglike_loss(batch)
-        avg_loss = loss/batch[0].numel()
+        loss, num_events = self.loglike_loss(batch)
+        avg_loss = loss/num_events
         self.log('avg_train_loss', avg_loss.item(), prog_bar=True)
         
         return loss
@@ -251,8 +251,8 @@ class BaseModel(pl.LightningModule, ABC):
         
         label_batch = [seq[:,1:] for seq in batch]
         
-        loss,_ = self.loglike_loss(batch)
-        avg_loss = loss/batch[0].numel()
+        loss, num_events = self.loglike_loss(batch)
+        avg_loss = loss/num_events
         #Compute some validation metrics
         pred = self.predict_one_step_at_every_event(batch)
         
@@ -269,7 +269,7 @@ class BaseModel(pl.LightningModule, ABC):
         
         for key in one_step_metrics : 
             
-            self.log(f"avg_{key}", one_step_metrics[key]/batch[0].numel(), prog_bar=True)
+            self.log(f"avg_{key}", one_step_metrics[key], prog_bar=True)
             
         
         return loss
@@ -294,8 +294,8 @@ class BaseModel(pl.LightningModule, ABC):
         batch = batch.values()
         label_batch = [seq[:, 1:] for seq in batch]
         
-        loss,_ = self.loglike_loss(batch)
-        avg_loss = loss/batch[0].numel()
+        loss, num_events = self.loglike_loss(batch)
+        avg_loss = loss/num_events
         
         # Override simulation parameters if provided in kwargs
         start_time = kwargs.get('start_time', self.simulation_end_time)
@@ -332,10 +332,10 @@ class BaseModel(pl.LightningModule, ABC):
         
         for key in one_step_metrics : 
             
-            self.log(f"avg_{key}", one_step_metrics[key]/batch[0].numel(), prog_bar=True)
+            self.log(f"avg_{key}", one_step_metrics[key], prog_bar=True)
         
         for key in simulation_metrics :
-            self.log(f"avg_{key}", simulation_metrics[key]/batch[0].numel(), prog_bar=True)
+            self.log(f"avg_{key}", simulation_metrics[key], prog_bar=True)
         
         return loss
     

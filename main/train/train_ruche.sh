@@ -1,33 +1,31 @@
 #!/bin/bash
-#SBATCH --job-name=train
-#SBATCH --output=resultat_%j.out
-#SBATCH --error=erreur_%j.err
-#SBATCH --ntasks=1
-#SBATCH --time=50:00:00  
-#SBATCH --mem=100G
+#SBATCH --output=logs/train_%A_%a.out
+#SBATCH --error=logs/train_%A_%a.err
 #SBATCH --partition=gpua100
-#SBATCH --gres=gpu:5      
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=100G
+#SBATCH --gres=gpu:1
+#SBATCH --export=NONE
+#SBATCH --array=0-14%5
 
-# Exécutez les scripts en parallèle, chacun avec 1 GPU
+# Nettoie l'environnement module pour éviter les conflits
+module purge
 
-# Activez l'environnement virtuel
-cd /gpfs/users/regnaguen/New_LTPP/main/train
-
+# Active l’environnement virtuel Python (créé avec python -m venv)
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
+# Définition des combinaisons exp/dataset
+experiments=(NHP_train RMTPP_train AttNHP_train)
+datasets=(hawkes1 hawkes2 H2expc H2expi self_correcting)
 
-python train.py --experiment_id NHP_train --dataset_id hawkes1
-python train.py --experiment_id NHP_train --dataset_id hawkes2
-python train.py --experiment_id NHP_train --dataset_id H2expc
-python train.py --experiment_id NHP_train --dataset_id H2expi
-python train.py --experiment_id NHP_train --dataset_id self_correcting
-python train.py --experiment_id RMTPP_train --dataset_id hawkes1
-python train.py --experiment_id RMTPP_train --dataset_id hawkes2
-python train.py --experiment_id RMTPP_train --dataset_id H2expc
-python train.py --experiment_id RMTPP_train --dataset_id H2expi
-python train.py --experiment_id RMTPP_train --dataset_id self_correcting
-python train.py --experiment_id AttNHP_train --dataset_id hawkes1
-python train.py --experiment_id AttNHP_train --dataset_id hawkes2
-python train.py --experiment_id AttNHP_train --dataset_id H2expc
-python train.py --experiment_id AttNHP_train --dataset_id H2expi
-python train.py --experiment_id AttNHP_train --dataset_id self_correcting
+# Mapping index → combinaison
+idx=$SLURM_ARRAY_TASK_ID
+exp=${experiments[$(( idx / ${#datasets[@]} ))]}
+data=${datasets[$(( idx % ${#datasets[@]} ))]}
+
+# Lancement avec srun
+srun python train.py --experiment_id "${exp}" --dataset_id "${data}"
+

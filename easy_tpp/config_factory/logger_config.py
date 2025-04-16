@@ -183,7 +183,7 @@ class  LoggerConfig(Config):
             TypeError: If the logger type is not a LoggerType or str
         """
         
-        logger_type = kwargs.get('logger_type', None)
+        logger_type = kwargs.pop('type', None)
         
         # Convert string to LoggerType if necessary
         if isinstance(logger_type, str):
@@ -202,7 +202,7 @@ class  LoggerConfig(Config):
         
         # Validate and initialize the configuration
         if self.adapter is not None :
-            self.config = self.adapter.validate_config(kwargs.get("logger_config", {}))
+            self.config = self.adapter.validate_config(kwargs)
     
     def get_config(self) -> Dict[str, Any]:
         """
@@ -227,7 +227,7 @@ class  LoggerConfig(Config):
         return yaml_config
 
     @staticmethod
-    def parse_from_yaml_config(yaml_config, **kwargs):
+    def parse_from_yaml_config(config, **kwargs):
         """Parse from the yaml to generate the config object.
 
         Args:
@@ -236,14 +236,12 @@ class  LoggerConfig(Config):
         Returns:
             LoggerConfig: Config class for logger.
         """
-        logger_type = yaml_config.get('logger_type')
-        config = yaml_config.get('config', {})
         
         # Update config with any additional kwargs
         if kwargs:
             config.update(kwargs)
             
-        return LoggerConfig(logger_type, **config)
+        return LoggerConfig(**config)
 
     def copy(self):
         """Get a same and freely modifiable copy of self.
@@ -251,7 +249,7 @@ class  LoggerConfig(Config):
         Returns:
             LoggerConfig: A copy of the current config.
         """
-        return LoggerConfig(self.logger_type, **copy.deepcopy(self.config))
+        return LoggerConfig.parse_from_yaml_config(copy.deepcopy(self.get_yaml_config()))
     
     def configure_logger(self) -> Any:
         """

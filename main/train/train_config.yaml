@@ -1,0 +1,134 @@
+pipeline_config_id: runner_config
+
+data:
+
+  taxi:
+    data_format: json
+    train_dir: easytpp/taxi
+    valid_dir: easytpp/taxi
+    test_dir: easytpp/taxi
+    data_specs:
+      num_event_types: 10
+      pad_token_id: 10
+      padding_side: left
+
+  test:
+    data_format: json
+    train_dir: NzoCs/test_dataset-temporal-dataset
+    valid_dir: NzoCs/test_dataset-temporal-dataset
+    test_dir: NzoCs/test_dataset-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+      
+  H2expi:
+    data_format: json
+    train_dir: NzoCs/H2expi-temporal-dataset
+    valid_dir: NzoCs/H2expi-temporal-dataset
+    test_dir: NzoCs/H2expi-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  H2expc:
+    data_format: json
+    train_dir: NzoCs/H2expc-temporal-dataset
+    valid_dir: NzoCs/H2expc-temporal-dataset
+    test_dir: NzoCs/H2expc-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  hawkes1:
+    data_format: json
+    train_dir: NzoCs/hawkes1-temporal-dataset
+    valid_dir: NzoCs/hawkes1-temporal-dataset
+    test_dir: NzoCs/hawkes1-temporal-dataset
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+
+  hawkes2:
+    data_format: json
+    train_dir: NzoCs/hawkes2-temporal-dataset
+    valid_dir: NzoCs/hawkes2-temporal-dataset
+    test_dir: NzoCs/hawkes2-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  self_correcting:
+    data_format: json
+    train_dir: NzoCs/self_correcting-temporal-dataset
+    valid_dir: NzoCs/self_correcting-temporal-dataset
+    test_dir: NzoCs/self_correcting-temporal-dataset
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+
+
+NHP_train:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 1
+
+  model_config:
+    hidden_size: 16
+    model_id: NHP
+  
+    base_config:
+      lr: 0.01
+      lr_scheduler: True
+
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 5
+      dtime_max: 5
+
+  trainer_config:
+    stage: train
+    max_epochs: 20
+    val_freq: 5
+    save_dir: ../results/trained_models/NHP/test
+
+    logger_config:
+      type: tensorboard
+      name: logs
+
+NHP_test:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 1
+
+  model_config:
+    hidden_size: 16
+    model_id: NHP
+
+    base_config:
+      lr: 0.01
+      lr_scheduler: True
+
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 5
+      dtime_max: 5
+    
+    simulation:
+      start_time: 200
+      end_time: 300
+
+  trainer_config:
+    stage: test
+    save_dir: ../results/trained_models/NHP/test
+
+    logger_config:
+      type: tensorboard
+      name: logs

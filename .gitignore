@@ -20,6 +20,18 @@ log
 *.swo
 .vscode
 
+#data
+*.png
+*.jpg
+*.json
+*.csv
+
+# model
+*.pth
+*.pt
+*.onnx
+*.onnx.prototxt
+*.ckpt
 
 #run files
 *.err

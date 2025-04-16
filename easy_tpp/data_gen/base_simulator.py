@@ -100,11 +100,12 @@ class BaseSimulator(ABC):
             for dim, timestamps in enumerate(sim):
                 # Filter timestamps greater than start_time
                 valid_timestamps = timestamps[timestamps > start_time]
+                valid_timestamps_trunc = valid_timestamps[1:]
                 
                 if len(valid_timestamps) > 0:
-                    all_timestamps.extend(valid_timestamps)
-                    all_types.extend([dim] * len(valid_timestamps))
-                    all_time_diff.extend(np.diff(np.array(valid_timestamps), prepend=valid_timestamps[0]))
+                    all_timestamps.extend(valid_timestamps_trunc)
+                    all_types.extend([dim] * len(valid_timestamps_trunc))
+                    all_time_diff.extend(np.diff(np.array(valid_timestamps)))
             
             if len(all_timestamps) == 0:
                 continue

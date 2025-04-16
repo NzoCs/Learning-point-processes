@@ -29,45 +29,72 @@ class BaseModel(pl.LightningModule, ABC):
         #Paramètre du modele
         self.save_hyperparameters()
         
-        self.lr = kwargs.get('lr')
-        self.lr_scheduler = kwargs.get("lr_scheduler")
-        self.max_epochs = kwargs.get("max_epochs")
-        self.num_event_types = kwargs.get('num_event_types')  # not include [PAD], [BOS], [EOS]
+        base_config = model_config.base_config
+        model_specs = model_config.specs
         
-        if isinstance(self.num_event_types, int):
-            self.num_event_types_pad = kwargs.get('num_event_types_pad', self.num_event_types + 1) # include [PAD], [BOS], [EOS]
-            
-        self.pad_token_id = kwargs.get('pad_token_id', self.num_event_types)
+        self.lr = base_config.lr
+        self.lr_scheduler = base_config.lr_scheduler
+        self.max_epochs = base_config.max_epochs
+        
+        self.num_event_types = model_config.num_event_types  # not include [PAD], [BOS], [EOS]
+        self.num_event_types_pad = model_config.num_event_types_pad
+        self.pad_token_id = model_config.pad_token_id
         
         
-        self.loss_integral_num_sample_per_step = model_config.loss_integral_num_sample_per_step
-        self.hidden_size = model_config.hidden_size
+        self.loss_integral_num_sample_per_step = model_specs.loss_integral_num_sample_per_step
+        self.hidden_size = model_specs.hidden_size
         
         self.eps = torch.finfo(torch.float32).eps
 
         self.layer_type_emb = nn.Embedding(
-            self.num_event_types_pad,  # have padding
-            self.hidden_size,
-            padding_idx = self.pad_token_id)
+            num_embeddings = self.num_event_types_pad,  # have padding
+            embedding_dim = self.hidden_size,
+            padding_idx = self.pad_token_id,
+            device=self.device)
 
         #Paramètre de la génération de données
-        self.gen_config = model_config.thinning
+        gen_config = model_config.thinning
         self.event_sampler = None
         self.use_mc_samples = model_config.use_mc_samples
+        self._device = model_config.device
         
         # Set up the event sampler if generation config is provided
-        if self.gen_config:
-            self.event_sampler = EventSampler(num_sample = self.gen_config.num_sample,
-                                              num_exp = self.gen_config.num_exp,
-                                              over_sample_rate = self.gen_config.over_sample_rate,
-                                              patience_counter = self.gen_config.patience_counter,
-                                              num_samples_boundary = self.gen_config.num_samples_boundary,
-                                              dtime_max = self.gen_config.dtime_max,
-                                              device = self.device)
+        self.event_sampler = EventSampler(num_sample = gen_config.num_sample,
+                                              num_exp = gen_config.num_exp,
+                                              over_sample_rate = gen_config.over_sample_rate,
+                                              num_samples_boundary = gen_config.num_samples_boundary,
+                                              dtime_max = gen_config.dtime_max,
+                                              device = self._device)
         
         simulation_config = model_config.simulation_config
-        self.simulation_start_time = simulation_config.get('start_time')
-        self.simulation_end_time = simulation_config.get('end_time')
+        self.simulation_batch_size = simulation_config.batch_size
+        self.simulation_start_time = simulation_config.start_time
+        self.simulation_end_time = simulation_config.end_time
+    
+    @property
+    def device(self):
+        """Get the current device."""
+        return self._device
+    
+    def to(self, *args, **kwargs):
+        """Override to() method to update device-dependent components."""
+        device = None
+        if args and isinstance(args[0], (str, torch.device)):
+            device = args[0]
+        elif 'device' in kwargs:
+            device = kwargs['device']
+        
+        # Call the parent's to() method first
+        model = super().to(*args, **kwargs)
+        
+        # Update our stored device if a new one was specified
+        if device is not None:
+            model._device = device
+            # Update the event_sampler device if it exists
+            if model.event_sampler is not None:
+                model.event_sampler.device = device
+        
+        return model
     
     @staticmethod
     def generate_model_from_config(model_config : ModelConfig, **kwargs):
@@ -297,10 +324,6 @@ class BaseModel(pl.LightningModule, ABC):
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss/num_events
         
-        # Override simulation parameters if provided in kwargs
-        start_time = kwargs.get('start_time', self.simulation_end_time)
-        end_time = kwargs.get('end_time', self.simulation_start_time)
-        
         # Compute some prediction metrics
         pred = self.predict_one_step_at_every_event(batch)
         
@@ -314,10 +337,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Compute simulation metrics
         simulation = self.simulate(
-            start_time = start_time,
-            end_time = end_time,
-            batch = batch,
-            batch_size = batch[0].size(0)
+            batch = batch
         )
         simulation_metrics_compute = TPPMetricsCompute(
             num_event_types = self.num_event_types,
@@ -473,10 +493,7 @@ class BaseModel(pl.LightningModule, ABC):
             
     def simulate(
         self,
-        start_time: float,
-        end_time: float,
-        batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] = None,
-        batch_size: int = 1
+        batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         
@@ -502,7 +519,11 @@ class BaseModel(pl.LightningModule, ABC):
                 - 'time_delta_seqs': Tensor of time differences between events.
                 - 'type_seqs': Tensor of generated event types.
         """
-
+        
+        start_time = self.simulation_start_time
+        end_time = self.simulation_end_time
+        batch_size = self.simulation_batch_size
+        
         # Initialize sequences
         if batch is None :
             batch = [torch.zeros(batch_size, 2) for _ in range(3)] + [None, None]
@@ -562,7 +583,7 @@ class BaseModel(pl.LightningModule, ABC):
                 event_seq,
                 dtimes_pred[:, :, None],
                 compute_last_step_only=True
-            ).squeeze(1).squeeze(2) #[batch_size, num_event_types]
+            ).view(batch_size, num_mark) #[batch_size, num_event_types]
 
             total_intensities = intensities_at_times.sum(dim=-1)
             
@@ -719,3 +740,27 @@ class BaseModel(pl.LightningModule, ABC):
             plt.show()
 
         return intensities, sample, marked_times
+
+    def get_model_metadata(self):
+        """
+        Get metadata about the model for simulation purposes.
+        
+        Returns:
+            dict: Dictionary containing model metadata
+        """
+        metadata = {
+            'model_type': self.__class__.__name__,
+            'hidden_size': self.hidden_size,
+            'num_event_types': self.num_event_types,
+            'lr': self.lr
+        }
+        
+        # Add additional parameters that are specific to the model
+        if hasattr(self, 'hparams'):
+            # Extract hyperparameters but exclude complex objects like modules
+            for key, value in self.hparams.items():
+                if isinstance(value, (int, float, str, bool, list, dict)) or value is None:
+                    if key not in metadata:  # Avoid overriding existing keys
+                        metadata[key] = value
+        
+        return metadata

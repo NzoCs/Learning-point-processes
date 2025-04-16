@@ -6,8 +6,8 @@ from easy_tpp.utils import logger
 
 import numpy as np
 import torch
-from datetime import datetime
 import os
+import random
 
 class TrainerConfig:
     
@@ -18,37 +18,52 @@ class TrainerConfig:
             return torch.cuda.device_count()
         return "auto"  # Use CPU
     
+    @staticmethod
+    def generate_random_name():
+        """Generate a random funny name for the experiment."""
+        adjectives = ['happy', 'sleepy', 'grumpy', 'dancing', 'jumping', 'flying', 'mysterious']
+        animals = ['panda', 'koala', 'penguin', 'octopus', 'unicorn', 'dragon', 'platypus']
+        return f"{random.choice(adjectives)}_{random.choice(animals)}_{random.randint(1, 999)}"
+    
     def __init__(self, **kwargs):
         
-        required_fields = ['lr', 'max_epochs', 'save_dir']
+        
+        self.stage = kwargs.get('stage', 'train')
+        
+        if self.stage not in ['train', 'test']:
+            raise ValueError("Invalid stage. Choose either 'train' or 'test'.")
+        
+        if self.stage == 'test':
+            kwargs['max_epochs'] = 1
+            
+        required_fields = ['max_epochs', 'save_dir', 'dataset_id', "model_id"]
+        # Check for required fields
         missing_fields = [field for field in required_fields if field not in kwargs]
         if missing_fields:
             raise ValueError(f"Missing required configuration fields: {missing_fields}")
         
+        self.dataset_id = kwargs.get('dataset_id')
+        self.model_id = kwargs.get('model_id')
         
-        if kwargs.get('save_dir') is None:
-            datetime_format = "%Y-%m-%d_%H-%M-%S"
-            date_time = datetime.now().strftime(datetime_format)
-            model_id = kwargs.get('model_id', 'default_model')
-            default_save_dir = f'./{model_id}/{kwargs.get('dataset_id')}/{date_time}'
-            save_dir = default_save_dir
-        else:
-            save_dir = kwargs.get('save_dir')
+        # Setup save directories with random names
+        save_dir = kwargs.get('save_dir', f"./{self.model_id}/{self.dataset_id}/")
+        experiment_id = kwargs.get('experiment_id')
+        
+        if experiment_id is None:
+            experiment_id = self.generate_random_name()
             
-        self.logger_type = kwargs.get("logger_type", "tensorboard")
-        logger_save_dir = os.path.join(save_dir, "logs")
+        dirpath = os.path.join(save_dir, experiment_id)
+        os.makedirs(dirpath, exist_ok=True)
+            
         logger_config = kwargs.get("logger_config", {})
         
         if logger_config.get("save_dir") is None:
-            logger_config["save_dir"] = logger_save_dir
+            logger_config["save_dir"] = dirpath
             
-        self.logger_config = LoggerConfig(logger_config = logger_config, logger_type = self.logger_type)
+        self.logger_config = LoggerConfig.parse_from_yaml_config(logger_config)
         
-        self.stage = kwargs.get('stage', 'train')
         self.dataset_id = kwargs.get('dataset_id', None)
-        self.lr = kwargs.get('lr')
-        self.lr_scheduler = kwargs.get('lr_scheduler')
-        self.batch_size = kwargs.get('batch_size')
+        self.batch_size = kwargs.get('batch_size', 32)
         self.max_epochs = kwargs.get('max_epochs')
         self.checkpoints_freq = kwargs.get('val_freq', 10)
         self.patience = kwargs.get('patience', np.inf)
@@ -59,7 +74,8 @@ class TrainerConfig:
         self.log_freq = kwargs.get('log_freq', 1)
         # Auto-detect devices if not specified
         self.devices = kwargs.get('devices', self.detect_available_devices())
-        self.save_model_dir = os.path.join(save_dir, "trained_models")
+        self.save_model_dir = os.path.join(dirpath, "trained_models")
+        os.makedirs(self.save_model_dir, exist_ok=True)
         
     def get(self, att):
         try:
@@ -86,24 +102,7 @@ class TrainerConfig:
             ValueError: If required parameters are missing
         """
             
-        return TrainerConfig(
-            stage = yaml_config.get('stage', 'train'),
-            dataset_id = yaml_config.get('dataset_id'),
-            lr = yaml_config.get('lr'),
-            use_precision_16 = yaml_config.get('use_precision_16', False),
-            lr_scheduler = yaml_config.get('lr_scheduler', True),
-            max_epochs = yaml_config.get('max_epochs'),
-            val_freq = yaml_config.get('val_freq', 10),
-            patience = yaml_config.get('patience', float('inf')),
-            patience_max = yaml_config.get("patience_max", float('inf')),
-            log_freq = yaml_config.get('log_freq', 1),
-            # Auto-detect devices if not specified in the config
-            devices = yaml_config.get('devices', TrainerConfig.detect_available_devices()),
-            save_dir = yaml_config.get('save_dir'),
-            logger_type = yaml_config.get('logger_type', 'tensorboard'),
-            logger_config = yaml_config.get('logger_config'),
-            model_id = yaml_config.get('model_id')
-        )
+        return TrainerConfig(**yaml_config)
 
     def get_yaml_config(self) -> dict:
         """Return the config in dict (yaml compatible) format.
@@ -112,8 +111,6 @@ class TrainerConfig:
             dict: Configuration including all non-None parameters
         """
         config = {
-            'lr': self.lr,
-            'lr_scheduler': self.lr_scheduler,
             'batch_size': self.batch_size,
             'max_epochs': self.max_epochs,
             'val_freq': self.val_freq,
@@ -122,7 +119,7 @@ class TrainerConfig:
             'devices': self.devices,
             'save_model_dir': self.save_model_dir,
             'patience_max': self.patience_max if self.patience_max != float('inf') else None,
-            'logger_type': self.logger_type
+            "logger_config": self.logger_config.get_yaml_config(),
         }
         return {k: v for k, v in config.items() if v is not None}
         
@@ -139,8 +136,6 @@ class RunnerConfig(Config):
             model_config (ModelConfig): Model configuration
             data_config (PLDataConfig): Data configuration
         """
-        if not all([trainer_config, model_config, data_config]):
-            raise ValueError("All configurations (trainer, model, data) must be provided")
             
         self.trainer_config = trainer_config
         self.model_config = model_config
@@ -162,37 +157,36 @@ class RunnerConfig(Config):
         """
         
         experiment_id = kwargs.get('experiment_id')
+        dataset_id = kwargs.get('dataset_id')
+        
         if experiment_id is not None : 
             exp_yaml_config = yaml_config[experiment_id]
         else : 
             exp_yaml_config = yaml_config
         
         #Initilize data_config
-        data_config_dict = exp_yaml_config.get('data_config')
+        data_loading_specs = exp_yaml_config.get('data_loading_specs', {})
         
-        if data_config_dict is None :
-            
-            try : 
-                dataset_id = exp_yaml_config.get('trainer_config').get('dataset_id')
-                data_config_dict = yaml_config.get('data').get(dataset_id)
-                data_loading_specs = exp_yaml_config.get('data_loading_specs', {})
-                data_config_dict["data_loading_specs"] = data_loading_specs
-                
-            except Exception as e:  # Changed from 'error' to catch all exceptions
-                raise Exception(f"Error parsing data_config: {e}")
+        data_config_dict = yaml_config.get('data').get(dataset_id)
+        data_config_dict['data_loading_specs'] = data_loading_specs
 
         data_config = DataConfig.parse_from_yaml_config(data_config_dict)
         
-        #Initialize model_config
-        model_config = exp_yaml_config.get('model_config')
+        #Initialize model_config and trainer_config
+        model_config = exp_yaml_config.get('model_config', {})
         model_config['num_event_types'] = data_config.data_specs.num_event_types
-        model_config = ModelConfig.parse_from_yaml_config(exp_yaml_config.get('model_config'))
+        model_id = model_config.get('model_id', None)
+        if model_id is None:
+            raise ValueError("model_id is required in the model_config")
         
-        #initialize trainer_config
         trainer_config = exp_yaml_config.get('trainer_config')
-        trainer_config['model_id'] = model_config.model_id
+        trainer_config['model_id'] = model_id
+        trainer_config['dataset_id'] = dataset_id
         trainer_config = TrainerConfig.parse_from_yaml_config(trainer_config)
         
+        model_config['base_config']['max_epochs'] = trainer_config.max_epochs
+        
+        model_config = ModelConfig.parse_from_yaml_config(model_config)
     
         return RunnerConfig(
             model_config=model_config,

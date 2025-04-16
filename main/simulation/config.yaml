@@ -1,0 +1,123 @@
+pipeline_config_id: simulator_config
+
+# Default configuration parameters shared across experiments
+seed: 42
+
+# Default splits for the simulated data
+splits:
+  train: 0.6
+  dev: 0.2
+  test: 0.2
+
+# Experiment-specific configurations
+hawkes1_simulation:
+  # Simulation output directory
+  save_dir: ../results/simulated_data/hawkes1_sim
+  
+  # Simulation time range
+  start_time: 200
+  end_time: 300
+  
+  # Number of simulations to generate
+  num_simulations: 100
+  
+  # Data configuration for history data
+  history_config: 
+    pipeline_config_id: data_config
+    dataset_id: hawkes1
+    batch_size: 32
+    max_seq_len: 64
+    pad_token_id: 1
+    padding_side: right
+    truncation_side: right
+    is_include_inter_time: true
+    is_include_event_type: true
+  
+  # Model configuration for Hawkes1 (univariate)
+  model_config:
+    pipeline_config_id: model_config
+    model_id: NHP
+    model_params:
+      hidden_size: 32
+      num_layers: 2
+      num_heads: 2
+      time_embedding_size: 16
+      dropout: 0.1
+      use_ln: true
+      use_intensity: true
+    num_event_types: 1
+    pad_token_id: 1
+
+hawkes2_simulation:
+  # Simulation output directory
+  save_dir: ../results/simulated_data/hawkes2_sim
+  
+  # Simulation time range
+  start_time: 200
+  end_time: 300
+  
+  # Number of simulations to generate
+  num_simulations: 150
+  
+  # Data configuration for history data
+  history_config: 
+    pipeline_config_id: data_config
+    dataset_id: hawkes2
+    batch_size: 32
+    max_seq_len: 64
+    pad_token_id: 2
+    padding_side: right
+    truncation_side: right
+    is_include_inter_time: true
+    is_include_event_type: true
+  
+  # Model configuration for Hawkes2 (bivariate)
+  model_config:
+    pipeline_config_id: model_config
+    model_id: nhp
+    model_params:
+      hidden_size: 32
+      num_layers: 2
+      num_heads: 2
+      time_embedding_size: 16
+      dropout: 0.1
+      use_ln: true
+      use_intensity: true
+    num_event_types: 2
+    pad_token_id: 2
+
+self_correcting_simulation:
+  # Simulation output directory 
+  save_dir: ../results/simulated_data/self_correcting_sim
+  
+  # Simulation time range
+  start_time: 200
+  end_time: 300
+  
+  # Number of simulations to generate
+  num_simulations: 120
+  
+  # Data configuration for history data
+  history_config: 
+    pipeline_config_id: data_config
+    dataset_id: self_correcting
+    batch_size: 32
+    max_seq_len: 64
+    pad_token_id: 1
+    padding_side: right
+    truncation_side: right
+    is_include_inter_time: true
+    is_include_event_type: true
+  
+  # Model configuration for Self-Correcting Process
+  model_config:
+    pipeline_config_id: model_config
+    model_id: rmtpp
+    model_params:
+      hidden_size: 32
+      num_layers: 2
+      time_embedding_size: 16
+      dropout: 0.1
+      use_ln: true
+    num_event_types: 1
+    pad_token_id: 1

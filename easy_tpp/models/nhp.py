@@ -95,8 +95,8 @@ class NHP(BaseModel):
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
         super(NHP, self).__init__(model_config, **kwargs)
-        self.beta = model_config.model_specs.get('beta', 1.0)
-        self.bias = model_config.model_specs.get('bias', True)
+        self.beta = kwargs.get('beta', 1.0)
+        self.bias = kwargs.get('bias', True)
         self.rnn_cell = ContTimeLSTMCell(self.hidden_size)
 
         self.layer_intensity = nn.Sequential(  # eq. 4a,

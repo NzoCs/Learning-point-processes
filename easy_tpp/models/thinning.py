@@ -11,7 +11,7 @@ class EventSampler(nn.Module):
     The implementation uses code from https://github.com/yangalan123/anhp-andtt/blob/master/anhp/esm/thinning.py.
     """
 
-    def __init__(self, num_sample, num_exp, over_sample_rate, num_samples_boundary, dtime_max, patience_counter,
+    def __init__(self, num_sample, num_exp, over_sample_rate, num_samples_boundary, dtime_max,
                  device):
         """Initialize the event sampler.
 
@@ -21,7 +21,6 @@ class EventSampler(nn.Module):
             over_sample_rate (float): multiplier for the intensity up bound.
             num_samples_boundary (int): number of sampled event times to compute the boundary of the intensity.
             dtime_max (float): max value of delta times in sampling
-            patience_counter (int): the maximum iteration used in adaptive thinning.
             device (torch.device): torch device index to select.
         """
         super(EventSampler, self).__init__()
@@ -30,16 +29,11 @@ class EventSampler(nn.Module):
         self.over_sample_rate = over_sample_rate
         self.num_samples_boundary = num_samples_boundary
         self.dtime_max = dtime_max
-        self.patience_counter = patience_counter
         self.device = device
 
     def compute_intensity_upper_bound(self, time_seq, time_delta_seq, event_seq, intensity_fn,
                                       compute_last_step_only):
-        # logger.critical(f'time_seq: {time_seq}')
-        # logger.critical(f'time_delta_seq: {time_delta_seq}')
-        # logger.critical(f'event_seq: {event_seq}')
-        # logger.critical(f'intensity_fn: {intensity_fn}')
-        # logger.critical(f'compute_last_step_only: {compute_last_step_only}')
+        
         """Compute the upper bound of intensity at each event timestamp.
 
         Args:
@@ -64,11 +58,13 @@ class EventSampler(nn.Module):
         dtime_for_bound_sampled = time_delta_seq[:, :, None] * time_for_bound_sampled
 
         # [batch_size, seq_len, num_samples_boundary, event_num]
-        intensities_for_bound = intensity_fn(time_seq,
-                                             time_delta_seq,
-                                             event_seq,
-                                             dtime_for_bound_sampled,
-                                                                                          compute_last_step_only=compute_last_step_only)
+        intensities_for_bound = intensity_fn(
+            time_seq, 
+            time_delta_seq,
+            event_seq,
+            dtime_for_bound_sampled,
+            compute_last_step_only=compute_last_step_only
+            )
 
         # [batch_size, seq_len]
         bounds = intensities_for_bound.sum(dim=-1).max(dim=-1)[0] * self.over_sample_rate

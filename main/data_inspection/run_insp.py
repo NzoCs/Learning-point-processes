@@ -3,6 +3,7 @@ import argparse
 from easy_tpp.config_factory import Config
 from easy_tpp.preprocess.data_loader import TPPDataModule
 from easy_tpp.preprocess.visualizer import Visualizer
+import os
 
 def main():
     
@@ -11,7 +12,7 @@ def main():
     parser.add_argument('--config_dir', type=str, required=False, default='./config.yaml',
                         help='Dir of configuration yaml to train and evaluate the model.')
 
-    parser.add_argument('--experiment_id', type=str, required=False, default='hawkes1',
+    parser.add_argument('--experiment_id', type=str, required=False, default='H2expi',
                         help='Experiment id in the config file.')
 
     args = parser.parse_args()
@@ -20,7 +21,10 @@ def main():
     
     data_module = TPPDataModule(config)
     
-    visu = Visualizer(data_module = data_module, split = 'test')
+    parent_dir = "../results/data/syn"
+    save_dir = os.path.join(parent_dir, args.experiment_id)
+    
+    visu = Visualizer(data_module = data_module, split = 'test', save_dir = save_dir)
     
     visu.show_all_distributions(log_scale = True)
 

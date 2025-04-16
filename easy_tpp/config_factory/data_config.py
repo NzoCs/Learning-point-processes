@@ -108,7 +108,8 @@ class DataLoadingSpecsConfig(Config):
         """
         
         
-        self.batch_size = kwargs.get('batch_size', 1)
+        
+        self.batch_size = kwargs.get('batch_size', 32)
         
         # Automatically set num_workers based on CPU count if not explicitly provided
         if 'num_workers' in kwargs:
@@ -183,7 +184,7 @@ class DataConfig(Config):
             train_dir (str): dir of train set.
             valid_dir (str): dir of valid set.
             test_dir (str): dir of test set.
-            source_dir (str): dir of source data.
+            source_dir (str): dir of dataset if there is no split.
             data_format (str, optional): format of the data. Defaults to None.
             data_specs (dict, optional): specs of dataset. Defaults to None.
             tokenizer_config (dict, optional): tokenizer configuration. Defaults to None.
@@ -200,17 +201,17 @@ class DataConfig(Config):
             elif self.source_dir is not None:
                 self.data_format = self.source_dir.split('.')[-1]
 
-        try:
-            data_loading_specs = kwargs.get("data_loading_specs", {})
+        data_loading_specs = kwargs.get("data_loading_specs", {})
+        if isinstance(data_loading_specs, DataLoadingSpecsConfig):
+            self.data_loading_specs = data_loading_specs
+        else:
             self.data_loading_specs = DataLoadingSpecsConfig.parse_from_yaml_config(data_loading_specs)
-        except:
-            self.data_loading_specs = kwargs.get("data_loading_specs")
         
-        try:
-            data_specs = kwargs.get("data_specs", {})
+        data_specs = kwargs.get("data_specs", {})
+        if isinstance(data_specs, TokenizerConfig):
+            self.data_specs = data_specs
+        else:
             self.data_specs = TokenizerConfig.parse_from_yaml_config(data_specs)
-        except:
-            self.data_specs = kwargs.get("data_loading_specs")
             
     def get_yaml_config(self):
         """Return the config in dict (yaml compatible) format.

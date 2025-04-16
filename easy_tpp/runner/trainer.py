@@ -27,18 +27,9 @@ class Trainer :
         trainer_config = config.trainer_config
         
         # Initialize your model
-        lr = trainer_config.lr
-        lr_scheduler = trainer_config.lr_scheduler
         self.max_epochs = trainer_config.max_epochs
-        num_event_types = data_config.data_specs.num_event_types
         
-        self.model = BaseModel.generate_model_from_config(
-            model_config = model_config,
-            lr = lr,
-            lr_scheduler = lr_scheduler,
-            max_epochs = self.max_epochs,
-            num_event_types = num_event_types
-            )
+        self.model = BaseModel.generate_model_from_config(model_config=model_config)
         
         self.model_id = model_config.model_id
         
@@ -48,29 +39,16 @@ class Trainer :
         
         
         #Initialize Train params
-        save_model_dir = trainer_config.save_model_dir
         self.log_freq = trainer_config.log_freq
         self.checkpoints_freq = trainer_config.checkpoints_freq
         self.patience = trainer_config.patience_max
-        # Use the devices attribute instead of num_gpus
         self.devices = trainer_config.devices
         self.logger_config = trainer_config.get('logger_config')
         self.val_freq = trainer_config.val_freq
         self.use_precision_16 = trainer_config.use_precision_16
         
-        dirpath = save_model_dir
-        experiment_id = kwargs.get('experiment_id', None)
-        
-        if experiment_id is not None:
-            self.dirpath = os.path.join(dirpath, experiment_id)
-        else:
-            # Generate a random funny name
-            adjectives = ['happy', 'sleepy', 'grumpy', 'dancing', 'jumping', 'flying', 'mysterious']
-            animals = ['panda', 'koala', 'penguin', 'octopus', 'unicorn', 'dragon', 'platypus']
-            random_name = f"{random.choice(adjectives)}_{random.choice(animals)}_{random.randint(1, 999)}"
-            self.dirpath = os.path.join(dirpath, f"{random_name}")
-        
-        os.makedirs(self.dirpath, exist_ok=True)
+        # Use the dirpath directly from the trainer_config
+        self.dirpath = trainer_config.save_model_dir
         
         try:
             self.logger = trainer_config.get_logger()
@@ -136,7 +114,7 @@ class Trainer :
         
         return trainer
     
-    def train(self) :
+    def train(self) -> None:
         
         trainer = self.trainer
         # Train the model
@@ -151,53 +129,18 @@ class Trainer :
             val_dataloaders = val_dataloader,
             )
         
-    def test(self, **kwargs):
+    def test(self) -> None:
         """
         Test the model with optional custom parameters for the test_step method.
-        
-        Args:
-            **kwargs: Additional keyword arguments that will be passed to the test_step method.
-                     Common examples include:
-                     - start_time: Custom start time for simulation
-                     - end_time: Custom end time for simulation
         """
         trainer = self.trainer
         self.datamodule.setup(stage='test')
-        # Test the model
+        
         test_dataloader = self.datamodule.test_dataloader()
         
-        # Store the kwargs in the model so they can be accessed in test_step
-        for key, value in kwargs.items():
-            setattr(self.model, f"test_{key}", value)
-        
-        # Create a custom test_step wrapper for the duration of this test
-        original_test_step = self.model.test_step
-        
-        def wrapped_test_step(self, batch, batch_idx):
-            # Extract the custom parameters from the model attributes
-            custom_kwargs = {}
-            for key in kwargs.keys():
-                if hasattr(self, f"test_{key}"):
-                    custom_kwargs[key] = getattr(self, f"test_{key}")
-            
-            # Call the original test_step with our custom kwargs
-            return original_test_step(batch, batch_idx, **custom_kwargs)
-        
-        # Replace the test_step method temporarily
-        self.model.test_step = wrapped_test_step.__get__(self.model)
-        
-        # Run the test
         results = trainer.test(
             model = self.model,
             dataloaders = test_dataloader
         )
-        
-        # Restore the original test_step method
-        self.model.test_step = original_test_step
-        
-        # Clean up the temporary attributes
-        for key in kwargs.keys():
-            if hasattr(self.model, f"test_{key}"):
-                delattr(self.model, f"test_{key}")
                 
         return results

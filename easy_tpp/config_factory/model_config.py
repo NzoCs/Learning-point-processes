@@ -14,49 +14,61 @@ def get_available_gpu():
     except ImportError:
         pass
     
-    try:
-        import tensorflow as tf
-        gpus = tf.config.list_physical_devices('GPU')
-        if gpus:
-            return 0
-    except ImportError:
-        pass
-    
     return -1
 
 class ThinningConfig(Config):
-    def __init__(self, **kwargs):
-        """Initialize the Config class.
-        """
-        self.num_seq = kwargs.get('num_seq', 10)
-        self.num_sample = kwargs.get('num_sample', 1)
-        self.num_exp = kwargs.get('num_exp', 500)
-        self.look_ahead_time = kwargs.get('look_ahead_time', 10)
-        self.patience_counter = kwargs.get('patience_counter', 5)
-        self.over_sample_rate = kwargs.get('over_sample_rate', 5)
-        self.num_samples_boundary = kwargs.get('num_samples_boundary', 5)
-        self.dtime_max = kwargs.get('dtime_max', 5)
-        # we pad the sequence at the front only in multi-step generation
-        self.num_step_gen = kwargs.get('num_step_gen', 1)
+    """Configuration class for the thinning algorithms.
+    
+    Attributes:
+        num_sample (int): Number of sampled next event times (default: 1)
+        num_exp (int): Number of i.i.d. Exp(intensity_bound) draws (default: 500)
+        over_sample_rate (float): Multiplier for intensity upper bound (default: 5.0)
+        num_samples_boundary (int): Samples for intensity boundary computation (default: 5)
+        dtime_max (float): Maximum delta time in sampling (default: 5.0)
+    """
+    
+    def __init__(self, 
+                 num_sample: int = 1,
+                 num_exp: int = 500,
+                 over_sample_rate: float = 5.0,
+                 num_samples_boundary: int = 5,
+                 dtime_max: float = 5.0) -> None:
+        """Initialize ThinningConfig with type-safe parameters."""
+        self.num_sample = int(num_sample)
+        self.num_exp = int(num_exp)
+        self.over_sample_rate = float(over_sample_rate)
+        self.num_samples_boundary = int(num_samples_boundary)
+        self.dtime_max = float(dtime_max)
 
-    def get_yaml_config(self):
+        self._validate_parameters()
+
+    def _validate_parameters(self) -> None:
+        """Validate configuration parameters."""
+        if self.num_sample <= 0:
+            raise ValueError("num_sample must be positive")
+        if self.num_exp <= 0:
+            raise ValueError("num_exp must be positive")
+        if self.over_sample_rate <= 0:
+            raise ValueError("over_sample_rate must be positive")
+        if self.num_samples_boundary <= 0:
+            raise ValueError("num_samples_boundary must be positive")
+        if self.dtime_max <= 0:
+            raise ValueError("dtime_max must be positive")
+
+    def get_yaml_config(self) -> dict[str]:
         """Return the config in dict (yaml compatible) format.
 
         Returns:
             dict: config of the thinning specs in dict format.
         """
-        return {'num_seq': self.num_seq,
-                'num_sample': self.num_sample,
+        return {'num_sample': self.num_sample,
                 'num_exp': self.num_exp,
-                'look_ahead_time': self.look_ahead_time,
-                'patience_counter': self.patience_counter,
                 'over_sample_rate': self.over_sample_rate,
                 'num_samples_boundary': self.num_samples_boundary,
-                'dtime_max': self.dtime_max,
-                'num_step_gen': self.num_step_gen}
+                'dtime_max': self.dtime_max}
 
     @staticmethod
-    def parse_from_yaml_config(yaml_config):
+    def parse_from_yaml_config(yaml_config) -> 'ThinningConfig':
         """Parse from the yaml to generate the config object.
 
         Args:
@@ -73,30 +85,114 @@ class ThinningConfig(Config):
         Returns:
             EasyTPP.ThinningConfig: a copy of current config.
         """
-        return ThinningConfig(num_seq=self.num_seq,
-                              num_sample=self.num_sample,
+        return ThinningConfig(num_sample=self.num_sample,
                               num_exp=self.num_exp,
-                              look_ahead_time=self.look_ahead_time,
-                              patience_counter=self.patience_counter,
                               over_sample_rate=self.over_sample_rate,
                               num_samples_boundary=self.num_samples_boundary,
-                              dtime_max=self.dtime_max,
-                              num_step_gen=self.num_step_gen)
+                              dtime_max=self.dtime_max)
 
+class SimulationConfig(Config):
+    """Configuration class for simulation parameters.
+    
+    Attributes:
+        start_time (float): Start time for the simulation.
+        end_time (float): End time for the simulation.
+        batch_size (int): Batch size for training/testing.
+    """
+    
+    def __init__(self, **kwargs):
+        """Initialize the Config class."""
+        
+        required_keys = ['start_time', 'end_time']
+        for key in required_keys:
+            if key not in kwargs:
+                raise ValueError(f"Missing required config key: {key}")
+            
+        self.start_time = kwargs.get('start_time')
+        self.end_time = kwargs.get('end_time')
+        self.batch_size = kwargs.get('batch_size', 32)
+
+    def get_yaml_config(self) -> dict[str]:
+        """Return the config in dict (yaml compatible) format.
+
+        Returns:
+            dict: config of the thinning specs in dict format.
+        """
+        return {'start_time': self.start_time,
+                'end_time': self.end_time,
+                'batch_size': self.batch_size}
+    
+    def copy(self) -> 'SimulationConfig':
+        """Copy the config.
+
+        Returns:
+            SimulationConfig: a copy of current config.
+        """
+        return SimulationConfig(start_time=self.start_time,
+                                 end_time=self.end_time,
+                                 batch_size=self.batch_size)
+        
+    def parse_from_yaml_config(yaml_config) -> 'SimulationConfig':
+        """Parse from the yaml to generate the config object.
+
+        Args:
+            yaml_config (dict): configs from yaml file.
+
+        Returns:
+            SimulationConfig: Config class for simulation specs.
+        """
+        return SimulationConfig(**yaml_config) if yaml_config is not None else None
 
 class BaseConfig(Config):
-    def __init__(self, **kwargs):
-        """Initialize the Config class.
-        """
-        self.stage = kwargs.get('stage')
-        self.backend = kwargs.get('backend')
-        self.dataset_id = kwargs.get('dataset_id')
-        self.runner_id = kwargs.get('runner_id')
-        self.model_id = kwargs.get('model_id')
-        self.exp_id = kwargs.get('exp_id')
-        self.base_dir = kwargs.get('base_dir')
-        self.specs = kwargs.get('specs', {})
-        self.backend = self.set_backend(self.backend)
+    """Base configuration for the EasyTPP library.
+    
+    Attributes:
+        stage (str): Training stage ('train' or 'test')
+        backend (Backend): Computation backend (Torch or TensorFlow)
+        dataset_id (str): Dataset identifier
+        lr (float): Learning rate
+        lr_scheduler (bool): Enable learning rate scheduling
+        max_epochs (int | None): Maximum training epochs
+        base_dir (str): Base directory for model/logs
+    """
+    
+    VALID_STAGES = {'train', 'test', 'val'}
+    
+    def __init__(self,
+                 stage: str = 'train',
+                 backend: str = 'torch',
+                 dataset_id: str | None = None,
+                 lr: float = 0.001,
+                 lr_scheduler: bool = False,
+                 max_epochs: int | None = None,
+                 base_dir: str | None = None) -> None:
+        
+        """Initialize BaseConfig with type-safe parameters."""
+        self.stage = self._validate_stage(stage)
+        self.lr = float(lr)
+        self.lr_scheduler = bool(lr_scheduler)
+        self.max_epochs = int(max_epochs) if max_epochs is not None else None
+        self.dataset_id = dataset_id
+        self.base_dir = base_dir
+        self.backend = self.set_backend(backend)
+
+        self._validate_parameters()
+
+    def _validate_stage(self, stage: str) -> str:
+        """Validate training stage."""
+        stage = stage.lower()
+        if stage not in self.VALID_STAGES:
+            raise ValueError(f"Stage must be one of {self.VALID_STAGES}")
+        return stage
+
+    def _validate_parameters(self) -> None:
+        """Validate configuration parameters."""
+        if self.lr <= 0:
+            raise ValueError("Learning rate must be positive")
+        if self.lr_scheduler and self.max_epochs is None:
+            raise ValueError("max_epochs required when lr_scheduler is enabled")
+        if self.max_epochs is not None and self.max_epochs <= 0:
+            raise ValueError("max_epochs must be positive")
 
     @staticmethod
     def set_backend(backend):
@@ -106,11 +202,11 @@ class BaseConfig(Config):
             return Backend.TF
         else:
             raise ValueError(
-                f"Backend  should be selected between 'torch or pytorch' and 'tf or tensorflow', "
+                f"Backend should be selected between 'torch or pytorch' and 'tf or tensorflow', "
                 f"current value: {backend}"
             )
 
-    def get_yaml_config(self):
+    def get_yaml_config(self) -> dict[str]:
         """Return the config in dict (yaml compatible) format.
 
         Returns:
@@ -119,13 +215,10 @@ class BaseConfig(Config):
         return {'stage': self.stage,
                 'backend': str(self.backend),
                 'dataset_id': self.dataset_id,
-                'runner_id': self.runner_id,
-                'model_id': self.model_id,
-                'base_dir': self.base_dir,
-                'specs': self.specs}
+                'base_dir': self.base_dir}
 
     @staticmethod
-    def parse_from_yaml_config(yaml_config):
+    def parse_from_yaml_config(yaml_config) -> 'BaseConfig':
         """Parse from the yaml to generate the config object.
 
         Args:
@@ -145,71 +238,149 @@ class BaseConfig(Config):
         return BaseConfig(stage=self.stage,
                           backend=self.backend,
                           dataset_id=self.dataset_id,
-                          runner_id=self.runner_id,
-                          model_id=self.model_id,
-                          base_dir=self.base_dir,
-                          specs=self.specs)
+                          base_dir=self.base_dir)
 
-class ModelSpecsConfig :
+
+class ModelSpecsConfig:
+    """Configuration class for the model specifications.
+    This class is used to define the configuration for the model specifications.
     
-    def __init__(self, **kwargs) :
-        """Initialize the Config class.
-        """
-        self.rnn_type = kwargs.get('rnn_type', 'LSTM')
-        self.hidden_size = kwargs.get('hidden_size', 32)
-        self.time_emb_size = kwargs.get('time_emb_size', 16)
-        self.num_layers = kwargs.get('num_layers', 2)
-        self.num_heads = kwargs.get('num_heads', 2)
-        self.sharing_param_layer = kwargs.get('sharing_param_layer', False)
-        self.use_mc_samples = kwargs.get('use_mc_samples', True)  # if using MC samples in computing log-likelihood
-        self.loss_integral_num_sample_per_step = kwargs.get('loss_integral_num_sample_per_step', 20)  # mc_num_sample_per_step
-                
-                
-class ModelConfig(Config):
+    Attributes:
+        rnn_type (str): Type of RNN to be used (e.g., 'LSTM', 'GRU').
+        hidden_size (int): Size of the hidden layer.
+        time_emb_size (int): Size of the time embedding layer.
+        num_layers (int): Number of layers in the RNN.
+        num_heads (int): Number of attention heads.
+        sharing_param_layer (bool): Whether to share parameters across layers.
+        use_mc_samples (bool): Whether to use Monte Carlo samples for log-likelihood computation.
+        loss_integral_num_sample_per_step (int): Number of samples per step for loss integral computation.
+    """
+    
     def __init__(self, **kwargs):
-        """Initialize the Config class.
-        """
-        
+        """Initialize the Config class."""
         self.rnn_type = kwargs.get('rnn_type', 'LSTM')
         self.hidden_size = kwargs.get('hidden_size', 32)
         self.time_emb_size = kwargs.get('time_emb_size', 16)
         self.num_layers = kwargs.get('num_layers', 2)
         self.num_heads = kwargs.get('num_heads', 2)
         self.sharing_param_layer = kwargs.get('sharing_param_layer', False)
-        self.use_mc_samples = kwargs.get('use_mc_samples', True)  # if using MC samples in computing log-likelihood
         self.loss_integral_num_sample_per_step = kwargs.get('loss_integral_num_sample_per_step', 20)  # mc_num_sample_per_step
+    
+    @staticmethod
+    def parse_from_yaml_config(yaml_config) -> 'ModelSpecsConfig':
+        """Parse from the yaml to generate the config object.
+
+        Args:
+            yaml_config (dict): configs from yaml file.
+
+        Returns:
+            ModelConfig: Config class for trainer specs.
+        """
+        return ModelSpecsConfig(**yaml_config)
+    
+    def copy(self) -> 'ModelSpecsConfig':
+        """Copy the config.
+
+        Returns:
+            ModelSpecsConfig: a copy of current config.
+        """
+        return ModelSpecsConfig(rnn_type=self.rnn_type,
+                                hidden_size=self.hidden_size,
+                                time_emb_size=self.time_emb_size,
+                                num_layers=self.num_layers,
+                                num_heads=self.num_heads,
+                                sharing_param_layer=self.sharing_param_layer,
+                                loss_integral_num_sample_per_step=self.loss_integral_num_sample_per_step)
+    
+    def get_yaml_config(self) -> dict[str]:
+        """Return the config in dict (yaml compatible) format.
+
+        Returns:
+            dict: config of the model specs in dict format.
+        """
+        return {'rnn_type': self.rnn_type,
+                'hidden_size': self.hidden_size,
+                'time_emb_size': self.time_emb_size,
+                'num_layers': self.num_layers,
+                'num_heads': self.num_heads,
+                'sharing_param_layer': self.sharing_param_layer,
+                'loss_integral_num_sample_per_step': self.loss_integral_num_sample_per_step}
+                
+                
+@Config.register('model_config')
+class ModelConfig(Config):
+    """
+    Configuration class for the model.
+    This class is used to define the configuration for the model.
+    
+    Attributes:
+        dropout_rate (float): Dropout rate for the model.
+        use_ln (bool): Whether to use layer normalization.
+        thinning (ThinningConfig): Configuration for the thinning process.  
+        is_training (bool): Whether the model is in training mode.
+        num_event_types_pad (int): Number of event types for padding.
+        num_event_types (int): Number of event types.
+        pad_token_id (int): Padding token ID.
+        model_id (str): Model ID.
+        gpu (int): GPU ID to be used for training.
+        model_specs (ModelSpecsConfig): Configuration for the model specifications."""
+    
+    def __init__(self, **kwargs):
+        """Initialize the Config class."""
+        
+        required_keys = ['num_event_types', 'model_id']
+        for key in required_keys:
+            if key not in kwargs:
+                raise ValueError(f"Missing required config key: {key}")
         
         self.dropout_rate = kwargs.get('dropout_rate', 0.0)
         self.use_ln = kwargs.get('use_norm', False)
-        self.thinning = ThinningConfig.parse_from_yaml_config(kwargs.get('thinning'))
+        
         self.is_training = kwargs.get('training', False)
-        self.num_event_types_pad = kwargs.get('num_event_types_pad', None)
-        self.num_event_types = kwargs.get('num_event_types', None)
-        self.pad_token_id = kwargs.get('event_pad_index', None)
-        self.model_id = kwargs.get('model_id', None)
+        self.num_event_types = kwargs.get('num_event_types')
+        self.num_event_types_pad = kwargs.get('num_event_types_pad', self.num_event_types + 1)
+        self.pad_token_id = kwargs.get('event_pad_index', self.num_event_types)
         # Use available GPU if not specified
         self.gpu = kwargs.get('gpu', get_available_gpu())
-        self.model_specs = kwargs.get('model_specs', {})
+        self.model_id = kwargs.get('model_id')
         
-        self.simulation_config = kwargs.get('simulation', {})
+        self.use_mc_samples = kwargs.get('use_mc_samples', True)  # if using MC samples in computing log-likelihood
         
+        self.device = kwargs.get('device', 'cuda' if self.gpu >= 0 else 'cpu')
+        
+        self.thinning = ThinningConfig.parse_from_yaml_config(kwargs.get('thinning', {}))
+        
+        self.specs = ModelSpecsConfig.parse_from_yaml_config(kwargs.get('specs', {}))
 
+        self.base_config = BaseConfig.parse_from_yaml_config(kwargs.get('base_config', {}))
+        
+        self.simulation_config = kwargs.get('simulation', None)
+        
+        if self.simulation_config is not None:
+            self.simulation_config = SimulationConfig.parse_from_yaml_config(self.simulation_config)
+        
+        
     def get_yaml_config(self):
         """Return the config in dict (yaml compatible) format.
 
         Returns:
             dict: config of the model config specs in dict format.
         """
+        
         return {
-                # for some models / cases we may not need to pass thinning config
-                # e.g., for intensity-free model
-                'thinning': None if self.thinning is None else self.thinning.get_yaml_config(),
-                'num_event_types_pad': self.num_event_types_pad,
-                'num_event_types': self.num_event_types,
-                'event_pad_index': self.pad_token_id,
-                'model_id': self.model_id,
-                'gpu': self.gpu,
-                'model_specs': self.model_specs}
+            'use_mc_samples': self.use_mc_samples,
+            'dropout_rate': self.dropout_rate,
+            'use_norm': self.use_ln,
+            'thinning': self.thinning.get_yaml_config(),
+            'training': self.is_training,
+            'num_event_types_pad': self.num_event_types_pad,
+            'num_event_types': self.num_event_types,
+            'event_pad_index': self.pad_token_id,
+            'model_id': self.model_id,
+            'gpu': self.gpu,
+            'model_specs': self.specs.get_yaml_config(),
+            'base_config': self.base_config.get_yaml_config()
+        }
 
     @staticmethod
     def parse_from_yaml_config(yaml_config):
@@ -230,11 +401,14 @@ class ModelConfig(Config):
             ModelConfig: a copy of current config.
         """
         return ModelConfig(
-                           dropout_rate=self.dropout_rate,
-                           use_ln=self.use_ln,
-                           thinning=self.thinning,
-                           num_event_types_pad=self.num_event_types_pad,
-                           num_event_types=self.num_event_types,
-                           event_pad_index=self.pad_token_id,
-                           gpu=self.gpu,
-                           model_specs=self.model_specs)
+            use_mc_samples=self.use_mc_samples,
+            dropout_rate=self.dropout_rate,
+            use_ln=self.use_ln,
+            thinning=self.thinning.copy(),
+            num_event_types_pad=self.num_event_types_pad,
+            num_event_types=self.num_event_types,
+            event_pad_index=self.pad_token_id,
+            gpu=self.gpu,
+            model_specs=self.specs.copy(),
+            base_config=self.base_config.copy()
+        )

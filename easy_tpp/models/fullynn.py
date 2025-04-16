@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from torch.autograd import grad
 
 from easy_tpp.models.basemodel import BaseModel
-
+from easy_tpp.config_factory import ModelConfig
 
 class CumulHazardFunctionNetwork(nn.Module):
     """Cumulative Hazard Function Network
@@ -87,25 +87,24 @@ class FullyNN(BaseModel):
             https://github.com/wassname/torch-neuralpointprocess
     """
 
-    def __init__(self, model_config):
+    def __init__(self, model_config : ModelConfig):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(FullyNN, self).__init__(model_config)
+        super(FullyNN, self).__init__(model_config )
 
-        self.rnn_type = model_config.rnn_type
+        self.rnn_type = model_config.specs.rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
-        self.n_layers = model_config.num_layers
-        self.dropout_rate = model_config.dropout_rate
+        self.n_layers = model_config.specs.num_layers
         for sub_rnn_class in self.rnn_list:
             if sub_rnn_class.__name__ == self.rnn_type:
                 self.layer_rnn = sub_rnn_class(input_size=1 + self.hidden_size,
                                                hidden_size=self.hidden_size,
                                                num_layers=self.n_layers,
                                                batch_first=True,
-                                               dropout=self.dropout_rate)
+                                               dropout=self.dropout)
 
         self.layer_intensity = CumulHazardFunctionNetwork(model_config)
 

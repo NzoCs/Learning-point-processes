@@ -13,7 +13,7 @@ import os
 
 from easy_tpp.models.thinning import EventSampler
 from easy_tpp.config_factory import ModelConfig
-from easy_tpp.evaluate import TPPMetricsCompute, EvaluationMode
+from easy_tpp.evaluate import MetricsCompute, EvaluationMode
 
 
 class BaseModel(pl.LightningModule, ABC):
@@ -35,6 +35,7 @@ class BaseModel(pl.LightningModule, ABC):
         self.lr = base_config.lr
         self.lr_scheduler = base_config.lr_scheduler
         self.max_epochs = base_config.max_epochs
+        self.dropout = base_config.dropout
         
         self.num_event_types = model_config.num_event_types  # not include [PAD], [BOS], [EOS]
         self.num_event_types_pad = model_config.num_event_types_pad
@@ -57,6 +58,7 @@ class BaseModel(pl.LightningModule, ABC):
         self.event_sampler = None
         self.use_mc_samples = model_config.use_mc_samples
         self._device = model_config.device
+        self.num_step_gen = gen_config.num_steps
         
         # Set up the event sampler if generation config is provided
         self.event_sampler = EventSampler(num_sample = gen_config.num_sample,
@@ -67,9 +69,11 @@ class BaseModel(pl.LightningModule, ABC):
                                               device = self._device)
         
         simulation_config = model_config.simulation_config
-        self.simulation_batch_size = simulation_config.batch_size
-        self.simulation_start_time = simulation_config.start_time
-        self.simulation_end_time = simulation_config.end_time
+        
+        if simulation_config is not None:
+            self.simulation_batch_size = simulation_config.batch_size
+            self.simulation_start_time = simulation_config.start_time
+            self.simulation_end_time = simulation_config.end_time
     
     @property
     def device(self):
@@ -283,7 +287,7 @@ class BaseModel(pl.LightningModule, ABC):
         #Compute some validation metrics
         pred = self.predict_one_step_at_every_event(batch)
         
-        one_step_metrics_compute = TPPMetricsCompute(
+        one_step_metrics_compute = MetricsCompute(
             num_event_types = self.num_event_types,
             mode = EvaluationMode.PREDICTION
             )
@@ -304,8 +308,7 @@ class BaseModel(pl.LightningModule, ABC):
     def test_step(
         self,
         batch, 
-        batch_idx,
-        **kwargs
+        batch_idx
         ) -> STEP_OUTPUT:
         """Test step for Lightning.
         
@@ -327,7 +330,7 @@ class BaseModel(pl.LightningModule, ABC):
         # Compute some prediction metrics
         pred = self.predict_one_step_at_every_event(batch)
         
-        one_step_metrics_compute = TPPMetricsCompute(
+        one_step_metrics_compute = MetricsCompute(
             num_event_types = self.num_event_types,
             mode = EvaluationMode.PREDICTION
             )
@@ -339,7 +342,7 @@ class BaseModel(pl.LightningModule, ABC):
         simulation = self.simulate(
             batch = batch
         )
-        simulation_metrics_compute = TPPMetricsCompute(
+        simulation_metrics_compute = MetricsCompute(
             num_event_types = self.num_event_types,
             mode = EvaluationMode.SIMULATION
             )
@@ -440,7 +443,7 @@ class BaseModel(pl.LightningModule, ABC):
         time_seq_label, time_delta_seq_label, event_seq_label, _, _ = batch
 
         if num_step is None:
-            num_step = self.gen_config.num_step_gen
+            num_step = self.num_step_gen
 
         if not forward:
             time_seq = time_seq_label[:, :-num_step]

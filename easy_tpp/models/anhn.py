@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 
+from easy_tpp.config_factory import ModelConfig
 from easy_tpp.models.baselayer import MultiHeadAttention
 from easy_tpp.models.basemodel import BaseModel
 
@@ -10,7 +11,7 @@ class ANHN(BaseModel):
        http://arxiv.org/abs/2211.11758
     """
 
-    def __init__(self, model_config):
+    def __init__(self, model_config : ModelConfig):
         """Initialize the model
 
         Args:
@@ -18,13 +19,11 @@ class ANHN(BaseModel):
         """
         super(ANHN, self).__init__(model_config)
 
-        self.d_time = model_config['time_emb_size']
-        self.use_norm = model_config['use_ln']
+        self.d_time = model_config.specs.time_emb_size
+        self.use_norm = model_config.specs.use_ln
 
-        self.n_layers = model_config['num_layers']
-        self.n_head = model_config['num_heads']
-        self.dropout = model_config['dropout']
-
+        self.n_layers = model_config.specs.num_layers
+        self.n_head = model_config.specs.num_heads
         self.layer_rnn = nn.LSTM(input_size=self.hidden_size, hidden_size=self.hidden_size, batch_first=True)
 
         self.lambda_w = torch.empty([self.hidden_size, self.num_event_types])

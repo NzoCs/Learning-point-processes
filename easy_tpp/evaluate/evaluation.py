@@ -1,7 +1,7 @@
 from easy_tpp.utils import logger
 from easy_tpp.preprocess import TPPDataModule
 from easy_tpp.config_factory import EvaluationConfig, DataConfig, TokenizerConfig
-from easy_tpp.evaluate.TPP_metrics_compute import TPPMetricsCompute, EvaluationMode
+from easy_tpp.evaluate.metrics_compute import MetricsCompute, EvaluationMode
 
 
 from typing import Dict, List, Union, Optional
@@ -57,10 +57,10 @@ class Evaluation :
         Initialize the available metrics based on the current mode.
         """
         if self.mode == EvaluationMode.PREDICTION:
-            self.evaluator = TPPMetricsCompute(mode = EvaluationMode.PREDICTION, num_event_types = self.num_event_types)
+            self.evaluator = MetricsCompute(mode = EvaluationMode.PREDICTION, num_event_types = self.num_event_types)
             
         elif self.mode == EvaluationMode.SIMULATION:
-            self.evaluator = TPPMetricsCompute(mode = EvaluationMode.SIMULATION, num_event_types = self.num_event_types)
+            self.evaluator = MetricsCompute(mode = EvaluationMode.SIMULATION, num_event_types = self.num_event_types)
         
         self.available_metrics = self.evaluator.get_available_metrics() if hasattr(self.evaluator, 'get_available_metrics') else []
         logger.info(f"Available metrics in {self.mode.value} mode: {self.available_metrics}")

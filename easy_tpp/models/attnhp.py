@@ -3,6 +3,7 @@ import math
 import torch
 from torch import nn
 
+from easy_tpp.config_factory import ModelConfig
 from easy_tpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
 from easy_tpp.models.basemodel import BaseModel
 
@@ -13,23 +14,22 @@ class AttNHP(BaseModel):
     Source code: https://github.com/yangalan123/anhp-andtt/blob/master/anhp/model/xfmr_nhp_fast.py
     """
 
-    def __init__(self, model_config):
+    def __init__(self, model_config : ModelConfig):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
         super(AttNHP, self).__init__(model_config)
-        self.d_model = model_config.hidden_size
-        self.use_norm = model_config.use_ln
-        self.d_time = model_config.time_emb_size
+        self.d_model = model_config.specs.hidden_size
+        self.use_norm = model_config.specs.use_ln
+        self.d_time = model_config.specs.time_emb_size
 
         self.div_term = torch.exp(torch.arange(0, self.d_time, 2) * -(math.log(10000.0) / self.d_time)).reshape(1, 1,
                                                                                                                 -1)
 
-        self.n_layers = model_config.num_layers
-        self.n_head = model_config.num_heads
-        self.dropout = model_config.dropout_rate
+        self.n_layers = model_config.specs.num_layers
+        self.n_head = model_config.specs.num_heads
 
         self.heads = []
         for i in range(self.n_head):

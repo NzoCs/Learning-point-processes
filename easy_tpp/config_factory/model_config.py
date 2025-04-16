@@ -22,6 +22,7 @@ class ThinningConfig(Config):
     Attributes:
         num_sample (int): Number of sampled next event times (default: 1)
         num_exp (int): Number of i.i.d. Exp(intensity_bound) draws (default: 500)
+        num_steps (int): Number of steps for multiple step predictions (default: 10)
         over_sample_rate (float): Multiplier for intensity upper bound (default: 5.0)
         num_samples_boundary (int): Samples for intensity boundary computation (default: 5)
         dtime_max (float): Maximum delta time in sampling (default: 5.0)
@@ -30,12 +31,14 @@ class ThinningConfig(Config):
     def __init__(self, 
                  num_sample: int = 1,
                  num_exp: int = 500,
+                 num_steps: int = 10,
                  over_sample_rate: float = 5.0,
                  num_samples_boundary: int = 5,
                  dtime_max: float = 5.0) -> None:
         """Initialize ThinningConfig with type-safe parameters."""
         self.num_sample = int(num_sample)
         self.num_exp = int(num_exp)
+        self.num_steps = int(num_steps)
         self.over_sample_rate = float(over_sample_rate)
         self.num_samples_boundary = int(num_samples_boundary)
         self.dtime_max = float(dtime_max)
@@ -55,7 +58,7 @@ class ThinningConfig(Config):
         if self.dtime_max <= 0:
             raise ValueError("dtime_max must be positive")
 
-    def get_yaml_config(self) -> dict[str]:
+    def get_yaml_config(self) -> dict:
         """Return the config in dict (yaml compatible) format.
 
         Returns:
@@ -112,7 +115,7 @@ class SimulationConfig(Config):
         self.end_time = kwargs.get('end_time')
         self.batch_size = kwargs.get('batch_size', 32)
 
-    def get_yaml_config(self) -> dict[str]:
+    def get_yaml_config(self) -> dict:
         """Return the config in dict (yaml compatible) format.
 
         Returns:
@@ -132,6 +135,7 @@ class SimulationConfig(Config):
                                  end_time=self.end_time,
                                  batch_size=self.batch_size)
         
+    @staticmethod
     def parse_from_yaml_config(yaml_config) -> 'SimulationConfig':
         """Parse from the yaml to generate the config object.
 
@@ -162,6 +166,7 @@ class BaseConfig(Config):
                  stage: str = 'train',
                  backend: str = 'torch',
                  dataset_id: str | None = None,
+                dropout_rate: float = 0.0,
                  lr: float = 0.001,
                  lr_scheduler: bool = False,
                  max_epochs: int | None = None,
@@ -171,6 +176,8 @@ class BaseConfig(Config):
         self.stage = self._validate_stage(stage)
         self.lr = float(lr)
         self.lr_scheduler = bool(lr_scheduler)
+        
+        self.dropout = float(dropout_rate)
         self.max_epochs = int(max_epochs) if max_epochs is not None else None
         self.dataset_id = dataset_id
         self.base_dir = base_dir
@@ -206,7 +213,7 @@ class BaseConfig(Config):
                 f"current value: {backend}"
             )
 
-    def get_yaml_config(self) -> dict[str]:
+    def get_yaml_config(self) -> dict:
         """Return the config in dict (yaml compatible) format.
 
         Returns:
@@ -215,7 +222,11 @@ class BaseConfig(Config):
         return {'stage': self.stage,
                 'backend': str(self.backend),
                 'dataset_id': self.dataset_id,
-                'base_dir': self.base_dir}
+                'base_dir': self.base_dir,
+                'lr': self.lr,
+                'lr_scheduler': self.lr_scheduler,
+                'max_epochs': self.max_epochs,
+                'dropout_rate': self.dropout}
 
     @staticmethod
     def parse_from_yaml_config(yaml_config) -> 'BaseConfig':
@@ -238,7 +249,11 @@ class BaseConfig(Config):
         return BaseConfig(stage=self.stage,
                           backend=self.backend,
                           dataset_id=self.dataset_id,
-                          base_dir=self.base_dir)
+                          base_dir=self.base_dir,
+                          dropout_rate=self.dropout,
+                          lr=self.lr,
+                          lr_scheduler=self.lr_scheduler,
+                          max_epochs=self.max_epochs)
 
 
 class ModelSpecsConfig:
@@ -265,6 +280,8 @@ class ModelSpecsConfig:
         self.num_heads = kwargs.get('num_heads', 2)
         self.sharing_param_layer = kwargs.get('sharing_param_layer', False)
         self.loss_integral_num_sample_per_step = kwargs.get('loss_integral_num_sample_per_step', 20)  # mc_num_sample_per_step
+        self.use_ln = kwargs.get('use_norm', False)
+        
     
     @staticmethod
     def parse_from_yaml_config(yaml_config) -> 'ModelSpecsConfig':
@@ -290,9 +307,10 @@ class ModelSpecsConfig:
                                 num_layers=self.num_layers,
                                 num_heads=self.num_heads,
                                 sharing_param_layer=self.sharing_param_layer,
-                                loss_integral_num_sample_per_step=self.loss_integral_num_sample_per_step)
+                                loss_integral_num_sample_per_step=self.loss_integral_num_sample_per_step,
+                                use_norm=self.use_ln)
     
-    def get_yaml_config(self) -> dict[str]:
+    def get_yaml_config(self) -> dict:
         """Return the config in dict (yaml compatible) format.
 
         Returns:
@@ -304,7 +322,8 @@ class ModelSpecsConfig:
                 'num_layers': self.num_layers,
                 'num_heads': self.num_heads,
                 'sharing_param_layer': self.sharing_param_layer,
-                'loss_integral_num_sample_per_step': self.loss_integral_num_sample_per_step}
+                'loss_integral_num_sample_per_step': self.loss_integral_num_sample_per_step,
+                'use_norm': self.use_ln}
                 
                 
 @Config.register('model_config')
@@ -332,9 +351,6 @@ class ModelConfig(Config):
         for key in required_keys:
             if key not in kwargs:
                 raise ValueError(f"Missing required config key: {key}")
-        
-        self.dropout_rate = kwargs.get('dropout_rate', 0.0)
-        self.use_ln = kwargs.get('use_norm', False)
         
         self.is_training = kwargs.get('training', False)
         self.num_event_types = kwargs.get('num_event_types')
@@ -369,8 +385,6 @@ class ModelConfig(Config):
         
         return {
             'use_mc_samples': self.use_mc_samples,
-            'dropout_rate': self.dropout_rate,
-            'use_norm': self.use_ln,
             'thinning': self.thinning.get_yaml_config(),
             'training': self.is_training,
             'num_event_types_pad': self.num_event_types_pad,
@@ -402,8 +416,6 @@ class ModelConfig(Config):
         """
         return ModelConfig(
             use_mc_samples=self.use_mc_samples,
-            dropout_rate=self.dropout_rate,
-            use_ln=self.use_ln,
             thinning=self.thinning.copy(),
             num_event_types_pad=self.num_event_types_pad,
             num_event_types=self.num_event_types,

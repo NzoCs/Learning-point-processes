@@ -132,6 +132,7 @@ class Trainer :
     def test(self) -> None:
         """
         Test the model with optional custom parameters for the test_step method.
+        Results are saved to a JSON file in the model directory.
         """
         trainer = self.trainer
         self.datamodule.setup(stage='test')
@@ -142,5 +143,16 @@ class Trainer :
             model = self.model,
             dataloaders = test_dataloader
         )
+        
+        # Save test results
+        if results and len(results) > 0:
+            import json
+            
+            results_file = os.path.join(self.dirpath, f'test_results.json')
+            
+            with open(results_file, 'w') as f:
+                json.dump(results[0], f, indent=4)
+            
+            logger.info(f"Test results saved to {results_file}")
                 
         return results

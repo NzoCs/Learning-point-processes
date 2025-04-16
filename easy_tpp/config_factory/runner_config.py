@@ -36,7 +36,7 @@ class TrainerConfig:
         if self.stage == 'test':
             kwargs['max_epochs'] = 1
             
-        required_fields = ['max_epochs', 'save_dir', 'dataset_id', "model_id"]
+        required_fields = ['max_epochs', 'dataset_id', "model_id"]
         # Check for required fields
         missing_fields = [field for field in required_fields if field not in kwargs]
         if missing_fields:

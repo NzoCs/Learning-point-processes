@@ -21,18 +21,17 @@ class SAHP(BaseModel):
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
         super(SAHP, self).__init__(model_config)
-        self.d_model = model_config.hidden_size
-        self.d_time = model_config.time_emb_size
+        self.d_model = model_config.specs.hidden_size
+        self.d_time = model_config.specs.time_emb_size
 
-        self.use_norm = model_config.use_ln
+        self.use_norm = model_config.specs.use_ln
 
         # position vector, used for temporal encoding
         self.layer_position_emb = TimeShiftedPositionalEncoding(d_model=self.d_model,
                                                                 device=self.device)
 
-        self.n_layers = model_config.num_layers
-        self.n_head = model_config.num_heads
-        self.dropout = model_config.dropout_rate
+        self.n_layers = model_config.specs.num_layers
+        self.n_head = model_config.specs.num_heads
 
         # convert hidden vectors into a scalar
         self.layer_intensity_hidden = nn.Linear(self.d_model, self.num_event_types)

@@ -22,8 +22,6 @@ files_to_remove=(
 for file in "${files_to_remove[@]}"
 do
     echo "🧹 Suppression de $file de l'historique..."
-    git filter-repo --path "$file" --invert-paths --force
+    git filter-repo --path-glob "$file" --invert-paths --force
     echo "✅ $file supprimé de l'historique."
 done
-
-echo "🚀 Push forcé vers GitHub (attention, l'historique sera réécrit)..."

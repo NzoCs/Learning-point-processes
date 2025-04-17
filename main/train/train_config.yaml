@@ -78,8 +78,8 @@ NHP_train:
 
   data_loading_specs:
     batch_size: 256
+    num_workers: 4
     
-
   model_config:
     hidden_size: 16
     model_id: NHP
@@ -106,8 +106,8 @@ RMTPP_train:
 
   data_loading_specs:
     batch_size: 256
+    num_workers: 4
     
-
   model_config:
     hidden_size: 16
     model_id: RMTPP
@@ -129,8 +129,8 @@ AttNHP_train:
 
   data_loading_specs:
     batch_size: 256
+    num_workers: 4
     
-
   model_config:
     hidden_size: 16
     time_emb_size: 16
@@ -160,6 +160,7 @@ SAHP_train:
 
   data_loading_specs:
     batch_size: 256
+    num_workers: 4
 
   model_config:
     hidden_size: 16
@@ -187,6 +188,7 @@ ANHN_train:
 
   data_loading_specs:
     batch_size: 256
+    num_workers: 4
 
   model_config:
     hidden_size: 16
@@ -217,8 +219,8 @@ NHP_test:
 
   data_loading_specs:
     batch_size: 256
+    num_workers: 4
     
-
   model_config:
     hidden_size: 16
     model_id: NHP

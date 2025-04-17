@@ -31,11 +31,6 @@ log
 *.pt
 *.onnx
 *.onnx.prototxt
-*.ckpt
-
-#run files
-*.err
-*.out
 
 # idea files
 .idea

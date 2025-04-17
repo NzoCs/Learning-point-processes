@@ -1,0 +1,69 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+Generating train split:   0%|          | 0/1800 [00:00<?, ? examples/s]Generating train split: 100%|██████████| 1800/1800 [00:00<00:00, 4674.89 examples/s]Generating train split: 100%|██████████| 1800/1800 [00:00<00:00, 4598.80 examples/s]
+Generating test split:   0%|          | 0/600 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 600/600 [00:00<00:00, 19047.41 examples/s]
+Generating validation split:   0%|          | 0/600 [00:00<?, ? examples/s]Generating validation split: 100%|██████████| 600/600 [00:00<00:00, 23545.65 examples/s]
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 1800 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 600 sequences
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/utils/data/dataloader.py:624: UserWarning: This DataLoader will create 31 worker processes in total. Our suggested max number of worker in current system is 4, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(
+You are using a CUDA device ('NVIDIA A100-SXM4-40GB') that has Tensor Cores. To properly utilize them, you should set `torch.set_float32_matmul_precision('medium' | 'high')` which will trade-off precision for performance. For more details, read https://pytorch.org/docs/stable/generated/torch.set_float32_matmul_precision.html#torch.set_float32_matmul_precision
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name            | Type             | Params | Mode 
+-------------------------------------------------------------
+0 | layer_type_emb  | Embedding        | 96     | train
+1 | event_sampler   | EventSampler     | 0      | train
+2 | rnn_cell        | ContTimeLSTMCell | 14.6 K | train
+3 | layer_intensity | Sequential       | 68     | train
+-------------------------------------------------------------
+14.7 K    Trainable params
+0         Non-trainable params
+14.7 K    Total params
+0.059     Total estimated model params size (MB)
+8         Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 27, in main
+    plrunner.train()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 126, in train
+    trainer.fit(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 561, in fit
+    call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 599, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1054, in _run_stage
+    self._run_sanity_check()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1083, in _run_sanity_check
+    val_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 145, in run
+    self._evaluation_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 437, in _evaluation_step
+    output = call._call_strategy_hook(trainer, hook_name, *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 412, in validation_step
+    return self.lightning_module.validation_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 288, in validation_step
+    pred = self.predict_one_step_at_every_event(batch)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 390, in predict_one_step_at_every_event
+    accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 197, in draw_next_time_one_step
+    intensities_at_sampled_times = intensity_fn(time_seq,
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/nhp.py", line 255, in compute_intensities_at_sample_times
+    _, h_ts = self.rnn_cell.decay(c_i[:, :, None, :],
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/nhp.py", line 82, in decay
+    h_t = o_i * torch.tanh(c_t)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 15.70 GiB. GPU 0 has a total capacity of 39.39 GiB of which 6.42 GiB is free. Including non-PyTorch memory, this process has 32.96 GiB memory in use. Of the allocated memory 32.32 GiB is allocated by PyTorch, and 156.09 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+srun: error: ruche-gpu14: task 0: Exited with exit code 1

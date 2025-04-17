@@ -26,12 +26,6 @@ log
 *.json
 *.csv
 
-# model
-*.pth
-*.pt
-*.onnx
-*.onnx.prototxt
-
 # idea files
 .idea
 

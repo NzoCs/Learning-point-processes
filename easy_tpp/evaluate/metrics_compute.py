@@ -122,40 +122,51 @@ class MetricsCompute:
     def calculate_time_rmse(self, masked: MaskedValues) -> float:
         if masked.true_times.numel() == 0:
             return float('nan')
+        # RMSE ne nécessite pas torchmetrics stateful, F.mse_loss gère les devices
         return torch.sqrt(F.mse_loss(masked.pred_times, masked.true_times)).item()
     
     def calculate_time_mae(self, masked: MaskedValues) -> float:
         if masked.true_times.numel() == 0:
             return float('nan')
+        # MAE ne nécessite pas torchmetrics stateful, F.l1_loss gère les devices
         return F.l1_loss(masked.pred_times, masked.true_times).item()
     
     def calculate_type_accuracy(self, masked: MaskedValues) -> float:
         if self.num_event_types <= 1 or masked.true_types.numel() == 0:
             return float('nan')
-        accuracy_metric = torchmetrics.Accuracy(task="multiclass", num_classes=self.num_event_types)
-        return accuracy_metric(masked.pred_types, masked.true_types).item() * 100
+        device = masked.true_types.device # Get device from input tensor
+        accuracy_metric = torchmetrics.Accuracy(task="multiclass", num_classes=self.num_event_types).to(device)
+        accuracy_metric.update(masked.pred_types, masked.true_types)
+        return accuracy_metric.compute().item() * 100
     
     def calculate_f1_score(self, masked: MaskedValues, average: str = 'macro') -> float:
         if self.num_event_types <= 1 or masked.true_types.numel() == 0:
             return float('nan')
-        f1_metric = torchmetrics.F1Score(task="multiclass", num_classes=self.num_event_types, average=average)
-        return f1_metric(masked.pred_types, masked.true_types).item() * 100
+        device = masked.true_types.device # Get device from input tensor
+        f1_metric = torchmetrics.F1Score(task="multiclass", num_classes=self.num_event_types, average=average).to(device)
+        f1_metric.update(masked.pred_types, masked.true_types)
+        return f1_metric.compute().item() * 100
     
     def calculate_recall(self, masked: MaskedValues) -> float:
         if self.num_event_types <= 1 or masked.true_types.numel() == 0:
             return float('nan')
-        recall_metric = torchmetrics.Recall(task="multiclass", num_classes=self.num_event_types, average='macro')
-        return recall_metric(masked.pred_types, masked.true_types).item() * 100
+        device = masked.true_types.device # Get device from input tensor
+        recall_metric = torchmetrics.Recall(task="multiclass", num_classes=self.num_event_types, average='macro').to(device)
+        recall_metric.update(masked.pred_types, masked.true_types)
+        return recall_metric.compute().item() * 100
     
     def calculate_precision(self, masked: MaskedValues) -> float:
         if self.num_event_types <= 1 or masked.true_types.numel() == 0:
             return float('nan')
-        precision_metric = torchmetrics.Precision(task="multiclass", num_classes=self.num_event_types, average='macro')
-        return precision_metric(masked.pred_types, masked.true_types).item() * 100
+        device = masked.true_types.device # Get device from input tensor
+        precision_metric = torchmetrics.Precision(task="multiclass", num_classes=self.num_event_types, average='macro').to(device)
+        precision_metric.update(masked.pred_types, masked.true_types)
+        return precision_metric.compute().item() * 100
     
     def calculate_cross_entropy(self, masked: MaskedValues) -> float:
         if self.num_event_types <= 1 or masked.true_types.numel() == 0:
             return float('nan')
+        # Cross entropy ne nécessite pas torchmetrics stateful
         # Vérification sur le format des prédictions
         if masked.pred_types.dim() == 1:
             pred_logits = F.one_hot(masked.pred_types, num_classes=self.num_event_types).float()

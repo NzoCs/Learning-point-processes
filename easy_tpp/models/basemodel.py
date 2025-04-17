@@ -51,7 +51,8 @@ class BaseModel(pl.LightningModule, ABC):
             num_embeddings = self.num_event_types_pad,  # have padding
             embedding_dim = self.hidden_size,
             padding_idx = self.pad_token_id,
-            device=self.device)
+            device=self.device
+            )
 
         #Paramètre de la génération de données
         gen_config = model_config.thinning
@@ -421,7 +422,7 @@ class BaseModel(pl.LightningModule, ABC):
         # [batch_size, seq_len]
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)  # compute the expected next event time
         
-        return dtimes_pred, types_pred
+        return dtimes_pred.to(self.device), types_pred.to(self.device)
 
     def predict_multi_step_since_last_event(
         self,
@@ -491,8 +492,8 @@ class BaseModel(pl.LightningModule, ABC):
             time_delta_seq = torch.cat([time_delta_seq, dtimes_pred_], dim=-1)
             event_seq = torch.cat([event_seq, types_pred_], dim=-1)
 
-        return time_delta_seq[:, -num_step - 1:], event_seq[:, -num_step - 1:], \
-               time_delta_seq_label[:, -num_step - 1:], event_seq_label[:, -num_step - 1:]
+        return time_delta_seq[:, -num_step - 1:].to(self.device), event_seq[:, -num_step - 1:].to(self.device), \
+               time_delta_seq_label[:, -num_step - 1:].to(self.device), event_seq_label[:, -num_step - 1:].to(self.device)
             
     def simulate(
         self,
@@ -633,9 +634,9 @@ class BaseModel(pl.LightningModule, ABC):
         simul_mask = torch.logical_and(
             time_seq >= start_time,
             time_seq <= end_time
-        )
+        ).to(self.device)
         
-        return time_seq, time_delta_seq, event_seq, simul_mask
+        return time_seq.to(self.device), time_delta_seq.to(self.device), event_seq.to(self.device), simul_mask
     
     
     def intensity_graph(

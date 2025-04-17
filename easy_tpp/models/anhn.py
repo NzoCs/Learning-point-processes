@@ -117,7 +117,7 @@ class ANHN(BaseModel):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask, type_mask = batch
+        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = batch
 
         imply_lambdas, (intensity_base, intensity_alpha, intensity_delta), (base_dtime, target_cumsum_dtime) \
             = self.forward(time_delta_seqs[:, 1:],
@@ -147,7 +147,7 @@ class ANHN(BaseModel):
                                                                         lambdas_loss_samples=lambda_t_sample,
                                                                         time_delta_seq=time_delta_seqs[:, 1:],
                                                                         seq_mask=batch_non_pad_mask[:, 1:],
-                                                                        lambda_type_mask=type_mask[:, 1:])
+                                                                        type_seq=type_seqs[:, 1:])
 
         # (num_samples, num_times)
         loss = - (event_ll - non_event_ll).sum()

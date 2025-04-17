@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=100G
 #SBATCH --gres=gpu:1
-#SBATCH --array=0-24%5
+#SBATCH --array=0-24%4
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge

@@ -7,7 +7,7 @@ easy_tpp.egg-info
 *.pyc
 
 #venv
-.venv
+.venv-py312
 
 # proto
 protoc
@@ -28,7 +28,3 @@ log
 
 # idea files
 .idea
-
-# Exclure les fichiers de bibliothèque PyTorch volumineux
-.venv/Lib/site-packages/torch/lib/*.lib
-.venv/Lib/site-packages/torch/lib/*.dll

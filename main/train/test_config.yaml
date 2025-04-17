@@ -74,7 +74,7 @@ data:
 
 
 
-NHP_train:
+NHP_test:
 
   data_loading_specs:
     batch_size: 128
@@ -97,13 +97,12 @@ NHP_train:
     stage: train
     max_epochs: 400
     val_freq: 10
-    accumulate_grad_batches: 1
 
     logger_config:
       type: tensorboard
       name: logs
 
-RMTPP_train:
+RMTPP_test:
 
   data_loading_specs:
     batch_size: 128
@@ -126,7 +125,7 @@ RMTPP_train:
       type: tensorboard
       name: logs
 
-AttNHP_train:
+AttNHP_test:
 
   data_loading_specs:
     batch_size: 128
@@ -157,7 +156,7 @@ AttNHP_train:
       type: tensorboard
       name: logs
 
-SAHP_train:
+SAHP_test:
 
   data_loading_specs:
     batch_size: 128
@@ -185,7 +184,7 @@ SAHP_train:
       type: tensorboard
       name: logs
       
-ANHN_train:
+ANHN_test:
 
   data_loading_specs:
     batch_size: 128
@@ -208,10 +207,37 @@ ANHN_train:
       dtime_max: 5
 
   trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
+    stage: test
+
+    logger_config:
+      type: tensorboard
+      name: logs
+
+NHP_test:
+
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 4
+    
+  model_config:
+    hidden_size: 16
+    model_id: NHP
+
+    base_config:
+      lr: 0.01
+      lr_scheduler: True
+
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 5
+      dtime_max: 5
+    
+    simulation:
+      start_time: 100
+      end_time: 200
+
+  trainer_config:
+    stage: test
 
     logger_config:
       type: tensorboard

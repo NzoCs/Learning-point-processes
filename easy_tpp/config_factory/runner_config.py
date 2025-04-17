@@ -72,6 +72,7 @@ class TrainerConfig:
         self.patience_max = kwargs.get("patience_max", float('inf'))
         
         self.log_freq = kwargs.get('log_freq', 1)
+        self.accumulate_grad_batches = kwargs.get('accumulate_grad_batches', 1)
         # Auto-detect devices if not specified
         self.devices = kwargs.get('devices', self.detect_available_devices())
         self.save_model_dir = os.path.join(dirpath, "trained_models")
@@ -120,6 +121,7 @@ class TrainerConfig:
             'save_model_dir': self.save_model_dir,
             'patience_max': self.patience_max if self.patience_max != float('inf') else None,
             "logger_config": self.logger_config.get_yaml_config(),
+            "accumulate_grad_batches": self.accumulate_grad_batches
         }
         return {k: v for k, v in config.items() if v is not None}
         

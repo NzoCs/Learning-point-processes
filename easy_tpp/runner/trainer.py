@@ -7,7 +7,6 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 import os
-import random
 
 
 class Trainer :
@@ -55,10 +54,14 @@ class Trainer :
         self.logger_config = trainer_config.get('logger_config')
         self.val_freq = trainer_config.val_freq
         self.use_precision_16 = trainer_config.use_precision_16
+        self.accumulate_grad_batches = trainer_config.accumulate_grad_batches
         
         # Use the dirpath directly from the trainer_config
         self.dirpath = trainer_config.save_model_dir
         
+        dataset_id = data_config.dataset_id
+        logger.info(f"--- Starting Training/Testing for Model : {self.model_id} on dataset : {dataset_id} ---")
+
         try:
             self.logger = trainer_config.get_logger()
         except Exception as e:
@@ -70,7 +73,7 @@ class Trainer :
         
         
         checkpoint_callback = ModelCheckpoint(
-            monitor='avg_val_loss',
+            monitor='val_loss',
             dirpath= self.dirpath,
             filename = f'{self.model_id}'+'-{epoch:02d}-{val_loss:.2f}',
             save_top_k=2,
@@ -79,7 +82,7 @@ class Trainer :
         )
         
         early_stop_callback = EarlyStopping(
-            monitor='avg_val_loss',
+            monitor='val_loss',
             patience= self.patience,
             verbose=False,
             mode='min'
@@ -119,6 +122,7 @@ class Trainer :
             enable_model_summary = True,
             check_val_every_n_epoch = self.val_freq,
             precision = precision,
+            accumulate_grad_batches=self.accumulate_grad_batches
         )
         
         return trainer

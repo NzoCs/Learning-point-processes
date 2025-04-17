@@ -194,6 +194,7 @@ class DataConfig(Config):
         self.test_dir = kwargs.get("test_dir")
         self.source_dir = kwargs.get("source_dir")
         self.data_format = kwargs.get('data_format')
+        self.dataset_id = kwargs.get('dataset_id')
         
         if self.data_format is None:
             if self.train_dir is not None:
@@ -242,6 +243,7 @@ class DataConfig(Config):
         experiment_id = kwargs.get('experiment_id')
         if experiment_id is not None : 
             exp_yaml_config = yaml_config[experiment_id]
+            exp_yaml_config['dataset_id'] = experiment_id
         else:
             exp_yaml_config = yaml_config
         

@@ -1,6 +1,8 @@
 from easy_tpp.config_factory.config import Config
 from easy_tpp.utils.const import Backend
 
+from typing import Optional, Union
+
 def get_available_gpu():
     """Detect available GPUs on the machine.
     
@@ -165,12 +167,12 @@ class BaseConfig(Config):
     def __init__(self,
                  stage: str = 'train',
                  backend: str = 'torch',
-                 dataset_id: str | None = None,
+                 dataset_id: Optional[str] = None,
                 dropout_rate: float = 0.0,
                  lr: float = 0.001,
                  lr_scheduler: bool = False,
-                 max_epochs: int | None = None,
-                 base_dir: str | None = None) -> None:
+                 max_epochs: Optional[int] = None,
+                 base_dir: Optional[str] = None) -> None:
         
         """Initialize BaseConfig with type-safe parameters."""
         self.stage = self._validate_stage(stage)

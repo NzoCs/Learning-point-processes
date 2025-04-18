@@ -81,23 +81,23 @@ NHP_test:
     num_workers: 4
     
   model_config:
-    hidden_size: 16
     model_id: NHP
-  
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
     base_config:
-      lr: 0.01
+      lr: 0.001
       lr_scheduler: True
 
-    thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
-      dtime_max: 5
-
   trainer_config:
-    stage: train
-    max_epochs: 400
+    stage: test
+    max_epochs: 100
     val_freq: 10
-
     logger_config:
       type: tensorboard
       name: logs
@@ -109,18 +109,19 @@ RMTPP_test:
     num_workers: 4
     
   model_config:
-    hidden_size: 16
     model_id: RMTPP
-
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
     base_config:
-      lr: 0.01
+      lr: 0.001
       lr_scheduler: True
 
   trainer_config:
-    stage: train
-    max_epochs: 400
+    stage: test
+    max_epochs: 100
     val_freq: 10
-
     logger_config:
       type: tensorboard
       name: logs
@@ -132,26 +133,24 @@ AttNHP_test:
     num_workers: 4
     
   model_config:
-    hidden_size: 16
-    time_emb_size: 16
-    num_layers: 2
-    num_heads: 2
     model_id: AttNHP
-
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 1
+      num_heads: 2
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
     base_config:
-      lr: 0.01
+      lr: 0.001
       lr_scheduler: True
 
-    thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
-      dtime_max: 5
-
   trainer_config:
-    stage: train
-    max_epochs: 400
+    stage: test
+    max_epochs: 100
     val_freq: 10
-
     logger_config:
       type: tensorboard
       name: logs
@@ -161,84 +160,139 @@ SAHP_test:
   data_loading_specs:
     batch_size: 128
     num_workers: 4
-
+    
   model_config:
-    hidden_size: 16
     model_id: SAHP
-
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+      num_heads: 2
     base_config:
-      lr: 0.01
+      lr: 0.001
       lr_scheduler: True
-
     thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
+      num_exp: 500
+      over_sample_rate: 1.5
       dtime_max: 5
 
   trainer_config:
-    stage: train
-    max_epochs: 400
+    stage: test
+    max_epochs: 100
     val_freq: 10
-
-    logger_config:
-      type: tensorboard
-      name: logs
-      
-ANHN_test:
-
-  data_loading_specs:
-    batch_size: 128
-    num_workers: 4
-
-  model_config:
-    hidden_size: 16
-    time_emb_size: 16
-    num_layers: 2
-    num_heads: 2
-    model_id: ANHN
-
-    base_config:
-      lr: 0.01
-      lr_scheduler: True
-
-    thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
-      dtime_max: 5
-
-  trainer_config:
-    stage: test
-
     logger_config:
       type: tensorboard
       name: logs
 
-NHP_test:
+THP_test:
 
   data_loading_specs:
     batch_size: 128
     num_workers: 4
     
   model_config:
-    hidden_size: 16
-    model_id: NHP
-
-    base_config:
-      lr: 0.01
-      lr_scheduler: True
-
+    model_id: THP
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
+      num_layers: 2
+      num_heads: 2
     thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
+      num_exp: 500
+      over_sample_rate: 1.5
       dtime_max: 5
-    
-    simulation:
-      start_time: 100
-      end_time: 200
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
 
   trainer_config:
     stage: test
+    max_epochs: 100
+    val_freq: 10
+    logger_config:
+      type: tensorboard
+      name: logs
 
+FullyNN_test:
+
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 4
+    
+  model_config:
+    model_id: FullyNN
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+
+  trainer_config:
+    stage: test
+    max_epochs: 100
+    val_freq: 10
+    logger_config:
+      type: tensorboard
+      name: logs
+
+IntensityFree_test:
+
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 4
+    
+  model_config:
+    model_id: IntensityFree
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+
+  trainer_config:
+    stage: test
+    max_epochs: 100
+    val_freq: 10
+    logger_config:
+      type: tensorboard
+      name: logs
+
+ODETPP_test:
+
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 4
+    
+  model_config:
+    model_id: ODETPP
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+
+  trainer_config:
+    stage: test
+    max_epochs: 100
+    val_freq: 10
     logger_config:
       type: tensorboard
       name: logs

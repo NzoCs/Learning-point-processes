@@ -1,2 +1,0 @@
-[31;1m2025-04-18 07:24:30,721 - config.py[pid:32327;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-04-18 07:24:32,983 - trainer.py[pid:32327;line:28:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m

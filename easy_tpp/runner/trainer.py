@@ -6,6 +6,7 @@ from easy_tpp.utils import logger
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.strategies import DDPStrategy
 import os
 
 
@@ -41,7 +42,7 @@ class Trainer :
         
         self.model_id = model_config.model_id
         
-        
+
         #Intialize Dataloaders
         self.datamodule = TPPDataModule(data_config)
         
@@ -109,32 +110,51 @@ class Trainer :
         else :
             precision = '32-true'
             
-        
-        trainer = pl.Trainer(
-            max_epochs = self.max_epochs,
-            devices = devices,
-            accelerator = accelerator,
-            strategy = strategy,
-            logger = self.logger,
-            log_every_n_steps = self.log_freq,
-            callbacks = self.callbacks,
-            enable_progress_bar = True,
-            enable_model_summary = True,
-            check_val_every_n_epoch = self.val_freq,
-            precision = precision,
-            accumulate_grad_batches=self.accumulate_grad_batches
-        )
+        # Check if distributed training is requested
+        if self.devices > 1:
+            # Use DDPStrategy with find_unused_parameters=True
+            strategy = DDPStrategy(find_unused_parameters=True)
+            trainer = pl.Trainer(
+                max_epochs=self.max_epochs,
+                devices=self.devices,
+                accelerator='gpu',
+                strategy=strategy,
+                logger=self.logger,
+                log_every_n_steps=self.log_freq,
+                callbacks=self.callbacks,
+                enable_progress_bar=True,
+                enable_model_summary=True,
+                check_val_every_n_epoch=self.val_freq,
+                precision='16-mixed' if self.use_precision_16 else '32-true',
+                accumulate_grad_batches=self.accumulate_grad_batches
+            )
+            
+        else:
+            trainer = pl.Trainer(
+                max_epochs = self.max_epochs,
+                devices = devices,
+                accelerator = accelerator,
+                strategy = strategy,
+                logger = self.logger,
+                log_every_n_steps = self.log_freq,
+                callbacks = self.callbacks,
+                enable_progress_bar = True,
+                enable_model_summary = True,
+                check_val_every_n_epoch = self.val_freq,
+                precision = precision,
+                accumulate_grad_batches=self.accumulate_grad_batches
+            )
         
         return trainer
     
     def train(self) -> None:
-        
+        """Training a model."""
         trainer = self.trainer
         # Train the model
         self.datamodule.setup(stage='fit')
         
         train_dataloader = self.datamodule.train_dataloader()
-        val_dataloader = self.datamodule.val_dataloader()
+        val_dataloader = self.datamodule.val_dataloader()        
         
         trainer.fit(
             model = self.model,

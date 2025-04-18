@@ -179,7 +179,6 @@ class BaseModel(pl.LightningModule, ABC):
 
         # First, add an epsilon to every marked intensity for stability
         lambda_at_event = lambda_at_event + self.eps
-        lambdas_loss_samples = lambdas_loss_samples + self.eps
 
         log_marked_event_lambdas = lambda_at_event.log()
         total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
@@ -218,7 +217,7 @@ class BaseModel(pl.LightningModule, ABC):
         """
         pass
         
-    @abstractmethod
+    #Implement for the models based on intensity (not implemented in intensity free)    
     def compute_intensities_at_sample_times(self, **kwargs):
         """Compute intensities at sample times.
         

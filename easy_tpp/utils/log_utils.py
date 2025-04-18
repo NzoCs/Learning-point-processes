@@ -47,6 +47,8 @@ def get_logger(name, level="INFO", handlers=None, update=False):
     logger.setLevel(level)
     logger.handlers = handlers or _DEFAULT_HANDLERS
     logger.propagate = False
+    # Store logger in cache
+    _LOGGER_CACHE[name] = logger
     return logger
 
 

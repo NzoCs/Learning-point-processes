@@ -1,4 +1,0 @@
-[31;1m2025-04-18 07:18:32,550 - config.py[pid:31335;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-04-18 07:18:33,332 - trainer.py[pid:31335;line:28:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-04-18 07:18:33,335 - trainer.py[pid:31335;line:63:__init__] - INFO: --- Starting Training/Testing for Model : FullyNN on dataset : self_correcting ---[0m
-Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]                                                                   

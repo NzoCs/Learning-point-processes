@@ -198,7 +198,7 @@ class EventSampler(nn.Module):
                                                     time_delta_seq,
                                                     event_seq,
                                                     exp_numbers,
-                                                                                                        compute_last_step_only=compute_last_step_only)
+                                                    compute_last_step_only=compute_last_step_only)
 
         # [batch_size, seq_len, num_exp]
         total_intensities = intensities_at_sampled_times.sum(dim=-1)

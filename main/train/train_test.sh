@@ -1,5 +1,29 @@
-python train.py --experiment_id NHP_train --dataset_id test
-python train.py --experiment_id AttNHP_train --dataset_id test
-python train.py --experiment_id RMTPP_train --dataset_id test
-python train.py --experiment_id SAHP_train --dataset_id test
-python train.py --experiment_id ANHN_train --dataset_id test
+#!/bin/bash
+#SBATCH --output=logs/train_%A_%a.out
+#SBATCH --error=logs/train_%A_%a.err
+#SBATCH --partition=gpua100
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=100G
+#SBATCH --gres=gpu:1
+#SBATCH --array=0-7%4
+
+# Nettoie l'environnement module pour éviter les conflits
+module purge
+
+# Active l'environnement virtuel Python (créé avec python -m venv)
+source /gpfs/workdir/regnaguen/LTPP/bin/activate
+
+# Définition des combinaisons exp/dataset
+experiments=(RMTPP_train AttNHP_train SAHP_train FullyNN_train IntensityFree_train ODETPP_train)
+datasets=(test)
+
+# Mapping index → combinaison
+idx=$SLURM_ARRAY_TASK_ID
+exp=${experiments[$(( idx / ${#datasets[@]} ))]}
+data=${datasets[$(( idx % ${#datasets[@]} ))]}
+
+# Lancement avec srun
+srun python train.py --experiment_id "${exp}" --dataset_id "${data}"

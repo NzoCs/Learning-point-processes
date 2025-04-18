@@ -59,21 +59,23 @@ class CumulHazardFunctionNetwork(nn.Module):
         # [batch_size, seq_len, num_event_types]
         integral_lambda = self.layer_dense_3(out)
 
-        # [batch_size, seq_len, num_event_types]
-        if self.proper_marked_intensities:
-            derivative_integral_lambdas = []
-            for i in range(integral_lambda.shape[-1]):  # iterate over marks
-                derivative_integral_lambdas.append(grad(
-                    integral_lambda[..., i].mean(),
+        # Enable gradient computation specifically for the derivative calculation
+        with torch.enable_grad():
+            # [batch_size, seq_len, num_event_types]
+            if self.proper_marked_intensities:
+                derivative_integral_lambdas = []
+                for i in range(integral_lambda.shape[-1]):  # iterate over marks
+                    derivative_integral_lambdas.append(grad(
+                        integral_lambda[..., i].mean(),
+                        time_delta_seqs,
+                        create_graph=True, retain_graph=True)[0])
+                derivative_integral_lambda = torch.stack(derivative_integral_lambdas, dim=-1)  # TODO: Check that it is okay to iterate over marks like this
+            else:
+                derivative_integral_lambda = grad(
+                    integral_lambda.sum(dim=-1).mean(),
                     time_delta_seqs,
-                    create_graph=True, retain_graph=True)[0])
-            derivative_integral_lambda = torch.stack(derivative_integral_lambdas, dim=-1)  # TODO: Check that it is okay to iterate over marks like this
-        else:
-            derivative_integral_lambda = grad(
-                integral_lambda.sum(dim=-1).mean(),
-                time_delta_seqs,
-                create_graph=True, retain_graph=True)[0]
-            derivative_integral_lambda = derivative_integral_lambda.unsqueeze(-1).expand(*derivative_integral_lambda.shape, self.num_event_types) / self.num_event_types
+                    create_graph=True, retain_graph=True)[0]
+                derivative_integral_lambda = derivative_integral_lambda.unsqueeze(-1).expand(*derivative_integral_lambda.shape, self.num_event_types) / self.num_event_types
 
         return integral_lambda, derivative_integral_lambda
 

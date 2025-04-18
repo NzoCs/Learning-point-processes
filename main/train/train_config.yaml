@@ -61,6 +61,16 @@ data:
       num_event_types: 2
       pad_token_id: 2
       padding_side: left
+  
+  hawkes2_:
+    data_format: json
+    train_dir: NzoCs/hawkes2_-temporal-dataset
+    valid_dir: NzoCs/hawkes2_-temporal-dataset
+    test_dir: NzoCs/hawkes2_-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
 
   self_correcting:
     data_format: json
@@ -71,7 +81,6 @@ data:
       num_event_types: 1
       pad_token_id: 1
       padding_side: left
-
 
 
 NHP_train:
@@ -96,11 +105,9 @@ NHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
-    lr: 0.001
-    lr_scheduler: True
     logger_config:
       type: tensorboard
       name: logs
@@ -127,7 +134,7 @@ RMTPP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -151,14 +158,15 @@ AttNHP_train:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
 
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
-    lr: 0.001
-    lr_scheduler: True
     logger_config:
       type: tensorboard
       name: logs
@@ -186,7 +194,7 @@ SAHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -216,7 +224,7 @@ THP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -245,7 +253,7 @@ FullyNN_train:
       
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -274,7 +282,7 @@ IntensityFree_train:
       
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -305,7 +313,7 @@ ODETPP_train:
       
   trainer_config:
     stage: train
-    max_epochs: 400
+    max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:

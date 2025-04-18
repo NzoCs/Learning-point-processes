@@ -66,10 +66,9 @@ class TrainerConfig:
         self.batch_size = kwargs.get('batch_size', 32)
         self.max_epochs = kwargs.get('max_epochs')
         self.checkpoints_freq = kwargs.get('val_freq', 10)
-        self.patience = kwargs.get('patience', np.inf)
+        self.patience = kwargs.get('patience', float("inf"))
         self.val_freq = kwargs.get('val_freq', 10)
         self.use_precision_16 = kwargs.get('use_precision_16', False)
-        self.patience_max = kwargs.get("patience_max", float('inf'))
         
         self.log_freq = kwargs.get('log_freq', 1)
         self.accumulate_grad_batches = kwargs.get('accumulate_grad_batches', 1)

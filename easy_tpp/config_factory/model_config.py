@@ -18,6 +18,7 @@ def get_available_gpu():
     
     return -1
 
+
 class ThinningConfig(Config):
     """Configuration class for the thinning algorithms.
     
@@ -31,12 +32,12 @@ class ThinningConfig(Config):
     """
     
     def __init__(self, 
-                 num_sample: int = 1,
+                 num_sample: int = 30,
                  num_exp: int = 500,
                  num_steps: int = 10,
-                 over_sample_rate: float = 5.0,
-                 num_samples_boundary: int = 5,
-                 dtime_max: float = 5.0) -> None:
+                 over_sample_rate: float = 1.5,
+                 num_samples_boundary: int = 30,
+                 dtime_max: float = 10.0) -> None:
         """Initialize ThinningConfig with type-safe parameters."""
         self.num_sample = int(num_sample)
         self.num_exp = int(num_exp)
@@ -90,11 +91,13 @@ class ThinningConfig(Config):
         Returns:
             EasyTPP.ThinningConfig: a copy of current config.
         """
-        return ThinningConfig(num_sample=self.num_sample,
-                              num_exp=self.num_exp,
-                              over_sample_rate=self.over_sample_rate,
-                              num_samples_boundary=self.num_samples_boundary,
-                              dtime_max=self.dtime_max)
+        return ThinningConfig(
+            num_sample=self.num_sample,
+            num_exp=self.num_exp,
+            over_sample_rate=self.over_sample_rate,
+            num_samples_boundary=self.num_samples_boundary,
+            dtime_max=self.dtime_max
+            )
 
 class SimulationConfig(Config):
     """Configuration class for simulation parameters.
@@ -133,9 +136,11 @@ class SimulationConfig(Config):
         Returns:
             SimulationConfig: a copy of current config.
         """
-        return SimulationConfig(start_time=self.start_time,
-                                 end_time=self.end_time,
-                                 batch_size=self.batch_size)
+        return SimulationConfig(
+            start_time=self.start_time,
+            end_time=self.end_time,
+            batch_size=self.batch_size
+            )
         
     @staticmethod
     def parse_from_yaml_config(yaml_config) -> 'SimulationConfig':
@@ -164,15 +169,17 @@ class BaseConfig(Config):
     
     VALID_STAGES = {'train', 'test', 'val'}
     
-    def __init__(self,
-                 stage: str = 'train',
-                 backend: str = 'torch',
-                 dataset_id: Optional[str] = None,
-                dropout_rate: float = 0.0,
-                 lr: float = 0.001,
-                 lr_scheduler: bool = False,
-                 max_epochs: Optional[int] = None,
-                 base_dir: Optional[str] = None) -> None:
+    def __init__(
+            self,
+            stage: str = 'train',
+            backend: str = 'torch',
+            dataset_id: Optional[str] = None,
+            dropout_rate: float = 0.0,
+            lr: float = 0.001,
+            lr_scheduler: bool = False,
+            max_epochs: Optional[int] = None,
+            base_dir: Optional[str] = None
+            ) -> None:
         
         """Initialize BaseConfig with type-safe parameters."""
         self.stage = self._validate_stage(stage)

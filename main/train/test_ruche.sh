@@ -18,7 +18,7 @@ module purge
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
-experiments=(NHP_test RMTPP_test AttNHP_test SAHP_test ANHN_test)
+experiments=(NHP_test RMTPP_test AttNHP_test SAHP_test)
 datasets=(hawkes1 hawkes2 H2expc H2expi self_correcting)
 
 # Mapping index → combinaison

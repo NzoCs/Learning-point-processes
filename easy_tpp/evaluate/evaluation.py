@@ -85,16 +85,10 @@ class Evaluation:
         Plots and saves the superimposed distribution of inter-event times.
         Accepts raw time delta lists as input.
         """
-        label_times_filtered = [t for t in label_times if t > 1e-9]
-        pred_times_filtered = [t for t in pred_times if t > 1e-9]
-
-        if not label_times_filtered or not pred_times_filtered:
-            logger.warning("Not enough non-zero data to plot inter-event time distribution.")
-            return
 
         plt.figure(figsize=(10, 6))
-        sns.kdeplot(label_times_filtered, label=f'Label ({self.label_split})', fill=True, common_norm=False, log_scale=True, cut=0)
-        sns.kdeplot(pred_times_filtered, label=f'Prediction ({self.pred_split})', fill=True, common_norm=False, log_scale=True, cut=0)
+        sns.kdeplot(label_times, label=f'Label ({self.label_split})', fill=True, common_norm=False, log_scale=True, cut=0)
+        sns.kdeplot(pred_times, label=f'Prediction ({self.pred_split})', fill=True, common_norm=False, log_scale=True, cut=0)
         plt.title('Comparison of Inter-Event Time Distributions (Log Scale)')
         plt.xlabel('Time Since Last Event (Log Scale)')
         plt.ylabel('Density')

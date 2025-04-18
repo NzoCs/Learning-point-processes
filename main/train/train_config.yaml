@@ -77,28 +77,30 @@ data:
 NHP_train:
 
   data_loading_specs:
-    batch_size: 128
+    batch_size: 64
     num_workers: 4
     
   model_config:
-    hidden_size: 16
     model_id: NHP
-  
-    base_config:
-      lr: 0.01
-      lr_scheduler: True
-
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
+      num_layers: 2
     thinning:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
+      over_sample_rate: 1.5
       dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
 
   trainer_config:
     stage: train
     max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
-
+    lr: 0.001
+    lr_scheduler: True
     logger_config:
       type: tensorboard
       name: logs
@@ -106,22 +108,28 @@ NHP_train:
 RMTPP_train:
 
   data_loading_specs:
-    batch_size: 128
+    batch_size: 64
     num_workers: 4
     
   model_config:
-    hidden_size: 16
     model_id: RMTPP
-
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
     base_config:
-      lr: 0.01
+      lr: 0.001
       lr_scheduler: True
 
   trainer_config:
     stage: train
     max_epochs: 400
     val_freq: 10
-
+    accumulate_grad_batches: 1
     logger_config:
       type: tensorboard
       name: logs
@@ -129,82 +137,19 @@ RMTPP_train:
 AttNHP_train:
 
   data_loading_specs:
-    batch_size: 128
+    batch_size: 64
     num_workers: 4
     
   model_config:
-    hidden_size: 16
-    time_emb_size: 16
-    num_layers: 2
-    num_heads: 2
     model_id: AttNHP
-
-    base_config:
-      lr: 0.01
-      lr_scheduler: True
-
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 1
+      num_heads: 2
     thinning:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
-      dtime_max: 5
-
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-
-    logger_config:
-      type: tensorboard
-      name: logs
-
-SAHP_train:
-
-  data_loading_specs:
-    batch_size: 128
-    num_workers: 4
-
-  model_config:
-    hidden_size: 16
-    model_id: SAHP
-
-    base_config:
-      lr: 0.01
-      lr_scheduler: True
-
-    thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
-      dtime_max: 5
-
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-
-    logger_config:
-      type: tensorboard
-      name: logs
-      
-ANHN_train:
-
-  data_loading_specs:
-    batch_size: 128
-    num_workers: 4
-
-  model_config:
-    hidden_size: 16
-    time_emb_size: 16
-    num_layers: 2
-    num_heads: 2
-    model_id: ANHN
-
-    base_config:
-      lr: 0.01
-      lr_scheduler: True
-
-    thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
-      over_sample_rate: 5
+      over_sample_rate: 1.5
       dtime_max: 5
 
   trainer_config:
@@ -212,7 +157,157 @@ ANHN_train:
     max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
+    lr: 0.001
+    lr_scheduler: True
+    logger_config:
+      type: tensorboard
+      name: logs
 
+SAHP_train:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: SAHP
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+      num_heads: 2
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+THP_train:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: THP
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
+      num_layers: 2
+      num_heads: 2
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+FullyNN_train:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: FullyNN
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+IntensityFree_train:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: IntensityFree
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+      
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+
+ODETPP_train:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: ODETPP
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+      
+      
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
     logger_config:
       type: tensorboard
       name: logs

@@ -283,8 +283,19 @@ class ModelSpecsConfig:
         self.sharing_param_layer = kwargs.get('sharing_param_layer', False)
         self.loss_integral_num_sample_per_step = kwargs.get('loss_integral_num_sample_per_step', 20)  # mc_num_sample_per_step
         self.use_ln = kwargs.get('use_norm', False)
+
+        #for cumulative hazard function network of the FullyNN model
+        self.num_mlp_layers = kwargs.get('num_mlp_layers', 2)
+        self.proper_marked_intensities = kwargs.get('proper_marked_intensities', False)
         
-    
+        #for IntensityFree model
+        self.num_mix_components = kwargs.get('num_mix_components', 1)
+        self.mean_log_inter_time = kwargs.get('mean_log_inter_time', 0.0)
+        self.std_log_inter_time = kwargs.get('std_log_inter_time', 1.0)
+
+        #for ODETPP model
+        self.ode_num_sample_per_step = kwargs.get('ode_num_sample_per_step', 20)
+
     @staticmethod
     def parse_from_yaml_config(yaml_config) -> 'ModelSpecsConfig':
         """Parse from the yaml to generate the config object.

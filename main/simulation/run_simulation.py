@@ -19,12 +19,12 @@ def load_config(config_path, experiment_id=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Run TPP simulations")
-    parser.add_argument("--config", type=str, help="Path to the configuration YAML file", default="config.yaml")
+    parser.add_argument("--config", type=str, help="Path to the configuration YAML file", default="simul_config.yaml")
     parser.add_argument("--experiment", type=str, help="Experiment ID to run (if not specified, uses default config)", default="hawkes1_simulation")
     args = parser.parse_args()
     
     # Load configuration
-    simulator_config = load_config(args.config, args.experiment)
+    simulator_config = load_config(config_path=args.config, experiment_id=args.experiment)
     
     # Print some configuration details
     print(f"Simulation configuration:")

@@ -11,12 +11,12 @@ class CumulHazardFunctionNetwork(nn.Module):
     ref: https://github.com/wassname/torch-neuralpointprocess
     """
 
-    def __init__(self, model_config):
+    def __init__(self, model_config : ModelConfig):
         super(CumulHazardFunctionNetwork, self).__init__()
-        self.hidden_size = model_config.hidden_size
-        self.num_mlp_layers = model_config.model_specs['num_mlp_layers']
+        self.hidden_size = model_config.specs.hidden_size
+        self.num_mlp_layers = model_config.specs.num_mlp_layers
         self.num_event_types = model_config.num_event_types
-        self.proper_marked_intensities = model_config.model_specs["proper_marked_intensities"]
+        self.proper_marked_intensities = model_config.specs.proper_marked_intensities
 
         # transform inter-event time embedding
         self.layer_dense_1 = nn.Linear(in_features=1, out_features=self.hidden_size)

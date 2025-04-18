@@ -5,19 +5,19 @@
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=100G
-#SBATCH --gres=gpu:1
-#SBATCH --array=0-24%4
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=250G
+#SBATCH --gres=gpu:2
+#SBATCH --array=0-39%2
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge
 
-# Active l’environnement virtuel Python (créé avec python -m venv)
+# Active l'environnement virtuel Python (créé avec python -m venv)
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
-experiments=(NHP_train RMTPP_train AttNHP_train SAHP_train ANHN_train)
+experiments=(NHP_train RMTPP_train AttNHP_train SAHP_train THP_train FullyNN_train IntensityFree_train ODETPP_train)
 datasets=(hawkes1 hawkes2 H2expc H2expi self_correcting)
 
 # Mapping index → combinaison

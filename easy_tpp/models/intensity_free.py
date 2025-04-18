@@ -120,9 +120,9 @@ class IntensityFree(BaseModel):
         """
         super(IntensityFree, self).__init__(model_config)
 
-        self.num_mix_components = model_config.model_specs['num_mix_components']
-        self.mean_log_inter_time = model_config.get("mean_log_inter_time", 0.0)
-        self.std_log_inter_time = model_config.get("std_log_inter_time", 1.0)
+        self.num_mix_components = model_config.specs.num_mix_components
+        self.mean_log_inter_time = model_config.specs.mean_log_inter_time
+        self.std_log_inter_time = model_config.specs.std_log_inter_time
 
         self.num_features = 1 + self.hidden_size
 

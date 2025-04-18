@@ -61,42 +61,42 @@ class RMTPP(BaseModel):
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
     
-    def compute_loglikelihood(self, lambda_at_event, lambda_at_0, seq_mask, type_seq):
-        """Compute the loglikelihood of the event sequence based on Equation (8) of NHP paper.
+    # def compute_loglikelihood(self, lambda_at_event, lambda_at_0, seq_mask, type_seq):
+    #     """Compute the loglikelihood of the event sequence based on Equation (8) of NHP paper.
 
-        Args:
-            time_delta_seq (tensor): [batch_size, seq_len], time_delta_seq from model input.
-            lambda_at_event (tensor): [batch_size, seq_len, num_event_types], unmasked intensity at
-            (right after) the event.
-            lambda_at_0 (tensor) : [batch_size,seq_len,num_event_types], unmasked intensity at time 0
-            seq_mask (tensor): [batch_size, seq_len], sequence mask vector to mask the padded events.
-            type_seq (tensor): [batch_size, seq_len], sequence of mark ids, with padded events having a mark of self.pad_token_id
+    #     Args:
+    #         time_delta_seq (tensor): [batch_size, seq_len], time_delta_seq from model input.
+    #         lambda_at_event (tensor): [batch_size, seq_len, num_event_types], unmasked intensity at
+    #         (right after) the event.
+    #         lambda_at_0 (tensor) : [batch_size,seq_len,num_event_types], unmasked intensity at time 0
+    #         seq_mask (tensor): [batch_size, seq_len], sequence mask vector to mask the padded events.
+    #         type_seq (tensor): [batch_size, seq_len], sequence of mark ids, with padded events having a mark of self.pad_token_id
 
-        Returns:
-            tuple: event loglike, non-event loglike, intensity at event with padding events masked
-        """
+    #     Returns:
+    #         tuple: event loglike, non-event loglike, intensity at event with padding events masked
+    #     """
 
-        # First, add an epsilon to every marked intensity for stability
-        lambda_at_event = lambda_at_event + self.eps
-        #lambdas_loss_samples = lambdas_loss_samples + self.eps
+    #     # First, add an epsilon to every marked intensity for stability
+    #     lambda_at_event = lambda_at_event + self.eps
+    #     #lambdas_loss_samples = lambdas_loss_samples + self.eps
 
-        log_marked_event_lambdas = lambda_at_event.log()
-        #total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
+    #     log_marked_event_lambdas = lambda_at_event.log()
+    #     #total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
 
-        # Compute event LL - [batch_size, seq_len]
-        event_ll = -F.nll_loss(
-            log_marked_event_lambdas.permute(0, 2, 1),  # mark dimension needs to come second, not third to match nll_loss specs
-            target=type_seq,
-            ignore_index=self.pad_token_id,  # Padded events have a pad_token_id as a value
-            reduction='none', # Does not aggregate, and replaces what would have been the log(marked intensity) with 0.
-        )
+    #     # Compute event LL - [batch_size, seq_len]
+    #     event_ll = -F.nll_loss(
+    #         log_marked_event_lambdas.permute(0, 2, 1),  # mark dimension needs to come second, not third to match nll_loss specs
+    #         target=type_seq,
+    #         ignore_index=self.pad_token_id,  # Padded events have a pad_token_id as a value
+    #         reduction='none', # Does not aggregate, and replaces what would have been the log(marked intensity) with 0.
+    #     )
         
-        w_t_11M = self.eps + self.w_t
-        non_event_ll_unmasked=(1/w_t_11M)*(lambda_at_event-lambda_at_0)
-        non_event_ll=non_event_ll_unmasked.sum(-1)*seq_mask
+    #     w_t_11M = self.eps + self.w_t
+    #     non_event_ll_unmasked=(1/w_t_11M)*(lambda_at_event-lambda_at_0)
+    #     non_event_ll=non_event_ll_unmasked.sum(-1)*seq_mask
 
-        num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
-        return event_ll, non_event_ll, num_events
+    #     num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
+    #     return event_ll, non_event_ll, num_events
 
     def loglike_loss(self, batch):
         """Compute the log-likelihood loss.

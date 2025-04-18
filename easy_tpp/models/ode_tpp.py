@@ -163,7 +163,7 @@ class ODETPP(BaseModel):
         self.event_model = DNN(inputs_dim=self.hidden_size,
                                hidden_size=[self.hidden_size])
 
-        self.ode_num_sample_per_step = model_config.model_specs['ode_num_sample_per_step']
+        self.ode_num_sample_per_step = model_config.specs.ode_num_sample_per_step
 
         self.solver = rk4_step_method
 

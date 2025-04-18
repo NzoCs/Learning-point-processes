@@ -171,6 +171,7 @@ class RunnerConfig(Config):
         
         data_config_dict = yaml_config.get('data').get(dataset_id)
         data_config_dict['data_loading_specs'] = data_loading_specs
+        data_config_dict['dataset_id'] = dataset_id
 
         data_config = DataConfig.parse_from_yaml_config(data_config_dict)
         

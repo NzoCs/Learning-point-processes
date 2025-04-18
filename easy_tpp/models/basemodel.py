@@ -264,7 +264,7 @@ class BaseModel(pl.LightningModule, ABC):
         batch = batch.values()
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss/num_events
-        self.log('train_loss', avg_loss.item(), prog_bar=True)
+        self.log('train_loss', avg_loss.item(), prog_bar=True, sync_dist=True, on_epoch=True, on_step=False)
         
         return avg_loss
     
@@ -297,11 +297,11 @@ class BaseModel(pl.LightningModule, ABC):
             batch = label_batch,
             pred = pred)
         
-        self.log('val_loss', avg_loss.item(), prog_bar=True)
+        self.log('val_loss', avg_loss.item(), prog_bar=True, sync_dist=True)
         
         for key in one_step_metrics : 
             
-            self.log(f"{key}", one_step_metrics[key], prog_bar=True)
+            self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
             
         
         return avg_loss
@@ -352,14 +352,14 @@ class BaseModel(pl.LightningModule, ABC):
             pred = simulation
         )
         
-        self.log('test_loss', avg_loss.item(), prog_bar=True)
+        self.log('test_loss', avg_loss.item(), prog_bar=True, sync_dist=True)
         
         for key in one_step_metrics : 
             
-            self.log(f"{key}", one_step_metrics[key], prog_bar=True)
+            self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
         
         for key in simulation_metrics :
-            self.log(f"{key}", simulation_metrics[key], prog_bar=True)
+            self.log(f"{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
         
         return avg_loss
     

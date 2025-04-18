@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 25, in main
+    plrunner = Trainer(config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 40, in __init__
+    self.model = BaseModel.generate_model_from_config(model_config=model_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 115, in generate_model_from_config
+    return subclass(model_config, **kwargs)
+TypeError: Can't instantiate abstract class IntensityFree with abstract method compute_intensities_at_sample_times
+srun: error: ruche-gpu13: task 0: Exited with exit code 1

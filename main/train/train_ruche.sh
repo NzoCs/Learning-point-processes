@@ -18,7 +18,7 @@ source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
 experiments=(RMTPP_train AttNHP_train SAHP_train FullyNN_train IntensityFree_train ODETPP_train)
-datasets=(hawkes1 hawkes2 H2expc H2expi self_correcting)
+datasets=(hawkes1 hawkes2_ H2expc H2expi self_correcting)
 
 # Mapping index → combinaison
 idx=$SLURM_ARRAY_TASK_ID

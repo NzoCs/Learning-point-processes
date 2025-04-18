@@ -50,7 +50,7 @@ class Trainer :
         #Initialize Train params
         self.log_freq = trainer_config.log_freq
         self.checkpoints_freq = trainer_config.checkpoints_freq
-        self.patience = trainer_config.patience_max
+        self.patience = trainer_config.patience
         self.devices = trainer_config.devices
         self.logger_config = trainer_config.get('logger_config')
         self.val_freq = trainer_config.val_freq

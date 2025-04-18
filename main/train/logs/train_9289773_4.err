@@ -1,0 +1,70 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 300 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 100 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name           | Type         | Params | Mode 
+--------------------------------------------------------
+0 | layer_type_emb | Embedding    | 96     | train
+1 | event_sampler  | EventSampler | 0      | train
+2 | layer_rnn      | GRU          | 6.4 K  | train
+3 | mark_linear    | Linear       | 99     | train
+4 | linear         | Linear       | 99     | train
+--------------------------------------------------------
+6.7 K     Trainable params
+0         Non-trainable params
+6.7 K     Total params
+0.027     Total estimated model params size (MB)
+5         Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 27, in main
+    plrunner.train()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 159, in train
+    trainer.fit(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 561, in fit
+    call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 599, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1054, in _run_stage
+    self._run_sanity_check()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1083, in _run_sanity_check
+    val_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 145, in run
+    self._evaluation_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 437, in _evaluation_step
+    output = call._call_strategy_hook(trainer, hook_name, *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 412, in validation_step
+    return self.lightning_module.validation_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 295, in validation_step
+    one_step_metrics = one_step_metrics_compute.compute_all_metrics(
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/evaluate/metrics_compute.py", line 63, in compute_all_metrics
+    return self._compute_prediction_metrics(batch, pred)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/evaluate/metrics_compute.py", line 76, in _compute_prediction_metrics
+    metrics['type_accuracy'] = self.calculate_type_accuracy(masked)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/evaluate/metrics_compute.py", line 139, in calculate_type_accuracy
+    accuracy_metric.update(masked.pred_types, masked.true_types)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torchmetrics/metric.py", line 559, in wrapped_func
+    raise err
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torchmetrics/metric.py", line 549, in wrapped_func
+    update(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torchmetrics/classification/stat_scores.py", line 339, in update
+    _multiclass_stat_scores_tensor_validation(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torchmetrics/functional/classification/stat_scores.py", line 322, in _multiclass_stat_scores_tensor_validation
+    raise RuntimeError(
+RuntimeError: Detected more unique values in `preds` than expected. Expected only 2 but found 3 in `preds`. Found values: tensor([0, 1, 2], device='cuda:0').
+srun: error: ruche-gpu13: task 0: Exited with exit code 1

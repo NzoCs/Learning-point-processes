@@ -1,0 +1,25 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 9000 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 3000 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name             | Type         | Params | Mode 
+----------------------------------------------------------
+0 | layer_type_emb   | Embedding    | 64     | train
+1 | event_sampler    | EventSampler | 0      | train
+2 | layer_intensity  | Sequential   | 33     | train
+3 | event_model      | DNN          | 1.1 K  | train
+4 | layer_neural_ode | NeuralODE    | 1.1 K  | train
+----------------------------------------------------------
+1.2 K     Trainable params
+0         Non-trainable params
+1.2 K     Total params
+0.005     Total estimated model params size (MB)
+12        Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+slurmstepd: error: *** STEP 9289835.0 ON ruche-gpu13 CANCELLED AT 2025-04-19T17:01:37 ***
+slurmstepd: error: *** JOB 9289835 ON ruche-gpu13 CANCELLED AT 2025-04-19T17:01:37 ***

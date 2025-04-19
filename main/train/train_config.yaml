@@ -11,6 +11,16 @@ data:
       num_event_types: 10
       pad_token_id: 10
       padding_side: left
+ 
+  taobao:
+    data_format: json
+    train_dir: easytpp/taobao
+    valid_dir: easytpp/taobao
+    test_dir: easytpp/taobao
+    data_specs:
+      num_event_types: 17
+      pad_token_id: 17
+      padding_side: left
 
   test:
     data_format: json
@@ -105,7 +115,7 @@ NHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -134,7 +144,7 @@ RMTPP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -164,7 +174,7 @@ AttNHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -194,7 +204,7 @@ SAHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -224,7 +234,7 @@ THP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -253,7 +263,7 @@ FullyNN_train:
       
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -282,7 +292,7 @@ IntensityFree_train:
       
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -313,7 +323,7 @@ ODETPP_train:
       
   trainer_config:
     stage: train
-    max_epochs: 1000
+    max_epochs: 600
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:

@@ -1,0 +1,3 @@
+[31;1m2025-04-19 03:06:15,891 - config.py[pid:24844;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-04-19 03:06:16,165 - trainer.py[pid:24844;line:29:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-04-19 03:06:16,168 - trainer.py[pid:24844;line:64:__init__] - INFO: --- Starting Training/Testing for Model : IntensityFree on dataset : hawkes2_ ---[0m

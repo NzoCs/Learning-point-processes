@@ -1,0 +1,25 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 9000 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 3000 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                       | Type         | Params | Mode 
+--------------------------------------------------------------------
+0 | layer_type_emb             | Embedding    | 64     | train
+1 | event_sampler              | EventSampler | 0      | train
+2 | layer_temporal_emb         | Linear       | 64     | train
+3 | layer_rnn                  | RNN          | 2.1 K  | train
+4 | hidden_to_intensity_logits | Linear       | 33     | train
+  | other params               | n/a          | 2      | n/a  
+--------------------------------------------------------------------
+2.3 K     Trainable params
+0         Non-trainable params
+2.3 K     Total params
+0.009     Total estimated model params size (MB)
+5         Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+`Trainer.fit` stopped: `max_epochs=600` reached.

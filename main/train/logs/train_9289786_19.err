@@ -1,0 +1,67 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 9000 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 3000 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name            | Type                       | Params | Mode 
+-----------------------------------------------------------------------
+0 | layer_type_emb  | Embedding                  | 64     | train
+1 | event_sampler   | EventSampler               | 0      | train
+2 | layer_rnn       | LSTM                       | 17.0 K | train
+3 | layer_intensity | CumulHazardFunctionNetwork | 3.2 K  | train
+-----------------------------------------------------------------------
+20.3 K    Trainable params
+0         Non-trainable params
+20.3 K    Total params
+0.081     Total estimated model params size (MB)
+11        Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 27, in main
+    plrunner.train()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 159, in train
+    trainer.fit(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 561, in fit
+    call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 599, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1054, in _run_stage
+    self._run_sanity_check()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1083, in _run_sanity_check
+    val_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 145, in run
+    self._evaluation_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 437, in _evaluation_step
+    output = call._call_strategy_hook(trainer, hook_name, *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 412, in validation_step
+    return self.lightning_module.validation_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 285, in validation_step
+    loss, num_events = self.loglike_loss(batch)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/fullynn.py", line 155, in loglike_loss
+    integral_lambda, derivative_integral_lambda = self.layer_intensity(hidden_states, time_delta_seqs[:, 1:])
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/fullynn.py", line 74, in forward
+    derivative_integral_lambda = grad(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/autograd/__init__.py", line 496, in grad
+    result = _engine_run_backward(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/autograd/graph.py", line 823, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+srun: error: ruche-gpu13: task 0: Exited with exit code 1

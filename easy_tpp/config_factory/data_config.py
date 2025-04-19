@@ -226,6 +226,7 @@ class DataConfig(Config):
             'test_dir': self.test_dir,
             'source_dir': self.source_dir,
             'data_format': self.data_format,
+            'dataset_id': self.dataset_id,
             'data_loading_specs': self.data_loading_specs.get_yaml_config(),
             'data_specs': self.data_specs.get_yaml_config(),
         }

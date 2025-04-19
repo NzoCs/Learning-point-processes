@@ -20,7 +20,7 @@ def main():
 
     args = parser.parse_args()
     
-    config = Config.build_from_yaml_file(args.config_dir, experiment_id = args.experiment_id, dataset_id = args.dataset_id)
+    config = Config.build_from_yaml_file(yaml_dir = args.config_dir, experiment_id = args.experiment_id, dataset_id = args.dataset_id)
     
     plrunner = Trainer(config)
     

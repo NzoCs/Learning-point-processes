@@ -218,11 +218,25 @@ class BaseModel(pl.LightningModule, ABC):
         pass
         
     #Implement for the models based on intensity (not implemented in intensity free)    
-    def compute_intensities_at_sample_times(self, **kwargs):
-        """Compute intensities at sample times.
-        
-        Implementation should be provided by subclasses.
-        """
+    def compute_intensities_at_sample_times(
+        self,
+        time_seqs : torch.Tensor,
+        time_delta_seqs : torch.Tensor,
+        type_seqs : torch.Tensor,
+        sample_dtimes : torch.Tensor, 
+        **kwargs
+        ) -> torch.Tensor :
+        """Compute the intensity at sampled times, not only event times.
+
+        Args:
+            time_seqs (tensor): [batch_size, seq_len], times seqs.
+            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
+            type_seqs (tensor): [batch_size, seq_len], event type seqs.
+            sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
+
+        Returns:
+            tensor: [batch_size, num_times, num_mc_sample, num_event_types],
+                    intensity at each timestamp for each event type."""
         pass
     
     def configure_optimizers(self):

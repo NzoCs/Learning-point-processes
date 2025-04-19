@@ -50,8 +50,10 @@ class HawkesModel(BaseModel):
 
     def compute_intensities_at_times(self,
                                      time_seq: torch.Tensor,
+                                     time_delta_seq: torch.Tensor, # Not directly used here
                                      type_seq: torch.Tensor,
-                                     query_times: torch.Tensor):
+                                     query_times: torch.Tensor,
+                                     **kwargs):
         """
         Computes the intensity lambda(t) for all event types at specified query times.
         lambda_i(t) = mu_i + sum_{j=1}^{D} sum_{t_k < t, type_k=j} alpha_{ij} * exp(-beta_{ij} * (t - t_k))

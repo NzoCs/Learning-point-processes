@@ -4,7 +4,6 @@ from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.config_factory.logger_config import LoggerConfig
 from easy_tpp.utils import logger
 
-import numpy as np
 import torch
 import os
 import random
@@ -26,7 +25,6 @@ class TrainerConfig:
         return f"{random.choice(adjectives)}_{random.choice(animals)}_{random.randint(1, 999)}"
     
     def __init__(self, **kwargs):
-        
         
         self.stage = kwargs.get('stage', 'train')
         
@@ -118,7 +116,7 @@ class TrainerConfig:
             'log_freq': self.log_freq,
             'devices': self.devices,
             'save_model_dir': self.save_model_dir,
-            'patience_max': self.patience_max if self.patience_max != float('inf') else None,
+            'patience_max': self.patience if self.patience != float('inf') else None,
             "logger_config": self.logger_config.get_yaml_config(),
             "accumulate_grad_batches": self.accumulate_grad_batches
         }

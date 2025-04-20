@@ -1,45 +1,0 @@
-GPU available: True (cuda), used: True
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.
-Generating train split:   0%|          | 0/9000 [00:00<?, ? examples/s]Generating train split: 100%|██████████| 9000/9000 [00:00<00:00, 199388.01 examples/s]
-Generating test split:   0%|          | 0/3000 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 3000/3000 [00:00<00:00, 150159.46 examples/s]
-Generating dev split:   0%|          | 0/3000 [00:00<?, ? examples/s]Generating dev split: 100%|██████████| 3000/3000 [00:00<00:00, 198550.07 examples/s]
-INFO:easy_tpp.preprocess.data_loader:Train dataset created with 9000 sequences
-Traceback (most recent call last):
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in <module>
-    main()
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 27, in main
-    plrunner.train()
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 154, in train
-    self.datamodule.setup(stage='fit')
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/preprocess/data_loader.py", line 134, in setup
-    self.val_data = self.build_input(val_data_dir, self.data_config.data_format, 'dev')
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/preprocess/data_loader.py", line 59, in build_input
-    return self._build_input_from_json(source_dir, split)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/preprocess/data_loader.py", line 101, in _build_input_from_json
-    data = load_dataset(source_dir, split=split_mapped)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/load.py", line 2096, in load_dataset
-    ds = builder_instance.as_dataset(split=split, verification_mode=verification_mode, in_memory=keep_in_memory)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/builder.py", line 1127, in as_dataset
-    datasets = map_nested(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/utils/py_utils.py", line 486, in map_nested
-    mapped = function(data_struct)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/builder.py", line 1157, in _build_single_dataset
-    ds = self._as_dataset(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/builder.py", line 1231, in _as_dataset
-    dataset_kwargs = ArrowReader(cache_dir, self.info).read(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/arrow_reader.py", line 248, in read
-    files = self.get_file_instructions(name, instructions, split_infos)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/arrow_reader.py", line 221, in get_file_instructions
-    file_instructions = make_file_instructions(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/arrow_reader.py", line 130, in make_file_instructions
-    absolute_instructions = instruction.to_absolute(name2len)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/arrow_reader.py", line 620, in to_absolute
-    return [_rel_to_abs_instr(rel_instr, name2len) for rel_instr in self._relative_instructions]
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/arrow_reader.py", line 620, in <listcomp>
-    return [_rel_to_abs_instr(rel_instr, name2len) for rel_instr in self._relative_instructions]
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/datasets/arrow_reader.py", line 437, in _rel_to_abs_instr
-    raise ValueError(f'Unknown split "{split}". Should be one of {list(name2len)}.')
-ValueError: Unknown split "validation". Should be one of ['train', 'test', 'dev'].
-srun: error: ruche-gpu15: task 0: Exited with exit code 1

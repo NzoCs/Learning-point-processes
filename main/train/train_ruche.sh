@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=400G
 #SBATCH --gres=gpu:1
-#SBATCH --array=0-39%4
+#SBATCH --array=0-17%4
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge
@@ -17,8 +17,8 @@ module purge
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
-experiments=(RMTPP_train AttNHP_train SAHP_train ODETPP_train)
-datasets=(hawkes1 hawkes2_ H2expc H2expi self_correcting taxi taobao)
+experiments=(NHP_train THP_train Intensity_train RMTPP_train AttNHP_train SAHP_train)
+datasets=(hawkes2_ taxi taobao)
 
 # Mapping index → combinaison
 idx=$SLURM_ARRAY_TASK_ID

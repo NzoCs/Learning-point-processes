@@ -160,7 +160,7 @@ AttNHP_train:
   model_config:
     model_id: AttNHP
     specs:
-      hidden_size: 32
+      hidden_size: 16
       time_emb_size: 16
       num_layers: 1
       num_heads: 2
@@ -273,7 +273,7 @@ FullyNN_train:
 IntensityFree_train:
 
   data_loading_specs:
-    batch_size: 64
+    batch_size: 256
     num_workers: 4
     
   model_config:

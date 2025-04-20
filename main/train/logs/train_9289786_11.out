@@ -1,3 +1,0 @@
-[31;1m2025-04-19 02:30:10,852 - config.py[pid:27022;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-04-19 02:30:11,300 - trainer.py[pid:27022;line:29:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-04-19 02:30:11,642 - trainer.py[pid:27022;line:64:__init__] - INFO: --- Starting Training/Testing for Model : SAHP on dataset : hawkes2_ ---[0m

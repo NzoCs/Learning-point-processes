@@ -1,6 +1,6 @@
 from easy_tpp.utils import logger
 from easy_tpp.preprocess import TPPDataModule
-from easy_tpp.config_factory import EvaluationConfig, DataConfig, TokenizerConfig
+from easy_tpp.config_factory import EvaluationConfig, DataConfig
 from easy_tpp.evaluate.metrics_compute import MetricsCompute, EvaluationMode
 from easy_tpp.preprocess.visualizer import Visualizer
 
@@ -11,7 +11,6 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 
 class Evaluation:
     
@@ -45,8 +44,8 @@ class Evaluation:
         self.label_split = evaluator_config.label_split
         self.pred_split = evaluator_config.pred_split
         
-        self.label_loader_setup = TPPDataModule(label_data_config, batch_size=evaluator_config.batch_size)
-        self.pred_loader_setup = TPPDataModule(pred_data_config, batch_size=evaluator_config.batch_size)
+        self.label_loader_setup = TPPDataModule(label_data_config, batch_size = evaluator_config.batch_size)
+        self.pred_loader_setup = TPPDataModule(pred_data_config, batch_size = evaluator_config.batch_size)
 
         # Initialize Visualizers using the DataModules
         logger.info("Initializing Label Visualizer...")
@@ -86,6 +85,7 @@ class Evaluation:
         Accepts raw time delta lists as input.
         """
 
+        # Main distribution plot
         plt.figure(figsize=(10, 6))
         sns.kdeplot(label_times, label=f'Label ({self.label_split})', fill=True, common_norm=False, log_scale=True, cut=0)
         sns.kdeplot(pred_times, label=f'Prediction ({self.pred_split})', fill=True, common_norm=False, log_scale=True, cut=0)
@@ -99,6 +99,84 @@ class Evaluation:
         plt.savefig(filepath)
         plt.close()
         logger.info(f"Inter-event time distribution comparison plot saved to {filepath}")
+        
+        # Add QQ plot for inter-event times
+        self._create_qq_plot(
+            label_times, 
+            pred_times, 
+            f'QQ Plot: Inter-Event Times (Label vs Prediction)',
+            os.path.join(self.output_dir, "qq_inter_event_times.png"),
+            log_scale=True
+        )
+
+    def _create_qq_plot(self, label_data: List, pred_data: List, title: str, save_path: str, log_scale: bool = False):
+        """
+        Creates and saves a QQ plot comparing label and prediction distributions.
+        
+        Args:
+            label_data: Data points from the label dataset
+            pred_data: Data points from the prediction dataset
+            title: Title for the plot
+            save_path: Path to save the plot
+            log_scale: Whether to use log scale for the axes
+        """
+        # Filter out non-positive values if using log scale
+        if log_scale:
+            label_data = [x for x in label_data if x > 0]
+            pred_data = [x for x in pred_data if x > 0]
+        
+        # Get quantiles for both datasets
+        label_data = np.sort(label_data)
+        pred_data = np.sort(pred_data)
+        
+        # Determine number of quantiles to use (minimum to avoid extrapolation)
+        n_quantiles = min(len(label_data), len(pred_data))
+        
+        if n_quantiles < 10:
+            logger.warning(f"Not enough data points for QQ plot: {n_quantiles} points")
+            return
+        
+        quantiles = np.linspace(0, 1, n_quantiles)[1:-1]  # Exclude 0 and 1 quantiles
+        
+        label_quantiles = np.quantile(label_data, quantiles)
+        pred_quantiles = np.quantile(pred_data, quantiles)
+        
+        # Create QQ plot
+        plt.figure(figsize=(8, 8))
+        
+        # Plot the quantiles
+        if log_scale:
+            plt.loglog(label_quantiles, pred_quantiles, 'o', markersize=4)
+            
+            # Add reference line (y=x) in log-log space
+            min_val = min(min(label_quantiles), min(pred_quantiles))
+            max_val = max(max(label_quantiles), max(pred_quantiles))
+            ref_line = np.logspace(np.log10(min_val), np.log10(max_val), 100)
+            plt.loglog(ref_line, ref_line, 'r--', alpha=0.7)
+        else:
+            plt.plot(label_quantiles, pred_quantiles, 'o', markersize=4)
+            
+            # Add reference line (y=x)
+            min_val = min(min(label_quantiles), min(pred_quantiles))
+            max_val = max(max(label_quantiles), max(pred_quantiles))
+            ref_line = np.linspace(min_val, max_val, 100)
+            plt.plot(ref_line, ref_line, 'r--', alpha=0.7)
+        
+        plt.grid(True, alpha=0.3)
+        plt.title(title)
+        plt.xlabel(f'Label Quantiles ({self.label_split})')
+        plt.ylabel(f'Prediction Quantiles ({self.pred_split})')
+        
+        # Add annotation explaining interpretation
+        plt.figtext(0.05, 0.01, 
+                   "Points along reference line indicate similar distributions.\n"
+                   "Deviations suggest distributional differences.",
+                   fontsize=8)
+        
+        plt.tight_layout()
+        plt.savefig(save_path)
+        plt.close()
+        logger.info(f"QQ plot saved to {save_path}")
 
     def plot_event_type_distribution(self, label_types: List[int], pred_types: List[int], filename: str = "comparison_event_type_dist.png"):
         """
@@ -130,6 +208,44 @@ class Evaluation:
         plt.savefig(filepath)
         plt.close()
         logger.info(f"Event type distribution comparison plot saved to {filepath}")
+        
+        # Create QQ plot for event types
+        # Since event types are discrete, we need to work with counts/frequencies
+        label_counts = pd.Series(label_types).value_counts(normalize=True).sort_index()
+        pred_counts = pd.Series(pred_types).value_counts(normalize=True).sort_index()
+        
+        # Ensure all event types are represented in both counts
+        all_types = sorted(set(label_counts.index) | set(pred_counts.index))
+        label_props = np.array([label_counts.get(t, 0) for t in all_types])
+        pred_props = np.array([pred_counts.get(t, 0) for t in all_types])
+        
+        # Create QQ plot for event type proportions
+        plt.figure(figsize=(8, 8))
+        plt.plot(label_props, pred_props, 'o', markersize=6)
+        
+        # Add reference line (y=x)
+        max_prop = max(max(label_props), max(pred_props))
+        ref_line = np.linspace(0, max_prop, 100)
+        plt.plot(ref_line, ref_line, 'r--', alpha=0.7)
+        
+        # Add event type labels
+        for i, event_type in enumerate(all_types):
+            plt.annotate(str(event_type), (label_props[i], pred_props[i]), 
+                        textcoords="offset points", xytext=(0,5), ha='center')
+        
+        plt.grid(True, alpha=0.3)
+        plt.title(f'QQ Plot: Event Type Proportions (Label vs Prediction)')
+        plt.xlabel(f'Label Proportions ({self.label_split})')
+        plt.ylabel(f'Prediction Proportions ({self.pred_split})')
+        
+        # Ensure same scale on both axes
+        plt.axis('equal')
+        
+        plt.tight_layout()
+        qq_filepath = os.path.join(self.output_dir, "qq_event_types.png")
+        plt.savefig(qq_filepath)
+        plt.close()
+        logger.info(f"Event type QQ plot saved to {qq_filepath}")
 
     def plot_sequence_length_distribution(self, label_lengths: List[int], pred_lengths: List[int], filename: str = "comparison_sequence_length_dist.png"):
         """
@@ -157,6 +273,15 @@ class Evaluation:
         plt.savefig(filepath)
         plt.close()
         logger.info(f"Sequence length distribution comparison plot saved to {filepath}")
+        
+        # Add QQ plot for sequence lengths
+        self._create_qq_plot(
+            label_lengths, 
+            pred_lengths, 
+            f'QQ Plot: Sequence Lengths (Label vs Prediction)',
+            os.path.join(self.output_dir, "qq_sequence_lengths.png"),
+            log_scale=False
+        )
 
     def run_evaluation(self) -> Dict[str, float]:
         """

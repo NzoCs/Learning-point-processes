@@ -26,7 +26,7 @@ class EvaluationConfig(Config):
         self.data_specs = kwargs.get("data_specs", {})
         self.label_split = kwargs.get("label_split", "test")
         self.pred_split = kwargs.get("pred_split", "test")
-        self.batch_size = kwargs.get("batch_size", 1)
+        self.batch_size = kwargs.get("batch_size", 32)
         
         for key, value in kwargs.items():
             if not hasattr(self, key):
@@ -42,7 +42,7 @@ class EvaluationConfig(Config):
         """
         config_dict = {
             "mode": self.mode,
-            "true_data_config": self.true_data_config,
+            "true_data_config": self.pred_data_config,
             "pred_data_config": self.pred_data_config,
             "data_specs": self.data_specs,
             "label_split": self.label_split,
@@ -54,7 +54,7 @@ class EvaluationConfig(Config):
             if key not in config_dict:
                 config_dict[key] = value
                 
-        return OmegaConf.create(config_dict)
+        return config_dict
     
     @staticmethod
     def parse_from_yaml_config(yaml_config, **kwargs):
@@ -67,13 +67,12 @@ class EvaluationConfig(Config):
         Returns:
             EvaluatorConfig: Config class for evaluation.
         """
-        config_dict = OmegaConf.to_container(yaml_config, resolve=True)
-        
+
         # Override with kwargs
         for key, value in kwargs.items():
-            config_dict[key] = value
+            yaml_config[key] = value
             
-        return EvaluationConfig(**config_dict)
+        return EvaluationConfig(**yaml_config)
     
     def copy(self):
         """Get a same and freely modifiable copy of self.

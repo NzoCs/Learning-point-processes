@@ -26,6 +26,7 @@ def main():
     
     plrunner.train()
     
+    plrunner.test()
     
 if __name__ == '__main__' :
     main()

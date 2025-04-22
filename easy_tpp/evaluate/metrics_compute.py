@@ -102,9 +102,7 @@ class MetricsCompute:
         elif len(batch) >= 5:
             true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask, attention_mask = batch
         else:
-            true_time_seqs, true_time_delta_seqs, true_type_seqs = batch[:3]
-            batch_non_pad_mask = (true_type_seqs != self.num_event_types).float()
-            attention_mask = self._create_attention_mask(batch_non_pad_mask)
+            raise ValueError("Batch values must contain at least 5 elements for prediction mode.")
         
         # Extraction des prédictions
         pred_time_delta_seqs, pred_type_seqs = pred[:2]

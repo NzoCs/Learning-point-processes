@@ -15,14 +15,7 @@ class TrainerConfig:
         """Detect available hardware and return appropriate device settings."""
         if torch.cuda.is_available():
             return torch.cuda.device_count()
-        return "auto"  # Use CPU
-    
-    @staticmethod
-    def generate_random_name():
-        """Generate a random funny name for the experiment."""
-        adjectives = ['happy', 'sleepy', 'grumpy', 'dancing', 'jumping', 'flying', 'mysterious']
-        animals = ['panda', 'koala', 'penguin', 'octopus', 'unicorn', 'dragon', 'platypus']
-        return f"{random.choice(adjectives)}_{random.choice(animals)}_{random.randint(1, 999)}"
+        return -1  # Use CPU
     
     def __init__(self, **kwargs):
         
@@ -43,15 +36,20 @@ class TrainerConfig:
         self.dataset_id = kwargs.get('dataset_id')
         self.model_id = kwargs.get('model_id')
         
+        checkpoint_dir = kwargs.get('checkpoint_dir', None)
         # Setup save directories with random names
-        save_dir = kwargs.get('save_dir', f"./{self.model_id}/{self.dataset_id}/")
-        experiment_id = kwargs.get('experiment_id')
-        
-        if experiment_id is None:
-            experiment_id = self.generate_random_name()
+        if checkpoint_dir is None:
+            ckpt = "checkpoints"
+        else : 
+            ckpt = checkpoint_dir
             
-        dirpath = os.path.join(save_dir, experiment_id)
-        os.makedirs(dirpath, exist_ok=True)
+        dirpath = kwargs.get('save_dir', f"./{ckpt}/{self.model_id}/{self.dataset_id}/")
+
+        if self.stage == 'train':
+            os.makedirs(dirpath, exist_ok=True)
+        else: #stage == 'test'
+            if not os.path.exists(dirpath):
+                raise ValueError(f"Checkpoint directory {dirpath} does not exist. Please train the model first.")
             
         logger_config = kwargs.get("logger_config", {})
         

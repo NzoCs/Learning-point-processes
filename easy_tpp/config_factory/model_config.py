@@ -383,6 +383,8 @@ class ModelConfig(Config):
         self.use_mc_samples = kwargs.get('use_mc_samples', True)  # if using MC samples in computing log-likelihood
         
         self.device = kwargs.get('device', 'cuda' if self.gpu >= 0 else 'cpu')
+
+        self.compute_simulation_metrics = kwargs.get('compute_simulation_metrics', False)
         
         self.thinning = ThinningConfig.parse_from_yaml_config(kwargs.get('thinning', {}))
         

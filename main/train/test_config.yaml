@@ -72,7 +72,7 @@ data:
       pad_token_id: 1
       padding_side: left
 
-#mettre les save_dir pour reprendre a un point de sauvegarde
+checkpoints_dir: checkpoints
 
 NHP_test:
 
@@ -96,8 +96,6 @@ NHP_test:
 
   trainer_config:
     stage: test
-    max_epochs: 100
-    val_freq: 10
     logger_config:
       type: tensorboard
       name: logs

@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --output=logs/train_%A_%a.out
-#SBATCH --error=logs/train_%A_%a.err
+#SBATCH --output=err_logs/test_%A_%a.out
+#SBATCH --error=err_logs/test_%A_%a.err
 #SBATCH --partition=gpua100
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1

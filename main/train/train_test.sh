@@ -17,7 +17,7 @@ module purge
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
-experiments=(FullyNN_train IntensityFree_train)
+experiments=(FullyNN_train)
 datasets=(test)
 
 # Mapping index → combinaison

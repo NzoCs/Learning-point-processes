@@ -32,6 +32,7 @@ class BaseModel(pl.LightningModule, ABC):
         base_config = model_config.base_config
         model_specs = model_config.specs
         
+        self.compute_simulation_metrics = model_config.compute_simulation_metrics
         self.lr = base_config.lr
         self.lr_scheduler = base_config.lr_scheduler
         self.max_epochs = base_config.max_epochs
@@ -56,7 +57,6 @@ class BaseModel(pl.LightningModule, ABC):
 
         #Paramètre de la génération de données
         gen_config = model_config.thinning
-        self.event_sampler = None
         self.use_mc_samples = model_config.use_mc_samples
         self._device = model_config.device
         self.num_step_gen = gen_config.num_steps
@@ -340,7 +340,8 @@ class BaseModel(pl.LightningModule, ABC):
         
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss/num_events
-        
+        self.log('test_loss', avg_loss.item(), prog_bar=True, sync_dist=True)
+
         # Compute some prediction metrics
         pred = self.predict_one_step_at_every_event(batch)
         
@@ -351,31 +352,27 @@ class BaseModel(pl.LightningModule, ABC):
         one_step_metrics = one_step_metrics_compute.compute_all_metrics(
             batch = label_batch,
             pred = pred)
-
-        # Compute simulation metrics
-        simulation = self.simulate(
-            batch = batch
-        )
-        simulation_metrics_compute = MetricsCompute(
-            num_event_types = self.num_event_types,
-            mode = EvaluationMode.SIMULATION
-            )
-        simulation_metrics = simulation_metrics_compute.compute_all_metrics(
-            batch = label_batch,
-            pred = simulation
-        )
-        
-        self.log('test_loss', avg_loss.item(), prog_bar=True, sync_dist=True)
-        
         for key in one_step_metrics : 
-            
             self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
-        
-        for key in simulation_metrics :
-            self.log(f"{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
+
+        if self.compute_simulation_metrics:
+            # Compute simulation metrics
+            simulation = self.simulate(
+                batch = batch
+            )
+            simulation_metrics_compute = MetricsCompute(
+                num_event_types = self.num_event_types,
+                mode = EvaluationMode.SIMULATION
+                )
+            simulation_metrics = simulation_metrics_compute.compute_all_metrics(
+                batch = label_batch,
+                pred = simulation
+            )
+            for key in simulation_metrics :
+                self.log(f"{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
         
         return avg_loss
-    
+     
 
     def predict_one_step_at_every_event(
         self,

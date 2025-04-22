@@ -1,29 +1,0 @@
-GPU available: True (cuda), used: True
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.
-Generating train split:   0%|          | 0/9000 [00:00<?, ? examples/s]Generating train split: 100%|██████████| 9000/9000 [00:00<00:00, 72297.17 examples/s]
-Generating test split:   0%|          | 0/3000 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 3000/3000 [00:00<00:00, 44735.43 examples/s]
-Generating validation split:   0%|          | 0/3000 [00:00<?, ? examples/s]Generating validation split: 100%|██████████| 3000/3000 [00:00<00:00, 35013.32 examples/s]
-INFO:easy_tpp.preprocess.data_loader:Train dataset created with 9000 sequences
-INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 3000 sequences
-LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-
-  | Name                    | Type                   | Params | Mode 
----------------------------------------------------------------------------
-0 | layer_type_emb          | Embedding              | 192    | train
-1 | event_sampler           | EventSampler           | 0      | train
-2 | layer_temporal_encoding | TimePositionalEncoding | 0      | train
-3 | layer_intensity_hidden  | Linear                 | 130    | train
-4 | softplus                | ScaledSoftplus         | 2      | train
-5 | feed_forward            | Sequential             | 16.6 K | train
-6 | stack_layers            | ModuleList             | 41.5 K | train
----------------------------------------------------------------------------
-41.9 K    Trainable params
-0         Non-trainable params
-41.9 K    Total params
-0.167     Total estimated model params size (MB)
-24        Modules in train mode
-0         Modules in eval mode
-SLURM auto-requeueing enabled. Setting signal handlers.
-`Trainer.fit` stopped: `max_epochs=600` reached.

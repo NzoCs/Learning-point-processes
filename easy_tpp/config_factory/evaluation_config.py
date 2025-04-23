@@ -1,9 +1,10 @@
 from copy import deepcopy
-from omegaconf import OmegaConf
-from typing import Dict, Any
+import os
 
 from easy_tpp.config_factory.config import Config
 from easy_tpp.utils import logger
+
+
 
 @Config.register('evaluation_config')
 class EvaluationConfig(Config):
@@ -14,6 +15,7 @@ class EvaluationConfig(Config):
         Args:
             **kwargs: Configuration options including:
                 - mode: Evaluation mode ("prediction" or "simulation")
+                - output_dir: Directory for output files
                 - true_data_config: Configuration for ground truth data
                 - pred_data_config: Configuration for prediction data
                 - data_specs: Specifications for the dataset
@@ -21,12 +23,14 @@ class EvaluationConfig(Config):
                 - pred_split: Data split for predictions (e.g., "test")
         """
         self.mode = kwargs.get("mode", "prediction")
+        self.output_dir = kwargs.get("output_dir", "./eval_output")
+        os.makedirs(self.output_dir, exist_ok=True)
         self.label_data_config = kwargs.get("label_data_config", {})
         self.pred_data_config = kwargs.get("pred_data_config", {})
         self.data_specs = kwargs.get("data_specs", {})
         self.label_split = kwargs.get("label_split", "test")
-        self.pred_split = kwargs.get("pred_split", "test")
-        self.batch_size = kwargs.get("batch_size", 32)
+        self.pred_split = kwargs.get("pred_split", None)
+        self.data_loading_specs = kwargs.get("data_loading_specs", {})
         
         for key, value in kwargs.items():
             if not hasattr(self, key):
@@ -68,11 +72,14 @@ class EvaluationConfig(Config):
             EvaluatorConfig: Config class for evaluation.
         """
 
-        # Override with kwargs
-        for key, value in kwargs.items():
-            yaml_config[key] = value
-            
-        return EvaluationConfig(**yaml_config)
+        experiment_id = kwargs.get('experiment_id')
+        if experiment_id is not None : 
+            exp_yaml_config = yaml_config[experiment_id]
+            exp_yaml_config['exp_id'] = experiment_id
+        else:
+            exp_yaml_config = yaml_config
+        
+        return EvaluationConfig(**exp_yaml_config)
     
     def copy(self):
         """Get a same and freely modifiable copy of self.

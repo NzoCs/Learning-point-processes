@@ -8,7 +8,7 @@ class TokenizerConfig(Config):
         """
         
         self.num_event_types = kwargs.get('num_event_types')
-        self.pad_token_id = kwargs.get('pad_token_id')
+        self.pad_token_id = kwargs.get('pad_token_id', self.num_event_types)
         self.padding_side = kwargs.get('padding_side', 'left')
         self.truncation_side = kwargs.get('truncation_side', 'left')
         self.padding_strategy = kwargs.get('padding_strategy', 'longest')
@@ -18,6 +18,7 @@ class TokenizerConfig(Config):
             self.num_event_types_pad = self.num_event_types + 1
         except:
             self.num_event_types_pad = None
+
         self.model_input_names = kwargs.get('model_input_names')
 
         if self.padding_side is not None and self.padding_side not in ["right", "left"]:
@@ -110,20 +111,7 @@ class DataLoadingSpecsConfig(Config):
         
         
         self.batch_size = kwargs.get('batch_size', 32)
-        
-        # Automatically set num_workers based on CPU count if not explicitly provided
-        if 'num_workers' in kwargs:
-            self.num_workers = kwargs['num_workers']
-        else:
-            try:
-                # Use CPU count with a small margin to avoid overloading
-                cpu_count = multiprocessing.cpu_count()
-                # Common practice is to use CPU count - 1 to leave one core for other processes
-                self.num_workers = max(1, cpu_count - 1)
-            except:
-                # Fallback to a safe default if CPU count cannot be determined
-                self.num_workers = 0
-        
+        self.num_workers = kwargs.get('num_workers', 1)
         self.shuffle = kwargs.get('shuffle', None)
         self.padding = kwargs.get('padding', None)
         self.truncation = kwargs.get('truncation', None)
@@ -267,16 +255,17 @@ class DataConfig(Config):
             data_specs=self.data_specs
         )
 
-    def get_data_dir(self, split):
+    def get_data_dir(self, split = None):
         """Get the dir of the source raw data.
 
         Args:
-            split (str): dataset split notation, 'train', 'dev' or 'valid', 'test'.
+            split (str): dataset split notation, 'train', 'dev' or 'valid', 'test' or None if the dataset does not have a split,
+            then the config must have a source dir.
 
         Returns:
             str: dir of the source raw data file.
         """
-        try:
+        if split in ['train', 'dev', 'valid', 'test']:
             split = split.lower()
             if split == 'train':
                 return self.train_dir
@@ -284,6 +273,10 @@ class DataConfig(Config):
                 return self.valid_dir
             else:
                 return self.test_dir
-        except:
-            return self.source_dir
+        if split is None:
+            if self.source_dir is None:
+                raise ValueError("The dataset does not have a split, please provide the source dir.")
+        else:
+            raise ValueError(f"Unknown split: {split}. Please provide a valid split name.")    
+            
 

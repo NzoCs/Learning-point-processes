@@ -17,7 +17,8 @@ class Visualizer:
         self,
         data_module: TPPDataModule,
         split: Optional[str] = 'test',
-        save_dir: Optional[str] = None
+        save_dir: Optional[str] = None,
+        dataset_size: Optional[int] = 10**4,
     ):
         self.data_module = data_module
         self.num_event_types = data_module.num_event_types
@@ -33,10 +34,20 @@ class Visualizer:
         data_format = data_module.data_config.data_format
         self.data = self.data_module.build_input(source_dir=data_dir, data_format=data_format, split=split)
 
-        self.all_event_types = [event for seq in self.data['type_seqs'] for event in seq]
-
-        # Calculate time_delta_seqs statistics
-        self.all_time_deltas = [delta for seq in self.data['time_delta_seqs'] for delta in seq]
+        self.all_event_types = []
+        self.all_time_deltas = []
+        # Preprocess the data to extract all event types and time deltas
+        i=0
+        for time_seq, type_seq  in zip(self.data['type_seqs'], self.data['time_delta_seqs']):
+            for event, time in zip(type_seq, time_seq):
+                self.all_event_types.append(event)
+                self.all_time_deltas.append(time)
+                i += 1
+                if i >= dataset_size:
+                    break
+                
+        self.all_event_types = np.array(self.all_event_types)
+        self.all_time_deltas = np.array(self.all_time_deltas)
 
         if save_dir is None:
             parent_dir = os.path.dirname(data_dir)

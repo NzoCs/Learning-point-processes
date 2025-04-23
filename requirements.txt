@@ -16,3 +16,4 @@ tensorboard
 tqdm
 fastdtw
 datasets
+polars

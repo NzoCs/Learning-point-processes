@@ -1,53 +1,13 @@
 pipeline_config_id: evaluation_config
-
-# Compare original Hawkes2 vs simulated Hawkes2
-hawkes2_comparison:
-  mode: simulation
-  label_data_config:
-    data_format: json
-    train_dir: NzoCs/hawkes2-temporal-dataset
-    valid_dir: NzoCs/hawkes2-temporal-dataset
-    test_dir: NzoCs/hawkes2-temporal-dataset
-  pred_data_config:
-    data_format: json
-    train_dir: NzoCs/hawkes2-simulated-dataset
-    valid_dir: NzoCs/hawkes2-simulated-dataset
-    test_dir: NzoCs/hawkes2-simulated-dataset
-  data_specs:
-    num_event_types: 2
-  label_split: test
-  pred_split: test
-  batch_size: 32
-  output_dir: ../results/evaluation/hawkes2_comparison
-
-# Compare original H2expi vs simulated H2expi  
-H2expi_comparison:
-  mode: simulation
-  label_data_config:
-    data_format: json
-    train_dir: NzoCs/H2expi-temporal-dataset
-    valid_dir: NzoCs/H2expi-temporal-dataset
-    test_dir: NzoCs/H2expi-temporal-dataset
-  pred_data_config:
-    data_format: json
-    train_dir: NzoCs/H2expi-simulated-dataset
-    valid_dir: NzoCs/H2expi-simulated-dataset
-    test_dir: NzoCs/H2expi-simulated-dataset
-  data_specs:
-    num_event_types: 2
-  label_split: test
-  pred_split: test
-  batch_size: 32
-  output_dir: ../results/evaluation/H2expi_comparison
-
 # Compare H2expi vs H2expc
 H2expi_vs_H2expc:
-  mode: simulation
+
   label_data_config:
     data_format: json
     train_dir: NzoCs/H2expi-temporal-dataset
     valid_dir: NzoCs/H2expi-temporal-dataset
     test_dir: NzoCs/H2expi-temporal-dataset
+
   pred_data_config:
     data_format: json
     train_dir: NzoCs/H2expc-temporal-dataset
@@ -55,27 +15,7 @@ H2expi_vs_H2expc:
     test_dir: NzoCs/H2expc-temporal-dataset
   data_specs:
     num_event_types: 2
+    
   label_split: test
   pred_split: test
-  batch_size: 32
-  output_dir: ../results/evaluation/H2expi_vs_H2expc
-
-# Example of local dataset comparison
-local_dataset_comparison:
-  mode: simulation
-  label_data_config:
-    data_format: json
-    train_dir: ../data/real_dataset
-    valid_dir: ../data/real_dataset
-    test_dir: ../data/real_dataset
-  pred_data_config:
-    data_format: json
-    train_dir: ../data/simulated_dataset
-    valid_dir: ../data/simulated_dataset
-    test_dir: ../data/simulated_dataset
-  data_specs:
-    num_event_types: 2
-  label_split: test
-  pred_split: test
-  batch_size: 32
-  output_dir: ../results/evaluation/local_comparison
+  output_dir: ./H2expi_vs_H2expc

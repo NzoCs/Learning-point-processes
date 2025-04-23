@@ -124,7 +124,7 @@ class TPPDataModule(pl.LightningDataModule):
             stage (str): 'fit', 'validate', 'test', or 'predict'
         """
         # Set up datasets for training and validation
-        if stage == 'fit' or stage is None:
+        if stage == 'fit':
             train_data_dir = self.data_config.get_data_dir('train')
             self.train_data = self.build_input(train_data_dir, self.data_config.data_format, 'train')
             self.train_dataset = TPPDataset(self.train_data)
@@ -136,7 +136,7 @@ class TPPDataModule(pl.LightningDataModule):
             logger.info(f"Validation dataset created with {len(self.val_dataset)} sequences")
         
         # Set up dataset for testing
-        if stage == 'test' or stage is None:
+        if stage == 'test':
             test_data_dir = self.data_config.get_data_dir('test')
             self.test_data = self.build_input(test_data_dir, self.data_config.data_format, 'test')
             self.test_dataset = TPPDataset(self.test_data)
@@ -147,7 +147,13 @@ class TPPDataModule(pl.LightningDataModule):
                 test_data_dir = self.data_config.get_data_dir('test')
                 self.predict_data = self.build_input(test_data_dir, self.data_config.data_format, 'test')
             self.predict_dataset = TPPDataset(self.predict_data)
-
+        
+        if stage is None :
+            logger.info("No stage specified, loading all data")
+            data_dir = self.data_config.get_data_dir()
+            self.data = self.build_input(data_dir, self.data_config.data_format, split=None)
+            self.dataset = TPPDataset(self.data)
+            
     def train_dataloader(self):
         """Return the training data loader.
         

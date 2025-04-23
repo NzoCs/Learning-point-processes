@@ -11,10 +11,12 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from collections import Counter
 
 class Evaluation:
     
-    def __init__(self, evaluator_config: EvaluationConfig):
+    def __init__(self, evaluator_config: EvaluationConfig, dataset_size: int = 10**4):
+
         """
         Initialize the evaluator for simulation comparison.
         
@@ -22,21 +24,18 @@ class Evaluation:
             evaluator_config: Configuration for the evaluator
         """
         self.config = evaluator_config
-        self.mode = EvaluationMode.SIMULATION  # Hardcode mode to SIMULATION
-        
-        # Ensure output directory exists
-        self.output_dir = evaluator_config.get('output_dir', 'evaluation_results')
-        os.makedirs(self.output_dir, exist_ok=True)
-        logger.info(f"Evaluation results will be saved to: {self.output_dir}")
 
         # Initialize DataModules first
         label_data_config_dict = evaluator_config.label_data_config
         pred_data_config_dict = evaluator_config.pred_data_config
         data_specs_dict = evaluator_config.data_specs
         
+        self.num_event_types = data_specs_dict['num_event_types']
         # Ensure data_specs is included in data configs
         label_data_config_dict['data_specs'] = data_specs_dict
         pred_data_config_dict['data_specs'] = data_specs_dict
+        label_data_config_dict["data_loading_specs"] = evaluator_config.data_loading_specs
+        pred_data_config_dict["data_loading_specs"] = evaluator_config.data_loading_specs
         
         label_data_config = DataConfig(**label_data_config_dict)
         pred_data_config = DataConfig(**pred_data_config_dict)
@@ -44,59 +43,120 @@ class Evaluation:
         self.label_split = evaluator_config.label_split
         self.pred_split = evaluator_config.pred_split
         
-        self.label_loader_setup = TPPDataModule(label_data_config, batch_size = evaluator_config.batch_size)
-        self.pred_loader_setup = TPPDataModule(pred_data_config, batch_size = evaluator_config.batch_size)
+        self.label_loader_setup = TPPDataModule(label_data_config)
+        self.pred_loader_setup = TPPDataModule(pred_data_config)
 
-        # Initialize Visualizers using the DataModules
-        logger.info("Initializing Label Visualizer...")
-        self.label_visualizer = Visualizer(
-            data_module=self.label_loader_setup, 
-            split=self.label_split, 
-            save_dir=os.path.join(self.output_dir, 'label_data_visuals')
-        )
-        logger.info("Initializing Prediction Visualizer...")
-        self.pred_visualizer = Visualizer(
-            data_module=self.pred_loader_setup, 
-            split=self.pred_split, 
-            save_dir=os.path.join(self.output_dir, 'pred_data_visuals')
-        )
-
-        # Get num_event_types from one of the visualizers
-        self.num_event_types = self.label_visualizer.num_event_types
-
-        logger.info(f"Evaluator initialized in {self.mode.value} mode")
+        self.label_loader_setup.setup(stage=evaluator_config.label_split)
+        self.pred_loader_setup.setup(stage=evaluator_config.pred_split)
         
-        # Initialize available metrics based on mode
-        self._initialize_metrics()
-
-    def _initialize_metrics(self):
-        """
-        Initialize the available metrics for SIMULATION mode.
-        """
-        # Always initialize for SIMULATION mode
-        self.evaluator = MetricsCompute(mode=EvaluationMode.SIMULATION, num_event_types=self.num_event_types)
+        # Create output directory for saving plots
+        self.output_dir = evaluator_config.output_dir
         
-        self.available_metrics = self.evaluator.get_available_metrics() if hasattr(self.evaluator, 'get_available_metrics') else []
-        logger.info(f"Available metrics in {self.mode.value} mode: {self.available_metrics}")
+        # Load data
+        label_source_dir = label_data_config.get_data_dir(split=self.label_split)
+        pred_source_dir = pred_data_config.get_data_dir(split=self.pred_split)
+        label_data_format = label_data_config.data_format
+        pred_data_format = pred_data_config.data_format
+        self.label_data = self.label_loader_setup.build_input(source_dir=label_source_dir, split=self.label_split, data_format=label_data_format)
+        self.pred_data = self.pred_loader_setup.build_input(source_dir=pred_source_dir, split=self.pred_split, data_format=pred_data_format)
 
-    def plot_inter_event_time_distribution(self, label_times: List[float], pred_times: List[float], filename: str = "comparison_inter_event_time_dist.png"):
+        label_all_event_types = []
+        label_all_time_deltas = []
+        pred_all_event_types = []
+        pred_all_time_deltas = []
+        
+        # Preprocess the data to extract all event types and time deltas
+        i = 0
+        for seq_idx in range(min(len(self.label_data['type_seqs']), len(self.pred_data['type_seqs']))):
+            label_type_seq = self.label_data['type_seqs'][seq_idx]
+            label_time_seq = self.label_data['time_delta_seqs'][seq_idx]
+            pred_type_seq = self.pred_data['type_seqs'][seq_idx]
+            pred_time_seq = self.pred_data['time_delta_seqs'][seq_idx]
+            
+            # Process events within each sequence separately without requiring matching indices
+            # First process label sequence
+            for idx in range(len(label_type_seq)):
+                label_all_event_types.append(label_type_seq[idx])
+                label_all_time_deltas.append(label_time_seq[idx])
+                i += 1
+                if i >= dataset_size:
+                    break
+            
+            # Then process prediction sequence
+            for idx in range(len(pred_type_seq)):
+                pred_all_event_types.append(pred_type_seq[idx])
+                pred_all_time_deltas.append(pred_time_seq[idx])
+                
+            if i >= dataset_size:
+                break
+                
+        # Ensure we respect the dataset_size limit for both datasets
+        self.label_all_event_types = np.array(label_all_event_types[:dataset_size])
+        self.label_all_time_deltas = np.array(label_all_time_deltas[:dataset_size])
+        self.pred_all_event_types = np.array(pred_all_event_types[:len(self.label_all_event_types)])
+        self.pred_all_time_deltas = np.array(pred_all_time_deltas[:len(self.label_all_time_deltas)])
+        
+        logger.info(f"Collected {len(self.label_all_event_types)} label events and {len(self.pred_all_event_types)} prediction events for comparison")
+    
+    def plot_inter_event_time_distribution(self, label_times: np.ndarray, pred_times: np.ndarray, filename: str = "comparison_inter_event_time_dist.png"):
         """
         Plots and saves the superimposed distribution of inter-event times.
-        Accepts raw time delta lists as input.
+        Accepts raw time delta arrays as input.
         """
+        # Set the Seaborn style and context
+        sns.set_theme(style="whitegrid")
 
         # Main distribution plot
         plt.figure(figsize=(10, 6))
-        sns.kdeplot(label_times, label=f'Label ({self.label_split})', fill=True, common_norm=False, log_scale=True, cut=0)
-        sns.kdeplot(pred_times, label=f'Prediction ({self.pred_split})', fill=True, common_norm=False, log_scale=True, cut=0)
+        
+        # Use Seaborn's histplot or kdeplot for better aesthetics
+        if label_times.size > 0 and pred_times.size > 0:
+            # Convert to numpy arrays if not already
+            label_times_array = np.asarray(label_times)
+            pred_times_array = np.asarray(pred_times)
+            
+            # Add histograms with KDE
+            sns.histplot(label_times_array, label=f'Label ({self.label_split})', kde=True, 
+                      alpha=0.6, log_scale=True, color='royalblue')
+            sns.histplot(pred_times_array, label=f'Prediction ({self.pred_split})', kde=True, 
+                      alpha=0.6, log_scale=True, color='crimson')
+            
+            # Calculate statistics using vectorized operations
+            label_mean = np.mean(label_times_array)
+            label_median = np.median(label_times_array)
+            label_std = np.std(label_times_array)
+            
+            pred_mean = np.mean(pred_times_array)
+            pred_median = np.median(pred_times_array)
+            pred_std = np.std(pred_times_array)
+            
+            # Add statistics to the plot as annotations
+            label_stats = (f"Label Stats:\n"
+                         f"Mean: {label_mean:.4f}\n"
+                         f"Median: {label_median:.4f}\n"
+                         f"Std Dev: {label_std:.4f}")
+            
+            pred_stats = (f"Prediction Stats:\n"
+                        f"Mean: {pred_mean:.4f}\n"
+                        f"Median: {pred_median:.4f}\n"
+                        f"Std Dev: {pred_std:.4f}")
+            
+            # Position text for label stats at top left
+            plt.annotate(label_stats, xy=(0.05, 0.95), xycoords='axes fraction',
+                      va='top', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
+            
+            # Position text for prediction stats at top right
+            plt.annotate(pred_stats, xy=(0.95, 0.95), xycoords='axes fraction',
+                      va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
+        
         plt.title('Comparison of Inter-Event Time Distributions (Log Scale)')
         plt.xlabel('Time Since Last Event (Log Scale)')
-        plt.ylabel('Density')
+        plt.ylabel('Frequency')
         plt.legend()
         plt.tight_layout()
         
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(filepath)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
         plt.close()
         logger.info(f"Inter-event time distribution comparison plot saved to {filepath}")
         
@@ -109,7 +169,7 @@ class Evaluation:
             log_scale=True
         )
 
-    def _create_qq_plot(self, label_data: List, pred_data: List, title: str, save_path: str, log_scale: bool = False):
+    def _create_qq_plot(self, label_data: np.ndarray, pred_data: np.ndarray, title: str, save_path: str, log_scale: bool = False):
         """
         Creates and saves a QQ plot comparing label and prediction distributions.
         
@@ -120,14 +180,27 @@ class Evaluation:
             save_path: Path to save the plot
             log_scale: Whether to use log scale for the axes
         """
-        # Filter out non-positive values if using log scale
-        if log_scale:
-            label_data = [x for x in label_data if x > 0]
-            pred_data = [x for x in pred_data if x > 0]
+        # Set the Seaborn style and context
+        sns.set_theme(style="whitegrid")
         
-        # Get quantiles for both datasets
-        label_data = np.sort(label_data)
-        pred_data = np.sort(pred_data)
+        # Convert inputs to numpy arrays if they aren't already
+        label_data = np.asarray(label_data)
+        pred_data = np.asarray(pred_data)
+        
+        # Filter out non-positive values if using log scale - use vectorized operations
+        if log_scale:
+            label_data = label_data[label_data > 0]
+            pred_data = pred_data[pred_data > 0]
+        
+        # Skip if empty arrays
+        if len(label_data) == 0 or len(pred_data) == 0:
+            logger.warning(f"Empty arrays after filtering: label_data={len(label_data)}, pred_data={len(pred_data)}")
+            return
+            
+        # Get quantiles using vectorized operations
+        # Sort the arrays in-place for better memory efficiency
+        label_data.sort()
+        pred_data.sort()
         
         # Determine number of quantiles to use (minimum to avoid extrapolation)
         n_quantiles = min(len(label_data), len(pred_data))
@@ -136,8 +209,10 @@ class Evaluation:
             logger.warning(f"Not enough data points for QQ plot: {n_quantiles} points")
             return
         
-        quantiles = np.linspace(0, 1, n_quantiles)[1:-1]  # Exclude 0 and 1 quantiles
+        # Create evenly spaced quantiles, avoiding 0 and 1 to prevent infinity issues with some distributions
+        quantiles = np.linspace(0.01, 0.99, min(100, n_quantiles))
         
+        # Compute quantiles efficiently using vectorized numpy functions
         label_quantiles = np.quantile(label_data, quantiles)
         pred_quantiles = np.quantile(pred_data, quantiles)
         
@@ -146,131 +221,185 @@ class Evaluation:
         
         # Plot the quantiles
         if log_scale:
-            plt.loglog(label_quantiles, pred_quantiles, 'o', markersize=4)
+            plt.loglog(label_quantiles, pred_quantiles, 'o', markersize=4, color='royalblue', alpha=0.7)
             
             # Add reference line (y=x) in log-log space
-            min_val = min(min(label_quantiles), min(pred_quantiles))
-            max_val = max(max(label_quantiles), max(pred_quantiles))
+            min_val = max(min(label_quantiles.min(), pred_quantiles.min()), 1e-10)  # Avoid log(0)
+            max_val = max(label_quantiles.max(), pred_quantiles.max())
             ref_line = np.logspace(np.log10(min_val), np.log10(max_val), 100)
             plt.loglog(ref_line, ref_line, 'r--', alpha=0.7)
         else:
-            plt.plot(label_quantiles, pred_quantiles, 'o', markersize=4)
+            plt.plot(label_quantiles, pred_quantiles, 'o', markersize=4, color='royalblue', alpha=0.7)
             
             # Add reference line (y=x)
-            min_val = min(min(label_quantiles), min(pred_quantiles))
-            max_val = max(max(label_quantiles), max(pred_quantiles))
+            min_val = min(label_quantiles.min(), pred_quantiles.min())
+            max_val = max(label_quantiles.max(), pred_quantiles.max())
             ref_line = np.linspace(min_val, max_val, 100)
             plt.plot(ref_line, ref_line, 'r--', alpha=0.7)
         
         plt.grid(True, alpha=0.3)
-        plt.title(title)
-        plt.xlabel(f'Label Quantiles ({self.label_split})')
-        plt.ylabel(f'Prediction Quantiles ({self.pred_split})')
+        plt.title(title, fontsize=14)
+        plt.xlabel(f'Label Quantiles ({self.label_split})', fontsize=12)
+        plt.ylabel(f'Prediction Quantiles ({self.pred_split})', fontsize=12)
         
-        # Add annotation explaining interpretation
-        plt.figtext(0.05, 0.01, 
-                   "Points along reference line indicate similar distributions.\n"
-                   "Deviations suggest distributional differences.",
-                   fontsize=8)
+        # Add annotation explaining interpretation with a box
+        annotation_text = ("Points along reference line indicate similar distributions.\n"
+                         "Deviations suggest distributional differences.")
+        plt.annotate(annotation_text, xy=(0.05, 0.05), xycoords='axes fraction',
+                   va='bottom', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=9)
         
         plt.tight_layout()
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         logger.info(f"QQ plot saved to {save_path}")
 
-    def plot_event_type_distribution(self, label_types: List[int], pred_types: List[int], filename: str = "comparison_event_type_dist.png"):
+    def plot_event_type_distribution(self, label_types: np.ndarray, pred_types: np.ndarray, filename: str = "comparison_event_type_dist.png"):
         """
         Plots and saves the superimposed distribution of event types.
-        Accepts raw event type lists as input.
+        Accepts raw event type arrays as input.
         """
-        if not label_types or not pred_types:
-            logger.warning("Not enough data to plot event type distribution.")
-            return
+        # Set the Seaborn style and context
+        sns.set_theme(style="whitegrid")
 
-        df_label = pd.DataFrame({'type': label_types, 'source': f'Label ({self.label_split})'})
-        df_pred = pd.DataFrame({'type': pred_types, 'source': f'Prediction ({self.pred_split})'})
-        df_combined = pd.concat([df_label, df_pred])
-
-        plt.figure(figsize=(10, 6))
-        ax = sns.histplot(data=df_combined, x='type', hue='source', multiple='dodge', 
-                          stat='proportion', common_norm=False, discrete=True, shrink=0.8)
+        # Calculate the probability distribution using vectorized operations
+        # Convert to numpy arrays for faster operations
+        label_types = np.asarray(label_types)
+        pred_types = np.asarray(pred_types)
         
-        ax.set_xticks(range(self.num_event_types))
-        ax.set_xticklabels(range(self.num_event_types))
-
-        plt.title('Comparison of Event Type Distributions')
-        plt.xlabel('Event Type')
-        plt.ylabel('Proportion within Source')
-        plt.legend(title='Data Source')
+        # Get all possible event types - use numpy's unique function
+        all_event_types = np.arange(self.num_event_types)
+        
+        # Count occurrences using numpy's bincount (faster than Counter for large arrays)
+        # Ensure the array contains only integers
+        label_types_int = label_types.astype(int)
+        pred_types_int = pred_types.astype(int)
+        
+        # Use bincount with minlength to ensure all event types are counted
+        label_counts = np.bincount(label_types_int, minlength=self.num_event_types)
+        pred_counts = np.bincount(pred_types_int, minlength=self.num_event_types)
+        
+        # Calculate normalized counts (probabilities) using numpy's division
+        label_total = len(label_types)
+        pred_total = len(pred_types)
+        
+        label_probs = label_counts / label_total if label_total > 0 else np.zeros_like(label_counts)
+        pred_probs = pred_counts / pred_total if pred_total > 0 else np.zeros_like(pred_counts)
+        
+        # Create the plot
+        plt.figure(figsize=(10, 6))
+        
+        # Width of bars - slightly offset for better visibility
+        width = 0.35
+        x = np.arange(len(all_event_types))
+        
+        # Plot bars side by side
+        plt.bar(x - width/2, label_probs, width, label=f'Label ({self.label_split})', 
+              color='royalblue', alpha=0.7)
+        plt.bar(x + width/2, pred_probs, width, label=f'Prediction ({self.pred_split})', 
+              color='crimson', alpha=0.7)
+        
+        plt.title('Comparison of Event Type Distributions', fontsize=14)
+        plt.xlabel('Event Type', fontsize=12)
+        plt.ylabel('Probability', fontsize=12)
+        plt.grid(axis='y', alpha=0.3)
+        plt.xticks(x, all_event_types)
+        plt.legend(title='Data Source', frameon=True, fancybox=True, shadow=True)
+        
+        # Add statistics for top event types as annotations
+        # Use numpy's argsort to get indices of top event types
+        label_top3_indices = np.argsort(label_probs)[-3:][::-1]  # Get top 3 in descending order
+        pred_top3_indices = np.argsort(pred_probs)[-3:][::-1]
+        
+        # Create formatted statistics strings
+        label_stats = "Label Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {label_probs[i]:.3f}" 
+                                                     for i in label_top3_indices])
+        pred_stats = "Prediction Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {pred_probs[i]:.3f}" 
+                                                         for i in pred_top3_indices])
+        
+        # Position text on left and right sides
+        plt.annotate(label_stats, xy=(0.05, 0.95), xycoords='axes fraction',
+                   va='top', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=10)
+        
+        plt.annotate(pred_stats, xy=(0.95, 0.95), xycoords='axes fraction',
+                   va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=10)
+        
         plt.tight_layout()
         
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(filepath)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
         plt.close()
         logger.info(f"Event type distribution comparison plot saved to {filepath}")
-        
-        # Create QQ plot for event types
-        # Since event types are discrete, we need to work with counts/frequencies
-        label_counts = pd.Series(label_types).value_counts(normalize=True).sort_index()
-        pred_counts = pd.Series(pred_types).value_counts(normalize=True).sort_index()
-        
-        # Ensure all event types are represented in both counts
-        all_types = sorted(set(label_counts.index) | set(pred_counts.index))
-        label_props = np.array([label_counts.get(t, 0) for t in all_types])
-        pred_props = np.array([pred_counts.get(t, 0) for t in all_types])
-        
-        # Create QQ plot for event type proportions
-        plt.figure(figsize=(8, 8))
-        plt.plot(label_props, pred_props, 'o', markersize=6)
-        
-        # Add reference line (y=x)
-        max_prop = max(max(label_props), max(pred_props))
-        ref_line = np.linspace(0, max_prop, 100)
-        plt.plot(ref_line, ref_line, 'r--', alpha=0.7)
-        
-        # Add event type labels
-        for i, event_type in enumerate(all_types):
-            plt.annotate(str(event_type), (label_props[i], pred_props[i]), 
-                        textcoords="offset points", xytext=(0,5), ha='center')
-        
-        plt.grid(True, alpha=0.3)
-        plt.title(f'QQ Plot: Event Type Proportions (Label vs Prediction)')
-        plt.xlabel(f'Label Proportions ({self.label_split})')
-        plt.ylabel(f'Prediction Proportions ({self.pred_split})')
-        
-        # Ensure same scale on both axes
-        plt.axis('equal')
-        
-        plt.tight_layout()
-        qq_filepath = os.path.join(self.output_dir, "qq_event_types.png")
-        plt.savefig(qq_filepath)
-        plt.close()
-        logger.info(f"Event type QQ plot saved to {qq_filepath}")
 
-    def plot_sequence_length_distribution(self, label_lengths: List[int], pred_lengths: List[int], filename: str = "comparison_sequence_length_dist.png"):
+    def plot_sequence_length_distribution(self, label_lengths: np.ndarray, pred_lengths: np.ndarray, filename: str = "comparison_sequence_length_dist.png"):
         """
         Plots and saves the superimposed distribution of sequence lengths.
-        Accepts raw sequence length lists as input.
+        Accepts raw sequence length arrays as input.
         """
-        if not label_lengths or not pred_lengths:
-            logger.warning("Not enough data to plot sequence length distribution.")
-            return
+        # Set the Seaborn style and context
+        sns.set_theme(style="whitegrid")
 
-        plt.figure(figsize=(10, 6))
-        binwidth_label = max(1, int(np.std(label_lengths)/2)) if label_lengths and np.std(label_lengths) > 0 else 1
-        binwidth_pred = max(1, int(np.std(pred_lengths)/2)) if pred_lengths and np.std(pred_lengths) > 0 else 1
-        binwidth = max(1, int((binwidth_label + binwidth_pred) / 2))
+        # Convert to numpy arrays if not already for faster operations
+        label_lengths = np.asarray(label_lengths)
+        pred_lengths = np.asarray(pred_lengths)
         
-        sns.histplot(label_lengths, label=f'Label ({self.label_split})', kde=True, stat='density', common_norm=False, binwidth=binwidth)
-        sns.histplot(pred_lengths, label=f'Prediction ({self.pred_split})', kde=True, stat='density', common_norm=False, binwidth=binwidth)
-        plt.title('Comparison of Sequence Length Distributions')
-        plt.xlabel('Sequence Length')
-        plt.ylabel('Density')
-        plt.legend()
+        plt.figure(figsize=(10, 6))
+        
+        # Calculate appropriate bin width using vectorized operations
+        # Use more robust calculation for bin width with defensive checks
+        label_std = np.std(label_lengths) if len(label_lengths) > 1 else 1
+        pred_std = np.std(pred_lengths) if len(pred_lengths) > 1 else 1
+        
+        # Take average of both standard deviations for bin width, minimum 1
+        binwidth = max(1, int((label_std + pred_std) / 4))
+        
+        # Use Seaborn's histplot with optimized parameters
+        sns.histplot(label_lengths, label=f'Label ({self.label_split})', kde=True, 
+                  stat='density', binwidth=binwidth, color='royalblue', alpha=0.6)
+        sns.histplot(pred_lengths, label=f'Prediction ({self.pred_split})', kde=True, 
+                  stat='density', binwidth=binwidth, color='crimson', alpha=0.6)
+        
+        # Calculate statistics using vectorized operations
+        label_mean = np.mean(label_lengths)
+        label_median = np.median(label_lengths)
+        label_std = np.std(label_lengths)
+        
+        pred_mean = np.mean(pred_lengths)
+        pred_median = np.median(pred_lengths)
+        pred_std = np.std(pred_lengths)
+        
+        # Add statistics to the plot as annotations
+        label_stats = (f"Label Stats:\n"
+                     f"Mean: {label_mean:.2f}\n"
+                     f"Median: {label_median:.2f}\n"
+                     f"Std Dev: {label_std:.2f}")
+        
+        pred_stats = (f"Prediction Stats:\n"
+                    f"Mean: {pred_mean:.2f}\n"
+                    f"Median: {pred_median:.2f}\n"
+                    f"Std Dev: {pred_std:.2f}")
+        
+        # Position text for label stats at top left
+        plt.annotate(label_stats, xy=(0.05, 0.95), xycoords='axes fraction',
+                   va='top', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=10)
+        
+        # Position text for prediction stats at top right
+        plt.annotate(pred_stats, xy=(0.95, 0.95), xycoords='axes fraction',
+                   va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=10)
+        
+        plt.title('Comparison of Sequence Length Distributions', fontsize=14)
+        plt.xlabel('Sequence Length', fontsize=12)
+        plt.ylabel('Density', fontsize=12)
+        plt.grid(axis='y', alpha=0.3)
+        plt.legend(title='Data Source', frameon=True, fancybox=True, shadow=True)
         plt.tight_layout()
         
         filepath = os.path.join(self.output_dir, filename)
-        plt.savefig(filepath)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
         plt.close()
         logger.info(f"Sequence length distribution comparison plot saved to {filepath}")
         
@@ -292,205 +421,35 @@ class Evaluation:
         Returns:
             Dict[str, float]: Dictionary containing averaged metrics.
         """
-        logger.info(f"Starting comprehensive evaluation in {self.mode.value} mode...")
-
-        logger.info("Calculating metrics...")
-        all_batch_metrics = []
-        total_batches = 0
-        
-        label_loader_iter = iter(self.label_loader)
-        pred_loader_iter = iter(self.pred_loader)
-
-        while True:
-            try:
-                label_batch = next(label_loader_iter)
-                pred_batch = next(pred_loader_iter)
-                
-                if not label_batch or not pred_batch:
-                    logger.warning("Skipping empty batch during metric calculation.")
-                    continue
-
-                batch_metrics = self.evaluator.compute_all_metrics(batch=label_batch, pred=pred_batch)
-                
-                if batch_metrics:
-                    all_batch_metrics.append(batch_metrics)
-                    total_batches += 1
-            except StopIteration:
-                break
-            except Exception as e:
-                 logger.error(f"Error processing batch for metrics: {e}", exc_info=True)
-                 continue
-
-        avg_metrics = {}
-        if all_batch_metrics:
-            metric_keys = set(k for metrics in all_batch_metrics for k in metrics.keys())
-            for metric in metric_keys:
-                values = [metrics[metric] for metrics in all_batch_metrics 
-                          if metric in metrics and metrics[metric] is not None and not np.isnan(metrics[metric])]
-                if values:
-                    avg_metrics[metric] = sum(values) / len(values)
-                else:
-                    avg_metrics[metric] = float('nan')
-        
-        logger.info(f"Metrics calculation complete: {total_batches} batches processed")
-        logger.info(f"Average metrics: {avg_metrics}")
-
-        metrics_filepath = os.path.join(self.output_dir, 'evaluation_metrics.json')
-        self.save_metrics(avg_metrics, metrics_filepath)
 
         logger.info("Generating comparison plots using data from Visualizers...")
         try:
-            label_times = self.label_visualizer.all_time_deltas
-            pred_times = self.pred_visualizer.all_time_deltas
-            label_types = self.label_visualizer.all_event_types
-            pred_types = self.pred_visualizer.all_event_types
-            label_lengths = [len(seq) for seq in self.label_visualizer.data["type_seqs"]]
-            pred_lengths = [len(seq) for seq in self.pred_visualizer.data["type_seqs"]]
+            label_times = self.label_all_time_deltas
+            pred_times = self.pred_all_time_deltas
+            label_types = self.label_all_event_types
+            pred_types = self.pred_all_event_types
+            
+            # Convert sequence lengths to numpy array directly
+            label_lengths = np.array([len(seq) for seq in self.label_data["type_seqs"]])
+            pred_lengths = np.array([len(seq) for seq in self.pred_data["type_seqs"]])
 
-            if label_times and pred_times and label_types and pred_types and label_lengths and pred_lengths:
-                self.plot_inter_event_time_distribution(label_times, pred_times)
-                self.plot_event_type_distribution(label_types, pred_types)
-                self.plot_sequence_length_distribution(label_lengths, pred_lengths)
-                
-                try:
-                    fig = self.plot_metrics_table(avg_metrics, title="Evaluation Metrics Summary")
-                    table_filepath = os.path.join(self.output_dir, 'metrics_summary_table.png')
-                    fig.savefig(table_filepath, bbox_inches='tight')
-                    plt.close(fig)
-                    logger.info(f"Metrics summary table plot saved to {table_filepath}")
-                except Exception as e:
-                    logger.error(f"Failed to generate or save metrics table plot: {e}", exc_info=True)
-            else:
-                logger.warning("Skipping comparison plot generation due to missing data in one or both visualizers.")
+            self.plot_inter_event_time_distribution(label_times, pred_times)
+            self.plot_event_type_distribution(label_types, pred_types)
+            self.plot_sequence_length_distribution(label_lengths, pred_lengths)
         except AttributeError as e:
             logger.error(f"Failed to access data from Visualizer instances. Ensure they initialized correctly. Error: {e}", exc_info=True)
         except Exception as e:
             logger.error(f"An unexpected error occurred during plot generation: {e}", exc_info=True)
 
-        logger.info(f"Comprehensive evaluation finished. Results saved in {self.output_dir}")
-        
-        return avg_metrics
+        # Return an empty dictionary as a placeholder
+        return {}
 
-    def save_metrics(self, metrics: Dict[str, float], filepath: str) -> None:
-        """
-        Save metrics dictionary to a JSON file.
-        
-        Args:
-            metrics: Dictionary of metrics to save
-            filepath: Path to save the JSON file
-        """
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        
-        serializable_metrics = {}
-        for k, v in metrics.items():
-            if isinstance(v, float) and (np.isnan(v) or np.isinf(v)):
-                serializable_metrics[k] = str(v)
-            else:
-                serializable_metrics[k] = v
-        
-        with open(filepath, 'w') as f:
-            json.dump(serializable_metrics, f, indent=4)
-        
-        logger.info(f"Metrics saved to {filepath}")
-    
-    def plot_metrics_table(self, metrics: Dict[str, float], title: str = "Evaluation Metrics") -> None:
-        """
-        Plot a formatted table of evaluation metrics.
-        
-        Args:
-            metrics: Dictionary of metrics to display
-            title: Title for the metrics table
-        """
-        time_metrics = {k: v for k, v in metrics.items() if 'time' in k.lower()}
-        type_metrics = {k: v for k, v in metrics.items() if 'type' in k.lower() or 
-                        any(term in k.lower() for term in ['accuracy', 'f1', 'recall', 'precision', 'entropy'])}
-        sequence_metrics = {k: v for k, v in metrics.items() if 'sequence' in k.lower() or 
-                          any(term in k.lower() for term in ['wasserstein', 'dtw', 'div'])}
-        other_metrics = {k: v for k, v in metrics.items() 
-                        if k not in time_metrics and k not in type_metrics and k not in sequence_metrics}
-        
-        data = []
-        categories = []
-        
-        if time_metrics:
-            data.append(list(time_metrics.items()))
-            categories.append("Time Metrics")
-        
-        if type_metrics:
-            data.append(list(type_metrics.items()))
-            categories.append("Event Type Metrics")
-        
-        if sequence_metrics:
-            data.append(list(sequence_metrics.items()))
-            categories.append("Sequence Metrics")
-        
-        if other_metrics:
-            data.append(list(other_metrics.items()))
-            categories.append("Other Metrics")
-        
-        fig, ax = plt.subplots(figsize=(12, len(metrics) * 0.4 + 2))
-        ax.axis('tight')
-        ax.axis('off')
-        
-        table_data = []
-        for category_idx, category_metrics in enumerate(data):
-            if category_idx > 0:
-                table_data.append(["", ""])
-            
-            table_data.append([f"**{categories[category_idx]}**", ""])
-            
-            for metric_name, metric_value in category_metrics:
-                formatted_name = " ".join(word.capitalize() for word in metric_name.replace('_', ' ').split())
-                
-                if isinstance(metric_value, float):
-                    if np.isnan(metric_value):
-                        formatted_value = "N/A"
-                    elif metric_name.lower().endswith(('accuracy', 'f1score', 'recall', 'precision')):
-                        formatted_value = f"{metric_value:.2f}%"
-                    else:
-                        formatted_value = f"{metric_value:.4f}"
-                else:
-                    formatted_value = str(metric_value)
-                
-                table_data.append([formatted_name, formatted_value])
-        
-        table = ax.table(cellText=table_data, 
-                         colLabels=["Metric", "Value"], 
-                         cellLoc='left', 
-                         loc='center',
-                         colWidths=[0.7, 0.3])
-        
-        table.auto_set_font_size(False)
-        table.set_fontsize(10)
-        table.scale(1.2, 1.2)
-        
-        for j, cell in enumerate(table._cells[(0, j)] for j in range(2)):
-            cell.set_text_props(weight='bold', color='white')
-            cell.set_facecolor('#4472C4')
-        
-        category_rows = [i for i, row in enumerate(table_data) if row[0].startswith('**')]
-        for row in category_rows:
-            for j in range(2):
-                cell = table._cells[(row + 1, j)]
-                cell.set_text_props(weight='bold')
-                cell.set_facecolor('#D9E1F2')
-                if j == 0:
-                    text = cell.get_text()
-                    text.set_text(text.get_text().strip('*'))
-        
-        plt.title(title, pad=20, fontsize=14, fontweight='bold')
-        plt.tight_layout()
-        
-        return fig
-    
     @property
     def label_loader(self):
-        if not hasattr(self.label_loader_setup, 'trainer'):
-            self.label_loader_setup.setup(stage='test')
+        self.label_loader_setup.setup(stage='test')
         return self.label_loader_setup.get_dataloader(split=self.label_split)
     
     @property
     def pred_loader(self):
-        if not hasattr(self.pred_loader_setup, 'trainer'):
-            self.pred_loader_setup.setup(stage='test')
+        self.pred_loader_setup.setup(stage='test')
         return self.pred_loader_setup.get_dataloader(split=self.pred_split)

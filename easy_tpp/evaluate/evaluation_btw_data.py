@@ -1,10 +1,8 @@
 from easy_tpp.utils import logger
 from easy_tpp.preprocess import TPPDataModule
 from easy_tpp.config_factory import EvaluationConfig, DataConfig
-from easy_tpp.evaluate.metrics_compute import MetricsCompute, EvaluationMode
-from easy_tpp.preprocess.visualizer import Visualizer
 
-from typing import Dict, List, Union, Optional, Tuple
+from typing import Dict
 import numpy as np
 import json
 import os

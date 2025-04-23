@@ -19,7 +19,7 @@ source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
 experiments=(NHP_test RMTPP_test AttNHP_test SAHP_test)
-datasets=(hawkes1 hawkes2 H2expc H2expi self_correcting)
+datasets=(hawkes1 H2expc H2expi self_correcting)
 
 # Mapping index → combinaison
 idx=$SLURM_ARRAY_TASK_ID
@@ -28,4 +28,3 @@ data=${datasets[$(( idx % ${#datasets[@]} ))]}
 
 # Lancement avec srun
 srun python test.py --experiment_id "${exp}" --dataset_id "${data}"
-

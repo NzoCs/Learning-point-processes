@@ -115,7 +115,7 @@ NHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -144,7 +144,7 @@ RMTPP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -174,7 +174,7 @@ AttNHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -204,7 +204,7 @@ SAHP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -234,7 +234,7 @@ THP_train:
 
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -263,7 +263,7 @@ FullyNN_train:
       
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -292,7 +292,7 @@ IntensityFree_train:
       
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:
@@ -323,7 +323,7 @@ ODETPP_train:
       
   trainer_config:
     stage: train
-    max_epochs: 600
+    max_epochs: 400
     val_freq: 10
     accumulate_grad_batches: 1
     logger_config:

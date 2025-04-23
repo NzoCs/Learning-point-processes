@@ -15,7 +15,7 @@ class MetricsHelper:
         if name in MetricsHelper._registry_center:
             return MetricsHelper._registry_center[name][0]
         else:
-            logger.warn(f'Metric is not found: {name}')
+            logger.warning(f'Metric is not found: {name}')
             return None
 
     @staticmethod
@@ -38,7 +38,7 @@ class MetricsHelper:
                 if overwrite:
                     registry_center[name] = (func, direction)
                 else:
-                    logger.warn(f'The metric {name} is already registered, and cannot be overwritten!')
+                    logger.warning(f'The metric {name} is already registered, and cannot be overwritten!')
             else:
                 registry_center[name] = (func, direction)
             return func

@@ -44,8 +44,6 @@ class MetricsCompute:
         self.num_event_types = num_event_types
         self.mode = mode
         
-        if num_event_types <= 1:
-            logger.info("Only one event type detected. Type prediction metrics will be skipped during evaluation.")
     
     def set_save_dir(self, save_dir: str):
         self.save_dir = save_dir

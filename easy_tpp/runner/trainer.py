@@ -109,12 +109,7 @@ class Trainer:
             mode='min'
         )
         
-        # Add progress tracking and hardware monitoring
-        from pytorch_lightning.callbacks import LearningRateMonitor, DeviceStatsMonitor
-        lr_monitor = LearningRateMonitor(logging_interval='epoch')
-        device_monitor = DeviceStatsMonitor()
-        
-        return [checkpoint_callback, early_stop_callback, lr_monitor, device_monitor]
+        return [checkpoint_callback, early_stop_callback]
     
     @property
     def trainer(self) -> pl.Trainer:

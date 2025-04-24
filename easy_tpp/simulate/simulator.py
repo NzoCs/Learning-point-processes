@@ -99,14 +99,7 @@ class Simulator:
         sim_count = 0
         with tqdm(total=self.num_simulations, desc="Simulating sequences") as pbar:
             for batch in data_loader:
-                if isinstance(batch, dict):
-                     batch_values = list(batch.values())
-                elif isinstance(batch, (list, tuple)):
-                     batch_values = batch
-                else:
-                     logger.error(f"Unsupported batch type: {type(batch)}")
-                     raise TypeError("Batch from data loader is not a dictionary, list, or tuple.")
-
+                batch_values = batch.values()
                 try:
                     time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(
                         start_time=start_time,
@@ -115,8 +108,7 @@ class Simulator:
                         batch_size=None
                     )
                 except Exception as e:
-                    logger.error(f"Error during model simulation: {e}")
-                    continue
+                    raise RuntimeError(f"Simulation failed because of error : {e}. Check the model and input data.") from e
 
                 batch_size = time_seq.size(0)
                 for i in range(batch_size):

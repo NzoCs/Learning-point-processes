@@ -1,0 +1,69 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 9000 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 3000 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name            | Type           | Params | Mode 
+-----------------------------------------------------------
+0 | layer_type_emb  | Embedding      | 48     | train
+1 | event_sampler   | EventSampler   | 0      | train
+2 | heads           | ModuleList     | 3.2 K  | train
+3 | inten_linear    | Linear         | 66     | train
+4 | softplus        | ScaledSoftplus | 2      | train
+5 | layer_event_emb | Linear         | 528    | train
+6 | layer_intensity | Sequential     | 68     | train
+-----------------------------------------------------------
+3.8 K     Trainable params
+0         Non-trainable params
+3.8 K     Total params
+0.015     Total estimated model params size (MB)
+23        Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+Metric val_loss improved. New best score: 2.153
+Metric val_loss improved by 0.148 >= min_delta = 0.0. New best score: 2.005
+Metric val_loss improved by 0.036 >= min_delta = 0.0. New best score: 1.969
+Metric val_loss improved by 0.016 >= min_delta = 0.0. New best score: 1.953
+Metric val_loss improved by 0.010 >= min_delta = 0.0. New best score: 1.943
+Metric val_loss improved by 0.008 >= min_delta = 0.0. New best score: 1.935
+Metric val_loss improved by 0.008 >= min_delta = 0.0. New best score: 1.928
+Metric val_loss improved by 0.008 >= min_delta = 0.0. New best score: 1.920
+Metric val_loss improved by 0.006 >= min_delta = 0.0. New best score: 1.913
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 1.909
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 1.906
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 1.901
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 1.896
+Metric val_loss improved by 0.006 >= min_delta = 0.0. New best score: 1.890
+Metric val_loss improved by 0.006 >= min_delta = 0.0. New best score: 1.884
+Metric val_loss improved by 0.014 >= min_delta = 0.0. New best score: 1.870
+Metric val_loss improved by 0.020 >= min_delta = 0.0. New best score: 1.850
+Metric val_loss improved by 0.022 >= min_delta = 0.0. New best score: 1.828
+Metric val_loss improved by 0.024 >= min_delta = 0.0. New best score: 1.804
+Metric val_loss improved by 0.024 >= min_delta = 0.0. New best score: 1.780
+Metric val_loss improved by 0.019 >= min_delta = 0.0. New best score: 1.761
+Metric val_loss improved by 0.010 >= min_delta = 0.0. New best score: 1.750
+Metric val_loss improved by 0.013 >= min_delta = 0.0. New best score: 1.737
+Metric val_loss improved by 0.007 >= min_delta = 0.0. New best score: 1.730
+Metric val_loss improved by 0.006 >= min_delta = 0.0. New best score: 1.724
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 1.719
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 1.714
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: 1.711
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: 1.707
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 1.705
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 1.701
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 1.699
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 1.697
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 1.695
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 1.694
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 1.693
+`Trainer.fit` stopped: `max_epochs=400` reached.
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+Restoring states from the checkpoint path at ./checkpoints/AttNHP/hawkes2_/trained_models/best.ckpt
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/AttNHP/hawkes2_/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.

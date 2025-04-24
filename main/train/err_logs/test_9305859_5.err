@@ -1,0 +1,40 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 1300 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 200 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                    | Type                   | Params | Mode 
+---------------------------------------------------------------------------
+0 | layer_type_emb          | Embedding              | 1.2 K  | train
+1 | event_sampler           | EventSampler           | 0      | train
+2 | layer_temporal_encoding | TimePositionalEncoding | 0      | train
+3 | layer_intensity_hidden  | Linear                 | 1.1 K  | train
+4 | softplus                | ScaledSoftplus         | 17     | train
+5 | feed_forward            | Sequential             | 16.6 K | train
+6 | stack_layers            | ModuleList             | 41.5 K | train
+---------------------------------------------------------------------------
+43.8 K    Trainable params
+0         Non-trainable params
+43.8 K    Total params
+0.175     Total estimated model params size (MB)
+24        Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+Metric val_loss improved. New best score: -0.351
+Metric val_loss improved by 0.131 >= min_delta = 0.0. New best score: -0.482
+Metric val_loss improved by 0.052 >= min_delta = 0.0. New best score: -0.534
+Metric val_loss improved by 0.018 >= min_delta = 0.0. New best score: -0.552
+Metric val_loss improved by 0.009 >= min_delta = 0.0. New best score: -0.561
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: -0.564
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: -0.566
+`Trainer.fit` stopped: `max_epochs=400` reached.
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+Restoring states from the checkpoint path at ./checkpoints/THP/taobao/trained_models/best.ckpt
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/THP/taobao/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.

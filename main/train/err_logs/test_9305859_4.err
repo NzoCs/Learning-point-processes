@@ -1,0 +1,66 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 1400 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 200 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                    | Type                   | Params | Mode 
+---------------------------------------------------------------------------
+0 | layer_type_emb          | Embedding              | 704    | train
+1 | event_sampler           | EventSampler           | 0      | train
+2 | layer_temporal_encoding | TimePositionalEncoding | 0      | train
+3 | layer_intensity_hidden  | Linear                 | 650    | train
+4 | softplus                | ScaledSoftplus         | 10     | train
+5 | feed_forward            | Sequential             | 16.6 K | train
+6 | stack_layers            | ModuleList             | 41.5 K | train
+---------------------------------------------------------------------------
+42.9 K    Trainable params
+0         Non-trainable params
+42.9 K    Total params
+0.172     Total estimated model params size (MB)
+24        Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+Metric val_loss improved. New best score: -0.199
+Metric val_loss improved by 0.046 >= min_delta = 0.0. New best score: -0.246
+Metric val_loss improved by 0.013 >= min_delta = 0.0. New best score: -0.258
+Metric val_loss improved by 0.010 >= min_delta = 0.0. New best score: -0.268
+Metric val_loss improved by 0.010 >= min_delta = 0.0. New best score: -0.278
+Metric val_loss improved by 0.007 >= min_delta = 0.0. New best score: -0.285
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: -0.290
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: -0.295
+Metric val_loss improved by 0.007 >= min_delta = 0.0. New best score: -0.302
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: -0.308
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: -0.312
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: -0.317
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: -0.322
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: -0.326
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: -0.330
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: -0.334
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: -0.337
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: -0.339
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: -0.341
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: -0.342
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: -0.343
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: -0.346
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: -0.349
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: -0.351
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: -0.353
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: -0.355
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: -0.355
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: -0.356
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: -0.356
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: -0.356
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: -0.356
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: -0.356
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: -0.356
+`Trainer.fit` stopped: `max_epochs=400` reached.
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+Restoring states from the checkpoint path at ./checkpoints/THP/taxi/trained_models/best.ckpt
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/THP/taxi/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.

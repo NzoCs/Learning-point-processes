@@ -4,7 +4,7 @@ from easy_tpp.config_factory.hpo_config import HPOConfig, HPORunnerConfig
 from easy_tpp.config_factory.model_config import ModelConfig, BaseConfig
 from easy_tpp.config_factory.syn_gen_config import SynGenConfig
 from easy_tpp.config_factory.runner_config import RunnerConfig
-from easy_tpp.config_factory.evaluation_config import EvaluationConfig
+from easy_tpp.config_factory.distrib_comp_config import DistribCompConfig
 from easy_tpp.config_factory.simulator_config import SimulatorConfig
 
 __all__ = ['Config',
@@ -17,5 +17,5 @@ __all__ = ['Config',
            'HPOConfig',
            'HPORunnerConfig',
            'SynGenConfig',
-           'EvaluationConfig',
+           'DistribCompConfig',
            'SimulatorConfig']

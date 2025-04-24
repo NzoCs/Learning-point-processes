@@ -1,6 +1,7 @@
 from easy_tpp.preprocess.data_loader import TPPDataModule
+from easy_tpp.config_factory import DataConfig
 
-from typing import Optional
+from typing import Optional, Dict, Tuple, List, Union
 import numpy as np
 import torch
 import seaborn as sns
@@ -19,10 +20,24 @@ class Visualizer:
         split: Optional[str] = 'test',
         save_dir: Optional[str] = None,
         dataset_size: Optional[int] = 10**4,
+        comparison_data_module: Optional[TPPDataModule] = None,
+        comparison_split: Optional[str] = None,
     ):
+        """
+        Initialize the visualizer.
+        
+        Args:
+            data_module: Data module for the main dataset
+            split: Dataset split to use ('test', 'valid', or 'train')
+            save_dir: Directory to save visualizations
+            dataset_size: Maximum number of events to use
+            comparison_data_module: Optional data module for comparison dataset
+            comparison_split: Optional split for comparison dataset
+        """
         self.data_module = data_module
         self.num_event_types = data_module.num_event_types
         self.save_dir = save_dir
+        self.is_comparison_mode = comparison_data_module is not None
 
         # Validate the split parameter
         valid_splits = {'valid', 'test', 'train', None}
@@ -34,11 +49,12 @@ class Visualizer:
         data_format = data_module.data_config.data_format
         self.data = self.data_module.build_input(source_dir=data_dir, data_format=data_format, split=split)
 
+        # Process main dataset
         self.all_event_types = []
         self.all_time_deltas = []
         # Preprocess the data to extract all event types and time deltas
         i=0
-        for time_seq, type_seq  in zip(self.data['type_seqs'], self.data['time_delta_seqs']):
+        for type_seq, time_seq in zip(self.data['type_seqs'], self.data['time_delta_seqs']):
             for event, time in zip(type_seq, time_seq):
                 self.all_event_types.append(event)
                 self.all_time_deltas.append(time)
@@ -48,11 +64,44 @@ class Visualizer:
                 
         self.all_event_types = np.array(self.all_event_types)
         self.all_time_deltas = np.array(self.all_time_deltas)
+        self.seq_lengths = np.array([len(seq) for seq in self.data["type_seqs"]])
+
+        # Process comparison dataset if provided
+        if self.is_comparison_mode:
+            self.comparison_split = comparison_split or split
+            self.comparison_data_module = comparison_data_module
+            
+            comp_data_dir = comparison_data_module.data_config.get_data_dir(self.comparison_split)
+            comp_data_format = comparison_data_module.data_config.data_format
+            self.comparison_data = self.comparison_data_module.build_input(
+                source_dir=comp_data_dir, 
+                data_format=comp_data_format, 
+                split=self.comparison_split
+            )
+            
+            self.comparison_event_types = []
+            self.comparison_time_deltas = []
+            
+            i=0
+            for type_seq, time_seq in zip(self.comparison_data['type_seqs'], self.comparison_data['time_delta_seqs']):
+                for event, time in zip(type_seq, time_seq):
+                    self.comparison_event_types.append(event)
+                    self.comparison_time_deltas.append(time)
+                    i += 1
+                    if i >= dataset_size:
+                        break
+            
+            self.comparison_event_types = np.array(self.comparison_event_types)
+            self.comparison_time_deltas = np.array(self.comparison_time_deltas)
+            self.comparison_seq_lengths = np.array([len(seq) for seq in self.comparison_data["type_seqs"]])
 
         if save_dir is None:
             parent_dir = os.path.dirname(data_dir)
             save_dir = os.path.join(parent_dir, 'visualizations')
             self.save_dir = save_dir
+        
+        # Create output directory if it doesn't exist
+        os.makedirs(self.save_dir, exist_ok=True)
 
     def _save_metadata_to_json(self, metadata, filename_base):
         """
@@ -124,546 +173,392 @@ class Visualizer:
             json.dump(metadata, f, indent=4)
         print(f"Metadata saved to {json_filename}")
 
+    def plot_inter_event_time_distribution(self, filename: str = "inter_event_time_dist.png"):
+        """
+        Plots and saves the distribution of inter-event times.
+        In comparison mode, plots both datasets.
+        """
+        # Set the Seaborn style and context
+        sns.set_theme(style="whitegrid")
+
+        # Main distribution plot
+        plt.figure(figsize=(10, 6))
+        
+        # Get data
+        times_data = self.all_time_deltas
+        
+        # Create histograms
+        hist, bin_edges = np.histogram(times_data, bins=50)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+        
+        # Filter out bins with frequency <= 2
+        mask = hist > 2
+        filtered_hist = hist[mask]
+        filtered_bin_centers = bin_centers[mask]
+        
+        # Plot histograms
+        label = f'Main ({self.split})'
+        color = 'royalblue'
+        plt.bar(filtered_bin_centers, filtered_hist, 
+                width=(bin_edges[1] - bin_edges[0]) * 0.8,
+                label=label, alpha=0.6, color=color)
+        
+        # If in comparison mode, add comparison data
+        if self.is_comparison_mode:
+            comp_times_data = self.comparison_time_deltas
+            comp_hist, comp_bin_edges = np.histogram(comp_times_data, bins=50)
+            comp_bin_centers = (comp_bin_edges[:-1] + comp_bin_edges[1:]) / 2
+            
+            # Filter out bins with frequency <= 2
+            comp_mask = comp_hist > 2
+            filtered_comp_hist = comp_hist[comp_mask]
+            filtered_comp_bin_centers = comp_bin_centers[comp_mask]
+            
+            # Plot comparison data
+            comp_label = f'Comparison ({self.comparison_split})'
+            comp_color = 'crimson'
+            plt.bar(filtered_comp_bin_centers, filtered_comp_hist, 
+                    width=(comp_bin_edges[1] - comp_bin_edges[0]) * 0.8,
+                    label=comp_label, alpha=0.6, color=comp_color)
+        
+        plt.yscale('log')
+        
+        # Calculate and add regression lines if enough data points
+        if len(filtered_hist) > 1:
+            X = filtered_bin_centers.reshape(-1, 1)
+            y = np.log10(filtered_hist)
+            reg = np.polyfit(X.flatten(), y, 1)
+            slope, intercept = reg
+            
+            x_line = np.linspace(min(filtered_bin_centers), max(filtered_bin_centers), 100)
+            y_line = 10 ** (slope * x_line + intercept)
+            
+            plt.plot(x_line, y_line, '--', color='blue', 
+                   label=f'Main slope: {slope:.4f}')
+        
+        if self.is_comparison_mode and len(filtered_comp_hist) > 1:
+            comp_X = filtered_comp_bin_centers.reshape(-1, 1)
+            comp_y = np.log10(filtered_comp_hist)
+            comp_reg = np.polyfit(comp_X.flatten(), comp_y, 1)
+            comp_slope, comp_intercept = comp_reg
+            
+            comp_x_line = np.linspace(min(filtered_comp_bin_centers), max(filtered_comp_bin_centers), 100)
+            comp_y_line = 10 ** (comp_slope * comp_x_line + comp_intercept)
+            
+            plt.plot(comp_x_line, comp_y_line, '--', color='red', 
+                   label=f'Comparison slope: {comp_slope:.4f}')
+        
+        # Calculate statistics
+        mean = np.mean(times_data)
+        median = np.median(times_data)
+        std = np.std(times_data)
+        
+        stats = (f"Main Stats:\n"
+               f"Mean: {mean:.4f}\n"
+               f"Median: {median:.4f}\n"
+               f"Std Dev: {std:.4f}")
+        
+        # Position text at top left
+        plt.annotate(stats, xy=(0.05, 0.95), xycoords='axes fraction',
+                   va='top', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
+        
+        # Add comparison statistics
+        if self.is_comparison_mode:
+            comp_mean = np.mean(comp_times_data)
+            comp_median = np.median(comp_times_data)
+            comp_std = np.std(comp_times_data)
+            
+            comp_stats = (f"Comparison Stats:\n"
+                        f"Mean: {comp_mean:.4f}\n"
+                        f"Median: {comp_median:.4f}\n"
+                        f"Std Dev: {comp_std:.4f}")
+            
+            # Position text at top right
+            plt.annotate(comp_stats, xy=(0.95, 0.95), xycoords='axes fraction',
+                       va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
+        
+        plt.title('Inter-Event Time Distribution (Log Scale)')
+        plt.xlabel('Time Since Last Event')
+        plt.ylabel('Frequency (Log Scale)')
+        plt.legend()
+        plt.tight_layout()
+        
+        filepath = os.path.join(self.save_dir, filename)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"Inter-event time distribution plot saved to {filepath}")
+        
+        # Add QQ plot if in comparison mode
+        if self.is_comparison_mode:
+            self._create_qq_plot(
+                self.all_time_deltas, 
+                self.comparison_time_deltas, 
+                'QQ Plot: Inter-Event Times',
+                os.path.join(self.save_dir, "qq_inter_event_times.png"),
+                log_scale=True
+            )
+
+    def _create_qq_plot(self, data1: np.ndarray, data2: np.ndarray, title: str, save_path: str, log_scale: bool = False):
+        """
+        Creates and saves a QQ plot comparing two distributions.
+        
+        Args:
+            data1: Data points from the first dataset
+            data2: Data points from the second dataset
+            title: Title for the plot
+            save_path: Path to save the plot
+            log_scale: Whether to use log scale for the axes
+        """
+        # Set the Seaborn style
+        sns.set_theme(style="whitegrid")
+        
+        # Convert inputs to numpy arrays if they aren't already
+        data1 = np.asarray(data1)
+        data2 = np.asarray(data2)
+        
+        # Filter out non-positive values if using log scale
+        if log_scale:
+            data1 = data1[data1 > 0]
+            data2 = data2[data2 > 0]
+        
+        # Skip if empty arrays
+        if len(data1) == 0 or len(data2) == 0:
+            print(f"Warning: Empty arrays after filtering: data1={len(data1)}, data2={len(data2)}")
+            return
+            
+        # Sort arrays for quantiles
+        data1.sort()
+        data2.sort()
+        
+        # Determine number of quantiles to use
+        n_quantiles = min(len(data1), len(data2))
+        
+        if n_quantiles < 10:
+            print(f"Warning: Not enough data points for QQ plot: {n_quantiles} points")
+            return
+        
+        # Create evenly spaced quantiles
+        quantiles = np.linspace(0.01, 0.99, min(100, n_quantiles))
+        
+        # Compute quantiles
+        data1_quantiles = np.quantile(data1, quantiles)
+        data2_quantiles = np.quantile(data2, quantiles)
+        
+        # Create QQ plot
+        plt.figure(figsize=(8, 8))
+        
+        # Plot the quantiles
+        if log_scale:
+            plt.loglog(data1_quantiles, data2_quantiles, 'o', markersize=4, color='royalblue', alpha=0.7)
+            
+            # Add reference line (y=x) in log-log space
+            min_val = max(min(data1_quantiles.min(), data2_quantiles.min()), 1e-10)  # Avoid log(0)
+            max_val = max(data1_quantiles.max(), data2_quantiles.max())
+            ref_line = np.logspace(np.log10(min_val), np.log10(max_val), 100)
+            plt.loglog(ref_line, ref_line, 'r--', alpha=0.7)
+        else:
+            plt.plot(data1_quantiles, data2_quantiles, 'o', markersize=4, color='royalblue', alpha=0.7)
+            
+            # Add reference line (y=x)
+            min_val = min(data1_quantiles.min(), data2_quantiles.min())
+            max_val = max(data1_quantiles.max(), data2_quantiles.max())
+            ref_line = np.linspace(min_val, max_val, 100)
+            plt.plot(ref_line, ref_line, 'r--', alpha=0.7)
+        
+        plt.grid(True, alpha=0.3)
+        plt.title(title, fontsize=14)
+        plt.xlabel(f'Main Quantiles ({self.split})', fontsize=12)
+        plt.ylabel(f'Comparison Quantiles ({self.comparison_split})', fontsize=12)
+        
+        # Add annotation explaining interpretation
+        annotation_text = ("Points along reference line indicate similar distributions.\n"
+                         "Deviations suggest distributional differences.")
+        plt.annotate(annotation_text, xy=(0.05, 0.05), xycoords='axes fraction',
+                   va='bottom', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=9)
+        
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"QQ plot saved to {save_path}")
+
+    def plot_event_type_distribution(self, filename: str = "event_type_dist.png"):
+        """
+        Plots and saves the distribution of event types.
+        In comparison mode, plots both datasets.
+        """
+        # Set the Seaborn style
+        sns.set_theme(style="whitegrid")
+
+        # Calculate event type distributions
+        types_data = self.all_event_types
+        all_event_types = np.arange(self.num_event_types)
+        
+        # Count occurrences
+        types_int = types_data.astype(int)
+        type_counts = np.bincount(types_int, minlength=self.num_event_types)
+        
+        # Calculate probabilities
+        total = len(types_data)
+        type_probs = type_counts / total if total > 0 else np.zeros_like(type_counts)
+        
+        # Create the plot
+        plt.figure(figsize=(10, 6))
+        
+        # Width of bars - slightly offset for better visibility
+        width = 0.35 if self.is_comparison_mode else 0.7
+        x = np.arange(len(all_event_types))
+        
+        # Plot main data
+        offset = -width/2 if self.is_comparison_mode else 0
+        plt.bar(x + offset, type_probs, width, label=f'Main ({self.split})', 
+              color='royalblue', alpha=0.7)
+        
+        # Add comparison data if in comparison mode
+        if self.is_comparison_mode:
+            comp_types_data = self.comparison_event_types
+            comp_types_int = comp_types_data.astype(int)
+            comp_type_counts = np.bincount(comp_types_int, minlength=self.num_event_types)
+            
+            comp_total = len(comp_types_data)
+            comp_type_probs = comp_type_counts / comp_total if comp_total > 0 else np.zeros_like(comp_type_counts)
+            
+            plt.bar(x + width/2, comp_type_probs, width, label=f'Comparison ({self.comparison_split})', 
+                  color='crimson', alpha=0.7)
+        
+        plt.title('Event Type Distribution', fontsize=14)
+        plt.xlabel('Event Type', fontsize=12)
+        plt.ylabel('Probability', fontsize=12)
+        plt.grid(axis='y', alpha=0.3)
+        plt.xticks(x, all_event_types)
+        plt.legend(frameon=True)
+        
+        # Add statistics for top event types
+        top3_indices = np.argsort(type_probs)[-3:][::-1]  # Top 3 in descending order
+        main_stats = "Main Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {type_probs[i]:.3f}" 
+                                                 for i in top3_indices])
+        
+        # Position text on left
+        plt.annotate(main_stats, xy=(0.05, 0.95), xycoords='axes fraction',
+                   va='top', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=10)
+        
+        # Add comparison statistics
+        if self.is_comparison_mode:
+            comp_top3_indices = np.argsort(comp_type_probs)[-3:][::-1]
+            comp_stats = "Comparison Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {comp_type_probs[i]:.3f}" 
+                                                         for i in comp_top3_indices])
+            
+            # Position text on right
+            plt.annotate(comp_stats, xy=(0.95, 0.95), xycoords='axes fraction',
+                       va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                       fontsize=10)
+        
+        plt.tight_layout()
+        
+        filepath = os.path.join(self.save_dir, filename)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"Event type distribution plot saved to {filepath}")
+
+    def plot_sequence_length_distribution(self, filename: str = "sequence_length_dist.png"):
+        """
+        Plots and saves the distribution of sequence lengths.
+        In comparison mode, plots both datasets.
+        """
+        # Set the Seaborn style
+        sns.set_theme(style="whitegrid")
+
+        plt.figure(figsize=(10, 6))
+        
+        # Calculate bin width
+        binwidth = max(1, int(np.std(self.seq_lengths) / 2)) if len(self.seq_lengths) > 1 else 1
+        
+        # Plot main dataset
+        sns.histplot(self.seq_lengths, label=f'Main ({self.split})', kde=True, 
+                  stat='density', binwidth=binwidth, color='royalblue', alpha=0.6)
+        
+        # Add comparison dataset if in comparison mode
+        if self.is_comparison_mode:
+            comp_binwidth = max(1, int(np.std(self.comparison_seq_lengths) / 2)) if len(self.comparison_seq_lengths) > 1 else 1
+            binwidth = max(binwidth, comp_binwidth)
+            
+            sns.histplot(self.comparison_seq_lengths, label=f'Comparison ({self.comparison_split})', kde=True, 
+                      stat='density', binwidth=binwidth, color='crimson', alpha=0.6)
+        
+        # Calculate statistics
+        mean = np.mean(self.seq_lengths)
+        median = np.median(self.seq_lengths)
+        std = np.std(self.seq_lengths)
+        
+        main_stats = (f"Main Stats:\n"
+                    f"Mean: {mean:.2f}\n"
+                    f"Median: {median:.2f}\n"
+                    f"Std Dev: {std:.2f}")
+        
+        # Position text at top left
+        plt.annotate(main_stats, xy=(0.05, 0.95), xycoords='axes fraction',
+                   va='top', ha='left', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                   fontsize=10)
+        
+        # Add comparison statistics
+        if self.is_comparison_mode:
+            comp_mean = np.mean(self.comparison_seq_lengths)
+            comp_median = np.median(self.comparison_seq_lengths)
+            comp_std = np.std(self.comparison_seq_lengths)
+            
+            comp_stats = (f"Comparison Stats:\n"
+                        f"Mean: {comp_mean:.2f}\n"
+                        f"Median: {comp_median:.2f}\n"
+                        f"Std Dev: {comp_std:.2f}")
+            
+            # Position text at top right
+            plt.annotate(comp_stats, xy=(0.95, 0.95), xycoords='axes fraction',
+                       va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7),
+                       fontsize=10)
+        
+        plt.title('Sequence Length Distribution', fontsize=14)
+        plt.xlabel('Sequence Length', fontsize=12)
+        plt.ylabel('Density', fontsize=12)
+        plt.grid(axis='y', alpha=0.3)
+        plt.legend(frameon=True)
+        plt.tight_layout()
+        
+        filepath = os.path.join(self.save_dir, filename)
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"Sequence length distribution plot saved to {filepath}")
+        
+        # Add QQ plot if in comparison mode
+        if self.is_comparison_mode:
+            self._create_qq_plot(
+                self.seq_lengths, 
+                self.comparison_seq_lengths, 
+                'QQ Plot: Sequence Lengths',
+                os.path.join(self.save_dir, "qq_sequence_lengths.png"),
+                log_scale=False
+            )
+
+    def run_visualization(self):
+        """
+        Run all visualization functions and save the plots.
+        """
+        print("Generating visualization plots...")
+        try:
+            self.plot_inter_event_time_distribution()
+            self.plot_event_type_distribution()
+            self.plot_sequence_length_distribution()
+            print("All plots generated successfully!")
+        except Exception as e:
+            print(f"Error occurred during plot generation: {e}")
+            
     def delta_times_distribution(
         self, plot=False, save_graph=False, bins=50, figsize=(10, 6), color='royalblue', log_scale=False,
     ) -> np.ndarray:
         """
-        Calculate and return the list of delta times, and optionally display
-        a histogram of the distribution.
-
-        Args:
-            split (str): Dataset split to use ('test', 'valid', or 'train').
-            plot (bool): Whether to display the histogram.
-            save_graph (bool): Whether to save the histogram as an image.
-            bins (int): Number of bins for the histogram.
-            figsize (tuple): Figure size for the plot (width, height).
-            color (str): Color for the histogram.
-            log_scale (bool): Whether to use logarithmic scale for x-axis.
-
-        Returns:
-            numpy.ndarray: The array of delta times.
+        Legacy method preserved for backward compatibility.
+        Now calls plot_inter_event_time_distribution instead.
         """
-        split = self.split
-
-        # Combine all delta times
-        all_time_deltas = self.all_time_deltas
-
-        # Create visualization if requested
         if plot or save_graph:
-            plt.figure(figsize=figsize)
-            ax = sns.histplot(all_time_deltas, bins=bins, kde=True, color=color)
-
-            plt.xlabel("Delta times")
-            plt.ylabel("Frequency")
-            plt.title(f"Distribution of inter-event times ({split} set)")
-
-            if log_scale:
-                plt.xscale('log')
-                plt.title(f"Distribution of inter-event times ({split} set) - Log Scale")
-
-            # Add statistics to the plot
-            stats_text = (f"Mean: {np.mean(self.all_time_deltas):.4f}\n"
-                          f"Median: {np.median(self.all_time_deltas):.4f}\n"
-                          f"Std Dev: {np.std(all_time_deltas):.4f}\n"
-                          f"Min: {np.min(all_time_deltas):.4f}\n"
-                          f"Max: {np.max(all_time_deltas):.4f}\n"
-                          f"Count: {len(all_time_deltas)}")
-
-            # Position text at top right
-            plt.annotate(stats_text, xy=(0.95, 0.95), xycoords='axes fraction',
-                         va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
-
-            # Save the figure if requested
-            if save_graph:
-                output_dir = self.save_dir
-                os.makedirs(output_dir, exist_ok=True)
-                filename = os.path.join(output_dir, f'delta_times_distribution_{split}.png')
-                plt.savefig(filename, dpi=300, bbox_inches='tight')
-                print(f"Graph saved to {filename}")
-
-                # Save metadata
-                metadata = {
-                    'plot_type': 'delta_times_distribution',
-                    'split': split,
-                    'bins': bins,
-                    'figsize': figsize,
-                    'color': color,
-                    'log_scale': log_scale,
-                    'statistics': {
-                        'mean': float(np.mean(all_time_deltas)),
-                        'median': float(np.median(all_time_deltas)),
-                        'std_dev': float(np.std(all_time_deltas)),
-                        'min': float(np.min(all_time_deltas)),
-                        'max': float(np.max(all_time_deltas)),
-                        'count': int(len(all_time_deltas))
-                    }
-                }
-                self._save_metadata_to_json(metadata, filename[:-4])  # Remove .png extension
-
-            # Show the plot if requested
-            if plot:
-                plt.show()
-            else:
-                plt.close()
-
-        return all_time_deltas
-
-    def marked_delta_times_distribution(self, plot=False, save_graph=False,
-                                        bins=30, figsize=(10, 6), cmap='tab10', alpha=0.6):
-        """
-        Calculate the distribution of inter-event times by mark and
-        optionally display superimposed histograms using Seaborn.
-
-        Args:
-            split (str): Dataset split to use ('test', 'valid', or 'train').
-            plot (bool): Whether to display the histogram.
-            save_graph (bool): Whether to save the histogram as an image.
-            bins (int): Number of bins for the histogram.
-            figsize (tuple): Base figure size for the plot (width, height).
-            cmap (str): Colormap for the different marks.
-            alpha (float): Transparency level for the histograms.
-
-        Returns:
-            dict[int, numpy.ndarray]: Dictionary of inter-event times for each mark.
-        """
-        split = self.split
-
-        flat_times = self.all_time_deltas
-        flat_types = self.all_event_types
-
-        # Calculate delta times per mark
-        marked_all_times_delta = {
-            m: flat_times[flat_types == m]
-            for m in range(self.num_event_types)
-        }
-
-        # Create visualization if requested
-        if plot or save_graph:
-            # Set the Seaborn style and context
-            sns.set_theme(style="whitegrid")
-
-            colors = plt.cm.get_cmap(cmap, self.num_event_types)
-            fig, axes = plt.subplots(self.num_event_types, 1,
-                                      figsize=(figsize[0], figsize[1] * self.num_event_types),
-                                      sharex=True)
-
-            # If num_mark is 1, axes is not an array, so convert it to a list
-            if self.num_event_types == 1:
-                axes = [axes]
-
-            # For storing statistics for metadata
-            mark_statistics = {}
-
-            for m in range(self.num_event_types):
-                data = marked_all_times_delta[m]
-                if len(data) > 0:  # Only plot if we have data for this mark
-                    # Use Seaborn's histplot for better visual aesthetics
-                    sns.histplot(data, bins=bins, color=colors(m),
-                                 alpha=alpha, edgecolor="none", kde=True, ax=axes[m])
-
-                    # Add statistics to the plot
-                    stats_text = (f"Count: {len(data)}\n"
-                                  f"Mean: {np.mean(data):.4f}\n"
-                                  f"Median: {np.median(data):.4f}\n"
-                                  f"Std Dev: {np.std(data):.4f}")
-
-                    axes[m].annotate(stats_text, xy=(0.95, 0.95), xycoords='axes fraction',
-                                     va='top', ha='right',
-                                     bbox=dict(boxstyle='round', fc='white', alpha=0.7))
-
-                    # Store statistics for metadata
-                    mark_statistics[str(m)] = {
-                        'count': int(len(data)),
-                        'mean': float(np.mean(data)) if len(data) > 0 else 0,
-                        'median': float(np.median(data)) if len(data) > 0 else 0,
-                        'std_dev': float(np.std(data)) if len(data) > 0 else 0
-                    }
-
-                axes[m].set_ylabel("Density")
-                axes[m].set_title(f"Distribution of inter-event times for type {m}")
-
-            axes[-1].set_xlabel("Delta times")
-            plt.tight_layout()
-
-            # Save figure if requested
-            if save_graph:
-                output_dir = self.save_dir
-                os.makedirs(output_dir, exist_ok=True)
-                filename = os.path.join(output_dir, f'marked_delta_times_{split}.png')
-                plt.savefig(filename, dpi=300, bbox_inches='tight')
-                print(f"Graph saved to {filename}")
-
-                # Save metadata
-                metadata = {
-                    'plot_type': 'marked_delta_times_distribution',
-                    'split': split,
-                    'bins': bins,
-                    'figsize': figsize,
-                    'cmap': cmap,
-                    'alpha': alpha,
-                    'num_event_types': self.num_event_types,
-                    'mark_statistics': mark_statistics
-                }
-                self._save_metadata_to_json(metadata, filename[:-4])  # Remove .png extension
-
-            # Show the plot if requested
-            if plot:
-                plt.show()
-            else:
-                plt.close(fig)
-
-        return marked_all_times_delta
-
-    def event_type_distribution(self, plot=False, save_graph=False,
-                                 figsize=(10, 6), color='royalblue', palette="Blues_d"):
-        """
-        Calculate the distribution of event types and
-        optionally display a histogram using Seaborn.
-
-        Args:
-            split (str): Dataset split to use ('test', 'valid', or 'train').
-            plot (bool): Whether to display the histogram.
-            save_graph (bool): Whether to save the histogram as an image.
-            figsize (tuple): Figure size for the plot (width, height).
-            color (str): Base color for the bars (used if palette is None).
-            palette (str): Seaborn color palette for the bars.
-
-        Returns:
-            tuple:
-                - list: Unique event types
-                - list: Corresponding probabilities
-        """
-        split = self.split
-
-        # Calculate event type distribution
-        events_counts = Counter(self.all_event_types)
-        events = list(events_counts.keys())
-        counts = list(events_counts.values())
-
-        # Calculate probability for each event
-        total = sum(counts)
-        probabilities = [c / total for c in counts] if total > 0 else []
-
-        # Create ordered pairs and sort by event type
-        event_prob_pairs = sorted(zip(events, probabilities))
-        events = [pair[0] for pair in event_prob_pairs]
-        probabilities = [pair[1] for pair in event_prob_pairs]
-
-        # Create DataFrame for Seaborn
-        df = pd.DataFrame({
-            'Event Type': events,
-            'Probability': probabilities
-        })
-
-        # Create visualization if requested
-        if plot or save_graph:
-            # Set the Seaborn style and context
-            sns.set_theme(style="whitegrid")
-
-            plt.figure(figsize=figsize)
-
-            # Use Seaborn's barplot for better aesthetics
-            ax = sns.barplot(x='Event Type', y='Probability', data=df,
-                             palette=palette if palette else color)
-
-            # Add value labels on top of bars
-            for i, p in enumerate(ax.patches):
-                height = p.get_height()
-                ax.text(p.get_x() + p.get_width() / 2., height + 0.005,
-                        f'{height:.3f}', ha='center', va='bottom')
-
-            plt.xlabel("Event types")
-            plt.ylabel("Probabilities")
-            plt.title(f"Distribution of event types ({split} set)")
-            plt.ylim(0, max(probabilities) * 1.15)  # Add some space for the text
-
-            # Save figure if requested
-            if save_graph:
-                output_dir = self.save_dir
-                os.makedirs(output_dir, exist_ok=True)
-                filename = os.path.join(output_dir, f'event_type_distribution_{split}.png')
-                plt.savefig(filename, dpi=300, bbox_inches='tight')
-                print(f"Graph saved to {filename}")
-
-                # Save metadata
-                event_probs = {str(event): float(prob) for event, prob in zip(events, probabilities)}
-                event_counts = {str(event): int(count) for event, count in events_counts.items()}
-
-                metadata = {
-                    'plot_type': 'event_type_distribution',
-                    'split': split,
-                    'figsize': figsize,
-                    'color': color,
-                    'palette': palette,
-                    'total_events': total,
-                    'event_probabilities': event_probs,
-                    'event_counts': event_counts
-                }
-                self._save_metadata_to_json(metadata, filename[:-4])  # Remove .png extension
-
-            # Show the plot if requested
-            if plot:
-                plt.show()
-            else:
-                plt.close()
-
-        return events, probabilities
-
-    def seq_len_distribution(self, plot=False, save_graph=False,
-                             bins=20, figsize=(10, 6), color='royalblue', kde=True):
-        """
-        Calculate the distribution of sequence lengths and
-        optionally display a histogram using Seaborn.
-
-        Args:
-            split (str): Dataset split to use ('test', 'valid', or 'train').
-            plot (bool): Whether to display the histogram.
-            save_graph (bool): Whether to save the histogram as an image.
-            bins (int): Number of bins for the histogram.
-            figsize (tuple): Figure size for the plot (width, height).
-            color (str): Color for the histogram.
-            kde (bool): Whether to show a kernel density estimate.
-
-        Returns:
-            numpy.ndarray: Array of sequence lengths
-        """
-        split = self.split
-
-        seq_lengths = [len(seq) for seq in self.data["type_seqs"]]
-
-        # Create visualization if requested
-        if plot or save_graph:
-            # Set the Seaborn style and context
-            sns.set_theme(style="whitegrid")
-
-            plt.figure(figsize=figsize)
-
-            # Use Seaborn's histplot for better aesthetics
-            ax = sns.histplot(seq_lengths, bins=bins, color=color, kde=kde)
-
-            # Add statistics to the plot
-            stats_text = (f"Count: {len(seq_lengths)}\n"
-                          f"Mean: {np.mean(seq_lengths):.2f}\n"
-                          f"Median: {np.median(seq_lengths):.2f}\n"
-                          f"Min: {np.min(seq_lengths):.2f}\n"
-                          f"Max: {np.max(seq_lengths):.2f}\n"
-                          f"Std Dev: {np.std(seq_lengths):.2f}")
-
-            plt.annotate(stats_text, xy=(0.95, 0.95), xycoords='axes fraction',
-                         va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
-
-            plt.xlabel("Sequence length")
-            plt.ylabel("Count")
-            plt.title(f"Distribution of sequence lengths ({split} set)")
-
-            # Save figure if requested
-            if save_graph:
-                output_dir = self.save_dir
-                os.makedirs(output_dir, exist_ok=True)
-                filename = os.path.join(output_dir, f'seq_len_distribution_{split}.png')
-                plt.savefig(filename, dpi=300, bbox_inches='tight')
-                print(f"Graph saved to {filename}")
-
-                # Save metadata
-                metadata = {
-                    'plot_type': 'seq_len_distribution',
-                    'split': split,
-                    'bins': bins,
-                    'figsize': figsize,
-                    'color': color,
-                    'kde': kde,
-                    'statistics': {
-                        'count': int(len(seq_lengths)),
-                        'mean': float(np.mean(seq_lengths)),
-                        'median': float(np.median(seq_lengths)),
-                        'min': int(np.min(seq_lengths)),
-                        'max': int(np.max(seq_lengths)),
-                        'std_dev': float(np.std(seq_lengths))
-                    }
-                }
-                self._save_metadata_to_json(metadata, filename[:-4])  # Remove .png extension
-
-            # Show the plot if requested
-            if plot:
-                plt.show()
-            else:
-                plt.close()
-
-        return seq_lengths
-
-    def show_all_distributions(self, log_scale=False, show_graph=False, save_graph=True,
-                                figsize=(18, 6), palette="Blues_d", bins=(30, None, 20), kde=True):
-        """
-        Calculate and display, in a single figure, the following three distributions using Seaborn:
-        - Distribution of delta times.
-        - Distribution of event types (only if there is more than one event type).
-        - Distribution of sequence lengths.
-
-        Args:
-            show_graph (bool): Whether to display the graph.
-            save_graph (bool): Whether to save the graph as PNG.
-            figsize (tuple): Figure size for the combined plot.
-            palette (str or list): Seaborn color palette for the plots.
-            bins (tuple): Number of bins for each histogram (delta_times, event_types, seq_lengths).
-            kde (bool): Whether to show kernel density estimate for histograms.
-
-        Returns:
-            tuple:
-                - numpy.ndarray: Delta times array
-                - tuple: (list of event types, list of corresponding probabilities)
-                - numpy.ndarray: Sequence lengths array
-        """
-        split = self.split
-
-        # Get data without displaying separate graphs
-        delta_times = self.delta_times_distribution()
-        event_types, probabilities = self.event_type_distribution()
-        seq_lengths = self.seq_len_distribution()
-
-        # Check if there's more than one event type
-        multiple_events = len(event_types) > 1
-
-        # Create figure if requested
-        if save_graph or show_graph:
-            # Set the Seaborn style
-            sns.set_theme(style="whitegrid")
-
-            # Determine number of subplots based on event types
-            num_plots = 3 if multiple_events else 2
-
-            # Create figure with appropriate number of subplots
-            fig, axes = plt.subplots(1, num_plots, figsize=(figsize[0] * num_plots / 3, figsize[1]),
-                                     constrained_layout=True)
-
-            # Get bin values
-            delta_bins, _, seq_bins = bins
-
-            # Plot index to track current subplot position
-            plot_idx = 0
-
-            # Graph 1: Delta times distribution
-            sns.histplot(delta_times, bins=delta_bins, kde=kde, ax=axes[plot_idx],
-                         color=sns.color_palette(palette)[0])
-
-            if log_scale:
-                axes[plot_idx].set_yscale('log')
-                axes[plot_idx].set_title(f"Distribution of inter-event times (Log Scale)", fontsize=12)
-            else:
-                axes[plot_idx].set_title(f"Distribution of inter-event times", fontsize=12)
-
-            # Add statistics for delta times
-            stats_text = (f"Mean: {np.mean(delta_times):.4f}\n"
-                          f"Median: {np.median(delta_times):.4f}\n"
-                          f"Std Dev: {np.std(delta_times):.4f}")
-
-            axes[plot_idx].annotate(stats_text, xy=(0.95, 0.95), xycoords='axes fraction',
-                                    va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
-
-            axes[plot_idx].set_xlabel("Delta times")
-            axes[plot_idx].set_ylabel("Count")
-
-            plot_idx += 1
-
-            # Graph 2: Event types distribution (only if multiple event types)
-            if multiple_events:
-                # Create DataFrame for event types
-                event_df = pd.DataFrame({
-                    'Event Type': event_types,
-                    'Probability': probabilities
-                })
-
-                bars = sns.barplot(x='Event Type', y='Probability', data=event_df, hue='Event Type', palette=palette,
-                                   ax=axes[plot_idx], legend=False)
-
-                # Add value labels on top of bars
-                for i, p in enumerate(axes[plot_idx].patches):
-                    height = p.get_height()
-                    axes[plot_idx].text(p.get_x() + p.get_width() / 2., height + 0.005,
-                                        f'{height:.3f}', ha='center', va='bottom', fontsize=8)
-
-                axes[plot_idx].set_xlabel("Event types")
-                axes[plot_idx].set_ylabel("Probabilities")
-                axes[plot_idx].set_title("Distribution of event types", fontsize=12)
-                axes[plot_idx].set_ylim(0, max(probabilities) * 1.15)  # Add some space for the text
-
-                plot_idx += 1
-
-            # Graph 3: Sequence lengths distribution
-            sns.histplot(seq_lengths, bins=seq_bins, kde=kde, ax=axes[plot_idx],
-                         color=sns.color_palette(palette)[2 if multiple_events else 1])
-
-            # Add statistics for sequence lengths
-            stats_text = (f"Mean: {np.mean(seq_lengths):.2f}\n"
-                          f"Median: {np.median(seq_lengths):.2f}\n"
-                          f"Std Dev: {np.std(seq_lengths):.2f}")
-
-            axes[plot_idx].annotate(stats_text, xy=(0.95, 0.95), xycoords='axes fraction',
-                                    va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
-
-            axes[plot_idx].set_xlabel("Sequence length")
-            axes[plot_idx].set_ylabel("Count")
-            axes[plot_idx].set_title("Distribution of sequence lengths", fontsize=12)
-
-            # Add overall title with dataset split information
-            fig.suptitle(f"Data distributions for {split.capitalize()} set",
-                         fontsize=14, fontweight='bold', y=0.98)
-
-            # Save figure if requested
-            if save_graph:
-                if log_scale:
-                    filename = f"all_distributions_{split}_log.png"
-                else:
-                    filename = f"all_distributions_{split}.png"
-
-                output_dir = self.save_dir
-                os.makedirs(output_dir, exist_ok=True)
-
-                # Use current datetime for filename
-                filename = os.path.join(output_dir, filename)
-
-                plt.savefig(filename, dpi=300, bbox_inches='tight')
-                print(f"Figure saved to {filename}")
-
-                # Save metadata
-                delta_times_stats = {
-                    'mean': float(np.mean(delta_times)),
-                    'median': float(np.median(delta_times)),
-                    'std_dev': float(np.std(delta_times)),
-                    'min': float(np.min(delta_times)),
-                    'max': float(np.max(delta_times)),
-                    'count': int(len(delta_times))
-                }
-
-                seq_lengths_stats = {
-                    'mean': float(np.mean(seq_lengths)),
-                    'median': float(np.median(seq_lengths)),
-                    'min': int(np.min(seq_lengths)),
-                    'max': int(np.max(seq_lengths)),
-                    'std_dev': float(np.std(seq_lengths)),
-                    'count': int(len(seq_lengths))
-                }
-
-                event_probs = {str(event): float(prob) for event, prob in zip(event_types, probabilities)}
-
-                metadata = {
-                    'plot_type': 'all_distributions',
-                    'split': split,
-                    'figsize': figsize,
-                    'palette': palette,
-                    'bins': bins,
-                    'kde': kde,
-                    'log_scale': log_scale,
-                    'multiple_events': multiple_events,
-                    'delta_times_statistics': delta_times_stats,
-                    'event_type_probabilities': event_probs,
-                    'seq_lengths_statistics': seq_lengths_stats
-                }
-                self._save_metadata_to_json(metadata, filename[:-4])  # Remove .png extension
-
-            # Show figure if requested
-            if show_graph:
-                plt.show()
-            else:
-                plt.close(fig)
-
-        return delta_times, (event_types, probabilities), seq_lengths
+            self.plot_inter_event_time_distribution()
+        return self.all_time_deltas

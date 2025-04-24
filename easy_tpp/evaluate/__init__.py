@@ -1,8 +1,10 @@
-from easy_tpp.evaluate.evaluation_btw_data import Evaluation
+from easy_tpp.evaluate.distribution_comparison import DistribComparator
 from easy_tpp.evaluate.metrics_compute import MetricsCompute, EvaluationMode
+from easy_tpp.evaluate.model_distribution_comparison import ModelDistributionComparator
 
 __all__ = [
-    'Evaluation',
+    'DistribComparator',
     'EvaluationMode',
     'MetricsCompute',
+    'ModelDistributionComparator',
 ]

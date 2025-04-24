@@ -1,6 +1,6 @@
 from easy_tpp.utils import logger
 from easy_tpp.preprocess import TPPDataModule
-from easy_tpp.config_factory import EvaluationConfig, DataConfig
+from easy_tpp.config_factory import DistribCompConfig, DataConfig
 
 from typing import Dict
 import numpy as np
@@ -9,11 +9,10 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from collections import Counter
 
-class Evaluation:
+class DistribComparator:
     
-    def __init__(self, evaluator_config: EvaluationConfig, dataset_size: int = 10**4):
+    def __init__(self, evaluator_config: DistribCompConfig, dataset_size: int = 10**4):
 
         """
         Initialize the evaluator for simulation comparison.
@@ -113,11 +112,61 @@ class Evaluation:
             label_times_array = np.asarray(label_times)
             pred_times_array = np.asarray(pred_times)
             
-            # Add histograms with KDE
-            sns.histplot(label_times_array, label=f'Label ({self.label_split})', kde=True, 
-                      alpha=0.6, log_scale=True, color='royalblue')
-            sns.histplot(pred_times_array, label=f'Prediction ({self.pred_split})', kde=True, 
-                      alpha=0.6, log_scale=True, color='crimson')
+            # Create histograms for both datasets
+            label_hist, label_bin_edges = np.histogram(label_times_array, bins=50)
+            pred_hist, pred_bin_edges = np.histogram(pred_times_array, bins=50)
+            
+            # Get bin centers for plotting
+            label_bin_centers = (label_bin_edges[:-1] + label_bin_edges[1:]) / 2
+            pred_bin_centers = (pred_bin_edges[:-1] + pred_bin_edges[1:]) / 2
+            
+            # Filter out bins with frequency <= 2
+            label_mask = label_hist > 2
+            pred_mask = pred_hist > 2
+            
+            # Filter the histogram data and bin centers
+            filtered_label_hist = label_hist[label_mask]
+            filtered_label_bin_centers = label_bin_centers[label_mask]
+            filtered_pred_hist = pred_hist[pred_mask]
+            filtered_pred_bin_centers = pred_bin_centers[pred_mask]
+            
+            # Plot histograms - we'll use bar plots with filtered data instead of histplot
+            plt.bar(filtered_label_bin_centers, filtered_label_hist, width=(label_bin_edges[1] - label_bin_edges[0]) * 0.8,
+                  label=f'Label ({self.label_split})', alpha=0.6, color='royalblue')
+            plt.bar(filtered_pred_bin_centers, filtered_pred_hist, width=(pred_bin_edges[1] - pred_bin_edges[0]) * 0.8,
+                  label=f'Prediction ({self.pred_split})', alpha=0.6, color='crimson')
+            
+            plt.yscale('log')
+            
+            # Calculate linear regression for filtered label data
+            if len(filtered_label_hist) > 1:  # Need at least 2 points for regression
+                label_X = filtered_label_bin_centers.reshape(-1, 1)
+                label_y = np.log10(filtered_label_hist)  # Log scale since y-axis is log
+                label_reg = np.polyfit(label_X.flatten(), label_y, 1)
+                label_slope, label_intercept = label_reg
+                
+                # Generate points for the regression line
+                label_x_line = np.linspace(min(filtered_label_bin_centers), max(filtered_label_bin_centers), 100)
+                label_y_line = 10 ** (label_slope * label_x_line + label_intercept)
+                
+                # Plot the regression line
+                plt.plot(label_x_line, label_y_line, '--', color='blue', 
+                       label=f'Label slope: {label_slope:.4f}')
+            
+            # Calculate linear regression for filtered prediction data
+            if len(filtered_pred_hist) > 1:  # Need at least 2 points for regression
+                pred_X = filtered_pred_bin_centers.reshape(-1, 1)
+                pred_y = np.log10(filtered_pred_hist)  # Log scale since y-axis is log
+                pred_reg = np.polyfit(pred_X.flatten(), pred_y, 1)
+                pred_slope, pred_intercept = pred_reg
+                
+                # Generate points for the regression line
+                pred_x_line = np.linspace(min(filtered_pred_bin_centers), max(filtered_pred_bin_centers), 100)
+                pred_y_line = 10 ** (pred_slope * pred_x_line + pred_intercept)
+                
+                # Plot the regression line
+                plt.plot(pred_x_line, pred_y_line, '--', color='red', 
+                       label=f'Pred slope: {pred_slope:.4f}')
             
             # Calculate statistics using vectorized operations
             label_mean = np.mean(label_times_array)
@@ -147,6 +196,10 @@ class Evaluation:
             plt.annotate(pred_stats, xy=(0.95, 0.95), xycoords='axes fraction',
                       va='top', ha='right', bbox=dict(boxstyle='round', fc='white', alpha=0.7))
         
+        else:
+            logger.warning("One or both of the time delta arrays are empty. Skipping plot generation.")
+            return
+
         plt.title('Comparison of Inter-Event Time Distributions (Log Scale)')
         plt.xlabel('Time Since Last Event (Log Scale)')
         plt.ylabel('Frequency')
@@ -166,6 +219,8 @@ class Evaluation:
             os.path.join(self.output_dir, "qq_inter_event_times.png"),
             log_scale=True
         )
+
+        return
 
     def _create_qq_plot(self, label_data: np.ndarray, pred_data: np.ndarray, title: str, save_path: str, log_scale: bool = False):
         """

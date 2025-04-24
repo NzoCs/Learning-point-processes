@@ -93,7 +93,7 @@ data:
       padding_side: left
 
 
-NHP_train:
+NHP:
 
   data_loading_specs:
     batch_size: 128
@@ -122,7 +122,7 @@ NHP_train:
       type: tensorboard
       name: logs
 
-RMTPP_train:
+RMTPP:
 
   data_loading_specs:
     batch_size: 256
@@ -151,7 +151,7 @@ RMTPP_train:
       type: tensorboard
       name: logs
 
-AttNHP_train:
+AttNHP:
 
   data_loading_specs:
     batch_size: 64
@@ -181,7 +181,7 @@ AttNHP_train:
       type: tensorboard
       name: logs
 
-SAHP_train:
+SAHP:
 
   data_loading_specs:
     batch_size: 64
@@ -211,7 +211,7 @@ SAHP_train:
       type: tensorboard
       name: logs
 
-THP_train:
+THP:
 
   data_loading_specs:
     batch_size: 64
@@ -241,7 +241,7 @@ THP_train:
       type: tensorboard
       name: logs
 
-FullyNN_train:
+FullyNN:
 
   data_loading_specs:
     batch_size: 64
@@ -270,7 +270,7 @@ FullyNN_train:
       type: tensorboard
       name: logs
 
-IntensityFree_train:
+IntensityFree:
 
   data_loading_specs:
     batch_size: 256
@@ -300,7 +300,7 @@ IntensityFree_train:
       name: logs
 
 
-ODETPP_train:
+ODETPP:
 
   data_loading_specs:
     batch_size: 256

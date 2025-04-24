@@ -19,12 +19,26 @@ source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
 experiments=(NHP_test RMTPP_test AttNHP_test SAHP_test)
-datasets=(hawkes1 H2expc H2expi self_correcting)
+datasets=(hawkes1 H2expc H2expi self_correcting taxi taobao self_correcting hawkes2_)
 
 # Mapping index → combinaison
 idx=$SLURM_ARRAY_TASK_ID
 exp=${experiments[$(( idx / ${#datasets[@]} ))]}
 data=${datasets[$(( idx % ${#datasets[@]} ))]}
 
+# Définition du chemin du modèle pour la combinaison actuelle
+model_dir="./checkpoints/${exp}/trained_models/${data}"
+
+# Vérification de l'existence de best.ckpt et l'absence de test_results.json
+if [ -f "${model_dir}/best.ckpt" ] && [ ! -f "${model_dir}/test_results.json" ]; then
+    echo "Lancement du test pour ${exp} sur ${data}"
 # Lancement avec srun
 srun python test.py --experiment_id "${exp}" --dataset_id "${data}"
+else
+    if [ ! -f "${model_dir}/best.ckpt" ]; then
+        echo "Le fichier ${model_dir}/best.ckpt n'existe pas. Test ignoré."
+    fi
+    if [ -f "${model_dir}/test_results.json" ]; then
+        echo "Le fichier ${model_dir}/test_results.json existe déjà. Test ignoré."
+    fi
+fi

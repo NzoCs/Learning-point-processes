@@ -2,7 +2,7 @@ import argparse
 import os
 
 from easy_tpp.config_factory import Config
-from easy_tpp.evaluate.evaluation_btw_data import Evaluation
+from easy_tpp.evaluate.distribution_comparison import Evaluation
 
 def main():
     parser = argparse.ArgumentParser()

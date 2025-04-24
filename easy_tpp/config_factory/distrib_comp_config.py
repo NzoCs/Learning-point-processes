@@ -7,7 +7,7 @@ from easy_tpp.utils import logger
 
 
 @Config.register('evaluation_config')
-class EvaluationConfig(Config):
+class DistribCompConfig(Config):
     
     def __init__(self, **kwargs):
         """Initialize evaluation configuration.
@@ -22,7 +22,7 @@ class EvaluationConfig(Config):
                 - label_split: Data split for labels (e.g., "test")
                 - pred_split: Data split for predictions (e.g., "test")
         """
-        self.mode = kwargs.get("mode", "prediction")
+        
         self.output_dir = kwargs.get("output_dir", "./eval_output")
         os.makedirs(self.output_dir, exist_ok=True)
         self.label_data_config = kwargs.get("label_data_config", {})
@@ -35,8 +35,6 @@ class EvaluationConfig(Config):
         for key, value in kwargs.items():
             if not hasattr(self, key):
                 setattr(self, key, value)
-        
-        logger.info(f"EvaluatorConfig initialized with mode: {self.mode}")
     
     def get_yaml_config(self):
         """Get the yaml format config from self.

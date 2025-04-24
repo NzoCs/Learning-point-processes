@@ -23,7 +23,6 @@ log
 #data
 *.png
 *.jpg
-*.json
 *.csv
 
 # idea files

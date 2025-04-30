@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import json
 import os
-from typing import List, Tuple, Dict, Optional, Union
+from typing import List, Tuple, Dict, Optional
 from tqdm import tqdm
 
 

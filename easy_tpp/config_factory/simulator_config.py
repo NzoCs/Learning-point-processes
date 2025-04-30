@@ -4,6 +4,9 @@ from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.config_factory.model_config import ModelConfig
 from easy_tpp.models import BaseModel
 
+import os
+import copy
+
 
 @Config.register("simulator_config")
 class SimulatorConfig(Config):
@@ -12,14 +15,14 @@ class SimulatorConfig(Config):
     
     Attributes:
         save_dir (str): Directory to save simulation results.
-        start_time (int): Start time for the simulation.
-        end_time (int): End time for the simulation.
-        history_data (TPPDataModule): Data module for history data.
+        start_time (float): Start time for the simulation.
+        end_time (float): End time for the simulation.
+        history_data_module (TPPDataModule): Data module for history data.
         pretrained_model (BaseModel): Pretrained model for simulation.
-        num_simulations (int): Number of simulations to run.
-        splits (dict): Dictionary of dataset splits and their ratios.
+        split (str): Dataset split to use for simulation.
         seed (int): Random seed for reproducibility.
         experiment_id (str): Identifier for the experiment.
+        dataset_id (str): Identifier for the dataset.
     """
     
     def __init__(self, **kwargs) -> None:
@@ -28,31 +31,42 @@ class SimulatorConfig(Config):
         
         Args:
             kwargs (dict): Configuration dictionary containing simulator settings.
-        """
+                Required keys:
+                - end_time: End time for the simulation
+                - start_time: Start time for the simulation
+                - model_config: Model configuration dictionary
+                - history_config: History data configuration dictionary
         
-        self.save_dir = kwargs.get('save_dir', 'simulated_data')
-        self.start_time = kwargs.get('start_time')
-        self.end_time = kwargs.get('end_time')
-        self.history_dataset_id = kwargs.get('history_dataset_id', None)
-        self.splits = kwargs.get('splits', {'train': 0.6, 'test': 0.2, 'dev': 0.2})
-        self.seed = kwargs.get('seed', None)
-        self.num_simulations = kwargs.get('num_simulations', 100)
-        self.experiment_id = kwargs.get('experiment_id', None)
+        Raises:
+            ValueError: If required configuration keys are missing
+        """
+        # Validate required fields
+        required_keys = ['model_config', 'hist_data_config']
+        missing_keys = [key for key in required_keys if key not in kwargs]
+        if missing_keys:
+            raise ValueError(f"Missing required configuration keys: {', '.join(missing_keys)}")
+
+        # Basic configuration attributes
+        dataset_id = kwargs.get('dataset_id', None)
+        self.seed = int(kwargs.get('seed', 2002))
+        self.split = kwargs.get('split', None)
         
         # Build Config for history data
-        history_config = kwargs.get('history_config', None)
-        history_config = DataConfig.parse_from_yaml_config(history_config) if history_config else None
+        history_config = kwargs.get('hist_data_config', {})
+        self.history_config = DataConfig.parse_from_yaml_config(history_config) 
+        self.max_size = kwargs.get("max_size", 10**4)
         
-        model_config = kwargs.get('model_config', None)
-        model_config = ModelConfig.parse_from_yaml_config(model_config) if model_config else None
+        # Build model configuration
+        model_config = kwargs.get('model_config', {})
+        model_config = ModelConfig.parse_from_yaml_config(model_config)
         
-        self.history_data = None
-        if history_config:
-            self.history_data = TPPDataModule(data_config = history_config)
-            
-        self.pretrained_model = None
-        if model_config:
-            self.pretrained_model = BaseModel.generate_model_from_config(model_config)
+        # Create data module and model from configs
+        self.history_data_module = TPPDataModule(data_config=self.history_config)
+        self.pretrained_model = BaseModel.generate_model_from_config(model_config)
+        
+        model_id = model_config.model_id
+        self.save_dir = kwargs.get("save_dir", f"./simul/{model_id}/{dataset_id}")
+        os.makedirs(self.save_dir, exist_ok=True)
     
     def get(self, key, default=None):
         """
@@ -68,52 +82,45 @@ class SimulatorConfig(Config):
         return getattr(self, key, default)
     
     @staticmethod
-    def parse_from_yaml_config(yaml_config, **kwargs):
-        """
-        Parse the configuration from a YAML dictionary, supporting multiple experiments.
+    def parse_from_yaml_config(yaml_config: dict, **kwargs) -> 'SimulatorConfig':
+        """Parse configuration from YAML dictionary.
         
         Args:
-            yaml_config (dict): Configuration dictionary from YAML file.
-            **kwargs: Additional keyword arguments, including experiment_id.
+            yaml_config (dict): Configuration dictionary from YAML
+            **kwargs: Additional keyword arguments
             
         Returns:
-            SimulatorConfig: A new SimulatorConfig instance
+            SimulatorConfig: Configured simulator instance
+            
+        Raises:
+            ValueError: If required configurations are missing
         """
-        # Check if direct_parse is specified to bypass experiment_id lookup
-        direct_parse = kwargs.get('direct_parse', False)
         
-        # Get experiment-specific configuration if not direct parsing
-        if not direct_parse:
-            experiment_id = kwargs.get('experiment_id')
-            if experiment_id is not None and experiment_id in yaml_config:
-                # Extract experiment-specific config
-                config_dict = yaml_config[experiment_id].copy()
-                # Add the experiment_id to the config
-                config_dict['experiment_id'] = experiment_id
-            else:
-                # If no experiment ID specified or not found, use the top-level config
-                config_dict = yaml_config.copy()
+        experiment_id = kwargs.get('experiment_id')
+        dataset_id = kwargs.get('dataset_id')
+        
+        if experiment_id is not None:
+            exp_yaml_config = yaml_config[experiment_id]
         else:
-            # Use the provided config directly
-            config_dict = yaml_config.copy()
-            
-        # Remove pipeline_config_id if present (not used in __init__)
-        if 'pipeline_config_id' in config_dict:
-            del config_dict['pipeline_config_id']
-            
-        # Update with any additional kwargs
-        if kwargs:
-            for key, value in kwargs.items():
-                if key not in ['direct_parse', 'experiment_id']:
-                    config_dict[key] = value
-                    
-        # Validate required fields
-        required_keys = ['save_dir', 'end_time', 'start_time']
-        missing_keys = [key for key in required_keys if key not in config_dict]
-        if missing_keys:
-            raise ValueError(f"Missing required configuration keys: {', '.join(missing_keys)}")
-            
-        return SimulatorConfig(**config_dict)
+            exp_yaml_config = yaml_config
+        
+        # Initialize history data config
+        data_loading_specs = exp_yaml_config.get('data_loading_specs', {})
+        
+        hist_data_config = yaml_config.get('data', {}).get(dataset_id, {})
+        hist_data_config['data_loading_specs'] = data_loading_specs
+        hist_data_config['dataset_id'] = dataset_id
+        
+        exp_yaml_config['hist_data_config'] = hist_data_config
+        # Initialize model config
+        model_config = exp_yaml_config.get('model_config', {})
+        if 'num_event_types' not in model_config:
+            # If we have access to hist_data_config, we can set num_event_types
+            if hasattr(hist_data_config, 'data_specs') and hasattr(hist_data_config.data_specs, 'num_event_types'):
+                model_config['num_event_types'] = hist_data_config.data_specs.num_event_types
+        
+        
+        return SimulatorConfig(**exp_yaml_config)
     
     def get_yaml_config(self):
         """
@@ -126,15 +133,26 @@ class SimulatorConfig(Config):
             'save_dir': self.save_dir,
             'start_time': self.start_time,
             'end_time': self.end_time,
-            'num_simulations': self.num_simulations,
             'seed': self.seed,
-            'splits': self.splits,
+            'split': self.split,
+            'model_config': self.model_config.get_yaml_config() if self.model_config else None,
+            'history_config': self.history_config.get_yaml_config() if self.history_config else None
         }
         
-        if self.history_dataset_id:
-            yaml_config['history_dataset_id'] = self.history_dataset_id
-            
-        if self.experiment_id:
+        if hasattr(self, 'experiment_id') and self.experiment_id:
             yaml_config['experiment_id'] = self.experiment_id
             
-        return yaml_config
+        if hasattr(self, 'dataset_id') and self.dataset_id:
+            yaml_config['dataset_id'] = self.dataset_id
+            
+        return {k: v for k, v in yaml_config.items() if v is not None}
+    
+    def copy(self):
+        """
+        Get a deep copy of the current configuration.
+        
+        Returns:
+            SimulatorConfig: A new instance with the same configuration values
+        """
+        config_dict = copy.deepcopy(self.get_yaml_config())
+        return SimulatorConfig(**config_dict)

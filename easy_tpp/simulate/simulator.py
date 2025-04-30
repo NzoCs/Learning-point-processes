@@ -1,16 +1,11 @@
 from easy_tpp.config_factory import SimulatorConfig
+from easy_tpp.utils import logger
+
 import json
 import os
-import numpy as np
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from tqdm import tqdm
 import random
-import torch
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 class Simulator:
     """
@@ -31,41 +26,21 @@ class Simulator:
             simulator_config (SimulatorConfig): Configuration object containing simulation parameters.
         """
         
+        #configuration for simulation
         self.save_dir = simulator_config.save_dir
-        self.start_time = simulator_config.start_time
-        self.end_time = simulator_config.end_time
-        self.history_data = simulator_config.history_data
+
+        #Load the model
         self.model = simulator_config.pretrained_model
-        self.splits = simulator_config.splits
+
+        #data_config
+        self.history_data_module = simulator_config.history_data_module
+        self.split = simulator_config.split
+        self.history_data_module.setup(stage=self.split)
+        self.num_event_types = self.history_data_module.num_event_types
+        self.max_size = simulator_config.max_size
+
+        #seed
         self.seed = simulator_config.seed
-        self.num_simulations = getattr(simulator_config, 'num_simulations', 100) # Default to 100 if not specified
-
-        logger.info(f"Simulator initialized with config: save_dir={self.save_dir}, "
-                    f"time_interval=[{self.start_time}, {self.end_time}], "
-                    f"num_simulations={self.num_simulations}, seed={self.seed}")
-
-        # --- Robustness Check ---
-        if self.model is None:
-            raise ValueError("A pre-trained model (pretrained_model) must be provided in the configuration.")
-        if not hasattr(self.model, 'simulate') or not callable(self.model.simulate):
-            raise AttributeError(f"The provided model of type {type(self.model).__name__} does not have a callable 'simulate' method.")
-        if not hasattr(self.model, 'num_event_types'):
-             if hasattr(self.model, 'config') and hasattr(self.model.config, 'num_event_types'):
-                 self.num_event_types = self.model.config.num_event_types
-             else:
-                 logger.warning("Could not determine 'num_event_types' from the model. Metadata might be incomplete.")
-                 self.num_event_types = None
-        else:
-            self.num_event_types = self.model.num_event_types
-
-        # --- Seed Setting ---
-        if self.seed is not None:
-            logger.info(f"Setting random seed to {self.seed}")
-            random.seed(self.seed)
-            np.random.seed(self.seed)
-            torch.manual_seed(self.seed)
-            if torch.cuda.is_available():
-                torch.cuda.manual_seed_all(self.seed)
 
     def run(self) -> None:
         """
@@ -75,65 +50,43 @@ class Simulator:
         formats them, splits them according to the configuration, and saves them to disk
         along with metadata. Requires `history_data` to be provided in the config.
         """
-        os.makedirs(self.save_dir, exist_ok=True)
-        logger.info(f"Ensured output directory exists: {self.save_dir}")
         
         model = self.model
-        history_data = self.history_data
-        start_time = self.start_time
-        end_time = self.end_time
+        history_data = self.history_data_module
         
         if history_data is None:
             logger.error("history_data is required for simulation but was not provided.")
             raise ValueError("history_data must be provided for simulation based on historical context.")
         
-        logger.info(f"Starting generation of {self.num_simulations} simulations...")
+        logger.info(f"Starting generation of simulations")
         simulations = []
         
         try:
-            data_loader = history_data.get_dataloader(split='test')
+            data_loader = history_data.get_dataloader(split=self.split)
         except Exception as e:
             logger.error(f"Failed to get dataloader from history_data: {e}")
             raise RuntimeError("Could not obtain dataloader from the provided history_data object.") from e
 
-        sim_count = 0
-        with tqdm(total=self.num_simulations, desc="Simulating sequences") as pbar:
-            for batch in data_loader:
-                batch_values = batch.values()
-                try:
-                    time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(
-                        start_time=start_time,
-                        end_time=end_time,
-                        batch=batch_values,
-                        batch_size=None
-                    )
-                except Exception as e:
-                    raise RuntimeError(f"Simulation failed because of error : {e}. Check the model and input data.") from e
+        events_count =  0
+        for batch in tqdm(data_loader, desc="Generating simulations", unit="batch"):
+            batch_values = batch.values()
+            time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(batch=batch_values)
 
-                batch_size = time_seq.size(0)
-                for i in range(batch_size):
-                    if sim_count >= self.num_simulations:
-                        break
+            batch_size = time_seq.size(0)
 
-                    mask_i = simul_mask[i]
-                    if mask_i.any():
-                        simulations.append({
-                            'time_seq': time_seq[i][mask_i].clone().detach(),
-                            'time_delta_seq': time_delta_seq[i][mask_i].clone().detach(),
-                            'event_seq': event_seq[i][mask_i].clone().detach(),
-                        })
-                        sim_count += 1
-                        pbar.update(1)
+            for i in range(batch_size):
+                mask_i = simul_mask[i]
+                if mask_i.any():
+                    simulations.append({
+                        'time_seq': time_seq[i][mask_i].clone().detach(),
+                        'time_delta_seq': time_delta_seq[i][mask_i].clone().detach(),
+                        'event_seq': event_seq[i][mask_i].clone().detach(),
+                    })
 
-                if sim_count >= self.num_simulations:
-                    logger.info(f"Target number of simulations ({self.num_simulations}) reached.")
-                    break
-
-        if sim_count < self.num_simulations:
-             logger.warning(f"Generated only {sim_count} simulations, less than the requested {self.num_simulations}.")
-             self.num_simulations = sim_count
-
-        logger.info(f"Successfully generated {len(simulations)} simulations.")
+            events_count += simul_mask.sum()
+            if events_count >= self.max_size:
+                break
+        logger.info(f"Successfully generated simulations.")
         
         logger.info("Formatting generated simulations...")
         formatted_data = self.format_multivariate_simulations(
@@ -166,6 +119,8 @@ class Simulator:
             events = sim['event_seq']
             time_deltas = sim['time_delta_seq']
             
+            times = times - times[0]  
+
             times_list = times.cpu().tolist()
             events_list = events.cpu().long().tolist()
             time_deltas_list = time_deltas.cpu().tolist()
@@ -173,18 +128,14 @@ class Simulator:
             if not times_list:
                 logger.warning(f"Skipping empty simulation sequence at index {seq_idx}.")
                 continue
-            
-            first_sim_time = times_list[0]
-            time_since_start = [t - first_sim_time for t in times_list]
 
             seq_dict = {
                 'dim_process': dim_process if dim_process is not None else -1,
                 'seq_len': len(times_list),
                 'seq_idx': seq_idx,
-                'time_since_start': time_since_start,
+                'time_since_start': times_list,
                 'time_since_last_event': time_deltas_list,
-                'type_event': events_list,
-                'timestamps': times_list
+                'type_event': events_list
             }
             formatted_data.append(seq_dict)
         
@@ -192,8 +143,8 @@ class Simulator:
     
     def save_data(self, formatted_data: List[Dict]) -> None:
         """
-        Saves the formatted simulation data into train, dev, and test splits based on
-        the ratios specified in the configuration. Also saves metadata.
+        Saves the formatted simulation data into a single file.
+        Also saves metadata.
 
         Args:
             formatted_data (List[Dict]): The list of formatted simulation sequences.
@@ -201,51 +152,23 @@ class Simulator:
         num_total_seqs = len(formatted_data)
         if num_total_seqs == 0:
             logger.warning("No formatted data to save.")
-            self.save_metadata(formatted_data, {})
+            self.save_metadata(formatted_data)
             return
 
         if self.seed is not None:
+            random.seed(self.seed)
             random.shuffle(formatted_data)
             logger.info("Shuffled formatted data using the provided seed.")
         else:
             random.shuffle(formatted_data)
             logger.info("Shuffled formatted data randomly (no seed provided).")
 
-        train_ratio, dev_ratio, test_ratio = self.splits
-        if not np.isclose(train_ratio + dev_ratio + test_ratio, 1.0):
-             logger.warning(f"Split ratios {self.splits} do not sum to 1. Normalizing...")
-             total = train_ratio + dev_ratio + test_ratio
-             train_ratio /= total
-             dev_ratio /= total
-             test_ratio /= total
+        output_filename = 'simulations.json'
+        filepath = os.path.join(self.save_dir, output_filename)
+        self.save_json(formatted_data, filepath)
 
-        num_train = int(train_ratio * num_total_seqs)
-        num_dev = int(dev_ratio * num_total_seqs)
-        num_test = num_total_seqs - num_train - num_dev
-
-        split_counts = {'train': num_train, 'dev': num_dev, 'test': num_test}
-        logger.info(f"Calculated split sizes: Train={num_train}, Dev={num_dev}, Test={num_test}")
-
-        train_data = formatted_data[:num_train]
-        dev_data = formatted_data[num_train : num_train + num_dev]
-        test_data = formatted_data[num_train + num_dev :]
-
-        split_filenames = {
-            'train': 'train.json',
-            'dev': 'dev.json',
-            'test': 'test.json'
-        }
-
-        for split_name, data_split in [('train', train_data), ('dev', dev_data), ('test', test_data)]:
-            if data_split:
-                filepath = os.path.join(self.save_dir, split_filenames[split_name])
-                self.save_json(data_split, filepath)
-                logger.info(f"Saved {split_name} data ({len(data_split)} sequences) to {filepath}")
-            else:
-                logger.info(f"Skipping save for empty split: {split_name}")
-
-        self.save_metadata(formatted_data, split_counts)
-        logger.info(f"All simulated data splits have been saved in {self.save_dir}")
+        self.save_metadata(formatted_data)
+        logger.info(f"All simulated data has been saved in {self.save_dir}")
     
     def save_json(self, data: List[Dict], filepath: str) -> None:
         """
@@ -263,15 +186,13 @@ class Simulator:
         except TypeError as e:
              logger.error(f"Data structure not serializable to JSON for {filepath}: {e}")
 
-    def save_metadata(self, formatted_data: List[Dict], split_counts: Dict[str, int]) -> None:
+    def save_metadata(self, formatted_data: List[Dict]) -> None:
         """
-        Saves metadata about the simulation run, including configuration details,
-        total event counts, and data split information.
+        Saves metadata about the simulation run, including configuration details
+        and total event counts.
 
         Args:
             formatted_data (List[Dict]): The list of all formatted sequences (used for stats).
-            split_counts (Dict[str, int]): Dictionary containing the number of sequences
-                                           in each split ('train', 'dev', 'test').
         """
         total_events = sum(item.get('seq_len', 0) for item in formatted_data)
         avg_seq_len = total_events / len(formatted_data) if formatted_data else 0
@@ -282,28 +203,11 @@ class Simulator:
                 'total_events_generated': total_events,
                 'average_sequence_length': round(avg_seq_len, 2),
                 'dimension': self.num_event_types if self.num_event_types is not None else 'Unknown',
-                'simulation_time_interval': [self.start_time, self.end_time],
+                'simulation_time_interval': [self.model.simulation_start_time, self.model.simulation_end_time],
                 'generating_model': self.model.__class__.__name__ if self.model else 'Unknown',
                 'seed_used': self.seed
-            },
-            'data_split_counts': split_counts,
-            'saved_files': {
-                 'train': os.path.join(self.save_dir, 'train.json') if split_counts.get('train', 0) > 0 else None,
-                 'dev': os.path.join(self.save_dir, 'dev.json') if split_counts.get('dev', 0) > 0 else None,
-                 'test': os.path.join(self.save_dir, 'test.json') if split_counts.get('test', 0) > 0 else None,
-                 'metadata': os.path.join(self.save_dir, 'metadata.json')
             }
         }
-        
-        if hasattr(self.model, 'get_model_metadata') and callable(self.model.get_model_metadata):
-            try:
-                model_metadata = self.model.get_model_metadata()
-                if isinstance(model_metadata, dict):
-                     metadata['model_specific_parameters'] = model_metadata
-                else:
-                     logger.warning("Model's get_model_metadata did not return a dictionary. Skipping.")
-            except Exception as e:
-                logger.warning(f"Could not retrieve or use model-specific metadata: {e}")
 
         meta_filepath = os.path.join(self.save_dir, 'metadata.json')
         self.save_json(metadata, meta_filepath)

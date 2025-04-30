@@ -14,7 +14,7 @@ import os
 from easy_tpp.models.thinning import EventSampler
 from easy_tpp.config_factory import ModelConfig
 from easy_tpp.evaluate import MetricsCompute, EvaluationMode
-
+from easy_tpp.utils import logger
 
 class BaseModel(pl.LightningModule, ABC):
     
@@ -28,7 +28,8 @@ class BaseModel(pl.LightningModule, ABC):
         
         #Paramètre du modele
         self.save_hyperparameters()
-        
+
+        pretrain_model_path = model_config.pretrain_model_path
         base_config = model_config.base_config
         model_specs = model_config.specs
         
@@ -75,6 +76,16 @@ class BaseModel(pl.LightningModule, ABC):
             self.simulation_batch_size = simulation_config.batch_size
             self.simulation_start_time = simulation_config.start_time
             self.simulation_end_time = simulation_config.end_time
+
+        # Load pretrained model if path is provided
+        if pretrain_model_path is not None:
+            checkpoint = torch.load(pretrain_model_path, map_location=self.device, weights_only=False)
+            # Adjust keys if necessary, e.g., remove prefix if saved with DDP
+            state_dict = checkpoint['state_dict']
+            # Example key adjustment (if needed):
+            # state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
+            self.load_state_dict(state_dict, strict=False) # Use strict=False if some layers are different
+            logger.info(f"Successfully loaded pretrained model from: {pretrain_model_path}")
     
     @property
     def device(self):
@@ -507,7 +518,10 @@ class BaseModel(pl.LightningModule, ABC):
             
     def simulate(
         self,
-        batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] = None
+        batch: tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor] = None,
+        start_time: float = None,
+        end_time: float = None,
+        batch_size: int = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         
@@ -534,9 +548,18 @@ class BaseModel(pl.LightningModule, ABC):
                 - 'type_seqs': Tensor of generated event types.
         """
         
-        start_time = self.simulation_start_time
-        end_time = self.simulation_end_time
-        batch_size = self.simulation_batch_size
+        if start_time is None:
+            start_time = self.simulation_start_time
+            if not isinstance(start_time, (int, float)):
+                raise ValueError("Valid start_time must be provided for simulations in the config or as an argument.")
+        if end_time is None:
+            end_time = self.simulation_end_time
+            if not isinstance(end_time, (int, float)):
+                raise ValueError("end_time must be provided for simulations in the config or as an argument.")
+        if batch_size is None:
+            batch_size = self.simulation_batch_size
+            if not isinstance(batch_size, int):
+                raise ValueError("Valid batch_size must be provided for simulations in the config or as an argument.")
         
         # Initialize sequences
         if batch is None :
@@ -547,7 +570,7 @@ class BaseModel(pl.LightningModule, ABC):
         time_seq_label, time_delta_seq_label, event_seq_label, non_pad_mask, _ = batch
         
         time_seq = time_seq_label.clone()
-        time_delta_seq = time_seq_label.clone()
+        time_delta_seq = time_delta_seq_label.clone()
         event_seq = event_seq_label.clone()
         
         num_mark = self.num_event_types
@@ -606,19 +629,19 @@ class BaseModel(pl.LightningModule, ABC):
             
             probs = intensities_at_times / total_intensities[:,None]
             type_pred = torch.multinomial(probs, num_samples=1)
-
+            
             # Update last event times for each mark
             for mark in range(num_mark):
                 # Create a boolean mask matching the batch dimension
                 mark_mask = (type_pred.squeeze(-1) == mark)
-                # Update last event times for this mark where the mask is True
+                # Update last event times if the event happened for this mark
                 marked_last_time = torch.where(
                     mark_mask, 
-                    time_pred_.squeeze(-1),
+                    time_seq[:,-1].squeeze(-1),
                     last_event_time[:,mark]
                 )
                 last_event_time[:,mark] = marked_last_time
-                
+
             # Get the last event times for the predicted types
             # Gather last event times for the specific types predicted
             batch_indices = torch.arange(batch_size, device=self.device)

@@ -7,7 +7,6 @@ statistical properties to real data.
 from easy_tpp.utils import logger
 from easy_tpp.preprocess import TPPDataModule
 from easy_tpp.config_factory import DistribCompConfig, DataConfig
-from easy_tpp.models import BaseModel
 
 from typing import Dict
 import numpy as np
@@ -22,9 +21,9 @@ class ModelDistributionComparator:
     Class for comparing distributions of real data and model simulations.
     """
     
-    def __init__(self, 
+    def __init__(self,
                  evaluator_config: DistribCompConfig, 
-                 model: BaseModel, 
+                 model, 
                  dataset_size: int = 10**4):
         """
         Initialize the evaluator for comparing real data to model simulations.
@@ -36,7 +35,6 @@ class ModelDistributionComparator:
         """
         self.config = evaluator_config
         self.model = model
-        self.model.eval()  # Set model to evaluation mode
         
         # Initialize DataModule for the label data
         label_data_config_dict = evaluator_config.label_data_config
@@ -66,15 +64,6 @@ class ModelDistributionComparator:
             split=self.label_split, 
             data_format=label_data_format
         )
-
-        # Initialize containers for real and simulated data
-        self.label_all_event_types = []
-        self.label_all_time_deltas = []
-        self.label_seq_lengths = []
-        
-        self.simulated_all_event_types = []
-        self.simulated_all_time_deltas = []
-        self.simulated_seq_lengths = []
         
         # Set the dataset size limit
         self.dataset_size = dataset_size
@@ -144,13 +133,7 @@ class ModelDistributionComparator:
                         for k, v in batch.items()}
                 
                 # Convert batch dictionary to tuple format expected by model.simulate
-                batch_tuple = (
-                    batch.get('time_seqs', None),
-                    batch.get('time_delta_seqs', None),
-                    batch.get('type_seqs', None),
-                    batch.get('non_pad_mask', None),
-                    batch.get('attention_mask', None)
-                )
+                batch_tuple = batch.values()
                 
                 # Run simulation
                 time_seq, time_delta_seq, event_seq, simul_mask = self.model.simulate(

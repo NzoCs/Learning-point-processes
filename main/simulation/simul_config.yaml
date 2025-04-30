@@ -1,123 +1,322 @@
 pipeline_config_id: simulator_config
 
-# Default configuration parameters shared across experiments
-seed: 42
+data:
 
-# Default splits for the simulated data
-splits:
-  train: 0.6
-  dev: 0.2
-  test: 0.2
+  taxi:
+    data_format: json
+    train_dir: easytpp/taxi
+    valid_dir: easytpp/taxi
+    test_dir: easytpp/taxi
+    data_specs:
+      num_event_types: 10
+      pad_token_id: 10
+      padding_side: left
+ 
+  taobao:
+    data_format: json
+    train_dir: easytpp/taobao
+    valid_dir: easytpp/taobao
+    test_dir: easytpp/taobao
+    data_specs:
+      num_event_types: 17
+      pad_token_id: 17
+      padding_side: left
 
-# Experiment-specific configurations
-hawkes1_simulation:
-  # Simulation output directory
-  save_dir: ../results/simulated_data/hawkes1_sim
+  test:
+    data_format: json
+    train_dir: NzoCs/test_dataset-temporal-dataset
+    valid_dir: NzoCs/test_dataset-temporal-dataset
+    test_dir: NzoCs/test_dataset-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+      
+  H2expi:
+    data_format: json
+    train_dir: NzoCs/H2expi-temporal-dataset
+    valid_dir: NzoCs/H2expi-temporal-dataset
+    test_dir: NzoCs/H2expi-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  H2expc:
+    data_format: json
+    train_dir: NzoCs/H2expc-temporal-dataset
+    valid_dir: NzoCs/H2expc-temporal-dataset
+    test_dir: NzoCs/H2expc-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  hawkes1:
+    data_format: json
+    train_dir: NzoCs/hawkes1-temporal-dataset
+    valid_dir: NzoCs/hawkes1-temporal-dataset
+    test_dir: NzoCs/hawkes1-temporal-dataset
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+
+  hawkes2:
+    data_format: json
+    train_dir: NzoCs/hawkes2-temporal-dataset
+    valid_dir: NzoCs/hawkes2-temporal-dataset
+    test_dir: NzoCs/hawkes2-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
   
-  # Simulation time range
-  start_time: 200
-  end_time: 300
-  
-  # Number of simulations to generate
-  num_simulations: 100
-  
-  # Data configuration for history data
-  history_config: 
-    pipeline_config_id: data_config
-    dataset_id: hawkes1
-    batch_size: 32
-    max_seq_len: 64
-    pad_token_id: 1
-    padding_side: right
-    truncation_side: right
-    is_include_inter_time: true
-    is_include_event_type: true
-  
-  # Model configuration for Hawkes1 (univariate)
+  hawkes2_:
+    data_format: json
+    train_dir: NzoCs/hawkes2_-temporal-dataset
+    valid_dir: NzoCs/hawkes2_-temporal-dataset
+    test_dir: NzoCs/hawkes2_-temporal-dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  self_correcting:
+    data_format: json
+    train_dir: NzoCs/self_correcting-temporal-dataset
+    valid_dir: NzoCs/self_correcting-temporal-dataset
+    test_dir: NzoCs/self_correcting-temporal-dataset
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+
+NHP_simul:
+  dataset_id: hawkes1
+  split: test
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 1
+    
   model_config:
-    pipeline_config_id: model_config
     model_id: NHP
-    model_params:
+    model_path: ../train/checkpoints/NHP/hawkes1/trained_models/best.ckpt
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+    simulation_config:
+      start_time: 100
+      end_time: 200
+
+RMTPP:
+
+  data_loading_specs:
+    batch_size: 256
+    num_workers: 4
+    
+  model_config:
+    model_id: RMTPP
+    specs:
       hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+AttNHP:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: AttNHP
+    specs:
+      hidden_size: 16
+      time_emb_size: 16
+      num_layers: 1
+      num_heads: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+SAHP:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: SAHP
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
       num_layers: 2
       num_heads: 2
-      time_embedding_size: 16
-      dropout: 0.1
-      use_ln: true
-      use_intensity: true
-    num_event_types: 1
-    pad_token_id: 1
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
 
-hawkes2_simulation:
-  # Simulation output directory
-  save_dir: ../results/simulated_data/hawkes2_sim
-  
-  # Simulation time range
-  start_time: 200
-  end_time: 300
-  
-  # Number of simulations to generate
-  num_simulations: 150
-  
-  # Data configuration for history data
-  history_config: 
-    pipeline_config_id: data_config
-    dataset_id: hawkes2
-    batch_size: 32
-    max_seq_len: 64
-    pad_token_id: 2
-    padding_side: right
-    truncation_side: right
-    is_include_inter_time: true
-    is_include_event_type: true
-  
-  # Model configuration for Hawkes2 (bivariate)
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+THP:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
   model_config:
-    pipeline_config_id: model_config
-    model_id: nhp
-    model_params:
-      hidden_size: 32
+    model_id: THP
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
       num_layers: 2
       num_heads: 2
-      time_embedding_size: 16
-      dropout: 0.1
-      use_ln: true
-      use_intensity: true
-    num_event_types: 2
-    pad_token_id: 2
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
 
-self_correcting_simulation:
-  # Simulation output directory 
-  save_dir: ../results/simulated_data/self_correcting_sim
-  
-  # Simulation time range
-  start_time: 200
-  end_time: 300
-  
-  # Number of simulations to generate
-  num_simulations: 120
-  
-  # Data configuration for history data
-  history_config: 
-    pipeline_config_id: data_config
-    dataset_id: self_correcting
-    batch_size: 32
-    max_seq_len: 64
-    pad_token_id: 1
-    padding_side: right
-    truncation_side: right
-    is_include_inter_time: true
-    is_include_event_type: true
-  
-  # Model configuration for Self-Correcting Process
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+FullyNN:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
   model_config:
-    pipeline_config_id: model_config
-    model_id: rmtpp
-    model_params:
+    model_id: FullyNN
+    specs:
       hidden_size: 32
+      time_emb_size: 16
       num_layers: 2
-      time_embedding_size: 16
-      dropout: 0.1
-      use_ln: true
-    num_event_types: 1
-    pad_token_id: 1
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+IntensityFree:
+
+  data_loading_specs:
+    batch_size: 256
+    num_workers: 4
+    
+  model_config:
+    model_id: IntensityFree
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+      
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
+
+ODETPP:
+
+  data_loading_specs:
+    batch_size: 256
+    num_workers: 4
+    
+  model_config:
+    model_id: ODETPP
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+      
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs

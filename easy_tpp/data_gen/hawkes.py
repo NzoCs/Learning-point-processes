@@ -1,8 +1,5 @@
 import numpy as np
-import json
-import os
-import random
-from typing import List, Tuple, Dict, Optional, Union
+from typing import List, Tuple, Dict, Optional
 
 from easy_tpp.data_gen.base_simulator import BaseSimulator
 

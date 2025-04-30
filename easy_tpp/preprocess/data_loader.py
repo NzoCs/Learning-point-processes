@@ -55,10 +55,13 @@ class TPPDataModule(pl.LightningDataModule):
         """
         if data_format == 'pkl':
             return self._build_input_from_pkl(source_dir, split)
-        elif data_format == 'json':
-            return self._build_input_from_json(source_dir, split)
-        else:
-            raise ValueError(f"Unsupported file format: {data_format}")
+        else :
+            try :
+                data_format == 'json'
+                return self._build_input_from_json(source_dir, split)
+            except ValueError as e:
+                logger.error(f"Error loading data from {source_dir}: {e}")
+                raise e
 
     def _build_input_from_pkl(self, source_dir, split):
         """Load and process data from a pickle file.

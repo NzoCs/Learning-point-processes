@@ -392,7 +392,9 @@ class ModelConfig(Config):
 
         self.base_config = BaseConfig.parse_from_yaml_config(kwargs.get('base_config', {}))
         
-        self.simulation_config = kwargs.get('simulation', None)
+        self.pretrain_model_path = kwargs.get('model_path', None)
+
+        self.simulation_config = kwargs.get('simulation_config', None)
         
         if self.simulation_config is not None:
             self.simulation_config = SimulationConfig.parse_from_yaml_config(self.simulation_config)
@@ -409,6 +411,7 @@ class ModelConfig(Config):
             'use_mc_samples': self.use_mc_samples,
             'thinning': self.thinning.get_yaml_config(),
             'training': self.is_training,
+            "pretrain_model_path" : self.pretrain_model_path,
             'num_event_types_pad': self.num_event_types_pad,
             'num_event_types': self.num_event_types,
             'event_pad_index': self.pad_token_id,
@@ -443,6 +446,7 @@ class ModelConfig(Config):
             num_event_types=self.num_event_types,
             event_pad_index=self.pad_token_id,
             gpu=self.gpu,
+            pretrain_model_path = self.pretrain_model_path,
             model_specs=self.specs.copy(),
             base_config=self.base_config.copy()
         )

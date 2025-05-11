@@ -303,6 +303,11 @@ class ModelSpecsConfig:
         #for ODETPP model
         self.ode_num_sample_per_step = kwargs.get('ode_num_sample_per_step', 20)
 
+        #for Hawkes model
+        self.mu = kwargs.get('mu')
+        self.alpha = kwargs.get('alpha')
+        self.beta = kwargs.get('beta')
+
     @staticmethod
     def parse_from_yaml_config(yaml_config) -> 'ModelSpecsConfig':
         """Parse from the yaml to generate the config object.

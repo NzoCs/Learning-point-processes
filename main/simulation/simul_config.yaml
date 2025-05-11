@@ -93,15 +93,15 @@ data:
       padding_side: left
 
 NHP_simul:
-  dataset_id: hawkes1
   split: test
+
   data_loading_specs:
     batch_size: 128
     num_workers: 1
     
   model_config:
+    stage: simul
     model_id: NHP
-    model_path: ../train/checkpoints/NHP/hawkes1/trained_models/best.ckpt
     specs:
       hidden_size: 64
       time_emb_size: 16
@@ -114,13 +114,24 @@ NHP_simul:
       start_time: 100
       end_time: 200
 
+  trainer_config:
+    stage: train
+    max_epochs: 400
+    val_freq: 10
+    accumulate_grad_batches: 1
+    logger_config:
+      type: tensorboard
+      name: logs
+
 RMTPP:
+  split: test
 
   data_loading_specs:
     batch_size: 256
     num_workers: 4
     
   model_config:
+    stage: simul
     model_id: RMTPP
     specs:
       hidden_size: 32
@@ -130,9 +141,9 @@ RMTPP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
+    simulation_config:
+      start_time: 100
+      end_time: 200
 
   trainer_config:
     stage: train
@@ -144,12 +155,14 @@ RMTPP:
       name: logs
 
 AttNHP:
+  split: test
 
   data_loading_specs:
     batch_size: 64
     num_workers: 4
     
   model_config:
+    stage: simul
     model_id: AttNHP
     specs:
       hidden_size: 16
@@ -160,9 +173,9 @@ AttNHP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
+    simulation_config:
+      start_time: 100
+      end_time: 200
 
   trainer_config:
     stage: train
@@ -174,25 +187,27 @@ AttNHP:
       name: logs
 
 SAHP:
+  split: test
 
   data_loading_specs:
     batch_size: 64
     num_workers: 4
     
   model_config:
+    stage: simul
     model_id: SAHP
     specs:
       hidden_size: 32
       time_emb_size: 16
       num_layers: 2
       num_heads: 2
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
     thinning:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+    simulation_config:
+      start_time: 100
+      end_time: 200
 
   trainer_config:
     stage: train
@@ -204,25 +219,27 @@ SAHP:
       name: logs
 
 THP:
+  split: test
 
   data_loading_specs:
     batch_size: 64
     num_workers: 4
     
   model_config:
+    stage: simul
     model_id: THP
     specs:
       hidden_size: 64
       time_emb_size: 16
       num_layers: 2
       num_heads: 2
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
     thinning:
       num_exp: 500
       over_sample_rate: 1.5
       dtime_max: 5
+    simulation_config:
+      start_time: 100
+      end_time: 200
 
   trainer_config:
     stage: train
@@ -234,24 +251,26 @@ THP:
       name: logs
 
 FullyNN:
+  split: test
 
   data_loading_specs:
     batch_size: 64
     num_workers: 4
     
   model_config:
+    stage: simul
     model_id: FullyNN
     specs:
       hidden_size: 32
       time_emb_size: 16
       num_layers: 2
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
     thinning:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+    simulation_config:
+      start_time: 100
+      end_time: 200
       
   trainer_config:
     stage: train
@@ -263,12 +282,14 @@ FullyNN:
       name: logs
 
 IntensityFree:
+  split: test
 
   data_loading_specs:
     batch_size: 256
     num_workers: 4
     
   model_config:
+    stage: simul
     model_id: IntensityFree
     specs:
       hidden_size: 32
@@ -278,39 +299,9 @@ IntensityFree:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
-      
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs
-
-
-ODETPP:
-
-  data_loading_specs:
-    batch_size: 256
-    num_workers: 4
-    
-  model_config:
-    model_id: ODETPP
-    specs:
-      hidden_size: 32
-      time_emb_size: 16
-      num_layers: 2
-    thinning:
-      num_exp: 500
-      over_sample_rate: 1.5
-      dtime_max: 5
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
+    simulation_config:
+      start_time: 100
+      end_time: 200
       
   trainer_config:
     stage: train

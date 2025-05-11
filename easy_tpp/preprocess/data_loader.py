@@ -145,7 +145,7 @@ class TPPDataModule(pl.LightningDataModule):
             self.test_dataset = TPPDataset(self.test_data)
         
         # Set up dataset for prediction (can be the same as test)
-        if stage == 'predict':
+        if stage == 'predict' or 'simul':
             if self.predict_data is None:
                 test_data_dir = self.data_config.get_data_dir('test')
                 self.predict_data = self.build_input(test_data_dir, self.data_config.data_format, 'test')

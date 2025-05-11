@@ -74,6 +74,88 @@ data:
 
 checkpoints_dir: checkpoints
 
+hawkes1 :
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 1
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: 0.2
+      alpha: 0.8
+      beta: 1
+    thinning:
+      num_exp: 500
+      num_sample: 100
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+  trainer_config:
+    stage: test
+
+hawkes2 :
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 1
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [0.2, 0.2]
+      alpha: [[0.4, 0], [0, 8.0]]
+      beta: [[1.0, 0], [0, 20.0]]
+    thinning:
+      num_exp: 500
+      num_sample: 100
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+  trainer_config:
+    stage: test
+
+
+H2expi :
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 1
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [1, 1]
+      alpha: [[0.7, 0], [0, 1.5]]
+      beta: [[1.0, 0], [0,5.0]]
+    thinning:
+      num_exp: 500
+      num_sample: 100
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+  trainer_config:
+    stage: test
+  
+H2expc :
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 1
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [1, 1]
+      alpha: [[0.5, 0.9], [0.5, 2.0]]
+      beta: [[1.0, 3.0], [2.0,5.0]]
+    thinning:
+      num_exp: 500
+      num_sample: 100
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+  trainer_config:
+    stage: test
+
+
 NHP_test:
 
   data_loading_specs:
@@ -96,9 +178,6 @@ NHP_test:
 
   trainer_config:
     stage: test
-    logger_config:
-      type: tensorboard
-      name: logs
 
 RMTPP_test:
 

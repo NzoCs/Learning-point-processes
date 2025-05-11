@@ -49,7 +49,7 @@ class TrainerConfig:
             os.makedirs(dirpath, exist_ok=True)
         else: #stage == 'test'
             if not os.path.exists(dirpath):
-                raise ValueError(f"Checkpoint directory {dirpath} does not exist. Please train the model first.")
+                logger.warning(f"Checkpoint directory {dirpath} does not exist. The model wont be loaded.")
             
         logger_config = kwargs.get("logger_config", {})
         
@@ -182,7 +182,9 @@ class RunnerConfig(Config):
         trainer_config['dataset_id'] = dataset_id
         trainer_config = TrainerConfig.parse_from_yaml_config(trainer_config)
         
-        model_config['base_config']['max_epochs'] = trainer_config.max_epochs
+        if hasattr(model_config, 'base_config') :
+            model_config['base_config']['max_epochs'] = trainer_config.max_epochs
+            
         
         model_config = ModelConfig.parse_from_yaml_config(model_config)
     

@@ -1,0 +1,46 @@
+{
+  "simulation_info": {
+    "num_simulations": 10,
+    "dimension": 2,
+    "time_interval": [
+      100,
+      130
+    ],
+    "simulator_type": "HawkesSimulator"
+  },
+  "split_info": {
+    "train_size": 6,
+    "test_size": 2,
+    "dev_size": 2,
+    "train_ratio": 0.6,
+    "test_ratio": 0.2,
+    "dev_ratio": 0.2
+  },
+  "total_events": 209,
+  "hawkes_parameters": {
+    "mu": [
+      0.2,
+      0.2
+    ],
+    "alpha": [
+      [
+        0.4,
+        0.0
+      ],
+      [
+        0.0,
+        8.0
+      ]
+    ],
+    "beta": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        20
+      ]
+    ]
+  }
+}

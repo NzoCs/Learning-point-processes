@@ -13,10 +13,10 @@ def main():
     parser.add_argument('--config_dir', type=str, required=False, default='./test_config.yaml',
                         help='Dir of configuration yaml to train and evaluate the model.')
 
-    parser.add_argument('--experiment_id', type=str, required=False, default='AttNHP_test',
+    parser.add_argument('--experiment_id', type=str, required=False, default='hawkes1',
                         help='Experiment id in the config file.')
     
-    parser.add_argument('--dataset_id', type=str, required=False, default='test',
+    parser.add_argument('--dataset_id', type=str, required=False, default='hawkes1',
                         help='Dataset id in the config file.')
     
     parser.add_argument('--checkpoint_path', type=str, required=False, default='best',

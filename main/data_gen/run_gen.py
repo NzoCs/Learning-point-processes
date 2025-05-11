@@ -26,7 +26,7 @@ def main():
         beta=beta,
         dim_process=dim_process,
         start_time=100,
-        end_time=200
+        end_time=130
     )
 
     # generator = SelfCorrecting(
@@ -35,7 +35,7 @@ def main():
     #     end_time=200
     # )
     
-    generator.generate_and_save(output_dir='./data/hawkes2', num_simulations=15000, splits={'train': 0.6, 'test': 0.2, 'dev': 0.2})
+    generator.generate_and_save(output_dir='./data/test', num_simulations=10, splits={'train': 0.6, 'test': 0.2, 'dev': 0.2})
 
 if __name__ == '__main__' :
     main()

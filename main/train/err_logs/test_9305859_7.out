@@ -1,5 +1,0 @@
-[31;1m2025-04-24 16:05:06,794 - config.py[pid:1018;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-04-24 16:05:07,234 - trainer.py[pid:1018;line:30:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-04-24 16:05:07,236 - trainer.py[pid:1018;line:75:__init__] - INFO: Checkpoint not found at None. Starting from scratch.[0m
-[38;20m2025-04-24 16:05:07,365 - trainer.py[pid:1018;line:173:train] - INFO: --- Starting Training for Model : IntensityFree on dataset : taxi ---[0m
-Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking:   0%|          | 0/1 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/1 [00:00<?, ?it/s]                                                                   

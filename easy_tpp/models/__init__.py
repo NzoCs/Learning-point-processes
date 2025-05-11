@@ -8,6 +8,7 @@ from easy_tpp.models.intensity_free import IntensityFree
 from easy_tpp.models.ode_tpp import ODETPP 
 from easy_tpp.models.sahp import SAHP 
 from easy_tpp.models.thp import THP 
+from easy_tpp.models.hawkes import HawkesModel
 
 __all__ = [
     'BaseModel',
@@ -19,5 +20,6 @@ __all__ = [
     'ODETPP',
     'SAHP',
     "THP",
-    'ANHN'
+    'ANHN',
+    'HawkesModel'
 ]

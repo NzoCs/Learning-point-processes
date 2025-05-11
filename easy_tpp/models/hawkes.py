@@ -1,9 +1,7 @@
 import torch
-from torch import nn
-import math
 
 from easy_tpp.models.basemodel import BaseModel
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.config_factory.model_config import ModelConfig
 
 class HawkesModel(BaseModel):
     """
@@ -28,13 +26,10 @@ class HawkesModel(BaseModel):
         # alpha: [num_event_types, num_event_types] (alpha[i, j] effect of type j on type i)
         # beta: [num_event_types, num_event_types] (beta[i, j] decay rate for effect of type j on type i)
 
-        if 'mu' not in model_config.specs or 'alpha' not in model_config.specs or 'beta' not in model_config.specs:
-             raise ValueError("Hawkes model requires 'mu', 'alpha', and 'beta' in model_config.specs")
-
         # Convert parameters to tensors and move to the correct device
-        mu = torch.tensor(model_config.specs['mu'], dtype=torch.float32)
-        alpha = torch.tensor(model_config.specs['alpha'], dtype=torch.float32)
-        beta = torch.tensor(model_config.specs['beta'], dtype=torch.float32)
+        mu = torch.tensor(model_config.specs.mu, dtype=torch.float32).view(self.num_event_types)
+        alpha = torch.tensor(model_config.specs.alpha, dtype=torch.float32).view(self.num_event_types, self.num_event_types)
+        beta = torch.tensor(model_config.specs.beta, dtype=torch.float32).view(self.num_event_types, self.num_event_types)
 
         if mu.shape[0] != self.num_event_types or \
            alpha.shape != (self.num_event_types, self.num_event_types) or \
@@ -43,10 +38,14 @@ class HawkesModel(BaseModel):
                              f"alpha/beta: ({self.num_event_types}, {self.num_event_types}). "
                              f"Got mu: {mu.shape}, alpha: {alpha.shape}, beta: {beta.shape}")
 
+        # Ensure beta values are positive for numerical stability
+        beta = torch.clamp(beta, min=self.eps)
+
         # Register parameters as buffers (non-trainable)
         self.register_buffer('mu', mu)
         self.register_buffer('alpha', alpha)
         self.register_buffer('beta', beta)
+
 
     def compute_intensities_at_times(self,
                                      time_seq: torch.Tensor,
@@ -61,72 +60,104 @@ class HawkesModel(BaseModel):
         Args:
             time_seq (torch.Tensor): Event timestamps [B, L_hist].
             type_seq (torch.Tensor): Event types [B, L_hist]. Assumes padding uses self.pad_token_id.
-            query_times (torch.Tensor): Times at which to compute intensities. Shape [B, L_query].
+            query_times (torch.Tensor): Times at which to compute intensities. Shape [B, L_query, N_samples].
 
         Returns:
-            torch.Tensor: Intensities lambda_i(t) for each type i. Shape [B, L_query, D].
+            torch.Tensor: Intensities lambda_i(t) for each type i. Shape [B, L_query, N_samples, D].
         """
-        batch_size, seq_len_hist = time_seq.shape
-        _ , seq_len_query = query_times.shape
-        num_types = self.num_event_types
+
+        batch_size, seq_len = time_seq.shape
+        num_samples = query_times.shape[-1]
         device = self.device
 
+
         # Ensure query_times has the correct shape for broadcasting: [B, L_query, 1]
-        query_times_exp = query_times.unsqueeze(-1).to(device) # [B, L_query, 1]
+        query_times = query_times.to(device) # [B, L_query, 1]
 
-        # Expand history sequences for broadcasting with query times
-        # time_seq: [B, 1, L_hist]
-        # type_seq: [B, 1, L_hist]
-        time_seq_exp = time_seq.unsqueeze(1).to(device)
-        type_seq_exp = type_seq.unsqueeze(1).to(device)
-
-        # Calculate time differences: delta_t = query_t - history_t
-        # Shape: [B, L_query, L_hist]
-        time_diffs = query_times_exp - time_seq_exp
-
-        # Mask for valid historical events (time_k < query_t and not padding)
-        valid_event_mask = (time_diffs > self.eps) & (type_seq_exp != self.pad_token_id) # [B, L_query, L_hist]
-
-        # Gather alpha and beta based on history event types (source type k)
-        # alpha[i, k], beta[i, k] where k = type_seq_exp
-        safe_type_seq = type_seq_exp.clone()
-        safe_type_seq[type_seq_exp == self.pad_token_id] = 0 # Replace pad id with a valid index (e.g., 0)
-
-        # Index alpha and beta: alpha[target_type, source_type]
-        # alpha is [D, D]. We need alpha[:, safe_type_seq] -> [D, B, 1, L_hist]
-        alpha_indexed = self.alpha[:, safe_type_seq]
-        beta_indexed = self.beta[:, safe_type_seq]
-
-        # Transpose to [B, 1, L_hist, D] for broadcasting with decay
-        alpha_gathered = alpha_indexed.permute(1, 2, 3, 0) # [B, 1, L_hist, D]
-        beta_gathered = beta_indexed.permute(1, 2, 3, 0)  # [B, 1, L_hist, D]
-
-        # Calculate exponential decay term: exp(-beta * delta_t)
-        # beta_gathered: [B, 1, L_hist, D]
-        # time_diffs: [B, L_query, L_hist] -> unsqueeze(-1) -> [B, L_query, L_hist, 1]
-        exp_decay = torch.exp(-beta_gathered * time_diffs.unsqueeze(-1)) # [B, L_query, L_hist, D]
-
-        # Calculate contribution from each historical event: alpha * exp_decay
-        # Shape: [B, L_query, L_hist, D]
-        event_contributions = alpha_gathered * exp_decay
-
-        # Apply mask to zero out contributions from invalid events (padding or future events)
-        # valid_event_mask: [B, L_query, L_hist] -> unsqueeze(-1) -> [B, L_query, L_hist, 1]
-        masked_contributions = event_contributions * valid_event_mask.unsqueeze(-1)
-
-        # Sum contributions over the history dimension (L_hist)
-        # Shape: [B, L_query, D]
-        summed_contributions = masked_contributions.sum(dim=2)
-
-        # Add the base intensity mu
-        # mu: [D] -> broadcastable to [B, L_query, D]
-        intensities = self.mu.to(device) + summed_contributions # [B, L_query, D]
-
-        # Ensure non-negative intensities
+        # 2. Create a causal mask to ensure each position only sees its history
+        # First reshape time_seq for broadcasting: [B, L, 1] (event times)
+        time_seq_expanded = time_seq.unsqueeze(-1)
+        
+        # Create position indices matrix [1...L]
+        seq_positions = torch.arange(1, seq_len+1, device=device).view(1, -1, 1)
+        history_positions = torch.arange(1, seq_len+1, device=device).view(1, 1, -1)
+        
+        # Causal mask: history_positions ≤ seq_positions
+        # Shape: [1, L, L] where True means this history position is valid for this sequence position
+        causal_mask = history_positions <= seq_positions
+        
+        # 3. Reshape for broadcasting with causal mask
+        batch_indices = torch.arange(batch_size, device=device)
+        
+        # 4. For each position k and sample n, compute intensity using history up to k
+        # Reshape query_times: [B, L, N_samples] → [B, L, N_samples, 1]
+        query_times_expanded = query_times.unsqueeze(-1)
+        
+        # 5. Expand time and type sequences for vectorized computation
+        # [B, L] → [B, 1, 1, L] ready for broadcasting
+        time_seq_hist = time_seq.unsqueeze(1).unsqueeze(1)  
+        type_seq_hist = type_seq.unsqueeze(1).unsqueeze(1)
+        
+        # 6. Create valid event mask using causal mask
+        # [B, 1, 1, L] & [1, L, 1, L] → [B, L, N_samples, L]
+        time_diffs = query_times_expanded - time_seq_hist
+        pad_mask = (type_seq_hist != self.pad_token_id)
+        
+        # Fix: correctly expand masks without adding extra dimensions
+        # Shape: [1, L, L] -> [1, L, 1, L] -> [B, L, N_samples, L]
+        causal_mask_expanded = causal_mask.unsqueeze(2).expand(batch_size, seq_len, num_samples, seq_len)
+        pad_mask_expanded = pad_mask.expand(batch_size, seq_len, num_samples, seq_len)
+        
+        # True where: event is before query time AND is in history of position k AND is not padding
+        valid_mask = (time_diffs > self.eps) & causal_mask_expanded & pad_mask_expanded
+        
+        # 7. Handle event types safely
+        safe_type_seq = torch.clamp(
+            type_seq_hist.clone().masked_fill_(type_seq_hist == self.pad_token_id, 0),
+            0, self.num_event_types - 1
+        )
+        
+        # 8. Gather alpha and beta matrices based on history event types
+        # Use advanced indexing to select appropriate parameters
+        # First get alpha/beta for each event type
+        alpha_indexed = self.alpha[:, safe_type_seq.squeeze(1)]  # [D, B, 1, L]
+        beta_indexed = self.beta[:, safe_type_seq.squeeze(1)]    # [D, B, 1, L]
+        
+        # 9. Fix: correctly reshape and expand alpha/beta tensors
+        # First reshape to add seq_len dimension: [D, B, 1, L] -> [D, B, 1, 1, L]
+        alpha_reshaped = alpha_indexed.unsqueeze(2)
+        beta_reshaped = beta_indexed.unsqueeze(2)
+        
+        # Permute to [B, 1, 1, D, L]
+        alpha_permuted = alpha_reshaped.permute(1, 2, 3, 0, 4)
+        beta_permuted = beta_reshaped.permute(1, 2, 3, 0, 4)
+        
+        # Now expand to [B, L, N, D, L]
+        alpha_expanded = alpha_permuted.expand(batch_size, seq_len, num_samples, self.num_event_types, seq_len)
+        beta_expanded = beta_permuted.expand(batch_size, seq_len, num_samples, self.num_event_types, seq_len)
+        
+        # 10. Compute exponential decay term for all positions at once
+        time_diffs_expanded = time_diffs.expand(batch_size, seq_len, num_samples, seq_len)
+        exp_decay = torch.exp(-beta_expanded * time_diffs_expanded.unsqueeze(-2))
+        
+        # 11. Calculate contribution from each historical event
+        event_contributions = alpha_expanded * exp_decay
+        
+        # 12. Apply mask to valid events only
+        masked_contributions = event_contributions * valid_mask.unsqueeze(-2)
+        
+        # 13. Sum contributions over the history dimension (L)
+        summed_contributions = masked_contributions.sum(dim=-1)
+        
+        # 14. Add the base intensity mu
+        # Expand mu: [D] → [1, 1, 1, D]
+        mu_expanded = self.mu.view(1, 1, 1, -1).expand(batch_size, seq_len, num_samples, -1)
+        intensities = mu_expanded + summed_contributions
+        
+        # 15. Ensure non-negative intensities
         intensities = torch.clamp(intensities, min=self.eps)
 
         return intensities
-
 
     def compute_intensities_at_sample_times(self,
                                             time_seq: torch.Tensor,
@@ -159,179 +190,97 @@ class HawkesModel(BaseModel):
         sample_dtimes = sample_dtimes.to(device)
 
         if compute_last_step_only:
-            # History is the full sequence
-            hist_time_seq = time_seq
-            hist_type_seq = type_seq
             # Query times are relative to the *last* event time
-            query_times = time_seq[:, -1:] + sample_dtimes[:, -1:, :] # [B, 1, N_samples]
-            query_times = query_times.squeeze(1) # Shape [B, N_samples]
+            time_seq = time_seq[:, -1:]
+            sample_dtimes = sample_dtimes[:, -1:, :]
+            
+        sample_dt_exp = sample_dtimes.unsqueeze(-1).expand(-1, -1, -1, self.num_event_types)
+        mask = (type_seq.view(batch_size, seq_len, 1, 1) == torch.arange(self.num_event_types).view(1,1,1,self.num_event_types)).expand(-1, -1, num_samples, -1)
+        masked_sample_dt = torch.where(mask, sample_dt_exp, 0)
+        sample_times = masked_sample_dt.cumsum(dim=1)
+        query_times = torch.zeros_like(sample_dtimes)
 
-            # Compute intensities at these query times using the full history
-            # Output shape: [B, N_samples, D]
-            intensities = self.compute_intensities_at_times(hist_time_seq, hist_type_seq, query_times)
-            # Reshape to match expected output: [B, 1, N_samples, D]
-            intensities = intensities.unsqueeze(1)
+        for j in range(self.num_event_types) :
+            query_times +=  torch.where(mask[..., j], sample_times[..., j], 0)
 
-        else:
-            # Compute for every step in the sequence
-            # Query times are t_k + delta_t_n for each k and sample n
-            # query_times shape: [B, L, N_samples]
-            query_times = time_seq.unsqueeze(-1) + sample_dtimes # Broadcasting t_k to all samples
-
-            # We need to compute intensity at query_times[b, k, n] using history up to time_seq[b, k].
-            # Loop approach for clarity, might be slow for very long sequences.
-            all_intensities = []
-            for k in range(seq_len):
-                # History up to event k (inclusive)
-                hist_time_seq_k = time_seq[:, :k+1]
-                hist_type_seq_k = type_seq[:, :k+1]
-
-                # Query times relative to event k
-                query_times_k = query_times[:, k, :] # [B, N_samples]
-
-                # Compute intensities at these times using history up to k
-                # Output: [B, N_samples, D]
-                intensities_k = self.compute_intensities_at_times(hist_time_seq_k, hist_type_seq_k, query_times_k)
-                all_intensities.append(intensities_k)
-
-            # Stack results along the sequence length dimension (L)
-            # List of tensors [B, N_samples, D] -> Stack -> [L, B, N_samples, D] -> Permute -> [B, L, N_samples, D]
-            if all_intensities:
-                 intensities = torch.stack(all_intensities, dim=0).permute(1, 0, 2, 3)
-            else:
-                 # Handle empty sequence case if necessary
-                 intensities = torch.empty((batch_size, seq_len, num_samples, self.num_event_types), device=device)
-
+        # Compute intensities at these query times using the full history
+        # Output shape: [B, L, N_samples, D]
+        intensities = self.compute_intensities_at_times(time_seq, None, type_seq, query_times)
 
         return intensities
-
-
-    def loglike_loss(self, batch: tuple) -> tuple[torch.Tensor, int]:
-        """
-        Compute the log-likelihood loss for the Hawkes process.
-        log L = sum_k log(lambda_{type_k}(time_k)) - sum_i integral_0^T lambda_i(t) dt
+        
+    def loglike_loss(self, batch):
+        """Compute the log-likelihood loss for the Hawkes model.
 
         Args:
-            batch: Tuple containing time_seq, time_delta_seq, type_seq, batch_non_pad_mask, _
+            batch (tuple): A tuple containing time_seq, time_delta_seq, type_seq,
+                           batch_non_pad_mask, and batch_attention_mask.
 
         Returns:
-            tuple: (total negative log-likelihood loss, number of events)
+            tuple: loss (torch.Tensor), num_events (int).
         """
-        time_seq, time_delta_seq, type_seq, batch_non_pad_mask, _ = batch
-        batch_size, seq_len = time_seq.shape
-        num_types = self.num_event_types
-        device = self.device
+        time_seq_BN, time_delta_seq_BN, type_seq_BN, batch_non_pad_mask_BN, _ = batch
 
-        time_seq = time_seq.to(device)
-        type_seq = type_seq.to(device)
-        batch_non_pad_mask = batch_non_pad_mask.to(device)
+        # Slice sequences for log-likelihood computation (N-1 intervals)
+        # We are interested in lambda(t_i) for events t_1, ..., t_N
+        # and integrals over (t_0, t_1), ..., (t_{N-1}, t_N)
+        # So, most sequences will be of length N (or N-1 if we consider N intervals)
 
-        # 1. Compute log intensity at each event time: sum_k log(lambda_{type_k}(time_k))
-        # We need lambda(t_k) using history *before* t_k.
-        log_lambda_at_event = torch.zeros_like(time_seq, dtype=torch.float32, device=device)
+        # For lambda_at_event (intensity at t_i), query times are t_1, ..., t_N. History is up to t_N.
+        # time_seq_BN itself is [t_0, ..., t_N]
+        # query_times for lambda_at_event should be t_1, ..., t_N.
+        # These are time_seq_BN[:, 1:]
+        query_times_for_event_ll = time_seq_BN[:, :].unsqueeze(-1)  # [B, N-1, 1] if N is original seq_len+1
+                                                                    # or [B, N, 1] if N is original seq_len
 
-        # Compute intensities for all events k=1...L-1 at once if possible?
-        # Requires computing lambda(t_k) using history up to k-1.
-        # The loop approach might be clearer here as well.
-        for k in range(1, seq_len): # Start from k=1 (second event)
-            # History strictly before event k
-            hist_time_seq_k = time_seq[:, :k]
-            hist_type_seq_k = type_seq[:, :k]
+        # lambda_at_event: Intensities at actual event times t_1, ..., t_N (or t_0,...,t_{N-1} depending on convention)
+        # NHP uses left_hiddens for events t_1, ..., t_N. So seq_len-1.
+        # Let's align with NHP: consider N-1 events for log-likelihood (events at t_1 to t_N)
+        # time_seq_BN is [B, L], type_seq_BN is [B, L]
+        # query_times_for_event_ll will be [B, L-1, 1] using time_seq_BN[:, 1:]
+        # The history for these queries is time_seq_BN, type_seq_BN (full history)
+        lambda_at_event = self.compute_intensities_at_times(
+            time_seq=time_seq_BN,
+            time_delta_seq=None,  # Not used by this specific Hawkes intensity function
+            type_seq=type_seq_BN,
+            query_times=query_times_for_event_ll
+        )
+        lambda_at_event = lambda_at_event.squeeze(-2)  # Shape: [B, L-1, D]
 
-            # Query time is t_k
-            query_times_k = time_seq[:, k:k+1].squeeze(-1) # [B]
+        # For integral term, consider intervals (t_0,t_1), ..., (t_{L-1}, t_L)
+        # time_delta_seq_BN[:, 1:] gives dt_1, ..., dt_L. Shape [B, L-1]
+        time_delta_seq_N_minus_1 = time_delta_seq_BN[:, :]
 
-            # Compute intensities lambda_i(t_k) for all i, using history up to k-1
-            # Output: [B, 1, D] -> squeeze -> [B, D]
-            intensities_at_k = self.compute_intensities_at_times(hist_time_seq_k, hist_type_seq_k, query_times_k).squeeze(1)
+        # dts_samples_for_integral: Samples within each interval dt_1, ..., dt_L
+        # Shape: [B, L-1, G]
+        dts_samples_for_integral = self.make_dtime_loss_samples(time_delta_seq_N_minus_1)
 
-            # Get the intensity for the specific event type that occurred at t_k
-            event_type_k = type_seq[:, k] # [B]
+        # lambdas_loss_samples: Intensities at these sampled times
+        # History for interval (t_k, t_{k+1}) is events up to t_k.
+        # So, time_seq and type_seq for compute_intensities_at_sample_times should be t_0, ..., t_{L-1}
+        # This corresponds to time_seq_BN[:, :-1]
+        time_seq_hist_for_integral = time_seq_BN[:, :]
+        type_seq_hist_for_integral = type_seq_BN[:, :]
 
-            # Mask for valid events (non-padding) at step k
-            valid_mask_k = (event_type_k != self.pad_token_id) # [B]
+        lambdas_loss_samples = self.compute_intensities_at_sample_times(
+            time_seq=time_seq_hist_for_integral,
+            time_delta_seq=None, # Not used by this specific Hawkes intensity function
+            type_seq=type_seq_hist_for_integral,
+            sample_dtimes=dts_samples_for_integral, # These are deltas from t_k
+            compute_last_step_only=False
+        ) # Shape: [B, L-1, G, D]
 
-            # Use gather to select the intensity corresponding to the event type
-            safe_event_type_k = event_type_k.clone()
-            safe_event_type_k[~valid_mask_k] = 0 # Replace pad id with 0 for gather index
+        # Prepare other arguments for compute_loglikelihood
+        type_seq_N_minus_1 = type_seq_BN[:, :] # Types of events t_1, ..., t_L
+        seq_mask_N_minus_1 = batch_non_pad_mask_BN[:, :] # Mask for events t_1, ..., t_L
 
-            # Gather requires index shape [B, 1] for dim=1
-            lambda_event_k = torch.gather(intensities_at_k, dim=1, index=safe_event_type_k.unsqueeze(-1)).squeeze(-1) # [B]
+        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
+            lambda_at_event=lambda_at_event,
+            lambdas_loss_samples=lambdas_loss_samples,
+            time_delta_seq=time_delta_seq_N_minus_1,
+            seq_mask=seq_mask_N_minus_1,
+            type_seq=type_seq_N_minus_1
+        )
 
-            # Add epsilon for numerical stability before log
-            log_lambda_event_k = torch.log(lambda_event_k + self.eps)
-
-            # Apply mask to zero out log-likelihood for padded events
-            log_lambda_at_event[:, k] = log_lambda_event_k * valid_mask_k
-
-        # Sum over sequence length (k=1 to L-1)
-        total_log_event_term = log_lambda_at_event[:, 1:].sum(dim=1) # [B]
-
-        # 2. Compute the integral term: sum_i integral_0^T lambda_i(t) dt (Analytic calculation)
-        # Integral = sum_i mu_i * T + sum_{i,j} sum_{t_k < T, type_k=j} (alpha_{ij} / beta_{ij}) * (1 - exp(-beta_{ij} * (T - t_k)))
-
-        # T is the time of the last non-pad event in each sequence
-        last_indices = batch_non_pad_mask.sum(dim=1) - 1
-        # Handle sequences with zero length (all padding)
-        last_indices = torch.clamp(last_indices, min=0)
-        T = time_seq[torch.arange(batch_size, device=device), last_indices] # [B]
-        T = T.unsqueeze(-1) # [B, 1] for broadcasting
-
-        # Base rate integral: sum_i mu_i * T
-        integral_base = self.mu.sum() * T.squeeze(-1) # [B]
-
-        # Event contribution integral
-        hist_times = time_seq # [B, L]
-        hist_types = type_seq # [B, L]
-
-        # Time differences: T - t_k
-        time_diffs_T = T - hist_times # [B, L]
-
-        # Mask for valid events contributing to the integral: time_k < T and not padding
-        # Use batch_non_pad_mask to only consider actual events in the sequence for the integral calculation
-        valid_integral_mask = (time_diffs_T > self.eps) & batch_non_pad_mask # [B, L]
-
-        # Gather alpha[i, type_k] and beta[i, type_k] for all target types i
-        safe_hist_types = hist_types.clone()
-        safe_hist_types[hist_types == self.pad_token_id] = 0 # Replace pad id with 0
-
-        # alpha_for_hist[i, b, k] = alpha[i, hist_types[b, k]]
-        # beta_for_hist[i, b, k] = beta[i, hist_types[b, k]]
-        alpha_for_hist = self.alpha[:, safe_hist_types] # [D, B, L]
-        beta_for_hist = self.beta[:, safe_hist_types]   # [D, B, L]
-
-        # Calculate term for each (i, b, k)
-        # Add eps to beta to avoid division by zero, though beta should ideally be > 0
-        alpha_over_beta = alpha_for_hist / (beta_for_hist + self.eps) # [D, B, L]
-        # Unsqueeze time_diffs_T for broadcasting with beta_for_hist
-        exp_term = torch.exp(-beta_for_hist * time_diffs_T.unsqueeze(0)) # [D, B, L]
-        decay_term = 1.0 - exp_term # [D, B, L]
-
-        contribution_ijk = alpha_over_beta * decay_term # [D, B, L]
-
-        # Apply mask: zero out contributions from invalid events (k)
-        # Unsqueeze valid_integral_mask for broadcasting
-        masked_contribution_ijk = contribution_ijk * valid_integral_mask.unsqueeze(0) # [D, B, L]
-
-        # Sum over target types (i) and history events (k) for each batch element (b)
-        integral_event = masked_contribution_ijk.sum(dim=[0, 2]) # Sum over D and L -> [B]
-
-        # Total integral
-        total_integral = integral_base + integral_event # [B]
-
-        # 3. Compute total log-likelihood per sequence
-        # Note: The first event t_0 doesn't contribute to the event sum term.
-        log_likelihood = total_log_event_term - total_integral # [B]
-
-        # 4. Compute loss (negative log-likelihood sum over batch)
-        loss = -log_likelihood.sum()
-
-        # 5. Count number of valid events (excluding the first event and padding) used in the loss calculation
-        # Events from index 1 onwards that are not padding contribute to the log_lambda term.
-        num_events = batch_non_pad_mask[:, 1:].sum().item()
-        # Avoid division by zero if num_events is 0
-        num_events = max(num_events, 1)
-
-
+        loss = - (event_ll - non_event_ll).sum()
         return loss, num_events
-

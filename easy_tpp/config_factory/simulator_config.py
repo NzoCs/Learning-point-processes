@@ -2,7 +2,7 @@ from easy_tpp.config_factory.config import Config
 from easy_tpp.preprocess.data_loader import TPPDataModule
 from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.config_factory.model_config import ModelConfig
-from easy_tpp.models import BaseModel
+from easy_tpp.models.basemodel import BaseModel
 
 import os
 import copy
@@ -49,7 +49,7 @@ class SimulatorConfig(Config):
         # Basic configuration attributes
         dataset_id = kwargs.get('dataset_id', None)
         self.seed = int(kwargs.get('seed', 2002))
-        self.split = kwargs.get('split', None)
+        self.split = kwargs.get('split', 'test')
         
         # Build Config for history data
         history_config = kwargs.get('hist_data_config', {})
@@ -58,6 +58,8 @@ class SimulatorConfig(Config):
         
         # Build model configuration
         model_config = kwargs.get('model_config', {})
+        ckpt_path = f"../train/checkpoints/{model_config['model_id']}/{dataset_id}/trained_models/best.ckpt"
+        model_config['model_path'] = ckpt_path
         model_config = ModelConfig.parse_from_yaml_config(model_config)
         
         # Create data module and model from configs
@@ -110,6 +112,7 @@ class SimulatorConfig(Config):
         hist_data_config = yaml_config.get('data', {}).get(dataset_id, {})
         hist_data_config['data_loading_specs'] = data_loading_specs
         hist_data_config['dataset_id'] = dataset_id
+        exp_yaml_config['dataset_id'] = dataset_id
         
         exp_yaml_config['hist_data_config'] = hist_data_config
         # Initialize model config

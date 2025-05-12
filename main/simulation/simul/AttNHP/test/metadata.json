@@ -1,0 +1,14 @@
+{
+  "simulation_summary": {
+    "total_sequences_generated": 2,
+    "total_events_generated": 58,
+    "average_sequence_length": 29.0,
+    "dimension": 2,
+    "simulation_time_interval": [
+      30,
+      50
+    ],
+    "generating_model": "AttNHP",
+    "seed_used": 2002
+  }
+}

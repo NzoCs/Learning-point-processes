@@ -19,3 +19,43 @@ H2expi_vs_H2expc:
   label_split: test
   pred_split: test
   output_dir: ./H2expi_vs_H2expc
+
+NHP_hawkes1:
+
+  label_data_config:
+    data_format: json
+    train_dir: NzoCs/hawkes1-temporal-dataset
+    valid_dir: NzoCs/hawkes1-temporal-dataset
+    test_dir: NzoCs/hawkes1-temporal-dataset
+
+  pred_data_config:
+    data_format: json
+    train_dir: ../simulation/NHP/hawkes1/train
+    valid_dir: ../simulation/NHP/hawkes1/valid
+    test_dir: ../simulation/NHP/hawkes1/test
+  data_specs:
+    num_event_types: 2
+    
+  label_split: test
+  pred_split: 
+  output_dir: ./H2expi_vs_H2expc
+
+NHP_hawkes2:
+
+  label_data_config:
+    data_format: json
+    train_dir: NzoCs/hawkes2-temporal-dataset
+    valid_dir: NzoCs/hawkes2-temporal-dataset
+    test_dir: NzoCs/hawkes2-temporal-dataset
+
+  pred_data_config:
+    data_format: json
+    train_dir: ../simulation/NHP/hawkes2/train
+    valid_dir: ../simulation/NHP/hawkes2/valid
+    test_dir: ../simulation/NHP/hawkes2/test
+  data_specs:
+    num_event_types: 2
+    
+  label_split: test
+  pred_split: 
+  output_dir: ./H2expi_vs_H2expc

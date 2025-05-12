@@ -21,12 +21,12 @@ def main():
     
     data_module = TPPDataModule(config)
     
-    parent_dir = "../results/data/syn"
+    parent_dir = "./visu"
     save_dir = os.path.join(parent_dir, args.experiment_id)
     
     visu = Visualizer(data_module = data_module, split = 'test', save_dir = save_dir)
     
-    visu.show_all_distributions(log_scale = True)
+    visu.run_visualization()
 
 if __name__ == '__main__':
     main()

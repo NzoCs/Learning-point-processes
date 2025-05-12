@@ -2,7 +2,7 @@ import argparse
 import os
 
 from easy_tpp.config_factory import Config
-from easy_tpp.evaluate.distribution_comparison import Evaluation
+from easy_tpp.evaluate.distribution_comparison import DistribComparator
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,7 +19,7 @@ def main():
     config = Config.build_from_yaml_file(args.config_dir, experiment_id=args.experiment_id)
     
     # Initialize the evaluator with the configuration
-    evaluator = Evaluation(config)
+    evaluator = DistribComparator(config)
     
     # Run the evaluation
     evaluator.run_evaluation()

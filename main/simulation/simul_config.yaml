@@ -24,9 +24,9 @@ data:
 
   test:
     data_format: json
-    train_dir: NzoCs/test_dataset-temporal-dataset
-    valid_dir: NzoCs/test_dataset-temporal-dataset
-    test_dir: NzoCs/test_dataset-temporal-dataset
+    train_dir: NzoCs/test-temporal-dataset
+    valid_dir: NzoCs/test-temporal-dataset
+    test_dir: NzoCs/test-temporal-dataset
     data_specs:
       num_event_types: 2
       pad_token_id: 2
@@ -165,7 +165,7 @@ AttNHP:
     stage: simul
     model_id: AttNHP
     specs:
-      hidden_size: 16
+      hidden_size: 32
       time_emb_size: 16
       num_layers: 1
       num_heads: 2
@@ -174,8 +174,8 @@ AttNHP:
       over_sample_rate: 1.5
       dtime_max: 5
     simulation_config:
-      start_time: 100
-      end_time: 200
+      start_time: 30
+      end_time: 50
 
   trainer_config:
     stage: train

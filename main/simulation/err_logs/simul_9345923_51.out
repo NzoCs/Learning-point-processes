@@ -1,17 +1,0 @@
-Lancement de la simulation pour IntensityFree sur self_correcting
-[31;1m2025-05-12 05:08:34,334 - config.py[pid:22116;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class SimulatorConfig[0m
-[38;20m2025-05-12 05:08:36,235 - basemodel.py[pid:22116;line:88:__init__] - INFO: Successfully loaded pretrained model from: ../train/checkpoints/IntensityFree/self_correcting/trained_models/best.ckpt[0m
-INFO:datasets:PyTorch version 2.6.0 available.
-[38;20m2025-05-12 05:09:34,959 - simulator.py[pid:22116;line:61:run] - INFO: Starting generation of simulations[0m
-Generating simulations:   0%|          | 0/12 [00:00<?, ?batch/s]Generating simulations:   0%|          | 0/12 [00:00<?, ?batch/s]
-Traceback (most recent call last):
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 24, in <module>
-    main()
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 21, in main
-    simulator.run()
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/simulate/simulator.py", line 73, in run
-    time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(batch=batch_values)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 585, in simulate
-    masked_time_seq = torch.where(mark_mask, time_seq_label, torch.tensor(0.0).to(self.device))
-RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
-srun: error: ruche-gpu14: task 0: Exited with exit code 1

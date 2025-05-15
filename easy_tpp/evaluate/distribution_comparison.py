@@ -494,6 +494,7 @@ class DistribComparator:
             self.plot_inter_event_time_distribution(label_times, pred_times)
             self.plot_event_type_distribution(label_types, pred_types)
             self.plot_sequence_length_distribution(label_lengths, pred_lengths)
+            self.plot_autocorrelation(label_times, pred_times)
         except AttributeError as e:
             logger.error(f"Failed to access data from Visualizer instances. Ensure they initialized correctly. Error: {e}", exc_info=True)
         except Exception as e:
@@ -511,3 +512,99 @@ class DistribComparator:
     def pred_loader(self):
         self.pred_loader_setup.setup(stage='test')
         return self.pred_loader_setup.get_dataloader(split=self.pred_split)
+    
+    def plot_autocorrelation(self, label_times: np.ndarray, pred_times: np.ndarray, max_lag: int = 30, filename: str = "autocorrelation_comparison.png"):
+            """
+            Plots and saves autocorrelation plots for both label and prediction time series.
+            
+            Args:
+                label_times: Time delta sequence for label data
+                pred_times: Time delta sequence for prediction data
+                max_lag: Maximum lag to compute autocorrelation for
+                filename: Name of the file to save the plot
+            """
+            # Set the Seaborn style
+            sns.set_theme(style="whitegrid")
+            
+            def autocorrelation(series, lags):
+                """Calculate autocorrelation for a time series with vectorized operations"""
+                series = np.asarray(series)
+                n = len(series)
+                # Mean normalization
+                series = series - np.mean(series)
+                # Calculate autocorrelation using numpy operations
+                autocorr = np.zeros(lags + 1)
+                # Variance (denominator)
+                var = np.sum(series ** 2)
+                if var == 0:  # Avoid division by zero
+                    return np.zeros(lags + 1)
+                    
+                # Calculate autocorrelation for each lag
+                for lag in range(lags + 1):
+                    # Numerator: sum of (x_t * x_{t-lag})
+                    autocorr[lag] = np.sum(series[lag:] * series[:n-lag]) / var
+                    
+                return autocorr
+            
+            # Create subplots with 1 row and 2 columns
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+            # Calculate lags up to min(max_lag, len(data)/4) to ensure statistical reliability
+            label_lags = min(max_lag, len(label_times) // 4) if len(label_times) > 0 else 0
+            pred_lags = min(max_lag, len(pred_times) // 4) if len(pred_times) > 0 else 0
+            
+            # Calculate autocorrelations
+            if len(label_times) > 0:
+                label_autocorr = autocorrelation(label_times, label_lags)
+                # Plot label autocorrelation
+                ax1.stem(range(len(label_autocorr)), label_autocorr, linefmt='b-', markerfmt='bo', basefmt='r-')
+                ax1.set_title(f'Label ({self.label_split}) Autocorrelation', fontsize=12)
+                ax1.set_xlabel('Lag', fontsize=10)
+                ax1.set_ylabel('Autocorrelation', fontsize=10)
+                
+                # Add confidence intervals (approximately ±2/√n)
+                conf_interval = 2.0 / np.sqrt(len(label_times))
+                ax1.axhline(y=conf_interval, linestyle='--', color='gray', alpha=0.6)
+                ax1.axhline(y=-conf_interval, linestyle='--', color='gray', alpha=0.6)
+                ax1.annotate(f'95% Confidence\nInterval', xy=(0.8, conf_interval+0.02), 
+                            xycoords=('axes fraction', 'data'), fontsize=8,
+                            bbox=dict(boxstyle='round', fc='white', alpha=0.7))
+            else:
+                ax1.text(0.5, 0.5, "Insufficient data for autocorrelation", 
+                        ha='center', va='center', transform=ax1.transAxes)
+            
+            if len(pred_times) > 0:
+                pred_autocorr = autocorrelation(pred_times, pred_lags)
+                # Plot prediction autocorrelation
+                ax2.stem(range(len(pred_autocorr)), pred_autocorr, linefmt='r-', markerfmt='ro', basefmt='b-')
+                ax2.set_title(f'Prediction ({self.pred_split}) Autocorrelation', fontsize=12)
+                ax2.set_xlabel('Lag', fontsize=10)
+                ax2.set_ylabel('Autocorrelation', fontsize=10)
+            # Add confidence intervals
+                conf_interval = 2.0 / np.sqrt(len(pred_times))
+                ax2.axhline(y=conf_interval, linestyle='--', color='gray', alpha=0.6)
+                ax2.axhline(y=-conf_interval, linestyle='--', color='gray', alpha=0.6)
+                ax2.annotate(f'95% Confidence\nInterval', xy=(0.8, conf_interval+0.02), 
+                            xycoords=('axes fraction', 'data'), fontsize=8,
+                            bbox=dict(boxstyle='round', fc='white', alpha=0.7))
+            else:
+                ax2.text(0.5, 0.5, "Insufficient data for autocorrelation", 
+                        ha='center', va='center', transform=ax2.transAxes)
+            
+            # Add an overall title explaining autocorrelation interpretation
+            fig.suptitle('Time Series Autocorrelation Analysis', fontsize=14)
+            
+            # Add annotation explaining interpretation
+            fig.text(0.5, 0.01, 
+                    "Significant spikes outside the confidence intervals indicate temporal dependency.\n"
+                    "Random data typically shows no significant autocorrelation beyond lag 0.", 
+                    ha='center', fontsize=9, 
+                    bbox=dict(boxstyle='round', fc='lightyellow', alpha=0.9))
+            
+            plt.tight_layout()
+            plt.subplots_adjust(bottom=0.15) # Make room for the annotation
+            
+            # Save the figure
+            filepath = os.path.join(self.output_dir, filename)
+            plt.savefig(filepath, dpi=300, bbox_inches='tight')
+            plt.close()
+            logger.info(f"Autocorrelation comparison plot saved to {filepath}")

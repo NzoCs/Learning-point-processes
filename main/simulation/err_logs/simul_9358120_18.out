@@ -1,0 +1,27 @@
+Lancement de la simulation pour AttNHP sur H2expi
+[31;1m2025-05-15 14:13:58,034 - config.py[pid:22756;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class SimulatorConfig[0m
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 24, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 17, in main
+    simulator_config = Config.build_from_yaml_file(args.config_dir, experiment_id=args.experiment_id, dataset_id=args.dataset_id)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/config_factory/config.py", line 35, in build_from_yaml_file
+    return config_cls.parse_from_yaml_config(config, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/config_factory/simulator_config.py", line 126, in parse_from_yaml_config
+    return SimulatorConfig(**exp_yaml_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/config_factory/simulator_config.py", line 67, in __init__
+    self.pretrained_model = BaseModel.generate_model_from_config(model_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 126, in generate_model_from_config
+    return subclass(model_config, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/attnhp.py", line 23, in __init__
+    super(AttNHP, self).__init__(model_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 82, in __init__
+    checkpoint = torch.load(pretrain_model_path, map_location=self.device, weights_only=False)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/serialization.py", line 1425, in load
+    with _open_file_like(f, "rb") as opened_file:
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/serialization.py", line 751, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/serialization.py", line 732, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: '../train/checkpoints/AttNHP/H2expi/trained_models/best.ckpt'
+srun: error: ruche-gpu19: task 0: Exited with exit code 1

@@ -1,0 +1,4 @@
+Lancement de la simulation pour THP sur hawkes2
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 9359156 ON ruche-gpu12 CANCELLED AT 2025-05-15T14:27:11 ***
+slurmstepd: error: *** STEP 9359156.0 ON ruche-gpu12 CANCELLED AT 2025-05-15T14:27:11 ***

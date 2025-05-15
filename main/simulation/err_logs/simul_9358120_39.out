@@ -1,0 +1,3 @@
+Lancement de la simulation pour THP sur hawkes2_
+slurmstepd: error: *** JOB 9359157 ON ruche-gpu19 CANCELLED AT 2025-05-15T14:27:11 ***
+slurmstepd: error: *** STEP 9359157.0 ON ruche-gpu19 CANCELLED AT 2025-05-15T14:27:11 ***

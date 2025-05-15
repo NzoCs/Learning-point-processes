@@ -10,7 +10,7 @@ def main():
     parser.add_argument('--config_dir', type=str, required=False, default='./eval_config.yaml',
                         help='Dir of configuration yaml for dataset evaluation.')
 
-    parser.add_argument('--experiment_id', type=str, required=False, default='H2expi_vs_H2expc',
+    parser.add_argument('--experiment_id', type=str, required=False, default='AttNHP_test',
                         help='Experiment id in the config file.')
 
     args = parser.parse_args()

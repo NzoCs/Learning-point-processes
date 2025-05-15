@@ -30,15 +30,35 @@ NHP_hawkes1:
 
   pred_data_config:
     data_format: json
-    train_dir: ../simulation/NHP/hawkes1/train
-    valid_dir: ../simulation/NHP/hawkes1/valid
-    test_dir: ../simulation/NHP/hawkes1/test
+    train_dir: ../simulation/simul/NHP/hawkes1/simulations.json
+    test_dir: ../simulation/simul/NHP/hawkes1/simulations.json
+    valid_dir: ../simulation/simul/NHP/hawkes1/simulations.json
+  data_specs:
+    num_event_types: 1
+    
+  label_split: test
+  pred_split: test
+  output_dir: ./NHP_hawkes1
+
+AttNHP_test:
+
+  label_data_config:
+    data_format: json
+    train_dir: NzoCs/test-temporal-dataset
+    valid_dir: NzoCs/test-temporal-dataset
+    test_dir: NzoCs/test-temporal-dataset
+
+  pred_data_config:
+    data_format: json
+    train_dir: ../simulation/simul/AttNHP/test/simulations.json
+    test_dir: ../simulation/simul/AttNHP/test/simulations.json
+    valid_dir: ../simulation/simul/AttNHP/test/simulations.json
   data_specs:
     num_event_types: 2
     
   label_split: test
-  pred_split: 
-  output_dir: ./H2expi_vs_H2expc
+  pred_split: test
+  output_dir: ./AttNHP_test
 
 NHP_hawkes2:
 

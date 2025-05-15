@@ -77,7 +77,7 @@ class DistribCompConfig(Config):
         else:
             exp_yaml_config = yaml_config
         
-        return EvaluationConfig(**exp_yaml_config)
+        return DistribCompConfig(**exp_yaml_config)
     
     def copy(self):
         """Get a same and freely modifiable copy of self.

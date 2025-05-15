@@ -398,6 +398,11 @@ class DistribComparator:
         label_lengths = np.asarray(label_lengths)
         pred_lengths = np.asarray(pred_lengths)
         
+        # Check if the arrays are empty
+        if len(label_lengths) == 0 or len(pred_lengths) == 0:
+            logger.warning("One or both sequence length arrays are empty. Skipping sequence length distribution plot.")
+            return
+
         plt.figure(figsize=(10, 6))
         
         # Calculate appropriate bin width using vectorized operations
@@ -406,13 +411,13 @@ class DistribComparator:
         pred_std = np.std(pred_lengths) if len(pred_lengths) > 1 else 1
         
         # Take average of both standard deviations for bin width, minimum 1
-        binwidth = max(1, int((label_std + pred_std) / 4))
+        binwidth = 1
         
         # Use Seaborn's histplot with optimized parameters
         sns.histplot(label_lengths, label=f'Label ({self.label_split})', kde=True, 
-                  stat='density', binwidth=binwidth, color='royalblue', alpha=0.6)
+                  stat='density', bins = 50, color='royalblue', alpha=0.6)
         sns.histplot(pred_lengths, label=f'Prediction ({self.pred_split})', kde=True, 
-                  stat='density', binwidth=binwidth, color='crimson', alpha=0.6)
+                  stat='density', bins = 50, color='crimson', alpha=0.6)
         
         # Calculate statistics using vectorized operations
         label_mean = np.mean(label_lengths)

@@ -1,0 +1,108 @@
+Lancement de la simulation pour AttNHP sur self_correcting
+[31;1m2025-05-15 15:16:44,929 - config.py[pid:25355;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class SimulatorConfig[0m
+[38;20m2025-05-15 15:16:47,297 - basemodel.py[pid:25355;line:91:__init__] - INFO: Successfully loaded pretrained model from: ../train/checkpoints/AttNHP/self_correcting/trained_models/best.ckpt[0m
+[38;20m2025-05-15 15:16:47,297 - basemodel.py[pid:25355;line:118:to] - INFO: Model device updated to: cuda[0m
+[38;20m2025-05-15 15:16:47,723 - simulator.py[pid:25355;line:41:__init__] - INFO: Simulator initialized with model on device: cuda[0m
+INFO:datasets:PyTorch version 2.6.0 available.
+[38;20m2025-05-15 15:17:25,573 - simulator.py[pid:25355;line:69:run] - INFO: Starting generation of simulations on device: cuda[0m
+Generating simulations:   0%|          | 0/47 [00:00<?, ?batch/s]
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [AGenerating simulations:   2%|▏         | 1/47 [00:01<00:53,  1.16s/batch]
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [AGenerating simulations:  55%|█████▌    | 26/47 [00:01<00:00, 28.11batch/s]
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [A
+Simulating sequences:   0%|          | 0/50 [00:00<?, ?time/s][A
+                                                              [AGenerating simulations: 100%|██████████| 47/47 [00:01<00:00, 34.90batch/s]
+[38;20m2025-05-15 15:17:26,920 - simulator.py[pid:25355;line:100:run] - INFO: Successfully generated simulations with 0 events.[0m
+[38;20m2025-05-15 15:17:26,921 - simulator.py[pid:25355;line:102:run] - INFO: Formatting generated simulations...[0m
+Formatting sequences: 0it [00:00, ?it/s]Formatting sequences: 0it [00:00, ?it/s]
+[38;20m2025-05-15 15:17:26,921 - simulator.py[pid:25355;line:106:run] - INFO: Formatting complete.[0m
+[33;20m2025-05-15 15:17:26,921 - simulator.py[pid:25355;line:165:save_data] - WARNING: No formatted data to save.[0m
+[38;20m2025-05-15 15:17:27,126 - simulator.py[pid:25355;line:225:save_metadata] - INFO: Metadata saved to ./simul/AttNHP/self_correcting/metadata.json[0m

@@ -1,0 +1,24 @@
+Lancement de la simulation pour AttNHP sur taxi
+[31;1m2025-05-15 15:21:52,213 - config.py[pid:30171;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class SimulatorConfig[0m
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 24, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 17, in main
+    simulator_config = Config.build_from_yaml_file(args.config_dir, experiment_id=args.experiment_id, dataset_id=args.dataset_id)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/config_factory/config.py", line 35, in build_from_yaml_file
+    return config_cls.parse_from_yaml_config(config, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/config_factory/simulator_config.py", line 126, in parse_from_yaml_config
+    return SimulatorConfig(**exp_yaml_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/config_factory/simulator_config.py", line 67, in __init__
+    self.pretrained_model = BaseModel.generate_model_from_config(model_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 133, in generate_model_from_config
+    return subclass(model_config, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/attnhp.py", line 23, in __init__
+    super(AttNHP, self).__init__(model_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 90, in __init__
+    self.load_state_dict(state_dict, strict=False) # Use strict=False if some layers are different
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 2581, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) in loading state_dict for AttNHP:
+	size mismatch for layer_type_emb.weight: copying a param with shape torch.Size([11, 16]) from checkpoint, the shape in current model is torch.Size([11, 32]).
+srun: error: ruche-gpu19: task 0: Exited with exit code 1

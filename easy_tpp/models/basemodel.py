@@ -49,17 +49,20 @@ class BaseModel(pl.LightningModule, ABC):
         
         self.eps = torch.finfo(torch.float32).eps
 
+        # Store device from configuration or default to CPU
+        self._device = model_config.device if hasattr(model_config, 'device') else torch.device('cpu')
+        
+        # Move embedding layer to the correct device immediately
         self.layer_type_emb = nn.Embedding(
             num_embeddings = self.num_event_types_pad,  # have padding
             embedding_dim = self.hidden_size,
             padding_idx = self.pad_token_id,
-            device=self.device
+            device=self._device
             )
 
         #Paramètre de la génération de données
         gen_config = model_config.thinning
         self.use_mc_samples = model_config.use_mc_samples
-        self._device = model_config.device
         self.num_step_gen = gen_config.num_steps
         
         # Set up the event sampler if generation config is provided
@@ -79,13 +82,16 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Load pretrained model if path is provided
         if pretrain_model_path is not None:
-            checkpoint = torch.load(pretrain_model_path, map_location=self.device, weights_only=False)
+            checkpoint = torch.load(pretrain_model_path, map_location=self._device, weights_only=False)
             # Adjust keys if necessary, e.g., remove prefix if saved with DDP
             state_dict = checkpoint['state_dict']
             # Example key adjustment (if needed):
             # state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
             self.load_state_dict(state_dict, strict=False) # Use strict=False if some layers are different
             logger.info(f"Successfully loaded pretrained model from: {pretrain_model_path}")
+            
+        # Ensure all parameters are on the correct device
+        self = self.to(self._device)
     
     @property
     def device(self):
@@ -109,6 +115,7 @@ class BaseModel(pl.LightningModule, ABC):
             # Update the event_sampler device if it exists
             if model.event_sampler is not None:
                 model.event_sampler.device = device
+            logger.info(f"Model device updated to: {device}")
         
         return model
     
@@ -548,6 +555,9 @@ class BaseModel(pl.LightningModule, ABC):
                 - 'type_seqs': Tensor of generated event types.
         """
         
+        # Ensure model is in evaluation mode
+        self.eval()
+        
         if start_time is None:
             start_time = self.simulation_start_time
             if not isinstance(start_time, (int, float)):
@@ -568,7 +578,11 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size = batch[0].size(0)
         
         time_seq_label, time_delta_seq_label, event_seq_label, non_pad_mask, _ = batch
-        time_seq_label, time_delta_seq_label, event_seq_label = time_seq_label.to(self.device), time_delta_seq_label.to(self.device), event_seq_label.to(self.device)
+        
+        # Ensure all tensors are on the correct device
+        time_seq_label = time_seq_label.to(self.device)
+        time_delta_seq_label = time_delta_seq_label.to(self.device)
+        event_seq_label = event_seq_label.to(self.device)
         
         time_seq = time_seq_label.clone()
         time_delta_seq = time_delta_seq_label.clone()
@@ -578,12 +592,12 @@ class BaseModel(pl.LightningModule, ABC):
         num_step = 0
         seq_len = 0
         
-        last_event_time = torch.zeros(batch_size, num_mark)
+        last_event_time = torch.zeros(batch_size, num_mark, device=self.device)
         
         for mark in range(num_mark):
             # Create a mask for each mark separately to avoid broadcasting issues
             mark_mask = (event_seq_label == mark).to(self.device)
-            masked_time_seq = torch.where(mark_mask, time_seq_label, torch.tensor(0.0).to(self.device))
+            masked_time_seq = torch.where(mark_mask, time_seq_label, torch.tensor(0.0, device=self.device))
             marked_last_time_label, _ = masked_time_seq.max(dim=1)
             last_event_time[:,mark] = marked_last_time_label
                     
@@ -668,10 +682,9 @@ class BaseModel(pl.LightningModule, ABC):
         simul_mask = torch.logical_and(
             time_seq >= start_time,
             time_seq <= end_time
-        ).to(self.device)
+        )
         
-        return time_seq.to(self.device), time_delta_seq.to(self.device), event_seq.to(self.device), simul_mask
-    
+        return time_seq, time_delta_seq, event_seq, simul_mask
     
     def intensity_graph(
         self,

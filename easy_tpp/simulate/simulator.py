@@ -6,6 +6,7 @@ import os
 from typing import List, Dict, Optional
 from tqdm import tqdm
 import random
+import torch
 
 class Simulator:
     """
@@ -31,6 +32,13 @@ class Simulator:
 
         #Load the model
         self.model = simulator_config.pretrained_model
+        
+        # Ensure model is in evaluation mode
+        self.model.eval()
+        
+        # Get the device from the model and log it
+        self.device = self.model.device
+        logger.info(f"Simulator initialized with model on device: {self.device}")
 
         #data_config
         self.history_data_module = simulator_config.history_data_module
@@ -58,7 +66,7 @@ class Simulator:
             logger.error("history_data is required for simulation but was not provided.")
             raise ValueError("history_data must be provided for simulation based on historical context.")
         
-        logger.info(f"Starting generation of simulations")
+        logger.info(f"Starting generation of simulations on device: {self.device}")
         simulations = []
         
         try:
@@ -70,7 +78,10 @@ class Simulator:
         events_count =  0
         for batch in tqdm(data_loader, desc="Generating simulations", unit="batch"):
             batch_values = batch.values()
-            time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(batch=batch_values)
+            
+            # Make sure model is on correct device before simulation
+            with torch.no_grad():
+                time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(batch=batch_values)
 
             batch_size = time_seq.size(0)
 
@@ -78,15 +89,15 @@ class Simulator:
                 mask_i = simul_mask[i]
                 if mask_i.any():
                     simulations.append({
-                        'time_seq': time_seq[i][mask_i].clone().detach(),
-                        'time_delta_seq': time_delta_seq[i][mask_i].clone().detach(),
-                        'event_seq': event_seq[i][mask_i].clone().detach(),
+                        'time_seq': time_seq[i][mask_i].clone().detach().cpu(),
+                        'time_delta_seq': time_delta_seq[i][mask_i].clone().detach().cpu(),
+                        'event_seq': event_seq[i][mask_i].clone().detach().cpu(),
                     })
 
-            events_count += simul_mask.sum()
+            events_count += simul_mask.sum().item()
             if events_count >= self.max_size:
                 break
-        logger.info(f"Successfully generated simulations.")
+        logger.info(f"Successfully generated simulations with {events_count} events.")
         
         logger.info("Formatting generated simulations...")
         formatted_data = self.format_multivariate_simulations(

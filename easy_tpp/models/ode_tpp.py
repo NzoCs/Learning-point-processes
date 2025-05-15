@@ -17,10 +17,6 @@ def flatten_parameters(model):
 
 class NeuralODEAdjoint(torch.autograd.Function):
 
-    def __init__(self, device):
-        super(NeuralODEAdjoint, self).__init__()
-        self.device = device
-
     @staticmethod
     def forward(ctx, z_init, delta_t, ode_fn, solver, num_sample_times, *model_parameters):
         """
@@ -35,6 +31,8 @@ class NeuralODEAdjoint(torch.autograd.Function):
         Returns:
 
         """
+        # Get the device from z_init for consistent usage
+        device = z_init.device
 
         ctx.ode_fn = ode_fn
         ctx.solver = solver

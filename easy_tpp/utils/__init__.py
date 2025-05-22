@@ -13,7 +13,7 @@ from easy_tpp.utils.ode_utils import rk4_step_method
 from easy_tpp.utils.registrable import Registrable
 from easy_tpp.utils.torch_utils import set_device, set_optimizer, set_seed, count_model_params
 from easy_tpp.utils.generic import is_torch_device, is_numpy_array
-from easy_tpp.utils.gen_utils import generate_and_save_json, format_gen_data_to_hf
+from easy_tpp.utils.gen_utils import generate_and_save_json, format_gen_data_to_hf, format_multivariate_simulations
 
 __all__ = ['py_assert',
            'make_config_string',

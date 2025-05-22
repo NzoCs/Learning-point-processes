@@ -1,41 +1,0 @@
-Lancement de la simulation pour SAHP sur hawkes2_
-[31;1m2025-05-15 15:32:43,698 - config.py[pid:31441;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class SimulatorConfig[0m
-[38;20m2025-05-15 15:32:45,523 - basemodel.py[pid:31441;line:91:__init__] - INFO: Successfully loaded pretrained model from: ../train/checkpoints/SAHP/hawkes2_/trained_models/best.ckpt[0m
-[38;20m2025-05-15 15:32:45,524 - basemodel.py[pid:31441;line:118:to] - INFO: Model device updated to: cuda[0m
-[38;20m2025-05-15 15:32:48,621 - simulator.py[pid:31441;line:41:__init__] - INFO: Simulator initialized with model on device: cuda[0m
-INFO:datasets:PyTorch version 2.6.0 available.
-[38;20m2025-05-15 15:33:17,908 - simulator.py[pid:31441;line:69:run] - INFO: Starting generation of simulations on device: cuda[0m
-Generating simulations:   0%|          | 0/47 [00:00<?, ?batch/s]
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][AGenerating simulations:   0%|          | 0/47 [00:03<?, ?batch/s]
-Traceback (most recent call last):
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 24, in <module>
-    main()
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 21, in main
-    simulator.run()
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/simulate/simulator.py", line 84, in run
-    time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(batch=batch_values)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 613, in simulate
-    accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 208, in draw_next_time_one_step
-    intensity_upper_bound = self.compute_intensity_upper_bound(time_seq,
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 74, in compute_intensity_upper_bound
-    intensities_for_bound = intensity_fn(
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/sahp.py", line 198, in compute_intensities_at_sample_times
-    enc_out = self.forward(time_seqs, time_delta_seqs, type_seqs, attention_mask)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/sahp.py", line 100, in forward
-    position_embedding = self.layer_position_emb(time_seqs, time_delta_seqs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
-    return self._call_impl(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
-    return forward_call(*args, **kwargs)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/baselayer.py", line 175, in forward
-    phi = self.layer_time_delta(interval.unsqueeze(-1))
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
-    return self._call_impl(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
-    return forward_call(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/linear.py", line 125, in forward
-    return F.linear(input, self.weight, self.bias)
-RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu! (when checking argument for argument mat2 in method wrapper_CUDA_mm)
-
-                                                               [Asrun: error: ruche-gpu19: task 0: Exited with exit code 1

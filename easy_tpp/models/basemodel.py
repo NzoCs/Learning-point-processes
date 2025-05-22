@@ -14,7 +14,7 @@ import os
 from easy_tpp.models.thinning import EventSampler
 from easy_tpp.config_factory import ModelConfig
 from easy_tpp.evaluate import MetricsCompute, EvaluationMode
-from easy_tpp.utils import logger
+from easy_tpp.utils import logger, format_multivariate_simulations, save_json
 
 class BaseModel(pl.LightningModule, ABC):
     
@@ -26,73 +26,99 @@ class BaseModel(pl.LightningModule, ABC):
         """
         super(BaseModel, self).__init__()
         
-        #Paramètre du modele
+        # Save hyperparameters for later use
         self.save_hyperparameters()
 
+        # Load model configuration
         pretrain_model_path = model_config.pretrain_model_path
         base_config = model_config.base_config
         model_specs = model_config.specs
-        
-        self.compute_simulation_metrics = model_config.compute_simulation_metrics
+
+        # Load training configuration
+        self.compute_simulation = model_config.compute_simulation
         self.lr = base_config.lr
         self.lr_scheduler = base_config.lr_scheduler
         self.max_epochs = base_config.max_epochs
         self.dropout = base_config.dropout
-        
+
+        # Load data and model specifications
         self.num_event_types = model_config.num_event_types  # not include [PAD], [BOS], [EOS]
         self.num_event_types_pad = model_config.num_event_types_pad
         self.pad_token_id = model_config.pad_token_id
-        
+        self.hidden_size = model_specs.hidden_size
         
         self.loss_integral_num_sample_per_step = model_specs.loss_integral_num_sample_per_step
-        self.hidden_size = model_specs.hidden_size
         
         self.eps = torch.finfo(torch.float32).eps
 
-        # Store device from configuration or default to CPU
-        self._device = model_config.device if hasattr(model_config, 'device') else torch.device('cpu')
-        
-        # Move embedding layer to the correct device immediately
+        # Initialize type embedding
         self.layer_type_emb = nn.Embedding(
             num_embeddings = self.num_event_types_pad,  # have padding
             embedding_dim = self.hidden_size,
             padding_idx = self.pad_token_id,
-            device=self._device
+            device=self.device
             )
 
-        #Paramètre de la génération de données
-        gen_config = model_config.thinning
+        # Model prediction configuration
+        self.gen_config = model_config.thinning
         self.use_mc_samples = model_config.use_mc_samples
-        self.num_step_gen = gen_config.num_steps
-        
-        # Set up the event sampler if generation config is provided
-        self.event_sampler = EventSampler(num_sample = gen_config.num_sample,
-                                              num_exp = gen_config.num_exp,
-                                              over_sample_rate = gen_config.over_sample_rate,
-                                              num_samples_boundary = gen_config.num_samples_boundary,
-                                              dtime_max = gen_config.dtime_max,
-                                              device = self._device)
+        self._device = model_config.device
+        self.num_step_gen = self.gen_config.num_steps
+        self.dtime_max = self.gen_config.dtime_max
         
         simulation_config = model_config.simulation_config
+        self.phase = "train"  # Default phase is train
         
+        # Simulation from the model configuration
         if simulation_config is not None:
+            self.seed = simulation_config.seed
             self.simulation_batch_size = simulation_config.batch_size
             self.simulation_start_time = simulation_config.start_time
             self.simulation_end_time = simulation_config.end_time
+            self.max_simul_events = simulation_config.max_sim_events
+
+        self.sim_events_counter = 0
+        self.simulations = []
 
         # Load pretrained model if path is provided
         if pretrain_model_path is not None:
-            checkpoint = torch.load(pretrain_model_path, map_location=self._device, weights_only=False)
+            checkpoint = torch.load(pretrain_model_path, map_location=self.device, weights_only=False)
             # Adjust keys if necessary, e.g., remove prefix if saved with DDP
             state_dict = checkpoint['state_dict']
             # Example key adjustment (if needed):
             # state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
             self.load_state_dict(state_dict, strict=False) # Use strict=False if some layers are different
             logger.info(f"Successfully loaded pretrained model from: {pretrain_model_path}")
-            
-        # Ensure all parameters are on the correct device
-        self = self.to(self._device)
     
+    @property
+    # Set up the event sampler if generation config is provided
+    def event_sampler(self) :
+        """Get the event sampler for generating events."""
+
+        gen_config = self.gen_config
+
+        if self.phase == "train":
+
+            event_sampler = EventSampler(num_sample = gen_config.num_sample,
+                                num_exp = gen_config.num_exp,
+                                over_sample_rate = gen_config.over_sample_rate,
+                                num_samples_boundary = gen_config.num_samples_boundary,
+                                dtime_max = gen_config.dtime_max,
+                                device = self._device
+                            )
+        
+        elif self.phase == "simulate":
+
+            event_sampler =  EventSampler(num_sample = 1,
+                                num_exp = gen_config.num_exp,
+                                over_sample_rate = gen_config.over_sample_rate,
+                                num_samples_boundary = gen_config.num_samples_boundary,
+                                dtime_max = gen_config.dtime_max,
+                                device = self._device
+                            )
+        
+        return event_sampler
+
     @property
     def device(self):
         """Get the current device."""
@@ -115,7 +141,6 @@ class BaseModel(pl.LightningModule, ABC):
             # Update the event_sampler device if it exists
             if model.event_sampler is not None:
                 model.event_sampler.device = device
-            logger.info(f"Model device updated to: {device}")
         
         return model
     
@@ -333,10 +358,26 @@ class BaseModel(pl.LightningModule, ABC):
         for key in one_step_metrics : 
             
             self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
-            
         
         return avg_loss
     
+    def limit_simulate(
+            self,
+            start_time: float = None,
+            end_time: float = None,
+            batch_size: int = None
+        ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+
+        """Simulate a sequence of events from the model. with a limit on the number of events. """
+
+        if start_time is None:
+            start_time = self.simulation_start_time
+        if end_time is None:
+            end_time = self.simulation_end_time
+        
+
+                    
+
     def test_step(
         self,
         batch, 
@@ -373,7 +414,7 @@ class BaseModel(pl.LightningModule, ABC):
         for key in one_step_metrics : 
             self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
 
-        if self.compute_simulation_metrics:
+        if self.compute_simulation:
             # Compute simulation metrics
             simulation = self.simulate(
                 batch = batch
@@ -388,9 +429,121 @@ class BaseModel(pl.LightningModule, ABC):
             )
             for key in simulation_metrics :
                 self.log(f"{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
-        
+
+            simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = simulation
+
+            batch_size = simul_time_seq.size(0)
+
+            for i in range(batch_size):
+
+                self.sim_events_counter += simul_mask.sum().item()
+                if self.sim_events_counter >= self.max_simul_events:
+                    break
+                mask_i = simul_mask[i]
+                if mask_i.any():
+                    self.simulations.append({
+                        'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
+                        'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
+                        'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
+                    })
+
+        # Ajouter les distributions qui sont dans evals a plot et enregistrer en prenant juste une partie des simulations peut etre
+
         return avg_loss
-     
+    
+    def predict_step(self, batch, batch_idx, **kwargs) -> STEP_OUTPUT:
+        """Prediction step for Lightning.
+        
+        Args:
+            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+            batch_idx: Index of the batch
+            
+        Returns:
+            STEP_OUTPUT: The output of the prediction step
+        """
+        
+        batch = batch.values()
+
+        if self.sim_events_counter >= self.max_simul_events:
+            return self.simulations
+        
+        simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
+                batch = batch
+            )
+        batch_size = simul_time_seq.size(0)
+
+        for i in range(batch_size):
+
+            self.sim_events_counter += simul_mask.sum().item()
+            if self.sim_events_counter >= self.max_simul_events:
+                break
+            mask_i = simul_mask[i]
+            if mask_i.any():
+                self.simulations.append({
+                    'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
+                    'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
+                    'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
+                })
+
+        return self.simulations
+        
+    
+    def format_and_save_simulations(self, save_dir: str) -> list[dict]:
+        """
+        Formats the raw simulation results into a list of dictionaries, one per sequence.
+
+        Each dictionary follows a structure similar to Hugging Face datasets,
+        containing event times, time deltas, event types, etc.
+
+        Args:
+            simulations (List[Dict]): A list where each dict contains tensors
+                                      ('time_seq', 'time_delta_seq', 'event_seq')
+                                      for a single simulated sequence.
+            dim_process (Optional[int]): The number of event types (dimensionality) in the process.
+
+        Returns:
+            List[Dict]: A list of dictionaries, each representing a formatted sequence.
+        """
+
+        if self.simulations == []:
+            logger.warning("No simulations to format.")
+            return None
+        formatted_data = format_multivariate_simulations(
+            simulations = self.simulations, dim_process = self.num_event_types
+        )
+        
+        save_data_path = os.path.join(save_dir, 'simulations.json')
+        os.makedirs(save_dir, exist_ok=True)
+        save_json(formatted_data, save_data_path)
+
+        return formatted_data
+    
+    def save_metadata(self, save_dir, formatted_data: list[dict]) -> None:
+        """
+        Saves metadata about the simulation run, including configuration details
+        and total event counts.
+
+        Args:
+            formatted_data (List[Dict]): The list of all formatted sequences (used for stats).
+        """
+        total_events = sum(item.get('seq_len', 0) for item in formatted_data)
+        avg_seq_len = total_events / len(formatted_data) if formatted_data else 0
+
+        metadata = {
+            'simulation_summary': {
+                'total_sequences_generated': len(formatted_data),
+                'total_events_generated': total_events,
+                'average_sequence_length': round(avg_seq_len, 2),
+                'dimension': self.num_event_types if self.num_event_types is not None else 'Unknown',
+                'simulation_time_interval': [self.simulation_start_time, self.simulation_end_time],
+                'generating_model': self.__class__.__name__,
+                'seed_used': self.seed
+            }
+        }
+
+        meta_filepath = os.path.join(save_dir, 'metadata.json')
+        save_json(metadata, meta_filepath)
+        logger.info(f"Metadata saved to {meta_filepath}")
 
     def predict_one_step_at_every_event(
         self,
@@ -412,8 +565,8 @@ class BaseModel(pl.LightningModule, ABC):
         time_seq, time_delta_seq, event_seq = time_seq[:, :-1], time_delta_seq[:, :-1], event_seq[:, :-1]
 
         # [batch_size, seq_len]
-        dtime_boundary = torch.max(time_delta_seq * self.event_sampler.dtime_max,
-                                   time_delta_seq + self.event_sampler.dtime_max)
+        dtime_boundary = torch.max(time_delta_seq * self.dtime_max,
+                                   time_delta_seq + self.dtime_max)
 
         # [batch_size, seq_len, num_sample]
         accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
@@ -483,7 +636,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         for i in range(num_step):
             # [batch_size, seq_len]
-            dtime_boundary = time_delta_seq + self.event_sampler.dtime_max
+            dtime_boundary = time_delta_seq + self.dtime_max
 
             # [batch_size, 1, num_sample]
             accepted_dtimes, weights = \
@@ -555,9 +708,6 @@ class BaseModel(pl.LightningModule, ABC):
                 - 'type_seqs': Tensor of generated event types.
         """
         
-        # Ensure model is in evaluation mode
-        self.eval()
-        
         if start_time is None:
             start_time = self.simulation_start_time
             if not isinstance(start_time, (int, float)):
@@ -571,6 +721,9 @@ class BaseModel(pl.LightningModule, ABC):
             if not isinstance(batch_size, int):
                 raise ValueError("Valid batch_size must be provided for simulations in the config or as an argument.")
         
+        # change phase to simulate
+        self.phase = "simulate"
+
         # Initialize sequences
         if batch is None :
             batch = [torch.zeros(batch_size, 2).to(self.device) for _ in range(3)] + [None, None]
@@ -578,11 +731,7 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size = batch[0].size(0)
         
         time_seq_label, time_delta_seq_label, event_seq_label, non_pad_mask, _ = batch
-        
-        # Ensure all tensors are on the correct device
-        time_seq_label = time_seq_label.to(self.device)
-        time_delta_seq_label = time_delta_seq_label.to(self.device)
-        event_seq_label = event_seq_label.to(self.device)
+        time_seq_label, time_delta_seq_label, event_seq_label = time_seq_label.to(self.device), time_delta_seq_label.to(self.device), event_seq_label.to(self.device)
         
         time_seq = time_seq_label.clone()
         time_delta_seq = time_delta_seq_label.clone()
@@ -592,12 +741,12 @@ class BaseModel(pl.LightningModule, ABC):
         num_step = 0
         seq_len = 0
         
-        last_event_time = torch.zeros(batch_size, num_mark, device=self.device)
+        last_event_time = torch.zeros(batch_size, num_mark)
         
         for mark in range(num_mark):
             # Create a mask for each mark separately to avoid broadcasting issues
             mark_mask = (event_seq_label == mark).to(self.device)
-            masked_time_seq = torch.where(mark_mask, time_seq_label, torch.tensor(0.0, device=self.device))
+            masked_time_seq = torch.where(mark_mask, time_seq_label, torch.tensor(0.0).to(self.device))
             marked_last_time_label, _ = masked_time_seq.max(dim=1)
             last_event_time[:,mark] = marked_last_time_label
                     
@@ -609,7 +758,7 @@ class BaseModel(pl.LightningModule, ABC):
             num_step += 1
 
             # Determine possible event times
-            dtime_boundary = time_delta_seq + self.event_sampler.dtime_max
+            dtime_boundary = time_delta_seq + self.dtime_max
             accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
                 time_seq, time_delta_seq, event_seq, dtime_boundary,
                 self.compute_intensities_at_sample_times, compute_last_step_only=True
@@ -682,9 +831,12 @@ class BaseModel(pl.LightningModule, ABC):
         simul_mask = torch.logical_and(
             time_seq >= start_time,
             time_seq <= end_time
-        )
+        ).to(self.device)
         
-        return time_seq, time_delta_seq, event_seq, simul_mask
+        # change phase back to train
+        self.phase = "train"
+
+        return time_seq.to(self.device), time_delta_seq.to(self.device), event_seq.to(self.device), simul_mask
     
     def intensity_graph(
         self,

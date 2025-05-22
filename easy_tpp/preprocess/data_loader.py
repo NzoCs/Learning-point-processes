@@ -139,17 +139,10 @@ class TPPDataModule(pl.LightningDataModule):
             logger.info(f"Validation dataset created with {len(self.val_dataset)} sequences")
         
         # Set up dataset for testing
-        if stage == 'test':
+        if stage == 'test' or "predict" or "simul":
             test_data_dir = self.data_config.get_data_dir('test')
             self.test_data = self.build_input(test_data_dir, self.data_config.data_format, 'test')
             self.test_dataset = TPPDataset(self.test_data)
-        
-        # Set up dataset for prediction (can be the same as test)
-        if stage == 'predict' or 'simul':
-            if self.predict_data is None:
-                test_data_dir = self.data_config.get_data_dir('test')
-                self.predict_data = self.build_input(test_data_dir, self.data_config.data_format, 'test')
-            self.predict_dataset = TPPDataset(self.predict_data)
         
         if stage is None :
             logger.info("No stage specified, loading all data")

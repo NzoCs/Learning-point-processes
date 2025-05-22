@@ -93,7 +93,7 @@ class HawkesModel(BaseModel):
 
         # Mask for valid historical events (time_k < query_t and not padding)
         # Shape: [B, L_query, N_samples, L_hist]
-        valid_event_mask = (time_diffs > self.eps) & (type_seq_exp != self.pad_token_id)
+        valid_event_mask = (time_diffs >= 0) & (type_seq_exp != self.pad_token_id)
 
         # Replace pad_token_id with a valid index (0) to avoid indexing errors
         safe_type_seq = type_seq_exp.clone()
@@ -111,7 +111,7 @@ class HawkesModel(BaseModel):
         # Calculate exponential decay term: exp(-beta * delta_t)
         # beta_gathered: [B, L_query, N_samples, L_hist, D]
         # time_diffs: [B, L_query, N_samples, L_hist] -> unsqueeze(-1) -> [B, L_query, N_samples, L_hist, 1]
-        exp_decay = torch.exp(-beta_gathered * time_diffs.unsqueeze(-1))
+        exp_decay = torch.exp(-beta_gathered * time_diffs.unsqueeze(-1)) 
 
         # Calculate contribution from each historical event: alpha * exp_decay
         # Shape: [B, L_query, N_samples, L_hist, D]
@@ -120,6 +120,7 @@ class HawkesModel(BaseModel):
         # Apply mask to zero out contributions from invalid events (padding or future events)
         # valid_event_mask: [B, L_query, N_samples, L_hist] -> unsqueeze(-1) -> [B, L_query, N_samples, L_hist, 1]
         masked_contributions = event_contributions * valid_event_mask.unsqueeze(-1)
+        masked_contributions = torch.nan_to_num(masked_contributions, nan=0.0, posinf=0.0, neginf=0.0)
 
         # Sum contributions over the history dimension (L_hist)
         # Shape: [B, L_query, N_samples, D]
@@ -167,54 +168,25 @@ class HawkesModel(BaseModel):
         time_seq = time_seq.to(device)
         type_seq = type_seq.to(device)
         sample_dtimes = sample_dtimes.to(device)
+        
+        type_seq_exp = type_seq.reshape(batch_size, seq_len, 1, 1).expand(-1, -1, num_samples, self.num_event_types)
 
-        if compute_last_step_only:
-            # History is the full sequence
-            hist_time_seq = time_seq
-            hist_type_seq = type_seq
-            
-            # Query times are relative to the *last* event time
-            # [B, 1, N_samples]
-            query_times = time_seq[:, -1:].unsqueeze(-1) + sample_dtimes[:, -1:, :]
-            
-            # Compute intensities at these query times using the full history
-            # Output shape: [B, 1, N_samples, D]
-            intensities = self.compute_intensities_at_times(
-                time_seq=hist_time_seq, 
-                time_delta_seq=None, 
-                type_seq=hist_type_seq, 
-                query_times=query_times
-            )
-        else:
-            # Calculate absolute query times for each event: t_k + sample_dtimes_k
-            # [B, L, N_samples]
-            query_times = time_seq.unsqueeze(-1) + sample_dtimes
-            
-            # Initialize result tensor
-            intensities = torch.zeros((batch_size, seq_len, num_samples, self.num_event_types), device=device)
-            
-            # For each position k, compute intensity using history up to k
-            for k in range(seq_len):
-                # For position k, use history up to and including k
-                # This properly implements the causality constraint
-                hist_time = time_seq[:, :(k+1)]
-                hist_type = type_seq[:, :(k+1)]
-                
-                # Query times for position k
-                # [B, 1, N_samples]
-                query_k = query_times[:, k:k+1, :]
-                
-                # Compute intensities using history up to k
-                # Result shape: [B, 1, N_samples, D]
-                intensity_k = self.compute_intensities_at_times(
-                    time_seq=hist_time,
-                    time_delta_seq=None,
-                    type_seq=hist_type,
-                    query_times=query_k
-                )
-                
-                # Store in the result tensor
-                intensities[:, k:k+1, :, :] = intensity_k
+        mask = torch.where(type_seq_exp == torch.arange(self.num_event_types).view(1, 1, 1, -1).to(device), 1, 0)
+
+        sample_dtimes_exp = sample_dtimes.unsqueeze(-1).expand(-1, -1, -1, self.num_event_types)
+        sample_dtimes_exp_masked = sample_dtimes_exp * mask
+        sample_times_exp_masked = sample_dtimes_exp_masked.cumsum(dim=2)
+        query_times = torch.zeros(batch_size, seq_len, num_samples).to(device)
+
+        for i in range(self.num_event_types):
+            query_times += torch.where(mask[:, :, :, i] == 1, sample_times_exp_masked[:, :, :, i], 0)
+        
+        intensities = self.compute_intensities_at_times(
+            time_seq=time_seq,
+            time_delta_seq=None,
+            type_seq=type_seq,
+            query_times=query_times
+        )
 
         return intensities
         
@@ -242,7 +214,7 @@ class HawkesModel(BaseModel):
             time_delta_seq=None,
             type_seq=type_seq_BN,
             query_times=query_times_for_event_ll
-        )
+        ).squeeze(-2)
 
         # For integral term: intervals (t_0,t_1), ..., (t_{N-1}, t_N)
         # time_delta_seq_BN[:, 1:] gives dt_1, ..., dt_N. Shape [B, L-1]

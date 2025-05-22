@@ -1,3 +1,0 @@
-Lancement de la simulation pour FullyNN sur hawkes1
-slurmstepd: error: *** JOB 9359158 ON ruche-gpu19 CANCELLED AT 2025-05-15T14:27:11 ***
-slurmstepd: error: *** STEP 9359158.0 ON ruche-gpu19 CANCELLED AT 2025-05-15T14:27:11 ***

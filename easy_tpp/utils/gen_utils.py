@@ -1,5 +1,6 @@
 import numpy as np
 from easy_tpp.utils.misc import save_json
+from tqdm import tqdm
 
 def generate_synthetic_data(n_nodes=3, end_time=1000, baseline=0.1, adjacency=0.5, decay=1.0):
     """
@@ -57,6 +58,47 @@ def generate_synthetic_data(n_nodes=3, end_time=1000, baseline=0.1, adjacency=0.
         events[node].append(event)
 
     return events
+
+def format_multivariate_simulations(simulations: list[dict], dim_process) -> list[dict]:
+    """
+    Formats the raw simulation results into a list of dictionaries, one per sequence.
+
+    Each dictionary follows a structure similar to Hugging Face datasets,
+    containing event times, time deltas, event types, sequence length, etc.
+
+    Args:
+        simulations (List[Dict]): A list where each dict contains tensors
+                                    ('time_seq', 'time_delta_seq', 'event_seq')
+                                    for a single simulated sequence.
+        dim_process (Optional[int]): The number of event types (dimensionality) in the process.
+
+    Returns:
+        List[Dict]: A list of dictionaries, each representing a formatted sequence.
+    """
+    formatted_data = []
+    
+    for seq_idx, sim in enumerate(tqdm(simulations, desc="Formatting sequences")):
+        times = sim['time_seq']
+        events = sim['event_seq']
+        time_deltas = sim['time_delta_seq']
+        
+        times = times - times[0]  
+
+        times_list = times.cpu().tolist()
+        events_list = events.cpu().long().tolist()
+        time_deltas_list = time_deltas.cpu().tolist()
+
+        seq_dict = {
+            'dim_process': dim_process if dim_process is not None else -1,
+            'seq_len': len(times_list),
+            'seq_idx': seq_idx,
+            'time_since_start': times_list,
+            'time_since_last_event': time_deltas_list,
+            'type_event': events_list
+        }
+        formatted_data.append(seq_dict)
+    
+    return formatted_data
 
 def format_tick_data_to_hf(events, dim_process, max_seq_len):
     """

@@ -14,9 +14,9 @@ data:
 
   test:
     data_format: json
-    train_dir: NzoCs/test_dataset-temporal-dataset
-    valid_dir: NzoCs/test_dataset-temporal-dataset
-    test_dir: NzoCs/test_dataset-temporal-dataset
+    train_dir: NzoCs/test-temporal-dataset
+    valid_dir: NzoCs/test-temporal-dataset
+    test_dir: NzoCs/test-temporal-dataset
     data_specs:
       num_event_types: 2
       pad_token_id: 2
@@ -54,9 +54,9 @@ data:
 
   hawkes2:
     data_format: json
-    train_dir: NzoCs/hawkes2-temporal-dataset
-    valid_dir: NzoCs/hawkes2-temporal-dataset
-    test_dir: NzoCs/hawkes2-temporal-dataset
+    train_dir: NzoCs/hawkes2_-temporal-dataset
+    valid_dir: NzoCs/hawkes2_-temporal-dataset
+    test_dir: NzoCs/hawkes2_-temporal-dataset
     data_specs:
       num_event_types: 2
       pad_token_id: 2
@@ -73,6 +73,26 @@ data:
       padding_side: left
 
 checkpoints_dir: checkpoints
+
+test :
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 1
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [0.2, 0.2]
+      alpha: [[0.4, 0], [0, 8.0]]
+      beta: [[1.0, 0], [0, 20.0]]
+    thinning:
+      num_exp: 200
+      num_sample: 100
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+  trainer_config:
+    stage: test
 
 hawkes1 :
   data_loading_specs:
@@ -113,7 +133,6 @@ hawkes2 :
 
   trainer_config:
     stage: test
-
 
 H2expi :
   data_loading_specs:

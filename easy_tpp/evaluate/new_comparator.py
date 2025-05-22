@@ -1,104 +1,122 @@
 from easy_tpp.utils import logger
-from easy_tpp.preprocess import TPPDataModule
-from easy_tpp.config_factory import DistribCompConfig, DataConfig
 
-from typing import Dict
+from typing import Dict, List, Union, Optional
 import numpy as np
-import json
 import os
-import pandas as pd
+import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-class DistribComparator:
+class NewDistribComparator:
     
-    def __init__(self, evaluator_config: DistribCompConfig, dataset_size: int = 10**4):
-
+    def __init__(
+            self,
+            label_data_loader,
+            simulation: List[Dict],
+            num_event_types: int,
+            output_dir: str,
+            dataset_size: int = 10**5
+            ):
         """
-        Initialize the evaluator for simulation comparison.
+        Initialize the comparator for simulation evaluation.
         
         Args:
-            evaluator_config: Configuration for the evaluator
+            label_data_loader: DataLoader containing the ground truth data
+            simulation: List of dictionaries containing simulated sequences
+            num_event_types: Number of event types in the dataset
+            output_dir: Directory to save output plots
+            dataset_size: Maximum number of events to use for comparison
         """
-        self.config = evaluator_config
-
-        # Initialize DataModules first
-        label_data_config_dict = evaluator_config.label_data_config
-        pred_data_config_dict = evaluator_config.pred_data_config
-        data_specs_dict = evaluator_config.data_specs
+        self.output_dir = output_dir
+        self.num_event_types = num_event_types
         
-        self.num_event_types = data_specs_dict['num_event_types']
-        # Ensure data_specs is included in data configs
-        label_data_config_dict['data_specs'] = data_specs_dict
-        pred_data_config_dict['data_specs'] = data_specs_dict
-        label_data_config_dict["data_loading_specs"] = evaluator_config.data_loading_specs
-        pred_data_config_dict["data_loading_specs"] = evaluator_config.data_loading_specs
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
         
-        label_data_config = DataConfig(**label_data_config_dict)
-        pred_data_config = DataConfig(**pred_data_config_dict)
+        # Extract data from label_data_loader
+        self.label_time_deltas = []
+        self.label_event_types = []
+        self.label_sequence_lengths = []
         
-        self.label_split = evaluator_config.label_split
-        self.pred_split = evaluator_config.pred_split
-        
-        self.label_loader_setup = TPPDataModule(label_data_config)
-        self.pred_loader_setup = TPPDataModule(pred_data_config)
-
-        self.label_loader_setup.setup(stage=evaluator_config.label_split)
-        self.pred_loader_setup.setup(stage=evaluator_config.pred_split)
-        
-        # Create output directory for saving plots
-        self.output_dir = evaluator_config.output_dir
-        
-        # Load data
-        label_source_dir = label_data_config.get_data_dir(split=self.label_split)
-        pred_source_dir = pred_data_config.get_data_dir(split=self.pred_split)
-        label_data_format = label_data_config.data_format
-        pred_data_format = pred_data_config.data_format
-        self.label_data = self.label_loader_setup.build_input(source_dir=label_source_dir, split=self.label_split, data_format=label_data_format)
-        self.pred_data = self.pred_loader_setup.build_input(source_dir=pred_source_dir, split=self.pred_split, data_format=pred_data_format)
-
-        label_all_event_types = []
-        label_all_time_deltas = []
-        pred_all_event_types = []
-        pred_all_time_deltas = []
-        
-        # Preprocess the data to extract all event types and time deltas
-        i = 0
-        for seq_idx in range(min(len(self.label_data['type_seqs']), len(self.pred_data['type_seqs']))):
-            label_type_seq = self.label_data['type_seqs'][seq_idx]
-            label_time_seq = self.label_data['time_delta_seqs'][seq_idx]
-            pred_type_seq = self.pred_data['type_seqs'][seq_idx]
-            pred_time_seq = self.pred_data['time_delta_seqs'][seq_idx]
+        # Process label data
+        logger.info("Extracting label data from dataloader...")
+        for batch in label_data_loader:
+            # Get the relevant tensors from the batch
+            if isinstance(batch, dict):
+                time_delta_seqs = batch.get('time_delta_seqs', None)
+                type_seqs = batch.get('type_seqs', None)
+                attention_mask = batch.get('attention_mask', None)
+            else:
+                # Assuming it's a tuple or list with a specific order
+                batch_values = list(batch.values()) if hasattr(batch, 'values') else batch
+                if len(batch_values) >= 5:
+                    _, time_delta_seqs, type_seqs, attention_mask, _ = batch_values
+                else:
+                    logger.warning(f"Batch format not recognized: {type(batch)}")
+                    continue
             
-            # Process events within each sequence separately without requiring matching indices
-            # First process label sequence
-            for idx in range(len(label_type_seq)):
-                label_all_event_types.append(label_type_seq[idx])
-                label_all_time_deltas.append(label_time_seq[idx])
-                i += 1
-                if i >= dataset_size:
+            # Process each sequence in the batch
+            for i in range(len(time_delta_seqs)):
+                mask = attention_mask[i] if attention_mask is not None else torch.ones_like(time_delta_seqs[i]).bool()
+                valid_indices = mask.bool()
+                
+                # Extract valid time deltas and event types
+                time_deltas = time_delta_seqs[i][valid_indices].cpu().numpy()
+                event_types = type_seqs[i][valid_indices].cpu().numpy()
+                
+                # Store sequence length
+                self.label_sequence_lengths.append(len(time_deltas))
+                
+                # Add to our lists
+                self.label_time_deltas.extend(time_deltas)
+                self.label_event_types.extend(event_types)
+                
+                # Check if we've collected enough data
+                if len(self.label_time_deltas) >= dataset_size:
                     break
             
-            # Then process prediction sequence
-            for idx in range(len(pred_type_seq)):
-                pred_all_event_types.append(pred_type_seq[idx])
-                pred_all_time_deltas.append(pred_time_seq[idx])
-                
-            if i >= dataset_size:
+            if len(self.label_time_deltas) >= dataset_size:
                 break
-                
-        # Ensure we respect the dataset_size limit for both datasets
-        self.label_all_event_types = np.array(label_all_event_types[:dataset_size])
-        self.label_all_time_deltas = np.array(label_all_time_deltas[:dataset_size])
-        self.pred_all_event_types = np.array(pred_all_event_types[:len(self.label_all_event_types)])
-        self.pred_all_time_deltas = np.array(pred_all_time_deltas[:len(self.label_all_time_deltas)])
         
-        logger.info(f"Collected {len(self.label_all_event_types)} label events and {len(self.pred_all_event_types)} prediction events for comparison")
+        # Process simulation data
+        self.simulated_time_deltas = []
+        self.simulated_event_types = []
+        self.simulated_sequence_lengths = []
+        
+        logger.info("Processing simulation data...")
+        for seq in simulation:
+            if 'time_delta_seq' in seq and 'event_seq' in seq:
+                # Extract time deltas and event types
+                time_deltas = seq['time_delta_seq'].cpu().numpy()
+                event_types = seq['event_seq'].cpu().numpy()
+            else:
+                continue
+                
+            # Store sequence length
+            self.simulated_sequence_lengths.append(len(time_deltas))
+            
+            # Add to our lists
+            self.simulated_time_deltas.extend(time_deltas)
+            self.simulated_event_types.extend(event_types)
+            
+            # Check if we've collected enough data
+            if len(self.simulated_time_deltas) >= dataset_size:
+                break
+        
+        # Convert to numpy arrays for faster processing
+        self.label_time_deltas = np.array(self.label_time_deltas[:dataset_size])
+        self.label_event_types = np.array(self.label_event_types[:dataset_size])
+        self.simulated_time_deltas = np.array(self.simulated_time_deltas[:dataset_size])
+        self.simulated_event_types = np.array(self.simulated_event_types[:dataset_size])
+        
+        logger.info(f"Collected {len(self.label_time_deltas)} label events and {len(self.simulated_time_deltas)} simulated events for comparison")
+        
+        # Generate all plots automatically upon initialization
+        self.run_evaluation()
     
-    def plot_inter_event_time_distribution(self, label_times: np.ndarray, pred_times: np.ndarray, filename: str = "comparison_inter_event_time_dist.png"):
+    def plot_inter_event_time_distribution(self, filename: str = "comparison_inter_event_time_dist.png"):
         """
         Plots and saves the superimposed distribution of inter-event times.
-        Accepts raw time delta arrays as input.
         """
         # Set the Seaborn style and context
         sns.set_theme(style="whitegrid")
@@ -107,20 +125,16 @@ class DistribComparator:
         plt.figure(figsize=(10, 6))
         
         # Use Seaborn's histplot or kdeplot for better aesthetics
-        if label_times.size > 0 and pred_times.size > 0:
-            # Convert to numpy arrays if not already
-            label_times_array = np.asarray(label_times)
-            pred_times_array = np.asarray(pred_times)
-            
+        if len(self.label_time_deltas) > 0 and len(self.simulated_time_deltas) > 0:
             # Create histograms for both datasets
-            label_hist, label_bin_edges = np.histogram(label_times_array, bins=50)
-            pred_hist, pred_bin_edges = np.histogram(pred_times_array, bins=50)
+            label_hist, label_bin_edges = np.histogram(self.label_time_deltas, bins=50)
+            pred_hist, pred_bin_edges = np.histogram(self.simulated_time_deltas, bins=50)
             
             # Get bin centers for plotting
             label_bin_centers = (label_bin_edges[:-1] + label_bin_edges[1:]) / 2
             pred_bin_centers = (pred_bin_edges[:-1] + pred_bin_edges[1:]) / 2
             
-            # Filter out bins with frequency <= 2
+            # Filter out bins with frequency <= 20
             label_mask = label_hist > 20
             pred_mask = pred_hist > 20
             
@@ -132,9 +146,9 @@ class DistribComparator:
             
             # Plot histograms - we'll use bar plots with filtered data instead of histplot
             plt.bar(filtered_label_bin_centers, filtered_label_hist, width=(label_bin_edges[1] - label_bin_edges[0]) * 0.8,
-                  label=f'Label ({self.label_split})', alpha=0.6, color='royalblue')
+                  label='Ground Truth', alpha=0.6, color='royalblue')
             plt.bar(filtered_pred_bin_centers, filtered_pred_hist, width=(pred_bin_edges[1] - pred_bin_edges[0]) * 0.8,
-                  label=f'Prediction ({self.pred_split})', alpha=0.6, color='crimson')
+                  label='Simulation', alpha=0.6, color='crimson')
             
             plt.yscale('log')
             
@@ -151,7 +165,7 @@ class DistribComparator:
                 
                 # Plot the regression line
                 plt.plot(label_x_line, label_y_line, '--', color='blue', 
-                       label=f'Label slope: {label_slope:.4f}')
+                       label=f'Truth slope: {label_slope:.4f}')
             
             # Calculate linear regression for filtered prediction data
             if len(filtered_pred_hist) > 1:  # Need at least 2 points for regression
@@ -166,24 +180,24 @@ class DistribComparator:
                 
                 # Plot the regression line
                 plt.plot(pred_x_line, pred_y_line, '--', color='red', 
-                       label=f'Pred slope: {pred_slope:.4f}')
+                       label=f'Simul slope: {pred_slope:.4f}')
             
             # Calculate statistics using vectorized operations
-            label_mean = np.mean(label_times_array)
-            label_median = np.median(label_times_array)
-            label_std = np.std(label_times_array)
+            label_mean = np.mean(self.label_time_deltas)
+            label_median = np.median(self.label_time_deltas)
+            label_std = np.std(self.label_time_deltas)
             
-            pred_mean = np.mean(pred_times_array)
-            pred_median = np.median(pred_times_array)
-            pred_std = np.std(pred_times_array)
+            pred_mean = np.mean(self.simulated_time_deltas)
+            pred_median = np.median(self.simulated_time_deltas)
+            pred_std = np.std(self.simulated_time_deltas)
             
             # Add statistics to the plot as annotations
-            label_stats = (f"Label Stats:\n"
+            label_stats = (f"Ground Truth Stats:\n"
                          f"Mean: {label_mean:.4f}\n"
                          f"Median: {label_median:.4f}\n"
                          f"Std Dev: {label_std:.4f}")
             
-            pred_stats = (f"Prediction Stats:\n"
+            pred_stats = (f"Simulation Stats:\n"
                         f"Mean: {pred_mean:.4f}\n"
                         f"Median: {pred_median:.4f}\n"
                         f"Std Dev: {pred_std:.4f}")
@@ -213,14 +227,12 @@ class DistribComparator:
         
         # Add QQ plot for inter-event times
         self._create_qq_plot(
-            label_times, 
-            pred_times, 
-            f'QQ Plot: Inter-Event Times (Label vs Prediction)',
+            self.label_time_deltas, 
+            self.simulated_time_deltas, 
+            'QQ Plot: Inter-Event Times (Ground Truth vs Simulation)',
             os.path.join(self.output_dir, "qq_inter_event_times.png"),
             log_scale=True
         )
-
-        return
 
     def _create_qq_plot(self, label_data: np.ndarray, pred_data: np.ndarray, title: str, save_path: str, log_scale: bool = False):
         """
@@ -292,8 +304,8 @@ class DistribComparator:
         
         plt.grid(True, alpha=0.3)
         plt.title(title, fontsize=14)
-        plt.xlabel(f'Label Quantiles ({self.label_split})', fontsize=12)
-        plt.ylabel(f'Prediction Quantiles ({self.pred_split})', fontsize=12)
+        plt.xlabel('Ground Truth Quantiles', fontsize=12)
+        plt.ylabel('Simulation Quantiles', fontsize=12)
         
         # Add annotation explaining interpretation with a box
         annotation_text = ("Points along reference line indicate similar distributions.\n"
@@ -307,34 +319,29 @@ class DistribComparator:
         plt.close()
         logger.info(f"QQ plot saved to {save_path}")
 
-    def plot_event_type_distribution(self, label_types: np.ndarray, pred_types: np.ndarray, filename: str = "comparison_event_type_dist.png"):
+    def plot_event_type_distribution(self, filename: str = "comparison_event_type_dist.png"):
         """
         Plots and saves the superimposed distribution of event types.
-        Accepts raw event type arrays as input.
         """
         # Set the Seaborn style and context
         sns.set_theme(style="whitegrid")
 
         # Calculate the probability distribution using vectorized operations
-        # Convert to numpy arrays for faster operations
-        label_types = np.asarray(label_types)
-        pred_types = np.asarray(pred_types)
-        
-        # Get all possible event types - use numpy's unique function
+        # Get all possible event types
         all_event_types = np.arange(self.num_event_types)
         
         # Count occurrences using numpy's bincount (faster than Counter for large arrays)
         # Ensure the array contains only integers
-        label_types_int = label_types.astype(int)
-        pred_types_int = pred_types.astype(int)
+        label_types_int = self.label_event_types.astype(int)
+        pred_types_int = self.simulated_event_types.astype(int)
         
         # Use bincount with minlength to ensure all event types are counted
         label_counts = np.bincount(label_types_int, minlength=self.num_event_types)
         pred_counts = np.bincount(pred_types_int, minlength=self.num_event_types)
         
         # Calculate normalized counts (probabilities) using numpy's division
-        label_total = len(label_types)
-        pred_total = len(pred_types)
+        label_total = len(self.label_event_types)
+        pred_total = len(self.simulated_event_types)
         
         label_probs = label_counts / label_total if label_total > 0 else np.zeros_like(label_counts)
         pred_probs = pred_counts / pred_total if pred_total > 0 else np.zeros_like(pred_counts)
@@ -347,9 +354,9 @@ class DistribComparator:
         x = np.arange(len(all_event_types))
         
         # Plot bars side by side
-        plt.bar(x - width/2, label_probs, width, label=f'Label ({self.label_split})', 
+        plt.bar(x - width/2, label_probs, width, label='Ground Truth', 
               color='royalblue', alpha=0.7)
-        plt.bar(x + width/2, pred_probs, width, label=f'Prediction ({self.pred_split})', 
+        plt.bar(x + width/2, pred_probs, width, label='Simulation', 
               color='crimson', alpha=0.7)
         
         plt.title('Comparison of Event Type Distributions', fontsize=14)
@@ -365,10 +372,10 @@ class DistribComparator:
         pred_top3_indices = np.argsort(pred_probs)[-3:][::-1]
         
         # Create formatted statistics strings
-        label_stats = "Label Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {label_probs[i]:.3f}" 
-                                                     for i in label_top3_indices])
-        pred_stats = "Prediction Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {pred_probs[i]:.3f}" 
-                                                         for i in pred_top3_indices])
+        label_stats = "Ground Truth Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {label_probs[i]:.3f}" 
+                                                        for i in label_top3_indices])
+        pred_stats = "Simulation Top Types:\n" + "\n".join([f"Type {all_event_types[i]}: {pred_probs[i]:.3f}" 
+                                                            for i in pred_top3_indices])
         
         # Position text on left and right sides
         plt.annotate(label_stats, xy=(0.05, 0.95), xycoords='axes fraction',
@@ -386,17 +393,16 @@ class DistribComparator:
         plt.close()
         logger.info(f"Event type distribution comparison plot saved to {filepath}")
 
-    def plot_sequence_length_distribution(self, label_lengths: np.ndarray, pred_lengths: np.ndarray, filename: str = "comparison_sequence_length_dist.png"):
+    def plot_sequence_length_distribution(self, filename: str = "comparison_sequence_length_dist.png"):
         """
         Plots and saves the superimposed distribution of sequence lengths.
-        Accepts raw sequence length arrays as input.
         """
         # Set the Seaborn style and context
         sns.set_theme(style="whitegrid")
 
         # Convert to numpy arrays if not already for faster operations
-        label_lengths = np.asarray(label_lengths)
-        pred_lengths = np.asarray(pred_lengths)
+        label_lengths = np.asarray(self.label_sequence_lengths)
+        pred_lengths = np.asarray(self.simulated_sequence_lengths)
         
         # Check if the arrays are empty
         if len(label_lengths) == 0 or len(pred_lengths) == 0:
@@ -405,19 +411,11 @@ class DistribComparator:
 
         plt.figure(figsize=(10, 6))
         
-        # Calculate appropriate bin width using vectorized operations
-        # Use more robust calculation for bin width with defensive checks
-        label_std = np.std(label_lengths) if len(label_lengths) > 1 else 1
-        pred_std = np.std(pred_lengths) if len(pred_lengths) > 1 else 1
-        
-        # Take average of both standard deviations for bin width, minimum 1
-        binwidth = 1
-        
         # Use Seaborn's histplot with optimized parameters
-        sns.histplot(label_lengths, label=f'Label ({self.label_split})', kde=True, 
-                  stat='density', bins = 50, color='royalblue', alpha=0.6)
-        sns.histplot(pred_lengths, label=f'Prediction ({self.pred_split})', kde=True, 
-                  stat='density', bins = 50, color='crimson', alpha=0.6)
+        sns.histplot(label_lengths, label='Ground Truth', kde=True, 
+                  stat='density', bins=50, color='royalblue', alpha=0.6)
+        sns.histplot(pred_lengths, label='Simulation', kde=True, 
+                  stat='density', bins=50, color='crimson', alpha=0.6)
         
         # Calculate statistics using vectorized operations
         label_mean = np.mean(label_lengths)
@@ -429,12 +427,12 @@ class DistribComparator:
         pred_std = np.std(pred_lengths)
         
         # Add statistics to the plot as annotations
-        label_stats = (f"Label Stats:\n"
+        label_stats = (f"Ground Truth Stats:\n"
                      f"Mean: {label_mean:.2f}\n"
                      f"Median: {label_median:.2f}\n"
                      f"Std Dev: {label_std:.2f}")
         
-        pred_stats = (f"Prediction Stats:\n"
+        pred_stats = (f"Simulation Stats:\n"
                     f"Mean: {pred_mean:.2f}\n"
                     f"Median: {pred_median:.2f}\n"
                     f"Std Dev: {pred_std:.2f}")
@@ -465,54 +463,11 @@ class DistribComparator:
         self._create_qq_plot(
             label_lengths, 
             pred_lengths, 
-            f'QQ Plot: Sequence Lengths (Label vs Prediction)',
+            'QQ Plot: Sequence Lengths (Ground Truth vs Simulation)',
             os.path.join(self.output_dir, "qq_sequence_lengths.png"),
             log_scale=False
         )
 
-    def run_evaluation(self) -> Dict[str, float]:
-        """
-        Run the full evaluation process: calculate metrics and generate comparison plots.
-        Uses Visualizer instances to get data for plotting.
-        Assumes SIMULATION mode.
-        
-        Returns:
-            Dict[str, float]: Dictionary containing averaged metrics.
-        """
-
-        logger.info("Generating comparison plots using data from Visualizers...")
-        try:
-            label_times = self.label_all_time_deltas
-            pred_times = self.pred_all_time_deltas
-            label_types = self.label_all_event_types
-            pred_types = self.pred_all_event_types
-            
-            # Convert sequence lengths to numpy array directly
-            label_lengths = np.array([len(seq) for seq in self.label_data["type_seqs"]])
-            pred_lengths = np.array([len(seq) for seq in self.pred_data["type_seqs"]])
-
-            self.plot_inter_event_time_distribution(label_times, pred_times)
-            self.plot_event_type_distribution(label_types, pred_types)
-            self.plot_sequence_length_distribution(label_lengths, pred_lengths)
-            self.plot_cross_correlation_moments(label_times, pred_times)
-        except AttributeError as e:
-            logger.error(f"Failed to access data from Visualizer instances. Ensure they initialized correctly. Error: {e}", exc_info=True)
-        except Exception as e:
-            logger.error(f"An unexpected error occurred during plot generation: {e}", exc_info=True)
-
-        # Return an empty dictionary as a placeholder
-        return {}
-
-    @property
-    def label_loader(self):
-        self.label_loader_setup.setup(stage='test')
-        return self.label_loader_setup.get_dataloader(split=self.label_split)
-    
-    @property
-    def pred_loader(self):
-        self.pred_loader_setup.setup(stage='test')
-        return self.pred_loader_setup.get_dataloader(split=self.pred_split)
-    
     @staticmethod
     def build_count_process(event_times: np.ndarray, time_grid: np.ndarray) -> np.ndarray:
         return np.searchsorted(event_times, time_grid, side='right')
@@ -539,21 +494,28 @@ class DistribComparator:
                 values.append(0.0)  # padding if nothing is computable
         return lags, np.array(values)
 
-
-    def plot_cross_correlation_moments(self, label_times: np.ndarray, pred_times: np.ndarray, filename: str = "comparison_cross_correlation_moments.png"):
+    def plot_cross_correlation_moments(self, filename: str = "comparison_cross_correlation_moments.png"):
         """
         Plots and saves the cross-correlation of counting process increments.
-        Accepts raw time arrays as input.
         """
         # Set the Seaborn style and context
         sns.set_theme(style="whitegrid")
         
+        # Create time grids for count processes
+        times_label = np.cumsum(self.label_time_deltas)
+        times_pred = np.cumsum(self.simulated_time_deltas)
+        
+        # Skip if empty arrays
+        if len(times_label) == 0 or len(times_pred) == 0:
+            logger.warning("One or both time arrays are empty. Skipping cross-correlation plot.")
+            return
+        
         dt = 0.1
-        T_max = max(np.max(label_times), np.max(pred_times)) + 1
+        T_max = max(np.max(times_label), np.max(times_pred)) + 1
         time_grid = np.arange(0, T_max, dt)
 
-        N_label = self.build_count_process(label_times, time_grid)
-        N_pred = self.build_count_process(pred_times, time_grid)
+        N_label = self.build_count_process(times_label, time_grid)
+        N_pred = self.build_count_process(times_pred, time_grid)
 
         h = r = int(2 / dt)  # corresponds to window size of 2 units
         max_lag = int(10 / dt)  # compute up to lag +/- 10 units
@@ -562,8 +524,8 @@ class DistribComparator:
         _, pred_corr = self.compute_cross_correlation(N_pred, h, r, max_lag)
 
         plt.figure(figsize=(10, 6))
-        plt.plot(lags * dt, label_corr, label=f'Label ({self.label_split})', linewidth=2, color='royalblue')
-        plt.plot(lags * dt, pred_corr, label=f'Prediction ({self.pred_split})', linewidth=2, linestyle='--', color='crimson')
+        plt.plot(lags * dt, label_corr, label='Ground Truth', linewidth=2, color='royalblue')
+        plt.plot(lags * dt, pred_corr, label='Simulation', linewidth=2, linestyle='--', color='crimson')
         plt.axvline(0, color='gray', linestyle=':', linewidth=1)
         
         plt.title('Cross-Correlation of Counting Process Increments', fontsize=14)
@@ -585,3 +547,32 @@ class DistribComparator:
         plt.savefig(filepath, dpi=300, bbox_inches='tight')
         plt.close()
         logger.info(f"Cross-correlation comparison plot saved to {filepath}")
+    
+    def run_evaluation(self) -> Dict[str, float]:
+        """
+        Run all evaluations and generate comparison plots between real and simulated data.
+        """
+        logger.info("Generating comparison plots for simulations...")
+        
+        try:
+            # Generate all comparison plots
+            self.plot_inter_event_time_distribution()
+            self.plot_event_type_distribution()
+            self.plot_sequence_length_distribution()
+            self.plot_cross_correlation_moments()
+            
+            # Calculate summary metrics
+            metrics = {
+                "label_mean_time_delta": float(np.mean(self.label_time_deltas)),
+                "simul_mean_time_delta": float(np.mean(self.simulated_time_deltas)),
+                "label_median_time_delta": float(np.median(self.label_time_deltas)),
+                "simul_median_time_delta": float(np.median(self.simulated_time_deltas)),
+                "label_mean_seq_length": float(np.mean(self.label_sequence_lengths)),
+                "simul_mean_seq_length": float(np.mean(self.simulated_sequence_lengths)),
+            }
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"An error occurred during plot generation: {str(e)}", exc_info=True)
+            return {}

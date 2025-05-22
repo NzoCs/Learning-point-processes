@@ -12,7 +12,7 @@ def main():
     parser.add_argument('--config_dir', type=str, required=False, default='./train_config.yaml',
                         help='Dir of configuration yaml to train and evaluate the model.')
 
-    parser.add_argument('--experiment_id', type=str, required=False, default='NHP_train',
+    parser.add_argument('--experiment_id', type=str, required=False, default='NHP',
                         help='Experiment id in the config file.')
     
     parser.add_argument('--dataset_id', type=str, required=False, default='test',
@@ -27,6 +27,9 @@ def main():
     plrunner.train()
     
     plrunner.test()
-    
+
+    plrunner.predict()
+
+
 if __name__ == '__main__' :
     main()

@@ -29,16 +29,8 @@ class EventSampler(nn.Module):
         self.over_sample_rate = over_sample_rate
         self.num_samples_boundary = num_samples_boundary
         self.dtime_max = dtime_max
-        self._device = device
-    
-    @property
-    def device(self):
-        return self._device
-    
-    @device.setter
-    def device(self, new_device):
-        self._device = new_device
-        
+        self.device = device
+
     def compute_intensity_upper_bound(self, time_seq, time_delta_seq, event_seq, intensity_fn,
                                       compute_last_step_only):
         
@@ -54,11 +46,6 @@ class EventSampler(nn.Module):
         Returns:
             tensor: [batch_size, seq_len]
         """
-        # Ensure all inputs are on the correct device
-        time_seq = time_seq.to(self.device)
-        time_delta_seq = time_delta_seq.to(self.device)
-        event_seq = event_seq.to(self.device)
-        
         batch_size, seq_len = time_seq.size()
 
         # [1, 1, num_samples_boundary]
@@ -93,8 +80,7 @@ class EventSampler(nn.Module):
         Returns:
             tensor: [batch_size, seq_len, num_exp], exp numbers at each event timestamp.
         """
-        # Ensure sample_rate is on the correct device
-        sample_rate = sample_rate.to(self.device)
+
         batch_size, seq_len = sample_rate.size()
 
         # For fast approximation, we reuse the rnd for all samples
@@ -104,7 +90,11 @@ class EventSampler(nn.Module):
                                   device=self.device)
 
         # [batch_size, seq_len, num_exp]
+        # exp_numbers.exponential_(1.0)
         exp_numbers.exponential_(1.0)
+
+        # [batch_size, seq_len, num_exp]
+        # exp_numbers = torch.tile(exp_numbers, [1, 1, self.num_sample, 1])
 
         # [batch_size, seq_len, num_exp]
         # div by sample_rate is equivalent to exp(sample_rate),
@@ -122,8 +112,6 @@ class EventSampler(nn.Module):
         Returns:
             tensor: [batch_size, seq_len, num_sample, num_exp]
         """
-        # Ensure intensity_upper_bound is on the correct device
-        intensity_upper_bound = intensity_upper_bound.to(self.device)
         batch_size, seq_len = intensity_upper_bound.size()
 
         unif_numbers = torch.empty(size=[batch_size, seq_len, self.num_sample, self.num_exp],
@@ -149,11 +137,6 @@ class EventSampler(nn.Module):
         Returns:
             result (tensor): [batch_size, seq_len, num_sample], sampled next-event times.
         """
-        # Ensure all inputs are on the correct device
-        unif_numbers = unif_numbers.to(self.device)
-        sample_rate = sample_rate.to(self.device)
-        total_intensities = total_intensities.to(self.device)
-        exp_numbers = exp_numbers.to(self.device)
 
         # [batch_size, max_len, num_sample, num_exp]
         criterion = unif_numbers * sample_rate[:, :, None, None] / total_intensities
@@ -172,9 +155,7 @@ class EventSampler(nn.Module):
         result_non_accepted_unfiltered = torch.gather(exp_numbers, 3, first_accepted_indexer.unsqueeze(3))
         
         # [batch_size, max_len, num_sample,1]
-        result = torch.where(non_accepted_filter.unsqueeze(3), 
-                            torch.tensor(self.dtime_max, device=self.device), 
-                            result_non_accepted_unfiltered)
+        result = torch.where(non_accepted_filter.unsqueeze(3), torch.tensor(self.dtime_max), result_non_accepted_unfiltered)
         
         # [batch_size, max_len, num_sample]
         result = result.squeeze(dim=-1)
@@ -196,12 +177,6 @@ class EventSampler(nn.Module):
         Returns:
             tuple: next event time prediction and weight.
         """
-        # Ensure all inputs are on the correct device
-        time_seq = time_seq.to(self.device)
-        time_delta_seq = time_delta_seq.to(self.device)
-        event_seq = event_seq.to(self.device)
-        dtime_boundary = dtime_boundary.to(self.device)
-        
         # 1. compute the upper bound of the intensity at each timestamp
         # the last event has no label (no next event), so we drop it
         # [batch_size, seq_len=max_len - 1]

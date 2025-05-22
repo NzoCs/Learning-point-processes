@@ -2,8 +2,7 @@ from easy_tpp.models import BaseModel
 from easy_tpp.preprocess import TPPDataModule
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.utils import logger
-from easy_tpp.simulate.simulator import Simulator
-from easy_tpp.config_factory import SimulatorConfig
+from easy_tpp.evaluate.new_comparator import NewDistribComparator
 
 import torch
 import pytorch_lightning as pl
@@ -93,6 +92,7 @@ class Trainer:
 
     @property
     def callbacks(self):
+
         checkpoint_callback = ModelCheckpoint(
             monitor='val_loss',
             dirpath=self.dirpath,
@@ -208,7 +208,6 @@ class Trainer:
                 ckpt_path=self.checkpoint_path
             )
         
-        
         # Save test results
         if results and len(results) > 0:
             import json
@@ -221,56 +220,38 @@ class Trainer:
             logger.info(f"Test results saved to {results_file}")
                 
         return results
+    
+    def predict(self) -> None:
+        """
+        Run predictions (e.g., simulations) using the model and save results.
+        """
+        logger.info(f"--- Starting Prediction for Model : {self.model_id} on dataset : {self.dataset_id} ---")
 
-    def simulate(self, simulator_config=None, **kwargs) -> None:
-        """
-        Run simulation using the trained model.
+        trainer = self.trainer
+        self.datamodule.setup(stage='predict')
+        predict_dataloader = self.datamodule.test_dataloader()  # ou un dataloader spécifique
+
+        predictions = trainer.predict(
+            model=self.model,
+            dataloaders=predict_dataloader,
+            ckpt_path=self.checkpoint_path
+        )
+
+        # save the predictions in the model parent directory
         
-        Args:
-            simulator_config (SimulatorConfig, optional): Configuration for simulation. 
-                If None, it will be created from kwargs.
-            **kwargs: Additional parameters to pass to SimulatorConfig if simulator_config is None.
-                Common options include:
-                - save_dir (str): Directory to save simulation results
-                - seed (int): Random seed for reproducibility
-                - max_size (int): Maximum number of events to generate
-                
-        Returns:
-            None: Results are saved to the specified directory.
-        """
-        logger.info(f"--- Starting Simulation using Model: {self.model_id} trained on dataset: {self.dataset_id} ---")
+        # Ensure the directory exists
+
+        output_dir = os.path.dirname(self.dirpath)
+        data_save_dir = os.path.join(output_dir, 'distributions_comparisons')
+        self.model.format_and_save_simulations(save_dir=data_save_dir)
+
+        NewDistribComparator(
+            label_data_loader = self.datamodule.test_dataloader(),
+            simulation = self.model.simulations,
+            num_event_types=self.datamodule.num_event_types,
+            output_dir=data_save_dir
+        )
+
+        logger.info(f"Predictions saved to {data_save_dir}")
         
-        # Ensure model is loaded from checkpoint if available
-        if self.checkpoint_path is not None:
-            logger.info(f"Loading model state from checkpoint: {self.checkpoint_path}")
-            # Load the checkpoint directly into the model
-            checkpoint = torch.load(self.checkpoint_path, map_location=self.model.device)
-            self.model.load_state_dict(checkpoint['state_dict'])
-            logger.info("Model loaded successfully from checkpoint.")
-        else:
-            logger.warning("No checkpoint found. Using the current model state.")
-            
-        # Prepare for simulation
-        self.model.eval()
-            
-        # Create simulator config if not provided
-        if simulator_config is None:
-            # Default save directory if not specified
-            save_dir = kwargs.get('save_dir', os.path.join(self.dirpath, 'simulations'))
-            os.makedirs(save_dir, exist_ok=True)
-            
-            # Create simulator config
-            simulator_config = SimulatorConfig(
-                pretrained_model=self.model,  # Pass the PyTorch Lightning model
-                history_data_module=self.datamodule,  # Pass the data module used for training
-                split='test',  # Default to test set for history data
-                save_dir=save_dir,
-                seed=kwargs.get('seed', 42),
-                max_size=kwargs.get('max_size', 10000)
-            )
-        
-        # Initialize and run the simulator
-        simulator = Simulator(simulator_config)
-        simulator.run()
-        
-        logger.info(f"Simulation completed. Results saved to {simulator_config.save_dir}")
+        return predictions

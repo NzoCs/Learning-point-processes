@@ -24,14 +24,10 @@ class THP(BaseModel):
         self.n_layers = model_config.specs.num_layers
         self.n_head = model_config.specs.num_heads
 
-        # Get the device from BaseModel
-        device = self.device
-        
-        self.layer_temporal_encoding = TimePositionalEncoding(self.d_model, device=device)
+        self.layer_temporal_encoding = TimePositionalEncoding(self.d_model, device=self.device)
 
-        # Initialize tensors directly on the correct device
-        self.factor_intensity_base = nn.Parameter(torch.empty([1, self.num_event_types], device=device))
-        self.factor_intensity_decay = nn.Parameter(torch.empty([1, self.num_event_types], device=device))
+        self.factor_intensity_base = nn.Parameter(torch.empty([1, self.num_event_types], device=self.device))
+        self.factor_intensity_decay = nn.Parameter(torch.empty([1, self.num_event_types], device=self.device))
         nn.init.xavier_normal_(self.factor_intensity_base)
         nn.init.xavier_normal_(self.factor_intensity_decay)
 
@@ -68,11 +64,6 @@ class THP(BaseModel):
         Returns:
             tensor: hidden states at event times.
         """
-        # Ensure inputs are on the correct device
-        time_seqs = time_seqs.to(self.device)
-        type_seqs = type_seqs.to(self.device)
-        attention_mask = attention_mask.to(self.device)
-        
         # [batch_size, seq_len, hidden_size]
         tem_enc = self.layer_temporal_encoding(time_seqs)
         enc_output = self.layer_type_emb(type_seqs)
@@ -96,13 +87,6 @@ class THP(BaseModel):
             tuple: loglike loss, num events.
         """
         time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = batch
-
-        # Ensure inputs are on the correct device
-        time_seqs = time_seqs.to(self.device)
-        time_delta_seqs = time_delta_seqs.to(self.device)
-        type_seqs = type_seqs.to(self.device)
-        batch_non_pad_mask = batch_non_pad_mask.to(self.device)
-        attention_mask = attention_mask.to(self.device)
 
         # 1. compute event-loglik
         # [batch_size, seq_len, hidden_size]
@@ -152,23 +136,15 @@ class THP(BaseModel):
         Returns:
             tensor: hidden state at each sampled time.
         """
-        # Ensure inputs are on the correct device
-        event_states = event_states.to(self.device)
-        sample_dtimes = sample_dtimes.to(self.device)
-        
         # [batch_size, seq_len, 1, hidden_size]
         event_states = event_states[:, :, None, :]
 
         # [batch_size, seq_len, num_samples, 1]
         sample_dtimes = sample_dtimes[..., None]
 
-        # Ensure parameters are on correct device
-        factor_intensity_decay = self.factor_intensity_decay.to(self.device)
-        factor_intensity_base = self.factor_intensity_base.to(self.device)
-        
         # [1, 1, 1, num_event_types]
-        factor_intensity_decay = factor_intensity_decay[None, None, ...]
-        factor_intensity_base = factor_intensity_base[None, None, ...]
+        factor_intensity_decay = self.factor_intensity_decay[None, None, ...]
+        factor_intensity_base = self.factor_intensity_base[None, None, ...]
 
         # update time decay based on Equation (6)
         # [batch_size, seq_len, num_samples, num_event_types]
@@ -194,11 +170,6 @@ class THP(BaseModel):
         Returns:
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
-        # Ensure all inputs are on the correct device
-        time_seqs = time_seqs.to(self.device)
-        time_delta_seqs = time_delta_seqs.to(self.device)
-        type_seqs = type_seqs.to(self.device)
-        sample_dtimes = sample_dtimes.to(self.device)
 
         attention_mask = kwargs.get('attention_mask', None)
         compute_last_step_only = kwargs.get('compute_last_step_only', False)
@@ -219,5 +190,4 @@ class THP(BaseModel):
         else:
             # [batch_size, seq_len, num_samples, num_event_types]
             lambdas = self.softplus(encoder_output)
-            
         return lambdas

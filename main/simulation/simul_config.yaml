@@ -92,7 +92,7 @@ data:
       pad_token_id: 1
       padding_side: left
 
-NHP_simul:
+NHP:
   split: test
 
   data_loading_specs:
@@ -110,18 +110,10 @@ NHP_simul:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+      num_sample: 1
     simulation_config:
       start_time: 100
       end_time: 200
-
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs
 
 RMTPP:
   split: test
@@ -141,18 +133,10 @@ RMTPP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+      num_sample: 1
     simulation_config:
       start_time: 100
       end_time: 200
-
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs
 
 AttNHP:
   split: test
@@ -173,18 +157,10 @@ AttNHP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+      num_sample: 1
     simulation_config:
       start_time: 30
       end_time: 50
-
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs
 
 SAHP:
   split: test
@@ -205,18 +181,10 @@ SAHP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+      num_sample: 1
     simulation_config:
       start_time: 100
       end_time: 200
-
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs
 
 THP:
   split: test
@@ -237,18 +205,10 @@ THP:
       num_exp: 500
       over_sample_rate: 1.5
       dtime_max: 5
+      num_sample: 1
     simulation_config:
       start_time: 100
       end_time: 200
-
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs
 
 FullyNN:
   split: test
@@ -268,18 +228,10 @@ FullyNN:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+      num_sample: 1
     simulation_config:
       start_time: 100
       end_time: 200
-      
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs
 
 IntensityFree:
   split: test
@@ -299,15 +251,7 @@ IntensityFree:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
+      num_sample: 1
     simulation_config:
       start_time: 100
       end_time: 200
-      
-  trainer_config:
-    stage: train
-    max_epochs: 400
-    val_freq: 10
-    accumulate_grad_batches: 1
-    logger_config:
-      type: tensorboard
-      name: logs

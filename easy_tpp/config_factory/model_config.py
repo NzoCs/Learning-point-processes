@@ -119,6 +119,8 @@ class SimulationConfig(Config):
         self.start_time = kwargs.get('start_time')
         self.end_time = kwargs.get('end_time')
         self.batch_size = kwargs.get('batch_size', 32)
+        self.max_sim_events = kwargs.get('max_sim_events', 10**5)
+        self.seed = kwargs.get('seed', 42)
 
     def get_yaml_config(self) -> dict:
         """Return the config in dict (yaml compatible) format.
@@ -389,7 +391,7 @@ class ModelConfig(Config):
         
         self.device = kwargs.get('device', 'cuda' if self.gpu >= 0 else 'cpu')
 
-        self.compute_simulation_metrics = kwargs.get('compute_simulation_metrics', False)
+        self.compute_simulation = kwargs.get('compute_simulation', False)
         
         self.thinning = ThinningConfig.parse_from_yaml_config(kwargs.get('thinning', {}))
         

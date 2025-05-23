@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 25, in main
+    plrunner = Trainer(config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 45, in __init__
+    self.model = BaseModel.generate_model_from_config(model_config=model_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 161, in generate_model_from_config
+    return subclass(model_config, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/sahp.py", line 23, in __init__
+    super(SAHP, self).__init__(model_config)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 55, in __init__
+    self.device = model_config.device
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 2029, in __setattr__
+    super().__setattr__(name, value)
+AttributeError: can't set attribute
+srun: error: ruche-gpu12: task 0: Exited with exit code 1

@@ -109,7 +109,7 @@ NHP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 200
+      num_sample: 60
     base_config:
       lr: 0.001
       lr_scheduler: True
@@ -144,7 +144,7 @@ RMTPP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 200
+      num_sample: 60
     base_config:
       lr: 0.001
       lr_scheduler: True
@@ -180,7 +180,7 @@ AttNHP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 200
+      num_sample: 60
     base_config:
       lr: 0.001
       lr_scheduler: True
@@ -219,7 +219,7 @@ SAHP:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 200
+      num_sample: 60
     simulation_config:
       start_time: 100
       end_time: 200
@@ -255,7 +255,7 @@ THP:
       num_exp: 500
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 200
+      num_sample: 60
     simulation_config:
       start_time: 100
       end_time: 200
@@ -290,7 +290,7 @@ FullyNN:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 200
+      num_sample: 60
     simulation_config:
       start_time: 100
       end_time: 200
@@ -322,42 +322,7 @@ IntensityFree:
       num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 200
-    base_config:
-      lr: 0.001
-      lr_scheduler: True
-    simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 100000
-      
-  trainer_config:
-    stage: train
-    max_epochs: 1000
-    val_freq: 10
-    accumulate_grad_batches: 1
-    patience: 20
-    logger_config:
-      type: tensorboard
-      name: logs
-
-
-ODETPP:
-
-  data_loading_specs:
-    batch_size: 256
-    num_workers: 4
-    
-  model_config:
-    model_id: ODETPP
-    specs:
-      hidden_size: 32
-      time_emb_size: 16
-      num_layers: 2
-    thinning:
-      num_exp: 500
-      over_sample_rate: 1.5
-      dtime_max: 5
+      num_sample: 60
     base_config:
       lr: 0.001
       lr_scheduler: True

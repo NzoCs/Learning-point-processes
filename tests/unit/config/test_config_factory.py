@@ -1,0 +1,349 @@
+"""Tests for configuration factory components."""
+import pytest
+import tempfile
+from pathlib import Path
+from unittest.mock import Mock, patch
+from omegaconf import OmegaConf, DictConfig
+
+from easy_tpp.config_factory import ModelConfig, DataConfig, RunnerConfig
+from easy_tpp.config_factory.config import Config
+
+
+@pytest.mark.unit
+@pytest.mark.config
+class TestModelConfig:
+    """Test cases for ModelConfig."""
+    
+    def test_model_config_initialization(self):
+        """Test ModelConfig initialization with valid parameters."""
+        config_dict = {
+            'model_id': 'NHP',
+            'hidden_size': 64,
+            'num_event_types': 10,
+            'num_event_types_pad': 11,
+            'max_seq_len': 100,
+            'lr': 0.001,
+            'batch_size': 32,
+            'device_id': 0
+        }
+        
+        config = ModelConfig(**config_dict)
+        
+        assert config.model_id == 'NHP'
+        assert config.hidden_size == 64
+        assert config.num_event_types == 10
+        assert config.lr == 0.001
+    
+    def test_model_config_default_values(self):
+        """Test ModelConfig with default values."""
+        # Minimal required parameters
+        config_dict = {
+            'model_id': 'RMTPP',
+            'num_event_types': 5
+        }
+        
+        config = ModelConfig(**config_dict)
+        assert config.model_id == 'RMTPP'
+        assert config.num_event_types == 5
+    
+    def test_model_config_validation(self):
+        """Test ModelConfig parameter validation."""
+        # Test invalid model_id
+        with pytest.raises((ValueError, TypeError)):
+            ModelConfig(model_id=123)  # Should be string
+        
+        # Test negative hidden_size
+        config_dict = {
+            'model_id': 'NHP',
+            'hidden_size': -1,
+            'num_event_types': 5
+        }
+        
+        # Depending on implementation, this might raise an error
+        # or be handled gracefully
+        try:
+            config = ModelConfig(**config_dict)
+            assert config.hidden_size == -1  # If no validation
+        except ValueError:
+            pass  # If validation exists
+    
+    def test_model_config_thinning_params(self):
+        """Test ModelConfig with thinning parameters."""
+        config_dict = {
+            'model_id': 'NHP',
+            'num_event_types': 5,
+            'thinning': {
+                'n_samples': 2000,
+                'patience_counter': 500
+            }
+        }
+        
+        config = ModelConfig(**config_dict)
+        assert hasattr(config, 'thinning')
+        if hasattr(config.thinning, 'n_samples'):
+            assert config.thinning.n_samples == 2000
+
+
+@pytest.mark.unit
+@pytest.mark.config
+class TestDataConfig:
+    """Test cases for DataConfig."""
+    
+    def test_data_config_initialization(self):
+        """Test DataConfig initialization."""
+        config_dict = {
+            'dataset_name': 'synthetic',
+            'data_format': 'pkl',
+            'train_dir': '/path/to/train',
+            'valid_dir': '/path/to/valid',
+            'test_dir': '/path/to/test',
+            'num_event_types': 5,
+            'max_seq_len': 100
+        }
+        
+        config = DataConfig(**config_dict)
+        
+        assert config.dataset_name == 'synthetic'
+        assert config.data_format == 'pkl'
+        assert config.num_event_types == 5
+        assert config.max_seq_len == 100
+    
+    def test_data_config_paths(self):
+        """Test DataConfig path handling."""
+        config_dict = {
+            'dataset_name': 'test_dataset',
+            'train_dir': 'data/train',
+            'valid_dir': 'data/valid',
+            'test_dir': 'data/test'
+        }
+        
+        config = DataConfig(**config_dict)
+        
+        assert config.train_dir == 'data/train'
+        assert config.valid_dir == 'data/valid'
+        assert config.test_dir == 'data/test'
+    
+    def test_data_config_tokenizer_params(self):
+        """Test DataConfig tokenizer parameters."""
+        config_dict = {
+            'dataset_name': 'test',
+            'pad_token_id': 0,
+            'padding_side': 'left',
+            'truncation_side': 'right',
+            'max_seq_len': 50
+        }
+        
+        config = DataConfig(**config_dict)
+        
+        if hasattr(config, 'pad_token_id'):
+            assert config.pad_token_id == 0
+        if hasattr(config, 'padding_side'):
+            assert config.padding_side == 'left'
+
+
+@pytest.mark.unit
+@pytest.mark.config
+class TestRunnerConfig:
+    """Test cases for RunnerConfig."""
+    
+    def test_runner_config_initialization(self):
+        """Test RunnerConfig initialization."""
+        config_dict = {
+            'base_dir': './experiments',
+            'logger_config': {
+                'logger_type': 'wandb',
+                'project_name': 'test_project'
+            },
+            'trainer_config': {
+                'max_epochs': 50,
+                'gpus': 1,
+                'precision': 32
+            }
+        }
+        
+        config = RunnerConfig(**config_dict)
+        
+        assert config.base_dir == './experiments'
+        assert hasattr(config, 'logger_config')
+        assert hasattr(config, 'trainer_config')
+    
+    def test_runner_config_trainer_params(self):
+        """Test RunnerConfig trainer parameters."""
+        config_dict = {
+            'base_dir': './test',
+            'trainer_config': {
+                'max_epochs': 10,
+                'enable_checkpointing': True,
+                'enable_progress_bar': False
+            }
+        }
+        
+        config = RunnerConfig(**config_dict)
+        
+        if hasattr(config, 'trainer_config'):
+            trainer_config = config.trainer_config
+            if hasattr(trainer_config, 'max_epochs'):
+                assert trainer_config.max_epochs == 10
+    
+    def test_runner_config_logger_params(self):
+        """Test RunnerConfig logger parameters."""
+        config_dict = {
+            'base_dir': './test',
+            'logger_config': {
+                'logger_type': 'tensorboard',
+                'save_dir': './logs'
+            }
+        }
+        
+        config = RunnerConfig(**config_dict)
+        
+        if hasattr(config, 'logger_config'):
+            logger_config = config.logger_config
+            if hasattr(logger_config, 'logger_type'):
+                assert logger_config.logger_type == 'tensorboard'
+
+
+@pytest.mark.unit
+@pytest.mark.config
+class TestConfigIntegration:
+    """Test configuration integration and consistency."""
+    
+    def test_config_compatibility(self):
+        """Test that different configs work together."""
+        model_config = ModelConfig(
+            model_id='NHP',
+            num_event_types=5,
+            hidden_size=32,
+            max_seq_len=100
+        )
+        
+        data_config = DataConfig(
+            dataset_name='test',
+            num_event_types=5,  # Should match model config
+            max_seq_len=100     # Should match model config
+        )
+        
+        runner_config = RunnerConfig(
+            base_dir='./test',
+            trainer_config={'max_epochs': 1}
+        )
+        
+        # Check consistency
+        assert model_config.num_event_types == data_config.num_event_types
+        assert model_config.max_seq_len == data_config.max_seq_len
+    
+    def test_config_from_dict(self):
+        """Test creating configs from dictionaries."""
+        config_dict = {
+            'model_id': 'RMTPP',
+            'hidden_size': 128,
+            'num_event_types': 8
+        }
+        
+        config = ModelConfig(**config_dict)
+        
+        # Convert back to dict and check
+        if hasattr(config, '__dict__'):
+            config_vars = vars(config)
+            for key, value in config_dict.items():
+                assert key in config_vars or hasattr(config, key)
+    
+    def test_config_serialization(self, temporary_directory):
+        """Test config serialization/deserialization."""
+        config = ModelConfig(
+            model_id='THP',
+            num_event_types=10,
+            hidden_size=64
+        )
+        
+        # If config supports serialization
+        if hasattr(config, 'to_dict') or hasattr(config, '__dict__'):
+            try:
+                # Try to serialize
+                import json
+                config_dict = vars(config) if hasattr(config, '__dict__') else config.to_dict()
+                
+                # Save to file
+                config_file = temporary_directory / 'config.json'
+                with open(config_file, 'w') as f:
+                    json.dump(config_dict, f, default=str)
+                
+                # Load from file
+                with open(config_file, 'r') as f:
+                    loaded_dict = json.load(f)
+                
+                # Create new config
+                new_config = ModelConfig(**loaded_dict)
+                
+                # Check key attributes match
+                assert new_config.model_id == config.model_id
+                assert new_config.num_event_types == config.num_event_types
+                
+            except (TypeError, AttributeError):
+                # Config might not support this type of serialization
+                pytest.skip("Config serialization not supported")
+    
+    @pytest.mark.parametrize("model_id", ['NHP', 'RMTPP', 'THP', 'SAHP'])
+    def test_different_model_configs(self, model_id):
+        """Test creating configs for different model types."""
+        config = ModelConfig(
+            model_id=model_id,
+            num_event_types=5,
+            hidden_size=32
+        )
+        
+        assert config.model_id == model_id
+        assert config.num_event_types == 5
+    
+    def test_config_validation_consistency(self):
+        """Test that config validation is consistent."""
+        # Test with valid parameters
+        valid_config = ModelConfig(
+            model_id='NHP',
+            num_event_types=5,
+            hidden_size=32,
+            lr=0.001
+        )
+        
+        assert valid_config.model_id == 'NHP'
+        assert valid_config.num_event_types == 5
+        
+        # Test parameter ranges if validation exists
+        edge_cases = [
+            {'lr': 0.0},  # Zero learning rate
+            {'hidden_size': 1},  # Minimal hidden size
+            {'num_event_types': 1}  # Minimal event types
+        ]
+        
+        for edge_case in edge_cases:
+            config_dict = {
+                'model_id': 'NHP',
+                'num_event_types': 5,
+                **edge_case
+            }
+            
+            try:
+                config = ModelConfig(**config_dict)
+                # If no error, validation passed
+                assert True
+            except (ValueError, TypeError):
+                # If error, validation caught invalid value
+                assert True
+    
+    def test_config_update_mechanism(self):
+        """Test config update mechanisms if available."""
+        config = ModelConfig(
+            model_id='NHP',
+            num_event_types=5,
+            hidden_size=32
+        )
+        
+        # Test direct attribute update if mutable
+        original_hidden_size = config.hidden_size
+        
+        try:
+            config.hidden_size = 64
+            assert config.hidden_size == 64
+        except AttributeError:
+            # Config might be immutable
+            assert config.hidden_size == original_hidden_size

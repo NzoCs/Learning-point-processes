@@ -29,19 +29,6 @@ idx=$SLURM_ARRAY_TASK_ID
 exp=${experiments[$idx]}
 data=${exp} # Ensures dataset is the same as the experiment
 
-# Définition du chemin du modèle pour la combinaison actuelle
-model_dir="./checkpoints/${exp}/trained_models/${data}"
 
-# Vérification de l'existence de best.ckpt et l'absence de test_results.json
-if [ -f "${model_dir}/best.ckpt" ] && [ ! -f "${model_dir}/test_results.json" ]; then
-    echo "Lancement du test pour ${exp} sur ${data}"
 # Lancement avec srun
 srun python test.py --experiment_id "${exp}" --dataset_id "${data}"
-else
-    if [ ! -f "${model_dir}/best.ckpt" ]; then
-        echo "Le fichier ${model_dir}/best.ckpt n'existe pas. Test ignoré pour ${exp} sur ${data}."
-    fi
-    if [ -f "${model_dir}/test_results.json" ]; then
-        echo "Le fichier ${model_dir}/test_results.json existe déjà. Test ignoré pour ${exp} sur ${data}."
-    fi
-fi

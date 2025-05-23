@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from easy_tpp.utils import logger
-from easy_tpp.preprocess import TPPDataLoader
+from easy_tpp.preprocess.data_loader import TPPDataModule
 
 class HistogramPredictor:
     """
@@ -10,15 +10,22 @@ class HistogramPredictor:
     et l’évaluation par échantillonnage à partir de ces histogrammes.
     """
     
-    def __init__(self, dataloader_setup : TPPDataLoader, split = 'test'):
-        
-        self.dataloader_setup = dataloader_setup
+    def __init__(self, data_module: TPPDataModule, split='test'):
+        self.data_module = data_module
         self.split = split
-        self.num_event_types = dataloader_setup.num_event_types
+        self.num_event_types = data_module.num_event_types
+        
+        # Setup the data module for the specified split
+        if split == 'test':
+            self.data_module.setup('test')
+        elif split in ['val', 'dev']:
+            self.data_module.setup('fit')  # This loads both train and val
+        elif split == 'train':
+            self.data_module.setup('fit')
 
     @property
     def loader(self):
-        return self.dataloader_setup.get_loader(split=self.split, num_event_types=self.num_event_types)
+        return self.data_module.get_dataloader(split=self.split)
     
     def create_histograms(self) -> tuple[tuple[np.ndarray, np.ndarray], tuple[np.ndarray, np.ndarray]]:
         """
@@ -97,7 +104,7 @@ class HistogramPredictor:
         all_sampled_marks = []
         all_sampled_times = []
         
-        for batch in self.test_loader:
+        for batch in self.loader:
             _, true_times, true_marks, _, _ = batch
             
             # Ignorer les batchs vides

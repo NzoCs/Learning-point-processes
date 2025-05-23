@@ -1,0 +1,25 @@
+Lancement de la simulation pour IntensityFree sur self_correcting
+[31;1m2025-05-15 16:25:54,117 - config.py[pid:21732;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class SimulatorConfig[0m
+[38;20m2025-05-15 16:25:55,995 - basemodel.py[pid:21732;line:91:__init__] - INFO: Successfully loaded pretrained model from: ../train/checkpoints/IntensityFree/self_correcting/trained_models/best.ckpt[0m
+[38;20m2025-05-15 16:25:55,996 - basemodel.py[pid:21732;line:118:to] - INFO: Model device updated to: cuda[0m
+[38;20m2025-05-15 16:25:56,114 - simulator.py[pid:21732;line:41:__init__] - INFO: Simulator initialized with model on device: cuda[0m
+INFO:datasets:PyTorch version 2.6.0 available.
+[38;20m2025-05-15 16:26:42,886 - simulator.py[pid:21732;line:69:run] - INFO: Starting generation of simulations on device: cuda[0m
+Generating simulations:   0%|          | 0/12 [00:00<?, ?batch/s]
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][AGenerating simulations:   0%|          | 0/12 [00:00<?, ?batch/s]
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 24, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/simulation/run_simulation.py", line 21, in main
+    simulator.run()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/simulate/simulator.py", line 84, in run
+    time_seq, time_delta_seq, event_seq, simul_mask = model.simulate(batch=batch_values)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 613, in simulate
+    accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 208, in draw_next_time_one_step
+    intensity_upper_bound = self.compute_intensity_upper_bound(time_seq,
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 83, in compute_intensity_upper_bound
+    bounds = intensities_for_bound.sum(dim=-1).max(dim=-1)[0] * self.over_sample_rate
+AttributeError: 'NoneType' object has no attribute 'sum'
+
+                                                               [Asrun: error: ruche-gpu16: task 0: Exited with exit code 1

@@ -1,0 +1,2 @@
+slurmstepd: error: execve(): python: No such file or directory
+srun: error: ruche-gpu18: task 0: Exited with exit code 2

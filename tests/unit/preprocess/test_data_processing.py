@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 from easy_tpp.preprocess.data_loader import DataLoader
 from easy_tpp.preprocess.dataset import TPPDataset
-from easy_tpp.preprocess.data_collator import Collator
+from easy_tpp.preprocess.data_collator import TPPDataCollator
 from easy_tpp.preprocess.event_tokenizer import EventTokenizer
 
 
@@ -133,7 +133,7 @@ class TestCollator:
     
     def test_collator_initialization(self):
         """Test collator initialization."""
-        collator = Collator(
+        collator = TPPDataCollator(
             pad_token_id=0,
             max_seq_len=100
         )
@@ -143,7 +143,7 @@ class TestCollator:
     
     def test_collator_batch_creation(self, sample_event_sequences):
         """Test batch creation from sequences."""
-        collator = Collator(pad_token_id=0, max_seq_len=20)
+        collator = TPPDataCollator(pad_token_id=0, max_seq_len=20)
         
         # Convert sequences to expected format
         batch_items = []
@@ -165,7 +165,7 @@ class TestCollator:
     
     def test_collator_padding_consistency(self):
         """Test padding consistency across batch."""
-        collator = Collator(pad_token_id=0, max_seq_len=10)
+        collator = TPPDataCollator(pad_token_id=0, max_seq_len=10)
         
         # Create items with different lengths
         items = [
@@ -187,7 +187,7 @@ class TestCollator:
     
     def test_collator_attention_mask(self):
         """Test attention mask creation."""
-        collator = Collator(pad_token_id=0, max_seq_len=10)
+        collator = TPPDataCollator(pad_token_id=0, max_seq_len=10)
         
         items = [
             {
@@ -448,7 +448,7 @@ class TestDataPipelineIntegration:
             dataset = TPPDataset(str(temporary_directory), 'sequences.pkl')
             
             # Create collator
-            collator = Collator(pad_token_id=0, max_seq_len=20)
+            collator = TPPDataCollator(pad_token_id=0, max_seq_len=20)
             
             # Create dataloader
             from torch.utils.data import DataLoader as TorchDataLoader

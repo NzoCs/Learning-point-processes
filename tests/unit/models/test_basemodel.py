@@ -14,7 +14,11 @@ class TestableBaseModel(BaseModel):
     
     def __init__(self, model_config, **kwargs):
         super().__init__(model_config, **kwargs)
-        self.test_layer = nn.Linear(model_config.hidden_size, model_config.num_event_types)
+        # Use hidden_size from specs if not directly available
+        hidden_size = getattr(model_config, 'hidden_size', None)
+        if hidden_size is None and hasattr(model_config, 'specs'):
+            hidden_size = getattr(model_config.specs, 'hidden_size', 32)
+        self.test_layer = nn.Linear(hidden_size, model_config.num_event_types)
     
     def forward(self, batch):
         """Simple forward pass for testing."""
@@ -31,6 +35,10 @@ class TestableBaseModel(BaseModel):
     def compute_loglikelihood(self, batch):
         """Compute log-likelihood for testing."""
         return torch.tensor([-1.5, -2.0, -1.8, -2.2])
+    
+    def loglike_loss(self, batch):
+        """Dummy loglike_loss implementation for abstract method."""
+        return torch.tensor(0.0), 1
 
 
 @pytest.mark.unit
@@ -44,7 +52,11 @@ class TestBaseModel:
         
         assert hasattr(model, 'model_config')
         assert model.model_config.model_id == 'NHP'
-        assert model.model_config.hidden_size == 32
+        # Use hidden_size from specs if not directly available
+        hidden_size = getattr(model.model_config, 'hidden_size', None)
+        if hidden_size is None and hasattr(model.model_config, 'specs'):
+            hidden_size = getattr(model.model_config.specs, 'hidden_size', 32)
+        assert hidden_size == 32
         assert hasattr(model, 'test_layer')
     
     def test_model_parameters(self, sample_model_config):

@@ -52,6 +52,8 @@ class BaseModel(pl.LightningModule, ABC):
         
         self.eps = torch.finfo(torch.float32).eps
 
+        self.device = model_config.device
+
         # Initialize type embedding
         self.layer_type_emb = nn.Embedding(
             num_embeddings = self.num_event_types_pad,  # have padding

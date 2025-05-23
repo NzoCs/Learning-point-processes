@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from easy_tpp.utils import logger
+from ..utils.device_utils import ensure_same_device
 
 
 class EventSampler(nn.Module):
@@ -121,6 +122,67 @@ class EventSampler(nn.Module):
 
         return unif_numbers
 
+    def draw_next_time_one_step(self, time_seq, type_seq, attention_mask, intensity_fn, t_max, t_min=None):
+        """Compute next event time based on Thinning algorithm.
+
+        Args:
+            time_seq (tensor): [batch_size, seq_len], timestamp seqs.
+            type_seq (tensor): [batch_size, seq_len], event type seqs.
+            attention_mask (tensor): [batch_size, seq_len], mask to avoid using padding idx.
+            intensity_fn (fn): a function to compute the intensity.
+            t_max (float): max value for sampling.
+            t_min (float, optional): min value for sampling. Defaults to None.
+
+        Returns:
+            tuple: next event time prediction and weight.
+        """
+        device = time_seq.device
+        
+        # Ensure t_min and t_max are on the correct device
+        if isinstance(t_min, (int, float)):
+            t_min = torch.tensor(t_min, device=device)
+        if isinstance(t_max, (int, float)):
+            t_max = torch.tensor(t_max, device=device)
+
+        # Compute upper bound
+        intensity_upper_bound = self.compute_intensity_upper_bound(time_seq,
+                                                                  type_seq,
+                                                                  attention_mask,
+                                                                  intensity_fn)
+
+        # Sample from exp distribution
+        exp_numbers = self.sample_exp_distribution(intensity_upper_bound)
+        exp_numbers = torch.cumsum(exp_numbers, dim=-1)
+        
+        # Compute intensity at sampled times from exp distribution
+        intensities_at_sampled_times = intensity_fn(time_seq,
+                                                    type_seq,
+                                                    attention_mask,
+                                                    exp_numbers)
+
+        total_intensities = intensities_at_sampled_times.sum(dim=-1)
+
+        # add one dim of num_sample: re-use the intensity for samples for prediction
+        total_intensities = torch.tile(total_intensities[:, :, None, :], [1, 1, self.num_sample, 1])
+        
+        exp_numbers = torch.tile(exp_numbers[:, :, None, :], [1, 1, self.num_sample, 1])
+        
+        # Sample from uniform distribution
+        unif_numbers = self.sample_uniform_distribution(intensity_upper_bound)
+        
+        # Ensure all tensors are on the same device
+        unif_numbers, intensity_upper_bound, total_intensities, exp_numbers = ensure_same_device(
+            unif_numbers, intensity_upper_bound, total_intensities, exp_numbers, target_device=device
+        )
+        
+        # Sample acceptance
+        res = self.sample_accept(unif_numbers, intensity_upper_bound, total_intensities, exp_numbers)
+
+        weights = torch.ones_like(res)/res.shape[2]
+        
+        # add a upper bound here in case it explodes, e.g., in ODE models
+        return res.clamp(max=1e5), weights
+
     def sample_accept(self, unif_numbers, sample_rate, total_intensities, exp_numbers):
         """Do the sample-accept process.
 
@@ -138,11 +200,18 @@ class EventSampler(nn.Module):
             result (tensor): [batch_size, seq_len, num_sample], sampled next-event times.
         """
 
-        # [batch_size, max_len, num_sample, num_exp]
+        device = unif_numbers.device
+        
+        # Ensure all tensors are on the same device
+        unif_numbers, sample_rate, total_intensities = ensure_same_device(
+            unif_numbers, sample_rate, total_intensities, target_device=device
+        )
+        
+        # Calculate criterion
         criterion = unif_numbers * sample_rate[:, :, None, None] / total_intensities
         
-        # [batch_size, max_len, num_sample, num_exp]
-        masked_crit_less_than_1 = torch.where(criterion<1,1,0)
+        # Apply masking
+        masked_crit_less_than_1 = torch.where(criterion < 1, 1, 0)
         
         # [batch_size, max_len, num_sample]
         non_accepted_filter = (1-masked_crit_less_than_1).all(dim=3)
@@ -161,65 +230,3 @@ class EventSampler(nn.Module):
         result = result.squeeze(dim=-1)
         
         return result
-
-    def draw_next_time_one_step(self, time_seq, time_delta_seq, event_seq, dtime_boundary,
-                                intensity_fn, compute_last_step_only=False):
-        """Compute next event time based on Thinning algorithm.
-
-        Args:
-            time_seq (tensor): [batch_size, seq_len], timestamp seqs.
-            time_delta_seq (tensor): [batch_size, seq_len], time delta seqs.
-            event_seq (tensor): [batch_size, seq_len], event type seqs.
-            dtime_boundary (tensor): [batch_size, seq_len], dtime upper bound.
-            intensity_fn (fn): a function to compute the intensity.
-            compute_last_step_only (bool, optional): whether to compute last event timestep only. Defaults to False.
-
-        Returns:
-            tuple: next event time prediction and weight.
-        """
-        # 1. compute the upper bound of the intensity at each timestamp
-        # the last event has no label (no next event), so we drop it
-        # [batch_size, seq_len=max_len - 1]
-        intensity_upper_bound = self.compute_intensity_upper_bound(time_seq,
-                                                                   time_delta_seq,
-                                                                   event_seq,
-                                                                   intensity_fn,
-                                                                   compute_last_step_only)
-
-        # 2. draw exp distribution with intensity = intensity_upper_bound
-        # we apply fast approximation, i.e., re-use exp sample times for computation
-        # [batch_size, seq_len, num_exp]
-        exp_numbers = self.sample_exp_distribution(intensity_upper_bound)
-        exp_numbers = torch.cumsum(exp_numbers, dim=-1)
-        
-        # 3. compute intensity at sampled times from exp distribution
-        # [batch_size, seq_len, num_exp, event_num]
-        intensities_at_sampled_times = intensity_fn(time_seq,
-                                                    time_delta_seq,
-                                                    event_seq,
-                                                    exp_numbers,
-                                                    compute_last_step_only=compute_last_step_only)
-
-        # [batch_size, seq_len, num_exp]
-        total_intensities = intensities_at_sampled_times.sum(dim=-1)
-
-        # add one dim of num_sample: re-use the intensity for samples for prediction
-        # [batch_size, seq_len, num_sample, num_exp]
-        total_intensities = torch.tile(total_intensities[:, :, None, :], [1, 1, self.num_sample, 1])
-        
-        # [batch_size, seq_len, num_sample, num_exp]
-        exp_numbers = torch.tile(exp_numbers[:, :, None, :], [1, 1, self.num_sample, 1])
-        
-        # 4. draw uniform distribution
-        # [batch_size, seq_len, num_sample, num_exp]
-        unif_numbers = self.sample_uniform_distribution(intensity_upper_bound)
-
-        # 5. find out accepted intensities
-        # [batch_size, seq_len, num_sample]
-        res = self.sample_accept(unif_numbers, intensity_upper_bound, total_intensities, exp_numbers)
-
-        # [batch_size, seq_len, num_sample]
-        weights = torch.ones_like(res)/res.shape[2]
-        
-        # add a upper bound here in case it explodes, e.g., in ODE models
-        return res.clamp(max=1e5), weights

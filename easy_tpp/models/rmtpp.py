@@ -17,10 +17,11 @@ class RMTPP(BaseModel):
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
         super(RMTPP, self).__init__(model_config)
+        # self.hidden_size is now set in BaseModel's __init__ via model_config.hidden_size
 
         self.layer_temporal_emb = nn.Linear(1, self.hidden_size)
         self.layer_rnn = nn.RNN(input_size=self.hidden_size, hidden_size=self.hidden_size,
-                                num_layers=1, nonlinearity='relu', batch_first=True) 
+                                num_layers=1, nonlinearity='relu', batch_first=True)
 
         self.hidden_to_intensity_logits = nn.Linear(self.hidden_size, self.num_event_types)
         self.b_t = nn.Parameter(torch.zeros(1, self.num_event_types))
@@ -53,10 +54,23 @@ class RMTPP(BaseModel):
             We need the right limit of t_N to sample continuation.
         """
 
-        t_BN, dt_BN, marks_BN, _, _ = batch
+        if isinstance(batch, dict):
+            t_BN = batch['time_seqs']
+            # Use time_seqs as time_delta_seqs if not explicitly provided, common in some test setups
+            dt_BN = batch.get('time_delta_seqs') 
+            marks_BN = batch['type_seqs']
+            # Other elements like attention_mask, batch_non_pad_mask, type_mask can be accessed if needed
+        elif isinstance(batch, (tuple, list)) and len(batch) >= 3:
+            t_BN, dt_BN, marks_BN = batch[0], batch[1], batch[2]
+            # Assuming the first three elements are time_seqs, time_delta_seqs, type_seqs
+            # This might need adjustment if the tuple structure is different
+        else:
+            raise ValueError(f"Unexpected batch type or structure in RMTPP forward: {type(batch)}, len: {len(batch) if hasattr(batch, '__len__') else 'N/A'}")
+
         mark_emb_BNH = self.layer_type_emb(marks_BN)
         time_emb_BNH = self.layer_temporal_emb(t_BN[..., None])
-        right_hiddens_BNH, _ = self.layer_rnn(mark_emb_BNH + time_emb_BNH)
+        rnn_input = mark_emb_BNH + time_emb_BNH
+        right_hiddens_BNH, _ = self.layer_rnn(rnn_input)
         left_intensity_B_Nm1_G_M = self.evolve_and_get_intentsity(right_hiddens_BNH[:, :-1, :], dt_BN[:, 1:][...,None])
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
@@ -70,12 +84,23 @@ class RMTPP(BaseModel):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        ts_BN, dts_BN, marks_BN, batch_non_pad_mask, _ = batch
+        if isinstance(batch, dict):
+            ts_BN = batch['time_seqs']
+            dts_BN = batch.get('time_delta_seqs', ts_BN)
+            marks_BN = batch['type_seqs']
+            batch_non_pad_mask = batch['batch_non_pad_mask']
+            # type_mask = batch.get('type_mask') # Optional
+        elif isinstance(batch, (tuple, list)) and len(batch) >=4:
+            ts_BN, dts_BN, marks_BN, batch_non_pad_mask = batch[0], batch[1], batch[2], batch[3]
+            if dts_BN is None: # Handle cases where dt_BN might be None
+                dts_BN = ts_BN
+            # type_mask = batch[4] if len(batch) > 4 else None # Optional
+        else:
+            raise ValueError(f"Unexpected batch type or structure in RMTPP loglike_loss: {type(batch)}")
 
-        # compute left intensity and hidden states at event time
-        # left limits of intensity at [t_1, ..., t_N]
-        # right limits of hidden states at [t_0, ..., t_{N-1}, t_N]
-        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward((ts_BN, dts_BN, marks_BN, None, None))
+        # Pass a tuple to self.forward, as it expects
+        forward_batch = (ts_BN, dts_BN, marks_BN, batch_non_pad_mask, None) # Pass None for the 5th element if not used by forward
+        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward(forward_batch)
         right_hiddens_B_Nm1_H = right_hiddens_BNH[..., :-1, :]  # discard right limit at t_N for logL
 
         dts_sample_B_Nm1_G = self.make_dtime_loss_samples(dts_BN[:, 1:])

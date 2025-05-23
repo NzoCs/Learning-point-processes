@@ -48,8 +48,12 @@ def sample_model_config():
         'batch_size': 16,
         'device_id': -1,  # CPU by default
         'thinning': {
-            'n_samples': 1000,
-            'patience_counter': 200
+            'num_sample': 1000,
+            'num_exp': 200,
+            'num_steps': 10,
+            'over_sample_rate': 1.5,
+            'num_samples_boundary': 5,
+            'dtime_max': 5.0
         }
     }
     return ModelConfig(**config_dict)
@@ -101,26 +105,23 @@ def sample_batch_data():
     
     # Time intervals (dt)
     time_seqs = torch.rand(batch_size, max_seq_len) * 2.0
-    
     # Event types
     type_seqs = torch.randint(1, num_event_types + 1, (batch_size, max_seq_len))
-    
     # Sequence lengths
     seq_lens = torch.randint(5, max_seq_len + 1, (batch_size,))
-    
     # Attention mask
     attention_mask = torch.zeros(batch_size, max_seq_len, dtype=torch.bool)
     for i, length in enumerate(seq_lens):
         attention_mask[i, :length] = True
-    
-    return {
-        'time_seqs': time_seqs,
-        'type_seqs': type_seqs,
-        'seq_lens': seq_lens,
-        'attention_mask': attention_mask,
-        'batch_non_pad_mask': attention_mask,
-        'type_mask': attention_mask
-    }
+
+    # Return as tuple for model compatibility
+    return (
+        time_seqs,         # t_BN
+        time_seqs,         # dt_BN (for test, use same as t_BN)
+        type_seqs,         # marks_BN
+        attention_mask,    # batch_non_pad_mask
+        None               # placeholder for fifth element
+    )
 
 
 @pytest.fixture

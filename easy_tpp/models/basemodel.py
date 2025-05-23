@@ -15,6 +15,7 @@ from easy_tpp.models.thinning import EventSampler
 from easy_tpp.config_factory import ModelConfig
 from easy_tpp.evaluate import MetricsCompute, EvaluationMode
 from easy_tpp.utils import logger, format_multivariate_simulations, save_json
+from ..utils.device_utils import ensure_same_device
 
 class BaseModel(pl.LightningModule, ABC):
     
@@ -463,13 +464,23 @@ class BaseModel(pl.LightningModule, ABC):
         """
         
         batch = batch.values()
+        time_seq, time_delta_seq, type_seq, batch_non_pad_mask, attention_mask = batch
 
+        device = self.device
+        
+        # Ensure all inputs are on the same device
+        time_seq, type_seq, attention_mask = ensure_same_device(
+            time_seq, type_seq, attention_mask, time_delta_seq, batch_non_pad_mask, target_device=device
+        )
+        
+        # Run simulation
+        simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
+            batch=batch,
+        )
+    
         if self.sim_events_counter >= self.max_simul_events:
             return self.simulations
         
-        simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
-                batch = batch
-            )
         batch_size = simul_time_seq.size(0)
 
         for i in range(batch_size):

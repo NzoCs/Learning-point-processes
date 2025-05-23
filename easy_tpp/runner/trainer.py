@@ -3,8 +3,10 @@ from easy_tpp.preprocess import TPPDataModule
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.utils import logger
 from easy_tpp.evaluate.new_comparator import NewDistribComparator
+from ..utils.model_utils import flexible_state_dict_loading, compare_model_configs
 
 import torch
+from typing import Optional, List
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.strategies import DDPStrategy
@@ -13,7 +15,7 @@ import os
 
 class Trainer:
     
-    def __init__(self, config: RunnerConfig, checkpoint_path : str = "best", output_dir=None, **kwargs):
+    def __init__(self, config: RunnerConfig, checkpoint_path : Optional[str] = None, output_dir=None, **kwargs):
         
         """_summary__.
         Args:
@@ -64,16 +66,33 @@ class Trainer:
             self.dirpath = output_dir
         else:
             self.dirpath = trainer_config.save_model_dir
-        
-        checkpoint_path = checkpoint_path + ".ckpt"
 
-        # Store checkpoint path for resuming training
-        self.checkpoint_path_ = os.path.join(self.dirpath, checkpoint_path) 
+        if checkpoint_path is None:
+            # Liste des checkpoints à tester, par ordre de priorité
+            possible_checkpoints = [os.path.join(self.dirpath, f"best-v{10-i}.ckpt") for i in range(10)] + [  # Celui donné en argument
+                os.path.join(self.dirpath, "best.ckpt"),
+                os.path.join(self.dirpath, "last.ckpt"),
+            ] 
 
-        if os.path.exists(self.checkpoint_path_) :
+            # Trouve le premier fichier existant dans la liste
+            self.checkpoint_path_ = None
+            for path in possible_checkpoints:
+                if os.path.exists(path):
+                    self.checkpoint_path_ = path
+                    logger.info(f"Checkpoint found: loading from {path}")
+                    break
+
+        elif isinstance(checkpoint_path, str):
+            checkpoint_path = checkpoint_path + ".ckpt"
+            # Store checkpoint path for resuming training
+            self.checkpoint_path_ = os.path.join(self.dirpath, checkpoint_path) 
+        else:
+            raise ValueError("Checkpoint path must be a string or None.")
+
+        if self.checkpoint_path_ and os.path.exists(self.checkpoint_path_):
             logger.info(f"Loading model from checkpoint: {self.checkpoint_path}.")
         else:
-            logger.info(f"Checkpoint not found at {self.checkpoint_path}. Starting from scratch.")
+            logger.info("No valid checkpoint found. Starting from scratch.")
         
         self.dataset_id = data_config.dataset_id
 
@@ -95,8 +114,8 @@ class Trainer:
 
         checkpoint_callback = ModelCheckpoint(
             monitor='val_loss',
-            dirpath=self.dirpath,
-            filename='best',
+            dirpath = self.dirpath,
+            filename = "best",
             save_top_k=1,
             mode='min',
             every_n_epochs=self.checkpoints_freq,

@@ -95,6 +95,7 @@ class NHP(BaseModel):
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
         super(NHP, self).__init__(model_config, **kwargs)
+        self.model_config = model_config  # Store for test compatibility
         self.beta = kwargs.get('beta', 1.0)
         self.bias = kwargs.get('bias', True)
         self.rnn_cell = ContTimeLSTMCell(self.hidden_size)

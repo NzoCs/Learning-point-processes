@@ -1,4 +1,5 @@
-# Coverage configuration
+# Coverage configuration - INI format
+# editorconfig: language=ini
 [run]
 source = easy_tpp
 omit = 
@@ -21,7 +22,7 @@ exclude_lines =
     raise AssertionError
     raise NotImplementedError
     if 0:
-    if __name__ == .__main__.:
+    if __name__ == "__main__":
     class .*\bProtocol\):
     @(abc\.)?abstractmethod
 

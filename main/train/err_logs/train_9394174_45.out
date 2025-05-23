@@ -1,21 +1,0 @@
-[31;1m2025-05-23 17:40:34,749 - config.py[pid:4887;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:40:35,184 - trainer.py[pid:4887;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:40:35,461 - trainer.py[pid:4887;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/SAHP/taxi/trained_models/best.ckpt.[0m
-[38;20m2025-05-23 17:40:35,568 - trainer.py[pid:4887;line:198:test] - INFO: --- Starting Testing for Model : SAHP on dataset : taxi ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/7 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/7 [00:00<?, ?it/s]Testing DataLoader 0:  14%|█▍        | 1/7 [00:01<00:11,  0.54it/s]Testing DataLoader 0:  29%|██▊       | 2/7 [00:01<00:04,  1.05it/s]Testing DataLoader 0:  43%|████▎     | 3/7 [00:01<00:02,  1.55it/s]Testing DataLoader 0:  57%|█████▋    | 4/7 [00:01<00:01,  2.05it/s]Testing DataLoader 0:  71%|███████▏  | 5/7 [00:01<00:00,  2.52it/s]Testing DataLoader 0:  86%|████████▌ | 6/7 [00:02<00:00,  2.99it/s]Testing DataLoader 0: 100%|██████████| 7/7 [00:02<00:00,  3.44it/s]Testing DataLoader 0: 100%|██████████| 7/7 [00:02<00:00,  3.43it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│       cross_entropy       │    1.5567737817764282     │
-│       macro_f1score       │     35.3426513671875      │
-│       micro_f1score       │      90.437744140625      │
-│         precision         │     40.79108428955078     │
-│          recall           │     34.33674621582031     │
-│         test_loss         │    -0.2938106656074524    │
-│         time_mae          │    0.22052082419395447    │
-│         time_rmse         │    0.3967425227165222     │
-│       type_accuracy       │      90.437744140625      │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-05-23 17:41:12,314 - trainer.py[pid:4887;line:220:test] - INFO: Test results saved to ./checkpoints/SAHP/taxi/trained_models/test_results.json[0m
-[38;20m2025-05-23 17:41:12,315 - trainer.py[pid:4887;line:228:predict] - INFO: --- Starting Prediction for Model : SAHP on dataset : taxi ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/7 [00:00<?, ?it/s]

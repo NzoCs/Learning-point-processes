@@ -1,21 +1,0 @@
-[31;1m2025-05-23 17:00:28,210 - config.py[pid:22194;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:00:28,573 - trainer.py[pid:22194;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:00:28,590 - trainer.py[pid:22194;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/NHP/taxi/trained_models/best.ckpt.[0m
-[38;20m2025-05-23 17:00:29,683 - trainer.py[pid:22194;line:198:test] - INFO: --- Starting Testing for Model : NHP on dataset : taxi ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/4 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/4 [00:00<?, ?it/s]Testing DataLoader 0:  25%|██▌       | 1/4 [00:02<00:08,  0.35it/s]Testing DataLoader 0:  50%|█████     | 2/4 [00:02<00:02,  0.68it/s]Testing DataLoader 0:  75%|███████▌  | 3/4 [00:03<00:01,  0.99it/s]Testing DataLoader 0: 100%|██████████| 4/4 [00:03<00:00,  1.28it/s]Testing DataLoader 0: 100%|██████████| 4/4 [00:03<00:00,  1.28it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│       cross_entropy       │    1.5979080200195312     │
-│       macro_f1score       │    38.875728607177734     │
-│       micro_f1score       │     86.32433319091797     │
-│         precision         │     45.74775314331055     │
-│          recall           │     37.4041862487793      │
-│         test_loss         │    -0.5755797028541565    │
-│         time_mae          │    0.3233407735824585     │
-│         time_rmse         │    0.9035055637359619     │
-│       type_accuracy       │     86.32433319091797     │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-05-23 17:01:10,721 - trainer.py[pid:22194;line:220:test] - INFO: Test results saved to ./checkpoints/NHP/taxi/trained_models/test_results.json[0m
-[38;20m2025-05-23 17:01:10,721 - trainer.py[pid:22194;line:228:predict] - INFO: --- Starting Prediction for Model : NHP on dataset : taxi ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/4 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/4 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/4 [00:02<?, ?it/s]

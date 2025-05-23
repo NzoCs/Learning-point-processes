@@ -1,5 +1,0 @@
-[31;1m2025-05-23 17:18:01,433 - config.py[pid:24802;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:18:01,946 - trainer.py[pid:24802;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:18:01,949 - trainer.py[pid:24802;line:76:__init__] - INFO: Checkpoint not found at None. Starting from scratch.[0m
-[38;20m2025-05-23 17:18:02,335 - trainer.py[pid:24802;line:198:test] - INFO: --- Starting Testing for Model : IntensityFree on dataset : hawkes2 ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/12 [00:04<?, ?it/s]

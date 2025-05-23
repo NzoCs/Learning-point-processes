@@ -1,15 +1,0 @@
-[31;1m2025-05-23 17:13:34,414 - config.py[pid:16419;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:13:35,411 - trainer.py[pid:16419;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:13:35,428 - trainer.py[pid:16419;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/IntensityFree/hawkes1/trained_models/best.ckpt.[0m
-[38;20m2025-05-23 17:13:35,571 - trainer.py[pid:16419;line:198:test] - INFO: --- Starting Testing for Model : IntensityFree on dataset : hawkes1 ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   8%|▊         | 1/12 [00:03<00:43,  0.25it/s]Testing DataLoader 0:  17%|█▋        | 2/12 [00:04<00:20,  0.50it/s]Testing DataLoader 0:  25%|██▌       | 3/12 [00:04<00:12,  0.74it/s]Testing DataLoader 0:  33%|███▎      | 4/12 [00:04<00:08,  0.99it/s]Testing DataLoader 0:  42%|████▏     | 5/12 [00:04<00:05,  1.23it/s]Testing DataLoader 0:  50%|█████     | 6/12 [00:04<00:04,  1.47it/s]Testing DataLoader 0:  58%|█████▊    | 7/12 [00:04<00:02,  1.71it/s]Testing DataLoader 0:  67%|██████▋   | 8/12 [00:04<00:02,  1.94it/s]Testing DataLoader 0:  75%|███████▌  | 9/12 [00:04<00:01,  2.17it/s]Testing DataLoader 0:  83%|████████▎ | 10/12 [00:04<00:00,  2.41it/s]Testing DataLoader 0:  92%|█████████▏| 11/12 [00:04<00:00,  2.63it/s]Testing DataLoader 0: 100%|██████████| 12/12 [00:04<00:00,  2.87it/s]Testing DataLoader 0: 100%|██████████| 12/12 [00:04<00:00,  2.86it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│         test_loss         │    0.47341060638427734    │
-│         time_mae          │    1.2228082418441772     │
-│         time_rmse         │    2.4130349159240723     │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-05-23 17:14:16,553 - trainer.py[pid:16419;line:220:test] - INFO: Test results saved to ./checkpoints/IntensityFree/hawkes1/trained_models/test_results.json[0m
-[38;20m2025-05-23 17:14:16,554 - trainer.py[pid:16419;line:228:predict] - INFO: --- Starting Prediction for Model : IntensityFree on dataset : hawkes1 ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]

@@ -1,21 +1,0 @@
-[31;1m2025-05-23 17:21:25,897 - config.py[pid:11577;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:21:26,947 - trainer.py[pid:11577;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:21:26,986 - trainer.py[pid:11577;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/IntensityFree/taxi/trained_models/best.ckpt.[0m
-[38;20m2025-05-23 17:21:27,036 - trainer.py[pid:11577;line:198:test] - INFO: --- Starting Testing for Model : IntensityFree on dataset : taxi ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/2 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Testing DataLoader 0:  50%|█████     | 1/2 [00:04<00:04,  0.25it/s]Testing DataLoader 0: 100%|██████████| 2/2 [00:04<00:00,  0.50it/s]Testing DataLoader 0: 100%|██████████| 2/2 [00:04<00:00,  0.50it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│       cross_entropy       │    1.5473941564559937     │
-│       macro_f1score       │     35.17548751831055     │
-│       micro_f1score       │      91.375732421875      │
-│         precision         │    44.955604553222656     │
-│          recall           │    32.689266204833984     │
-│         test_loss         │    -0.5165984034538269    │
-│         time_mae          │    152.17430114746094     │
-│         time_rmse         │      12364.130859375      │
-│       type_accuracy       │      91.375732421875      │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-05-23 17:22:02,371 - trainer.py[pid:11577;line:220:test] - INFO: Test results saved to ./checkpoints/IntensityFree/taxi/trained_models/test_results.json[0m
-[38;20m2025-05-23 17:22:02,371 - trainer.py[pid:11577;line:228:predict] - INFO: --- Starting Prediction for Model : IntensityFree on dataset : taxi ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]

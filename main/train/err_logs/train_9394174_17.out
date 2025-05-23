@@ -1,21 +1,0 @@
-[31;1m2025-05-23 17:13:34,427 - config.py[pid:30242;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:13:35,398 - trainer.py[pid:30242;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:13:35,418 - trainer.py[pid:30242;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/IntensityFree/H2expc/trained_models/best.ckpt.[0m
-[38;20m2025-05-23 17:13:35,571 - trainer.py[pid:30242;line:198:test] - INFO: --- Starting Testing for Model : IntensityFree on dataset : H2expc ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/3 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/3 [00:00<?, ?it/s]Testing DataLoader 0:  33%|███▎      | 1/3 [00:02<00:04,  0.48it/s]Testing DataLoader 0:  67%|██████▋   | 2/3 [00:02<00:01,  0.87it/s]Testing DataLoader 0: 100%|██████████| 3/3 [00:02<00:00,  1.25it/s]Testing DataLoader 0: 100%|██████████| 3/3 [00:02<00:00,  1.24it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│       cross_entropy       │    0.7713303565979004     │
-│       macro_f1score       │     53.59563064575195     │
-│       micro_f1score       │     54.19225311279297     │
-│         precision         │     54.06185531616211     │
-│          recall           │    53.906829833984375     │
-│         test_loss         │    0.26102909445762634    │
-│         time_mae          │    0.2606428563594818     │
-│         time_rmse         │    0.5177326202392578     │
-│       type_accuracy       │     54.19225311279297     │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-05-23 17:14:15,298 - trainer.py[pid:30242;line:220:test] - INFO: Test results saved to ./checkpoints/IntensityFree/H2expc/trained_models/test_results.json[0m
-[38;20m2025-05-23 17:14:15,298 - trainer.py[pid:30242;line:228:predict] - INFO: --- Starting Prediction for Model : IntensityFree on dataset : H2expc ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/3 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/3 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/3 [00:00<?, ?it/s]

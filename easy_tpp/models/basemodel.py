@@ -742,11 +742,10 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size = batch[0].size(0)
         
         time_seq_label, time_delta_seq_label, event_seq_label, non_pad_mask, _ = batch
-        time_seq_label, time_delta_seq_label, event_seq_label = time_seq_label.to(self.device), time_delta_seq_label.to(self.device), event_seq_label.to(self.device)
         
-        time_seq = time_seq_label.clone()
-        time_delta_seq = time_delta_seq_label.clone()
-        event_seq = event_seq_label.clone()
+        time_seq = time_seq_label.to(self.device)
+        time_delta_seq = time_delta_seq_label.to(self.device)
+        event_seq = event_seq_label.to(self.device)
         
         num_mark = self.num_event_types
         num_step = 0
@@ -757,7 +756,7 @@ class BaseModel(pl.LightningModule, ABC):
         for mark in range(num_mark):
             # Create a mask for each mark separately to avoid broadcasting issues
             mark_mask = (event_seq_label == mark).to(self.device)
-            masked_time_seq = torch.where(mark_mask, time_seq_label, torch.tensor(0.0).to(self.device))
+            masked_time_seq = torch.where(mark_mask, time_seq, torch.tensor(0.0).to(self.device))
             marked_last_time_label, _ = masked_time_seq.max(dim=1)
             last_event_time[:,mark] = marked_last_time_label
                     

@@ -1,37 +1,63 @@
 import torch
+from typing import Union, Tuple, Any
 
-def ensure_same_device(*tensors, target_device=None):
+def ensure_same_device(*tensors, target_device: Union[str, torch.device] = None) -> Tuple[torch.Tensor, ...]:
     """
-    Ensures that all given tensors are on the same device.
-    If target_device is provided, all tensors will be moved to that device.
-    Otherwise, they will be moved to the device of the first tensor.
+    Ensure all tensors are on the same device.
     
     Args:
-        *tensors: Variable number of tensors to ensure are on the same device
-        target_device: Optional target device to move tensors to
+        *tensors: Variable number of tensors or tensor-like objects
+        target_device: Target device. If None, uses the device of the first tensor
         
     Returns:
-        List of tensors all on the same device
+        Tuple of tensors all on the same device
     """
     if not tensors:
-        return []
+        return ()
+    
+    # Filter out None values and non-tensors
+    valid_tensors = []
+    tensor_indices = []
+    for i, tensor in enumerate(tensors):
+        if tensor is not None and isinstance(tensor, torch.Tensor):
+            valid_tensors.append(tensor)
+            tensor_indices.append(i)
+    
+    if not valid_tensors:
+        return tensors
     
     # Determine target device
     if target_device is None:
-        for t in tensors:
-            if isinstance(t, torch.Tensor):
-                target_device = t.device
-                break
-        if target_device is None:
-            # No tensor found, return as is
-            return list(tensors)
+        target_device = valid_tensors[0].device
+    elif isinstance(target_device, str):
+        target_device = torch.device(target_device)
     
-    # Move all tensors to target device
-    result = []
-    for t in tensors:
-        if isinstance(t, torch.Tensor) and t.device != target_device:
-            result.append(t.to(target_device))
-        else:
-            result.append(t)
+    # Convert all tensors to target device
+    result = list(tensors)
+    for i in tensor_indices:
+        if result[i] is not None:
+            result[i] = result[i].to(target_device)
     
-    return result
+    return tuple(result) if len(result) > 1 else result[0]
+
+def get_device_info():
+    """Get information about available devices."""
+    info = {
+        'cuda_available': torch.cuda.is_available(),
+        'cuda_device_count': torch.cuda.device_count() if torch.cuda.is_available() else 0,
+        'current_device': None
+    }
+    
+    if torch.cuda.is_available():
+        info['current_device'] = torch.cuda.current_device()
+        info['device_name'] = torch.cuda.get_device_name()
+        info['memory_allocated'] = torch.cuda.memory_allocated()
+        info['memory_reserved'] = torch.cuda.memory_reserved()
+    
+    return info
+
+def clear_gpu_cache():
+    """Clear GPU cache to free up memory."""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()

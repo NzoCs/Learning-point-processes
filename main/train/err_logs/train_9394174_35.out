@@ -1,4 +1,0 @@
-[31;1m2025-05-23 17:31:28,386 - config.py[pid:818;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:31:28,804 - trainer.py[pid:818;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:31:29,054 - trainer.py[pid:818;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/AttNHP/self_correcting/trained_models/best.ckpt.[0m
-[38;20m2025-05-23 17:31:29,092 - trainer.py[pid:818;line:198:test] - INFO: --- Starting Testing for Model : AttNHP on dataset : self_correcting ---[0m

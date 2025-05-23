@@ -1,21 +1,0 @@
-[31;1m2025-05-23 17:40:34,751 - config.py[pid:27806;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-23 17:40:35,141 - trainer.py[pid:27806;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-23 17:40:35,660 - trainer.py[pid:27806;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/SAHP/taobao/trained_models/best.ckpt.[0m
-[38;20m2025-05-23 17:40:35,670 - trainer.py[pid:27806;line:198:test] - INFO: --- Starting Testing for Model : SAHP on dataset : taobao ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/8 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]Testing DataLoader 0:  12%|█▎        | 1/8 [00:01<00:08,  0.85it/s]Testing DataLoader 0:  25%|██▌       | 2/8 [00:01<00:03,  1.65it/s]Testing DataLoader 0:  38%|███▊      | 3/8 [00:01<00:02,  2.41it/s]Testing DataLoader 0:  50%|█████     | 4/8 [00:01<00:01,  3.14it/s]Testing DataLoader 0:  62%|██████▎   | 5/8 [00:01<00:00,  3.82it/s]Testing DataLoader 0:  75%|███████▌  | 6/8 [00:01<00:00,  4.48it/s]Testing DataLoader 0:  88%|████████▊ | 7/8 [00:01<00:00,  5.12it/s]Testing DataLoader 0: 100%|██████████| 8/8 [00:01<00:00,  5.33it/s]Testing DataLoader 0: 100%|██████████| 8/8 [00:01<00:00,  5.31it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│       cross_entropy       │     2.337448835372925     │
-│       macro_f1score       │    38.820133209228516     │
-│       micro_f1score       │    59.205467224121094     │
-│         precision         │     43.53672790527344     │
-│          recall           │     36.25045394897461     │
-│         test_loss         │    -1.0991096496582031    │
-│         time_mae          │   0.060202401131391525    │
-│         time_rmse         │    0.13024866580963135    │
-│       type_accuracy       │    59.205467224121094     │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-05-23 17:41:11,761 - trainer.py[pid:27806;line:220:test] - INFO: Test results saved to ./checkpoints/SAHP/taobao/trained_models/test_results.json[0m
-[38;20m2025-05-23 17:41:11,761 - trainer.py[pid:27806;line:228:predict] - INFO: --- Starting Prediction for Model : SAHP on dataset : taobao ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]

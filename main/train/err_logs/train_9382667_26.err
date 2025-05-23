@@ -1,0 +1,73 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 1800 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 600 sequences
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:654: Checkpoint directory /gpfs/users/regnaguen/Learning-point-processes/main/train/checkpoints/RMTPP/H2expi/trained_models exists and is not empty.
+Restoring states from the checkpoint path at ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/gpfs/users/regnaguen/Learning-point-processes/main/train/RMTPP/H2expi/mysterious_panda_327/trained_models' to '/gpfs/users/regnaguen/Learning-point-processes/main/train/checkpoints/RMTPP/H2expi/trained_models', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name                       | Type      | Params | Mode 
+-----------------------------------------------------------------
+0 | layer_type_emb             | Embedding | 96     | train
+1 | layer_temporal_emb         | Linear    | 64     | train
+2 | layer_rnn                  | RNN       | 2.1 K  | train
+3 | hidden_to_intensity_logits | Linear    | 66     | train
+  | other params               | n/a       | 4      | n/a  
+-----------------------------------------------------------------
+2.3 K     Trainable params
+0         Non-trainable params
+2.3 K     Total params
+0.009     Total estimated model params size (MB)
+4         Modules in train mode
+0         Modules in eval mode
+Restored all states from the checkpoint at ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py:221: You're resuming from a checkpoint that ended before the epoch ended and your dataloader is not resumable. This can cause unreliable results if further training is done. Consider using an end-of-epoch checkpoint or make your dataloader resumable by implementing the `state_dict` / `load_state_dict` interface.
+Traceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 27, in main
+    plrunner.train()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 185, in train
+    trainer.fit(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 561, in fit
+    call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 599, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1056, in _run_stage
+    self.fit_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 216, in run
+    self.advance()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/fit_loop.py", line 455, in advance
+    self.epoch_loop.run(self._data_fetcher)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 151, in run
+    self.on_advance_end(data_fetcher)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 370, in on_advance_end
+    self.val_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 145, in run
+    self._evaluation_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/evaluation_loop.py", line 437, in _evaluation_step
+    output = call._call_strategy_hook(trainer, hook_name, *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 412, in validation_step
+    return self.lightning_module.validation_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 345, in validation_step
+    pred = self.predict_one_step_at_every_event(batch)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 572, in predict_one_step_at_every_event
+    accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 215, in draw_next_time_one_step
+    unif_numbers = self.sample_uniform_distribution(intensity_upper_bound)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 117, in sample_uniform_distribution
+    unif_numbers = torch.empty(size=[batch_size, seq_len, self.num_sample, self.num_exp],
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 18.63 GiB. GPU 0 has a total capacity of 39.39 GiB of which 682.69 MiB is free. Including non-PyTorch memory, this process has 38.71 GiB memory in use. Of the allocated memory 37.99 GiB is allocated by PyTorch, and 225.42 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+srun: error: ruche-gpu14: task 0: Exited with exit code 1

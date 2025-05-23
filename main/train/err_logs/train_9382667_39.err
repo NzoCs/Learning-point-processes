@@ -1,0 +1,158 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+INFO:easy_tpp.preprocess.data_loader:Train dataset created with 6454 sequences
+INFO:easy_tpp.preprocess.data_loader:Validation dataset created with 922 sequences
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name            | Type           | Params | Mode 
+-----------------------------------------------------------
+0 | layer_type_emb  | Embedding      | 272    | train
+1 | heads           | ModuleList     | 3.2 K  | train
+2 | inten_linear    | Linear         | 528    | train
+3 | softplus        | ScaledSoftplus | 16     | train
+4 | layer_event_emb | Linear         | 528    | train
+5 | layer_intensity | Sequential     | 544    | train
+-----------------------------------------------------------
+4.5 K     Trainable params
+0         Non-trainable params
+4.5 K     Total params
+0.018     Total estimated model params size (MB)
+22        Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+Metric val_loss improved. New best score: 2.472
+Metric val_loss improved by 0.147 >= min_delta = 0.0. New best score: 2.326
+Metric val_loss improved by 0.233 >= min_delta = 0.0. New best score: 2.093
+Metric val_loss improved by 0.203 >= min_delta = 0.0. New best score: 1.890
+Metric val_loss improved by 0.165 >= min_delta = 0.0. New best score: 1.725
+Metric val_loss improved by 0.124 >= min_delta = 0.0. New best score: 1.601
+Metric val_loss improved by 0.150 >= min_delta = 0.0. New best score: 1.451
+Metric val_loss improved by 0.122 >= min_delta = 0.0. New best score: 1.329
+Metric val_loss improved by 0.090 >= min_delta = 0.0. New best score: 1.239
+Metric val_loss improved by 0.069 >= min_delta = 0.0. New best score: 1.171
+Metric val_loss improved by 0.086 >= min_delta = 0.0. New best score: 1.085
+Metric val_loss improved by 0.091 >= min_delta = 0.0. New best score: 0.994
+Metric val_loss improved by 0.053 >= min_delta = 0.0. New best score: 0.940
+Metric val_loss improved by 0.028 >= min_delta = 0.0. New best score: 0.912
+Metric val_loss improved by 0.020 >= min_delta = 0.0. New best score: 0.892
+Metric val_loss improved by 0.015 >= min_delta = 0.0. New best score: 0.878
+Metric val_loss improved by 0.014 >= min_delta = 0.0. New best score: 0.863
+Metric val_loss improved by 0.013 >= min_delta = 0.0. New best score: 0.850
+Metric val_loss improved by 0.010 >= min_delta = 0.0. New best score: 0.841
+Metric val_loss improved by 0.010 >= min_delta = 0.0. New best score: 0.830
+Metric val_loss improved by 0.008 >= min_delta = 0.0. New best score: 0.822
+Metric val_loss improved by 0.008 >= min_delta = 0.0. New best score: 0.814
+Metric val_loss improved by 0.007 >= min_delta = 0.0. New best score: 0.807
+Metric val_loss improved by 0.006 >= min_delta = 0.0. New best score: 0.802
+Metric val_loss improved by 0.007 >= min_delta = 0.0. New best score: 0.795
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 0.790
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 0.787
+Metric val_loss improved by 0.007 >= min_delta = 0.0. New best score: 0.779
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: 0.775
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 0.770
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 0.765
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 0.762
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 0.757
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.755
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 0.750
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 0.747
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: 0.743
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 0.741
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: 0.737
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.734
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 0.731
+Metric val_loss improved by 0.005 >= min_delta = 0.0. New best score: 0.726
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: 0.723
+Metric val_loss improved by 0.004 >= min_delta = 0.0. New best score: 0.719
+Metric val_loss improved by 0.003 >= min_delta = 0.0. New best score: 0.716
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.714
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.713
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.711
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.709
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.709
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.708
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.706
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.704
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.703
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.702
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.700
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.699
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.698
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.698
+Metric val_loss improved by 0.002 >= min_delta = 0.0. New best score: 0.696
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.694
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.694
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.693
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.692
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.691
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.690
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.689
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.688
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.687
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.687
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.686
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.686
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.686
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.685
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.684
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.684
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.683
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.683
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.683
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.683
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.682
+Metric val_loss improved by 0.000 >= min_delta = 0.0. New best score: 0.682
+Metric val_loss improved by 0.001 >= min_delta = 0.0. New best score: 0.682
+`Trainer.fit` stopped: `max_epochs=1000` reached.
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+Restoring states from the checkpoint path at ./checkpoints/AttNHP/amazon/trained_models/best.ckpt
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/AttNHP/amazon/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+Restoring states from the checkpoint path at ./checkpoints/AttNHP/amazon/trained_models/best.ckpt
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/AttNHP/amazon/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:   3%|▎         | 5.617213726043701/200 [00:00<00:07, 25.68time/s][ATraceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in main
+    plrunner.predict()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 234, in predict
+    predictions = trainer.predict(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 887, in predict
+    return call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 928, in _predict_impl
+    results = self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1051, in _run_stage
+    return self.predict_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 125, in run
+    self._predict_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 255, in _predict_step
+    predictions = call._call_strategy_hook(trainer, "predict_step", *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 438, in predict_step
+    return self.lightning_module.predict_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 470, in predict_step
+    simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 802, in simulate
+    marked_last_time = torch.where(
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!
+
+                                                                                       [Asrun: error: ruche-gpu18: task 0: Exited with exit code 1

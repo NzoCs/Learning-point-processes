@@ -1,0 +1,21 @@
+[31;1m2025-05-23 17:28:41,083 - config.py[pid:11553;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 17:28:41,463 - trainer.py[pid:11553;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 17:28:41,465 - trainer.py[pid:11553;line:76:__init__] - INFO: Checkpoint not found at None. Starting from scratch.[0m
+[38;20m2025-05-23 17:28:41,681 - trainer.py[pid:11553;line:198:test] - INFO: --- Starting Testing for Model : RMTPP on dataset : hawkes2 ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   8%|▊         | 1/12 [00:02<00:22,  0.49it/s]Testing DataLoader 0:  17%|█▋        | 2/12 [00:02<00:13,  0.76it/s]Testing DataLoader 0:  25%|██▌       | 3/12 [00:02<00:08,  1.03it/s]Testing DataLoader 0:  33%|███▎      | 4/12 [00:02<00:05,  1.35it/s]Testing DataLoader 0:  42%|████▏     | 5/12 [00:03<00:04,  1.64it/s]Testing DataLoader 0:  50%|█████     | 6/12 [00:03<00:03,  1.81it/s]Testing DataLoader 0:  58%|█████▊    | 7/12 [00:03<00:02,  1.94it/s]Testing DataLoader 0:  67%|██████▋   | 8/12 [00:03<00:01,  2.18it/s]Testing DataLoader 0:  75%|███████▌  | 9/12 [00:03<00:01,  2.40it/s]Testing DataLoader 0:  83%|████████▎ | 10/12 [00:03<00:00,  2.62it/s]Testing DataLoader 0:  92%|█████████▏| 11/12 [00:03<00:00,  2.82it/s]Testing DataLoader 0: 100%|██████████| 12/12 [00:03<00:00,  3.04it/s]Testing DataLoader 0: 100%|██████████| 12/12 [00:03<00:00,  3.03it/s]
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        Test metric        ┃       DataLoader 0        ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│       cross_entropy       │    0.8208199143409729     │
+│       macro_f1score       │     42.35087203979492     │
+│       micro_f1score       │    49.244293212890625     │
+│         precision         │     49.91631317138672     │
+│          recall           │    49.957298278808594     │
+│         test_loss         │      8717.3310546875      │
+│         time_mae          │      19860.962890625      │
+│         time_rmse         │      41385.73828125       │
+│       type_accuracy       │    49.244293212890625     │
+└───────────────────────────┴───────────────────────────┘
+[38;20m2025-05-23 17:29:04,208 - trainer.py[pid:11553;line:220:test] - INFO: Test results saved to ./checkpoints/RMTPP/hawkes2/trained_models/test_results.json[0m
+[38;20m2025-05-23 17:29:04,208 - trainer.py[pid:11553;line:228:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : hawkes2 ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [00:01<?, ?it/s]

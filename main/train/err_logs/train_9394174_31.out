@@ -1,0 +1,21 @@
+[31;1m2025-05-23 17:28:16,512 - config.py[pid:32601;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 17:28:17,125 - trainer.py[pid:32601;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 17:28:17,129 - trainer.py[pid:32601;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/amazon/trained_models/best.ckpt.[0m
+[38;20m2025-05-23 17:28:17,133 - trainer.py[pid:32601;line:198:test] - INFO: --- Starting Testing for Model : RMTPP on dataset : amazon ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/8 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]Testing DataLoader 0:  12%|█▎        | 1/8 [00:01<00:07,  0.89it/s]Testing DataLoader 0:  25%|██▌       | 2/8 [00:01<00:05,  1.08it/s]Testing DataLoader 0:  38%|███▊      | 3/8 [00:02<00:03,  1.48it/s]Testing DataLoader 0:  50%|█████     | 4/8 [00:02<00:02,  1.82it/s]Testing DataLoader 0:  62%|██████▎   | 5/8 [00:02<00:01,  2.12it/s]Testing DataLoader 0:  75%|███████▌  | 6/8 [00:02<00:00,  2.05it/s]Testing DataLoader 0:  88%|████████▊ | 7/8 [00:03<00:00,  2.26it/s]Testing DataLoader 0: 100%|██████████| 8/8 [00:03<00:00,  2.53it/s]Testing DataLoader 0: 100%|██████████| 8/8 [00:03<00:00,  2.53it/s]
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        Test metric        ┃       DataLoader 0        ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│       cross_entropy       │      2.5338134765625      │
+│       macro_f1score       │    12.397455215454102     │
+│       micro_f1score       │     34.0775260925293      │
+│         precision         │    21.645965576171875     │
+│          recall           │    12.472733497619629     │
+│         test_loss         │    1.8358711004257202     │
+│         time_mae          │    0.4494026005268097     │
+│         time_rmse         │     3.186401128768921     │
+│       type_accuracy       │     34.0775260925293      │
+└───────────────────────────┴───────────────────────────┘
+[38;20m2025-05-23 17:28:52,022 - trainer.py[pid:32601;line:220:test] - INFO: Test results saved to ./checkpoints/RMTPP/amazon/trained_models/test_results.json[0m
+[38;20m2025-05-23 17:28:52,022 - trainer.py[pid:32601;line:228:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : amazon ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]

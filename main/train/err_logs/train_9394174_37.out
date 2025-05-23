@@ -1,0 +1,21 @@
+[31;1m2025-05-23 17:34:43,170 - config.py[pid:3333;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 17:34:44,109 - trainer.py[pid:3333;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 17:34:44,247 - trainer.py[pid:3333;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/AttNHP/taxi/trained_models/best.ckpt.[0m
+[38;20m2025-05-23 17:34:44,315 - trainer.py[pid:3333;line:198:test] - INFO: --- Starting Testing for Model : AttNHP on dataset : taxi ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/7 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/7 [00:00<?, ?it/s]Testing DataLoader 0:  14%|█▍        | 1/7 [00:02<00:15,  0.40it/s]Testing DataLoader 0:  29%|██▊       | 2/7 [00:02<00:06,  0.76it/s]Testing DataLoader 0:  43%|████▎     | 3/7 [00:02<00:03,  1.10it/s]Testing DataLoader 0:  57%|█████▋    | 4/7 [00:02<00:02,  1.41it/s]Testing DataLoader 0:  71%|███████▏  | 5/7 [00:02<00:01,  1.71it/s]Testing DataLoader 0:  86%|████████▌ | 6/7 [00:03<00:00,  1.99it/s]Testing DataLoader 0: 100%|██████████| 7/7 [00:03<00:00,  2.24it/s]Testing DataLoader 0: 100%|██████████| 7/7 [00:03<00:00,  2.24it/s]
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        Test metric        ┃       DataLoader 0        ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│       cross_entropy       │    1.8640239238739014     │
+│       macro_f1score       │    31.607254028320312     │
+│       micro_f1score       │    59.712730407714844     │
+│         precision         │     36.1813850402832      │
+│          recall           │     38.87875747680664     │
+│         test_loss         │    -0.4879114627838135    │
+│         time_mae          │     20.45964813232422     │
+│         time_rmse         │     46.75088882446289     │
+│       type_accuracy       │    59.712730407714844     │
+└───────────────────────────┴───────────────────────────┘
+[38;20m2025-05-23 17:35:06,455 - trainer.py[pid:3333;line:220:test] - INFO: Test results saved to ./checkpoints/AttNHP/taxi/trained_models/test_results.json[0m
+[38;20m2025-05-23 17:35:06,455 - trainer.py[pid:3333;line:228:predict] - INFO: --- Starting Prediction for Model : AttNHP on dataset : taxi ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/7 [00:01<?, ?it/s]

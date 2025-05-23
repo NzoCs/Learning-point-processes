@@ -1,0 +1,15 @@
+[31;1m2025-05-23 17:18:01,431 - config.py[pid:24775;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 17:18:02,069 - trainer.py[pid:24775;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 17:18:02,126 - trainer.py[pid:24775;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/IntensityFree/self_correcting/trained_models/best.ckpt.[0m
+[38;20m2025-05-23 17:18:02,335 - trainer.py[pid:24775;line:198:test] - INFO: --- Starting Testing for Model : IntensityFree on dataset : self_correcting ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Testing DataLoader 0:   8%|▊         | 1/12 [00:01<00:19,  0.55it/s]Testing DataLoader 0:  17%|█▋        | 2/12 [00:01<00:09,  1.09it/s]Testing DataLoader 0:  25%|██▌       | 3/12 [00:01<00:05,  1.63it/s]Testing DataLoader 0:  33%|███▎      | 4/12 [00:01<00:03,  2.16it/s]Testing DataLoader 0:  42%|████▏     | 5/12 [00:01<00:02,  2.69it/s]Testing DataLoader 0:  50%|█████     | 6/12 [00:01<00:01,  3.22it/s]Testing DataLoader 0:  58%|█████▊    | 7/12 [00:01<00:01,  3.74it/s]Testing DataLoader 0:  67%|██████▋   | 8/12 [00:01<00:00,  4.26it/s]Testing DataLoader 0:  75%|███████▌  | 9/12 [00:01<00:00,  4.77it/s]Testing DataLoader 0:  83%|████████▎ | 10/12 [00:01<00:00,  5.27it/s]Testing DataLoader 0:  92%|█████████▏| 11/12 [00:01<00:00,  5.77it/s]Testing DataLoader 0: 100%|██████████| 12/12 [00:01<00:00,  6.26it/s]Testing DataLoader 0: 100%|██████████| 12/12 [00:01<00:00,  6.24it/s]
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        Test metric        ┃       DataLoader 0        ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│         test_loss         │     1.008638620376587     │
+│         time_mae          │    0.5358949899673462     │
+│         time_rmse         │    0.6625933647155762     │
+└───────────────────────────┴───────────────────────────┘
+[38;20m2025-05-23 17:18:32,628 - trainer.py[pid:24775;line:220:test] - INFO: Test results saved to ./checkpoints/IntensityFree/self_correcting/trained_models/test_results.json[0m
+[38;20m2025-05-23 17:18:32,628 - trainer.py[pid:24775;line:228:predict] - INFO: --- Starting Prediction for Model : IntensityFree on dataset : self_correcting ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]

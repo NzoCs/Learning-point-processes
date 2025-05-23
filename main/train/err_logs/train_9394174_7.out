@@ -1,0 +1,21 @@
+[31;1m2025-05-23 17:04:41,483 - config.py[pid:28922;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 17:04:42,041 - trainer.py[pid:28922;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 17:04:42,091 - trainer.py[pid:28922;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/NHP/amazon/trained_models/best.ckpt.[0m
+[38;20m2025-05-23 17:04:42,377 - trainer.py[pid:28922;line:198:test] - INFO: --- Starting Testing for Model : NHP on dataset : amazon ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/15 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/15 [00:00<?, ?it/s]Testing DataLoader 0:   7%|▋         | 1/15 [00:01<00:16,  0.87it/s]Testing DataLoader 0:  13%|█▎        | 2/15 [00:01<00:09,  1.42it/s]Testing DataLoader 0:  20%|██        | 3/15 [00:01<00:06,  1.80it/s]Testing DataLoader 0:  27%|██▋       | 4/15 [00:01<00:05,  2.09it/s]Testing DataLoader 0:  33%|███▎      | 5/15 [00:02<00:04,  2.30it/s]Testing DataLoader 0:  40%|████      | 6/15 [00:02<00:03,  2.48it/s]Testing DataLoader 0:  47%|████▋     | 7/15 [00:02<00:03,  2.63it/s]Testing DataLoader 0:  53%|█████▎    | 8/15 [00:02<00:02,  2.75it/s]Testing DataLoader 0:  60%|██████    | 9/15 [00:03<00:02,  2.84it/s]Testing DataLoader 0:  67%|██████▋   | 10/15 [00:03<00:01,  2.93it/s]Testing DataLoader 0:  73%|███████▎  | 11/15 [00:03<00:01,  2.99it/s]Testing DataLoader 0:  80%|████████  | 12/15 [00:03<00:00,  3.06it/s]Testing DataLoader 0:  87%|████████▋ | 13/15 [00:04<00:00,  3.11it/s]Testing DataLoader 0:  93%|█████████▎| 14/15 [00:04<00:00,  3.16it/s]Testing DataLoader 0: 100%|██████████| 15/15 [00:04<00:00,  3.25it/s]Testing DataLoader 0: 100%|██████████| 15/15 [00:04<00:00,  3.25it/s]
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        Test metric        ┃       DataLoader 0        ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│       cross_entropy       │    2.5787346363067627     │
+│       macro_f1score       │     8.690309524536133     │
+│       micro_f1score       │     29.58661651611328     │
+│         precision         │    17.272512435913086     │
+│          recall           │     9.09286117553711      │
+│         test_loss         │    -0.4204762279987335    │
+│         time_mae          │     3.724123477935791     │
+│         time_rmse         │    53.788970947265625     │
+│       type_accuracy       │     29.58661651611328     │
+└───────────────────────────┴───────────────────────────┘
+[38;20m2025-05-23 17:05:28,317 - trainer.py[pid:28922;line:220:test] - INFO: Test results saved to ./checkpoints/NHP/amazon/trained_models/test_results.json[0m
+[38;20m2025-05-23 17:05:28,318 - trainer.py[pid:28922;line:228:predict] - INFO: --- Starting Prediction for Model : NHP on dataset : amazon ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/15 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/15 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/15 [00:00<?, ?it/s]

@@ -1,0 +1,21 @@
+[31;1m2025-05-23 17:24:49,387 - config.py[pid:31969;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 17:24:49,680 - trainer.py[pid:31969;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 17:24:49,697 - trainer.py[pid:31969;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/taxi/trained_models/best.ckpt.[0m
+[38;20m2025-05-23 17:24:49,762 - trainer.py[pid:31969;line:198:test] - INFO: --- Starting Testing for Model : RMTPP on dataset : taxi ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/2 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Testing DataLoader 0:  50%|█████     | 1/2 [00:01<00:01,  0.66it/s]Testing DataLoader 0: 100%|██████████| 2/2 [00:01<00:00,  1.27it/s]Testing DataLoader 0: 100%|██████████| 2/2 [00:01<00:00,  1.27it/s]
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        Test metric        ┃       DataLoader 0        ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│       cross_entropy       │    1.5535541772842407     │
+│       macro_f1score       │     36.15635299682617     │
+│       micro_f1score       │     90.75970458984375     │
+│         precision         │     44.22844314575195     │
+│          recall           │    34.420318603515625     │
+│         test_loss         │    -0.4872957170009613    │
+│         time_mae          │    0.18300049006938934    │
+│         time_rmse         │    0.3319774568080902     │
+│       type_accuracy       │     90.75970458984375     │
+└───────────────────────────┴───────────────────────────┘
+[38;20m2025-05-23 17:25:22,701 - trainer.py[pid:31969;line:220:test] - INFO: Test results saved to ./checkpoints/RMTPP/taxi/trained_models/test_results.json[0m
+[38;20m2025-05-23 17:25:22,702 - trainer.py[pid:31969;line:228:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : taxi ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]

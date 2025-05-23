@@ -1,0 +1,5 @@
+[31;1m2025-05-23 16:56:57,256 - config.py[pid:27780;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 16:56:57,592 - trainer.py[pid:27780;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 16:56:57,613 - trainer.py[pid:27780;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/NHP/H2expc/trained_models/best.ckpt.[0m
+[38;20m2025-05-23 16:56:59,335 - trainer.py[pid:27780;line:198:test] - INFO: --- Starting Testing for Model : NHP on dataset : H2expc ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/5 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/5 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/5 [00:04<?, ?it/s]

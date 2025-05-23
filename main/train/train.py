@@ -24,7 +24,7 @@ def main():
     
     plrunner = Trainer(config)
     
-    plrunner.train()
+#    plrunner.train()
     
     plrunner.test()
 

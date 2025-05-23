@@ -1,0 +1,21 @@
+[31;1m2025-05-23 17:28:16,510 - config.py[pid:32603;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-23 17:28:16,976 - trainer.py[pid:32603;line:31:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-23 17:28:16,988 - trainer.py[pid:32603;line:74:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/taobao/trained_models/best.ckpt.[0m
+[38;20m2025-05-23 17:28:17,061 - trainer.py[pid:32603;line:198:test] - INFO: --- Starting Testing for Model : RMTPP on dataset : taobao ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/2 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Testing DataLoader 0:  50%|█████     | 1/2 [00:01<00:01,  0.88it/s]Testing DataLoader 0: 100%|██████████| 2/2 [00:01<00:00,  1.57it/s]Testing DataLoader 0: 100%|██████████| 2/2 [00:01<00:00,  1.57it/s]
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        Test metric        ┃       DataLoader 0        ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│       cross_entropy       │    2.3290762901306152     │
+│       macro_f1score       │     43.65266418457031     │
+│       micro_f1score       │    60.042686462402344     │
+│         precision         │     49.5124397277832      │
+│          recall           │     40.09017562866211     │
+│         test_loss         │    -1.083124041557312     │
+│         time_mae          │    0.05675564706325531    │
+│         time_rmse         │    0.14025871455669403    │
+│       type_accuracy       │    60.042686462402344     │
+└───────────────────────────┴───────────────────────────┘
+[38;20m2025-05-23 17:28:50,551 - trainer.py[pid:32603;line:220:test] - INFO: Test results saved to ./checkpoints/RMTPP/taobao/trained_models/test_results.json[0m
+[38;20m2025-05-23 17:28:50,551 - trainer.py[pid:32603;line:228:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : taobao ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]

@@ -26,7 +26,7 @@ def main():
     
 #    plrunner.train()
     
-    plrunner.test()
+#    plrunner.test()
 
     plrunner.predict()
 

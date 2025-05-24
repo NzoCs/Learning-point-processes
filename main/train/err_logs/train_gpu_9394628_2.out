@@ -1,0 +1,18 @@
+[31;1m2025-05-24 04:38:41,102 - config.py[pid:19953;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 04:38:41,947 - trainer.py[pid:19953;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-24 04:38:41,961 - trainer.py[pid:19953;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/NHP/H2expi/trained_models/best.ckpt[0m
+[38;20m2025-05-24 04:38:41,961 - trainer.py[pid:19953;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/NHP/H2expi/trained_models/best.ckpt.[0m
+[38;20m2025-05-24 04:38:41,994 - trainer.py[pid:19953;line:247:predict] - INFO: --- Starting Prediction for Model : NHP on dataset : H2expi ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/5 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/5 [00:00<?, ?it/s]Predicting DataLoader 0:  20%|██        | 1/5 [02:57<11:48,  0.01it/s]Predicting DataLoader 0:  40%|████      | 2/5 [05:48<08:43,  0.01it/s]Predicting DataLoader 0:  60%|██████    | 3/5 [08:57<05:58,  0.01it/s]Predicting DataLoader 0:  80%|████████  | 4/5 [11:34<02:53,  0.01it/s]Predicting DataLoader 0: 100%|██████████| 5/5 [14:23<00:00,  0.01it/s]Predicting DataLoader 0: 100%|██████████| 5/5 [14:23<00:00,  0.01it/s]
+Data successfully saved to ./checkpoints/NHP/H2expi/distributions_comparisons/simulations.json
+[38;20m2025-05-24 04:53:21,861 - new_comparator.py[pid:19953;line:42:__init__] - INFO: Extracting label data from dataloader...[0m
+[38;20m2025-05-24 04:53:22,150 - new_comparator.py[pid:19953;line:86:__init__] - INFO: Processing simulation data...[0m
+[38;20m2025-05-24 04:53:22,162 - new_comparator.py[pid:19953;line:112:__init__] - INFO: Collected 100000 label events and 620 simulated events for comparison[0m
+[38;20m2025-05-24 04:53:22,162 - new_comparator.py[pid:19953;line:555:run_evaluation] - INFO: Generating comparison plots for simulations...[0m
+[38;20m2025-05-24 04:53:23,624 - new_comparator.py[pid:19953;line:226:plot_inter_event_time_distribution] - INFO: Inter-event time distribution comparison plot saved to ./checkpoints/NHP/H2expi/distributions_comparisons/comparison_inter_event_time_dist.png[0m
+[38;20m2025-05-24 04:53:24,498 - new_comparator.py[pid:19953;line:320:_create_qq_plot] - INFO: QQ plot saved to ./checkpoints/NHP/H2expi/distributions_comparisons/qq_inter_event_times.png[0m
+[38;20m2025-05-24 04:53:24,952 - new_comparator.py[pid:19953;line:394:plot_event_type_distribution] - INFO: Event type distribution comparison plot saved to ./checkpoints/NHP/H2expi/distributions_comparisons/comparison_event_type_dist.png[0m
+[38;20m2025-05-24 04:53:25,835 - new_comparator.py[pid:19953;line:460:plot_sequence_length_distribution] - INFO: Sequence length distribution comparison plot saved to ./checkpoints/NHP/H2expi/distributions_comparisons/comparison_sequence_length_dist.png[0m
+[33;20m2025-05-24 04:53:25,835 - new_comparator.py[pid:19953;line:274:_create_qq_plot] - WARNING: Not enough data points for QQ plot: 3 points[0m
+[38;20m2025-05-24 04:55:37,657 - new_comparator.py[pid:19953;line:549:plot_cross_correlation_moments] - INFO: Cross-correlation comparison plot saved to ./checkpoints/NHP/H2expi/distributions_comparisons/comparison_cross_correlation_moments.png[0m
+[38;20m2025-05-24 04:55:37,659 - trainer.py[pid:19953;line:274:predict] - INFO: Predictions saved to ./checkpoints/NHP/H2expi/distributions_comparisons[0m

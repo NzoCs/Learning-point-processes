@@ -1,0 +1,6 @@
+[31;1m2025-05-24 08:41:30,033 - config.py[pid:32263;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 08:41:30,703 - trainer.py[pid:32263;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-24 08:41:30,722 - trainer.py[pid:32263;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/AttNHP/amazon/trained_models/best.ckpt[0m
+[38;20m2025-05-24 08:41:30,722 - trainer.py[pid:32263;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/AttNHP/amazon/trained_models/best.ckpt.[0m
+[38;20m2025-05-24 08:41:30,840 - trainer.py[pid:32263;line:247:predict] - INFO: --- Starting Prediction for Model : AttNHP on dataset : amazon ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/29 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/29 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/29 [01:43<?, ?it/s]

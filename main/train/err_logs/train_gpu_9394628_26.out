@@ -1,0 +1,18 @@
+[31;1m2025-05-24 08:22:06,533 - config.py[pid:772;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 08:22:06,941 - trainer.py[pid:772;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-24 08:22:06,954 - trainer.py[pid:772;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt[0m
+[38;20m2025-05-24 08:22:06,954 - trainer.py[pid:772;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt.[0m
+[38;20m2025-05-24 08:22:07,054 - trainer.py[pid:772;line:247:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : H2expi ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/3 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/3 [00:00<?, ?it/s]Predicting DataLoader 0:  33%|███▎      | 1/3 [00:00<00:01,  1.44it/s]Predicting DataLoader 0:  67%|██████▋   | 2/3 [00:00<00:00,  2.54it/s]Predicting DataLoader 0: 100%|██████████| 3/3 [00:00<00:00,  3.65it/s]Predicting DataLoader 0: 100%|██████████| 3/3 [00:00<00:00,  3.64it/s]
+Data successfully saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons/simulations.json
+[38;20m2025-05-24 08:22:25,193 - new_comparator.py[pid:772;line:42:__init__] - INFO: Extracting label data from dataloader...[0m
+[38;20m2025-05-24 08:22:25,461 - new_comparator.py[pid:772;line:86:__init__] - INFO: Processing simulation data...[0m
+[38;20m2025-05-24 08:22:25,473 - new_comparator.py[pid:772;line:112:__init__] - INFO: Collected 100000 label events and 386 simulated events for comparison[0m
+[38;20m2025-05-24 08:22:25,473 - new_comparator.py[pid:772;line:555:run_evaluation] - INFO: Generating comparison plots for simulations...[0m
+[38;20m2025-05-24 08:22:26,649 - new_comparator.py[pid:772;line:226:plot_inter_event_time_distribution] - INFO: Inter-event time distribution comparison plot saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons/comparison_inter_event_time_dist.png[0m
+[38;20m2025-05-24 08:22:27,626 - new_comparator.py[pid:772;line:320:_create_qq_plot] - INFO: QQ plot saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons/qq_inter_event_times.png[0m
+[38;20m2025-05-24 08:22:28,088 - new_comparator.py[pid:772;line:394:plot_event_type_distribution] - INFO: Event type distribution comparison plot saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons/comparison_event_type_dist.png[0m
+[38;20m2025-05-24 08:22:28,772 - new_comparator.py[pid:772;line:460:plot_sequence_length_distribution] - INFO: Sequence length distribution comparison plot saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons/comparison_sequence_length_dist.png[0m
+[38;20m2025-05-24 08:22:29,314 - new_comparator.py[pid:772;line:320:_create_qq_plot] - INFO: QQ plot saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons/qq_sequence_lengths.png[0m
+[38;20m2025-05-24 08:24:41,572 - new_comparator.py[pid:772;line:549:plot_cross_correlation_moments] - INFO: Cross-correlation comparison plot saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons/comparison_cross_correlation_moments.png[0m
+[38;20m2025-05-24 08:24:41,574 - trainer.py[pid:772;line:274:predict] - INFO: Predictions saved to ./checkpoints/RMTPP/H2expi/distributions_comparisons[0m

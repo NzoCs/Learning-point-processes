@@ -1,0 +1,30 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+Restoring states from the checkpoint path at ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/gpfs/users/regnaguen/Learning-point-processes/main/train/RMTPP/H2expi/mysterious_panda_327/trained_models' to '/gpfs/users/regnaguen/Learning-point-processes/main/train/checkpoints/RMTPP/H2expi/trained_models', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:  48%|████▊     | 95.87722778320312/200 [00:00<00:00, 172.38time/s][A
+Simulating sequences:  48%|████▊     | 95.95075988769531/200 [00:00<00:00, 164.11time/s][A
+Simulating sequences:  48%|████▊     | 95.9714584350586/200 [00:00<00:00, 162.97time/s] [A
+Simulating sequences:  48%|████▊     | 95.97235870361328/200 [00:00<00:00, 161.86time/s][A
+                                                                                        [A
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:  47%|████▋     | 94.7516098022461/200 [00:00<00:00, 36247.45time/s][A
+Simulating sequences:  48%|████▊     | 95.45927429199219/200 [00:00<00:00, 14505.66time/s][A
+Simulating sequences:  48%|████▊     | 95.46455383300781/200 [00:00<00:00, 9100.99time/s] [A
+Simulating sequences:  48%|████▊     | 95.67213439941406/200 [00:00<00:00, 6644.12time/s][A
+                                                                                         [A
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:  48%|████▊     | 96.3733901977539/200 [00:00<00:00, 45612.65time/s][A
+Simulating sequences:  48%|████▊     | 96.67710876464844/200 [00:00<00:00, 18051.60time/s][A
+Simulating sequences:  48%|████▊     | 96.88105010986328/200 [00:00<00:00, 11280.88time/s][A
+Simulating sequences:  48%|████▊     | 96.9879150390625/200 [00:00<00:00, 8198.24time/s]  [A
+Simulating sequences:  48%|████▊     | 96.9969482421875/200 [00:00<00:00, 6451.75time/s][A
+Simulating sequences:  49%|████▊     | 97.16698455810547/200 [00:00<00:00, 5322.41time/s][A
+                                                                                         [AFormatting sequences:   0%|          | 0/201 [00:00<?, ?it/s]Formatting sequences: 100%|██████████| 201/201 [00:00<00:00, 101097.87it/s]

@@ -1,0 +1,16 @@
+[31;1m2025-05-24 05:12:37,903 - config.py[pid:6418;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 05:12:38,354 - trainer.py[pid:6418;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-24 05:12:38,403 - trainer.py[pid:6418;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/NHP/taobao/trained_models/best-v3.ckpt[0m
+[38;20m2025-05-24 05:12:38,403 - trainer.py[pid:6418;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/NHP/taobao/trained_models/best-v3.ckpt.[0m
+[38;20m2025-05-24 05:12:38,580 - trainer.py[pid:6418;line:247:predict] - INFO: --- Starting Prediction for Model : NHP on dataset : taobao ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/4 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/4 [00:00<?, ?it/s]Predicting DataLoader 0:  25%|██▌       | 1/4 [1:47:44<5:23:12,  0.00it/s]Predicting DataLoader 0:  50%|█████     | 2/4 [3:26:07<3:26:07,  0.00it/s]Predicting DataLoader 0:  75%|███████▌  | 3/4 [5:16:47<1:45:35,  0.00it/s]Predicting DataLoader 0: 100%|██████████| 4/4 [7:12:05<00:00,  0.00it/s]  Predicting DataLoader 0: 100%|██████████| 4/4 [7:12:05<00:00,  0.00it/s]
+[33;20m2025-05-24 12:25:03,676 - basemodel.py[pid:6418;line:520:format_and_save_simulations] - WARNING: No simulations to format.[0m
+[38;20m2025-05-24 12:25:03,678 - new_comparator.py[pid:6418;line:42:__init__] - INFO: Extracting label data from dataloader...[0m
+[38;20m2025-05-24 12:25:04,313 - new_comparator.py[pid:6418;line:86:__init__] - INFO: Processing simulation data...[0m
+[38;20m2025-05-24 12:25:04,316 - new_comparator.py[pid:6418;line:112:__init__] - INFO: Collected 28455 label events and 0 simulated events for comparison[0m
+[38;20m2025-05-24 12:25:04,316 - new_comparator.py[pid:6418;line:555:run_evaluation] - INFO: Generating comparison plots for simulations...[0m
+[33;20m2025-05-24 12:25:04,412 - new_comparator.py[pid:6418;line:214:plot_inter_event_time_distribution] - WARNING: One or both of the time delta arrays are empty. Skipping plot generation.[0m
+[38;20m2025-05-24 12:25:05,649 - new_comparator.py[pid:6418;line:394:plot_event_type_distribution] - INFO: Event type distribution comparison plot saved to ./checkpoints/NHP/taobao/distributions_comparisons/comparison_event_type_dist.png[0m
+[33;20m2025-05-24 12:25:05,650 - new_comparator.py[pid:6418;line:409:plot_sequence_length_distribution] - WARNING: One or both sequence length arrays are empty. Skipping sequence length distribution plot.[0m
+[33;20m2025-05-24 12:25:05,650 - new_comparator.py[pid:6418;line:510:plot_cross_correlation_moments] - WARNING: One or both time arrays are empty. Skipping cross-correlation plot.[0m
+[38;20m2025-05-24 12:25:05,972 - trainer.py[pid:6418;line:274:predict] - INFO: Predictions saved to ./checkpoints/NHP/taobao/distributions_comparisons[0m

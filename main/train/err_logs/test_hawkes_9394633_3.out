@@ -1,0 +1,9 @@
+[31;1m2025-05-24 09:15:03,066 - config.py[pid:10501;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[33;20m2025-05-24 09:15:03,081 - runner_config.py[pid:10501;line:52:__init__] - WARNING: Checkpoint directory ./checkpoints/HawkesModel/H2expi/ does not exist. The model wont be loaded.[0m
+[33;20m2025-05-24 09:15:03,081 - logger_config.py[pid:10501;line:200:__init__] - WARNING: No adapter available for logger type: None[0m
+[33;20m2025-05-24 09:15:03,082 - logger_config.py[pid:10501;line:201:__init__] - WARNING: The logger will not be configured.[0m
+[38;20m2025-05-24 09:15:03,771 - trainer.py[pid:10501;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-24 09:15:03,774 - trainer.py[pid:10501;line:95:__init__] - INFO: No valid checkpoint found. Starting from scratch.[0m
+[31;1m2025-05-24 09:15:03,774 - trainer.py[pid:10501;line:103:__init__] - CRITICAL: Logging is disabled for this run. Error: 'LoggerConfig' object has no attribute 'config'[0m
+[38;20m2025-05-24 09:15:03,774 - trainer.py[pid:10501;line:217:test] - INFO: --- Starting Testing for Model : HawkesModel on dataset : H2expi ---[0m
+Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/5 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/5 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/5 [00:02<?, ?it/s]

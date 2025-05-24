@@ -52,8 +52,6 @@ class BaseModel(pl.LightningModule, ABC):
         
         self.eps = torch.finfo(torch.float32).eps
 
-        self.device = model_config.device
-
         # Initialize type embedding
         self.layer_type_emb = nn.Embedding(
             num_embeddings = self.num_event_types_pad,  # have padding
@@ -758,6 +756,7 @@ class BaseModel(pl.LightningModule, ABC):
         for mark in range(num_mark):
             # Create a mask for each mark separately to avoid broadcasting issues
             mark_mask = (event_seq_label == mark).to(self.device)
+            logger.debug(f"mark_mask device {mark_mask.device}, time_seq device {time_seq.device}, device {self.device}")
             masked_time_seq = torch.where(mark_mask, time_seq, torch.tensor(0.0).to(self.device))
             marked_last_time_label, _ = masked_time_seq.max(dim=1)
             last_event_time[:,mark] = marked_last_time_label

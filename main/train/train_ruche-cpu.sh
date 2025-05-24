@@ -1,14 +1,13 @@
 #!/bin/bash
-#SBATCH --output=err_logs/train_gpu_%A_%a.out
-#SBATCH --error=err_logs/train_gpu_%A_%a.err
-#SBATCH --partition=gpua100
+#SBATCH --output=err_logs/train_cpu_%A_%a.out
+#SBATCH --error=err_logs/train_cpu_%A_%a.err
+#SBATCH --partition=cpu_long         # Utilisation d'une partition CPU
 #SBATCH --time=24:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=100G
-#SBATCH --gres=gpu:1
-#SBATCH --array=0-47%5
+#SBATCH --mem=180G                   # Mémoire maximale par nœud CPU
+#SBATCH --array=0-47%4
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge

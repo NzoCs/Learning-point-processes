@@ -485,7 +485,6 @@ class BaseModel(pl.LightningModule, ABC):
 
         for i in range(batch_size):
 
-            self.sim_events_counter += simul_mask.sum().item()
             if self.sim_events_counter >= self.max_simul_events:
                 break
             mask_i = simul_mask[i]
@@ -495,6 +494,8 @@ class BaseModel(pl.LightningModule, ABC):
                     'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
                     'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
                 })
+            
+            self.sim_events_counter += simul_time_seq[i][mask_i].clone().detach().cpu()
 
         return self.simulations
         

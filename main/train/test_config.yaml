@@ -96,7 +96,7 @@ test :
 
 hawkes1 :
   data_loading_specs:
-    batch_size: 128
+    batch_size: 32
     num_workers: 1
     
   model_config:
@@ -106,8 +106,8 @@ hawkes1 :
       alpha: 0.8
       beta: 1
     thinning:
-      num_exp: 500
-      num_sample: 100
+      num_exp: 300
+      num_sample: 60
       over_sample_rate: 1.5
       dtime_max: 5
 
@@ -116,7 +116,7 @@ hawkes1 :
 
 hawkes2 :
   data_loading_specs:
-    batch_size: 128
+    batch_size: 32
     num_workers: 1
     
   model_config:
@@ -126,8 +126,8 @@ hawkes2 :
       alpha: [[0.4, 0], [0, 8.0]]
       beta: [[1.0, 0], [0, 20.0]]
     thinning:
-      num_exp: 500
-      num_sample: 100
+      num_exp: 300
+      num_sample: 60
       over_sample_rate: 1.5
       dtime_max: 5
 
@@ -136,7 +136,7 @@ hawkes2 :
 
 H2expi :
   data_loading_specs:
-    batch_size: 128
+    batch_size: 32
     num_workers: 1
     
   model_config:
@@ -146,8 +146,8 @@ H2expi :
       alpha: [[0.7, 0], [0, 1.5]]
       beta: [[1.0, 0], [0,5.0]]
     thinning:
-      num_exp: 500
-      num_sample: 100
+      num_exp: 300
+      num_sample: 60
       over_sample_rate: 1.5
       dtime_max: 5
 
@@ -156,7 +156,7 @@ H2expi :
   
 H2expc :
   data_loading_specs:
-    batch_size: 128
+    batch_size: 32
     num_workers: 1
     
   model_config:
@@ -167,7 +167,7 @@ H2expc :
       beta: [[1.0, 3.0], [2.0,5.0]]
     thinning:
       num_exp: 500
-      num_sample: 100
+      num_sample: 60
       over_sample_rate: 1.5
       dtime_max: 5
 

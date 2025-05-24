@@ -3,6 +3,8 @@ import torch
 from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.config_factory.model_config import ModelConfig
 
+
+
 class HawkesModel(BaseModel):
     """
     PyTorch implementation of the Hawkes process model.
@@ -168,6 +170,13 @@ class HawkesModel(BaseModel):
         time_seq = time_seq.to(device)
         type_seq = type_seq.to(device)
         sample_dtimes = sample_dtimes.to(device)
+
+        if compute_last_step_only:
+            # Only compute for the last event in the sequence
+            time_seq = time_seq[:, -1:]
+            type_seq = type_seq[:, -1:]
+            sample_dtimes = sample_dtimes[:, -1:, :]
+            seq_len = 1
         
         type_seq_exp = type_seq.reshape(batch_size, seq_len, 1, 1).expand(-1, -1, num_samples, self.num_event_types)
 

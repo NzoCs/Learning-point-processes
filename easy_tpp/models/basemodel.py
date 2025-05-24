@@ -751,13 +751,13 @@ class BaseModel(pl.LightningModule, ABC):
         num_step = 0
         seq_len = 0
         
-        last_event_time = torch.zeros(batch_size, num_mark)
+        last_event_time = torch.zeros(batch_size, num_mark, device=self.device)
         
         for mark in range(num_mark):
             # Create a mask for each mark separately to avoid broadcasting issues
             mark_mask = (event_seq_label == mark).to(self.device)
             logger.debug(f"mark_mask device {mark_mask.device}, time_seq device {time_seq.device}, device {self.device}")
-            masked_time_seq = torch.where(mark_mask, time_seq, torch.tensor(0.0).to(self.device))
+            masked_time_seq = torch.where(mark_mask, time_seq, 0).to(self.device)
             marked_last_time_label, _ = masked_time_seq.max(dim=1)
             last_event_time[:,mark] = marked_last_time_label
                     
@@ -808,7 +808,7 @@ class BaseModel(pl.LightningModule, ABC):
             # Update last event times for each mark
             for mark in range(num_mark):
                 # Create a boolean mask matching the batch dimension
-                mark_mask = (type_pred.squeeze(-1) == mark)
+                mark_mask = (type_pred.squeeze(-1) == mark).to(self.device)
                 # Update last event times if the event happened for this mark
                 marked_last_time = torch.where(
                     mark_mask, 

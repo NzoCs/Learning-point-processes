@@ -469,8 +469,8 @@ class BaseModel(pl.LightningModule, ABC):
         device = self.device
         
         # Ensure all inputs are on the same device
-        time_seq, type_seq, attention_mask = ensure_same_device(
-            time_seq, type_seq, attention_mask, time_delta_seq, batch_non_pad_mask, target_device=device
+        batch = ensure_same_device(
+            time_seq, time_delta_seq, type_seq, batch_non_pad_mask, attention_mask, target_device=device
         )
         
         # Run simulation
@@ -743,9 +743,9 @@ class BaseModel(pl.LightningModule, ABC):
         
         time_seq_label, time_delta_seq_label, event_seq_label, non_pad_mask, _ = batch
         
-        time_seq = time_seq_label.to(self.device)
-        time_delta_seq = time_delta_seq_label.to(self.device)
-        event_seq = event_seq_label.to(self.device)
+        time_seq = time_seq_label
+        time_delta_seq = time_delta_seq_label
+        event_seq = event_seq_label
         
         num_mark = self.num_event_types
         num_step = 0

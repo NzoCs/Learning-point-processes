@@ -1,0 +1,6 @@
+[31;1m2025-05-24 14:06:51,065 - config.py[pid:15764;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 14:06:51,405 - trainer.py[pid:15764;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-24 14:06:51,699 - trainer.py[pid:15764;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/THP/H2expi/trained_models/best.ckpt[0m
+[38;20m2025-05-24 14:06:51,699 - trainer.py[pid:15764;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/THP/H2expi/trained_models/best.ckpt.[0m
+[38;20m2025-05-24 14:06:51,771 - trainer.py[pid:15764;line:247:predict] - INFO: --- Starting Prediction for Model : THP on dataset : H2expi ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/10 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/10 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/10 [00:33<?, ?it/s]

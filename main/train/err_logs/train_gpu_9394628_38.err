@@ -1,146 +1,0 @@
-GPU available: True (cuda), used: True
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.
-Restoring states from the checkpoint path at ./checkpoints/AttNHP/taobao/trained_models/best.ckpt
-LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-Loaded model weights from the checkpoint at ./checkpoints/AttNHP/taobao/trained_models/best.ckpt
-SLURM auto-requeueing enabled. Setting signal handlers.
-
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
-Simulating sequences:   0%|          | 0.6762622594833374/200 [00:01<07:24,  2.23s/time][A
-Simulating sequences:   0%|          | 0.7077471613883972/200 [00:01<07:55,  2.39s/time][A
-Simulating sequences:   0%|          | 0.9283673167228699/200 [00:01<06:29,  1.96s/time][A
-Simulating sequences:   0%|          | 0.9525311589241028/200 [00:01<06:50,  2.06s/time][A
-Simulating sequences:   0%|          | 0.9789832234382629/200 [00:02<07:06,  2.14s/time][A
-Simulating sequences:   0%|          | 0.9815604090690613/200 [00:02<07:35,  2.29s/time][A
-Simulating sequences:   0%|          | 0.9816221594810486/200 [00:03<11:29,  3.46s/time][A
-Simulating sequences:   0%|          | 0.9922122359275818/200 [00:03<12:37,  3.80s/time][A
-Simulating sequences:   1%|          | 1.0047835111618042/200 [00:04<13:27,  4.06s/time][A
-Simulating sequences:   1%|          | 1.0192887783050537/200 [00:05<18:54,  5.70s/time][A
-Simulating sequences:   1%|          | 1.0399912595748901/200 [00:05<19:01,  5.74s/time][A
-Simulating sequences:   1%|          | 1.1491999626159668/200 [00:06<17:40,  5.33s/time][A
-Simulating sequences:   1%|          | 1.187164306640625/200 [00:06<17:32,  5.29s/time] [A
-Simulating sequences:   1%|          | 1.200544834136963/200 [00:07<21:52,  6.60s/time][A
-Simulating sequences:   1%|          | 1.2035810947418213/200 [00:08<22:52,  6.90s/time][A
-Simulating sequences:   1%|          | 1.2178181409835815/200 [00:08<23:04,  6.97s/time][A
-Simulating sequences:   1%|          | 1.2373155355453491/200 [00:08<23:48,  7.19s/time][A
-Simulating sequences:   1%|          | 1.2416881322860718/200 [00:09<24:19,  7.35s/time][A
-Simulating sequences:   1%|          | 1.2498600482940674/200 [00:10<27:48,  8.40s/time][A
-Simulating sequences:   1%|          | 1.427237629890442/200 [00:10<24:46,  7.49s/time] [A
-Simulating sequences:   1%|          | 1.4397733211517334/200 [00:11<25:38,  7.75s/time][A
-Simulating sequences:   1%|          | 1.4429876804351807/200 [00:11<26:02,  7.87s/time][A
-Simulating sequences:   1%|          | 1.452440857887268/200 [00:12<29:07,  8.80s/time] [A
-Simulating sequences:   1%|          | 1.4671835899353027/200 [00:13<30:29,  9.21s/time][A
-Simulating sequences:   1%|          | 1.4694243669509888/200 [00:14<32:59,  9.97s/time][A
-Simulating sequences:   1%|          | 1.4902656078338623/200 [00:14<32:58,  9.97s/time][A
-Simulating sequences:   1%|          | 1.5011448860168457/200 [00:16<37:04, 11.21s/time][A
-Simulating sequences:   1%|          | 1.5418399572372437/200 [00:17<36:32, 11.05s/time][A
-Simulating sequences:   1%|          | 1.5487078428268433/200 [00:17<36:49, 11.14s/time][A
-Simulating sequences:   1%|          | 1.5511361360549927/200 [00:19<40:53, 12.36s/time][A
-Simulating sequences:   1%|          | 1.8354997634887695/200 [00:19<34:54, 10.57s/time][A
-Simulating sequences:   1%|          | 1.8388489484786987/200 [00:19<35:14, 10.67s/time][A
-Simulating sequences:   1%|          | 1.8897254467010498/200 [00:21<37:29, 11.35s/time][A
-Simulating sequences:   1%|          | 1.8911651372909546/200 [00:21<38:03, 11.52s/time][A
-Simulating sequences:   1%|          | 1.8936222791671753/200 [00:22<39:23, 11.93s/time][A
-Simulating sequences:   1%|          | 1.9002808332443237/200 [00:24<42:12, 12.78s/time][A
-Simulating sequences:   1%|          | 1.9751200675964355/200 [00:26<43:41, 13.24s/time][A
-Simulating sequences:   1%|          | 2.011476516723633/200 [00:26<44:08, 13.38s/time] [A
-Simulating sequences:   1%|          | 2.060429573059082/200 [00:27<43:28, 13.18s/time][A
-Simulating sequences:   1%|          | 2.0849599838256836/200 [00:28<45:47, 13.88s/time][A
-Simulating sequences:   1%|          | 2.0888795852661133/200 [00:29<46:32, 14.11s/time][A
-Simulating sequences:   1%|          | 2.090867042541504/200 [00:30<47:38, 14.44s/time] [A
-Simulating sequences:   1%|          | 2.106809616088867/200 [00:31<49:12, 14.92s/time][A
-Simulating sequences:   1%|          | 2.1100761890411377/200 [00:32<50:32, 15.32s/time][A
-Simulating sequences:   1%|          | 2.1118898391723633/200 [00:34<53:07, 16.11s/time][A
-Simulating sequences:   1%|          | 2.1195778846740723/200 [00:35<55:53, 16.95s/time][A
-Simulating sequences:   1%|          | 2.139802932739258/200 [00:36<55:48, 16.92s/time] [A
-Simulating sequences:   1%|          | 2.1521761417388916/200 [00:38<58:39, 17.79s/time][A
-Simulating sequences:   1%|          | 2.2753820419311523/200 [00:39<56:35, 17.17s/time][A
-Simulating sequences:   1%|          | 2.4170899391174316/200 [00:41<55:57, 16.99s/time][A
-Simulating sequences:   1%|          | 2.42175555229187/200 [00:42<57:49, 17.56s/time]  [A
-Simulating sequences:   1%|          | 2.427891731262207/200 [00:43<59:04, 17.94s/time][A
-Simulating sequences:   1%|          | 2.4287569522857666/200 [00:45<1:01:18, 18.62s/time][A
-Simulating sequences:   1%|          | 2.432069778442383/200 [00:46<1:02:53, 19.10s/time] [A
-Simulating sequences:   1%|          | 2.474714994430542/200 [00:47<1:03:26, 19.27s/time][A
-Simulating sequences:   1%|          | 2.4823734760284424/200 [00:49<1:06:02, 20.06s/time][A
-Simulating sequences:   1%|▏         | 2.5120036602020264/200 [00:50<1:05:50, 20.00s/time][A
-Simulating sequences:   1%|▏         | 2.5231494903564453/200 [00:52<1:07:50, 20.61s/time][A
-Simulating sequences:   1%|▏         | 2.5606977939605713/200 [00:52<1:07:48, 20.61s/time][A
-Simulating sequences:   1%|▏         | 2.5944762229919434/200 [00:54<1:09:15, 21.05s/time][A
-Simulating sequences:   1%|▏         | 2.600597620010376/200 [00:55<1:10:41, 21.49s/time] [A
-Simulating sequences:   1%|▏         | 2.61979341506958/200 [00:58<1:12:59, 22.19s/time] [A
-Simulating sequences:   1%|▏         | 2.7094454765319824/200 [01:00<1:13:49, 22.45s/time][A
-Simulating sequences:   1%|▏         | 2.772444248199463/200 [01:03<1:14:44, 22.74s/time] [A
-Simulating sequences:   1%|▏         | 2.832388401031494/200 [01:05<1:15:46, 23.06s/time][A
-Simulating sequences:   1%|▏         | 2.8430566787719727/200 [01:07<1:17:55, 23.71s/time][A
-Simulating sequences:   1%|▏         | 2.847191095352173/200 [01:10<1:20:52, 24.61s/time] [A
-Simulating sequences:   1%|▏         | 2.8609323501586914/200 [01:12<1:22:50, 25.21s/time][A
-Simulating sequences:   1%|▏         | 2.8783063888549805/200 [01:14<1:24:37, 25.76s/time][A
-Simulating sequences:   1%|▏         | 2.8789854049682617/200 [01:16<1:27:19, 26.58s/time][A
-Simulating sequences:   1%|▏         | 2.8861873149871826/200 [01:19<1:30:10, 27.45s/time][A
-Simulating sequences:   1%|▏         | 2.891463041305542/200 [01:21<1:32:31, 28.16s/time] [A
-Simulating sequences:   1%|▏         | 2.89965558052063/200 [01:24<1:35:37, 29.11s/time] [A
-Simulating sequences:   1%|▏         | 2.9050991535186768/200 [01:26<1:37:46, 29.76s/time][A
-Simulating sequences:   1%|▏         | 2.9083080291748047/200 [01:28<1:40:14, 30.52s/time][A
-Simulating sequences:   1%|▏         | 2.927485466003418/200 [01:31<1:42:28, 31.20s/time] [A
-Simulating sequences:   1%|▏         | 2.939842700958252/200 [01:34<1:45:30, 32.12s/time][A
-Simulating sequences:   1%|▏         | 2.9472994804382324/200 [01:36<1:47:37, 32.77s/time][A
-Simulating sequences:   1%|▏         | 2.9680166244506836/200 [01:38<1:49:07, 33.23s/time][ATraceback (most recent call last):
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
-    main()
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in main
-    plrunner.predict()
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 253, in predict
-    predictions = trainer.predict(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 887, in predict
-    return call._call_and_handle_interrupt(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
-    return trainer_fn(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 928, in _predict_impl
-    results = self._run(model, ckpt_path=ckpt_path)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
-    results = self._run_stage()
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1051, in _run_stage
-    return self.predict_loop.run()
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
-    return loop_run(self, *args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 125, in run
-    self._predict_step(batch, batch_idx, dataloader_idx, dataloader_iter)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 255, in _predict_step
-    predictions = call._call_strategy_hook(trainer, "predict_step", *step_args)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
-    output = fn(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 438, in predict_step
-    return self.lightning_module.predict_step(*args, **kwargs)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 477, in predict_step
-    simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 773, in simulate
-    accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/thinning.py", line 201, in draw_next_time_one_step
-    intensities_at_sampled_times = intensity_fn(time_seq,
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/attnhp.py", line 314, in compute_intensities_at_sample_times
-    encoder_output = self.compute_states_at_sample_times(time_seqs, type_seqs, attention_mask, sample_dtimes)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/attnhp.py", line 276, in compute_states_at_sample_times
-    encoder_output = self.forward(_times,
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/attnhp.py", line 195, in forward
-    cur_layer_ = self.forward_pass(init_cur_layer, time_emb, sample_time_emb, event_emb, combined_mask)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/attnhp.py", line 106, in forward_pass
-    enc_output = enc_layer(_combined_input, combined_mask)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
-    return self._call_impl(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
-    return forward_call(*args, **kwargs)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/baselayer.py", line 115, in forward
-    x = self.self_attn(x, x, x, mask)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
-    return self._call_impl(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
-    return forward_call(*args, **kwargs)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/baselayer.py", line 69, in forward
-    x, attn_weight = attention(query, key, value, mask=mask, dropout=self.dropout)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/baselayer.py", line 13, in attention
-    scores = scores.masked_fill(mask > 0, -1e9)
-torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 9.75 GiB. GPU 0 has a total capacity of 39.39 GiB of which 9.57 GiB is free. Including non-PyTorch memory, this process has 29.81 GiB memory in use. Of the allocated memory 20.24 GiB is allocated by PyTorch, and 9.09 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
-
-                                                                                          [Asrun: error: ruche-gpu17: task 0: Exited with exit code 1

@@ -1,0 +1,85 @@
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/cuda/__init__.py:734: UserWarning: Can't initialize NVML
+  warnings.warn("Can't initialize NVML")
+GPU available: False, used: False
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+Restoring states from the checkpoint path at ./checkpoints/THP/self_correcting/trained_models/best-v1.ckpt
+Loaded model weights from the checkpoint at ./checkpoints/THP/self_correcting/trained_models/best-v1.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:  47%|████▋     | 94.02615356445312/200 [00:00<00:00, 1078.58time/s][A
+Simulating sequences:  47%|████▋     | 94.65101623535156/200 [00:00<00:00, 684.29time/s] [A
+Simulating sequences:  48%|████▊     | 95.88839721679688/200 [00:00<00:00, 441.46time/s][A
+Simulating sequences:  49%|████▉     | 97.83909606933594/200 [00:00<00:00, 364.79time/s][A
+Simulating sequences:  49%|████▉     | 97.90003967285156/200 [00:00<00:00, 281.92time/s][A
+Simulating sequences:  49%|████▉     | 98.06067657470703/200 [00:00<00:00, 229.81time/s][A
+Simulating sequences:  49%|████▉     | 98.12915802001953/200 [00:00<00:00, 204.98time/s][A
+Simulating sequences:  49%|████▉     | 98.21443176269531/200 [00:00<00:00, 175.77time/s][A
+Simulating sequences:  49%|████▉     | 98.34554290771484/200 [00:00<00:00, 154.00time/s][A
+Simulating sequences:  49%|████▉     | 98.40339660644531/200 [00:00<00:00, 135.74time/s][A
+Simulating sequences:  49%|████▉     | 98.41304779052734/200 [00:00<00:00, 121.18time/s][A
+Simulating sequences:  49%|████▉     | 98.54344940185547/200 [00:00<00:00, 109.95time/s][A
+Simulating sequences:  49%|████▉     | 98.63851928710938/200 [00:00<00:01, 100.41time/s][A
+Simulating sequences:  49%|████▉     | 98.76835632324219/200 [00:01<00:01, 92.33time/s] [A
+Simulating sequences:  49%|████▉     | 98.7850341796875/200 [00:01<00:01, 85.33time/s] [A
+Simulating sequences:  49%|████▉     | 98.87428283691406/200 [00:01<00:01, 77.27time/s][A
+Simulating sequences:  49%|████▉     | 98.88960266113281/200 [00:01<00:01, 72.14time/s][A
+Simulating sequences:  49%|████▉     | 98.89877319335938/200 [00:01<00:01, 66.26time/s][A
+Simulating sequences:  49%|████▉     | 98.95252227783203/200 [00:01<00:01, 62.42time/s][A
+Simulating sequences:  50%|████▉     | 99.06719970703125/200 [00:01<00:01, 58.03time/s][A
+Simulating sequences:  50%|████▉     | 99.39434814453125/200 [00:01<00:01, 55.23time/s][A
+Simulating sequences:  50%|████▉     | 99.41496276855469/200 [00:01<00:01, 51.57time/s][A
+Simulating sequences:  50%|████▉     | 99.5023193359375/200 [00:02<00:02, 48.49time/s] [A
+Simulating sequences:  50%|████▉     | 99.54757690429688/200 [00:02<00:02, 45.74time/s][A
+Simulating sequences:  50%|████▉     | 99.6585464477539/200 [00:02<00:02, 42.53time/s] [A
+Simulating sequences:  50%|████▉     | 99.77691650390625/200 [00:02<00:02, 40.27time/s][A
+Simulating sequences:  50%|████▉     | 99.89260864257812/200 [00:02<00:02, 37.70time/s][A
+Simulating sequences:  50%|████▉     | 99.90546417236328/200 [00:02<00:02, 34.92time/s][A
+Simulating sequences:  50%|█████     | 100.34767150878906/200 [00:03<00:03, 32.63time/s][A
+Simulating sequences:  50%|█████     | 100.38139343261719/200 [00:03<00:03, 30.13time/s][A
+Simulating sequences:  51%|█████     | 101.16303253173828/200 [00:03<00:03, 28.53time/s][A
+Simulating sequences:  51%|█████     | 101.25997924804688/200 [00:03<00:03, 26.41time/s][A
+Simulating sequences:  51%|█████     | 101.99217224121094/200 [00:04<00:03, 24.96time/s][A
+Simulating sequences:  51%|█████▏    | 102.81615447998047/200 [00:04<00:04, 23.85time/s][A
+Simulating sequences:  55%|█████▌    | 110.28926086425781/200 [00:04<00:03, 24.26time/s][A
+Simulating sequences:  59%|█████▉    | 118.22057342529297/200 [00:04<00:03, 25.02time/s][A
+Simulating sequences:  64%|██████▎   | 127.34791564941406/200 [00:04<00:02, 25.96time/s][A
+Simulating sequences:  87%|████████▋ | 173.87672424316406/200 [00:05<00:00, 33.96time/s][A
+Simulating sequences:  89%|████████▉ | 178.68499755859375/200 [00:05<00:00, 33.50time/s][A
+Simulating sequences:  92%|█████████▏| 183.79635620117188/200 [00:05<00:00, 32.76time/s][A
+Simulating sequences:  96%|█████████▌| 191.57081604003906/200 [00:05<00:00, 32.84time/s][A
+Simulating sequences:  99%|█████████▉| 197.69439697265625/200 [00:06<00:00, 32.87time/s][A
+Simulating sequences: 100%|██████████| 200/200 [00:06<00:00, 31.93time/s]               [A
+                                                                         [ATraceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in main
+    plrunner.predict()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 253, in predict
+    predictions = trainer.predict(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 887, in predict
+    return call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 928, in _predict_impl
+    results = self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1051, in _run_stage
+    return self.predict_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 125, in run
+    self._predict_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 255, in _predict_step
+    predictions = call._call_strategy_hook(trainer, "predict_step", *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 438, in predict_step
+    return self.lightning_module.predict_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 488, in predict_step
+    if self.sim_events_counter >= self.max_simul_events:
+RuntimeError: Boolean value of Tensor with more than one value is ambiguous
+srun: error: ruche-gpu11: task 0: Exited with exit code 1

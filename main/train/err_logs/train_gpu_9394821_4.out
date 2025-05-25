@@ -1,0 +1,5 @@
+[31;1m2025-05-24 13:54:20,145 - config.py[pid:16036;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 13:54:20,312 - trainer.py[pid:16036;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/NHP/hawkes2/trained_models/best.ckpt[0m
+[38;20m2025-05-24 13:54:20,312 - trainer.py[pid:16036;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/NHP/hawkes2/trained_models/best.ckpt.[0m
+[38;20m2025-05-24 13:54:20,396 - trainer.py[pid:16036;line:247:predict] - INFO: --- Starting Prediction for Model : NHP on dataset : hawkes2 ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/24 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/24 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/24 [00:48<?, ?it/s]

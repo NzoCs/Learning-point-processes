@@ -1,18 +1,0 @@
-[31;1m2025-05-24 08:28:44,150 - config.py[pid:28475;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-24 08:28:44,833 - trainer.py[pid:28475;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-24 08:28:44,857 - trainer.py[pid:28475;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/RMTPP/taxi/trained_models/best.ckpt[0m
-[38;20m2025-05-24 08:28:44,857 - trainer.py[pid:28475;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/taxi/trained_models/best.ckpt.[0m
-[38;20m2025-05-24 08:28:44,938 - trainer.py[pid:28475;line:247:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : taxi ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:  50%|█████     | 1/2 [00:01<00:01,  0.57it/s]Predicting DataLoader 0: 100%|██████████| 2/2 [00:02<00:00,  0.74it/s]Predicting DataLoader 0: 100%|██████████| 2/2 [00:02<00:00,  0.74it/s]
-Data successfully saved to ./checkpoints/RMTPP/taxi/distributions_comparisons/simulations.json
-[38;20m2025-05-24 08:29:03,187 - new_comparator.py[pid:28475;line:42:__init__] - INFO: Extracting label data from dataloader...[0m
-[38;20m2025-05-24 08:29:03,269 - new_comparator.py[pid:28475;line:86:__init__] - INFO: Processing simulation data...[0m
-[38;20m2025-05-24 08:29:03,271 - new_comparator.py[pid:28475;line:112:__init__] - INFO: Collected 14820 label events and 2 simulated events for comparison[0m
-[38;20m2025-05-24 08:29:03,271 - new_comparator.py[pid:28475;line:555:run_evaluation] - INFO: Generating comparison plots for simulations...[0m
-[38;20m2025-05-24 08:29:04,395 - new_comparator.py[pid:28475;line:226:plot_inter_event_time_distribution] - INFO: Inter-event time distribution comparison plot saved to ./checkpoints/RMTPP/taxi/distributions_comparisons/comparison_inter_event_time_dist.png[0m
-[33;20m2025-05-24 08:29:04,395 - new_comparator.py[pid:28475;line:274:_create_qq_plot] - WARNING: Not enough data points for QQ plot: 2 points[0m
-[38;20m2025-05-24 08:29:04,936 - new_comparator.py[pid:28475;line:394:plot_event_type_distribution] - INFO: Event type distribution comparison plot saved to ./checkpoints/RMTPP/taxi/distributions_comparisons/comparison_event_type_dist.png[0m
-[38;20m2025-05-24 08:29:05,617 - new_comparator.py[pid:28475;line:460:plot_sequence_length_distribution] - INFO: Sequence length distribution comparison plot saved to ./checkpoints/RMTPP/taxi/distributions_comparisons/comparison_sequence_length_dist.png[0m
-[33;20m2025-05-24 08:29:05,618 - new_comparator.py[pid:28475;line:274:_create_qq_plot] - WARNING: Not enough data points for QQ plot: 1 points[0m
-[38;20m2025-05-24 08:29:16,055 - new_comparator.py[pid:28475;line:549:plot_cross_correlation_moments] - INFO: Cross-correlation comparison plot saved to ./checkpoints/RMTPP/taxi/distributions_comparisons/comparison_cross_correlation_moments.png[0m
-[38;20m2025-05-24 08:29:16,056 - trainer.py[pid:28475;line:274:predict] - INFO: Predictions saved to ./checkpoints/RMTPP/taxi/distributions_comparisons[0m

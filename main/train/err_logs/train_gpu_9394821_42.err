@@ -1,0 +1,361 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+Restoring states from the checkpoint path at ./checkpoints/SAHP/H2expi/trained_models/best.ckpt
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/gpfs/users/regnaguen/Learning-point-processes/main/train/SAHP/H2expi/mysterious_panda_589/trained_models' to '/gpfs/users/regnaguen/Learning-point-processes/main/train/checkpoints/SAHP/H2expi/trained_models', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/SAHP/H2expi/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:  48%|████▊     | 95.68465423583984/200 [00:01<00:01, 64.15time/s][A
+Simulating sequences:  48%|████▊     | 96.1336898803711/200 [00:01<00:01, 62.92time/s] [A
+Simulating sequences:  48%|████▊     | 96.22173309326172/200 [00:01<00:01, 62.34time/s][A
+Simulating sequences:  48%|████▊     | 96.26467895507812/200 [00:01<00:01, 61.76time/s][A
+Simulating sequences:  48%|████▊     | 96.27986145019531/200 [00:01<00:01, 61.15time/s][A
+Simulating sequences:  48%|████▊     | 96.43981170654297/200 [00:01<00:01, 60.65time/s][A
+Simulating sequences:  48%|████▊     | 96.64373779296875/200 [00:01<00:01, 60.20time/s][A
+Simulating sequences:  49%|████▊     | 97.08287048339844/200 [00:01<00:01, 59.90time/s][A
+Simulating sequences:  49%|████▊     | 97.45500183105469/200 [00:01<00:01, 59.55time/s][A
+Simulating sequences:  49%|████▉     | 97.57540130615234/200 [00:01<00:01, 59.04time/s][A
+Simulating sequences:  49%|████▉     | 97.59158325195312/200 [00:01<00:01, 58.51time/s][A
+Simulating sequences:  49%|████▉     | 97.6001968383789/200 [00:01<00:01, 57.97time/s] [A
+Simulating sequences:  49%|████▉     | 97.72711944580078/200 [00:01<00:01, 57.43time/s][A
+Simulating sequences:  49%|████▉     | 97.99938201904297/200 [00:01<00:01, 57.05time/s][A
+Simulating sequences:  49%|████▉     | 98.17011260986328/200 [00:01<00:01, 56.64time/s][A
+Simulating sequences:  49%|████▉     | 98.43480682373047/200 [00:01<00:01, 56.28time/s][A
+Simulating sequences:  49%|████▉     | 98.4446029663086/200 [00:01<00:01, 55.77time/s] [A
+Simulating sequences:  49%|████▉     | 98.86540222167969/200 [00:01<00:01, 55.55time/s][A
+Simulating sequences:  49%|████▉     | 98.87004852294922/200 [00:01<00:01, 55.10time/s][A
+Simulating sequences:  49%|████▉     | 98.97555541992188/200 [00:01<00:01, 54.71time/s][A
+Simulating sequences:  50%|████▉     | 99.47467803955078/200 [00:01<00:01, 54.54time/s][A
+Simulating sequences:  50%|████▉     | 99.64241790771484/200 [00:01<00:01, 54.19time/s][A
+Simulating sequences:  50%|████▉     | 99.78520965576172/200 [00:01<00:01, 53.84time/s][A
+Simulating sequences:  50%|████▉     | 99.81167602539062/200 [00:01<00:01, 53.43time/s][A
+Simulating sequences:  50%|████▉     | 99.82215118408203/200 [00:01<00:01, 53.02time/s][A
+Simulating sequences:  50%|████▉     | 99.83800506591797/200 [00:01<00:01, 52.61time/s][A
+Simulating sequences:  50%|████▉     | 99.89313507080078/200 [00:01<00:01, 52.23time/s][A
+Simulating sequences:  50%|█████     | 100.35868072509766/200 [00:01<00:01, 52.07time/s][A
+Simulating sequences:  51%|█████     | 101.324462890625/200 [00:01<00:01, 52.17time/s]  [A
+Simulating sequences:  51%|█████     | 101.6335678100586/200 [00:01<00:01, 51.92time/s][A
+Simulating sequences:  51%|█████     | 101.6372299194336/200 [00:01<00:01, 51.53time/s][A
+Simulating sequences:  51%|█████     | 101.6651611328125/200 [00:01<00:01, 51.16time/s][A
+Simulating sequences:  51%|█████     | 101.68146514892578/200 [00:02<00:01, 50.58time/s][A
+Simulating sequences:  51%|█████     | 101.75178527832031/200 [00:02<00:01, 50.23time/s][A
+Simulating sequences:  52%|█████▏    | 103.01927185058594/200 [00:02<00:01, 50.49time/s][A
+Simulating sequences:  52%|█████▏    | 103.0801010131836/200 [00:02<00:01, 49.95time/s] [A
+Simulating sequences:  52%|█████▏    | 103.15953826904297/200 [00:02<00:01, 49.61time/s][A
+Simulating sequences:  52%|█████▏    | 103.29413604736328/200 [00:02<00:01, 49.31time/s][A
+Simulating sequences:  52%|█████▏    | 103.77191162109375/200 [00:02<00:01, 49.19time/s][A
+Simulating sequences:  52%|█████▏    | 103.7909927368164/200 [00:02<00:01, 48.83time/s] [A
+Simulating sequences:  53%|█████▎    | 105.16063690185547/200 [00:02<00:01, 49.11time/s][A
+Simulating sequences:  53%|█████▎    | 105.79053497314453/200 [00:02<00:01, 49.04time/s][A
+Simulating sequences:  53%|█████▎    | 105.83244323730469/200 [00:02<00:01, 48.70time/s][A
+Simulating sequences:  53%|█████▎    | 106.82588195800781/200 [00:02<00:01, 48.81time/s][A
+Simulating sequences:  53%|█████▎    | 106.86128234863281/200 [00:02<00:01, 48.47time/s][A
+Simulating sequences:  54%|█████▎    | 107.0478515625/200 [00:02<00:01, 48.20time/s]    [A
+Simulating sequences:  54%|█████▎    | 107.14599609375/200 [00:02<00:01, 47.91time/s][A
+Simulating sequences:  54%|█████▎    | 107.17684173583984/200 [00:02<00:01, 47.59time/s][A
+Simulating sequences:  54%|█████▍    | 107.62151336669922/200 [00:02<00:01, 47.44time/s][A
+Simulating sequences:  54%|█████▍    | 107.9697036743164/200 [00:02<00:01, 47.26time/s] [A
+Simulating sequences:  55%|█████▍    | 109.83636474609375/200 [00:02<00:01, 47.75time/s][A
+Simulating sequences:  55%|█████▌    | 110.16548919677734/200 [00:02<00:01, 47.55time/s][A
+Simulating sequences:  55%|█████▌    | 110.17070007324219/200 [00:02<00:01, 47.22time/s][A
+Simulating sequences:  55%|█████▌    | 110.38957977294922/200 [00:02<00:01, 46.99time/s][A
+Simulating sequences:  55%|█████▌    | 110.46609497070312/200 [00:02<00:01, 46.57time/s][A
+Simulating sequences:  55%|█████▌    | 110.47576141357422/200 [00:02<00:01, 46.25time/s][A
+Simulating sequences:  55%|█████▌    | 110.71630859375/200 [00:02<00:01, 46.04time/s]   [A
+Simulating sequences:  55%|█████▌    | 110.74180603027344/200 [00:02<00:01, 45.74time/s][A
+Simulating sequences:  56%|█████▌    | 111.07794189453125/200 [00:02<00:01, 45.57time/s][A
+Simulating sequences:  56%|█████▌    | 111.32403564453125/200 [00:02<00:01, 45.37time/s][A
+Simulating sequences:  56%|█████▌    | 111.35684967041016/200 [00:02<00:01, 45.08time/s][A
+Simulating sequences:  56%|█████▌    | 111.79714965820312/200 [00:02<00:01, 44.96time/s][A
+Simulating sequences:  56%|█████▌    | 112.02344512939453/200 [00:02<00:01, 44.76time/s][A
+Simulating sequences:  56%|█████▌    | 112.11581420898438/200 [00:02<00:01, 44.50time/s][A
+Simulating sequences:  56%|█████▌    | 112.17053985595703/200 [00:02<00:01, 44.23time/s][A
+Simulating sequences:  56%|█████▌    | 112.25841522216797/200 [00:02<00:01, 43.97time/s][A
+Simulating sequences:  56%|█████▌    | 112.26012420654297/200 [00:02<00:02, 43.70time/s][A
+Simulating sequences:  57%|█████▋    | 113.02901458740234/200 [00:02<00:01, 43.71time/s][A
+Simulating sequences:  57%|█████▋    | 113.20184326171875/200 [00:02<00:01, 43.50time/s][A
+Simulating sequences:  57%|█████▋    | 113.47615051269531/200 [00:02<00:01, 43.32time/s][A
+Simulating sequences:  57%|█████▋    | 113.487548828125/200 [00:02<00:02, 43.05time/s]  [A
+Simulating sequences:  57%|█████▋    | 113.79436492919922/200 [00:02<00:02, 42.90time/s][A
+Simulating sequences:  57%|█████▋    | 113.8021011352539/200 [00:02<00:02, 42.63time/s] [A
+Simulating sequences:  57%|█████▋    | 113.80765533447266/200 [00:02<00:02, 42.27time/s][A
+Simulating sequences:  57%|█████▋    | 114.03785705566406/200 [00:02<00:02, 42.10time/s][A
+Simulating sequences:  57%|█████▋    | 114.10169982910156/200 [00:02<00:02, 41.86time/s][A
+Simulating sequences:  57%|█████▋    | 114.1192855834961/200 [00:02<00:02, 41.60time/s] [A
+Simulating sequences:  57%|█████▋    | 114.38916015625/200 [00:02<00:02, 41.44time/s]  [A
+Simulating sequences:  57%|█████▋    | 114.65526580810547/200 [00:02<00:02, 41.29time/s][A
+Simulating sequences:  57%|█████▋    | 114.91239166259766/200 [00:02<00:02, 41.13time/s][A
+Simulating sequences:  57%|█████▋    | 114.96536254882812/200 [00:02<00:02, 40.90time/s][A
+Simulating sequences:  58%|█████▊    | 115.00450897216797/200 [00:02<00:02, 40.66time/s][A
+Simulating sequences:  58%|█████▊    | 115.46578979492188/200 [00:02<00:02, 40.58time/s][A
+Simulating sequences:  58%|█████▊    | 116.07235717773438/200 [00:02<00:02, 40.54time/s][A
+Simulating sequences:  58%|█████▊    | 116.27134704589844/200 [00:02<00:02, 40.37time/s][A
+Simulating sequences:  58%|█████▊    | 116.37408447265625/200 [00:02<00:02, 40.16time/s][A
+Simulating sequences:  58%|█████▊    | 116.46318817138672/200 [00:02<00:02, 39.96time/s][A
+Simulating sequences:  58%|█████▊    | 116.71060943603516/200 [00:02<00:02, 39.81time/s][A
+Simulating sequences:  58%|█████▊    | 116.72532653808594/200 [00:02<00:02, 39.57time/s][A
+Simulating sequences:  59%|█████▉    | 117.68870544433594/200 [00:02<00:02, 39.66time/s][A
+Simulating sequences:  59%|█████▉    | 117.76925659179688/200 [00:02<00:02, 39.46time/s][A
+Simulating sequences:  59%|█████▉    | 117.99441528320312/200 [00:03<00:02, 39.30time/s][A
+Simulating sequences:  59%|█████▉    | 118.16612243652344/200 [00:03<00:02, 39.13time/s][A
+Simulating sequences:  59%|█████▉    | 118.2432632446289/200 [00:03<00:02, 38.93time/s] [A
+Simulating sequences:  59%|█████▉    | 118.34176635742188/200 [00:03<00:02, 38.64time/s][A
+Simulating sequences:  59%|█████▉    | 118.42689514160156/200 [00:03<00:02, 38.45time/s][A
+Simulating sequences:  59%|█████▉    | 118.45069885253906/200 [00:03<00:02, 38.24time/s][A
+Simulating sequences:  59%|█████▉    | 118.49642181396484/200 [00:03<00:02, 38.03time/s][A
+Simulating sequences:  60%|█████▉    | 119.22309112548828/200 [00:03<00:02, 38.05time/s][A
+Simulating sequences:  60%|█████▉    | 119.22828674316406/200 [00:03<00:02, 37.84time/s][A
+Simulating sequences:  60%|█████▉    | 119.34030151367188/200 [00:03<00:02, 37.65time/s][A
+Simulating sequences:  60%|█████▉    | 119.56056213378906/200 [00:03<00:02, 37.51time/s][A
+Simulating sequences:  60%|█████▉    | 119.59567260742188/200 [00:03<00:02, 37.31time/s][A
+Simulating sequences:  60%|█████▉    | 119.6798324584961/200 [00:03<00:02, 37.13time/s] [A
+Simulating sequences:  61%|██████    | 121.9180679321289/200 [00:03<00:02, 37.61time/s][A
+Simulating sequences:  61%|██████    | 122.43264770507812/200 [00:03<00:02, 37.56time/s][A
+Simulating sequences:  61%|██████▏   | 122.94314575195312/200 [00:03<00:02, 37.51time/s][A
+Simulating sequences:  62%|██████▏   | 123.35198974609375/200 [00:03<00:02, 37.43time/s][A
+Simulating sequences:  62%|██████▏   | 123.45515441894531/200 [00:03<00:02, 37.25time/s][A
+Simulating sequences:  62%|██████▏   | 123.57142639160156/200 [00:03<00:02, 37.08time/s][A
+Simulating sequences:  62%|██████▏   | 123.62492370605469/200 [00:03<00:02, 36.90time/s][A
+Simulating sequences:  62%|██████▏   | 123.65901184082031/200 [00:03<00:02, 36.67time/s][A
+Simulating sequences:  62%|██████▏   | 124.46332550048828/200 [00:03<00:02, 36.70time/s][A
+Simulating sequences:  63%|██████▎   | 126.22139739990234/200 [00:03<00:01, 37.02time/s][A
+Simulating sequences:  63%|██████▎   | 126.24578857421875/200 [00:03<00:02, 36.82time/s][A
+Simulating sequences:  63%|██████▎   | 126.31181335449219/200 [00:03<00:02, 36.65time/s][A
+Simulating sequences:  63%|██████▎   | 126.32278442382812/200 [00:03<00:02, 36.45time/s][A
+Simulating sequences:  64%|██████▎   | 127.29011535644531/200 [00:03<00:01, 36.53time/s][A
+Simulating sequences:  65%|██████▍   | 129.115234375/200 [00:03<00:01, 36.86time/s]     [A
+Simulating sequences:  65%|██████▍   | 129.35598754882812/200 [00:03<00:01, 36.74time/s][A
+Simulating sequences:  65%|██████▌   | 130.96214294433594/200 [00:03<00:01, 36.99time/s][A
+Simulating sequences:  66%|██████▌   | 131.8907012939453/200 [00:03<00:01, 37.06time/s] [A
+Simulating sequences:  66%|██████▌   | 132.1602325439453/200 [00:03<00:01, 36.94time/s][A
+Simulating sequences:  66%|██████▋   | 132.58470153808594/200 [00:03<00:01, 36.87time/s][A
+Simulating sequences:  66%|██████▋   | 132.79055786132812/200 [00:03<00:01, 36.73time/s][A
+Simulating sequences:  67%|██████▋   | 133.3213653564453/200 [00:03<00:01, 36.68time/s] [A
+Simulating sequences:  67%|██████▋   | 133.5121612548828/200 [00:03<00:01, 36.55time/s][A
+Simulating sequences:  67%|██████▋   | 134.0545196533203/200 [00:03<00:01, 36.51time/s][A
+Simulating sequences:  67%|██████▋   | 134.14901733398438/200 [00:03<00:01, 36.34time/s][A
+Simulating sequences:  68%|██████▊   | 135.26075744628906/200 [00:03<00:01, 36.45time/s][A
+Simulating sequences:  68%|██████▊   | 135.49464416503906/200 [00:03<00:01, 36.33time/s][A
+Simulating sequences:  68%|██████▊   | 136.71673583984375/200 [00:03<00:01, 36.47time/s][A
+Simulating sequences:  68%|██████▊   | 136.7228546142578/200 [00:03<00:01, 36.29time/s] [A
+Simulating sequences:  68%|██████▊   | 136.7249755859375/200 [00:03<00:01, 36.10time/s][A
+Simulating sequences:  68%|██████▊   | 136.75119018554688/200 [00:03<00:01, 35.93time/s][A
+Simulating sequences:  68%|██████▊   | 136.78411865234375/200 [00:03<00:01, 35.76time/s][A
+Simulating sequences:  68%|██████▊   | 136.97103881835938/200 [00:03<00:01, 35.62time/s][A
+Simulating sequences:  69%|██████▊   | 137.01373291015625/200 [00:03<00:01, 35.45time/s][A
+Simulating sequences:  69%|██████▊   | 137.16519165039062/200 [00:03<00:01, 35.32time/s][A
+Simulating sequences:  69%|██████▊   | 137.28936767578125/200 [00:03<00:01, 35.17time/s][A
+Simulating sequences:  69%|██████▉   | 137.57342529296875/200 [00:03<00:01, 35.07time/s][A
+Simulating sequences:  69%|██████▉   | 137.6041259765625/200 [00:03<00:01, 34.90time/s] [A
+Simulating sequences:  69%|██████▉   | 137.73362731933594/200 [00:03<00:01, 34.76time/s][A
+Simulating sequences:  69%|██████▉   | 137.92254638671875/200 [00:03<00:01, 34.64time/s][A
+Simulating sequences:  69%|██████▉   | 137.9912872314453/200 [00:04<00:01, 34.49time/s] [A
+Simulating sequences:  70%|██████▉   | 139.1236114501953/200 [00:04<00:01, 34.59time/s][A
+Simulating sequences:  70%|██████▉   | 139.2363739013672/200 [00:04<00:01, 34.46time/s][A
+Simulating sequences:  70%|███████   | 140.82630920410156/200 [00:04<00:01, 34.68time/s][A
+Simulating sequences:  71%|███████   | 141.2770538330078/200 [00:04<00:01, 34.55time/s] [A
+Simulating sequences:  71%|███████   | 141.29006958007812/200 [00:04<00:01, 34.39time/s][A
+Simulating sequences:  71%|███████   | 141.6621551513672/200 [00:04<00:01, 34.31time/s] [A
+Simulating sequences:  71%|███████   | 141.73403930664062/200 [00:04<00:01, 34.17time/s][A
+Simulating sequences:  71%|███████   | 142.19163513183594/200 [00:04<00:01, 34.11time/s][A
+Simulating sequences:  71%|███████   | 142.41781616210938/200 [00:04<00:01, 34.00time/s][A
+Simulating sequences:  71%|███████   | 142.46139526367188/200 [00:04<00:01, 33.85time/s][A
+Simulating sequences:  71%|███████▏  | 142.51455688476562/200 [00:04<00:01, 33.70time/s][A
+Simulating sequences:  71%|███████▏  | 142.5299530029297/200 [00:04<00:01, 33.54time/s] [A
+Simulating sequences:  72%|███████▏  | 143.01913452148438/200 [00:04<00:01, 33.50time/s][A
+Simulating sequences:  72%|███████▏  | 143.16477966308594/200 [00:04<00:01, 33.37time/s][A
+Simulating sequences:  72%|███████▏  | 143.71737670898438/200 [00:04<00:01, 33.34time/s][A
+Simulating sequences:  72%|███████▏  | 143.72340393066406/200 [00:04<00:01, 33.19time/s][A
+Simulating sequences:  72%|███████▏  | 143.8109588623047/200 [00:04<00:01, 33.05time/s] [A
+Simulating sequences:  72%|███████▏  | 143.81356811523438/200 [00:04<00:01, 32.90time/s][A
+Simulating sequences:  72%|███████▏  | 143.8895263671875/200 [00:04<00:01, 32.76time/s] [A
+Simulating sequences:  72%|███████▏  | 143.92706298828125/200 [00:04<00:01, 32.56time/s][A
+Simulating sequences:  72%|███████▏  | 144.12538146972656/200 [00:04<00:01, 32.46time/s][A
+Simulating sequences:  73%|███████▎  | 145.5573272705078/200 [00:04<00:01, 32.63time/s] [A
+Simulating sequences:  73%|███████▎  | 146.13209533691406/200 [00:04<00:01, 32.60time/s][A
+Simulating sequences:  74%|███████▎  | 147.15757751464844/200 [00:04<00:01, 32.68time/s][A
+Simulating sequences:  74%|███████▍  | 147.7558135986328/200 [00:04<00:01, 32.66time/s] [A
+Simulating sequences:  74%|███████▍  | 147.76881408691406/200 [00:04<00:01, 32.51time/s][A
+Simulating sequences:  74%|███████▍  | 147.79730224609375/200 [00:04<00:01, 32.37time/s][A
+Simulating sequences:  74%|███████▍  | 147.98170471191406/200 [00:04<00:01, 32.25time/s][A
+Simulating sequences:  74%|███████▍  | 148.0042724609375/200 [00:04<00:01, 32.11time/s] [A
+Simulating sequences:  74%|███████▍  | 148.2256622314453/200 [00:04<00:01, 32.01time/s][A
+Simulating sequences:  74%|███████▍  | 148.4111785888672/200 [00:04<00:01, 31.90time/s][A
+Simulating sequences:  74%|███████▍  | 148.80908203125/200 [00:04<00:01, 31.84time/s]  [A
+Simulating sequences:  75%|███████▍  | 149.59561157226562/200 [00:04<00:01, 31.86time/s][A
+Simulating sequences:  75%|███████▍  | 149.89361572265625/200 [00:04<00:01, 31.78time/s][A
+Simulating sequences:  75%|███████▌  | 150.365234375/200 [00:04<00:01, 31.74time/s]     [A
+Simulating sequences:  75%|███████▌  | 150.6053009033203/200 [00:04<00:01, 31.60time/s][A
+Simulating sequences:  76%|███████▌  | 151.0784912109375/200 [00:04<00:01, 31.55time/s][A
+Simulating sequences:  76%|███████▌  | 151.6172332763672/200 [00:04<00:01, 31.52time/s][A
+Simulating sequences:  76%|███████▌  | 151.71087646484375/200 [00:04<00:01, 31.40time/s][A
+Simulating sequences:  76%|███████▌  | 151.8810577392578/200 [00:04<00:01, 31.30time/s] [A
+Simulating sequences:  76%|███████▌  | 152.4985809326172/200 [00:04<00:01, 31.28time/s][A
+Simulating sequences:  77%|███████▋  | 154.3290252685547/200 [00:04<00:01, 31.52time/s][A
+Simulating sequences:  77%|███████▋  | 154.8478546142578/200 [00:04<00:01, 31.48time/s][A
+Simulating sequences:  77%|███████▋  | 154.8756866455078/200 [00:04<00:01, 31.35time/s][A
+Simulating sequences:  77%|███████▋  | 154.97225952148438/200 [00:04<00:01, 31.23time/s][A
+Simulating sequences:  78%|███████▊  | 155.74916076660156/200 [00:04<00:01, 31.25time/s][A
+Simulating sequences:  78%|███████▊  | 155.8084259033203/200 [00:05<00:01, 31.12time/s] [A
+Simulating sequences:  78%|███████▊  | 155.96461486816406/200 [00:05<00:01, 31.02time/s][A
+Simulating sequences:  78%|███████▊  | 156.0626220703125/200 [00:05<00:01, 30.90time/s] [A
+Simulating sequences:  78%|███████▊  | 156.49107360839844/200 [00:05<00:01, 30.85time/s][A
+Simulating sequences:  78%|███████▊  | 156.63938903808594/200 [00:05<00:01, 30.70time/s][A
+Simulating sequences:  78%|███████▊  | 156.7455291748047/200 [00:05<00:01, 30.59time/s] [A
+Simulating sequences:  78%|███████▊  | 156.83154296875/200 [00:05<00:01, 30.47time/s]  [A
+Simulating sequences:  79%|███████▊  | 157.12326049804688/200 [00:05<00:01, 30.40time/s][A
+Simulating sequences:  79%|███████▊  | 157.47262573242188/200 [00:05<00:01, 30.34time/s][A
+Simulating sequences:  79%|███████▉  | 157.55816650390625/200 [00:05<00:01, 30.22time/s][A
+Simulating sequences:  79%|███████▉  | 157.64398193359375/200 [00:05<00:01, 30.10time/s][A
+Simulating sequences:  79%|███████▉  | 158.22015380859375/200 [00:05<00:01, 30.09time/s][A
+Simulating sequences:  80%|███████▉  | 159.2796173095703/200 [00:05<00:01, 30.16time/s] [A
+Simulating sequences:  80%|███████▉  | 159.61947631835938/200 [00:05<00:01, 30.09time/s][A
+Simulating sequences:  80%|███████▉  | 159.68104553222656/200 [00:05<00:01, 29.97time/s][A
+Simulating sequences:  80%|████████  | 160.56283569335938/200 [00:05<00:01, 30.01time/s][A
+Simulating sequences:  80%|████████  | 160.86328125/200 [00:05<00:01, 29.94time/s]      [A
+Simulating sequences:  81%|████████  | 161.05126953125/200 [00:05<00:01, 29.85time/s][A
+Simulating sequences:  81%|████████  | 161.0672607421875/200 [00:05<00:01, 29.72time/s][A
+Simulating sequences:  81%|████████  | 161.755859375/200 [00:05<00:01, 29.73time/s]    [A
+Simulating sequences:  81%|████████  | 161.96408081054688/200 [00:05<00:01, 29.64time/s][A
+Simulating sequences:  81%|████████  | 162.04371643066406/200 [00:05<00:01, 29.53time/s][A
+Simulating sequences:  81%|████████  | 162.1617431640625/200 [00:05<00:01, 29.43time/s] [A
+Simulating sequences:  81%|████████  | 162.4108428955078/200 [00:05<00:01, 29.35time/s][A
+Simulating sequences:  81%|████████▏ | 162.88739013671875/200 [00:05<00:01, 29.32time/s][A
+Simulating sequences:  81%|████████▏ | 162.9385528564453/200 [00:05<00:01, 29.20time/s] [A
+Simulating sequences:  81%|████████▏ | 162.99270629882812/200 [00:05<00:01, 29.09time/s][A
+Simulating sequences:  82%|████████▏ | 163.0797576904297/200 [00:05<00:01, 28.99time/s] [A
+Simulating sequences:  82%|████████▏ | 163.12705993652344/200 [00:05<00:01, 28.88time/s][A
+Simulating sequences:  82%|████████▏ | 163.5946502685547/200 [00:05<00:01, 28.84time/s] [A
+Simulating sequences:  82%|████████▏ | 163.97793579101562/200 [00:05<00:01, 28.61time/s][A
+Simulating sequences:  83%|████████▎ | 166.230712890625/200 [00:05<00:01, 28.88time/s]  [A
+Simulating sequences:  83%|████████▎ | 166.7339324951172/200 [00:05<00:01, 28.80time/s][A
+Simulating sequences:  83%|████████▎ | 166.74586486816406/200 [00:05<00:01, 28.69time/s][A
+Simulating sequences:  83%|████████▎ | 166.90744018554688/200 [00:05<00:01, 28.59time/s][A
+Simulating sequences:  83%|████████▎ | 166.9858856201172/200 [00:05<00:01, 28.48time/s] [A
+Simulating sequences:  84%|████████▎ | 167.091796875/200 [00:05<00:01, 28.38time/s]    [A
+Simulating sequences:  84%|████████▎ | 167.43698120117188/200 [00:05<00:01, 28.32time/s][A
+Simulating sequences:  84%|████████▍ | 167.554931640625/200 [00:05<00:01, 28.22time/s]  [A
+Simulating sequences:  84%|████████▍ | 167.5719451904297/200 [00:05<00:01, 28.11time/s][A
+Simulating sequences:  84%|████████▍ | 167.8642578125/200 [00:05<00:01, 28.04time/s]   [A
+Simulating sequences:  84%|████████▍ | 168.03338623046875/200 [00:06<00:01, 27.95time/s][A
+Simulating sequences:  84%|████████▍ | 168.04759216308594/200 [00:06<00:01, 27.83time/s][A
+Simulating sequences:  84%|████████▍ | 168.35044860839844/200 [00:06<00:01, 27.77time/s][A
+Simulating sequences:  85%|████████▍ | 169.0065460205078/200 [00:06<00:01, 27.76time/s] [A
+Simulating sequences:  85%|████████▍ | 169.3742218017578/200 [00:06<00:01, 27.71time/s][A
+Simulating sequences:  85%|████████▍ | 169.37777709960938/200 [00:06<00:01, 27.60time/s][A
+Simulating sequences:  85%|████████▍ | 169.39022827148438/200 [00:06<00:01, 27.49time/s][A
+Simulating sequences:  85%|████████▍ | 169.74049377441406/200 [00:06<00:01, 27.43time/s][A
+Simulating sequences:  85%|████████▌ | 170.10633850097656/200 [00:06<00:01, 27.38time/s][A
+Simulating sequences:  85%|████████▌ | 170.16864013671875/200 [00:06<00:01, 27.28time/s][A
+Simulating sequences:  85%|████████▌ | 170.2358856201172/200 [00:06<00:01, 27.18time/s] [A
+Simulating sequences:  85%|████████▌ | 170.25489807128906/200 [00:06<00:01, 27.07time/s][A
+Simulating sequences:  85%|████████▌ | 170.6388397216797/200 [00:06<00:01, 27.02time/s] [A
+Simulating sequences:  86%|████████▌ | 171.04869079589844/200 [00:06<00:01, 26.98time/s][A
+Simulating sequences:  86%|████████▌ | 171.08084106445312/200 [00:06<00:01, 26.88time/s][A
+Simulating sequences:  86%|████████▌ | 171.2482147216797/200 [00:06<00:01, 26.80time/s] [A
+Simulating sequences:  86%|████████▌ | 171.83348083496094/200 [00:06<00:01, 26.78time/s][A
+Simulating sequences:  86%|████████▌ | 171.86412048339844/200 [00:06<00:01, 26.67time/s][A
+Simulating sequences:  87%|████████▋ | 173.36231994628906/200 [00:06<00:00, 26.76time/s][A
+Simulating sequences:  87%|████████▋ | 173.44924926757812/200 [00:06<00:00, 26.67time/s][A
+Simulating sequences:  87%|████████▋ | 173.6726531982422/200 [00:06<00:00, 26.59time/s] [A
+Simulating sequences:  87%|████████▋ | 173.91159057617188/200 [00:06<00:00, 26.52time/s][A
+Simulating sequences:  87%|████████▋ | 173.9119415283203/200 [00:06<00:00, 26.42time/s] [A
+Simulating sequences:  87%|████████▋ | 174.1958770751953/200 [00:06<00:00, 26.36time/s][A
+Simulating sequences:  87%|████████▋ | 174.27517700195312/200 [00:06<00:00, 26.27time/s][A
+Simulating sequences:  87%|████████▋ | 174.6315460205078/200 [00:06<00:00, 26.21time/s] [A
+Simulating sequences:  87%|████████▋ | 174.8345947265625/200 [00:06<00:00, 26.15time/s][A
+Simulating sequences:  88%|████████▊ | 175.02798461914062/200 [00:06<00:00, 26.07time/s][A
+Simulating sequences:  88%|████████▊ | 175.20547485351562/200 [00:06<00:00, 26.00time/s][A
+Simulating sequences:  88%|████████▊ | 175.81768798828125/200 [00:06<00:00, 25.99time/s][A
+Simulating sequences:  88%|████████▊ | 175.8269805908203/200 [00:06<00:00, 25.86time/s] [A
+Simulating sequences:  88%|████████▊ | 175.87010192871094/200 [00:06<00:00, 25.77time/s][A
+Simulating sequences:  88%|████████▊ | 175.9137725830078/200 [00:06<00:00, 25.68time/s] [A
+Simulating sequences:  88%|████████▊ | 176.14157104492188/200 [00:06<00:00, 25.61time/s][A
+Simulating sequences:  88%|████████▊ | 176.27105712890625/200 [00:06<00:00, 25.54time/s][A
+Simulating sequences:  88%|████████▊ | 176.86288452148438/200 [00:06<00:00, 25.53time/s][A
+Simulating sequences:  89%|████████▊ | 177.11534118652344/200 [00:06<00:00, 25.47time/s][A
+Simulating sequences:  89%|████████▉ | 177.83700561523438/200 [00:06<00:00, 25.48time/s][A
+Simulating sequences:  89%|████████▉ | 178.10496520996094/200 [00:07<00:00, 25.43time/s][A
+Simulating sequences:  89%|████████▉ | 178.13134765625/200 [00:07<00:00, 25.34time/s]   [A
+Simulating sequences:  89%|████████▉ | 178.76739501953125/200 [00:07<00:00, 25.33time/s][A
+Simulating sequences:  90%|████████▉ | 179.17576599121094/200 [00:07<00:00, 25.30time/s][A
+Simulating sequences:  90%|████████▉ | 179.6580047607422/200 [00:07<00:00, 25.27time/s] [A
+Simulating sequences:  90%|█████████ | 180.06900024414062/200 [00:07<00:00, 25.24time/s][A
+Simulating sequences:  90%|█████████ | 180.2024688720703/200 [00:07<00:00, 25.14time/s] [A
+Simulating sequences:  90%|█████████ | 180.28756713867188/200 [00:07<00:00, 25.06time/s][A
+Simulating sequences:  91%|█████████ | 181.02139282226562/200 [00:07<00:00, 25.08time/s][A
+Simulating sequences:  91%|█████████ | 181.30091857910156/200 [00:07<00:00, 25.02time/s][A
+Simulating sequences:  91%|█████████ | 181.7724151611328/200 [00:07<00:00, 25.00time/s] [A
+Simulating sequences:  91%|█████████ | 181.9355010986328/200 [00:07<00:00, 24.93time/s][A
+Simulating sequences:  91%|█████████ | 182.03370666503906/200 [00:07<00:00, 24.86time/s][A
+Simulating sequences:  91%|█████████ | 182.18931579589844/200 [00:07<00:00, 24.79time/s][A
+Simulating sequences:  91%|█████████ | 182.3936004638672/200 [00:07<00:00, 24.73time/s] [A
+Simulating sequences:  91%|█████████▏| 182.5212860107422/200 [00:07<00:00, 24.65time/s][A
+Simulating sequences:  91%|█████████▏| 182.72994995117188/200 [00:07<00:00, 24.60time/s][A
+Simulating sequences:  92%|█████████▏| 183.04232788085938/200 [00:07<00:00, 24.55time/s][A
+Simulating sequences:  92%|█████████▏| 183.2103729248047/200 [00:07<00:00, 24.47time/s] [A
+Simulating sequences:  92%|█████████▏| 183.22552490234375/200 [00:07<00:00, 24.38time/s][A
+Simulating sequences:  92%|█████████▏| 183.4263458251953/200 [00:07<00:00, 24.32time/s] [A
+Simulating sequences:  92%|█████████▏| 183.9501495361328/200 [00:07<00:00, 24.31time/s][A
+Simulating sequences:  92%|█████████▏| 184.63821411132812/200 [00:07<00:00, 24.31time/s][A
+Simulating sequences:  93%|█████████▎| 185.1822052001953/200 [00:07<00:00, 24.30time/s] [A
+Simulating sequences:  93%|█████████▎| 185.2682647705078/200 [00:07<00:00, 24.22time/s][A
+Simulating sequences:  93%|█████████▎| 185.3728790283203/200 [00:07<00:00, 24.15time/s][A
+Simulating sequences:  93%|█████████▎| 185.43096923828125/200 [00:07<00:00, 24.07time/s][A
+Simulating sequences:  93%|█████████▎| 186.10072326660156/200 [00:07<00:00, 24.07time/s][A
+Simulating sequences:  94%|█████████▍| 188.94700622558594/200 [00:07<00:00, 24.36time/s][A
+Simulating sequences:  95%|█████████▍| 189.02020263671875/200 [00:07<00:00, 24.28time/s][A
+Simulating sequences:  95%|█████████▍| 189.23806762695312/200 [00:07<00:00, 24.22time/s][A
+Simulating sequences:  95%|█████████▍| 189.35531616210938/200 [00:07<00:00, 24.12time/s][A
+Simulating sequences:  95%|█████████▍| 189.5823516845703/200 [00:07<00:00, 24.07time/s] [A
+Simulating sequences:  95%|█████████▍| 189.70948791503906/200 [00:07<00:00, 24.00time/s][A
+Simulating sequences:  96%|█████████▌| 191.52658081054688/200 [00:07<00:00, 24.15time/s][A
+Simulating sequences:  97%|█████████▋| 193.0188446044922/200 [00:07<00:00, 24.25time/s] [A
+Simulating sequences:  97%|█████████▋| 193.36842346191406/200 [00:07<00:00, 24.21time/s][A
+Simulating sequences:  97%|█████████▋| 193.36997985839844/200 [00:08<00:00, 24.13time/s][A
+Simulating sequences:  97%|█████████▋| 193.8175506591797/200 [00:08<00:00, 24.10time/s] [A
+Simulating sequences:  97%|█████████▋| 194.2328338623047/200 [00:08<00:00, 24.06time/s][A
+Simulating sequences:  97%|█████████▋| 194.25596618652344/200 [00:08<00:00, 23.98time/s][A
+Simulating sequences:  98%|█████████▊| 195.99310302734375/200 [00:08<00:00, 24.12time/s][A
+Simulating sequences:  98%|█████████▊| 196.27310180664062/200 [00:08<00:00, 24.07time/s][A
+Simulating sequences:  99%|█████████▊| 197.3502960205078/200 [00:08<00:00, 24.09time/s] [A
+Simulating sequences:  99%|█████████▉| 198.0115966796875/200 [00:08<00:00, 24.09time/s][A
+Simulating sequences:  99%|█████████▉| 198.40423583984375/200 [00:08<00:00, 24.05time/s][A
+Simulating sequences:  99%|█████████▉| 198.5701446533203/200 [00:08<00:00, 23.99time/s] [A
+Simulating sequences:  99%|█████████▉| 198.9509735107422/200 [00:08<00:00, 23.95time/s][A
+Simulating sequences: 100%|██████████| 200/200 [00:08<00:00, 24.00time/s]              [A
+                                                                         [ATraceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in main
+    plrunner.predict()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 253, in predict
+    predictions = trainer.predict(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 887, in predict
+    return call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 928, in _predict_impl
+    results = self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1051, in _run_stage
+    return self.predict_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 125, in run
+    self._predict_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 255, in _predict_step
+    predictions = call._call_strategy_hook(trainer, "predict_step", *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 438, in predict_step
+    return self.lightning_module.predict_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 488, in predict_step
+    if self.sim_events_counter >= self.max_simul_events:
+RuntimeError: Boolean value of Tensor with more than one value is ambiguous
+srun: error: ruche-gpu13: task 0: Exited with exit code 1

@@ -1,0 +1,6 @@
+[31;1m2025-05-24 14:28:55,105 - config.py[pid:21261;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 14:28:55,432 - trainer.py[pid:21261;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-24 14:28:55,452 - trainer.py[pid:21261;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/RMTPP/taobao/trained_models/best.ckpt[0m
+[38;20m2025-05-24 14:28:55,452 - trainer.py[pid:21261;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/taobao/trained_models/best.ckpt.[0m
+[38;20m2025-05-24 14:28:55,557 - trainer.py[pid:21261;line:247:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : taobao ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:06<?, ?it/s]

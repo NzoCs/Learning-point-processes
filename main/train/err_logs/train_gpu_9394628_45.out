@@ -1,18 +1,0 @@
-[31;1m2025-05-24 08:53:29,061 - config.py[pid:3428;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-24 08:53:29,482 - trainer.py[pid:3428;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-24 08:53:29,752 - trainer.py[pid:3428;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/SAHP/taxi/trained_models/best.ckpt[0m
-[38;20m2025-05-24 08:53:29,752 - trainer.py[pid:3428;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/SAHP/taxi/trained_models/best.ckpt.[0m
-[38;20m2025-05-24 08:53:29,832 - trainer.py[pid:3428;line:247:predict] - INFO: --- Starting Prediction for Model : SAHP on dataset : taxi ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:  14%|█▍        | 1/7 [00:41<04:09,  0.02it/s]Predicting DataLoader 0:  29%|██▊       | 2/7 [01:34<03:56,  0.02it/s]Predicting DataLoader 0:  43%|████▎     | 3/7 [02:17<03:03,  0.02it/s]Predicting DataLoader 0:  57%|█████▋    | 4/7 [02:32<01:54,  0.03it/s]Predicting DataLoader 0:  71%|███████▏  | 5/7 [02:49<01:07,  0.03it/s]Predicting DataLoader 0:  86%|████████▌ | 6/7 [03:04<00:30,  0.03it/s]Predicting DataLoader 0: 100%|██████████| 7/7 [03:09<00:00,  0.04it/s]Predicting DataLoader 0: 100%|██████████| 7/7 [03:09<00:00,  0.04it/s]
-Data successfully saved to ./checkpoints/SAHP/taxi/distributions_comparisons/simulations.json
-[38;20m2025-05-24 08:56:53,959 - new_comparator.py[pid:3428;line:42:__init__] - INFO: Extracting label data from dataloader...[0m
-[38;20m2025-05-24 08:56:54,645 - new_comparator.py[pid:3428;line:86:__init__] - INFO: Processing simulation data...[0m
-[38;20m2025-05-24 08:56:54,647 - new_comparator.py[pid:3428;line:112:__init__] - INFO: Collected 14820 label events and 1250 simulated events for comparison[0m
-[38;20m2025-05-24 08:56:54,647 - new_comparator.py[pid:3428;line:555:run_evaluation] - INFO: Generating comparison plots for simulations...[0m
-[38;20m2025-05-24 08:56:56,283 - new_comparator.py[pid:3428;line:226:plot_inter_event_time_distribution] - INFO: Inter-event time distribution comparison plot saved to ./checkpoints/SAHP/taxi/distributions_comparisons/comparison_inter_event_time_dist.png[0m
-[38;20m2025-05-24 08:56:57,175 - new_comparator.py[pid:3428;line:320:_create_qq_plot] - INFO: QQ plot saved to ./checkpoints/SAHP/taxi/distributions_comparisons/qq_inter_event_times.png[0m
-[38;20m2025-05-24 08:56:57,710 - new_comparator.py[pid:3428;line:394:plot_event_type_distribution] - INFO: Event type distribution comparison plot saved to ./checkpoints/SAHP/taxi/distributions_comparisons/comparison_event_type_dist.png[0m
-[38;20m2025-05-24 08:56:58,378 - new_comparator.py[pid:3428;line:460:plot_sequence_length_distribution] - INFO: Sequence length distribution comparison plot saved to ./checkpoints/SAHP/taxi/distributions_comparisons/comparison_sequence_length_dist.png[0m
-[33;20m2025-05-24 08:56:58,378 - new_comparator.py[pid:3428;line:274:_create_qq_plot] - WARNING: Not enough data points for QQ plot: 3 points[0m
-[38;20m2025-05-24 08:57:08,951 - new_comparator.py[pid:3428;line:549:plot_cross_correlation_moments] - INFO: Cross-correlation comparison plot saved to ./checkpoints/SAHP/taxi/distributions_comparisons/comparison_cross_correlation_moments.png[0m
-[38;20m2025-05-24 08:57:08,952 - trainer.py[pid:3428;line:274:predict] - INFO: Predictions saved to ./checkpoints/SAHP/taxi/distributions_comparisons[0m

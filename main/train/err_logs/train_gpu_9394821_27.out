@@ -1,0 +1,5 @@
+[31;1m2025-05-24 14:24:57,367 - config.py[pid:19120;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-24 14:24:57,557 - trainer.py[pid:19120;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/RMTPP/self_correcting/trained_models/best-v1.ckpt[0m
+[38;20m2025-05-24 14:24:57,557 - trainer.py[pid:19120;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/self_correcting/trained_models/best-v1.ckpt.[0m
+[38;20m2025-05-24 14:24:57,662 - trainer.py[pid:19120;line:247:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : self_correcting ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/12 [01:57<?, ?it/s]

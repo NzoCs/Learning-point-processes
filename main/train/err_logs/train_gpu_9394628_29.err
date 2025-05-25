@@ -1,51 +1,0 @@
-GPU available: True (cuda), used: True
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.
-Restoring states from the checkpoint path at ./checkpoints/RMTPP/taxi/trained_models/best.ckpt
-LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-Loaded model weights from the checkpoint at ./checkpoints/RMTPP/taxi/trained_models/best.ckpt
-SLURM auto-requeueing enabled. Setting signal handlers.
-
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
-Simulating sequences:   2%|▏         | 3.785663366317749/200 [00:00<00:44,  4.38time/s][A
-Simulating sequences:   2%|▏         | 3.9424641132354736/200 [00:00<00:44,  4.42time/s][A
-Simulating sequences:   2%|▏         | 3.9442973136901855/200 [00:00<00:44,  4.41time/s][A
-Simulating sequences:   2%|▏         | 4.332834243774414/200 [00:00<00:40,  4.83time/s] [A
-Simulating sequences:   2%|▏         | 4.438582420349121/200 [00:00<00:39,  4.93time/s][A
-Simulating sequences:   2%|▏         | 4.6572747230529785/200 [00:00<00:37,  5.15time/s][A
-Simulating sequences:   3%|▎         | 5.2643141746521/200 [00:00<00:33,  5.80time/s]   [A
-Simulating sequences:   3%|▎         | 5.273561477661133/200 [00:00<00:33,  5.79time/s][A
-Simulating sequences:   3%|▎         | 6.002773284912109/200 [00:00<00:29,  6.57time/s][A
-Simulating sequences:   3%|▎         | 6.0697922706604/200 [00:00<00:29,  6.60time/s]  [A
-Simulating sequences:   3%|▎         | 6.2511372566223145/200 [00:00<00:28,  6.77time/s][A
-Simulating sequences:   3%|▎         | 6.266040802001953/200 [00:00<00:28,  6.77time/s] [A
-Simulating sequences:   3%|▎         | 6.329758167266846/200 [00:00<00:28,  6.81time/s][A
-Simulating sequences:   3%|▎         | 6.880380153656006/200 [00:00<00:26,  7.38time/s][A
-Simulating sequences:   3%|▎         | 6.989307403564453/200 [00:00<00:25,  7.47time/s][A
-Simulating sequences:   4%|▎         | 7.113470077514648/200 [00:00<00:25,  7.58time/s][A
-Simulating sequences:   4%|▎         | 7.3559956550598145/200 [00:00<00:24,  7.81time/s][A
-Simulating sequences:   4%|▍         | 7.716363906860352/200 [00:00<00:23,  8.17time/s] [A
-Simulating sequences:   4%|▍         | 7.8310065269470215/200 [00:00<00:23,  8.26time/s][A
-Simulating sequences:   4%|▍         | 7.958752632141113/200 [00:00<00:22,  8.37time/s] [A
-                                                                                       [A
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
-Simulating sequences:   2%|▏         | 4.492944240570068/200 [00:00<00:00, 2290.60time/s][A
-Simulating sequences:   2%|▏         | 4.808874130249023/200 [00:00<00:00, 951.59time/s] [A
-Simulating sequences:   3%|▎         | 5.295111179351807/200 [00:00<00:00, 615.17time/s][A
-Simulating sequences:   3%|▎         | 5.417932510375977/200 [00:00<00:00, 444.70time/s][A
-Simulating sequences:   3%|▎         | 5.461502552032471/200 [00:00<00:31,  6.13time/s] [A
-Simulating sequences:   3%|▎         | 5.698867321014404/200 [00:00<00:30,  6.36time/s][A
-Simulating sequences:   3%|▎         | 5.720048904418945/200 [00:00<00:30,  6.36time/s][A
-Simulating sequences:   3%|▎         | 5.888374328613281/200 [00:00<00:29,  6.53time/s][A
-Simulating sequences:   3%|▎         | 5.899075984954834/200 [00:00<00:29,  6.52time/s][A
-Simulating sequences:   3%|▎         | 6.2191548347473145/200 [00:00<00:28,  6.85time/s][A
-Simulating sequences:   3%|▎         | 6.619195461273193/200 [00:00<00:26,  7.26time/s] [A
-Simulating sequences:   3%|▎         | 6.660463809967041/200 [00:00<00:26,  7.28time/s][A
-Simulating sequences:   3%|▎         | 6.816659927368164/200 [00:00<00:26,  7.43time/s][A
-Simulating sequences:   4%|▎         | 7.1282477378845215/200 [00:00<00:24,  7.74time/s][A
-Simulating sequences:   4%|▎         | 7.149099826812744/200 [00:00<00:24,  7.74time/s] [A
-Simulating sequences:   4%|▎         | 7.221717834472656/200 [00:00<00:24,  7.79time/s][A
-Simulating sequences:   4%|▍         | 8.48308277130127/200 [00:00<00:20,  9.13time/s] [A
-Simulating sequences:   4%|▍         | 8.515914916992188/200 [00:00<00:20,  9.13time/s][A
-                                                                                       [AFormatting sequences:   0%|          | 0/1 [00:00<?, ?it/s]Formatting sequences: 100%|██████████| 1/1 [00:00<00:00, 8559.80it/s]

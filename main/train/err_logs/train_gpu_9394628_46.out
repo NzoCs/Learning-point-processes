@@ -1,6 +1,0 @@
-[31;1m2025-05-24 08:55:27,411 - config.py[pid:4130;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-24 08:55:27,851 - trainer.py[pid:4130;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-24 08:55:28,111 - trainer.py[pid:4130;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/SAHP/taobao/trained_models/best.ckpt[0m
-[38;20m2025-05-24 08:55:28,111 - trainer.py[pid:4130;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/SAHP/taobao/trained_models/best.ckpt.[0m
-[38;20m2025-05-24 08:55:28,189 - trainer.py[pid:4130;line:247:predict] - INFO: --- Starting Prediction for Model : SAHP on dataset : taobao ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [49:16<?, ?it/s]

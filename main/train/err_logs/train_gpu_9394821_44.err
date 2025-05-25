@@ -1,0 +1,95 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+Restoring states from the checkpoint path at ./checkpoints/SAHP/hawkes2/trained_models/best.ckpt
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/SAHP/hawkes2/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:  40%|███▉      | 79.13553619384766/200 [00:00<00:00, 137.19time/s][A
+Simulating sequences:  40%|███▉      | 79.17591094970703/200 [00:00<00:00, 131.09time/s][A
+Simulating sequences:  41%|████▏     | 82.90291595458984/200 [00:00<00:00, 136.13time/s][A
+Simulating sequences:  41%|████▏     | 82.97386169433594/200 [00:00<00:00, 135.20time/s][A
+Simulating sequences:  42%|████▏     | 84.12805938720703/200 [00:00<00:00, 136.05time/s][A
+Simulating sequences:  43%|████▎     | 85.21060943603516/200 [00:00<00:00, 136.78time/s][A
+Simulating sequences:  43%|████▎     | 86.82972717285156/200 [00:00<00:00, 138.35time/s][A
+Simulating sequences:  47%|████▋     | 93.15608215332031/200 [00:00<00:00, 147.29time/s][A
+Simulating sequences:  47%|████▋     | 93.84822845458984/200 [00:00<00:00, 147.31time/s][A
+Simulating sequences:  49%|████▉     | 98.33409118652344/200 [00:00<00:00, 153.24time/s][A
+Simulating sequences:  50%|█████     | 100.13277435302734/200 [00:00<00:00, 154.93time/s][A
+Simulating sequences:  53%|█████▎    | 106.79512023925781/200 [00:00<00:00, 164.07time/s][A
+Simulating sequences:  53%|█████▎    | 106.88658905029297/200 [00:00<00:00, 163.07time/s][A
+Simulating sequences:  56%|█████▌    | 112.02344512939453/200 [00:00<00:00, 169.71time/s][A
+Simulating sequences:  57%|█████▋    | 114.68523406982422/200 [00:00<00:00, 172.53time/s][A
+Simulating sequences:  59%|█████▊    | 117.11249542236328/200 [00:00<00:00, 174.90time/s][A
+Simulating sequences:  60%|█████▉    | 119.70506286621094/200 [00:00<00:00, 177.55time/s][A
+Simulating sequences:  61%|██████    | 122.18621826171875/200 [00:00<00:00, 180.00time/s][A
+Simulating sequences:  62%|██████▏   | 123.03823852539062/200 [00:00<00:00, 180.06time/s][A
+Simulating sequences:  62%|██████▏   | 123.43609619140625/200 [00:00<00:00, 179.45time/s][A
+Simulating sequences:  62%|██████▏   | 124.60478210449219/200 [00:00<00:00, 179.96time/s][A
+Simulating sequences:  63%|██████▎   | 126.62105560302734/200 [00:00<00:00, 181.67time/s][A
+Simulating sequences:  64%|██████▎   | 127.20834350585938/200 [00:00<00:00, 181.33time/s][A
+Simulating sequences:  64%|██████▍   | 127.93231201171875/200 [00:00<00:00, 181.12time/s][A
+Simulating sequences:  66%|██████▋   | 132.965087890625/200 [00:00<00:00, 187.02time/s]  [A
+Simulating sequences:  67%|██████▋   | 133.0790252685547/200 [00:00<00:00, 185.99time/s][A
+Simulating sequences:  68%|██████▊   | 136.99920654296875/200 [00:00<00:00, 190.25time/s][A
+Simulating sequences:  69%|██████▊   | 137.17079162597656/200 [00:00<00:00, 189.29time/s][A
+Simulating sequences:  69%|██████▉   | 137.61219787597656/200 [00:00<00:00, 188.71time/s][A
+Simulating sequences:  70%|██████▉   | 139.3092041015625/200 [00:00<00:00, 189.85time/s] [A
+Simulating sequences:  73%|███████▎  | 146.2938232421875/200 [00:00<00:00, 198.14time/s][A
+Simulating sequences:  73%|███████▎  | 146.3241729736328/200 [00:00<00:00, 196.89time/s][A
+Simulating sequences:  73%|███████▎  | 146.65074157714844/200 [00:00<00:00, 196.13time/s][A
+Simulating sequences:  75%|███████▌  | 150.6543731689453/200 [00:00<00:00, 200.27time/s] [A
+Simulating sequences:  75%|███████▌  | 150.82461547851562/200 [00:00<00:00, 199.29time/s][A
+Simulating sequences:  79%|███████▉  | 158.9384307861328/200 [00:00<00:00, 208.71time/s] [A
+Simulating sequences:  82%|████████▏ | 163.05471801757812/200 [00:00<00:00, 212.84time/s][A
+Simulating sequences:  82%|████████▏ | 164.8448028564453/200 [00:00<00:00, 213.89time/s] [A
+Simulating sequences:  83%|████████▎ | 165.3173370361328/200 [00:00<00:00, 213.25time/s][A
+Simulating sequences:  84%|████████▍ | 168.47903442382812/200 [00:00<00:00, 216.07time/s][A
+Simulating sequences:  85%|████████▍ | 169.01625061035156/200 [00:00<00:00, 215.40time/s][A
+Simulating sequences:  87%|████████▋ | 173.8658905029297/200 [00:00<00:00, 220.30time/s] [A
+Simulating sequences:  87%|████████▋ | 174.72943115234375/200 [00:00<00:00, 220.13time/s][A
+Simulating sequences:  88%|████████▊ | 176.3037109375/200 [00:00<00:00, 220.85time/s]    [A
+Simulating sequences:  89%|████████▉ | 177.51747131347656/200 [00:00<00:00, 221.12time/s][A
+Simulating sequences:  90%|████████▉ | 179.6848907470703/200 [00:00<00:00, 222.57time/s] [A
+Simulating sequences:  90%|█████████ | 180.8890380859375/200 [00:00<00:00, 222.82time/s][A
+Simulating sequences:  92%|█████████▏| 184.055419921875/200 [00:00<00:00, 225.47time/s] [A
+Simulating sequences:  93%|█████████▎| 185.839111328125/200 [00:00<00:00, 226.32time/s][A
+Simulating sequences:  94%|█████████▍| 187.76907348632812/200 [00:00<00:00, 227.41time/s][A
+Simulating sequences:  96%|█████████▋| 192.90077209472656/200 [00:00<00:00, 232.36time/s][A
+Simulating sequences: 100%|█████████▉| 199.205322265625/200 [00:00<00:00, 238.66time/s]  [A
+Simulating sequences: 100%|█████████▉| 199.65664672851562/200 [00:00<00:00, 237.91time/s][A
+Simulating sequences: 100%|██████████| 200/200 [00:00<00:00, 237.04time/s]               [A
+                                                                          [ATraceback (most recent call last):
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
+    main()
+  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in main
+    plrunner.predict()
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 253, in predict
+    predictions = trainer.predict(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 887, in predict
+    return call._call_and_handle_interrupt(
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 928, in _predict_impl
+    results = self._run(model, ckpt_path=ckpt_path)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
+    results = self._run_stage()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1051, in _run_stage
+    return self.predict_loop.run()
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
+    return loop_run(self, *args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 125, in run
+    self._predict_step(batch, batch_idx, dataloader_idx, dataloader_iter)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 255, in _predict_step
+    predictions = call._call_strategy_hook(trainer, "predict_step", *step_args)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 438, in predict_step
+    return self.lightning_module.predict_step(*args, **kwargs)
+  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 488, in predict_step
+    if self.sim_events_counter >= self.max_simul_events:
+RuntimeError: Boolean value of Tensor with more than one value is ambiguous
+srun: error: ruche-gpu13: task 0: Exited with exit code 1

@@ -1,1908 +1,0 @@
-GPU available: True (cuda), used: True
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.
-Restoring states from the checkpoint path at ./checkpoints/RMTPP/taobao/trained_models/best.ckpt
-LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-Loaded model weights from the checkpoint at ./checkpoints/RMTPP/taobao/trained_models/best.ckpt
-SLURM auto-requeueing enabled. Setting signal handlers.
-
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
-Simulating sequences:   0%|          | 0.35657238960266113/200 [00:01<13:15,  3.98s/time][A
-Simulating sequences:   0%|          | 0.35810524225234985/200 [00:01<13:27,  4.04s/time][A
-Simulating sequences:   0%|          | 0.35957038402557373/200 [00:01<13:26,  4.04s/time][A
-Simulating sequences:   0%|          | 0.37070176005363464/200 [00:01<13:03,  3.93s/time][A
-Simulating sequences:   0%|          | 0.37649643421173096/200 [00:01<12:53,  3.87s/time][A
-Simulating sequences:   0%|          | 0.39099860191345215/200 [00:01<12:26,  3.74s/time][A
-Simulating sequences:   0%|          | 0.4094935655593872/200 [00:01<11:54,  3.58s/time] [A
-Simulating sequences:   0%|          | 0.4150991141796112/200 [00:01<11:46,  3.54s/time][A
-Simulating sequences:   0%|          | 0.42310968041419983/200 [00:01<11:34,  3.48s/time][A
-Simulating sequences:   0%|          | 0.4429458975791931/200 [00:01<11:04,  3.33s/time] [A
-Simulating sequences:   0%|          | 0.4675956964492798/200 [00:01<10:31,  3.16s/time][A
-Simulating sequences:   0%|          | 0.46971505880355835/200 [00:01<10:29,  3.16s/time][A
-Simulating sequences:   0%|          | 0.4860922396183014/200 [00:01<10:10,  3.06s/time] [A
-Simulating sequences:   0%|          | 0.5000959634780884/200 [00:01<09:54,  2.98s/time][A
-Simulating sequences:   0%|          | 0.5074235796928406/200 [00:01<09:46,  2.94s/time][A
-Simulating sequences:   0%|          | 0.5092014074325562/200 [00:01<09:46,  2.94s/time][A
-Simulating sequences:   0%|          | 0.5557920932769775/200 [00:01<08:58,  2.70s/time][A
-Simulating sequences:   0%|          | 0.5718177556991577/200 [00:01<08:44,  2.63s/time][A
-Simulating sequences:   0%|          | 0.6052612662315369/200 [00:01<08:16,  2.49s/time][A
-Simulating sequences:   0%|          | 0.6082863211631775/200 [00:01<08:14,  2.48s/time][A
-Simulating sequences:   0%|          | 0.6114501953125/200 [00:01<08:13,  2.48s/time]   [A
-Simulating sequences:   0%|          | 0.6181501746177673/200 [00:01<08:09,  2.45s/time][A
-Simulating sequences:   0%|          | 0.6332848072052002/200 [00:01<07:58,  2.40s/time][A
-Simulating sequences:   0%|          | 0.6432057023048401/200 [00:01<07:52,  2.37s/time][A
-Simulating sequences:   0%|          | 0.6644725203514099/200 [00:01<07:38,  2.30s/time][A
-Simulating sequences:   0%|          | 0.6700241565704346/200 [00:01<07:35,  2.28s/time][A
-Simulating sequences:   0%|          | 0.7088534832000732/200 [00:01<07:11,  2.16s/time][A
-Simulating sequences:   0%|          | 0.7184012532234192/200 [00:01<07:06,  2.14s/time][A
-Simulating sequences:   0%|          | 0.7238621711730957/200 [00:01<07:04,  2.13s/time][A
-Simulating sequences:   0%|          | 0.7262622714042664/200 [00:01<07:03,  2.13s/time][A
-Simulating sequences:   0%|          | 0.727277934551239/200 [00:01<07:04,  2.13s/time] [A
-Simulating sequences:   0%|          | 0.7291343808174133/200 [00:01<07:03,  2.13s/time][A
-Simulating sequences:   0%|          | 0.7349135875701904/200 [00:01<07:01,  2.12s/time][A
-Simulating sequences:   0%|          | 0.7585952877998352/200 [00:01<06:49,  2.05s/time][A
-Simulating sequences:   0%|          | 0.7692165970802307/200 [00:01<06:44,  2.03s/time][A
-Simulating sequences:   0%|          | 0.7839446067810059/200 [00:01<06:37,  2.00s/time][A
-Simulating sequences:   0%|          | 0.7914066910743713/200 [00:01<06:34,  1.98s/time][A
-Simulating sequences:   0%|          | 0.8157858848571777/200 [00:01<06:23,  1.93s/time][A
-Simulating sequences:   0%|          | 0.822120189666748/200 [00:01<06:21,  1.92s/time] [A
-Simulating sequences:   0%|          | 0.8986387252807617/200 [00:01<05:49,  1.76s/time][A
-Simulating sequences:   0%|          | 0.9017032980918884/200 [00:01<05:49,  1.75s/time][A
-Simulating sequences:   0%|          | 0.9104126691818237/200 [00:01<05:46,  1.74s/time][A
-Simulating sequences:   0%|          | 0.9326695799827576/200 [00:01<05:39,  1.70s/time][A
-Simulating sequences:   0%|          | 0.939318835735321/200 [00:01<05:37,  1.70s/time] [A
-Simulating sequences:   0%|          | 0.9440814256668091/200 [00:01<05:36,  1.69s/time][A
-Simulating sequences:   0%|          | 0.9482961297035217/200 [00:01<05:35,  1.69s/time][A
-Simulating sequences:   0%|          | 0.9769705533981323/200 [00:01<05:27,  1.64s/time][A
-Simulating sequences:   0%|          | 0.996851921081543/200 [00:01<05:21,  1.61s/time] [A
-Simulating sequences:   1%|          | 1.0098426342010498/200 [00:01<05:18,  1.60s/time][A
-Simulating sequences:   1%|          | 1.01496160030365/200 [00:01<05:17,  1.59s/time]  [A
-Simulating sequences:   1%|          | 1.018578052520752/200 [00:01<05:16,  1.59s/time][A
-Simulating sequences:   1%|          | 1.0215390920639038/200 [00:01<05:16,  1.59s/time][A
-Simulating sequences:   1%|          | 1.0281848907470703/200 [00:01<05:15,  1.58s/time][A
-Simulating sequences:   1%|          | 1.0308996438980103/200 [00:01<05:15,  1.58s/time][A
-Simulating sequences:   1%|          | 1.0390727519989014/200 [00:01<05:13,  1.57s/time][A
-Simulating sequences:   1%|          | 1.0615054368972778/200 [00:01<05:10,  1.56s/time][A
-Simulating sequences:   1%|          | 1.0765782594680786/200 [00:01<05:06,  1.54s/time][A
-Simulating sequences:   1%|          | 1.0857629776000977/200 [00:01<05:04,  1.53s/time][A
-Simulating sequences:   1%|          | 1.1195757389068604/200 [00:01<04:56,  1.49s/time][A
-Simulating sequences:   1%|          | 1.1283282041549683/200 [00:01<04:54,  1.48s/time][A
-Simulating sequences:   1%|          | 1.1332364082336426/200 [00:01<04:53,  1.48s/time][A
-Simulating sequences:   1%|          | 1.139337182044983/200 [00:01<04:52,  1.47s/time] [A
-Simulating sequences:   1%|          | 1.1947944164276123/200 [00:01<04:39,  1.41s/time][A
-Simulating sequences:   1%|          | 1.2199450731277466/200 [00:01<04:34,  1.38s/time][A
-Simulating sequences:   1%|          | 1.2273606061935425/200 [00:01<04:33,  1.37s/time][A
-Simulating sequences:   1%|          | 1.2590678930282593/200 [00:01<04:26,  1.34s/time][A
-Simulating sequences:   1%|          | 1.283598780632019/200 [00:01<04:22,  1.32s/time] [A
-Simulating sequences:   1%|          | 1.2853056192398071/200 [00:01<04:22,  1.32s/time][A
-Simulating sequences:   1%|          | 1.35474693775177/200 [00:01<04:09,  1.26s/time]  [A
-Simulating sequences:   1%|          | 1.3793632984161377/200 [00:01<04:05,  1.24s/time][A
-Simulating sequences:   1%|          | 1.4224718809127808/200 [00:01<03:58,  1.20s/time][A
-Simulating sequences:   1%|          | 1.4530242681503296/200 [00:01<03:53,  1.18s/time][A
-Simulating sequences:   1%|          | 1.4572035074234009/200 [00:01<03:53,  1.18s/time][A
-Simulating sequences:   1%|          | 1.5009065866470337/200 [00:01<03:47,  1.15s/time][A
-Simulating sequences:   1%|          | 1.5273635387420654/200 [00:01<03:43,  1.13s/time][A
-Simulating sequences:   1%|          | 1.553923487663269/200 [00:01<03:40,  1.11s/time] [A
-Simulating sequences:   1%|          | 1.5606907606124878/200 [00:01<03:39,  1.11s/time][A
-Simulating sequences:   1%|          | 1.6113687753677368/200 [00:01<03:33,  1.08s/time][A
-Simulating sequences:   1%|          | 1.6462427377700806/200 [00:01<03:29,  1.05s/time][A
-Simulating sequences:   1%|          | 1.6746941804885864/200 [00:01<03:25,  1.04s/time][A
-Simulating sequences:   1%|          | 1.748835802078247/200 [00:01<03:17,  1.00time/s] [A
-Simulating sequences:   1%|          | 1.7575774192810059/200 [00:01<03:16,  1.01time/s][A
-Simulating sequences:   1%|          | 1.7591661214828491/200 [00:01<03:17,  1.01time/s][A
-Simulating sequences:   1%|          | 1.7706202268600464/200 [00:01<03:16,  1.01time/s][A
-Simulating sequences:   1%|          | 1.7828600406646729/200 [00:01<03:15,  1.01time/s][A
-Simulating sequences:   1%|          | 1.8552372455596924/200 [00:01<03:08,  1.05time/s][A
-Simulating sequences:   1%|          | 1.8569990396499634/200 [00:01<03:08,  1.05time/s][A
-Simulating sequences:   1%|          | 1.8887954950332642/200 [00:01<03:05,  1.07time/s][A
-Simulating sequences:   1%|          | 1.9564826488494873/200 [00:01<02:59,  1.10time/s][A
-Simulating sequences:   1%|          | 1.9697256088256836/200 [00:01<02:58,  1.11time/s][A
-Simulating sequences:   1%|          | 1.9697760343551636/200 [00:01<02:58,  1.11time/s][A
-Simulating sequences:   1%|          | 1.9807530641555786/200 [00:01<02:58,  1.11time/s][A
-Simulating sequences:   1%|          | 1.9852113723754883/200 [00:01<02:58,  1.11time/s][A
-Simulating sequences:   1%|          | 1.99101984500885/200 [00:01<02:57,  1.11time/s]  [A
-Simulating sequences:   1%|          | 2.0184743404388428/200 [00:01<02:55,  1.13time/s][A
-Simulating sequences:   1%|          | 2.1254303455352783/200 [00:01<02:47,  1.18time/s][A
-Simulating sequences:   1%|          | 2.1777591705322266/200 [00:01<02:43,  1.21time/s][A
-Simulating sequences:   1%|          | 2.1872096061706543/200 [00:01<02:43,  1.21time/s][A
-Simulating sequences:   1%|          | 2.196906089782715/200 [00:01<02:42,  1.22time/s] [A
-Simulating sequences:   1%|          | 2.209634780883789/200 [00:01<02:41,  1.22time/s][A
-Simulating sequences:   1%|          | 2.2224113941192627/200 [00:01<02:41,  1.23time/s][A
-Simulating sequences:   1%|          | 2.422973394393921/200 [00:01<02:28,  1.33time/s] [A
-Simulating sequences:   1%|          | 2.423868179321289/200 [00:01<02:28,  1.33time/s][A
-Simulating sequences:   1%|          | 2.464311361312866/200 [00:01<02:26,  1.35time/s][A
-Simulating sequences:   1%|          | 2.469329595565796/200 [00:01<02:26,  1.35time/s][A
-Simulating sequences:   1%|▏         | 2.514995813369751/200 [00:01<02:23,  1.37time/s][A
-Simulating sequences:   1%|▏         | 2.562138795852661/200 [00:01<02:21,  1.40time/s][A
-Simulating sequences:   1%|▏         | 2.6251277923583984/200 [00:01<02:18,  1.43time/s][A
-Simulating sequences:   1%|▏         | 2.704369306564331/200 [00:01<02:14,  1.47time/s] [A
-Simulating sequences:   1%|▏         | 2.7935330867767334/200 [00:01<02:10,  1.51time/s][A
-Simulating sequences:   1%|▏         | 2.794196605682373/200 [00:01<02:10,  1.51time/s] [A
-Simulating sequences:   1%|▏         | 2.7988405227661133/200 [00:01<02:10,  1.51time/s][A
-Simulating sequences:   1%|▏         | 2.909458637237549/200 [00:01<02:05,  1.57time/s] [A
-Simulating sequences:   1%|▏         | 2.915464162826538/200 [00:01<02:05,  1.57time/s][A
-Simulating sequences:   2%|▏         | 3.005911350250244/200 [00:01<02:02,  1.61time/s][A
-Simulating sequences:   2%|▏         | 3.0273871421813965/200 [00:01<02:01,  1.62time/s][A
-Simulating sequences:   2%|▏         | 3.0380187034606934/200 [00:01<02:01,  1.62time/s][A
-Simulating sequences:   2%|▏         | 3.040548324584961/200 [00:01<02:01,  1.62time/s] [A
-Simulating sequences:   2%|▏         | 3.1495869159698486/200 [00:01<01:57,  1.68time/s][A
-Simulating sequences:   2%|▏         | 3.1773734092712402/200 [00:01<01:56,  1.69time/s][A
-Simulating sequences:   2%|▏         | 3.216704845428467/200 [00:01<01:55,  1.71time/s] [A
-Simulating sequences:   2%|▏         | 3.219191789627075/200 [00:01<01:55,  1.71time/s][A
-Simulating sequences:   2%|▏         | 3.2681591510772705/200 [00:01<01:53,  1.73time/s][A
-Simulating sequences:   2%|▏         | 3.282201051712036/200 [00:01<01:53,  1.73time/s] [A
-Simulating sequences:   2%|▏         | 3.3770034313201904/200 [00:01<01:50,  1.78time/s][A
-Simulating sequences:   2%|▏         | 3.4067187309265137/200 [00:01<01:49,  1.79time/s][A
-Simulating sequences:   2%|▏         | 3.4167211055755615/200 [00:01<01:49,  1.79time/s][A
-Simulating sequences:   2%|▏         | 3.4490561485290527/200 [00:01<01:48,  1.81time/s][A
-Simulating sequences:   2%|▏         | 3.5855774879455566/200 [00:01<01:44,  1.87time/s][A
-Simulating sequences:   2%|▏         | 3.602045774459839/200 [00:01<01:44,  1.88time/s] [A
-Simulating sequences:   2%|▏         | 3.615377426147461/200 [00:01<01:44,  1.88time/s][A
-Simulating sequences:   2%|▏         | 3.634429931640625/200 [00:01<01:43,  1.89time/s][A
-Simulating sequences:   2%|▏         | 3.6354634761810303/200 [00:01<01:44,  1.89time/s][A
-Simulating sequences:   2%|▏         | 3.642611026763916/200 [00:01<01:44,  1.89time/s] [A
-Simulating sequences:   2%|▏         | 3.6445178985595703/200 [00:01<01:44,  1.88time/s][A
-Simulating sequences:   2%|▏         | 3.766364574432373/200 [00:01<01:40,  1.94time/s] [A
-Simulating sequences:   2%|▏         | 3.791813373565674/200 [00:01<01:40,  1.95time/s][A
-Simulating sequences:   2%|▏         | 3.794710159301758/200 [00:01<01:40,  1.95time/s][A
-Simulating sequences:   2%|▏         | 3.8453307151794434/200 [00:01<01:39,  1.97time/s][A
-Simulating sequences:   2%|▏         | 3.8939030170440674/200 [00:01<01:38,  1.99time/s][A
-Simulating sequences:   2%|▏         | 3.9225964546203613/200 [00:01<01:37,  2.01time/s][A
-Simulating sequences:   2%|▏         | 3.990111827850342/200 [00:01<01:36,  2.04time/s] [A
-Simulating sequences:   2%|▏         | 4.004120349884033/200 [00:01<01:36,  2.04time/s][A
-Simulating sequences:   2%|▏         | 4.0705389976501465/200 [00:01<01:34,  2.07time/s][A
-Simulating sequences:   2%|▏         | 4.11603307723999/200 [00:01<01:33,  2.09time/s]  [A
-Simulating sequences:   2%|▏         | 4.131567001342773/200 [00:01<01:33,  2.09time/s][A
-Simulating sequences:   2%|▏         | 4.14460563659668/200 [00:01<01:33,  2.09time/s] [A
-Simulating sequences:   2%|▏         | 4.159390449523926/200 [00:01<01:33,  2.10time/s][A
-Simulating sequences:   2%|▏         | 4.178211212158203/200 [00:01<01:33,  2.10time/s][A
-Simulating sequences:   2%|▏         | 4.201393127441406/200 [00:01<01:32,  2.11time/s][A
-Simulating sequences:   2%|▏         | 4.2016706466674805/200 [00:01<01:32,  2.11time/s][A
-Simulating sequences:   2%|▏         | 4.262633800506592/200 [00:01<01:31,  2.13time/s] [A
-Simulating sequences:   2%|▏         | 4.319843769073486/200 [00:02<01:30,  2.16time/s][A
-Simulating sequences:   2%|▏         | 4.322168827056885/200 [00:02<01:30,  2.15time/s][A
-Simulating sequences:   2%|▏         | 4.409387111663818/200 [00:02<01:29,  2.19time/s][A
-Simulating sequences:   2%|▏         | 4.438726425170898/200 [00:02<01:28,  2.20time/s][A
-Simulating sequences:   2%|▏         | 4.564197063446045/200 [00:02<01:26,  2.26time/s][A
-Simulating sequences:   2%|▏         | 4.76198673248291/200 [00:02<01:22,  2.36time/s] [A
-Simulating sequences:   2%|▏         | 4.763040065765381/200 [00:02<01:22,  2.35time/s][A
-Simulating sequences:   2%|▏         | 4.7766947746276855/200 [00:02<01:22,  2.36time/s][A
-Simulating sequences:   2%|▏         | 4.854015827178955/200 [00:02<01:21,  2.39time/s] [A
-Simulating sequences:   2%|▏         | 4.8727898597717285/200 [00:02<01:21,  2.39time/s][A
-Simulating sequences:   2%|▏         | 4.973353385925293/200 [00:02<01:19,  2.44time/s] [A
-Simulating sequences:   2%|▏         | 4.979986667633057/200 [00:02<01:19,  2.44time/s][A
-Simulating sequences:   2%|▏         | 4.982867240905762/200 [00:02<01:20,  2.44time/s][A
-Simulating sequences:   2%|▏         | 4.99529504776001/200 [00:02<01:20,  2.44time/s] [A
-Simulating sequences:   3%|▎         | 5.051365852355957/200 [00:02<01:19,  2.46time/s][A
-Simulating sequences:   3%|▎         | 5.062893867492676/200 [00:02<01:19,  2.46time/s][A
-Simulating sequences:   3%|▎         | 5.066866874694824/200 [00:02<01:19,  2.46time/s][A
-Simulating sequences:   3%|▎         | 5.073476314544678/200 [00:02<01:19,  2.46time/s][A
-Simulating sequences:   3%|▎         | 5.090729236602783/200 [00:02<01:19,  2.46time/s][A
-Simulating sequences:   3%|▎         | 5.13335657119751/200 [00:02<01:18,  2.48time/s] [A
-Simulating sequences:   3%|▎         | 5.1720757484436035/200 [00:02<01:18,  2.49time/s][A
-Simulating sequences:   3%|▎         | 5.184263229370117/200 [00:02<01:18,  2.49time/s] [A
-Simulating sequences:   3%|▎         | 5.314418315887451/200 [00:02<01:16,  2.55time/s][A
-Simulating sequences:   3%|▎         | 5.335231781005859/200 [00:02<01:16,  2.56time/s][A
-Simulating sequences:   3%|▎         | 5.335731029510498/200 [00:02<01:16,  2.55time/s][A
-Simulating sequences:   3%|▎         | 5.364955902099609/200 [00:02<01:15,  2.56time/s][A
-Simulating sequences:   3%|▎         | 5.3731369972229/200 [00:02<01:15,  2.56time/s]  [A
-Simulating sequences:   3%|▎         | 5.374781608581543/200 [00:02<01:16,  2.56time/s][A
-Simulating sequences:   3%|▎         | 5.390265464782715/200 [00:02<01:15,  2.56time/s][A
-Simulating sequences:   3%|▎         | 5.402344226837158/200 [00:02<01:15,  2.56time/s][A
-Simulating sequences:   3%|▎         | 5.453838348388672/200 [00:02<01:15,  2.58time/s][A
-Simulating sequences:   3%|▎         | 5.505311489105225/200 [00:02<01:14,  2.60time/s][A
-Simulating sequences:   3%|▎         | 5.507741451263428/200 [00:02<01:14,  2.60time/s][A
-Simulating sequences:   3%|▎         | 5.5195512771606445/200 [00:02<01:14,  2.60time/s][A
-Simulating sequences:   3%|▎         | 5.545231342315674/200 [00:02<01:14,  2.61time/s] [A
-Simulating sequences:   3%|▎         | 5.601918697357178/200 [00:02<01:13,  2.63time/s][A
-Simulating sequences:   3%|▎         | 5.608477592468262/200 [00:02<01:13,  2.63time/s][A
-Simulating sequences:   3%|▎         | 5.626676082611084/200 [00:02<01:13,  2.63time/s][A
-Simulating sequences:   3%|▎         | 5.633614540100098/200 [00:02<01:13,  2.63time/s][A
-Simulating sequences:   3%|▎         | 5.653427600860596/200 [00:02<01:13,  2.64time/s][A
-Simulating sequences:   3%|▎         | 5.655830383300781/200 [00:02<01:15,  2.56time/s][A
-Simulating sequences:   3%|▎         | 5.668142795562744/200 [00:02<01:15,  2.56time/s][A
-Simulating sequences:   3%|▎         | 5.70267915725708/200 [00:02<01:15,  2.58time/s] [A
-Simulating sequences:   3%|▎         | 5.707274436950684/200 [00:02<01:15,  2.57time/s][A
-Simulating sequences:   3%|▎         | 5.80437707901001/200 [00:02<01:14,  2.61time/s] [A
-Simulating sequences:   3%|▎         | 5.9740142822265625/200 [00:02<01:12,  2.68time/s][A
-Simulating sequences:   3%|▎         | 5.98012638092041/200 [00:02<01:12,  2.68time/s]  [A
-Simulating sequences:   3%|▎         | 6.033530235290527/200 [00:02<01:11,  2.70time/s][A
-Simulating sequences:   3%|▎         | 6.050346374511719/200 [00:02<01:11,  2.71time/s][A
-Simulating sequences:   3%|▎         | 6.058732032775879/200 [00:03<01:39,  1.95time/s][A
-Simulating sequences:   3%|▎         | 6.063975811004639/200 [00:03<01:39,  1.94time/s][A
-Simulating sequences:   3%|▎         | 6.124529838562012/200 [00:03<01:38,  1.96time/s][A
-Simulating sequences:   3%|▎         | 6.13538932800293/200 [00:03<01:38,  1.96time/s] [A
-Simulating sequences:   3%|▎         | 6.135672092437744/200 [00:03<01:38,  1.96time/s][A
-Simulating sequences:   3%|▎         | 6.136829853057861/200 [00:03<01:39,  1.96time/s][A
-Simulating sequences:   3%|▎         | 6.176443576812744/200 [00:03<01:38,  1.97time/s][A
-Simulating sequences:   3%|▎         | 6.242978096008301/200 [00:03<01:37,  1.99time/s][A
-Simulating sequences:   3%|▎         | 6.246397018432617/200 [00:03<01:37,  1.98time/s][A
-Simulating sequences:   3%|▎         | 6.25464391708374/200 [00:03<01:37,  1.98time/s] [A
-Simulating sequences:   3%|▎         | 6.273824214935303/200 [00:03<01:37,  1.98time/s][A
-Simulating sequences:   3%|▎         | 6.277466297149658/200 [00:03<01:37,  1.98time/s][A
-Simulating sequences:   3%|▎         | 6.297355651855469/200 [00:03<01:37,  1.98time/s][A
-Simulating sequences:   3%|▎         | 6.331491947174072/200 [00:03<01:37,  1.99time/s][A
-Simulating sequences:   3%|▎         | 6.354797840118408/200 [00:03<01:36,  2.00time/s][A
-Simulating sequences:   3%|▎         | 6.359657287597656/200 [00:03<01:36,  2.00time/s][A
-Simulating sequences:   3%|▎         | 6.364412784576416/200 [00:03<01:37,  2.00time/s][A
-Simulating sequences:   3%|▎         | 6.374506950378418/200 [00:03<01:36,  2.00time/s][A
-Simulating sequences:   3%|▎         | 6.518828392028809/200 [00:03<01:34,  2.04time/s][A
-Simulating sequences:   3%|▎         | 6.556255340576172/200 [00:03<01:34,  2.05time/s][A
-Simulating sequences:   3%|▎         | 6.638251304626465/200 [00:03<01:33,  2.07time/s][A
-Simulating sequences:   3%|▎         | 6.676692008972168/200 [00:03<01:32,  2.08time/s][A
-Simulating sequences:   3%|▎         | 6.718136310577393/200 [00:03<01:32,  2.09time/s][A
-Simulating sequences:   3%|▎         | 6.720896244049072/200 [00:03<01:32,  2.09time/s][A
-Simulating sequences:   3%|▎         | 6.735518932342529/200 [00:03<01:32,  2.09time/s][A
-Simulating sequences:   3%|▎         | 6.775898456573486/200 [00:03<01:31,  2.10time/s][A
-Simulating sequences:   3%|▎         | 6.7933349609375/200 [00:03<01:31,  2.11time/s]  [A
-Simulating sequences:   3%|▎         | 6.825037479400635/200 [00:03<01:31,  2.11time/s][A
-Simulating sequences:   3%|▎         | 6.878015995025635/200 [00:03<01:30,  2.13time/s][A
-Simulating sequences:   3%|▎         | 6.892805576324463/200 [00:03<01:30,  2.13time/s][A
-Simulating sequences:   3%|▎         | 6.911174774169922/200 [00:03<01:30,  2.13time/s][A
-Simulating sequences:   3%|▎         | 6.932011604309082/200 [00:03<01:30,  2.14time/s][A
-Simulating sequences:   4%|▎         | 7.343355178833008/200 [00:03<01:25,  2.26time/s][A
-Simulating sequences:   4%|▍         | 7.603099346160889/200 [00:03<01:22,  2.34time/s][A
-Simulating sequences:   4%|▍         | 7.673050403594971/200 [00:03<01:21,  2.36time/s][A
-Simulating sequences:   4%|▍         | 7.695144176483154/200 [00:03<01:21,  2.36time/s][A
-Simulating sequences:   4%|▍         | 7.703333854675293/200 [00:03<01:21,  2.36time/s][A
-Simulating sequences:   4%|▍         | 7.714141368865967/200 [00:03<01:21,  2.36time/s][A
-Simulating sequences:   4%|▍         | 7.717360496520996/200 [00:03<01:21,  2.36time/s][A
-Simulating sequences:   4%|▍         | 7.861239910125732/200 [00:03<01:20,  2.40time/s][A
-Simulating sequences:   4%|▍         | 7.865137100219727/200 [00:03<01:20,  2.40time/s][A
-Simulating sequences:   4%|▍         | 7.877246856689453/200 [00:03<01:20,  2.40time/s][A
-Simulating sequences:   4%|▍         | 7.882812976837158/200 [00:03<01:20,  2.40time/s][A
-Simulating sequences:   4%|▍         | 7.8970513343811035/200 [00:03<01:20,  2.40time/s][A
-Simulating sequences:   4%|▍         | 7.905341148376465/200 [00:03<01:20,  2.40time/s] [A
-Simulating sequences:   4%|▍         | 7.970685005187988/200 [00:03<01:19,  2.42time/s][A
-Simulating sequences:   4%|▍         | 8.016618728637695/200 [00:03<01:19,  2.43time/s][A
-Simulating sequences:   4%|▍         | 8.025296211242676/200 [00:03<01:19,  2.43time/s][A
-Simulating sequences:   4%|▍         | 8.070226669311523/200 [00:03<01:18,  2.44time/s][A
-Simulating sequences:   4%|▍         | 8.093074798583984/200 [00:03<01:18,  2.44time/s][A
-Simulating sequences:   4%|▍         | 8.101901054382324/200 [00:03<01:18,  2.44time/s][A
-Simulating sequences:   4%|▍         | 8.107423782348633/200 [00:03<01:18,  2.44time/s][A
-Simulating sequences:   4%|▍         | 8.174409866333008/200 [00:03<01:17,  2.46time/s][A
-Simulating sequences:   4%|▍         | 8.22215461730957/200 [00:03<01:17,  2.47time/s] [A
-Simulating sequences:   4%|▍         | 8.22795581817627/200 [00:03<01:17,  2.47time/s][A
-Simulating sequences:   4%|▍         | 8.231197357177734/200 [00:03<01:17,  2.47time/s][A
-Simulating sequences:   4%|▍         | 8.232841491699219/200 [00:03<01:17,  2.47time/s][A
-Simulating sequences:   4%|▍         | 8.303857803344727/200 [00:03<01:17,  2.48time/s][A
-Simulating sequences:   4%|▍         | 8.32210636138916/200 [00:03<01:17,  2.49time/s] [A
-Simulating sequences:   4%|▍         | 8.372111320495605/200 [00:03<01:16,  2.50time/s][A
-Simulating sequences:   4%|▍         | 8.395438194274902/200 [00:03<01:16,  2.50time/s][A
-Simulating sequences:   4%|▍         | 8.422343254089355/200 [00:03<01:16,  2.51time/s][A
-Simulating sequences:   4%|▍         | 8.429219245910645/200 [00:03<01:16,  2.51time/s][A
-Simulating sequences:   4%|▍         | 8.477279663085938/200 [00:03<01:16,  2.52time/s][A
-Simulating sequences:   4%|▍         | 8.482672691345215/200 [00:03<01:16,  2.52time/s][A
-Simulating sequences:   4%|▍         | 8.483854293823242/200 [00:03<01:16,  2.52time/s][A
-Simulating sequences:   4%|▍         | 8.51840877532959/200 [00:03<01:15,  2.52time/s] [A
-Simulating sequences:   4%|▍         | 8.525056838989258/200 [00:03<01:15,  2.52time/s][A
-Simulating sequences:   4%|▍         | 8.530129432678223/200 [00:03<01:15,  2.52time/s][A
-Simulating sequences:   4%|▍         | 8.549086570739746/200 [00:03<01:15,  2.52time/s][A
-Simulating sequences:   4%|▍         | 8.553213119506836/200 [00:03<01:15,  2.52time/s][A
-Simulating sequences:   4%|▍         | 8.55323314666748/200 [00:03<01:15,  2.52time/s] [A
-Simulating sequences:   4%|▍         | 8.585988998413086/200 [00:03<01:15,  2.53time/s][A
-Simulating sequences:   4%|▍         | 8.601693153381348/200 [00:03<01:15,  2.53time/s][A
-Simulating sequences:   4%|▍         | 8.622753143310547/200 [00:03<01:15,  2.53time/s][A
-Simulating sequences:   4%|▍         | 8.62478256225586/200 [00:03<01:15,  2.53time/s] [A
-Simulating sequences:   4%|▍         | 8.62718391418457/200 [00:03<01:15,  2.53time/s][A
-Simulating sequences:   4%|▍         | 8.637681007385254/200 [00:03<01:15,  2.53time/s][A
-Simulating sequences:   4%|▍         | 8.669565200805664/200 [00:03<01:15,  2.53time/s][A
-Simulating sequences:   4%|▍         | 8.80624008178711/200 [00:03<01:14,  2.57time/s] [A
-Simulating sequences:   4%|▍         | 8.882736206054688/200 [00:03<01:13,  2.59time/s][A
-Simulating sequences:   4%|▍         | 8.934114456176758/200 [00:03<01:13,  2.60time/s][A
-Simulating sequences:   4%|▍         | 8.946788787841797/200 [00:03<01:13,  2.60time/s][A
-Simulating sequences:   4%|▍         | 8.980626106262207/200 [00:03<01:13,  2.61time/s][A
-Simulating sequences:   5%|▍         | 9.023333549499512/200 [00:03<01:12,  2.62time/s][A
-Simulating sequences:   5%|▍         | 9.028858184814453/200 [00:03<01:12,  2.62time/s][A
-Simulating sequences:   5%|▍         | 9.071526527404785/200 [00:03<01:12,  2.63time/s][A
-Simulating sequences:   5%|▍         | 9.107731819152832/200 [00:03<01:12,  2.64time/s][A
-Simulating sequences:   5%|▍         | 9.117143630981445/200 [00:03<01:12,  2.64time/s][A
-Simulating sequences:   5%|▍         | 9.35026741027832/200 [00:03<01:10,  2.70time/s] [A
-Simulating sequences:   5%|▍         | 9.40945053100586/200 [00:03<01:10,  2.71time/s][A
-Simulating sequences:   5%|▍         | 9.432215690612793/200 [00:03<01:10,  2.71time/s][A
-Simulating sequences:   5%|▍         | 9.433293342590332/200 [00:03<01:10,  2.71time/s][A
-Simulating sequences:   5%|▍         | 9.46442699432373/200 [00:03<01:10,  2.71time/s] [A
-Simulating sequences:   5%|▍         | 9.508515357971191/200 [00:03<01:09,  2.72time/s][A
-Simulating sequences:   5%|▍         | 9.600662231445312/200 [00:03<01:09,  2.75time/s][A
-Simulating sequences:   5%|▍         | 9.615467071533203/200 [00:03<01:09,  2.75time/s][A
-Simulating sequences:   5%|▍         | 9.617530822753906/200 [00:03<01:09,  2.75time/s][A
-Simulating sequences:   5%|▍         | 9.62332820892334/200 [00:03<01:09,  2.74time/s] [A
-Simulating sequences:   5%|▍         | 9.636677742004395/200 [00:03<01:09,  2.75time/s][A
-Simulating sequences:   5%|▍         | 9.6671142578125/200 [00:03<01:09,  2.75time/s]  [A
-Simulating sequences:   5%|▍         | 9.679108619689941/200 [00:03<01:09,  2.75time/s][A
-Simulating sequences:   5%|▍         | 9.706274032592773/200 [00:03<01:09,  2.76time/s][A
-Simulating sequences:   5%|▍         | 9.747901916503906/200 [00:03<01:08,  2.76time/s][A
-Simulating sequences:   5%|▍         | 9.750741004943848/200 [00:03<01:08,  2.76time/s][A
-Simulating sequences:   5%|▍         | 9.793357849121094/200 [00:03<01:08,  2.77time/s][A
-Simulating sequences:   5%|▍         | 9.802130699157715/200 [00:03<01:08,  2.77time/s][A
-Simulating sequences:   5%|▍         | 9.811867713928223/200 [00:03<01:08,  2.77time/s][A
-Simulating sequences:   5%|▍         | 9.892687797546387/200 [00:03<01:08,  2.79time/s][A
-Simulating sequences:   5%|▌         | 10.12382698059082/200 [00:03<01:06,  2.85time/s][A
-Simulating sequences:   5%|▌         | 10.139134407043457/200 [00:03<01:06,  2.85time/s][A
-Simulating sequences:   5%|▌         | 10.189093589782715/200 [00:03<01:06,  2.86time/s][A
-Simulating sequences:   5%|▌         | 10.259173393249512/200 [00:03<01:05,  2.88time/s][A
-Simulating sequences:   5%|▌         | 10.26590347290039/200 [00:03<01:05,  2.88time/s] [A
-Simulating sequences:   5%|▌         | 10.269489288330078/200 [00:03<01:05,  2.88time/s][A
-Simulating sequences:   5%|▌         | 10.27609920501709/200 [00:03<01:05,  2.88time/s] [A
-Simulating sequences:   5%|▌         | 10.286675453186035/200 [00:03<01:05,  2.88time/s][A
-Simulating sequences:   5%|▌         | 10.291964530944824/200 [00:03<01:05,  2.88time/s][A
-Simulating sequences:   5%|▌         | 10.3004732131958/200 [00:03<01:05,  2.87time/s]  [A
-Simulating sequences:   5%|▌         | 10.30468463897705/200 [00:03<01:06,  2.87time/s][A
-Simulating sequences:   5%|▌         | 10.304977416992188/200 [00:03<01:06,  2.87time/s][A
-Simulating sequences:   5%|▌         | 10.308737754821777/200 [00:03<01:06,  2.87time/s][A
-Simulating sequences:   5%|▌         | 10.341851234436035/200 [00:03<01:06,  2.87time/s][A
-Simulating sequences:   5%|▌         | 10.341986656188965/200 [00:03<01:06,  2.87time/s][A
-Simulating sequences:   5%|▌         | 10.663049697875977/200 [00:03<01:04,  2.96time/s][A
-Simulating sequences:   5%|▌         | 10.67477035522461/200 [00:03<01:04,  2.96time/s] [A
-Simulating sequences:   5%|▌         | 10.740277290344238/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.750212669372559/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.751218795776367/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.766294479370117/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.769577980041504/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.797832489013672/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.801107406616211/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.810250282287598/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.810333251953125/200 [00:03<01:03,  2.97time/s][A
-Simulating sequences:   5%|▌         | 10.816969871520996/200 [00:03<01:03,  2.96time/s][A
-Simulating sequences:   5%|▌         | 10.912825584411621/200 [00:03<01:03,  2.99time/s][A
-Simulating sequences:   5%|▌         | 10.919337272644043/200 [00:03<01:03,  2.99time/s][A
-Simulating sequences:   5%|▌         | 10.945920944213867/200 [00:03<01:03,  2.99time/s][A
-Simulating sequences:   6%|▌         | 11.008747100830078/200 [00:03<01:02,  3.00time/s][A
-Simulating sequences:   6%|▌         | 11.014782905578613/200 [00:03<01:02,  3.00time/s][A
-Simulating sequences:   6%|▌         | 11.019160270690918/200 [00:03<01:02,  3.00time/s][A
-Simulating sequences:   6%|▌         | 11.024858474731445/200 [00:03<01:03,  3.00time/s][A
-Simulating sequences:   6%|▌         | 11.0283784866333/200 [00:03<01:03,  3.00time/s]  [A
-Simulating sequences:   6%|▌         | 11.114238739013672/200 [00:03<01:02,  3.02time/s][A
-Simulating sequences:   6%|▌         | 11.168984413146973/200 [00:03<01:02,  3.03time/s][A
-Simulating sequences:   6%|▌         | 11.172739028930664/200 [00:03<01:02,  3.03time/s][A
-Simulating sequences:   6%|▌         | 11.17691707611084/200 [00:03<01:02,  3.02time/s] [A
-Simulating sequences:   6%|▌         | 11.182985305786133/200 [00:03<01:02,  3.02time/s][A
-Simulating sequences:   6%|▌         | 11.196966171264648/200 [00:03<01:02,  3.02time/s][A
-Simulating sequences:   6%|▌         | 11.208385467529297/200 [00:03<01:02,  3.02time/s][A
-Simulating sequences:   6%|▌         | 11.245072364807129/200 [00:03<01:02,  3.03time/s][A
-Simulating sequences:   6%|▌         | 11.278299331665039/200 [00:03<01:02,  3.04time/s][A
-Simulating sequences:   6%|▌         | 11.280196189880371/200 [00:03<01:02,  3.03time/s][A
-Simulating sequences:   6%|▌         | 11.298505783081055/200 [00:03<01:02,  3.03time/s][A
-Simulating sequences:   6%|▌         | 11.301074028015137/200 [00:03<01:02,  3.03time/s][A
-Simulating sequences:   6%|▌         | 11.336795806884766/200 [00:03<01:02,  3.04time/s][A
-Simulating sequences:   6%|▌         | 11.342708587646484/200 [00:03<01:02,  3.04time/s][A
-Simulating sequences:   6%|▌         | 11.34752082824707/200 [00:03<01:02,  3.04time/s] [A
-Simulating sequences:   6%|▌         | 11.37692928314209/200 [00:03<01:02,  3.04time/s][A
-Simulating sequences:   6%|▌         | 11.377659797668457/200 [00:03<01:02,  3.04time/s][A
-Simulating sequences:   6%|▌         | 11.481666564941406/200 [00:03<01:01,  3.06time/s][A
-Simulating sequences:   6%|▌         | 11.58617877960205/200 [00:03<01:01,  3.09time/s] [A
-Simulating sequences:   6%|▌         | 11.65849781036377/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.66692066192627/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.670540809631348/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.67220401763916/200 [00:03<01:00,  3.10time/s] [A
-Simulating sequences:   6%|▌         | 11.672833442687988/200 [00:03<01:00,  3.09time/s][A
-Simulating sequences:   6%|▌         | 11.674705505371094/200 [00:03<01:00,  3.09time/s][A
-Simulating sequences:   6%|▌         | 11.677618026733398/200 [00:03<01:00,  3.09time/s][A
-Simulating sequences:   6%|▌         | 11.711033821105957/200 [00:03<01:00,  3.09time/s][A
-Simulating sequences:   6%|▌         | 11.737251281738281/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.752296447753906/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.797894477844238/200 [00:03<01:00,  3.11time/s][A
-Simulating sequences:   6%|▌         | 11.806501388549805/200 [00:03<01:00,  3.11time/s][A
-Simulating sequences:   6%|▌         | 11.819498062133789/200 [00:03<01:00,  3.11time/s][A
-Simulating sequences:   6%|▌         | 11.82402229309082/200 [00:03<01:00,  3.10time/s] [A
-Simulating sequences:   6%|▌         | 11.829268455505371/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.846431732177734/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.864629745483398/200 [00:03<01:00,  3.10time/s][A
-Simulating sequences:   6%|▌         | 11.877320289611816/200 [00:03<01:00,  3.11time/s][A
-Simulating sequences:   6%|▌         | 11.966583251953125/200 [00:03<01:00,  3.13time/s][A
-Simulating sequences:   6%|▌         | 11.989602088928223/200 [00:03<01:00,  3.13time/s][A
-Simulating sequences:   6%|▌         | 11.999730110168457/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.005799293518066/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.081498146057129/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.083135604858398/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.086219787597656/200 [00:03<00:59,  3.13time/s][A
-Simulating sequences:   6%|▌         | 12.093743324279785/200 [00:03<00:59,  3.13time/s][A
-Simulating sequences:   6%|▌         | 12.129857063293457/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.133513450622559/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.152642250061035/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.165092468261719/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.174023628234863/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.186835289001465/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.192039489746094/200 [00:03<00:59,  3.13time/s][A
-Simulating sequences:   6%|▌         | 12.19670295715332/200 [00:03<00:59,  3.13time/s] [A
-Simulating sequences:   6%|▌         | 12.198457717895508/200 [00:03<01:00,  3.13time/s][A
-Simulating sequences:   6%|▌         | 12.202810287475586/200 [00:03<01:00,  3.13time/s][A
-Simulating sequences:   6%|▌         | 12.203299522399902/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.204142570495605/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.206732749938965/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.224675178527832/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.230355262756348/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.258931159973145/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.259790420532227/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.276347160339355/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.276952743530273/200 [00:03<01:00,  3.12time/s][A
-Simulating sequences:   6%|▌         | 12.30156135559082/200 [00:03<01:00,  3.12time/s] [A
-Simulating sequences:   6%|▌         | 12.399158477783203/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.407734870910645/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.408624649047852/200 [00:03<00:59,  3.14time/s][A
-Simulating sequences:   6%|▌         | 12.41685676574707/200 [00:03<00:59,  3.14time/s] [A
-Simulating sequences:   6%|▌         | 12.471578598022461/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▌         | 12.497965812683105/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.506490707397461/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.513053894042969/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.523186683654785/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.53585147857666/200 [00:03<00:59,  3.15time/s] [A
-Simulating sequences:   6%|▋         | 12.538495063781738/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.557336807250977/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.564538955688477/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.603126525878906/200 [00:03<00:59,  3.15time/s][A
-Simulating sequences:   6%|▋         | 12.636879920959473/200 [00:04<00:59,  3.16time/s][A
-Simulating sequences:   6%|▋         | 12.666537284851074/200 [00:04<00:59,  3.16time/s][A
-Simulating sequences:   6%|▋         | 12.691384315490723/200 [00:04<00:59,  3.16time/s][A
-Simulating sequences:   6%|▋         | 12.693222999572754/200 [00:04<00:59,  3.16time/s][A
-Simulating sequences:   6%|▋         | 12.701215744018555/200 [00:04<00:59,  3.16time/s][A
-Simulating sequences:   6%|▋         | 12.703292846679688/200 [00:04<00:59,  3.16time/s][A
-Simulating sequences:   6%|▋         | 12.70417594909668/200 [00:04<01:12,  2.60time/s] [A
-Simulating sequences:   6%|▋         | 12.711165428161621/200 [00:04<01:12,  2.60time/s][A
-Simulating sequences:   6%|▋         | 12.718300819396973/200 [00:04<01:12,  2.60time/s][A
-Simulating sequences:   6%|▋         | 12.723770141601562/200 [00:04<01:12,  2.60time/s][A
-Simulating sequences:   6%|▋         | 12.734698295593262/200 [00:04<01:12,  2.60time/s][A
-Simulating sequences:   6%|▋         | 12.74421501159668/200 [00:04<01:12,  2.60time/s] [A
-Simulating sequences:   6%|▋         | 12.744648933410645/200 [00:04<01:12,  2.59time/s][A
-Simulating sequences:   6%|▋         | 12.749030113220215/200 [00:04<01:12,  2.59time/s][A
-Simulating sequences:   6%|▋         | 12.765368461608887/200 [00:04<01:12,  2.59time/s][A
-Simulating sequences:   6%|▋         | 12.778460502624512/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.799437522888184/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.825878143310547/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.863895416259766/200 [00:04<01:12,  2.59time/s][A
-Simulating sequences:   6%|▋         | 12.870546340942383/200 [00:04<01:12,  2.59time/s][A
-Simulating sequences:   6%|▋         | 12.872000694274902/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.875184059143066/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.883302688598633/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.883837699890137/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.894048690795898/200 [00:04<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.897855758666992/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.898147583007812/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.905747413635254/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   6%|▋         | 12.911127090454102/200 [00:05<01:12,  2.57time/s][A
-Simulating sequences:   6%|▋         | 12.92827033996582/200 [00:05<01:12,  2.58time/s] [A
-Simulating sequences:   6%|▋         | 12.931722640991211/200 [00:05<01:12,  2.57time/s][A
-Simulating sequences:   6%|▋         | 12.933405876159668/200 [00:05<01:12,  2.57time/s][A
-Simulating sequences:   6%|▋         | 12.947521209716797/200 [00:05<01:12,  2.57time/s][A
-Simulating sequences:   6%|▋         | 12.95528793334961/200 [00:05<01:12,  2.57time/s] [A
-Simulating sequences:   6%|▋         | 12.985538482666016/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   7%|▋         | 13.00423812866211/200 [00:05<01:12,  2.58time/s] [A
-Simulating sequences:   7%|▋         | 13.041966438293457/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   7%|▋         | 13.059654235839844/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.090676307678223/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.12830638885498/200 [00:05<01:12,  2.59time/s] [A
-Simulating sequences:   7%|▋         | 13.139286994934082/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.139692306518555/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.166404724121094/200 [00:05<01:11,  2.60time/s][A
-Simulating sequences:   7%|▋         | 13.166579246520996/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.175296783447266/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.179254531860352/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.180654525756836/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.183418273925781/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.186410903930664/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.188426971435547/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.197179794311523/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.19843864440918/200 [00:05<01:12,  2.58time/s] [A
-Simulating sequences:   7%|▋         | 13.202392578125/200 [00:05<01:12,  2.58time/s]  [A
-Simulating sequences:   7%|▋         | 13.204947471618652/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   7%|▋         | 13.225204467773438/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   7%|▋         | 13.261762619018555/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.277881622314453/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.287359237670898/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.289464950561523/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.29691219329834/200 [00:05<01:12,  2.59time/s] [A
-Simulating sequences:   7%|▋         | 13.29934310913086/200 [00:05<01:12,  2.58time/s][A
-Simulating sequences:   7%|▋         | 13.339947700500488/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.345303535461426/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.349717140197754/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.349931716918945/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.388052940368652/200 [00:05<01:12,  2.59time/s][A
-Simulating sequences:   7%|▋         | 13.509903907775879/200 [00:05<01:11,  2.61time/s][A
-Simulating sequences:   7%|▋         | 13.5372314453125/200 [00:05<01:11,  2.62time/s]  [A
-Simulating sequences:   7%|▋         | 13.55187702178955/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.5569429397583/200 [00:05<01:11,  2.62time/s] [A
-Simulating sequences:   7%|▋         | 13.572870254516602/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.57734489440918/200 [00:05<01:11,  2.61time/s] [A
-Simulating sequences:   7%|▋         | 13.590266227722168/200 [00:05<01:11,  2.61time/s][A
-Simulating sequences:   7%|▋         | 13.604629516601562/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.650101661682129/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.652111053466797/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.655384063720703/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.661053657531738/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.679280281066895/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.686230659484863/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.697200775146484/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.703704833984375/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.706195831298828/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.727644920349121/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.73074722290039/200 [00:05<01:11,  2.62time/s] [A
-Simulating sequences:   7%|▋         | 13.749754905700684/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.753862380981445/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.767223358154297/200 [00:05<01:11,  2.62time/s][A
-Simulating sequences:   7%|▋         | 13.77121639251709/200 [00:05<01:11,  2.62time/s] [A
-Simulating sequences:   7%|▋         | 14.099790573120117/200 [00:05<01:09,  2.68time/s][A
-Simulating sequences:   7%|▋         | 14.17857551574707/200 [00:05<01:09,  2.69time/s] [A
-Simulating sequences:   7%|▋         | 14.18057918548584/200 [00:05<01:09,  2.69time/s][A
-Simulating sequences:   7%|▋         | 14.18251895904541/200 [00:05<01:09,  2.69time/s][A
-Simulating sequences:   7%|▋         | 14.190902709960938/200 [00:05<01:09,  2.68time/s][A
-Simulating sequences:   7%|▋         | 14.197370529174805/200 [00:05<01:09,  2.68time/s][A
-Simulating sequences:   7%|▋         | 14.219528198242188/200 [00:05<01:09,  2.69time/s][A
-Simulating sequences:   7%|▋         | 14.233366012573242/200 [00:05<01:09,  2.69time/s][A
-Simulating sequences:   7%|▋         | 14.32884693145752/200 [00:05<01:08,  2.70time/s] [A
-Simulating sequences:   7%|▋         | 14.336291313171387/200 [00:05<01:08,  2.70time/s][A
-Simulating sequences:   7%|▋         | 14.337368965148926/200 [00:05<01:08,  2.70time/s][A
-Simulating sequences:   7%|▋         | 14.403007507324219/200 [00:05<01:08,  2.71time/s][A
-Simulating sequences:   7%|▋         | 14.451423645019531/200 [00:05<01:08,  2.71time/s][A
-Simulating sequences:   7%|▋         | 14.470752716064453/200 [00:05<01:08,  2.71time/s][A
-Simulating sequences:   7%|▋         | 14.550749778747559/200 [00:05<01:08,  2.73time/s][A
-Simulating sequences:   7%|▋         | 14.60768985748291/200 [00:05<01:07,  2.74time/s] [A
-Simulating sequences:   7%|▋         | 14.618719100952148/200 [00:05<01:07,  2.74time/s][A
-Simulating sequences:   7%|▋         | 14.709529876708984/200 [00:05<01:07,  2.75time/s][A
-Simulating sequences:   7%|▋         | 14.76911449432373/200 [00:05<01:07,  2.76time/s] [A
-Simulating sequences:   7%|▋         | 14.789745330810547/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.801698684692383/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.815450668334961/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.825098037719727/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.825810432434082/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.830756187438965/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.832110404968262/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.848752975463867/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.89795970916748/200 [00:05<01:06,  2.76time/s] [A
-Simulating sequences:   7%|▋         | 14.905009269714355/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.906611442565918/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.916703224182129/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.92861557006836/200 [00:05<01:07,  2.76time/s] [A
-Simulating sequences:   7%|▋         | 14.953478813171387/200 [00:05<01:06,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.960538864135742/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.968151092529297/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.970756530761719/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.981581687927246/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.983611106872559/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   7%|▋         | 14.994668960571289/200 [00:05<01:07,  2.76time/s][A
-Simulating sequences:   8%|▊         | 15.04466438293457/200 [00:05<01:06,  2.76time/s] [A
-Simulating sequences:   8%|▊         | 15.120558738708496/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.127740859985352/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.129007339477539/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.13265323638916/200 [00:05<01:06,  2.77time/s] [A
-Simulating sequences:   8%|▊         | 15.134952545166016/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.135308265686035/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.145543098449707/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.14921760559082/200 [00:05<01:06,  2.76time/s] [A
-Simulating sequences:   8%|▊         | 15.182572364807129/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.235295295715332/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.250815391540527/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.255447387695312/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.29821491241455/200 [00:05<01:06,  2.78time/s] [A
-Simulating sequences:   8%|▊         | 15.366157531738281/200 [00:05<01:06,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.380770683288574/200 [00:05<01:06,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.409546852111816/200 [00:05<01:06,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.451301574707031/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.469728469848633/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.488754272460938/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.493083000183105/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.50094223022461/200 [00:05<01:05,  2.80time/s] [A
-Simulating sequences:   8%|▊         | 15.502506256103516/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.523896217346191/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.548487663269043/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.569994926452637/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.579855918884277/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.583385467529297/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.585945129394531/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.592805862426758/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.597269058227539/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.597952842712402/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.612874031066895/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.63334846496582/200 [00:05<01:05,  2.80time/s] [A
-Simulating sequences:   8%|▊         | 15.640266418457031/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.659149169921875/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.66283130645752/200 [00:05<01:05,  2.79time/s] [A
-Simulating sequences:   8%|▊         | 15.668601036071777/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.672584533691406/200 [00:05<01:06,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.692659378051758/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.69544792175293/200 [00:05<01:06,  2.79time/s] [A
-Simulating sequences:   8%|▊         | 15.699357032775879/200 [00:05<01:06,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.706562995910645/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.716695785522461/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.720404624938965/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.728752136230469/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.730369567871094/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.742989540100098/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.755607604980469/200 [00:05<01:06,  2.78time/s][A
-Simulating sequences:   8%|▊         | 15.757884979248047/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.763710021972656/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.771294593811035/200 [00:05<01:06,  2.77time/s][A
-Simulating sequences:   8%|▊         | 15.876100540161133/200 [00:05<01:06,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.929826736450195/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.954619407653809/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.962190628051758/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.963749885559082/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 15.964507102966309/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.976276397705078/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.978558540344238/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.979057312011719/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 15.985976219177246/200 [00:05<01:06,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.083593368530273/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.130706787109375/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.16897201538086/200 [00:05<01:05,  2.81time/s] [A
-Simulating sequences:   8%|▊         | 16.1839542388916/200 [00:05<01:05,  2.81time/s] [A
-Simulating sequences:   8%|▊         | 16.187925338745117/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.19114112854004/200 [00:05<01:05,  2.81time/s] [A
-Simulating sequences:   8%|▊         | 16.193382263183594/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.219343185424805/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.235506057739258/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.236928939819336/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.239755630493164/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.24595832824707/200 [00:05<01:05,  2.81time/s] [A
-Simulating sequences:   8%|▊         | 16.264942169189453/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.265779495239258/200 [00:05<01:05,  2.81time/s][A
-Simulating sequences:   8%|▊         | 16.27173614501953/200 [00:05<01:05,  2.80time/s] [A
-Simulating sequences:   8%|▊         | 16.28142547607422/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.295141220092773/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.295799255371094/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.304332733154297/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.324092864990234/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.33285140991211/200 [00:05<01:05,  2.80time/s] [A
-Simulating sequences:   8%|▊         | 16.3476619720459/200 [00:05<01:05,  2.80time/s] [A
-Simulating sequences:   8%|▊         | 16.349239349365234/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.364700317382812/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.37366485595703/200 [00:05<01:05,  2.80time/s] [A
-Simulating sequences:   8%|▊         | 16.37946128845215/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.395870208740234/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.39662742614746/200 [00:05<01:05,  2.80time/s] [A
-Simulating sequences:   8%|▊         | 16.400192260742188/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.411705017089844/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.42646026611328/200 [00:05<01:05,  2.79time/s] [A
-Simulating sequences:   8%|▊         | 16.441293716430664/200 [00:05<01:05,  2.80time/s][A
-Simulating sequences:   8%|▊         | 16.44501495361328/200 [00:05<01:05,  2.79time/s] [A
-Simulating sequences:   8%|▊         | 16.445924758911133/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.45138931274414/200 [00:05<01:05,  2.79time/s] [A
-Simulating sequences:   8%|▊         | 16.475751876831055/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.478540420532227/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.480361938476562/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.482040405273438/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.504474639892578/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.527986526489258/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.5302677154541/200 [00:05<01:05,  2.79time/s]  [A
-Simulating sequences:   8%|▊         | 16.531644821166992/200 [00:05<01:05,  2.79time/s][A
-Simulating sequences:   8%|▊         | 16.563720703125/200 [00:05<01:05,  2.79time/s]   [A
-Simulating sequences:   8%|▊         | 16.60205841064453/200 [00:06<01:15,  2.44time/s][A
-Simulating sequences:   8%|▊         | 16.62268829345703/200 [00:06<01:15,  2.44time/s][A
-Simulating sequences:   8%|▊         | 16.62397003173828/200 [00:06<01:15,  2.44time/s][A
-Simulating sequences:   8%|▊         | 16.650205612182617/200 [00:06<01:15,  2.44time/s][A
-Simulating sequences:   8%|▊         | 16.65682601928711/200 [00:06<01:15,  2.44time/s] [A
-Simulating sequences:   8%|▊         | 16.903600692749023/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   8%|▊         | 16.905853271484375/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   8%|▊         | 16.910213470458984/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   8%|▊         | 16.983972549438477/200 [00:06<01:13,  2.48time/s][A
-Simulating sequences:   8%|▊         | 16.99095916748047/200 [00:06<01:13,  2.48time/s] [A
-Simulating sequences:   8%|▊         | 16.991838455200195/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.01506233215332/200 [00:06<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.023590087890625/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.029478073120117/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.03033447265625/200 [00:06<01:14,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.03156089782715/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.03652000427246/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.04598045349121/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.054210662841797/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.057836532592773/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.05954360961914/200 [00:06<01:14,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.080059051513672/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.0876407623291/200 [00:06<01:14,  2.47time/s]  [A
-Simulating sequences:   9%|▊         | 17.08859634399414/200 [00:06<01:14,  2.46time/s][A
-Simulating sequences:   9%|▊         | 17.090471267700195/200 [00:06<01:14,  2.46time/s][A
-Simulating sequences:   9%|▊         | 17.16375160217285/200 [00:06<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.174863815307617/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.19379425048828/200 [00:06<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.212846755981445/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.216135025024414/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.216205596923828/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.224166870117188/200 [00:06<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.224214553833008/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.23371124267578/200 [00:06<01:14,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.234455108642578/200 [00:06<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.23643684387207/200 [00:06<01:14,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.236549377441406/200 [00:06<01:14,  2.46time/s][A
-Simulating sequences:   9%|▊         | 17.239290237426758/200 [00:07<01:14,  2.46time/s][A
-Simulating sequences:   9%|▊         | 17.249412536621094/200 [00:07<01:14,  2.46time/s][A
-Simulating sequences:   9%|▊         | 17.26893424987793/200 [00:07<01:14,  2.46time/s] [A
-Simulating sequences:   9%|▊         | 17.323209762573242/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.326467514038086/200 [00:07<01:14,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.34825325012207/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▊         | 17.34950065612793/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▊         | 17.499732971191406/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 17.523101806640625/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 17.525007247924805/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 17.52985382080078/200 [00:07<01:13,  2.49time/s] [A
-Simulating sequences:   9%|▉         | 17.531312942504883/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 17.532155990600586/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.532615661621094/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.546175003051758/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.551288604736328/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.566791534423828/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.592510223388672/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.596384048461914/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.59906768798828/200 [00:07<01:13,  2.48time/s] [A
-Simulating sequences:   9%|▉         | 17.603435516357422/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.606040954589844/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.632570266723633/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.63319206237793/200 [00:07<01:13,  2.48time/s] [A
-Simulating sequences:   9%|▉         | 17.64778709411621/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.650766372680664/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.651691436767578/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.654212951660156/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.67245101928711/200 [00:07<01:13,  2.48time/s] [A
-Simulating sequences:   9%|▉         | 17.672683715820312/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.676870346069336/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.692703247070312/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.70478630065918/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 17.717208862304688/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.740806579589844/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 17.74180793762207/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 17.749130249023438/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.77318572998047/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 17.78288459777832/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.79300308227539/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.793508529663086/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.812345504760742/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.819652557373047/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.840927124023438/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 17.84624671936035/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 17.974740982055664/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 17.976255416870117/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 17.993627548217773/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 18.00079917907715/200 [00:07<01:13,  2.49time/s] [A
-Simulating sequences:   9%|▉         | 18.010648727416992/200 [00:07<01:13,  2.49time/s][A
-Simulating sequences:   9%|▉         | 18.0108699798584/200 [00:07<01:13,  2.48time/s]  [A
-Simulating sequences:   9%|▉         | 18.01885223388672/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 18.029552459716797/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 18.02971839904785/200 [00:07<01:13,  2.48time/s] [A
-Simulating sequences:   9%|▉         | 18.03160285949707/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 18.034088134765625/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 18.038570404052734/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 18.03910255432129/200 [00:07<01:13,  2.48time/s] [A
-Simulating sequences:   9%|▉         | 18.047712326049805/200 [00:07<01:13,  2.48time/s][A
-Simulating sequences:   9%|▉         | 18.05035400390625/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 18.05662727355957/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.057941436767578/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.058584213256836/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.058753967285156/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.059656143188477/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.066436767578125/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.074481964111328/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.09549331665039/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 18.105945587158203/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.115476608276367/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.16654396057129/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 18.191585540771484/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.195451736450195/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.212661743164062/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.213218688964844/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.225852966308594/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.234539031982422/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.246381759643555/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.260324478149414/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.26400375366211/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 18.27464485168457/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.28352165222168/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.29212760925293/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.32369613647461/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.328447341918945/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.3294734954834/200 [00:07<01:13,  2.47time/s]  [A
-Simulating sequences:   9%|▉         | 18.342891693115234/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.34453773498535/200 [00:07<01:13,  2.47time/s] [A
-Simulating sequences:   9%|▉         | 18.34686279296875/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.364439010620117/200 [00:07<01:13,  2.47time/s][A
-Simulating sequences:   9%|▉         | 18.365201950073242/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.365413665771484/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.370746612548828/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.392955780029297/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.40303611755371/200 [00:07<01:13,  2.46time/s] [A
-Simulating sequences:   9%|▉         | 18.40732192993164/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.409475326538086/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.417463302612305/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.418725967407227/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.427722930908203/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.44673728942871/200 [00:07<01:13,  2.46time/s] [A
-Simulating sequences:   9%|▉         | 18.467742919921875/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.499099731445312/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.50837516784668/200 [00:07<01:13,  2.46time/s] [A
-Simulating sequences:   9%|▉         | 18.509204864501953/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.516305923461914/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.52644157409668/200 [00:07<01:13,  2.46time/s] [A
-Simulating sequences:   9%|▉         | 18.54463768005371/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.555856704711914/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.55686378479004/200 [00:07<01:13,  2.46time/s] [A
-Simulating sequences:   9%|▉         | 18.558324813842773/200 [00:07<01:13,  2.46time/s][A
-Simulating sequences:   9%|▉         | 18.55915069580078/200 [00:07<01:13,  2.46time/s] [A
-Simulating sequences:   9%|▉         | 18.566476821899414/200 [00:07<01:13,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.580495834350586/200 [00:07<01:13,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.582134246826172/200 [00:07<01:13,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.582305908203125/200 [00:07<01:14,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.589279174804688/200 [00:07<01:14,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.59701919555664/200 [00:07<01:14,  2.45time/s] [A
-Simulating sequences:   9%|▉         | 18.60167121887207/200 [00:07<01:14,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.602048873901367/200 [00:07<01:14,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.603778839111328/200 [00:07<01:14,  2.45time/s][A
-Simulating sequences:   9%|▉         | 18.605703353881836/200 [00:07<01:14,  2.44time/s][A
-Simulating sequences:   9%|▉         | 18.61510467529297/200 [00:07<01:14,  2.44time/s] [A
-Simulating sequences:   9%|▉         | 18.615482330322266/200 [00:07<01:14,  2.44time/s][A
-Simulating sequences:   9%|▉         | 18.624446868896484/200 [00:07<01:14,  2.44time/s][A
-Simulating sequences:   9%|▉         | 18.62748146057129/200 [00:07<01:14,  2.44time/s] [A
-Simulating sequences:   9%|▉         | 18.629398345947266/200 [00:07<01:14,  2.44time/s][A
-Simulating sequences:   9%|▉         | 18.632383346557617/200 [00:07<01:14,  2.44time/s][A
-Simulating sequences:   9%|▉         | 18.63334083557129/200 [00:07<01:14,  2.44time/s] [A
-Simulating sequences:   9%|▉         | 18.638830184936523/200 [00:07<01:14,  2.44time/s][A
-Simulating sequences:   9%|▉         | 18.64162254333496/200 [00:07<01:14,  2.43time/s] [A
-Simulating sequences:   9%|▉         | 18.64797592163086/200 [00:07<01:14,  2.43time/s][A
-Simulating sequences:   9%|▉         | 18.651498794555664/200 [00:07<01:14,  2.43time/s][A
-Simulating sequences:   9%|▉         | 18.6546688079834/200 [00:07<01:14,  2.43time/s]  [A
-Simulating sequences:   9%|▉         | 18.659284591674805/200 [00:07<01:14,  2.43time/s][A
-Simulating sequences:   9%|▉         | 18.665271759033203/200 [00:07<01:14,  2.43time/s][A
-Simulating sequences:   9%|▉         | 18.666057586669922/200 [00:07<01:14,  2.43time/s][A
-Simulating sequences:   9%|▉         | 18.66822624206543/200 [00:07<01:14,  2.43time/s] [A
-Simulating sequences:   9%|▉         | 18.670482635498047/200 [00:07<01:14,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.676069259643555/200 [00:07<01:14,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.677066802978516/200 [00:07<01:14,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.67989730834961/200 [00:07<01:14,  2.42time/s] [A
-Simulating sequences:   9%|▉         | 18.685651779174805/200 [00:07<01:14,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.695362091064453/200 [00:07<01:14,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.695383071899414/200 [00:07<01:14,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.69664192199707/200 [00:07<01:15,  2.42time/s] [A
-Simulating sequences:   9%|▉         | 18.7042293548584/200 [00:07<01:15,  2.42time/s] [A
-Simulating sequences:   9%|▉         | 18.72037696838379/200 [00:07<01:15,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.724998474121094/200 [00:07<01:15,  2.42time/s][A
-Simulating sequences:   9%|▉         | 18.73067283630371/200 [00:07<01:15,  2.41time/s] [A
-Simulating sequences:   9%|▉         | 18.7318115234375/200 [00:07<01:15,  2.41time/s] [A
-Simulating sequences:   9%|▉         | 18.734453201293945/200 [00:07<01:15,  2.41time/s][A
-Simulating sequences:   9%|▉         | 18.736661911010742/200 [00:07<01:15,  2.41time/s][A
-Simulating sequences:   9%|▉         | 18.74386978149414/200 [00:07<01:15,  2.41time/s] [A
-Simulating sequences:   9%|▉         | 18.746990203857422/200 [00:07<01:15,  2.41time/s][A
-Simulating sequences:   9%|▉         | 18.75661849975586/200 [00:08<01:23,  2.16time/s] [A
-Simulating sequences:   9%|▉         | 18.758041381835938/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.76476287841797/200 [00:08<01:23,  2.16time/s] [A
-Simulating sequences:   9%|▉         | 18.77895736694336/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.780065536499023/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.79936981201172/200 [00:08<01:23,  2.16time/s] [A
-Simulating sequences:   9%|▉         | 18.817890167236328/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.819263458251953/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.836166381835938/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.84038734436035/200 [00:08<01:23,  2.16time/s] [A
-Simulating sequences:   9%|▉         | 18.845016479492188/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.864282608032227/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.869701385498047/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.886497497558594/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.904064178466797/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.90920066833496/200 [00:08<01:23,  2.16time/s] [A
-Simulating sequences:   9%|▉         | 18.921188354492188/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.927791595458984/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.930078506469727/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.937414169311523/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.941314697265625/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.955631256103516/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.9593505859375/200 [00:08<01:23,  2.16time/s]  [A
-Simulating sequences:   9%|▉         | 18.97338104248047/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.98220443725586/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.98872947692871/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:   9%|▉         | 18.99053382873535/200 [00:08<01:24,  2.15time/s][A
-Simulating sequences:  10%|▉         | 19.015201568603516/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:  10%|▉         | 19.039077758789062/200 [00:08<01:23,  2.16time/s][A
-Simulating sequences:  10%|▉         | 19.222124099731445/200 [00:08<01:23,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.233299255371094/200 [00:08<01:23,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.326725006103516/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.479660034179688/200 [00:08<01:21,  2.20time/s][A
-Simulating sequences:  10%|▉         | 19.48267364501953/200 [00:08<01:22,  2.20time/s] [A
-Simulating sequences:  10%|▉         | 19.490774154663086/200 [00:08<01:22,  2.20time/s][A
-Simulating sequences:  10%|▉         | 19.496463775634766/200 [00:08<01:22,  2.20time/s][A
-Simulating sequences:  10%|▉         | 19.49945640563965/200 [00:08<01:22,  2.20time/s] [A
-Simulating sequences:  10%|▉         | 19.5008544921875/200 [00:08<01:22,  2.20time/s] [A
-Simulating sequences:  10%|▉         | 19.5081844329834/200 [00:08<01:22,  2.20time/s][A
-Simulating sequences:  10%|▉         | 19.517044067382812/200 [00:08<01:22,  2.20time/s][A
-Simulating sequences:  10%|▉         | 19.524940490722656/200 [00:08<01:22,  2.20time/s][A
-Simulating sequences:  10%|▉         | 19.52631187438965/200 [00:08<01:22,  2.19time/s] [A
-Simulating sequences:  10%|▉         | 19.529142379760742/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.53479766845703/200 [00:08<01:22,  2.19time/s] [A
-Simulating sequences:  10%|▉         | 19.53497314453125/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.5441951751709/200 [00:08<01:22,  2.19time/s] [A
-Simulating sequences:  10%|▉         | 19.550020217895508/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.552040100097656/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.5634822845459/200 [00:08<01:22,  2.19time/s]  [A
-Simulating sequences:  10%|▉         | 19.571704864501953/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.573610305786133/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.603580474853516/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.60536003112793/200 [00:08<01:22,  2.19time/s] [A
-Simulating sequences:  10%|▉         | 19.605430603027344/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.613460540771484/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.624479293823242/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.624858856201172/200 [00:08<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.625797271728516/200 [00:08<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.630739212036133/200 [00:08<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.630859375/200 [00:08<01:22,  2.18time/s]      [A
-Simulating sequences:  10%|▉         | 19.631620407104492/200 [00:09<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.632600784301758/200 [00:09<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.647077560424805/200 [00:09<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.655101776123047/200 [00:09<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.660314559936523/200 [00:09<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.720294952392578/200 [00:09<01:22,  2.18time/s][A
-Simulating sequences:  10%|▉         | 19.758451461791992/200 [00:09<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.794689178466797/200 [00:09<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.800891876220703/200 [00:09<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.828371047973633/200 [00:09<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.836149215698242/200 [00:09<01:22,  2.19time/s][A
-Simulating sequences:  10%|▉         | 19.83816146850586/200 [00:09<01:22,  2.19time/s] [A
-Simulating sequences:  10%|▉         | 19.8416748046875/200 [00:09<01:22,  2.19time/s] [A
-Simulating sequences:  10%|▉         | 19.84857940673828/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.854156494140625/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.870859146118164/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.88949966430664/200 [00:09<01:22,  2.17time/s] [A
-Simulating sequences:  10%|▉         | 19.891874313354492/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.914499282836914/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.91828727722168/200 [00:09<01:22,  2.17time/s] [A
-Simulating sequences:  10%|▉         | 19.921077728271484/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.9517822265625/200 [00:09<01:22,  2.17time/s]  [A
-Simulating sequences:  10%|▉         | 19.95256233215332/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.967187881469727/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.969785690307617/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.977005004882812/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.987998962402344/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.993358612060547/200 [00:09<01:22,  2.17time/s][A
-Simulating sequences:  10%|▉         | 19.99458885192871/200 [00:09<01:23,  2.17time/s] [A
-Simulating sequences:  10%|█         | 20.00335693359375/200 [00:09<01:23,  2.17time/s][A
-Simulating sequences:  10%|█         | 20.005962371826172/200 [00:09<01:23,  2.17time/s][A
-Simulating sequences:  10%|█         | 20.014616012573242/200 [00:09<01:23,  2.17time/s][A
-Simulating sequences:  10%|█         | 20.02178382873535/200 [00:09<01:23,  2.17time/s] [A
-                                                                                       [A
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
-Simulating sequences:   0%|          | 0.37992846965789795/200 [00:00<00:01, 195.65time/s][A
-Simulating sequences:   0%|          | 0.3907466530799866/200 [00:00<00:02, 72.75time/s]  [A
-Simulating sequences:   0%|          | 0.4053243398666382/200 [00:00<00:04, 44.89time/s][A
-Simulating sequences:   0%|          | 0.40964236855506897/200 [00:00<00:06, 32.20time/s][A
-Simulating sequences:   0%|          | 0.41658738255500793/200 [00:00<00:07, 25.49time/s][A
-Simulating sequences:   0%|          | 0.4287398159503937/200 [00:00<00:09, 21.78time/s] [A
-Simulating sequences:   0%|          | 0.45617014169692993/200 [00:00<00:10, 19.79time/s][A
-Simulating sequences:   0%|          | 0.46230030059814453/200 [00:00<00:11, 17.49time/s][A
-Simulating sequences:   0%|          | 0.4695446789264679/200 [00:00<00:12, 15.77time/s] [A
-Simulating sequences:   0%|          | 0.4763728082180023/200 [00:00<00:13, 14.38time/s][A
-Simulating sequences:   0%|          | 0.48549261689186096/200 [00:00<00:15, 13.29time/s][A
-Simulating sequences:   0%|          | 0.48890089988708496/200 [00:00<00:16, 12.26time/s][A
-Simulating sequences:   0%|          | 0.4927423894405365/200 [00:00<00:17, 11.40time/s] [A
-Simulating sequences:   0%|          | 0.5087401270866394/200 [00:00<00:18, 10.92time/s][A
-Simulating sequences:   0%|          | 0.5114135146141052/200 [00:00<00:19, 10.23time/s][A
-Simulating sequences:   0%|          | 0.514236569404602/200 [00:00<00:20,  9.64time/s] [A
-Simulating sequences:   0%|          | 0.5178738236427307/200 [00:00<00:21,  9.13time/s][A
-Simulating sequences:   0%|          | 0.5184095501899719/200 [00:00<00:23,  8.63time/s][A
-Simulating sequences:   0%|          | 0.5240666270256042/200 [00:00<00:24,  8.26time/s][A
-Simulating sequences:   0%|          | 0.5303443670272827/200 [00:00<00:25,  7.94time/s][A
-Simulating sequences:   0%|          | 0.594380795955658/200 [00:00<00:23,  8.47time/s] [A
-Simulating sequences:   0%|          | 0.5951244235038757/200 [00:00<00:24,  8.09time/s][A
-Simulating sequences:   0%|          | 0.6263113021850586/200 [00:00<00:24,  8.14time/s][A
-Simulating sequences:   0%|          | 0.6273423433303833/200 [00:00<00:25,  7.81time/s][A
-Simulating sequences:   0%|          | 0.6616489887237549/200 [00:00<00:25,  7.91time/s][A
-Simulating sequences:   0%|          | 0.6648695468902588/200 [00:00<00:26,  7.64time/s][A
-Simulating sequences:   0%|          | 0.6690402030944824/200 [00:00<00:26,  7.40time/s][A
-Simulating sequences:   0%|          | 0.6780452728271484/200 [00:00<00:27,  7.22time/s][A
-Simulating sequences:   0%|          | 0.6835448741912842/200 [00:00<00:28,  7.03time/s][A
-Simulating sequences:   0%|          | 0.6848646402359009/200 [00:00<00:29,  6.80time/s][A
-Simulating sequences:   0%|          | 0.6937668919563293/200 [00:00<00:29,  6.67time/s][A
-Simulating sequences:   0%|          | 0.7094917297363281/200 [00:00<00:30,  6.60time/s][A
-Simulating sequences:   0%|          | 0.7626482248306274/200 [00:00<00:28,  6.88time/s][A
-Simulating sequences:   0%|          | 0.7666352987289429/200 [00:00<00:29,  6.71time/s][A
-Simulating sequences:   0%|          | 0.7684835195541382/200 [00:00<00:30,  6.53time/s][A
-Simulating sequences:   0%|          | 0.7734836339950562/200 [00:00<00:31,  6.39time/s][A
-Simulating sequences:   0%|          | 0.8064850568771362/200 [00:00<00:30,  6.48time/s][A
-Simulating sequences:   0%|          | 0.8881896138191223/200 [00:00<00:28,  6.95time/s][A
-Simulating sequences:   0%|          | 0.8960280418395996/200 [00:00<00:29,  6.83time/s][A
-Simulating sequences:   0%|          | 0.9548059105873108/200 [00:00<00:28,  7.09time/s][A
-Simulating sequences:   0%|          | 0.9849762320518494/200 [00:00<00:27,  7.14time/s][A
-Simulating sequences:   1%|          | 1.0008639097213745/200 [00:00<00:28,  7.08time/s][A
-Simulating sequences:   1%|          | 1.0209747552871704/200 [00:00<00:28,  7.05time/s][A
-Simulating sequences:   1%|          | 1.136868953704834/200 [00:00<00:25,  7.67time/s] [A
-Simulating sequences:   1%|          | 1.1432207822799683/200 [00:00<00:26,  7.54time/s][A
-Simulating sequences:   1%|          | 1.1722420454025269/200 [00:00<00:26,  7.56time/s][A
-Simulating sequences:   1%|          | 1.1930173635482788/200 [00:00<00:26,  7.53time/s][A
-Simulating sequences:   1%|          | 1.1976604461669922/200 [00:00<00:26,  7.40time/s][A
-Simulating sequences:   1%|          | 1.2374272346496582/200 [00:00<00:26,  7.49time/s][A
-Simulating sequences:   1%|          | 1.2384895086288452/200 [00:00<00:27,  7.34time/s][A
-Simulating sequences:   1%|          | 1.2606698274612427/200 [00:00<00:27,  7.32time/s][A
-Simulating sequences:   1%|          | 1.314554214477539/200 [00:00<00:26,  7.49time/s] [A
-Simulating sequences:   1%|          | 1.4031492471694946/200 [00:00<00:25,  7.84time/s][A
-Simulating sequences:   1%|          | 1.4383593797683716/200 [00:00<00:25,  7.89time/s][A
-Simulating sequences:   1%|          | 1.4771465063095093/200 [00:00<00:24,  7.95time/s][A
-Simulating sequences:   1%|          | 1.4778271913528442/200 [00:00<00:25,  7.81time/s][A
-Simulating sequences:   1%|          | 1.631321907043457/200 [00:00<00:23,  8.47time/s] [A
-Simulating sequences:   1%|          | 1.6354060173034668/200 [00:00<00:23,  8.35time/s][A
-Simulating sequences:   1%|          | 1.645369052886963/200 [00:00<00:24,  8.25time/s] [A
-Simulating sequences:   1%|          | 1.6591545343399048/200 [00:00<00:24,  8.18time/s][A
-Simulating sequences:   1%|          | 1.6686980724334717/200 [00:00<00:24,  8.09time/s][A
-Simulating sequences:   1%|          | 1.6818253993988037/200 [00:00<00:24,  8.03time/s][A
-Simulating sequences:   1%|          | 1.7065261602401733/200 [00:00<00:24,  8.01time/s][A
-Simulating sequences:   1%|          | 1.7110732793807983/200 [00:00<00:25,  7.91time/s][A
-Simulating sequences:   1%|          | 1.741209864616394/200 [00:00<00:25,  7.92time/s] [A
-Simulating sequences:   1%|          | 1.7445752620697021/200 [00:00<00:25,  7.81time/s][A
-Simulating sequences:   1%|          | 1.7532861232757568/200 [00:00<00:25,  7.73time/s][A
-Simulating sequences:   1%|          | 1.7625641822814941/200 [00:00<00:25,  7.66time/s][A
-Simulating sequences:   1%|          | 1.7652138471603394/200 [00:00<00:26,  7.56time/s][A
-Simulating sequences:   1%|          | 1.8028571605682373/200 [00:00<00:26,  7.61time/s][A
-Simulating sequences:   1%|          | 1.8149851560592651/200 [00:00<00:26,  7.55time/s][A
-Simulating sequences:   1%|          | 1.907292366027832/200 [00:00<00:25,  7.82time/s] [A
-Simulating sequences:   1%|          | 1.9875905513763428/200 [00:00<00:24,  8.04time/s][A
-Simulating sequences:   1%|          | 1.998077392578125/200 [00:00<00:24,  7.97time/s] [A
-Simulating sequences:   1%|          | 2.0134105682373047/200 [00:00<00:24,  7.92time/s][A
-Simulating sequences:   1%|          | 2.1494829654693604/200 [00:00<00:23,  8.34time/s][A
-Simulating sequences:   1%|          | 2.1734073162078857/200 [00:00<00:23,  8.32time/s][A
-Simulating sequences:   1%|          | 2.2109005451202393/200 [00:00<00:23,  8.36time/s][A
-Simulating sequences:   1%|          | 2.2136788368225098/200 [00:00<00:23,  8.26time/s][A
-Simulating sequences:   1%|          | 2.226900815963745/200 [00:00<00:24,  8.20time/s] [A
-Simulating sequences:   1%|          | 2.2337958812713623/200 [00:00<00:24,  8.13time/s][A
-Simulating sequences:   1%|          | 2.2362112998962402/200 [00:00<00:24,  8.03time/s][A
-Simulating sequences:   1%|          | 2.24227237701416/200 [00:00<00:24,  7.96time/s]  [A
-Simulating sequences:   1%|          | 2.251089334487915/200 [00:00<00:25,  7.89time/s][A
-Simulating sequences:   1%|          | 2.2669460773468018/200 [00:00<00:25,  7.85time/s][A
-Simulating sequences:   1%|          | 2.270477056503296/200 [00:00<00:25,  7.77time/s] [A
-Simulating sequences:   1%|          | 2.3182125091552734/200 [00:00<00:25,  7.84time/s][A
-Simulating sequences:   1%|          | 2.3202273845672607/200 [00:00<00:25,  7.76time/s][A
-Simulating sequences:   1%|          | 2.346341609954834/200 [00:00<00:25,  7.76time/s] [A
-Simulating sequences:   1%|          | 2.3484156131744385/200 [00:00<00:25,  7.67time/s][A
-Simulating sequences:   1%|          | 2.4020113945007324/200 [00:00<00:25,  7.76time/s][A
-Simulating sequences:   1%|          | 2.4369752407073975/200 [00:00<00:25,  7.79time/s][A
-Simulating sequences:   1%|          | 2.4778361320495605/200 [00:00<00:25,  7.83time/s][A
-Simulating sequences:   1%|▏         | 2.5868420600891113/200 [00:00<00:24,  8.09time/s][A
-Simulating sequences:   1%|▏         | 2.658613920211792/200 [00:00<00:23,  8.22time/s] [A
-Simulating sequences:   1%|▏         | 2.6593244075775146/200 [00:00<00:24,  8.14time/s][A
-Simulating sequences:   1%|▏         | 2.721376657485962/200 [00:00<00:23,  8.24time/s] [A
-Simulating sequences:   1%|▏         | 2.735816717147827/200 [00:00<00:24,  8.20time/s][A
-Simulating sequences:   1%|▏         | 2.765486478805542/200 [00:00<00:24,  8.20time/s][A
-Simulating sequences:   1%|▏         | 2.7910516262054443/200 [00:00<00:24,  8.20time/s][A
-Simulating sequences:   1%|▏         | 2.7957799434661865/200 [00:00<00:24,  8.13time/s][A
-Simulating sequences:   1%|▏         | 2.8213083744049072/200 [00:00<00:24,  8.12time/s][A
-Simulating sequences:   1%|▏         | 2.848262310028076/200 [00:00<00:24,  8.11time/s] [A
-Simulating sequences:   1%|▏         | 2.8564863204956055/200 [00:00<00:24,  8.06time/s][A
-Simulating sequences:   1%|▏         | 2.908247232437134/200 [00:00<00:24,  8.12time/s] [A
-Simulating sequences:   1%|▏         | 2.935176134109497/200 [00:00<00:24,  8.12time/s][A
-Simulating sequences:   1%|▏         | 2.9737300872802734/200 [00:00<00:24,  8.15time/s][A
-Simulating sequences:   2%|▏         | 3.0289881229400635/200 [00:00<00:23,  8.22time/s][A
-Simulating sequences:   2%|▏         | 3.057396411895752/200 [00:00<00:23,  8.22time/s] [A
-Simulating sequences:   2%|▏         | 3.112614393234253/200 [00:00<00:23,  8.29time/s][A
-Simulating sequences:   2%|▏         | 3.1326396465301514/200 [00:00<00:23,  8.27time/s][A
-Simulating sequences:   2%|▏         | 3.133936882019043/200 [00:00<00:24,  8.20time/s] [A
-Simulating sequences:   2%|▏         | 3.1531851291656494/200 [00:00<00:24,  8.17time/s][A
-Simulating sequences:   2%|▏         | 3.1797678470611572/200 [00:00<00:24,  8.17time/s][A
-Simulating sequences:   2%|▏         | 3.192958354949951/200 [00:00<00:24,  8.13time/s] [A
-Simulating sequences:   2%|▏         | 3.2516767978668213/200 [00:00<00:23,  8.20time/s][A
-Simulating sequences:   2%|▏         | 3.2922770977020264/200 [00:00<00:23,  8.23time/s][A
-Simulating sequences:   2%|▏         | 3.2936899662017822/200 [00:00<00:24,  8.17time/s][A
-Simulating sequences:   2%|▏         | 3.3063793182373047/200 [00:00<00:24,  8.13time/s][A
-Simulating sequences:   2%|▏         | 3.3313732147216797/200 [00:00<00:24,  8.12time/s][A
-Simulating sequences:   2%|▏         | 3.356557607650757/200 [00:00<00:24,  8.11time/s] [A
-Simulating sequences:   2%|▏         | 3.3733596801757812/200 [00:00<00:24,  8.08time/s][A
-Simulating sequences:   2%|▏         | 3.428084373474121/200 [00:00<00:24,  8.14time/s] [A
-Simulating sequences:   2%|▏         | 3.563495397567749/200 [00:00<00:23,  8.40time/s][A
-Simulating sequences:   2%|▏         | 3.5647199153900146/200 [00:00<00:23,  8.33time/s][A
-Simulating sequences:   2%|▏         | 3.6350953578948975/200 [00:00<00:23,  8.43time/s][A
-Simulating sequences:   2%|▏         | 3.6370229721069336/200 [00:00<00:23,  8.36time/s][A
-Simulating sequences:   2%|▏         | 3.673046827316284/200 [00:00<00:23,  8.38time/s] [A
-Simulating sequences:   2%|▏         | 3.677150011062622/200 [00:00<00:23,  8.32time/s][A
-Simulating sequences:   2%|▏         | 3.689253568649292/200 [00:00<00:23,  8.28time/s][A
-Simulating sequences:   2%|▏         | 3.6929845809936523/200 [00:00<00:23,  8.23time/s][A
-Simulating sequences:   2%|▏         | 3.8100361824035645/200 [00:00<00:23,  8.42time/s][A
-Simulating sequences:   2%|▏         | 3.812323570251465/200 [00:00<00:23,  8.36time/s] [A
-Simulating sequences:   2%|▏         | 3.829158306121826/200 [00:00<00:23,  8.34time/s][A
-Simulating sequences:   2%|▏         | 3.8805062770843506/200 [00:00<00:23,  8.38time/s][A
-Simulating sequences:   2%|▏         | 3.933471918106079/200 [00:00<00:23,  8.43time/s] [A
-Simulating sequences:   2%|▏         | 3.960844039916992/200 [00:00<00:23,  8.43time/s][A
-Simulating sequences:   2%|▏         | 3.9694135189056396/200 [00:00<00:23,  8.38time/s][A
-Simulating sequences:   2%|▏         | 3.998318672180176/200 [00:00<00:23,  8.38time/s] [A
-Simulating sequences:   2%|▏         | 4.002642631530762/200 [00:00<00:23,  8.33time/s][A
-Simulating sequences:   2%|▏         | 4.018927574157715/200 [00:00<00:23,  8.30time/s][A
-Simulating sequences:   2%|▏         | 4.066287517547607/200 [00:00<00:23,  8.34time/s][A
-Simulating sequences:   2%|▏         | 4.10785436630249/200 [00:00<00:23,  8.36time/s] [A
-Simulating sequences:   2%|▏         | 4.110948085784912/200 [00:00<00:23,  8.31time/s][A
-Simulating sequences:   2%|▏         | 4.156826972961426/200 [00:00<00:23,  8.34time/s][A
-Simulating sequences:   2%|▏         | 4.257925033569336/200 [00:00<00:23,  8.49time/s][A
-Simulating sequences:   2%|▏         | 4.326450824737549/200 [00:00<00:22,  8.56time/s][A
-Simulating sequences:   2%|▏         | 4.365688800811768/200 [00:00<00:22,  8.58time/s][A
-Simulating sequences:   2%|▏         | 4.426967620849609/200 [00:00<00:22,  8.64time/s][A
-Simulating sequences:   2%|▏         | 4.42933464050293/200 [00:00<00:22,  8.59time/s] [A
-Simulating sequences:   2%|▏         | 4.473715782165527/200 [00:00<00:22,  8.61time/s][A
-Simulating sequences:   2%|▏         | 4.475403785705566/200 [00:00<00:22,  8.56time/s][A
-Simulating sequences:   2%|▏         | 4.492969989776611/200 [00:00<00:22,  8.53time/s][A
-Simulating sequences:   2%|▏         | 4.574834823608398/200 [00:00<00:22,  8.63time/s][A
-Simulating sequences:   2%|▏         | 4.597453594207764/200 [00:00<00:22,  8.61time/s][A
-Simulating sequences:   2%|▏         | 4.656259059906006/200 [00:00<00:22,  8.67time/s][A
-Simulating sequences:   2%|▏         | 4.667900562286377/200 [00:00<00:22,  8.63time/s][A
-Simulating sequences:   2%|▏         | 4.706004619598389/200 [00:00<00:22,  8.64time/s][A
-Simulating sequences:   2%|▏         | 4.767263889312744/200 [00:00<00:22,  8.70time/s][A
-Simulating sequences:   2%|▏         | 4.768658638000488/200 [00:00<00:22,  8.65time/s][A
-Simulating sequences:   2%|▏         | 4.774566173553467/200 [00:00<00:22,  8.60time/s][A
-Simulating sequences:   2%|▏         | 4.822086811065674/200 [00:00<00:22,  8.63time/s][A
-Simulating sequences:   2%|▏         | 4.834201335906982/200 [00:00<00:22,  8.60time/s][A
-Simulating sequences:   2%|▏         | 4.878393650054932/200 [00:00<00:22,  8.62time/s][A
-Simulating sequences:   2%|▏         | 4.881551742553711/200 [00:00<00:22,  8.57time/s][A
-Simulating sequences:   2%|▏         | 4.910682201385498/200 [00:00<00:22,  8.57time/s][A
-Simulating sequences:   2%|▏         | 4.947936058044434/200 [00:00<00:22,  8.58time/s][A
-Simulating sequences:   2%|▏         | 4.968151092529297/200 [00:00<00:22,  8.56time/s][A
-Simulating sequences:   2%|▏         | 4.989810466766357/200 [00:00<00:22,  8.55time/s][A
-Simulating sequences:   3%|▎         | 5.027653694152832/200 [00:00<00:22,  8.56time/s][A
-Simulating sequences:   3%|▎         | 5.0334954261779785/200 [00:00<00:22,  8.52time/s][A
-Simulating sequences:   3%|▎         | 5.080842971801758/200 [00:00<00:22,  8.55time/s] [A
-Simulating sequences:   3%|▎         | 5.100876808166504/200 [00:00<00:22,  8.53time/s][A
-Simulating sequences:   3%|▎         | 5.151811599731445/200 [00:00<00:22,  8.56time/s][A
-Simulating sequences:   3%|▎         | 5.189865589141846/200 [00:00<00:22,  8.57time/s][A
-Simulating sequences:   3%|▎         | 5.190514087677002/200 [00:00<00:22,  8.52time/s][A
-Simulating sequences:   3%|▎         | 5.236401081085205/200 [00:00<00:22,  8.55time/s][A
-Simulating sequences:   3%|▎         | 5.242935657501221/200 [00:00<00:22,  8.51time/s][A
-Simulating sequences:   3%|▎         | 5.302121162414551/200 [00:00<00:22,  8.56time/s][A
-Simulating sequences:   3%|▎         | 5.356718063354492/200 [00:00<00:22,  8.59time/s][A
-Simulating sequences:   3%|▎         | 5.36331033706665/200 [00:00<00:22,  8.56time/s] [A
-Simulating sequences:   3%|▎         | 5.40024995803833/200 [00:00<00:22,  8.57time/s][A
-Simulating sequences:   3%|▎         | 5.40154504776001/200 [00:00<00:22,  8.52time/s][A
-Simulating sequences:   3%|▎         | 5.403611660003662/200 [00:00<00:22,  8.47time/s][A
-Simulating sequences:   3%|▎         | 5.555912494659424/200 [00:00<00:22,  8.66time/s][A
-Simulating sequences:   3%|▎         | 5.579824447631836/200 [00:00<00:22,  8.65time/s][A
-Simulating sequences:   3%|▎         | 5.617192268371582/200 [00:00<00:22,  8.66time/s][A
-Simulating sequences:   3%|▎         | 5.719415187835693/200 [00:00<00:22,  8.77time/s][A
-Simulating sequences:   3%|▎         | 5.756291389465332/200 [00:00<00:22,  8.78time/s][A
-Simulating sequences:   3%|▎         | 5.826934337615967/200 [00:00<00:21,  8.83time/s][A
-Simulating sequences:   3%|▎         | 5.8565568923950195/200 [00:00<00:21,  8.83time/s][A
-Simulating sequences:   3%|▎         | 5.869089126586914/200 [00:00<00:22,  8.80time/s] [A
-Simulating sequences:   3%|▎         | 5.891129970550537/200 [00:00<00:22,  8.79time/s][A
-Simulating sequences:   3%|▎         | 5.942861557006836/200 [00:00<00:22,  8.82time/s][A
-Simulating sequences:   3%|▎         | 5.97935676574707/200 [00:00<00:21,  8.82time/s] [A
-Simulating sequences:   3%|▎         | 6.016942501068115/200 [00:00<00:21,  8.83time/s][A
-Simulating sequences:   3%|▎         | 6.060246467590332/200 [00:00<00:21,  8.85time/s][A
-Simulating sequences:   3%|▎         | 6.11820650100708/200 [00:00<00:21,  8.89time/s] [A
-Simulating sequences:   3%|▎         | 6.143983840942383/200 [00:00<00:21,  8.88time/s][A
-Simulating sequences:   3%|▎         | 6.155741214752197/200 [00:00<00:21,  8.85time/s][A
-Simulating sequences:   3%|▎         | 6.325059413909912/200 [00:00<00:21,  9.04time/s][A
-Simulating sequences:   3%|▎         | 6.327342510223389/200 [00:00<00:21,  9.00time/s][A
-Simulating sequences:   3%|▎         | 6.363720893859863/200 [00:00<00:21,  9.01time/s][A
-Simulating sequences:   3%|▎         | 6.587726593017578/200 [00:00<00:20,  9.28time/s][A
-Simulating sequences:   3%|▎         | 6.681371688842773/200 [00:00<00:20,  9.36time/s][A
-Simulating sequences:   3%|▎         | 6.738854885101318/200 [00:00<00:20,  9.39time/s][A
-Simulating sequences:   3%|▎         | 6.875083923339844/200 [00:00<00:20,  9.53time/s][A
-Simulating sequences:   3%|▎         | 6.917057037353516/200 [00:00<00:20,  9.54time/s][A
-Simulating sequences:   3%|▎         | 6.953192710876465/200 [00:00<00:20,  9.54time/s][A
-Simulating sequences:   3%|▎         | 6.967057704925537/200 [00:00<00:20,  9.51time/s][A
-Simulating sequences:   4%|▎         | 7.008963584899902/200 [00:00<00:20,  9.52time/s][A
-Simulating sequences:   4%|▎         | 7.043317794799805/200 [00:00<00:20,  9.52time/s][A
-Simulating sequences:   4%|▎         | 7.045501708984375/200 [00:00<00:20,  9.48time/s][A
-Simulating sequences:   4%|▎         | 7.0521111488342285/200 [00:00<00:20,  9.44time/s][A
-Simulating sequences:   4%|▎         | 7.0647478103637695/200 [00:00<00:20,  9.41time/s][A
-Simulating sequences:   4%|▎         | 7.118160724639893/200 [00:00<00:20,  9.44time/s] [A
-Simulating sequences:   4%|▎         | 7.12166166305542/200 [00:00<00:20,  9.40time/s] [A
-Simulating sequences:   4%|▎         | 7.122124195098877/200 [00:00<00:20,  9.35time/s][A
-Simulating sequences:   4%|▎         | 7.156063079833984/200 [00:00<00:20,  9.35time/s][A
-Simulating sequences:   4%|▎         | 7.180126190185547/200 [00:00<00:20,  9.34time/s][A
-Simulating sequences:   4%|▎         | 7.205164909362793/200 [00:00<00:20,  9.33time/s][A
-Simulating sequences:   4%|▎         | 7.309778213500977/200 [00:00<00:20,  9.42time/s][A
-Simulating sequences:   4%|▎         | 7.315586566925049/200 [00:00<00:20,  9.38time/s][A
-Simulating sequences:   4%|▎         | 7.335328578948975/200 [00:00<00:20,  9.36time/s][A
-Simulating sequences:   4%|▎         | 7.354857921600342/200 [00:00<00:20,  9.34time/s][A
-Simulating sequences:   4%|▎         | 7.378435134887695/200 [00:00<00:20,  9.33time/s][A
-Simulating sequences:   4%|▎         | 7.399510860443115/200 [00:00<00:20,  9.31time/s][A
-Simulating sequences:   4%|▎         | 7.414681434631348/200 [00:00<00:20,  9.29time/s][A
-Simulating sequences:   4%|▍         | 7.758052349090576/200 [00:00<00:19,  9.68time/s][A
-Simulating sequences:   4%|▍         | 7.810530662536621/200 [00:00<00:19,  9.70time/s][A
-Simulating sequences:   4%|▍         | 7.853214740753174/200 [00:00<00:19,  9.71time/s][A
-Simulating sequences:   4%|▍         | 7.893862724304199/200 [00:00<00:19,  9.71time/s][A
-Simulating sequences:   4%|▍         | 7.919239044189453/200 [00:00<00:19,  9.70time/s][A
-Simulating sequences:   4%|▍         | 7.927008628845215/200 [00:00<00:19,  9.67time/s][A
-Simulating sequences:   4%|▍         | 8.048609733581543/200 [00:00<00:19,  9.77time/s][A
-Simulating sequences:   4%|▍         | 8.062525749206543/200 [00:00<00:19,  9.74time/s][A
-Simulating sequences:   4%|▍         | 8.079109191894531/200 [00:00<00:19,  9.72time/s][A
-Simulating sequences:   4%|▍         | 8.094343185424805/200 [00:00<00:19,  9.70time/s][A
-Simulating sequences:   4%|▍         | 8.122672080993652/200 [00:00<00:19,  9.69time/s][A
-Simulating sequences:   4%|▍         | 8.190916061401367/200 [00:00<00:19,  9.73time/s][A
-Simulating sequences:   4%|▍         | 8.333261489868164/200 [00:00<00:19,  9.85time/s][A
-Simulating sequences:   5%|▍         | 9.437882423400879/200 [00:00<00:17, 11.11time/s][A
-Simulating sequences:   5%|▍         | 9.573591232299805/200 [00:00<00:16, 11.22time/s][A
-Simulating sequences:   5%|▍         | 9.580029487609863/200 [00:00<00:17, 11.18time/s][A
-Simulating sequences:   5%|▍         | 9.585745811462402/200 [00:00<00:17, 11.14time/s][A
-Simulating sequences:   5%|▍         | 9.611114501953125/200 [00:00<00:17, 11.12time/s][A
-Simulating sequences:   5%|▍         | 9.628642082214355/200 [00:00<00:17, 11.09time/s][A
-Simulating sequences:   5%|▍         | 9.654326438903809/200 [00:00<00:17, 11.08time/s][A
-Simulating sequences:   5%|▍         | 9.657979011535645/200 [00:00<00:17, 11.03time/s][A
-Simulating sequences:   5%|▍         | 9.756200790405273/200 [00:00<00:17, 11.10time/s][A
-Simulating sequences:   5%|▍         | 9.782490730285645/200 [00:00<00:17, 11.08time/s][A
-Simulating sequences:   5%|▍         | 9.790054321289062/200 [00:00<00:17, 11.05time/s][A
-Simulating sequences:   5%|▍         | 9.809052467346191/200 [00:00<00:17, 11.02time/s][A
-Simulating sequences:   5%|▍         | 9.83789348602295/200 [00:00<00:17, 11.01time/s] [A
-Simulating sequences:   5%|▍         | 9.917922019958496/200 [00:00<00:17, 11.05time/s][A
-Simulating sequences:   5%|▍         | 9.931363105773926/200 [00:00<00:17, 11.02time/s][A
-Simulating sequences:   5%|▍         | 9.948719024658203/200 [00:00<00:17, 11.00time/s][A
-Simulating sequences:   5%|▍         | 9.964563369750977/200 [00:00<00:17, 10.97time/s][A
-Simulating sequences:   5%|▌         | 10.03785228729248/200 [00:00<00:17, 11.00time/s][A
-Simulating sequences:   5%|▌         | 10.043401718139648/200 [00:00<00:17, 10.97time/s][A
-Simulating sequences:   5%|▌         | 10.12129020690918/200 [00:00<00:17, 11.01time/s] [A
-Simulating sequences:   5%|▌         | 10.162829399108887/200 [00:00<00:17, 11.01time/s][A
-Simulating sequences:   5%|▌         | 10.203141212463379/200 [00:00<00:17, 11.01time/s][A
-Simulating sequences:   5%|▌         | 10.218878746032715/200 [00:00<00:17, 10.98time/s][A
-Simulating sequences:   5%|▌         | 10.221060752868652/200 [00:00<00:17, 10.94time/s][A
-Simulating sequences:   5%|▌         | 10.232491493225098/200 [00:00<00:17, 10.91time/s][A
-Simulating sequences:   5%|▌         | 10.25838851928711/200 [00:00<00:17, 10.89time/s] [A
-Simulating sequences:   5%|▌         | 10.269488334655762/200 [00:00<00:17, 10.86time/s][A
-Simulating sequences:   5%|▌         | 10.411677360534668/200 [00:00<00:17, 10.97time/s][A
-Simulating sequences:   5%|▌         | 10.436193466186523/200 [00:00<00:17, 10.95time/s][A
-Simulating sequences:   5%|▌         | 10.458348274230957/200 [00:00<00:17, 10.93time/s][A
-Simulating sequences:   5%|▌         | 10.476602554321289/200 [00:00<00:17, 10.91time/s][A
-Simulating sequences:   5%|▌         | 10.48757553100586/200 [00:00<00:17, 10.88time/s] [A
-Simulating sequences:   5%|▌         | 10.50284481048584/200 [00:00<00:17, 10.85time/s][A
-Simulating sequences:   5%|▌         | 10.534324645996094/200 [00:00<00:17, 10.84time/s][A
-Simulating sequences:   5%|▌         | 10.577632904052734/200 [00:00<00:17, 10.84time/s][A
-Simulating sequences:   5%|▌         | 10.600410461425781/200 [00:00<00:17, 10.83time/s][A
-Simulating sequences:   5%|▌         | 10.607767105102539/200 [00:00<00:17, 10.79time/s][A
-Simulating sequences:   5%|▌         | 10.692208290100098/200 [00:00<00:17, 10.84time/s][A
-Simulating sequences:   5%|▌         | 10.70202350616455/200 [00:00<00:17, 10.81time/s] [A
-Simulating sequences:   5%|▌         | 10.715380668640137/200 [00:00<00:17, 10.78time/s][A
-Simulating sequences:   5%|▌         | 10.74838638305664/200 [00:00<00:17, 10.77time/s] [A
-Simulating sequences:   5%|▌         | 10.75354290008545/200 [00:01<00:17, 10.74time/s][A
-Simulating sequences:   5%|▌         | 10.755433082580566/200 [00:01<00:17, 10.70time/s][A
-Simulating sequences:   5%|▌         | 10.783035278320312/200 [00:01<00:17, 10.68time/s][A
-Simulating sequences:   5%|▌         | 10.893574714660645/200 [00:01<00:17, 10.75time/s][A
-Simulating sequences:   5%|▌         | 10.895784378051758/200 [00:01<00:17, 10.72time/s][A
-Simulating sequences:   5%|▌         | 10.895813941955566/200 [00:01<00:17, 10.68time/s][A
-Simulating sequences:   5%|▌         | 10.9097261428833/200 [00:01<00:17, 10.65time/s]  [A
-Simulating sequences:   5%|▌         | 10.949464797973633/200 [00:01<00:17, 10.65time/s][A
-Simulating sequences:   5%|▌         | 10.954850196838379/200 [00:01<00:17, 10.62time/s][A
-Simulating sequences:   5%|▌         | 10.986482620239258/200 [00:01<00:17, 10.61time/s][A
-Simulating sequences:   6%|▌         | 11.0145845413208/200 [00:01<00:17, 10.60time/s]  [A
-Simulating sequences:   6%|▌         | 11.057281494140625/200 [00:01<00:17, 10.60time/s][A
-Simulating sequences:   6%|▌         | 11.095748901367188/200 [00:01<00:17, 10.60time/s][A
-Simulating sequences:   6%|▌         | 11.113371849060059/200 [00:01<00:17, 10.58time/s][A
-Simulating sequences:   6%|▌         | 11.126474380493164/200 [00:01<00:17, 10.55time/s][A
-Simulating sequences:   6%|▌         | 11.133760452270508/200 [00:01<00:17, 10.52time/s][A
-Simulating sequences:   6%|▌         | 11.139217376708984/200 [00:01<00:18, 10.49time/s][A
-Simulating sequences:   6%|▌         | 11.141517639160156/200 [00:01<00:18, 10.46time/s][A
-Simulating sequences:   6%|▌         | 11.149938583374023/200 [00:01<00:18, 10.43time/s][A
-Simulating sequences:   6%|▌         | 11.157554626464844/200 [00:01<00:18, 10.40time/s][A
-Simulating sequences:   6%|▌         | 11.164820671081543/200 [00:01<00:18, 10.37time/s][A
-Simulating sequences:   6%|▌         | 11.175841331481934/200 [00:01<00:18, 10.34time/s][A
-Simulating sequences:   6%|▌         | 11.182351112365723/200 [00:01<00:18, 10.31time/s][A
-Simulating sequences:   6%|▌         | 11.191715240478516/200 [00:01<00:18, 10.29time/s][A
-Simulating sequences:   6%|▌         | 11.209275245666504/200 [00:01<00:18, 10.27time/s][A
-Simulating sequences:   6%|▌         | 11.260671615600586/200 [00:01<00:18, 10.28time/s][A
-Simulating sequences:   6%|▌         | 11.26346206665039/200 [00:01<00:18, 10.24time/s] [A
-Simulating sequences:   6%|▌         | 11.274534225463867/200 [00:01<00:18, 10.22time/s][A
-Simulating sequences:   6%|▌         | 11.275195121765137/200 [00:01<00:18, 10.19time/s][A
-Simulating sequences:   6%|▌         | 11.352563858032227/200 [00:01<00:18, 10.22time/s][A
-Simulating sequences:   6%|▌         | 11.354336738586426/200 [00:01<00:18, 10.19time/s][A
-Simulating sequences:   6%|▌         | 11.355210304260254/200 [00:01<00:18, 10.15time/s][A
-Simulating sequences:   6%|▌         | 11.361006736755371/200 [00:01<00:18, 10.12time/s][A
-Simulating sequences:   6%|▌         | 11.377540588378906/200 [00:01<00:18, 10.10time/s][A
-Simulating sequences:   6%|▌         | 11.393916130065918/200 [00:01<00:18, 10.09time/s][A
-Simulating sequences:   6%|▌         | 11.397599220275879/200 [00:01<00:18, 10.06time/s][A
-Simulating sequences:   6%|▌         | 11.402556419372559/200 [00:01<00:18, 10.03time/s][A
-Simulating sequences:   6%|▌         | 11.403939247131348/200 [00:01<00:18,  9.99time/s][A
-Simulating sequences:   6%|▌         | 11.404804229736328/200 [00:01<00:18,  9.96time/s][A
-Simulating sequences:   6%|▌         | 11.520319938659668/200 [00:01<00:18, 10.03time/s][A
-Simulating sequences:   6%|▌         | 11.538850784301758/200 [00:01<00:18, 10.01time/s][A
-Simulating sequences:   6%|▌         | 11.560134887695312/200 [00:01<00:18, 10.00time/s][A
-Simulating sequences:   6%|▌         | 11.596417427062988/200 [00:01<00:18, 10.00time/s][A
-Simulating sequences:   6%|▌         | 11.613968849182129/200 [00:01<00:18,  9.98time/s][A
-Simulating sequences:   6%|▌         | 11.64810562133789/200 [00:01<00:18,  9.98time/s] [A
-Simulating sequences:   6%|▌         | 11.674854278564453/200 [00:01<00:18,  9.97time/s][A
-Simulating sequences:   6%|▌         | 11.683770179748535/200 [00:01<00:18,  9.94time/s][A
-Simulating sequences:   6%|▌         | 11.738029479980469/200 [00:01<00:18,  9.96time/s][A
-Simulating sequences:   6%|▌         | 11.73885440826416/200 [00:01<00:18,  9.92time/s] [A
-Simulating sequences:   6%|▌         | 11.755807876586914/200 [00:01<00:19,  9.91time/s][A
-Simulating sequences:   6%|▌         | 11.776403427124023/200 [00:01<00:19,  9.89time/s][A
-Simulating sequences:   6%|▌         | 11.779263496398926/200 [00:01<00:19,  9.86time/s][A
-Simulating sequences:   6%|▌         | 11.795863151550293/200 [00:01<00:19,  9.85time/s][A
-Simulating sequences:   6%|▌         | 11.799829483032227/200 [00:01<00:19,  9.82time/s][A
-Simulating sequences:   6%|▌         | 11.81749153137207/200 [00:01<00:19,  9.80time/s] [A
-Simulating sequences:   6%|▌         | 11.835665702819824/200 [00:01<00:19,  9.79time/s][A
-Simulating sequences:   6%|▌         | 11.839613914489746/200 [00:01<00:19,  9.76time/s][A
-Simulating sequences:   6%|▌         | 11.840048789978027/200 [00:01<00:19,  9.73time/s][A
-Simulating sequences:   6%|▌         | 11.857666015625/200 [00:01<00:19,  9.71time/s]   [A
-Simulating sequences:   6%|▌         | 11.871342658996582/200 [00:01<00:19,  9.69time/s][A
-Simulating sequences:   6%|▌         | 11.873334884643555/200 [00:01<00:19,  9.67time/s][A
-Simulating sequences:   6%|▌         | 11.889692306518555/200 [00:01<00:19,  9.65time/s][A
-Simulating sequences:   6%|▌         | 11.889939308166504/200 [00:01<00:19,  9.62time/s][A
-Simulating sequences:   6%|▌         | 11.894224166870117/200 [00:01<00:19,  9.59time/s][A
-Simulating sequences:   6%|▌         | 11.89815902709961/200 [00:01<00:19,  9.57time/s] [A
-Simulating sequences:   6%|▌         | 11.899646759033203/200 [00:01<00:19,  9.54time/s][A
-Simulating sequences:   6%|▌         | 11.900670051574707/200 [00:01<00:19,  9.51time/s][A
-Simulating sequences:   6%|▌         | 11.910253524780273/200 [00:01<00:19,  9.49time/s][A
-Simulating sequences:   6%|▌         | 11.9252290725708/200 [00:01<00:19,  9.47time/s]  [A
-Simulating sequences:   6%|▌         | 11.926527976989746/200 [00:01<00:19,  9.44time/s][A
-Simulating sequences:   6%|▌         | 11.929166793823242/200 [00:01<00:19,  9.42time/s][A
-Simulating sequences:   6%|▌         | 11.933887481689453/200 [00:01<00:20,  9.39time/s][A
-Simulating sequences:   6%|▌         | 11.94411563873291/200 [00:01<00:20,  9.37time/s] [A
-Simulating sequences:   6%|▌         | 11.950718879699707/200 [00:01<00:20,  9.35time/s][A
-Simulating sequences:   6%|▌         | 11.956133842468262/200 [00:01<00:20,  9.33time/s][A
-Simulating sequences:   6%|▌         | 11.958342552185059/200 [00:01<00:20,  9.30time/s][A
-Simulating sequences:   6%|▌         | 11.960508346557617/200 [00:01<00:20,  9.27time/s][A
-Simulating sequences:   6%|▌         | 11.96213150024414/200 [00:01<00:20,  9.25time/s] [A
-Simulating sequences:   6%|▌         | 11.970005989074707/200 [00:01<00:20,  9.23time/s][A
-Simulating sequences:   6%|▌         | 12.005364418029785/200 [00:01<00:20,  9.23time/s][A
-Simulating sequences:   6%|▌         | 12.038646697998047/200 [00:01<00:20,  9.22time/s][A
-Simulating sequences:   6%|▌         | 12.039407730102539/200 [00:01<00:20,  9.20time/s][A
-Simulating sequences:   6%|▌         | 12.060443878173828/200 [00:01<00:20,  9.19time/s][A
-Simulating sequences:   6%|▌         | 12.064726829528809/200 [00:01<00:20,  9.16time/s][A
-Simulating sequences:   6%|▌         | 12.073859214782715/200 [00:01<00:20,  9.14time/s][A
-Simulating sequences:   6%|▌         | 12.082727432250977/200 [00:01<00:20,  9.12time/s][A
-Simulating sequences:   6%|▌         | 12.084802627563477/200 [00:01<00:20,  9.10time/s][A
-Simulating sequences:   6%|▌         | 12.088569641113281/200 [00:01<00:20,  9.07time/s][A
-Simulating sequences:   6%|▌         | 12.092020988464355/200 [00:01<00:20,  9.05time/s][A
-Simulating sequences:   6%|▌         | 12.10386848449707/200 [00:01<00:20,  9.03time/s] [A
-Simulating sequences:   6%|▌         | 12.105579376220703/200 [00:01<00:20,  9.01time/s][A
-Simulating sequences:   6%|▌         | 12.121209144592285/200 [00:01<00:20,  8.99time/s][A
-Simulating sequences:   6%|▌         | 12.149157524108887/200 [00:01<00:20,  8.99time/s][A
-Simulating sequences:   6%|▌         | 12.158644676208496/200 [00:01<00:20,  8.97time/s][A
-Simulating sequences:   6%|▌         | 12.162178993225098/200 [00:01<00:20,  8.95time/s][A
-Simulating sequences:   6%|▌         | 12.163640022277832/200 [00:01<00:21,  8.92time/s][A
-Simulating sequences:   6%|▌         | 12.164192199707031/200 [00:01<00:21,  8.90time/s][A
-Simulating sequences:   6%|▌         | 12.177214622497559/200 [00:01<00:21,  8.88time/s][A
-Simulating sequences:   6%|▌         | 12.181995391845703/200 [00:01<00:21,  8.86time/s][A
-Simulating sequences:   6%|▌         | 12.188337326049805/200 [00:01<00:21,  8.84time/s][A
-Simulating sequences:   6%|▌         | 12.195596694946289/200 [00:01<00:21,  8.82time/s][A
-Simulating sequences:   6%|▌         | 12.196700096130371/200 [00:01<00:21,  8.80time/s][A
-Simulating sequences:   6%|▌         | 12.199069023132324/200 [00:01<00:21,  8.77time/s][A
-Simulating sequences:   6%|▌         | 12.203953742980957/200 [00:01<00:21,  8.75time/s][A
-Simulating sequences:   6%|▌         | 12.205307960510254/200 [00:01<00:21,  8.73time/s][A
-Simulating sequences:   6%|▌         | 12.216081619262695/200 [00:01<00:21,  8.71time/s][A
-Simulating sequences:   6%|▌         | 12.217350959777832/200 [00:01<00:21,  8.69time/s][A
-Simulating sequences:   6%|▌         | 12.217766761779785/200 [00:01<00:21,  8.67time/s][A
-Simulating sequences:   6%|▌         | 12.238805770874023/200 [00:01<00:21,  8.66time/s][A
-Simulating sequences:   6%|▌         | 12.284214973449707/200 [00:01<00:21,  8.66time/s][A
-Simulating sequences:   6%|▌         | 12.308924674987793/200 [00:01<00:21,  8.66time/s][A
-Simulating sequences:   6%|▌         | 12.427240371704102/200 [00:01<00:21,  8.72time/s][A
-Simulating sequences:   6%|▌         | 12.440103530883789/200 [00:01<00:21,  8.70time/s][A
-Simulating sequences:   6%|▌         | 12.495593070983887/200 [00:01<00:21,  8.72time/s][A
-Simulating sequences:   6%|▋         | 12.517208099365234/200 [00:01<00:21,  8.71time/s][A
-Simulating sequences:   6%|▋         | 12.520971298217773/200 [00:01<00:21,  8.69time/s][A
-Simulating sequences:   6%|▋         | 12.522161483764648/200 [00:01<00:21,  8.66time/s][A
-Simulating sequences:   6%|▋         | 12.600166320800781/200 [00:01<00:21,  8.69time/s][A
-Simulating sequences:   6%|▋         | 12.607768058776855/200 [00:01<00:21,  8.68time/s][A
-Simulating sequences:   6%|▋         | 12.622873306274414/200 [00:01<00:21,  8.66time/s][A
-Simulating sequences:   6%|▋         | 12.636388778686523/200 [00:01<00:21,  8.65time/s][A
-Simulating sequences:   6%|▋         | 12.715792655944824/200 [00:01<00:21,  8.68time/s][A
-Simulating sequences:   6%|▋         | 12.71700382232666/200 [00:01<00:21,  8.66time/s] [A
-Simulating sequences:   6%|▋         | 12.733307838439941/200 [00:01<00:21,  8.65time/s][A
-Simulating sequences:   6%|▋         | 12.821367263793945/200 [00:01<00:21,  8.68time/s][A
-Simulating sequences:   6%|▋         | 12.95630931854248/200 [00:01<00:21,  8.75time/s] [A
-Simulating sequences:   7%|▋         | 13.049820899963379/200 [00:01<00:21,  8.79time/s][A
-Simulating sequences:   7%|▋         | 13.337164878845215/200 [00:01<00:20,  8.96time/s][A
-Simulating sequences:   7%|▋         | 13.34414291381836/200 [00:01<00:20,  8.94time/s] [A
-Simulating sequences:   7%|▋         | 13.366847038269043/200 [00:01<00:20,  8.93time/s][A
-Simulating sequences:   7%|▋         | 13.370287895202637/200 [00:01<00:20,  8.91time/s][A
-Simulating sequences:   7%|▋         | 13.431864738464355/200 [00:01<00:20,  8.93time/s][A
-Simulating sequences:   7%|▋         | 13.439179420471191/200 [00:01<00:20,  8.91time/s][A
-Simulating sequences:   7%|▋         | 13.451951026916504/200 [00:01<00:20,  8.90time/s][A
-Simulating sequences:   7%|▋         | 13.48427677154541/200 [00:01<00:20,  8.89time/s] [A
-Simulating sequences:   7%|▋         | 13.502523422241211/200 [00:01<00:20,  8.88time/s][A
-Simulating sequences:   7%|▋         | 13.63237476348877/200 [00:01<00:20,  8.94time/s] [A
-Simulating sequences:   7%|▋         | 13.6497163772583/200 [00:01<00:20,  8.93time/s] [A
-Simulating sequences:   7%|▋         | 13.650160789489746/200 [00:01<00:20,  8.91time/s][A
-Simulating sequences:   7%|▋         | 13.678242683410645/200 [00:01<00:20,  8.91time/s][A
-Simulating sequences:   7%|▋         | 13.766106605529785/200 [00:01<00:20,  8.94time/s][A
-Simulating sequences:   7%|▋         | 13.775228500366211/200 [00:01<00:20,  8.92time/s][A
-Simulating sequences:   7%|▋         | 13.794178009033203/200 [00:01<00:20,  8.91time/s][A
-Simulating sequences:   7%|▋         | 13.809075355529785/200 [00:01<00:20,  8.90time/s][A
-Simulating sequences:   7%|▋         | 13.829045295715332/200 [00:01<00:20,  8.89time/s][A
-Simulating sequences:   7%|▋         | 13.8440523147583/200 [00:01<00:20,  8.88time/s]  [A
-Simulating sequences:   7%|▋         | 13.846466064453125/200 [00:01<00:21,  8.85time/s][A
-Simulating sequences:   7%|▋         | 13.855066299438477/200 [00:01<00:21,  8.84time/s][A
-Simulating sequences:   7%|▋         | 13.855615615844727/200 [00:01<00:21,  8.82time/s][A
-Simulating sequences:   7%|▋         | 13.872386932373047/200 [00:01<00:21,  8.80time/s][A
-Simulating sequences:   7%|▋         | 13.876659393310547/200 [00:01<00:21,  8.78time/s][A
-Simulating sequences:   7%|▋         | 13.877523422241211/200 [00:01<00:21,  8.76time/s][A
-Simulating sequences:   7%|▋         | 13.88859748840332/200 [00:01<00:21,  8.75time/s] [A
-Simulating sequences:   7%|▋         | 13.896449089050293/200 [00:01<00:21,  8.73time/s][A
-Simulating sequences:   7%|▋         | 13.96524429321289/200 [00:01<00:21,  8.75time/s] [A
-Simulating sequences:   7%|▋         | 13.988630294799805/200 [00:01<00:21,  8.74time/s][A
-Simulating sequences:   7%|▋         | 13.994701385498047/200 [00:01<00:21,  8.73time/s][A
-Simulating sequences:   7%|▋         | 14.016641616821289/200 [00:01<00:21,  8.72time/s][A
-Simulating sequences:   7%|▋         | 14.017902374267578/200 [00:01<00:21,  8.70time/s][A
-Simulating sequences:   7%|▋         | 14.023658752441406/200 [00:01<00:21,  8.68time/s][A
-Simulating sequences:   7%|▋         | 14.026956558227539/200 [00:01<00:21,  8.66time/s][A
-Simulating sequences:   7%|▋         | 14.04037857055664/200 [00:01<00:21,  8.65time/s] [A
-Simulating sequences:   7%|▋         | 14.050724029541016/200 [00:01<00:21,  8.63time/s][A
-Simulating sequences:   7%|▋         | 14.051582336425781/200 [00:01<00:21,  8.61time/s][A
-Simulating sequences:   7%|▋         | 14.065902709960938/200 [00:01<00:21,  8.60time/s][A
-Simulating sequences:   7%|▋         | 14.067545890808105/200 [00:01<00:21,  8.58time/s][A
-Simulating sequences:   7%|▋         | 14.0679349899292/200 [00:01<00:21,  8.56time/s]  [A
-Simulating sequences:   7%|▋         | 14.083369255065918/200 [00:01<00:21,  8.55time/s][A
-Simulating sequences:   7%|▋         | 14.083663940429688/200 [00:01<00:21,  8.53time/s][A
-Simulating sequences:   7%|▋         | 14.095504760742188/200 [00:01<00:21,  8.51time/s][A
-Simulating sequences:   7%|▋         | 14.104137420654297/200 [00:01<00:21,  8.50time/s][A
-Simulating sequences:   7%|▋         | 14.109195709228516/200 [00:01<00:21,  8.48time/s][A
-Simulating sequences:   7%|▋         | 14.113358497619629/200 [00:01<00:21,  8.46time/s][A
-Simulating sequences:   7%|▋         | 14.13339614868164/200 [00:01<00:21,  8.45time/s] [A
-Simulating sequences:   7%|▋         | 14.140430450439453/200 [00:01<00:22,  8.44time/s][A
-Simulating sequences:   7%|▋         | 14.15009880065918/200 [00:01<00:22,  8.42time/s] [A
-Simulating sequences:   7%|▋         | 14.159896850585938/200 [00:01<00:22,  8.41time/s][A
-Simulating sequences:   7%|▋         | 14.168750762939453/200 [00:01<00:22,  8.39time/s][A
-Simulating sequences:   7%|▋         | 14.170256614685059/200 [00:01<00:22,  8.37time/s][A
-Simulating sequences:   7%|▋         | 14.18239974975586/200 [00:01<00:22,  8.36time/s] [A
-Simulating sequences:   7%|▋         | 14.195039749145508/200 [00:01<00:22,  8.35time/s][A
-Simulating sequences:   7%|▋         | 14.216056823730469/200 [00:01<00:22,  8.34time/s][A
-Simulating sequences:   7%|▋         | 14.220623970031738/200 [00:01<00:22,  8.32time/s][A
-Simulating sequences:   7%|▋         | 14.228275299072266/200 [00:01<00:22,  8.31time/s][A
-Simulating sequences:   7%|▋         | 14.240574836730957/200 [00:01<00:22,  8.30time/s][A
-Simulating sequences:   7%|▋         | 14.271329879760742/200 [00:01<00:22,  8.29time/s][A
-Simulating sequences:   7%|▋         | 14.297076225280762/200 [00:01<00:22,  8.29time/s][A
-Simulating sequences:   7%|▋         | 14.305368423461914/200 [00:01<00:22,  8.27time/s][A
-Simulating sequences:   7%|▋         | 14.314253807067871/200 [00:01<00:22,  8.26time/s][A
-Simulating sequences:   7%|▋         | 14.317787170410156/200 [00:01<00:22,  8.24time/s][A
-Simulating sequences:   7%|▋         | 14.352736473083496/200 [00:01<00:22,  8.24time/s][A
-Simulating sequences:   7%|▋         | 14.36173152923584/200 [00:01<00:22,  8.23time/s] [A
-Simulating sequences:   7%|▋         | 14.375706672668457/200 [00:01<00:22,  8.22time/s][A
-Simulating sequences:   7%|▋         | 14.378022193908691/200 [00:01<00:22,  8.20time/s][A
-Simulating sequences:   7%|▋         | 14.386442184448242/200 [00:01<00:22,  8.19time/s][A
-Simulating sequences:   7%|▋         | 14.386890411376953/200 [00:01<00:22,  8.17time/s][A
-Simulating sequences:   7%|▋         | 14.389440536499023/200 [00:01<00:22,  8.15time/s][A
-Simulating sequences:   7%|▋         | 14.393145561218262/200 [00:01<00:22,  8.13time/s][A
-Simulating sequences:   7%|▋         | 14.399749755859375/200 [00:01<00:22,  8.12time/s][A
-Simulating sequences:   7%|▋         | 14.420086860656738/200 [00:01<00:22,  8.11time/s][A
-Simulating sequences:   7%|▋         | 14.423606872558594/200 [00:01<00:22,  8.10time/s][A
-Simulating sequences:   7%|▋         | 14.42668628692627/200 [00:01<00:22,  8.08time/s] [A
-Simulating sequences:   7%|▋         | 14.442378044128418/200 [00:01<00:22,  8.07time/s][A
-Simulating sequences:   7%|▋         | 14.447598457336426/200 [00:01<00:23,  8.05time/s][A
-Simulating sequences:   7%|▋         | 14.45313835144043/200 [00:01<00:23,  8.04time/s] [A
-Simulating sequences:   7%|▋         | 14.457082748413086/200 [00:01<00:23,  8.02time/s][A
-Simulating sequences:   7%|▋         | 14.459418296813965/200 [00:01<00:23,  8.01time/s][A
-Simulating sequences:   7%|▋         | 14.459515571594238/200 [00:01<00:23,  7.99time/s][A
-Simulating sequences:   7%|▋         | 14.478581428527832/200 [00:01<00:23,  7.98time/s][A
-Simulating sequences:   7%|▋         | 14.484090805053711/200 [00:01<00:23,  7.96time/s][A
-Simulating sequences:   7%|▋         | 14.49614429473877/200 [00:01<00:23,  7.95time/s] [A
-Simulating sequences:   7%|▋         | 14.502655982971191/200 [00:01<00:23,  7.94time/s][A
-Simulating sequences:   7%|▋         | 14.505764961242676/200 [00:01<00:23,  7.92time/s][A
-Simulating sequences:   7%|▋         | 14.505861282348633/200 [00:01<00:23,  7.91time/s][A
-Simulating sequences:   7%|▋         | 14.506890296936035/200 [00:01<00:23,  7.89time/s][A
-Simulating sequences:   7%|▋         | 14.510580062866211/200 [00:01<00:23,  7.87time/s][A
-Simulating sequences:   7%|▋         | 14.511019706726074/200 [00:01<00:23,  7.86time/s][A
-Simulating sequences:   7%|▋         | 14.515048027038574/200 [00:01<00:23,  7.84time/s][A
-Simulating sequences:   7%|▋         | 14.51792049407959/200 [00:01<00:23,  7.82time/s] [A
-Simulating sequences:   7%|▋         | 14.526312828063965/200 [00:01<00:23,  7.81time/s][A
-Simulating sequences:   7%|▋         | 14.531662940979004/200 [00:01<00:23,  7.80time/s][A
-Simulating sequences:   7%|▋         | 14.531753540039062/200 [00:01<00:23,  7.78time/s][A
-Simulating sequences:   7%|▋         | 14.53380012512207/200 [00:01<00:23,  7.76time/s] [A
-Simulating sequences:   7%|▋         | 14.53387451171875/200 [00:01<00:23,  7.75time/s][A
-Simulating sequences:   7%|▋         | 14.543124198913574/200 [00:01<00:23,  7.73time/s][A
-Simulating sequences:   7%|▋         | 14.545469284057617/200 [00:01<00:24,  7.72time/s][A
-Simulating sequences:   7%|▋         | 14.545979499816895/200 [00:01<00:24,  7.70time/s][A
-Simulating sequences:   7%|▋         | 14.548737525939941/200 [00:01<00:24,  7.69time/s][A
-Simulating sequences:   7%|▋         | 14.558830261230469/200 [00:01<00:24,  7.68time/s][A
-Simulating sequences:   7%|▋         | 14.563940048217773/200 [00:01<00:24,  7.66time/s][A
-Simulating sequences:   7%|▋         | 14.567142486572266/200 [00:01<00:24,  7.65time/s][A
-Simulating sequences:   7%|▋         | 14.575660705566406/200 [00:01<00:24,  7.63time/s][A
-Simulating sequences:   7%|▋         | 14.588128089904785/200 [00:01<00:24,  7.62time/s][A
-Simulating sequences:   7%|▋         | 14.588568687438965/200 [00:01<00:24,  7.61time/s][A
-Simulating sequences:   7%|▋         | 14.589173316955566/200 [00:01<00:24,  7.59time/s][A
-Simulating sequences:   7%|▋         | 14.60530948638916/200 [00:01<00:24,  7.58time/s] [A
-Simulating sequences:   7%|▋         | 14.61388111114502/200 [00:01<00:24,  7.57time/s][A
-Simulating sequences:   7%|▋         | 14.631940841674805/200 [00:01<00:24,  7.56time/s][A
-Simulating sequences:   7%|▋         | 14.65268325805664/200 [00:01<00:24,  7.56time/s] [A
-Simulating sequences:   7%|▋         | 14.676971435546875/200 [00:01<00:24,  7.55time/s][A
-Simulating sequences:   7%|▋         | 14.677608489990234/200 [00:01<00:24,  7.54time/s][A
-Simulating sequences:   7%|▋         | 14.679463386535645/200 [00:01<00:24,  7.52time/s][A
-Simulating sequences:   7%|▋         | 14.681144714355469/200 [00:01<00:24,  7.51time/s][A
-Simulating sequences:   7%|▋         | 14.681290626525879/200 [00:01<00:24,  7.49time/s][A
-Simulating sequences:   7%|▋         | 14.681522369384766/200 [00:01<00:24,  7.48time/s][A
-Simulating sequences:   7%|▋         | 14.690373420715332/200 [00:01<00:24,  7.46time/s][A
-Simulating sequences:   7%|▋         | 14.691064834594727/200 [00:01<00:24,  7.45time/s][A
-Simulating sequences:   7%|▋         | 14.691167831420898/200 [00:01<00:24,  7.43time/s][A
-Simulating sequences:   7%|▋         | 14.6935453414917/200 [00:01<00:24,  7.42time/s]  [A
-Simulating sequences:   7%|▋         | 14.7153902053833/200 [00:01<00:24,  7.41time/s][A
-Simulating sequences:   7%|▋         | 14.723597526550293/200 [00:01<00:25,  7.40time/s][A
-Simulating sequences:   7%|▋         | 14.73320484161377/200 [00:01<00:25,  7.39time/s] [A
-Simulating sequences:   7%|▋         | 14.80839729309082/200 [00:01<00:24,  7.41time/s][A
-Simulating sequences:   7%|▋         | 14.869543075561523/200 [00:02<00:24,  7.43time/s][A
-Simulating sequences:   7%|▋         | 14.900370597839355/200 [00:02<00:24,  7.43time/s][A
-Simulating sequences:   7%|▋         | 14.907269477844238/200 [00:02<00:24,  7.42time/s][A
-Simulating sequences:   7%|▋         | 14.92037582397461/200 [00:02<00:24,  7.41time/s] [A
-Simulating sequences:   7%|▋         | 14.929677963256836/200 [00:02<00:25,  7.40time/s][A
-Simulating sequences:   7%|▋         | 14.951889038085938/200 [00:02<00:25,  7.39time/s][A
-Simulating sequences:   7%|▋         | 14.960209846496582/200 [00:02<00:25,  7.38time/s][A
-Simulating sequences:   7%|▋         | 14.975911140441895/200 [00:02<00:25,  7.37time/s][A
-Simulating sequences:   7%|▋         | 14.981124877929688/200 [00:02<00:25,  7.36time/s][A
-Simulating sequences:   7%|▋         | 14.982767105102539/200 [00:02<00:25,  7.35time/s][A
-Simulating sequences:   7%|▋         | 14.992331504821777/200 [00:02<00:25,  7.33time/s][A
-Simulating sequences:   7%|▋         | 14.994165420532227/200 [00:02<00:25,  7.32time/s][A
-Simulating sequences:   7%|▋         | 14.995044708251953/200 [00:02<00:25,  7.31time/s][A
-Simulating sequences:   7%|▋         | 14.997306823730469/200 [00:02<00:25,  7.29time/s][A
-Simulating sequences:   8%|▊         | 15.001330375671387/200 [00:02<00:25,  7.28time/s][A
-Simulating sequences:   8%|▊         | 15.002755165100098/200 [00:02<00:25,  7.26time/s][A
-Simulating sequences:   8%|▊         | 15.007624626159668/200 [00:02<00:25,  7.25time/s][A
-Simulating sequences:   8%|▊         | 15.014469146728516/200 [00:02<00:25,  7.24time/s][A
-Simulating sequences:   8%|▊         | 15.018381118774414/200 [00:02<00:25,  7.23time/s][A
-Simulating sequences:   8%|▊         | 15.01976203918457/200 [00:02<00:25,  7.21time/s] [A
-Simulating sequences:   8%|▊         | 15.019835472106934/200 [00:02<00:25,  7.20time/s][A
-Simulating sequences:   8%|▊         | 15.023412704467773/200 [00:02<00:25,  7.18time/s][A
-Simulating sequences:   8%|▊         | 15.028014183044434/200 [00:02<00:25,  7.17time/s][A
-Simulating sequences:   8%|▊         | 15.049955368041992/200 [00:02<00:25,  7.17time/s][A
-Simulating sequences:   8%|▊         | 15.052559852600098/200 [00:02<00:25,  7.15time/s][A
-Simulating sequences:   8%|▊         | 15.055188179016113/200 [00:02<00:25,  7.14time/s][A
-Simulating sequences:   8%|▊         | 15.118372917175293/200 [00:02<00:25,  7.16time/s][A
-Simulating sequences:   8%|▊         | 15.215871810913086/200 [00:02<00:25,  7.19time/s][A
-Simulating sequences:   8%|▊         | 15.22790813446045/200 [00:02<00:25,  7.18time/s] [A
-Simulating sequences:   8%|▊         | 15.232338905334473/200 [00:02<00:25,  7.17time/s][A
-Simulating sequences:   8%|▊         | 15.235264778137207/200 [00:02<00:25,  7.15time/s][A
-Simulating sequences:   8%|▊         | 15.238707542419434/200 [00:02<00:25,  7.14time/s][A
-Simulating sequences:   8%|▊         | 15.244062423706055/200 [00:02<00:25,  7.13time/s][A
-Simulating sequences:   8%|▊         | 15.251969337463379/200 [00:02<00:25,  7.12time/s][A
-Simulating sequences:   8%|▊         | 15.253983497619629/200 [00:02<00:26,  7.10time/s][A
-Simulating sequences:   8%|▊         | 15.266392707824707/200 [00:02<00:26,  7.10time/s][A
-Simulating sequences:   8%|▊         | 15.27060317993164/200 [00:02<00:26,  7.08time/s] [A
-Simulating sequences:   8%|▊         | 15.271552085876465/200 [00:02<00:26,  7.07time/s][A
-Simulating sequences:   8%|▊         | 15.272283554077148/200 [00:02<00:26,  7.06time/s][A
-Simulating sequences:   8%|▊         | 15.272882461547852/200 [00:02<00:26,  7.04time/s][A
-Simulating sequences:   8%|▊         | 15.273838996887207/200 [00:02<00:26,  7.03time/s][A
-Simulating sequences:   8%|▊         | 15.276712417602539/200 [00:02<00:26,  7.02time/s][A
-Simulating sequences:   8%|▊         | 15.299925804138184/200 [00:02<00:26,  7.01time/s][A
-Simulating sequences:   8%|▊         | 15.30107307434082/200 [00:02<00:26,  7.00time/s] [A
-Simulating sequences:   8%|▊         | 15.309165954589844/200 [00:02<00:26,  6.99time/s][A
-Simulating sequences:   8%|▊         | 15.311455726623535/200 [00:02<00:26,  6.98time/s][A
-Simulating sequences:   8%|▊         | 15.311630249023438/200 [00:02<00:26,  6.96time/s][A
-Simulating sequences:   8%|▊         | 15.322029113769531/200 [00:02<00:26,  6.95time/s][A
-Simulating sequences:   8%|▊         | 15.344653129577637/200 [00:02<00:26,  6.95time/s][A
-Simulating sequences:   8%|▊         | 15.352209091186523/200 [00:02<00:26,  6.94time/s][A
-Simulating sequences:   8%|▊         | 15.390771865844727/200 [00:02<00:26,  6.94time/s][A
-Simulating sequences:   8%|▊         | 15.395514488220215/200 [00:02<00:26,  6.93time/s][A
-Simulating sequences:   8%|▊         | 15.395960807800293/200 [00:02<00:26,  6.92time/s][A
-Simulating sequences:   8%|▊         | 15.396442413330078/200 [00:02<00:26,  6.90time/s][A
-Simulating sequences:   8%|▊         | 15.409250259399414/200 [00:02<00:26,  6.90time/s][A
-Simulating sequences:   8%|▊         | 15.726249694824219/200 [00:02<00:26,  7.02time/s][A
-Simulating sequences:   8%|▊         | 15.740532875061035/200 [00:02<00:26,  7.02time/s][A
-Simulating sequences:   8%|▊         | 15.741182327270508/200 [00:02<00:26,  7.00time/s][A
-Simulating sequences:   8%|▊         | 15.750236511230469/200 [00:02<00:26,  6.99time/s][A
-Simulating sequences:   8%|▊         | 15.765528678894043/200 [00:02<00:26,  6.99time/s][A
-Simulating sequences:   8%|▊         | 15.771639823913574/200 [00:02<00:26,  6.98time/s][A
-Simulating sequences:   8%|▊         | 15.778289794921875/200 [00:02<00:26,  6.97time/s][A
-Simulating sequences:   8%|▊         | 15.786465644836426/200 [00:02<00:26,  6.96time/s][A
-Simulating sequences:   8%|▊         | 15.81190013885498/200 [00:02<00:26,  6.95time/s] [A
-Simulating sequences:   8%|▊         | 15.836653709411621/200 [00:02<00:26,  6.95time/s][A
-Simulating sequences:   8%|▊         | 15.84630012512207/200 [00:02<00:26,  6.94time/s] [A
-Simulating sequences:   8%|▊         | 15.84786319732666/200 [00:02<00:26,  6.93time/s][A
-Simulating sequences:   8%|▊         | 15.852506637573242/200 [00:02<00:26,  6.92time/s][A
-Simulating sequences:   8%|▊         | 15.85406494140625/200 [00:02<00:26,  6.90time/s] [A
-Simulating sequences:   8%|▊         | 15.86373519897461/200 [00:02<00:26,  6.90time/s][A
-Simulating sequences:   8%|▊         | 15.886835098266602/200 [00:02<00:26,  6.89time/s][A
-Simulating sequences:   8%|▊         | 15.892730712890625/200 [00:02<00:26,  6.88time/s][A
-Simulating sequences:   8%|▊         | 15.89753246307373/200 [00:02<00:26,  6.87time/s] [A
-Simulating sequences:   8%|▊         | 15.899412155151367/200 [00:02<00:26,  6.86time/s][A
-Simulating sequences:   8%|▊         | 15.907796859741211/200 [00:02<00:26,  6.85time/s][A
-Simulating sequences:   8%|▊         | 15.908082962036133/200 [00:02<00:26,  6.84time/s][A
-Simulating sequences:   8%|▊         | 15.916075706481934/200 [00:02<00:26,  6.83time/s][A
-Simulating sequences:   8%|▊         | 15.921104431152344/200 [00:02<00:27,  6.82time/s][A
-Simulating sequences:   8%|▊         | 15.925586700439453/200 [00:02<00:27,  6.80time/s][A
-Simulating sequences:   8%|▊         | 15.927151679992676/200 [00:02<00:27,  6.79time/s][A
-Simulating sequences:   8%|▊         | 15.928318977355957/200 [00:02<00:27,  6.78time/s][A
-Simulating sequences:   8%|▊         | 15.935117721557617/200 [00:02<00:27,  6.77time/s][A
-Simulating sequences:   8%|▊         | 15.938557624816895/200 [00:02<00:27,  6.76time/s][A
-Simulating sequences:   8%|▊         | 15.938836097717285/200 [00:02<00:27,  6.75time/s][A
-Simulating sequences:   8%|▊         | 15.942170143127441/200 [00:02<00:27,  6.73time/s][A
-Simulating sequences:   8%|▊         | 15.944169998168945/200 [00:02<00:27,  6.72time/s][A
-Simulating sequences:   8%|▊         | 15.966409683227539/200 [00:02<00:27,  6.72time/s][A
-Simulating sequences:   8%|▊         | 15.969282150268555/200 [00:02<00:27,  6.71time/s][A
-Simulating sequences:   8%|▊         | 15.971783638000488/200 [00:02<00:27,  6.70time/s][A
-Simulating sequences:   8%|▊         | 15.973254203796387/200 [00:02<00:27,  6.68time/s][A
-Simulating sequences:   8%|▊         | 15.980268478393555/200 [00:02<00:27,  6.67time/s][A
-Simulating sequences:   8%|▊         | 15.980287551879883/200 [00:02<00:27,  6.66time/s][A
-Simulating sequences:   8%|▊         | 16.008731842041016/200 [00:02<00:27,  6.66time/s][A
-Simulating sequences:   8%|▊         | 16.01886558532715/200 [00:02<00:27,  6.65time/s] [A
-Simulating sequences:   8%|▊         | 16.024356842041016/200 [00:02<00:27,  6.64time/s][A
-Simulating sequences:   8%|▊         | 16.02674102783203/200 [00:02<00:27,  6.63time/s] [A
-Simulating sequences:   8%|▊         | 16.041147232055664/200 [00:02<00:27,  6.62time/s][A
-Simulating sequences:   8%|▊         | 16.04315948486328/200 [00:02<00:27,  6.61time/s] [A
-Simulating sequences:   8%|▊         | 16.047115325927734/200 [00:02<00:27,  6.60time/s][A
-Simulating sequences:   8%|▊         | 16.048038482666016/200 [00:02<00:27,  6.59time/s][A
-Simulating sequences:   8%|▊         | 16.048160552978516/200 [00:02<00:27,  6.58time/s][A
-Simulating sequences:   8%|▊         | 16.053335189819336/200 [00:02<00:28,  6.57time/s][A
-Simulating sequences:   8%|▊         | 16.05602264404297/200 [00:02<00:28,  6.56time/s] [A
-Simulating sequences:   8%|▊         | 16.064620971679688/200 [00:02<00:28,  6.55time/s][A
-Simulating sequences:   8%|▊         | 16.073448181152344/200 [00:02<00:28,  6.54time/s][A
-Simulating sequences:   8%|▊         | 16.07548713684082/200 [00:02<00:28,  6.53time/s] [A
-Simulating sequences:   8%|▊         | 16.080965042114258/200 [00:02<00:28,  6.52time/s][A
-Simulating sequences:   8%|▊         | 16.087127685546875/200 [00:02<00:28,  6.51time/s][A
-Simulating sequences:   8%|▊         | 16.115156173706055/200 [00:02<00:28,  6.51time/s][A
-Simulating sequences:   8%|▊         | 16.116865158081055/200 [00:02<00:28,  6.50time/s][A
-Simulating sequences:   8%|▊         | 16.127952575683594/200 [00:02<00:28,  6.49time/s][A
-Simulating sequences:   8%|▊         | 16.131786346435547/200 [00:02<00:28,  6.48time/s][A
-Simulating sequences:   8%|▊         | 16.136178970336914/200 [00:02<00:28,  6.47time/s][A
-Simulating sequences:   8%|▊         | 16.137163162231445/200 [00:02<00:28,  6.46time/s][A
-Simulating sequences:   8%|▊         | 16.14518928527832/200 [00:02<00:28,  6.45time/s] [A
-Simulating sequences:   8%|▊         | 16.149227142333984/200 [00:02<00:28,  6.44time/s][A
-Simulating sequences:   8%|▊         | 16.25367546081543/200 [00:02<00:28,  6.47time/s] [A
-Simulating sequences:   8%|▊         | 16.281341552734375/200 [00:02<00:28,  6.47time/s][A
-Simulating sequences:   8%|▊         | 16.346086502075195/200 [00:02<00:28,  6.48time/s][A
-Simulating sequences:   8%|▊         | 16.402612686157227/200 [00:02<00:28,  6.49time/s][A
-Simulating sequences:   8%|▊         | 16.513425827026367/200 [00:02<00:28,  6.52time/s][A
-Simulating sequences:   8%|▊         | 16.514047622680664/200 [00:02<00:28,  6.51time/s][A
-Simulating sequences:   8%|▊         | 16.54615592956543/200 [00:02<00:28,  6.51time/s] [A
-Simulating sequences:   8%|▊         | 16.553312301635742/200 [00:02<00:28,  6.50time/s][A
-Simulating sequences:   8%|▊         | 16.5643253326416/200 [00:02<00:28,  6.50time/s]  [A
-Simulating sequences:   8%|▊         | 16.574987411499023/200 [00:02<00:28,  6.49time/s][A
-Simulating sequences:   8%|▊         | 16.578182220458984/200 [00:02<00:28,  6.48time/s][A
-Simulating sequences:   8%|▊         | 16.584033966064453/200 [00:02<00:28,  6.47time/s][A
-Simulating sequences:   8%|▊         | 16.588817596435547/200 [00:02<00:28,  6.46time/s][A
-Simulating sequences:   8%|▊         | 16.59380340576172/200 [00:02<00:28,  6.45time/s] [A
-Simulating sequences:   8%|▊         | 16.595684051513672/200 [00:02<00:28,  6.44time/s][A
-Simulating sequences:   8%|▊         | 16.61756134033203/200 [00:02<00:28,  6.44time/s] [A
-Simulating sequences:   8%|▊         | 16.62689971923828/200 [00:02<00:28,  6.43time/s][A
-Simulating sequences:   8%|▊         | 16.631267547607422/200 [00:02<00:28,  6.42time/s][A
-Simulating sequences:   8%|▊         | 16.632352828979492/200 [00:02<00:28,  6.41time/s][A
-Simulating sequences:   8%|▊         | 16.638988494873047/200 [00:02<00:28,  6.40time/s][A
-Simulating sequences:   8%|▊         | 16.63976287841797/200 [00:02<00:28,  6.39time/s] [A
-Simulating sequences:   8%|▊         | 16.642112731933594/200 [00:02<00:28,  6.38time/s][A
-Simulating sequences:   8%|▊         | 16.666484832763672/200 [00:02<00:28,  6.37time/s][A
-Simulating sequences:   8%|▊         | 16.674413681030273/200 [00:02<00:28,  6.37time/s][A
-Simulating sequences:   8%|▊         | 16.710813522338867/200 [00:02<00:28,  6.37time/s][A
-Simulating sequences:   8%|▊         | 16.7250919342041/200 [00:02<00:28,  6.36time/s]  [A
-Simulating sequences:   8%|▊         | 16.73724937438965/200 [00:02<00:28,  6.36time/s][A
-Simulating sequences:   8%|▊         | 16.742788314819336/200 [00:02<00:28,  6.35time/s][A
-Simulating sequences:   8%|▊         | 16.744510650634766/200 [00:02<00:28,  6.34time/s][A
-Simulating sequences:   8%|▊         | 16.747861862182617/200 [00:02<00:28,  6.33time/s][A
-Simulating sequences:   8%|▊         | 16.755306243896484/200 [00:02<00:29,  6.32time/s][A
-Simulating sequences:   8%|▊         | 16.755966186523438/200 [00:02<00:29,  6.31time/s][A
-Simulating sequences:   8%|▊         | 16.775497436523438/200 [00:02<00:29,  6.30time/s][A
-Simulating sequences:   8%|▊         | 16.792011260986328/200 [00:02<00:29,  6.30time/s][A
-Simulating sequences:   8%|▊         | 16.84527015686035/200 [00:02<00:29,  6.31time/s] [A
-Simulating sequences:   8%|▊         | 16.862648010253906/200 [00:02<00:29,  6.30time/s][A
-Simulating sequences:   8%|▊         | 16.872610092163086/200 [00:02<00:29,  6.30time/s][A
-Simulating sequences:   8%|▊         | 16.873762130737305/200 [00:02<00:29,  6.29time/s][A
-Simulating sequences:   8%|▊         | 16.883121490478516/200 [00:02<00:29,  6.28time/s][A
-Simulating sequences:   8%|▊         | 16.892208099365234/200 [00:02<00:29,  6.27time/s][A
-Simulating sequences:   8%|▊         | 16.893075942993164/200 [00:02<00:29,  6.26time/s][A
-Simulating sequences:   8%|▊         | 16.907577514648438/200 [00:02<00:29,  6.25time/s][A
-Simulating sequences:   8%|▊         | 16.922622680664062/200 [00:02<00:29,  6.25time/s][A
-Simulating sequences:   8%|▊         | 16.929027557373047/200 [00:02<00:29,  6.24time/s][A
-Simulating sequences:   8%|▊         | 16.930171966552734/200 [00:02<00:29,  6.23time/s][A
-Simulating sequences:   8%|▊         | 16.95682716369629/200 [00:02<00:29,  6.23time/s] [A
-Simulating sequences:   8%|▊         | 16.957496643066406/200 [00:02<00:29,  6.22time/s][A
-Simulating sequences:   8%|▊         | 16.9823055267334/200 [00:02<00:29,  6.22time/s]  [A
-Simulating sequences:   9%|▊         | 17.025564193725586/200 [00:02<00:29,  6.22time/s][A
-Simulating sequences:   9%|▊         | 17.048879623413086/200 [00:02<00:29,  6.22time/s][A
-Simulating sequences:   9%|▊         | 17.05164337158203/200 [00:02<00:29,  6.21time/s] [A
-Simulating sequences:   9%|▊         | 17.064205169677734/200 [00:02<00:29,  6.20time/s][A
-Simulating sequences:   9%|▊         | 17.065147399902344/200 [00:02<00:29,  6.19time/s][A
-Simulating sequences:   9%|▊         | 17.080617904663086/200 [00:02<00:29,  6.19time/s][A
-Simulating sequences:   9%|▊         | 17.084453582763672/200 [00:02<00:29,  6.18time/s][A
-Simulating sequences:   9%|▊         | 17.09404182434082/200 [00:02<00:29,  6.17time/s] [A
-Simulating sequences:   9%|▊         | 17.10148811340332/200 [00:02<00:29,  6.16time/s][A
-Simulating sequences:   9%|▊         | 17.12967300415039/200 [00:02<00:29,  6.16time/s][A
-Simulating sequences:   9%|▊         | 17.13136100769043/200 [00:02<00:29,  6.15time/s][A
-Simulating sequences:   9%|▊         | 17.13698959350586/200 [00:02<00:29,  6.15time/s][A
-Simulating sequences:   9%|▊         | 17.142274856567383/200 [00:02<00:29,  6.14time/s][A
-Simulating sequences:   9%|▊         | 17.147056579589844/200 [00:02<00:29,  6.13time/s][A
-Simulating sequences:   9%|▊         | 17.15391731262207/200 [00:02<00:29,  6.12time/s] [A
-Simulating sequences:   9%|▊         | 17.160724639892578/200 [00:02<00:29,  6.11time/s][A
-Simulating sequences:   9%|▊         | 17.16667938232422/200 [00:02<00:29,  6.10time/s] [A
-Simulating sequences:   9%|▊         | 17.172672271728516/200 [00:02<00:29,  6.10time/s][A
-Simulating sequences:   9%|▊         | 17.18137550354004/200 [00:02<00:30,  6.09time/s] [A
-Simulating sequences:   9%|▊         | 17.181997299194336/200 [00:02<00:30,  6.08time/s][A
-Simulating sequences:   9%|▊         | 17.184297561645508/200 [00:02<00:30,  6.07time/s][A
-Simulating sequences:   9%|▊         | 17.184429168701172/200 [00:02<00:30,  6.06time/s][A
-Simulating sequences:   9%|▊         | 17.190292358398438/200 [00:02<00:30,  6.05time/s][A
-Simulating sequences:   9%|▊         | 17.190292358398438/200 [00:02<00:30,  6.04time/s][A
-Simulating sequences:   9%|▊         | 17.19173240661621/200 [00:02<00:30,  6.03time/s] [A
-Simulating sequences:   9%|▊         | 17.19371223449707/200 [00:02<00:30,  6.02time/s][A
-Simulating sequences:   9%|▊         | 17.20199203491211/200 [00:02<00:30,  6.01time/s][A
-Simulating sequences:   9%|▊         | 17.20745849609375/200 [00:02<00:30,  6.01time/s][A
-Simulating sequences:   9%|▊         | 17.212688446044922/200 [00:02<00:30,  6.00time/s][A
-Simulating sequences:   9%|▊         | 17.222017288208008/200 [00:02<00:30,  5.99time/s][A
-Simulating sequences:   9%|▊         | 17.2332820892334/200 [00:02<00:30,  5.98time/s]  [A
-Simulating sequences:   9%|▊         | 17.237606048583984/200 [00:02<00:30,  5.98time/s][A
-Simulating sequences:   9%|▊         | 17.23888397216797/200 [00:02<00:30,  5.97time/s] [A
-Simulating sequences:   9%|▊         | 17.24319076538086/200 [00:02<00:30,  5.96time/s][A
-Simulating sequences:   9%|▊         | 17.249069213867188/200 [00:02<00:30,  5.95time/s][A
-Simulating sequences:   9%|▊         | 17.255393981933594/200 [00:02<00:30,  5.94time/s][A
-Simulating sequences:   9%|▊         | 17.25635528564453/200 [00:02<00:30,  5.93time/s] [A
-Simulating sequences:   9%|▊         | 17.25771141052246/200 [00:02<00:30,  5.92time/s][A
-Simulating sequences:   9%|▊         | 17.258136749267578/200 [00:02<00:30,  5.91time/s][A
-Simulating sequences:   9%|▊         | 17.27401351928711/200 [00:02<00:30,  5.91time/s] [A
-Simulating sequences:   9%|▊         | 17.2745304107666/200 [00:02<00:30,  5.90time/s] [A
-Simulating sequences:   9%|▊         | 17.286779403686523/200 [00:02<00:31,  5.89time/s][A
-Simulating sequences:   9%|▊         | 17.288864135742188/200 [00:02<00:31,  5.88time/s][A
-Simulating sequences:   9%|▊         | 17.29078483581543/200 [00:02<00:31,  5.88time/s] [A
-Simulating sequences:   9%|▊         | 17.29546356201172/200 [00:02<00:31,  5.87time/s][A
-Simulating sequences:   9%|▊         | 17.302040100097656/200 [00:02<00:31,  5.86time/s][A
-Simulating sequences:   9%|▊         | 17.304210662841797/200 [00:02<00:31,  5.85time/s][A
-Simulating sequences:   9%|▊         | 17.30451011657715/200 [00:02<00:31,  5.84time/s] [A
-Simulating sequences:   9%|▊         | 17.3103084564209/200 [00:02<00:31,  5.83time/s] [A
-Simulating sequences:   9%|▊         | 17.31131362915039/200 [00:02<00:31,  5.82time/s][A
-Simulating sequences:   9%|▊         | 17.313312530517578/200 [00:02<00:31,  5.82time/s][A
-Simulating sequences:   9%|▊         | 17.317392349243164/200 [00:02<00:31,  5.81time/s][A
-Simulating sequences:   9%|▊         | 17.333263397216797/200 [00:02<00:31,  5.80time/s][A
-Simulating sequences:   9%|▊         | 17.336318969726562/200 [00:02<00:31,  5.80time/s][A
-Simulating sequences:   9%|▊         | 17.340150833129883/200 [00:02<00:31,  5.79time/s][A
-Simulating sequences:   9%|▊         | 17.357194900512695/200 [00:03<00:31,  5.78time/s][A
-Simulating sequences:   9%|▊         | 17.358522415161133/200 [00:03<00:31,  5.77time/s][A
-Simulating sequences:   9%|▊         | 17.358800888061523/200 [00:03<00:31,  5.76time/s][A
-Simulating sequences:   9%|▊         | 17.359729766845703/200 [00:03<00:31,  5.76time/s][A
-Simulating sequences:   9%|▊         | 17.37160873413086/200 [00:03<00:31,  5.75time/s] [A
-Simulating sequences:   9%|▊         | 17.3857364654541/200 [00:03<00:31,  5.75time/s] [A
-Simulating sequences:   9%|▊         | 17.38864517211914/200 [00:03<00:31,  5.74time/s][A
-Simulating sequences:   9%|▊         | 17.395435333251953/200 [00:03<00:31,  5.73time/s][A
-Simulating sequences:   9%|▊         | 17.402925491333008/200 [00:03<00:31,  5.72time/s][A
-Simulating sequences:   9%|▊         | 17.408231735229492/200 [00:03<00:31,  5.72time/s][A
-Simulating sequences:   9%|▊         | 17.422338485717773/200 [00:03<00:31,  5.71time/s][A
-Simulating sequences:   9%|▊         | 17.42779541015625/200 [00:03<00:32,  5.70time/s] [A
-Simulating sequences:   9%|▊         | 17.443668365478516/200 [00:03<00:32,  5.70time/s][A
-Simulating sequences:   9%|▊         | 17.444250106811523/200 [00:03<00:32,  5.69time/s][A
-Simulating sequences:   9%|▊         | 17.448991775512695/200 [00:03<00:32,  5.68time/s][A
-Simulating sequences:   9%|▊         | 17.466718673706055/200 [00:03<00:32,  5.68time/s][A
-Simulating sequences:   9%|▊         | 17.479053497314453/200 [00:03<00:32,  5.67time/s][A
-Simulating sequences:   9%|▊         | 17.48533821105957/200 [00:03<00:32,  5.67time/s] [A
-Simulating sequences:   9%|▊         | 17.49069595336914/200 [00:03<00:32,  5.66time/s][A
-Simulating sequences:   9%|▊         | 17.493988037109375/200 [00:03<00:32,  5.65time/s][A
-Simulating sequences:   9%|▊         | 17.496849060058594/200 [00:03<00:32,  5.64time/s][A
-Simulating sequences:   9%|▊         | 17.499267578125/200 [00:03<00:32,  5.64time/s]   [A
-Simulating sequences:   9%|▉         | 17.504331588745117/200 [00:03<00:32,  5.63time/s][A
-Simulating sequences:   9%|▉         | 17.508861541748047/200 [00:03<00:32,  5.62time/s][A
-Simulating sequences:   9%|▉         | 17.5187931060791/200 [00:03<00:32,  5.62time/s]  [A
-Simulating sequences:   9%|▉         | 17.52304458618164/200 [00:03<00:32,  5.61time/s][A
-Simulating sequences:   9%|▉         | 17.528703689575195/200 [00:03<00:32,  5.60time/s][A
-Simulating sequences:   9%|▉         | 17.543731689453125/200 [00:03<00:32,  5.60time/s][A
-Simulating sequences:   9%|▉         | 17.563026428222656/200 [00:03<00:32,  5.59time/s][A
-Simulating sequences:   9%|▉         | 17.581829071044922/200 [00:03<00:32,  5.59time/s][A
-Simulating sequences:   9%|▉         | 17.582048416137695/200 [00:03<00:32,  5.58time/s][A
-Simulating sequences:   9%|▉         | 17.586153030395508/200 [00:03<00:32,  5.57time/s][A
-Simulating sequences:   9%|▉         | 17.589635848999023/200 [00:03<00:32,  5.57time/s][A
-Simulating sequences:   9%|▉         | 17.5917911529541/200 [00:03<00:32,  5.56time/s]  [A
-Simulating sequences:   9%|▉         | 17.600900650024414/200 [00:03<00:32,  5.55time/s][A
-Simulating sequences:   9%|▉         | 17.605058670043945/200 [00:03<00:32,  5.55time/s][A
-Simulating sequences:   9%|▉         | 17.61927032470703/200 [00:03<00:32,  5.54time/s] [A
-Simulating sequences:   9%|▉         | 17.6196231842041/200 [00:03<00:32,  5.53time/s] [A
-Simulating sequences:   9%|▉         | 17.629863739013672/200 [00:03<00:32,  5.53time/s][A
-Simulating sequences:   9%|▉         | 17.630273818969727/200 [00:03<00:33,  5.52time/s][A
-Simulating sequences:   9%|▉         | 17.633317947387695/200 [00:03<00:33,  5.51time/s][A
-Simulating sequences:   9%|▉         | 17.634580612182617/200 [00:03<00:33,  5.50time/s][A
-Simulating sequences:   9%|▉         | 17.63790512084961/200 [00:03<00:33,  5.50time/s] [A
-Simulating sequences:   9%|▉         | 17.641258239746094/200 [00:03<00:33,  5.49time/s][A
-Simulating sequences:   9%|▉         | 17.661540985107422/200 [00:03<00:33,  5.49time/s][A
-Simulating sequences:   9%|▉         | 17.662506103515625/200 [00:03<00:33,  5.48time/s][A
-Simulating sequences:   9%|▉         | 17.683364868164062/200 [00:03<00:33,  5.48time/s][A
-Simulating sequences:   9%|▉         | 17.683557510375977/200 [00:03<00:33,  5.47time/s][A
-Simulating sequences:   9%|▉         | 17.68470001220703/200 [00:03<00:33,  5.46time/s] [A
-Simulating sequences:   9%|▉         | 17.686304092407227/200 [00:03<00:33,  5.45time/s][A
-Simulating sequences:   9%|▉         | 17.687864303588867/200 [00:03<00:33,  5.44time/s][A
-Simulating sequences:   9%|▉         | 17.691051483154297/200 [00:03<00:33,  5.44time/s][A
-Simulating sequences:   9%|▉         | 17.695375442504883/200 [00:03<00:33,  5.43time/s][A
-Simulating sequences:   9%|▉         | 17.717144012451172/200 [00:03<00:33,  5.43time/s][A
-Simulating sequences:   9%|▉         | 17.80258560180664/200 [00:03<00:33,  5.44time/s] [A
-Simulating sequences:   9%|▉         | 17.808197021484375/200 [00:03<00:33,  5.44time/s][A
-Simulating sequences:   9%|▉         | 17.83857536315918/200 [00:03<00:33,  5.44time/s] [A
-Simulating sequences:   9%|▉         | 17.84415626525879/200 [00:03<00:33,  5.43time/s][A
-Simulating sequences:   9%|▉         | 17.84771728515625/200 [00:03<00:33,  5.42time/s][A
-Simulating sequences:   9%|▉         | 17.85787582397461/200 [00:03<00:33,  5.42time/s][A
-Simulating sequences:   9%|▉         | 17.865219116210938/200 [00:03<00:33,  5.41time/s][A
-Simulating sequences:   9%|▉         | 17.876550674438477/200 [00:03<00:33,  5.41time/s][A
-Simulating sequences:   9%|▉         | 17.87990951538086/200 [00:03<00:33,  5.40time/s] [A
-Simulating sequences:   9%|▉         | 17.891286849975586/200 [00:03<00:33,  5.40time/s][A
-Simulating sequences:   9%|▉         | 17.894350051879883/200 [00:03<00:33,  5.39time/s][A
-Simulating sequences:   9%|▉         | 17.909244537353516/200 [00:03<00:33,  5.38time/s][A
-Simulating sequences:   9%|▉         | 17.91935157775879/200 [00:03<00:33,  5.38time/s] [A
-Simulating sequences:   9%|▉         | 17.921497344970703/200 [00:03<00:33,  5.37time/s][A
-Simulating sequences:   9%|▉         | 17.92567253112793/200 [00:03<00:33,  5.36time/s] [A
-Simulating sequences:   9%|▉         | 17.92901611328125/200 [00:03<00:33,  5.36time/s][A
-Simulating sequences:   9%|▉         | 17.961116790771484/200 [00:03<00:33,  5.36time/s][A
-Simulating sequences:   9%|▉         | 17.962081909179688/200 [00:03<00:34,  5.35time/s][A
-Simulating sequences:   9%|▉         | 17.982393264770508/200 [00:03<00:34,  5.35time/s][A
-Simulating sequences:   9%|▉         | 17.9886417388916/200 [00:03<00:34,  5.34time/s]  [A
-Simulating sequences:   9%|▉         | 18.00217628479004/200 [00:03<00:34,  5.34time/s][A
-Simulating sequences:   9%|▉         | 18.01006317138672/200 [00:03<00:34,  5.33time/s][A
-Simulating sequences:   9%|▉         | 18.0155029296875/200 [00:03<00:34,  5.33time/s] [A
-Simulating sequences:   9%|▉         | 18.023412704467773/200 [00:03<00:34,  5.32time/s][A
-Simulating sequences:   9%|▉         | 18.042808532714844/200 [00:03<00:34,  5.32time/s][A
-Simulating sequences:   9%|▉         | 18.06810188293457/200 [00:03<00:34,  5.32time/s] [A
-Simulating sequences:   9%|▉         | 18.072500228881836/200 [00:03<00:34,  5.31time/s][A
-Simulating sequences:   9%|▉         | 18.07267951965332/200 [00:03<00:34,  5.30time/s] [A
-Simulating sequences:   9%|▉         | 18.097793579101562/200 [00:03<00:34,  5.30time/s][A
-Simulating sequences:   9%|▉         | 18.11017608642578/200 [00:03<00:34,  5.30time/s] [A
-Simulating sequences:   9%|▉         | 18.113832473754883/200 [00:03<00:34,  5.29time/s][A
-Simulating sequences:   9%|▉         | 18.132944107055664/200 [00:03<00:34,  5.29time/s][A
-Simulating sequences:   9%|▉         | 18.133424758911133/200 [00:03<00:34,  5.28time/s][A
-Simulating sequences:   9%|▉         | 18.1357364654541/200 [00:03<00:34,  5.27time/s]  [A
-Simulating sequences:   9%|▉         | 18.175724029541016/200 [00:03<00:34,  5.28time/s][A
-Simulating sequences:   9%|▉         | 18.18021583557129/200 [00:03<00:34,  5.27time/s] [A
-Simulating sequences:   9%|▉         | 18.210800170898438/200 [00:03<00:34,  5.27time/s][A
-Simulating sequences:   9%|▉         | 18.224380493164062/200 [00:03<00:34,  5.27time/s][A
-Simulating sequences:   9%|▉         | 18.225542068481445/200 [00:03<00:34,  5.26time/s][A
-Simulating sequences:   9%|▉         | 18.228628158569336/200 [00:03<00:34,  5.25time/s][A
-Simulating sequences:   9%|▉         | 18.257165908813477/200 [00:03<00:34,  5.25time/s][A
-Simulating sequences:   9%|▉         | 18.27176284790039/200 [00:03<00:34,  5.25time/s] [A
-Simulating sequences:   9%|▉         | 18.273700714111328/200 [00:03<00:34,  5.24time/s][A
-Simulating sequences:   9%|▉         | 18.282377243041992/200 [00:03<00:34,  5.24time/s][A
-Simulating sequences:   9%|▉         | 18.30240249633789/200 [00:03<00:34,  5.23time/s] [A
-Simulating sequences:   9%|▉         | 18.310762405395508/200 [00:03<00:34,  5.23time/s][A
-Simulating sequences:   9%|▉         | 18.311365127563477/200 [00:03<00:34,  5.22time/s][A
-Simulating sequences:   9%|▉         | 18.321929931640625/200 [00:03<00:34,  5.22time/s][A
-Simulating sequences:   9%|▉         | 18.32586669921875/200 [00:03<00:34,  5.21time/s] [A
-Simulating sequences:   9%|▉         | 18.326133728027344/200 [00:03<00:34,  5.20time/s][A
-Simulating sequences:   9%|▉         | 18.329299926757812/200 [00:03<00:34,  5.20time/s][A
-Simulating sequences:   9%|▉         | 18.349193572998047/200 [00:03<00:34,  5.19time/s][A
-Simulating sequences:   9%|▉         | 18.353662490844727/200 [00:03<00:35,  5.19time/s][A
-Simulating sequences:   9%|▉         | 18.36228370666504/200 [00:03<00:35,  5.18time/s] [A
-Simulating sequences:   9%|▉         | 18.365276336669922/200 [00:03<00:35,  5.18time/s][A
-Simulating sequences:   9%|▉         | 18.39102554321289/200 [00:03<00:35,  5.17time/s] [A
-Simulating sequences:   9%|▉         | 18.391098022460938/200 [00:03<00:35,  5.17time/s][A
-Simulating sequences:   9%|▉         | 18.402883529663086/200 [00:03<00:35,  5.16time/s][A
-Simulating sequences:   9%|▉         | 18.42325782775879/200 [00:03<00:35,  5.16time/s] [A
-Simulating sequences:   9%|▉         | 18.42387580871582/200 [00:03<00:35,  5.15time/s][A
-Simulating sequences:   9%|▉         | 18.424518585205078/200 [00:03<00:35,  5.15time/s][A
-Simulating sequences:   9%|▉         | 18.42718505859375/200 [00:03<00:35,  5.14time/s] [A
-Simulating sequences:   9%|▉         | 18.43182945251465/200 [00:03<00:35,  5.13time/s][A
-Simulating sequences:   9%|▉         | 18.436992645263672/200 [00:03<00:35,  5.13time/s][A
-Simulating sequences:   9%|▉         | 18.439212799072266/200 [00:03<00:35,  5.12time/s][A
-Simulating sequences:   9%|▉         | 18.445188522338867/200 [00:03<00:35,  5.11time/s][A
-Simulating sequences:   9%|▉         | 18.454330444335938/200 [00:03<00:35,  5.11time/s][A
-Simulating sequences:   9%|▉         | 18.456043243408203/200 [00:03<00:35,  5.10time/s][A
-Simulating sequences:   9%|▉         | 18.45686149597168/200 [00:03<00:35,  5.09time/s] [A
-Simulating sequences:   9%|▉         | 18.463443756103516/200 [00:03<00:35,  5.09time/s][A
-Simulating sequences:   9%|▉         | 18.4680233001709/200 [00:03<00:35,  5.08time/s]  [A
-Simulating sequences:   9%|▉         | 18.475234985351562/200 [00:03<00:35,  5.08time/s][A
-Simulating sequences:   9%|▉         | 18.4798583984375/200 [00:03<00:35,  5.07time/s]  [A
-Simulating sequences:   9%|▉         | 18.493406295776367/200 [00:03<00:35,  5.07time/s][A
-Simulating sequences:   9%|▉         | 18.49794578552246/200 [00:03<00:35,  5.06time/s] [A
-Simulating sequences:   9%|▉         | 18.502546310424805/200 [00:03<00:35,  5.06time/s][A
-Simulating sequences:   9%|▉         | 18.502723693847656/200 [00:03<00:35,  5.05time/s][A
-Simulating sequences:   9%|▉         | 18.511600494384766/200 [00:03<00:35,  5.04time/s][A
-Simulating sequences:   9%|▉         | 18.516738891601562/200 [00:03<00:36,  5.04time/s][A
-Simulating sequences:   9%|▉         | 18.518457412719727/200 [00:03<00:36,  5.03time/s][A
-Simulating sequences:   9%|▉         | 18.518537521362305/200 [00:03<00:36,  5.02time/s][A
-Simulating sequences:   9%|▉         | 18.53792953491211/200 [00:03<00:36,  5.02time/s] [A
-Simulating sequences:   9%|▉         | 18.5621395111084/200 [00:03<00:36,  5.02time/s] [A
-Simulating sequences:   9%|▉         | 18.56584930419922/200 [00:03<00:36,  5.01time/s][A
-Simulating sequences:   9%|▉         | 18.5670166015625/200 [00:03<00:36,  5.01time/s] [A
-Simulating sequences:   9%|▉         | 18.591144561767578/200 [00:03<00:36,  5.01time/s][A
-Simulating sequences:   9%|▉         | 18.591840744018555/200 [00:03<00:36,  5.00time/s][A
-Simulating sequences:   9%|▉         | 18.594881057739258/200 [00:03<00:36,  4.99time/s][A
-Simulating sequences:   9%|▉         | 18.59852409362793/200 [00:03<00:36,  4.99time/s] [A
-Simulating sequences:   9%|▉         | 18.629690170288086/200 [00:03<00:36,  4.99time/s][A
-Simulating sequences:   9%|▉         | 18.63187599182129/200 [00:03<00:36,  4.98time/s] [A
-Simulating sequences:   9%|▉         | 18.63325309753418/200 [00:03<00:36,  4.97time/s][A
-Simulating sequences:   9%|▉         | 18.645475387573242/200 [00:03<00:36,  4.97time/s][A
-Simulating sequences:   9%|▉         | 18.67776107788086/200 [00:03<00:36,  4.97time/s] [A
-Simulating sequences:   9%|▉         | 18.69279670715332/200 [00:03<00:36,  4.97time/s][A
-Simulating sequences:   9%|▉         | 18.697954177856445/200 [00:03<00:36,  4.96time/s][A
-Simulating sequences:   9%|▉         | 18.70090675354004/200 [00:03<00:36,  4.96time/s] [A
-Simulating sequences:   9%|▉         | 18.701915740966797/200 [00:03<00:36,  4.95time/s][A
-Simulating sequences:   9%|▉         | 18.705583572387695/200 [00:03<00:36,  4.94time/s][A
-Simulating sequences:   9%|▉         | 18.708847045898438/200 [00:03<00:36,  4.94time/s][A
-Simulating sequences:   9%|▉         | 18.720603942871094/200 [00:03<00:36,  4.93time/s][A
-Simulating sequences:   9%|▉         | 18.72151756286621/200 [00:03<00:36,  4.93time/s] [A
-Simulating sequences:   9%|▉         | 18.7257022857666/200 [00:03<00:36,  4.92time/s] [A
-Simulating sequences:   9%|▉         | 18.72647476196289/200 [00:03<00:36,  4.91time/s][A
-Simulating sequences:   9%|▉         | 18.736757278442383/200 [00:03<00:36,  4.91time/s][A
-Simulating sequences:   9%|▉         | 18.75743293762207/200 [00:03<00:36,  4.91time/s] [A
-Simulating sequences:   9%|▉         | 18.75872039794922/200 [00:03<00:36,  4.90time/s][A
-Simulating sequences:   9%|▉         | 18.7625789642334/200 [00:03<00:37,  4.90time/s] [A
-Simulating sequences:   9%|▉         | 18.764461517333984/200 [00:03<00:37,  4.89time/s][A
-Simulating sequences:   9%|▉         | 18.779924392700195/200 [00:03<00:37,  4.89time/s][A
-Simulating sequences:   9%|▉         | 18.791210174560547/200 [00:03<00:37,  4.88time/s][A
-Simulating sequences:   9%|▉         | 18.793956756591797/200 [00:03<00:37,  4.88time/s][A
-Simulating sequences:   9%|▉         | 18.805238723754883/200 [00:03<00:37,  4.87time/s][A
-Simulating sequences:   9%|▉         | 18.808658599853516/200 [00:03<00:37,  4.87time/s][A
-Simulating sequences:   9%|▉         | 18.80939483642578/200 [00:03<00:37,  4.86time/s] [A
-Simulating sequences:   9%|▉         | 18.821882247924805/200 [00:03<00:37,  4.86time/s][A
-Simulating sequences:   9%|▉         | 18.825353622436523/200 [00:03<00:37,  4.85time/s][A
-Simulating sequences:   9%|▉         | 18.829050064086914/200 [00:03<00:37,  4.84time/s][A
-Simulating sequences:   9%|▉         | 18.835500717163086/200 [00:03<00:37,  4.84time/s][A
-Simulating sequences:   9%|▉         | 18.92247772216797/200 [00:03<00:37,  4.85time/s] [A
-Simulating sequences:   9%|▉         | 18.954875946044922/200 [00:03<00:37,  4.86time/s][A
-Simulating sequences:   9%|▉         | 18.96299171447754/200 [00:03<00:37,  4.85time/s] [A
-Simulating sequences:   9%|▉         | 18.963708877563477/200 [00:03<00:37,  4.84time/s][A
-Simulating sequences:   9%|▉         | 18.964990615844727/200 [00:03<00:37,  4.84time/s][A
-Simulating sequences:   9%|▉         | 18.971830368041992/200 [00:03<00:37,  4.83time/s][A
-Simulating sequences:   9%|▉         | 18.984941482543945/200 [00:03<00:37,  4.83time/s][A
-Simulating sequences:  10%|▉         | 19.00210952758789/200 [00:03<00:37,  4.83time/s] [A
-Simulating sequences:  10%|▉         | 19.007946014404297/200 [00:03<00:37,  4.82time/s][A
-Simulating sequences:  10%|▉         | 19.01028823852539/200 [00:03<00:37,  4.82time/s] [A
-Simulating sequences:  10%|▉         | 19.012962341308594/200 [00:03<00:37,  4.81time/s][A
-Simulating sequences:  10%|▉         | 19.014915466308594/200 [00:03<00:37,  4.80time/s][A
-Simulating sequences:  10%|▉         | 19.015209197998047/200 [00:03<00:37,  4.80time/s][A
-Simulating sequences:  10%|▉         | 19.017515182495117/200 [00:03<00:37,  4.79time/s][A
-Simulating sequences:  10%|▉         | 19.023601531982422/200 [00:03<00:37,  4.78time/s][A
-Simulating sequences:  10%|▉         | 19.024078369140625/200 [00:03<00:37,  4.78time/s][A
-Simulating sequences:  10%|▉         | 19.025814056396484/200 [00:03<00:37,  4.77time/s][A
-Simulating sequences:  10%|▉         | 19.02994155883789/200 [00:03<00:37,  4.77time/s] [A
-Simulating sequences:  10%|▉         | 19.048776626586914/200 [00:03<00:37,  4.76time/s][A
-Simulating sequences:  10%|▉         | 19.050277709960938/200 [00:04<00:38,  4.76time/s][A
-Simulating sequences:  10%|▉         | 19.056943893432617/200 [00:04<00:38,  4.75time/s][A
-Simulating sequences:  10%|▉         | 19.062604904174805/200 [00:04<00:38,  4.75time/s][A
-Simulating sequences:  10%|▉         | 19.09776496887207/200 [00:04<00:38,  4.75time/s] [A
-Simulating sequences:  10%|▉         | 19.10199737548828/200 [00:04<00:38,  4.74time/s][A
-Simulating sequences:  10%|▉         | 19.102731704711914/200 [00:04<00:38,  4.74time/s][A
-                                                                                        [AFormatting sequences:   0%|          | 0/18 [00:00<?, ?it/s]Formatting sequences: 100%|██████████| 18/18 [00:00<00:00, 58209.31it/s]

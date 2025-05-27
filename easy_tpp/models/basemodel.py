@@ -13,9 +13,8 @@ import os
 
 from easy_tpp.models.thinning import EventSampler
 from easy_tpp.config_factory import ModelConfig
-from easy_tpp.evaluate import MetricsCompute, EvaluationMode
+from easy_tpp.evaluate.metrics_compute import MetricsCompute, EvaluationMode
 from easy_tpp.utils import logger, format_multivariate_simulations, save_json
-from ..utils.device_utils import ensure_same_device
 
 class BaseModel(pl.LightningModule, ABC):
     
@@ -318,7 +317,10 @@ class BaseModel(pl.LightningModule, ABC):
             STEP_OUTPUT: The output of the training step
         """
         
-        batch = batch.values()
+        # Convert dict to tuple for models that expect tuple format
+        if not isinstance(batch, tuple):
+            batch = tuple(batch.values())
+            
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss/num_events
         self.log('train_loss', avg_loss.item(), prog_bar=True, sync_dist=True, on_epoch=True, on_step=False)
@@ -335,8 +337,9 @@ class BaseModel(pl.LightningModule, ABC):
         Returns:
             STEP_OUTPUT: The output of the validation step
         """
-        
-        batch = batch.values()
+        # Fix: always convert dict.values() to tuple
+        if not isinstance(batch, tuple):
+            batch = tuple(batch.values())
         
         label_batch = [seq[:,1:] for seq in batch]
         
@@ -357,27 +360,9 @@ class BaseModel(pl.LightningModule, ABC):
         self.log('val_loss', avg_loss.item(), prog_bar=True, sync_dist=True)
         
         for key in one_step_metrics : 
-            
             self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
         
         return avg_loss
-    
-    def limit_simulate(
-            self,
-            start_time: float = None,
-            end_time: float = None,
-            batch_size: int = None
-        ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-
-        """Simulate a sequence of events from the model. with a limit on the number of events. """
-
-        if start_time is None:
-            start_time = self.simulation_start_time
-        if end_time is None:
-            end_time = self.simulation_end_time
-        
-
-                    
 
     def test_step(
         self,
@@ -394,8 +379,10 @@ class BaseModel(pl.LightningModule, ABC):
         Returns:
             STEP_OUTPUT: The output of the test step
         """
+        # Fix: always convert dict.values() to tuple
+        if not isinstance(batch, tuple):
+            batch = tuple(batch.values())
         
-        batch = batch.values()
         label_batch = [seq[:, 1:] for seq in batch]
         
         loss, num_events = self.loglike_loss(batch)
@@ -417,9 +404,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         if self.compute_simulation:
             # Compute simulation metrics
-            simulation = self.simulate(
-                batch = batch
-            )
+            simulation = self.simulate(batch = batch)
             simulation_metrics_compute = MetricsCompute(
                 num_event_types = self.num_event_types,
                 mode = EvaluationMode.SIMULATION
@@ -435,20 +420,23 @@ class BaseModel(pl.LightningModule, ABC):
 
             batch_size = simul_time_seq.size(0)
 
-            for i in range(batch_size):
-
+            if self.sim_events_counter >= self.max_simul_events:
+                logger.warning(f"Test simulation limit reached: {self.sim_events_counter} events generated, max is {self.max_simul_events}.")
+                
+            else:
+                # Fix: only sum over simul_mask, not logical_and with batch_non_pad_mask
                 self.sim_events_counter += simul_mask.sum().item()
-                if self.sim_events_counter >= self.max_simul_events:
-                    break
-                mask_i = simul_mask[i]
-                if mask_i.any():
-                    self.simulations.append({
-                        'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
-                        'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
-                        'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
-                    })
 
-        # Ajouter les distributions qui sont dans evals a plot et enregistrer en prenant juste une partie des simulations peut etre
+                for i in range(batch_size):
+                    if self.sim_events_counter >= self.max_simul_events:
+                        break
+                    mask_i = simul_mask[i]
+                    if mask_i.any():
+                        self.simulations.append({
+                            'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
+                            'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
+                            'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
+                        })        
 
         return avg_loss
     
@@ -462,16 +450,12 @@ class BaseModel(pl.LightningModule, ABC):
         Returns:
             STEP_OUTPUT: The output of the prediction step
         """
-        
-        batch = batch.values()
+        # Fix: always convert dict.values() to tuple
+        if not isinstance(batch, tuple):
+            batch = tuple(batch.values())
         time_seq, time_delta_seq, type_seq, batch_non_pad_mask, attention_mask = batch
 
         device = self.device
-        
-        # Ensure all inputs are on the same device
-        batch = ensure_same_device(
-            time_seq, time_delta_seq, type_seq, batch_non_pad_mask, attention_mask, target_device=device
-        )
         
         # Run simulation
         simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
@@ -483,19 +467,23 @@ class BaseModel(pl.LightningModule, ABC):
         
         batch_size = simul_time_seq.size(0)
 
-        for i in range(batch_size):
+        if self.sim_events_counter >= self.max_simul_events:
+            logger.warning(f"Simulation limit reached: {self.sim_events_counter} events generated, max is {self.max_simul_events}.")
+            return self.simulations
+        else:
+            # Fix: only sum over simul_mask, not logical_and with batch_non_pad_mask
+            self.sim_events_counter += simul_mask.sum().item()
 
-            if self.sim_events_counter >= self.max_simul_events:
-                break
-            mask_i = simul_mask[i]
-            if mask_i.any():
-                self.simulations.append({
-                    'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
-                    'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
-                    'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
-                })
-            
-            self.sim_events_counter += simul_time_seq[i][mask_i].clone().detach().cpu()
+            for i in range(batch_size):
+                if self.sim_events_counter >= self.max_simul_events:
+                    break
+                mask_i = simul_mask[i]
+                if mask_i.any():
+                    self.simulations.append({
+                        'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
+                        'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
+                        'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
+                    })        
 
         return self.simulations
         
@@ -757,7 +745,6 @@ class BaseModel(pl.LightningModule, ABC):
         for mark in range(num_mark):
             # Create a mask for each mark separately to avoid broadcasting issues
             mark_mask = (event_seq_label == mark).to(self.device)
-            logger.debug(f"mark_mask device {mark_mask.device}, time_seq device {time_seq.device}, device {self.device}")
             masked_time_seq = torch.where(mark_mask, time_seq, 0).to(self.device)
             marked_last_time_label, _ = masked_time_seq.max(dim=1)
             last_event_time[:,mark] = marked_last_time_label

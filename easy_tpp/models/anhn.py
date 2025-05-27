@@ -43,6 +43,8 @@ class ANHN(BaseModel):
         self.layer_intensity = nn.Sequential(nn.Linear(self.hidden_size, self.num_event_types), nn.Softplus())
 
         self.layer_temporal_emb = nn.Linear(1, self.hidden_size)
+        # Fix: add missing softplus attribute for intensity computation
+        self.softplus = nn.Softplus()
 
     def forward(self, dtime_seqs, type_seqs, attention_mask):
         """Call the model.

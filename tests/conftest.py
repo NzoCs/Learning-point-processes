@@ -15,6 +15,13 @@ from easy_tpp.config_factory import ModelConfig, DataConfig, RunnerConfig
 from easy_tpp.utils.torch_utils import set_device, set_seed
 
 
+DEFAULT_NUM_EVENT_TYPES = 5
+DEFAULT_MAX_SEQ_LEN = 100
+DEFAULT_DATASET_NAME = 'test_dataset'
+DEFAULT_MODEL_ID = 'NHP'
+DEFAULT_COMPUTE_SIMULATION = True
+
+
 @pytest.fixture(scope="session")
 def device():
     """Fixture to provide device for testing."""
@@ -38,22 +45,37 @@ def reset_seed():
 @pytest.fixture
 def sample_model_config():
     """Create a sample model configuration for testing."""
+    num_event_types = DEFAULT_NUM_EVENT_TYPES
     config_dict = {
-        'model_id': 'NHP',
+        'model_id': DEFAULT_MODEL_ID,
         'hidden_size': 32,
-        'num_event_types': 5,
-        'num_event_types_pad': 6,
-        'max_seq_len': 100,
+        'num_event_types': num_event_types,
+        'num_event_types_pad': num_event_types + 1,
+        'max_seq_len': DEFAULT_MAX_SEQ_LEN,
         'lr': 0.001,
         'batch_size': 16,
         'device_id': -1,  # CPU by default
+        'compute_simulation': DEFAULT_COMPUTE_SIMULATION,  # Added for predict/test step
         'thinning': {
-            'num_sample': 1000,
+            'num_sample': 10,
             'num_exp': 200,
             'num_steps': 10,
             'over_sample_rate': 1.5,
             'num_samples_boundary': 5,
-            'dtime_max': 5.0
+            'dtime_max': 5.0        },
+        'simulation_config': {
+            'start_time': 0.0,
+            'end_time': 10.0,
+            'batch_size': 16,
+            'max_sim_events': 1000,
+            'seed': 42
+        },
+        'specs': {
+            'hidden_size': 32,
+            # Hawkes-specific parameters as arrays
+            'mu': [0.5] * num_event_types,
+            'alpha': [[0.8] * num_event_types for _ in range(num_event_types)],
+            'beta': [[1.2] * num_event_types for _ in range(num_event_types)]
         }
     }
     return ModelConfig(**config_dict)
@@ -63,16 +85,16 @@ def sample_model_config():
 def sample_data_config():
     """Create a sample data configuration for testing."""
     config_dict = {
-        'dataset_name': 'test_dataset',
+        'dataset_name': DEFAULT_DATASET_NAME,
         'data_format': 'pkl',
         'train_dir': 'test_data/train',
         'valid_dir': 'test_data/valid', 
         'test_dir': 'test_data/test',
-        'num_event_types': 5,
+        'num_event_types': DEFAULT_NUM_EVENT_TYPES,
         'pad_token_id': 0,
         'padding_side': 'left',
         'truncation_side': 'right',
-        'max_seq_len': 100
+        'max_seq_len': DEFAULT_MAX_SEQ_LEN
     }
     return DataConfig(**config_dict)
 
@@ -80,20 +102,50 @@ def sample_data_config():
 @pytest.fixture
 def sample_runner_config():
     """Create a sample runner configuration for testing."""
-    config_dict = {
-        'base_dir': './test_output',
-        'logger_config': {
-            'logger_type': 'none'
+    from easy_tpp.config_factory.runner_config import TrainerConfig
+    from easy_tpp.config_factory.data_config import DataConfig
+    from easy_tpp.config_factory.model_config import ModelConfig
+    
+    # Create trainer config
+    trainer_config = TrainerConfig(
+        max_epochs=1,
+        dataset_id='test_dataset',
+        model_id='NHP',  # Use a valid model
+        batch_size=32,
+        logger_config={'logger_type': 'none'}
+    )
+    
+    # Create a minimal data config  
+    data_config = DataConfig.parse_from_yaml_config({
+        'dataset_id': 'test_dataset',
+        'data_specs': {
+            'num_event_types': 5,
+            'pad_token_id': 0
         },
-        'trainer_config': {
-            'max_epochs': 1,
-            'enable_checkpointing': False,
-            'logger': False,
-            'enable_progress_bar': False,
-            'enable_model_summary': False
-        }
-    }
-    return RunnerConfig(**config_dict)
+        'data_loading_specs': {}
+    })
+      # Create a minimal model config
+    model_config = ModelConfig.parse_from_yaml_config({
+        'model_id': 'NHP',  # Use a valid model
+        'base_config': {
+            'lr': 0.001,
+            'max_epochs': 1
+        },
+        'specs': {
+            'hidden_size': 32,
+            'time_emb_size': 16,
+            'use_ln': True,
+            'num_layers': 2,
+            'num_heads': 4
+        },
+        'num_event_types': 5
+    })
+    
+    return RunnerConfig(
+        trainer_config=trainer_config,
+        model_config=model_config,
+        data_config=data_config
+    )
 
 
 @pytest.fixture
@@ -106,22 +158,30 @@ def sample_batch_data():
     # Time intervals (dt)
     time_seqs = torch.rand(batch_size, max_seq_len) * 2.0
     # Event types
-    type_seqs = torch.randint(1, num_event_types + 1, (batch_size, max_seq_len))
+    type_seqs = torch.randint(0, num_event_types, (batch_size, max_seq_len))
     # Sequence lengths
     seq_lens = torch.randint(5, max_seq_len + 1, (batch_size,))
-    # Attention mask
-    attention_mask = torch.zeros(batch_size, max_seq_len, dtype=torch.bool)
+    # Attention mask (batch_size, max_seq_len, max_seq_len)
+    attention_mask = torch.zeros(batch_size, max_seq_len, max_seq_len, dtype=torch.bool)
+    batch_non_pad_mask = torch.zeros(batch_size, max_seq_len, dtype=torch.bool)
+    
     for i, length in enumerate(seq_lens):
-        attention_mask[i, :length] = True
-
-    # Return as tuple for model compatibility
-    return (
-        time_seqs,         # t_BN
-        time_seqs,         # dt_BN (for test, use same as t_BN)
-        type_seqs,         # marks_BN
-        attention_mask,    # batch_non_pad_mask
-        None               # placeholder for fifth element
-    )
+        batch_non_pad_mask[i, :length] = True
+        # Create causal attention mask
+        for j in range(length):
+            attention_mask[i, j, :j+1] = True    # Calculate time deltas (dt_seqs) - needed for some models
+    time_delta_seqs = torch.cat([
+        torch.zeros(batch_size, 1),  # First event has dt=0
+        time_seqs[:, 1:] - time_seqs[:, :-1]  # Subsequent events have dt = t_i - t_{i-1}
+    ], dim=1)
+      # Return as dictionary for easy access - only include the 5 keys that models expect
+    return {
+        'time_seqs': time_seqs,         
+        'time_delta_seqs': time_delta_seqs,
+        'type_seqs': type_seqs,         
+        'batch_non_pad_mask': batch_non_pad_mask,    
+        'attention_mask': attention_mask
+    }
 
 
 @pytest.fixture

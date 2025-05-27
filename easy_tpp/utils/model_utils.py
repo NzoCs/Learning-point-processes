@@ -88,7 +88,20 @@ def flexible_state_dict_loading(model: torch.nn.Module, state_dict: Dict[str, An
             unexpected_keys.append(key)
     
     # Load the compatible parts
-    model.load_state_dict(compatible_state_dict, strict=False)
+    try:
+        model.load_state_dict(compatible_state_dict, strict=False)
+    except RuntimeError as e:
+        # If there are still shape mismatches, skip those keys and try again
+        error_msg = str(e)
+        import re
+        # Find all keys with size mismatch
+        mismatched_keys = re.findall(r'size mismatch for ([^:]+):', error_msg)
+        for key in mismatched_keys:
+            if key in compatible_state_dict:
+                logger.warning(f"Skipping incompatible key {key} due to shape mismatch.")
+                del compatible_state_dict[key]
+        # Try loading again with problematic keys removed
+        model.load_state_dict(compatible_state_dict, strict=False)
     
     # Report on loading
     report = {

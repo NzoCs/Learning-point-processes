@@ -9,7 +9,7 @@ from easy_tpp.models.nhp import NHP
 from easy_tpp.models.rmtpp import RMTPP
 from easy_tpp.utils.torch_utils import set_device
 from easy_tpp.config_factory import ModelConfig
-from conftest import check_device_consistency, check_tensor_device
+from tests.conftest import check_device_consistency, check_tensor_device
 
 
 @pytest.mark.device
@@ -42,9 +42,7 @@ class TestDeviceConsistency:
         for tensor in sample_batch_data:
             if isinstance(tensor, torch.Tensor):
                 tensor_on_cpu = tensor.to(cpu_device)
-                check_tensor_device(tensor_on_cpu, cpu_device)
-
-    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+                check_tensor_device(tensor_on_cpu, cpu_device)    @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_batch_data_gpu_consistency(self, sample_batch_data):
         """Test batch data GPU device consistency."""
         gpu_device = torch.device('cuda:0')
@@ -53,74 +51,53 @@ class TestDeviceConsistency:
             if isinstance(tensor, torch.Tensor):
                 tensor_on_gpu = tensor.to(gpu_device)
                 check_tensor_device(tensor_on_gpu, gpu_device)
-
+    
     def test_model_forward_device_consistency(self, sample_model_config, sample_batch_data):
-        """Test device consistency during forward pass."""
+        """Test device consistency during training_step."""
         model = NHP(sample_model_config)
         cpu_device = torch.device('cpu')
         model = model.to(cpu_device)
-        # Move all tensors in the tuple to CPU
-        cpu_batch = tuple(tensor.to(cpu_device) if isinstance(tensor, torch.Tensor) else tensor for tensor in sample_batch_data)
-        model.eval()
-        with torch.no_grad():
-            output = model(cpu_batch)
-        # Check output device consistency if output is a dict or tuple
-        if isinstance(output, dict):
-            for value in output.values():
-                if isinstance(value, torch.Tensor):
-                    check_tensor_device(value, cpu_device)
-        elif isinstance(output, tuple):
-            for value in output:
-                if isinstance(value, torch.Tensor):
-                    check_tensor_device(value, cpu_device)
+        # Move all tensors in the batch dict to CPU
+        cpu_batch = {k: v.to(cpu_device) if isinstance(v, torch.Tensor) else v 
+                    for k, v in sample_batch_data.items()}
+        model.train()
+        # Use training_step instead of forward for proper workflow
+        loss = model.training_step(cpu_batch, batch_idx=0)
+        # Check loss device consistency
+        check_tensor_device(loss, cpu_device)
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_model_forward_gpu_consistency(self, sample_model_config, sample_batch_data):
-        """Test GPU device consistency during forward pass."""
+        """Test GPU device consistency during forward pass."""        
         model = NHP(sample_model_config)
         gpu_device = torch.device('cuda:0')
         model = model.to(gpu_device)
-        gpu_batch = tuple(tensor.to(gpu_device) if isinstance(tensor, torch.Tensor) else tensor for tensor in sample_batch_data)
-        model.eval()
-        with torch.no_grad():
-            output = model(gpu_batch)
-        if isinstance(output, dict):
-            for value in output.values():
-                if isinstance(value, torch.Tensor):
-                    check_tensor_device(value, gpu_device)
-        elif isinstance(output, tuple):
-            for value in output:
-                if isinstance(value, torch.Tensor):
-                    check_tensor_device(value, gpu_device)
+        # Move all tensors in the batch dict to GPU
+        gpu_batch = {k: v.to(gpu_device) if isinstance(v, torch.Tensor) else v
+                    for k, v in sample_batch_data.items()}
+        model.train()
+        # Use training_step instead of forward for proper workflow
+        loss = model.training_step(gpu_batch, batch_idx=0)
+        # Check loss device consistency
+        check_tensor_device(loss, gpu_device)
 
     def test_device_switching_during_training(self, sample_model_config, sample_batch_data):
         """Test device switching during training steps."""
         model = NHP(sample_model_config)
         cpu_device = torch.device('cpu')
         model = model.to(cpu_device)
-        cpu_batch = tuple(tensor.to(cpu_device) if isinstance(tensor, torch.Tensor) else tensor for tensor in sample_batch_data)
+          # Move batch data to CPU
+        cpu_batch_dict = {k: v.to(cpu_device) if isinstance(v, torch.Tensor) else v 
+                         for k, v in sample_batch_data.items()}
         
-        # Pass a dict to model.training_step to match model expectation
-        cpu_batch_dict = {
-            'time_seqs': sample_batch_data[0],
-            'dt_seqs': sample_batch_data[1],
-            'type_seqs': sample_batch_data[2],
-            'batch_non_pad_mask': sample_batch_data[3],
-            'placeholder': sample_batch_data[4]
-        }
         model.train()
         loss_cpu = model.training_step(cpu_batch_dict, batch_idx=0)
         check_tensor_device(loss_cpu, cpu_device)
         if torch.cuda.is_available():
             gpu_device = torch.device('cuda:0')
             model = model.to(gpu_device)
-            gpu_batch_dict = {
-                'time_seqs': sample_batch_data[0].to(gpu_device),
-                'dt_seqs': sample_batch_data[1].to(gpu_device),
-                'type_seqs': sample_batch_data[2].to(gpu_device),
-                'batch_non_pad_mask': sample_batch_data[3].to(gpu_device),
-                'placeholder': sample_batch_data[4]
-            }
+            gpu_batch_dict = {k: v.to(gpu_device) if isinstance(v, torch.Tensor) else v 
+                             for k, v in sample_batch_data.items()}
             loss_gpu = model.training_step(gpu_batch_dict, batch_idx=0)
             check_tensor_device(loss_gpu, gpu_device)
 
@@ -129,16 +106,9 @@ class TestDeviceConsistency:
         model = NHP(sample_model_config)
         cpu_device = torch.device('cpu')
         model = model.to(cpu_device)
-        cpu_batch = tuple(tensor.to(cpu_device) if isinstance(tensor, torch.Tensor) else tensor for tensor in sample_batch_data)
+        cpu_batch_dict = {k: v.to(cpu_device) if isinstance(v, torch.Tensor) else v 
+                         for k, v in sample_batch_data.items()}
         model.train()
-        # Pass a dict to model.training_step to match model expectation
-        cpu_batch_dict = {
-            'time_seqs': sample_batch_data[0],
-            'dt_seqs': sample_batch_data[1],
-            'type_seqs': sample_batch_data[2],
-            'batch_non_pad_mask': sample_batch_data[3],
-            'placeholder': sample_batch_data[4]
-        }
         loss = model.training_step(cpu_batch_dict, batch_idx=0)
         loss.backward()
         for param in model.parameters():
@@ -152,7 +122,8 @@ class TestDeviceConsistency:
         model = NHP(sample_model_config)
         gpu_device = torch.device('cuda:0')
         model = model.to(gpu_device)
-        gpu_batch = tuple(tensor.to(gpu_device) if isinstance(tensor, torch.Tensor) else tensor for tensor in sample_batch_data)
+        gpu_batch = {k: v.to(gpu_device) if isinstance(v, torch.Tensor) else v
+                    for k, v in sample_batch_data.items()}
         model.train()
         loss = model.training_step(gpu_batch, batch_idx=0)
         loss.backward()

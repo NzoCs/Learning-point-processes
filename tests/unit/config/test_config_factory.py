@@ -72,7 +72,7 @@ class TestModelConfig:
             'model_id': 'NHP',
             'num_event_types': 5,
             'thinning': {
-                'num_sample': 2000,
+                'num_sample': 20,
                 'num_exp': 500,
                 'num_steps': 10,
                 'over_sample_rate': 1.5,
@@ -83,7 +83,7 @@ class TestModelConfig:
         config = ModelConfig(**config_dict)
         assert hasattr(config, 'thinning')
         if hasattr(config.thinning, 'num_sample'):
-            assert config.thinning.num_sample == 2000
+            assert config.thinning.num_sample == 20
 
 
 @pytest.mark.unit

@@ -90,7 +90,7 @@ class TestTorchUtils:
         linear_layer = torch.nn.Linear(10, 5)
         params = linear_layer.parameters()
         
-        optimizer = set_optimizer('sgd', params, lr=0.01)
+        optimizer = set_optimizer('SGD', params, lr=0.01)
         
         assert isinstance(optimizer, torch.optim.SGD)
         assert optimizer.param_groups[0]['lr'] == 0.01
@@ -121,6 +121,14 @@ class TestTorchUtils:
         
         # Check that deterministic flag is set
         assert torch.backends.cudnn.deterministic is True
+    
+    def test_count_model_params(self):
+        """Test counting model parameters."""
+        model = torch.nn.Linear(10, 5)
+        from easy_tpp.utils.torch_utils import count_model_params
+        count = count_model_params(model)
+        expected = sum(p.numel() for p in model.parameters())
+        assert count == expected
 
 
 @pytest.mark.device

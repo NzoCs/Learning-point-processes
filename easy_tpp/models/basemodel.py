@@ -405,14 +405,17 @@ class BaseModel(pl.LightningModule, ABC):
         if self.compute_simulation:
             # Compute simulation metrics
             simulation = self.simulate(batch = batch)
+
             simulation_metrics_compute = MetricsCompute(
                 num_event_types = self.num_event_types,
                 mode = EvaluationMode.SIMULATION
                 )
+            
             simulation_metrics = simulation_metrics_compute.compute_all_metrics(
                 batch = label_batch,
                 pred = simulation
             )
+
             for key in simulation_metrics :
                 self.log(f"{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
 
@@ -420,16 +423,12 @@ class BaseModel(pl.LightningModule, ABC):
 
             batch_size = simul_time_seq.size(0)
 
-            if self.sim_events_counter >= self.max_simul_events:
-                logger.warning(f"Test simulation limit reached: {self.sim_events_counter} events generated, max is {self.max_simul_events}.")
-                
-            else:
-                # Fix: only sum over simul_mask, not logical_and with batch_non_pad_mask
-                self.sim_events_counter += simul_mask.sum().item()
+            self.sim_events_counter += simul_mask.sum().item()
 
-                for i in range(batch_size):
-                    if self.sim_events_counter >= self.max_simul_events:
-                        break
+            if self.sim_events_counter < self.max_simul_events:
+
+                for i in range(batch_size): 
+
                     mask_i = simul_mask[i]
                     if mask_i.any():
                         self.simulations.append({
@@ -453,6 +452,7 @@ class BaseModel(pl.LightningModule, ABC):
         # Fix: always convert dict.values() to tuple
         if not isinstance(batch, tuple):
             batch = tuple(batch.values())
+
         time_seq, time_delta_seq, type_seq, batch_non_pad_mask, attention_mask = batch
 
         device = self.device
@@ -461,29 +461,24 @@ class BaseModel(pl.LightningModule, ABC):
         simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
             batch=batch,
         )
-    
-        if self.sim_events_counter >= self.max_simul_events:
-            return self.simulations
         
         batch_size = simul_time_seq.size(0)
 
         if self.sim_events_counter >= self.max_simul_events:
             logger.warning(f"Simulation limit reached: {self.sim_events_counter} events generated, max is {self.max_simul_events}.")
             return self.simulations
-        else:
-            # Fix: only sum over simul_mask, not logical_and with batch_non_pad_mask
-            self.sim_events_counter += simul_mask.sum().item()
+        
+        self.sim_events_counter += simul_mask.sum().item()
 
-            for i in range(batch_size):
-                if self.sim_events_counter >= self.max_simul_events:
-                    break
-                mask_i = simul_mask[i]
-                if mask_i.any():
-                    self.simulations.append({
-                        'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
-                        'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
-                        'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
-                    })        
+        for i in range(batch_size):
+            
+            mask_i = simul_mask[i]
+            if mask_i.any():
+                self.simulations.append({
+                    'time_seq': simul_time_seq[i][mask_i].clone().detach().cpu(),
+                    'time_delta_seq': simul_time_delta_seq[i][mask_i].clone().detach().cpu(),
+                    'event_seq': simul_event_seq[i][mask_i].clone().detach().cpu(),
+                })        
 
         return self.simulations
         

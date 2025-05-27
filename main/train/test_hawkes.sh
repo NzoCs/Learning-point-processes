@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=100G
 #SBATCH --gres=gpu:1
-#SBATCH --array=0-3%5 # Adjusted for 2 experiments (hawkes1, hawkes2)
+#SBATCH --array=0-1%5
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge
@@ -17,10 +17,7 @@ module purge
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des expériences
-# For this script, we want specific pairings:
-# hawkes1 experiment with hawkes1 dataset
-# hawkes2 experiment with hawkes2 dataset
-experiments=(hawkes1 hawkes2 H2expc H2expi)
+experiments=(H2expc)
 
 # Mapping SLURM task index to experiment and dataset
 # The dataset name will be the same as the experiment name.

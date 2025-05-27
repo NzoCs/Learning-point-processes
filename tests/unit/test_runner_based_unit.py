@@ -50,11 +50,10 @@ class TestRunnerBasedUnit:
                     'specs': {
                         'hidden_size': 16,
                         'time_emb_size': 8,
-                        'num_layers': 1
-                    } if model_id in ['NHP', 'RMTPP'] else {
-                        'mu': [0.1],
-                        'alpha': [[0.2]],
-                        'beta': [[1.0]]
+                        'num_layers': 1                    } if model_id in ['NHP', 'RMTPP'] else {
+                        'mu': [0.1, 0.1],
+                        'alpha': [[0.2, 0.1], [0.1, 0.2]],
+                        'beta': [[1.0, 0.5], [0.5, 1.0]]
                     },
                     'thinning': {
                         'num_exp': 10,
@@ -147,11 +146,11 @@ class TestRunnerBasedUnit:
             )
             
             trainer = Trainer(config, output_dir=str(temporary_directory))
-            
-            # Test model properties
+              # Test model properties
             assert trainer.model is not None
             assert trainer.model_id == 'HawkesModel'
-            assert hasattr(trainer.model, 'model_config')
+            # Note: HawkesModel doesn't have model_config attribute like other models
+            assert hasattr(trainer.model, 'num_event_types')
     
     def test_runner_datamodule_creation(self, temporary_directory):
         """Test datamodule creation through runner."""

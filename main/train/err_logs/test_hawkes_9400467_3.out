@@ -1,22 +1,0 @@
-[31;1m2025-05-27 17:37:03,349 - config.py[pid:5292;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[33;20m2025-05-27 17:37:03,420 - logger_config.py[pid:5292;line:200:__init__] - WARNING: No adapter available for logger type: None[0m
-[33;20m2025-05-27 17:37:03,420 - logger_config.py[pid:5292;line:201:__init__] - WARNING: The logger will not be configured.[0m
-[38;20m2025-05-27 17:37:04,038 - trainer.py[pid:5292;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-27 17:37:04,041 - trainer.py[pid:5292;line:95:__init__] - INFO: No valid checkpoint found. Starting from scratch.[0m
-[31;1m2025-05-27 17:37:04,041 - trainer.py[pid:5292;line:103:__init__] - CRITICAL: Logging is disabled for this run. Error: 'LoggerConfig' object has no attribute 'config'[0m
-[38;20m2025-05-27 17:37:04,041 - trainer.py[pid:5292;line:217:test] - INFO: --- Starting Testing for Model : HawkesModel on dataset : H2expi ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/19 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s]Testing DataLoader 0:   5%|▌         | 1/19 [00:06<02:01,  0.15it/s]Testing DataLoader 0:  11%|█         | 2/19 [00:07<01:04,  0.26it/s]Testing DataLoader 0:  16%|█▌        | 3/19 [00:07<00:41,  0.39it/s]Testing DataLoader 0:  21%|██        | 4/19 [00:08<00:32,  0.47it/s]Testing DataLoader 0:  26%|██▋       | 5/19 [00:08<00:24,  0.57it/s]Testing DataLoader 0:  32%|███▏      | 6/19 [00:08<00:19,  0.67it/s]Testing DataLoader 0:  37%|███▋      | 7/19 [00:09<00:15,  0.77it/s]Testing DataLoader 0:  42%|████▏     | 8/19 [00:09<00:12,  0.86it/s]Testing DataLoader 0:  47%|████▋     | 9/19 [00:09<00:10,  0.95it/s]Testing DataLoader 0:  53%|█████▎    | 10/19 [00:09<00:08,  1.04it/s]Testing DataLoader 0:  58%|█████▊    | 11/19 [00:09<00:07,  1.12it/s]Testing DataLoader 0:  63%|██████▎   | 12/19 [00:09<00:05,  1.21it/s]Testing DataLoader 0:  68%|██████▊   | 13/19 [00:10<00:04,  1.29it/s]Testing DataLoader 0:  74%|███████▎  | 14/19 [00:10<00:03,  1.36it/s]Testing DataLoader 0:  79%|███████▉  | 15/19 [00:10<00:02,  1.43it/s]Testing DataLoader 0:  84%|████████▍ | 16/19 [00:10<00:01,  1.50it/s]Testing DataLoader 0:  89%|████████▉ | 17/19 [00:10<00:01,  1.57it/s]Testing DataLoader 0:  95%|█████████▍| 18/19 [00:10<00:00,  1.64it/s]Testing DataLoader 0: 100%|██████████| 19/19 [00:11<00:00,  1.71it/s]Testing DataLoader 0: 100%|██████████| 19/19 [00:11<00:00,  1.71it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│       cross_entropy       │    0.6587987542152405     │
-│       macro_f1score       │     43.12863540649414     │
-│       micro_f1score       │     65.44640350341797     │
-│         precision         │     51.71570587158203     │
-│          recall           │     50.2622184753418      │
-│         test_loss         │    0.24951805174350739    │
-│         time_mae          │    0.3945234715938568     │
-│         time_rmse         │    0.7155017852783203     │
-│       type_accuracy       │     65.44640350341797     │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-05-27 17:37:59,469 - trainer.py[pid:5292;line:239:test] - INFO: Test results saved to ./checkpoints/HawkesModel/H2expi/trained_models/test_results.json[0m

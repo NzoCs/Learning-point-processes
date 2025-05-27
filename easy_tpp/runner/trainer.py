@@ -23,14 +23,21 @@ class Trainer:
             checkpoint_path (str, optional): Path to a checkpoint file to resume training from. Defaults to None.
             **kwargs: Additional keyword arguments that can be used to override specific configurations.
         """
-        
-        # Set matmul precision for Tensor Cores (if available)
+          # Set matmul precision for Tensor Cores (if available)
         # Recommended for A100 GPUs as per logs
-        if torch.cuda.is_available() and torch.cuda.get_device_capability(0)[0] >= 7:
-             # Check if the major capability is >= 7 (Volta, Ampere, Hopper, etc.)
+        if torch.cuda.is_available():
              try:
-                 torch.set_float32_matmul_precision('medium')
-                 logger.info("Set torch.set_float32_matmul_precision('medium') for Tensor Cores.")
+                 # Try to get device capability safely
+                 device_capability = torch.cuda.get_device_capability(0)
+                 if device_capability[0] >= 7:
+                     # Check if the major capability is >= 7 (Volta, Ampere, Hopper, etc.)
+                     torch.set_float32_matmul_precision('medium')
+                     logger.info(f"Set torch.set_float32_matmul_precision('medium') for Tensor Cores. GPU capability: {device_capability}")
+                 else:
+                     logger.info(f"GPU capability {device_capability} < 7.0, keeping default matmul precision.")
+             except RuntimeError as e:
+                 logger.warning(f"Could not access GPU device capability (driver issue?): {e}")
+                 logger.info("Continuing without Tensor Core optimization.")
              except Exception as e:
                  logger.warning(f"Could not set matmul precision: {e}")
 
@@ -63,6 +70,7 @@ class Trainer:
         
         # Use the dirpath directly from the trainer_config
         if output_dir is not None:
+            
             self.dirpath = output_dir
         else:
             self.dirpath = trainer_config.save_model_dir
@@ -105,7 +113,7 @@ class Trainer:
     @property
     def checkpoint_path(self):
         """Return the checkpoint path for resuming training."""
-        if os.path.exists(self.checkpoint_path_):
+        if isinstance(self.checkpoint_path_, str) and os.path.exists(self.checkpoint_path_):
             return self.checkpoint_path_
         return None
 

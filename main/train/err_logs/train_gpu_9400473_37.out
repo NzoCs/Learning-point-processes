@@ -1,6 +1,0 @@
-[31;1m2025-05-27 18:47:15,506 - config.py[pid:17576;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-27 18:47:15,892 - trainer.py[pid:17576;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-27 18:47:15,915 - trainer.py[pid:17576;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/AttNHP/taxi/trained_models/best.ckpt[0m
-[38;20m2025-05-27 18:47:15,916 - trainer.py[pid:17576;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/AttNHP/taxi/trained_models/best.ckpt.[0m
-[38;20m2025-05-27 18:47:16,069 - trainer.py[pid:17576;line:247:predict] - INFO: --- Starting Prediction for Model : AttNHP on dataset : taxi ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/7 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/7 [00:42<?, ?it/s]

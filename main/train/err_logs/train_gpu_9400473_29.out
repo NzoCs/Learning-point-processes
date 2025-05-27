@@ -1,16 +1,0 @@
-[31;1m2025-05-27 18:35:51,103 - config.py[pid:14821;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-27 18:35:51,487 - trainer.py[pid:14821;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-27 18:35:51,508 - trainer.py[pid:14821;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/RMTPP/taxi/trained_models/best.ckpt[0m
-[38;20m2025-05-27 18:35:51,508 - trainer.py[pid:14821;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/taxi/trained_models/best.ckpt.[0m
-[38;20m2025-05-27 18:35:51,654 - trainer.py[pid:14821;line:247:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : taxi ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:  50%|█████     | 1/2 [00:01<00:01,  0.95it/s]Predicting DataLoader 0: 100%|██████████| 2/2 [00:01<00:00,  1.78it/s]Predicting DataLoader 0: 100%|██████████| 2/2 [00:01<00:00,  1.77it/s]
-[33;20m2025-05-27 18:36:27,352 - basemodel.py[pid:14821;line:509:format_and_save_simulations] - WARNING: No simulations to format.[0m
-[38;20m2025-05-27 18:36:27,364 - new_comparator.py[pid:14821;line:42:__init__] - INFO: Extracting label data from dataloader...[0m
-[38;20m2025-05-27 18:36:27,447 - new_comparator.py[pid:14821;line:86:__init__] - INFO: Processing simulation data...[0m
-[38;20m2025-05-27 18:36:27,450 - new_comparator.py[pid:14821;line:112:__init__] - INFO: Collected 14820 label events and 0 simulated events for comparison[0m
-[38;20m2025-05-27 18:36:27,450 - new_comparator.py[pid:14821;line:555:run_evaluation] - INFO: Generating comparison plots for simulations...[0m
-[33;20m2025-05-27 18:36:27,534 - new_comparator.py[pid:14821;line:214:plot_inter_event_time_distribution] - WARNING: One or both of the time delta arrays are empty. Skipping plot generation.[0m
-[38;20m2025-05-27 18:36:28,477 - new_comparator.py[pid:14821;line:394:plot_event_type_distribution] - INFO: Event type distribution comparison plot saved to ./checkpoints/RMTPP/taxi/distributions_comparisons/comparison_event_type_dist.png[0m
-[33;20m2025-05-27 18:36:28,477 - new_comparator.py[pid:14821;line:409:plot_sequence_length_distribution] - WARNING: One or both sequence length arrays are empty. Skipping sequence length distribution plot.[0m
-[33;20m2025-05-27 18:36:28,478 - new_comparator.py[pid:14821;line:510:plot_cross_correlation_moments] - WARNING: One or both time arrays are empty. Skipping cross-correlation plot.[0m
-[38;20m2025-05-27 18:36:28,534 - trainer.py[pid:14821;line:274:predict] - INFO: Predictions saved to ./checkpoints/RMTPP/taxi/distributions_comparisons[0m

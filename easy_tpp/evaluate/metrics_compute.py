@@ -6,7 +6,6 @@ import numpy as np
 from scipy.stats import wasserstein_distance
 from dataclasses import dataclass
 from enum import Enum
-from sklearn.metrics import roc_auc_score
 
 
 from easy_tpp.utils import logger
@@ -238,22 +237,6 @@ class MetricsCompute:
         K_ts = torch.exp(-X**2/(2*sigma**2)).mean()
 
         return K_tt + K_ss - 2*K_ts
-
-
-    def classwise_auc_matrix(y_true: np.ndarray,
-                            y_proba: np.ndarray,
-                            class_names: Optional[List[str]] = None):
-        """
-        DataFrame pandas des AUC One-vs-Rest par classe.
-        """
-        import pandas as pd
-        n_classes = y_proba.shape[1]
-        aucs = []
-        for i in range(n_classes):
-            labels = (y_true == i).astype(int)
-            aucs.append(roc_auc_score(labels, y_proba[:, i]))
-        idx = class_names if class_names else [f'class_{i}' for i in range(n_classes)]
-        return pd.DataFrame({'AUC': aucs}, index=idx)
 
     def get_masked_values(self, batch, pred) -> MaskedValues:
         # Extraction selon le format EasyTPP

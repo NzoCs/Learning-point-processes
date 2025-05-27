@@ -1,0 +1,4 @@
+[31;1m2025-05-27 18:35:51,103 - config.py[pid:20786;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-27 18:35:51,459 - trainer.py[pid:20786;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-27 18:35:51,462 - trainer.py[pid:20786;line:95:__init__] - INFO: No valid checkpoint found. Starting from scratch.[0m
+[38;20m2025-05-27 18:35:51,654 - trainer.py[pid:20786;line:247:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : hawkes2 ---[0m

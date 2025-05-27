@@ -1,6 +1,0 @@
-/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/cuda/__init__.py:734: UserWarning: Can't initialize NVML
-  warnings.warn("Can't initialize NVML")
-GPU available: False, used: False
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.

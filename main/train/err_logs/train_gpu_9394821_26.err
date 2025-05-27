@@ -1,47 +1,0 @@
-/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/torch/cuda/__init__.py:734: UserWarning: Can't initialize NVML
-  warnings.warn("Can't initialize NVML")
-GPU available: False, used: False
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.
-Restoring states from the checkpoint path at ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt
-/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:362: The dirpath has changed from '/gpfs/users/regnaguen/Learning-point-processes/main/train/RMTPP/H2expi/mysterious_panda_327/trained_models' to '/gpfs/users/regnaguen/Learning-point-processes/main/train/checkpoints/RMTPP/H2expi/trained_models', therefore `best_model_score`, `kth_best_model_path`, `kth_value`, `last_model_path` and `best_k_models` won't be reloaded. Only `best_model_path` will be reloaded.
-Loaded model weights from the checkpoint at ./checkpoints/RMTPP/H2expi/trained_models/best.ckpt
-SLURM auto-requeueing enabled. Setting signal handlers.
-
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
-Simulating sequences:  48%|████▊     | 95.66378021240234/200 [00:00<00:00, 324.54time/s][A
-Simulating sequences:  48%|████▊     | 95.75639343261719/200 [00:00<00:00, 140.95time/s][A
-Simulating sequences:  48%|████▊     | 95.88897705078125/200 [00:00<00:01, 98.08time/s] [A
-Simulating sequences:  48%|████▊     | 96.24554443359375/200 [00:01<00:01, 73.00time/s][A
-                                                                                       [ATraceback (most recent call last):
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
-    main()
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in main
-    plrunner.predict()
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 253, in predict
-    predictions = trainer.predict(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 887, in predict
-    return call._call_and_handle_interrupt(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
-    return trainer_fn(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 928, in _predict_impl
-    results = self._run(model, ckpt_path=ckpt_path)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
-    results = self._run_stage()
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1051, in _run_stage
-    return self.predict_loop.run()
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
-    return loop_run(self, *args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 125, in run
-    self._predict_step(batch, batch_idx, dataloader_idx, dataloader_iter)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 255, in _predict_step
-    predictions = call._call_strategy_hook(trainer, "predict_step", *step_args)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
-    output = fn(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 438, in predict_step
-    return self.lightning_module.predict_step(*args, **kwargs)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 498, in predict_step
-    self.sim_events_counter += simul_time_seq[i][mask_i].clone().detach().cpu()
-RuntimeError: output with shape [1] doesn't match the broadcast shape [3]
-srun: error: ruche-gpu11: task 0: Exited with exit code 1

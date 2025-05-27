@@ -1,6 +1,0 @@
-[31;1m2025-05-24 14:35:06,695 - config.py[pid:22588;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-24 14:35:06,995 - trainer.py[pid:22588;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-24 14:35:07,015 - trainer.py[pid:22588;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/AttNHP/hawkes2/trained_models/best.ckpt[0m
-[38;20m2025-05-24 14:35:07,015 - trainer.py[pid:22588;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/AttNHP/hawkes2/trained_models/best.ckpt.[0m
-[38;20m2025-05-24 14:35:07,150 - trainer.py[pid:22588;line:247:predict] - INFO: --- Starting Prediction for Model : AttNHP on dataset : hawkes2 ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/47 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/47 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/47 [00:08<?, ?it/s]

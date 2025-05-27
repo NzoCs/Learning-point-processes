@@ -1,0 +1,50 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+INFO:datasets:PyTorch version 2.6.0 available.
+Restoring states from the checkpoint path at ./checkpoints/RMTPP/taxi/trained_models/best.ckpt
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+Loaded model weights from the checkpoint at ./checkpoints/RMTPP/taxi/trained_models/best.ckpt
+SLURM auto-requeueing enabled. Setting signal handlers.
+
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:   2%|▏         | 3.7128942012786865/200 [00:00<00:48,  4.05time/s][A
+Simulating sequences:   2%|▏         | 3.857872486114502/200 [00:00<00:48,  4.08time/s] [A
+Simulating sequences:   2%|▏         | 4.069355487823486/200 [00:00<00:45,  4.29time/s][A
+Simulating sequences:   2%|▏         | 4.422317028045654/200 [00:00<00:42,  4.65time/s][A
+Simulating sequences:   2%|▏         | 4.511341094970703/200 [00:00<00:41,  4.73time/s][A
+Simulating sequences:   3%|▎         | 5.110180377960205/200 [00:00<00:36,  5.34time/s][A
+Simulating sequences:   3%|▎         | 5.194140911102295/200 [00:00<00:36,  5.41time/s][A
+Simulating sequences:   3%|▎         | 5.454593658447266/200 [00:00<00:34,  5.66time/s][A
+Simulating sequences:   3%|▎         | 5.577605247497559/200 [00:00<00:33,  5.77time/s][A
+Simulating sequences:   3%|▎         | 5.609699726104736/200 [00:00<00:33,  5.76time/s][A
+Simulating sequences:   3%|▎         | 5.778231143951416/200 [00:00<00:32,  5.91time/s][A
+Simulating sequences:   3%|▎         | 5.801647663116455/200 [00:00<00:32,  5.92time/s][A
+Simulating sequences:   3%|▎         | 5.900359630584717/200 [00:00<00:32,  6.00time/s][A
+Simulating sequences:   3%|▎         | 5.925160884857178/200 [00:00<00:32,  6.01time/s][A
+                                                                                       [A
+Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
+Simulating sequences:   2%|▏         | 4.491541385650635/200 [00:00<00:00, 1959.93time/s][A
+Simulating sequences:   2%|▏         | 4.624971389770508/200 [00:00<00:00, 785.78time/s] [A
+Simulating sequences:   2%|▏         | 4.762940406799316/200 [00:00<00:00, 502.37time/s][A
+Simulating sequences:   2%|▏         | 4.780384540557861/200 [00:00<00:00, 379.31time/s][A
+Simulating sequences:   3%|▎         | 5.211436748504639/200 [00:00<00:00, 329.71time/s][A
+Simulating sequences:   3%|▎         | 5.320096015930176/200 [00:00<00:00, 281.92time/s][A
+Simulating sequences:   3%|▎         | 5.413201332092285/200 [00:00<00:00, 246.91time/s][A
+Simulating sequences:   3%|▎         | 5.672354698181152/200 [00:00<00:00, 227.01time/s][A
+Simulating sequences:   3%|▎         | 5.781064987182617/200 [00:00<00:00, 206.31time/s][A
+Simulating sequences:   3%|▎         | 5.796750068664551/200 [00:00<00:01, 186.46time/s][A
+Simulating sequences:   3%|▎         | 5.919467926025391/200 [00:00<00:01, 173.34time/s][A
+Simulating sequences:   3%|▎         | 6.012893199920654/200 [00:00<00:01, 161.74time/s][A
+Simulating sequences:   3%|▎         | 6.087160110473633/200 [00:00<00:01, 151.31time/s][A
+Simulating sequences:   3%|▎         | 6.260258197784424/200 [00:00<00:01, 144.69time/s][A
+Simulating sequences:   3%|▎         | 6.706606388092041/200 [00:00<00:01, 144.93time/s][A
+Simulating sequences:   4%|▎         | 7.09697961807251/200 [00:00<00:01, 143.91time/s] [A
+Simulating sequences:   4%|▍         | 7.8363938331604/200 [00:00<00:01, 149.73time/s] [A
+Simulating sequences:   4%|▍         | 8.05034351348877/200 [00:00<00:01, 145.40time/s][A
+Simulating sequences:   4%|▍         | 8.288778305053711/200 [00:00<00:01, 141.98time/s][A
+Simulating sequences:   4%|▍         | 8.523116111755371/200 [00:00<00:01, 138.72time/s][A
+                                                                                        [A/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/numpy/_core/fromnumeric.py:3596: RuntimeWarning: Mean of empty slice.
+  return _methods._mean(a, axis=axis, dtype=dtype,
+/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/numpy/_core/_methods.py:138: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)

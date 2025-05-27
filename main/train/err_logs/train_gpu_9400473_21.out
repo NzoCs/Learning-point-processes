@@ -1,0 +1,6 @@
+[31;1m2025-05-27 18:23:31,065 - config.py[pid:11206;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
+[38;20m2025-05-27 18:23:31,428 - trainer.py[pid:11206;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
+[38;20m2025-05-27 18:23:31,444 - trainer.py[pid:11206;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/IntensityFree/taxi/trained_models/best.ckpt[0m
+[38;20m2025-05-27 18:23:31,444 - trainer.py[pid:11206;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/IntensityFree/taxi/trained_models/best.ckpt.[0m
+[38;20m2025-05-27 18:23:31,608 - trainer.py[pid:11206;line:247:predict] - INFO: --- Starting Prediction for Model : IntensityFree on dataset : taxi ---[0m
+Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]

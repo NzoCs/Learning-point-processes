@@ -1,6 +1,0 @@
-[31;1m2025-05-24 14:20:04,480 - config.py[pid:19244;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-24 14:20:05,282 - trainer.py[pid:19244;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-24 14:20:05,301 - trainer.py[pid:19244;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/IntensityFree/taobao/trained_models/best.ckpt[0m
-[38;20m2025-05-24 14:20:05,302 - trainer.py[pid:19244;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/IntensityFree/taobao/trained_models/best.ckpt.[0m
-[38;20m2025-05-24 14:20:05,551 - trainer.py[pid:19244;line:247:predict] - INFO: --- Starting Prediction for Model : IntensityFree on dataset : taobao ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]

@@ -1,3 +1,0 @@
-[31;1m2025-05-24 14:32:15,639 - config.py[pid:19874;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-24 14:32:16,204 - trainer.py[pid:19874;line:95:__init__] - INFO: No valid checkpoint found. Starting from scratch.[0m
-[38;20m2025-05-24 14:32:16,341 - trainer.py[pid:19874;line:247:predict] - INFO: --- Starting Prediction for Model : AttNHP on dataset : hawkes1 ---[0m

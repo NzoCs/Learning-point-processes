@@ -1,57 +1,0 @@
-GPU available: True (cuda), used: True
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-INFO:datasets:PyTorch version 2.6.0 available.
-Restoring states from the checkpoint path at ./checkpoints/AttNHP/hawkes2/trained_models/best.ckpt
-LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-Loaded model weights from the checkpoint at ./checkpoints/AttNHP/hawkes2/trained_models/best.ckpt
-SLURM auto-requeueing enabled. Setting signal handlers.
-
-Simulating sequences:   0%|          | 0/200 [00:00<?, ?time/s][A
-Simulating sequences:  40%|███▉      | 79.32379913330078/200 [00:01<00:01, 78.16time/s][A
-Simulating sequences:  41%|████▏     | 82.62403106689453/200 [00:01<00:01, 66.09time/s][A
-Simulating sequences:  42%|████▏     | 83.46199035644531/200 [00:01<00:02, 57.21time/s][A
-Simulating sequences:  47%|████▋     | 94.49456024169922/200 [00:02<00:02, 45.33time/s][A
-Simulating sequences:  50%|████▉     | 99.50714111328125/200 [00:02<00:02, 40.56time/s][A
-Simulating sequences:  50%|████▉     | 99.60494995117188/200 [00:02<00:02, 37.16time/s][A
-Simulating sequences:  50%|████▉     | 99.63329315185547/200 [00:03<00:03, 27.83time/s][A
-Simulating sequences:  50%|████▉     | 99.6867446899414/200 [00:03<00:03, 26.14time/s] [A
-Simulating sequences:  50%|████▉     | 99.68831634521484/200 [00:04<00:04, 21.74time/s][A
-Simulating sequences:  50%|████▉     | 99.80990600585938/200 [00:04<00:04, 20.67time/s][A
-Simulating sequences:  50%|█████     | 100.10806274414062/200 [00:05<00:05, 18.06time/s][A
-Simulating sequences:  50%|█████     | 100.46963500976562/200 [00:05<00:05, 17.20time/s][A
-Simulating sequences:  50%|█████     | 100.90485382080078/200 [00:06<00:06, 15.33time/s][A
-Simulating sequences:  97%|█████████▋| 194.31642150878906/200 [00:06<00:00, 28.21time/s][A
-Simulating sequences:  98%|█████████▊| 195.99981689453125/200 [00:07<00:00, 25.12time/s][A
-Simulating sequences: 100%|██████████| 200/200 [00:08<00:00, 24.80time/s]               [A
-                                                                         [ATraceback (most recent call last):
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 35, in <module>
-    main()
-  File "/gpfs/users/regnaguen/Learning-point-processes/main/train/train.py", line 31, in main
-    plrunner.predict()
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/runner/trainer.py", line 253, in predict
-    predictions = trainer.predict(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 887, in predict
-    return call._call_and_handle_interrupt(
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 48, in _call_and_handle_interrupt
-    return trainer_fn(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 928, in _predict_impl
-    results = self._run(model, ckpt_path=ckpt_path)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1012, in _run
-    results = self._run_stage()
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1051, in _run_stage
-    return self.predict_loop.run()
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/utilities.py", line 179, in _decorator
-    return loop_run(self, *args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 125, in run
-    self._predict_step(batch, batch_idx, dataloader_idx, dataloader_iter)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/loops/prediction_loop.py", line 255, in _predict_step
-    predictions = call._call_strategy_hook(trainer, "predict_step", *step_args)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/call.py", line 328, in _call_strategy_hook
-    output = fn(*args, **kwargs)
-  File "/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/strategies/strategy.py", line 438, in predict_step
-    return self.lightning_module.predict_step(*args, **kwargs)
-  File "/gpfs/users/regnaguen/Learning-point-processes/easy_tpp/models/basemodel.py", line 488, in predict_step
-    if self.sim_events_counter >= self.max_simul_events:
-RuntimeError: Boolean value of Tensor with no values is ambiguous
-srun: error: ruche-gpu13: task 0: Exited with exit code 1

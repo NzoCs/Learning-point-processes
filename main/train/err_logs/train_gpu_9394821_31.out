@@ -1,6 +1,0 @@
-[31;1m2025-05-24 14:30:37,100 - config.py[pid:21443;line:34:build_from_yaml_file] - CRITICAL: Load pipeline config class RunnerConfig[0m
-[38;20m2025-05-24 14:30:37,476 - trainer.py[pid:21443;line:33:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores.[0m
-[38;20m2025-05-24 14:30:37,492 - trainer.py[pid:21443;line:82:__init__] - INFO: Checkpoint found: loading from ./checkpoints/RMTPP/amazon/trained_models/best.ckpt[0m
-[38;20m2025-05-24 14:30:37,492 - trainer.py[pid:21443;line:93:__init__] - INFO: Loading model from checkpoint: ./checkpoints/RMTPP/amazon/trained_models/best.ckpt.[0m
-[38;20m2025-05-24 14:30:37,574 - trainer.py[pid:21443;line:247:predict] - INFO: --- Starting Prediction for Model : RMTPP on dataset : amazon ---[0m
-Predicting: |          | 0/? [00:00<?, ?it/s]Predicting:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [00:00<?, ?it/s]Predicting DataLoader 0:   0%|          | 0/8 [00:03<?, ?it/s]

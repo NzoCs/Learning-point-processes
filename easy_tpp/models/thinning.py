@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from easy_tpp.utils import logger
-from easy_tpp.utils.device_utils import ensure_same_device
 
 class EventSampler(nn.Module):
     """Event Sequence Sampler based on thinning algorithm, which corresponds to Algorithm 2 of
@@ -34,11 +32,7 @@ class EventSampler(nn.Module):
 
     def compute_intensity_upper_bound(self, time_seq, time_delta_seq, event_seq, intensity_fn,
                                       compute_last_step_only):
-        # logger.critical(f'time_seq: {time_seq}')
-        # logger.critical(f'time_delta_seq: {time_delta_seq}')
-        # logger.critical(f'event_seq: {event_seq}')
-        # logger.critical(f'intensity_fn: {intensity_fn}')
-        # logger.critical(f'compute_last_step_only: {compute_last_step_only}')
+        
         """Compute the upper bound of intensity at each event timestamp.
 
         Args:
@@ -181,6 +175,8 @@ class EventSampler(nn.Module):
         Returns:
             tuple: next event time prediction and weight.
         """
+
+        
         # 1. compute the upper bound of the intensity at each timestamp
         # the last event has no label (no next event), so we drop it
         # [batch_size, seq_len=max_len - 1]
@@ -220,11 +216,6 @@ class EventSampler(nn.Module):
         unif_numbers = self.sample_uniform_distribution(intensity_upper_bound)
 
         device = self.device
-
-        # Ensure all tensors are on the same device
-        unif_numbers, intensity_upper_bound, total_intensities, exp_numbers = ensure_same_device(
-            unif_numbers, intensity_upper_bound, total_intensities, exp_numbers, target_device=device
-        )
 
         # 5. find out accepted intensities
         # [batch_size, seq_len, num_sample]

@@ -208,6 +208,55 @@ class IntensityFree(BaseModel):
 
         return loss, num_events
 
+    def predict_dtime_one_step(
+        self,
+        time_seq: torch.Tensor,
+        time_delta_seq: torch.Tensor,
+        event_seq: torch.Tensor,
+        compute_last_step_only: bool = True
+    ) -> torch.Tensor:
+        """
+        Utility method to predict the next time delta using intensity-free approach.
+
+        Args:
+            time_seq (torch.Tensor): Time sequence [batch_size, seq_len]
+            time_delta_seq (torch.Tensor): Time delta sequence [batch_size, seq_len]
+            event_seq (torch.Tensor): Event type sequence [batch_size, seq_len]
+            compute_last_step_only (bool): Whether to compute only the last step
+
+        Returns:
+            torch.Tensor: Predicted time deltas
+        """
+        # [batch_size, seq_len, hidden_size]
+        context = self.forward(time_delta_seq, event_seq)
+
+        # [batch_size, seq_len, 3 * num_mix_components]
+        raw_params = self.linear(context)
+        locs = raw_params[..., :self.num_mix_components]
+        log_scales = raw_params[..., self.num_mix_components: (2 * self.num_mix_components)]
+        log_weights = raw_params[..., (2 * self.num_mix_components):]
+
+        log_scales = clamp_preserve_gradients(log_scales, -5.0, 3.0)
+        log_weights = torch.log_softmax(log_weights, dim=-1)
+        inter_time_dist = LogNormalMixtureDistribution(
+            locs=locs,
+            log_scales=log_scales,
+            log_weights=log_weights,
+            mean_log_inter_time=self.mean_log_inter_time,
+            std_log_inter_time=self.std_log_inter_time
+        )
+
+        # [num_samples, batch_size, seq_len]
+        accepted_dtimes = inter_time_dist.sample((self.event_sampler.num_sample,))
+        dtimes_pred = accepted_dtimes.mean(dim=0)
+
+        if compute_last_step_only:
+            # Return only the last step: [batch_size, 1]
+            return dtimes_pred[:, -1:]
+        else:
+            # Return all steps: [batch_size, seq_len]
+            return dtimes_pred
+
     def predict_one_step_at_every_event(self, batch):
         """One-step prediction for every event in the sequence.
 

@@ -275,10 +275,12 @@ class Trainer:
         NewDistribComparator(
             label_data_loader = self.datamodule.test_dataloader(),
             simulation = self.model.simulations,
-            num_event_types=self.datamodule.num_event_types,
-            output_dir=data_save_dir
+            num_event_types = self.datamodule.num_event_types,
+            output_dir = data_save_dir
         )
 
         logger.info(f"Predictions saved to {data_save_dir}")
+
+        self.model.intensity_graph(save_dir=data_save_dir)
         
         return predictions

@@ -127,8 +127,9 @@ class NewDistribComparator:
         # Use Seaborn's histplot or kdeplot for better aesthetics
         if len(self.label_time_deltas) > 0 and len(self.simulated_time_deltas) > 0:
             # Create histograms for both datasets
-            label_hist, label_bin_edges = np.histogram(self.label_time_deltas, bins=50)
-            pred_hist, pred_bin_edges = np.histogram(self.simulated_time_deltas, bins=50)
+            label_hist, label_bin_edges = np.histogram(self.label_time_deltas, bins=50, density=True)
+            # Normalize the histogram to get a probability distribution
+            pred_hist, pred_bin_edges = np.histogram(self.simulated_time_deltas, bins=50, density=True)
             
             # Get bin centers for plotting
             label_bin_centers = (label_bin_edges[:-1] + label_bin_edges[1:]) / 2

@@ -721,7 +721,11 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Initialize sequences
         if batch is None :
-            batch = [torch.zeros(batch_size, 2).to(self.device) for _ in range(3)] + [None, None]
+            batch = [
+                torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
+                torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32), 
+                torch.zeros(batch_size, 2, device=self.device, dtype=torch.long)
+                ] + [None, None]
         else :
             batch_size = batch[0].size(0)
         
@@ -751,15 +755,11 @@ class BaseModel(pl.LightningModule, ABC):
         while current_time < end_time:
             num_step += 1
 
-            # Determine possible event times
-            dtime_boundary = time_delta_seq + self.dtime_max
-            accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
-                time_seq, time_delta_seq, event_seq, dtime_boundary,
-                self.compute_intensities_at_sample_times, compute_last_step_only=True
+            # Use the utility function to predict next time delta
+            dtimes_pred = self.predict_dtime_one_step(
+                time_seq, time_delta_seq, event_seq, compute_last_step_only=True
             )
-
-            # Estimate next time delta
-            dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1) #[batch_size, 1]
+            
             time_pred_ = time_seq[:, -1:] + dtimes_pred
             min_time = time_pred_.min()
             current_time = min_time.item()
@@ -834,13 +834,17 @@ class BaseModel(pl.LightningModule, ABC):
     
     def intensity_graph(
         self,
-        start_time: float = 0.0,
-        end_time: float = 30.0,
-        precision: int = 20,
+        start_time: float = 100.0,
+        end_time: float = 200.0,
+        precision: int = 100,
         plot: bool = False,
+        save_plot: bool = True,
+        save_data: bool = True,
         save_dir: str = './',
         **kwargs
     ) -> tuple[torch.Tensor, torch.Tensor, dict[int, torch.Tensor]]:
+        
+
         """
         Génère et affiche la courbe d'intensité du modèle pour une séquence donnée.
 
@@ -848,95 +852,158 @@ class BaseModel(pl.LightningModule, ABC):
         permet de visualiser leur évolution en fonction du temps, séparément pour chaque type d'événement.
 
         Args:
-            time_seq (torch.Tensor): Séquence des temps d'événements, de taille [seq_len].
-            time_delta_seq (torch.Tensor): Différences de temps entre les événements.
-            type_seq (torch.Tensor): Séquence des types d'événements, de taille [seq_len].
+            start_time (float): Temps de début de la simulation.
+            end_time (float): Temps de fin de la simulation.
             precision (int, optionnel): Nombre de points interpolés entre deux événements 
-                pour lisser la courbe d'intensité. Par défaut à 20.
+                pour lisser la courbe d'intensité. Par défaut à 100.
             plot (bool, optionnel): Indique s'il faut afficher le graphique des intensités. 
                 Par défaut à False.
+            save_plot (bool, optionnel): Indique s'il faut sauvegarder le graphique.
+                Par défaut à False.
+            save_data (bool, optionnel): Indique s'il faut sauvegarder les données d'intensité.
+                Par défaut à False.
+            save_dir (str): Répertoire de sauvegarde du graphique et des données.
 
         Returns:
             tuple:
-                - torch.Tensor: Matrice des intensités calculées pour chaque type d'événement.
-                - torch.Tensor: Points de temps correspondant aux échantillons d'intensité.
+                - torch.Tensor: Matrice des intensités calculées pour chaque type d'événement [num_sample_points, num_event_types].
+                - torch.Tensor: Points de temps correspondant aux échantillons d'intensité [num_sample_points].
                 - dict[int, torch.Tensor]: Dictionnaire des instants où chaque type d'événement est observé.
-
-        Exemple:
-            ```python
-            intensities, sample, marked_times = model.intensity_graph(time_seq, time_delta_seq, type_seq, precision=50, plot=True)
-            ```
-            Cela affichera les courbes d'intensité et retournera les valeurs numériques associées.
-
-        Détails:
-        - Les intensités sont calculées aux instants interpolés définis par `precision`.
-        - La visualisation affiche une courbe par type d'événement, avec des marqueurs indiquant les événements observés.
         """
         
-        num_mark = self.num_mark
+        num_mark = self.num_event_types
 
-        time_delta_seq, type_seq, simul_mask = self.simulate(
-            start_time = start_time,
-            end_time = end_time,
-            history_batch = None,
-            batch_size= 1
+        # Simulate data
+        time_seq, time_delta_seq, type_seq, simul_mask = self.simulate(
+            start_time=start_time,
+            end_time=end_time,
+            batch_size=1
         )
         
-        # Normalisation du temps pour commencer à zéro
-        time_seq = time_seq - time_seq[0]
-
-        sample = torch.linspace(
-            time_seq[0].item(), time_seq[-1].item(), precision
-        ).to(self.device).unsqueeze(0).unsqueeze(-1)
-
+        # Extract the first (and only) sequence from batch dimension
+        time_seq = time_seq[0][simul_mask[0]]  # [seq_len]
+        time_delta_seq = time_delta_seq[0][simul_mask[0]]  # [seq_len]
+        type_seq = type_seq[0][simul_mask[0]]  # [seq_len]
+        
+        # Add batch dimension back for processing
+        time_seq = time_seq.unsqueeze(0)  # [1, seq_len]
+        time_delta_seq = time_delta_seq.unsqueeze(0)  # [1, seq_len]
+        type_seq = type_seq.unsqueeze(0)  # [1, seq_len]
+        
+        ratios = torch.linspace(start=0.0, end=1.0, steps=precision, device=self.device).unsqueeze(0).unsqueeze(0) # [1, 1, precision]
+        
+        # Reconstruct actual time points from intervals
+        # For each interval, create time points: start_time + delta * ratio
+        time_starts = time_seq[:, :-1]  # [1, seq_len-1] - exclude last event
+        time_deltas = time_delta_seq[:, 1:]  # [1, seq_len-1] - exclude first delta (which is 0)
+        
+        time_deltas_sample = time_deltas.unsqueeze(-1) * ratios
+        
+        # Calculate intensities on augmented intervals
+        # [1, seq_len, precision, num_event_types]
         intensities = self.compute_intensities_at_sample_times(
-            time_seq,
-            time_delta_seq,
-            type_seq,
-            sample
-        ).squeeze()
+            time_seq[:, 1:],  # [1, seq_len-1]
+            time_delta_seq[:, 1:],  # [1, seq_len-1]
+            type_seq[:, 1:],  # [1, seq_len-1]
+            time_deltas_sample
+        )
+
+        time_diffs = time_seq.diff()
+
+        # Calculate actual time points: [1, seq_len-1, precision]
+        time_points = time_starts.unsqueeze(-1) + time_diffs.unsqueeze(-1) * ratios
+
+        # Flatten time points and intensities for plotting
+        # [total_points] where total_points = (seq_len-1) * precision
+        time_flat = time_points.view(-1)
         
+        # Remove batch dimension and flatten: [total_points, num_event_types]
+        intensities_flat = intensities[0, ...].view(-1, num_mark)
+        
+        # Collect marked times for each event type
         marked_times = defaultdict(list)
-        for i in range(num_mark):
-            marked_times[i] = time_seq[type_seq == i].squeeze()
+        time_seq_flat = time_seq.squeeze(0)  # Remove batch dimension
+        type_seq_flat = type_seq.squeeze(0)  # Remove batch dimension
         
-        # Affichage du graphe si demandé
-        if plot:
+        for i in range(num_mark):
+            mask = (type_seq_flat == i)
+            if mask.any():
+                marked_times[i] = time_seq_flat[mask]
+            else:
+                marked_times[i] = torch.empty(0, device=self.device)
+        
+        # Sauvegarder les données d'intensité si demandé
+        if save_data:
+            os.makedirs(save_dir, exist_ok=True)
             
-            save_file = f'{self._get_name}/intensity_graph.png'
+            # Sauvegarder les intensités et les points temporels
+            intensity_data = {
+                'time_points': time_flat.cpu().detach().numpy().tolist(),
+                'intensities': intensities_flat.cpu().detach().numpy().tolist(),
+                'marked_times': {str(dim): times.cpu().detach().numpy().tolist() for dim, times in marked_times.items()},
+                'metadata': {
+                    'precision': precision,
+                    'start_time': start_time,
+                    'end_time': end_time,
+                    'num_event_types': num_mark,
+                    'model_type': self.__class__.__name__
+                }
+            }
             
-            save_file = os.path.join(save_dir, save_file)
+            data_file = f'{self.__class__.__name__}_intensity_data.json'
+            data_file = os.path.join(save_dir, data_file)
             
-            fig, axes = plt.subplots(num_mark, 1, figsize=(10, 6))
-
-            # Gestion du cas où num_mark == 1
-            if num_mark == 1:
-                axes = [axes]
-
+            save_json(intensity_data, data_file)
+            logger.info(f"Données d'intensité sauvegardées dans {data_file}")
+        
+        # Affichage et/ou sauvegarde du graphe si demandé
+        if plot or save_plot:
+            # Create directory if it doesn't exist
+            if save_plot:
+                os.makedirs(save_dir, exist_ok=True)
+            
             # Liste de marqueurs pour distinguer les événements
             markers = ['o', 'D', ',', 'x', '+', '^', 'v', '<', '>', 's', 'p', '*']
 
             for i in range(num_mark):
-                ax = axes[i]
+                # Créer une nouvelle figure pour chaque type d'événement
+                fig, ax = plt.subplots(1, 1, figsize=(12, 6))
 
                 # Tracé de l'intensité en fonction du temps
-                ax.plot(sample.numpy(), intensities[:, i].numpy(), color=f'C{i}')
+                ax.plot(time_flat.cpu().detach().numpy(), intensities_flat[:, i].cpu().detach().numpy(), 
+                       color=f'C{i}', linewidth=2, label=f'Intensity Mark {i}')
 
                 # Ajout des événements observés sous forme de points
-                ax.scatter(marked_times[i].numpy(),
-                        torch.zeros_like(marked_times[i]).numpy() - 0.3,
-                        s=20, color=f'C{i}',
-                        marker=markers[i % len(markers)],
-                        label=f'Mark {i}')
+                if len(marked_times[i]) > 0:
+                    ax.scatter(marked_times[i].cpu().detach().numpy(),
+                              torch.zeros_like(marked_times[i]).cpu().detach().numpy() - 0.05 * intensities_flat[:, i].max().item(),
+                              s=30, color=f'C{i}',
+                              marker=markers[i % len(markers)],
+                              label=f'Events Mark {i}',
+                              alpha=0.8)
 
                 ax.set_title(f"Intensité pour la marque {i}")
+                ax.set_xlabel("Temps")
+                ax.set_ylabel("Intensité")
                 ax.legend()
+                ax.grid(True, alpha=0.3)
 
-            plt.tight_layout()
-            plt.savefig(save_file)
-            plt.show()
+                plt.tight_layout()
+                
+                # Sauvegarder le graphique si demandé
+                if save_plot:
+                    save_file = f'{self.__class__.__name__}_intensity_graph_mark_{i}.png'
+                    save_file = os.path.join(save_dir, save_file)
+                    plt.savefig(save_file, dpi=150, bbox_inches='tight')
+                    logger.info(f"Graphique d'intensité pour la marque {i} sauvegardé dans {save_file}")
+                
+                # Afficher le graphique si demandé
+                if plot:
+                    plt.show()
+                else:
+                    plt.close()
 
-        return intensities, sample, marked_times
+        return intensities_flat, time_flat, marked_times
 
     def get_model_metadata(self):
         """
@@ -961,3 +1028,34 @@ class BaseModel(pl.LightningModule, ABC):
                         metadata[key] = value
         
         return metadata
+
+    def predict_dtime_one_step(
+        self,
+        time_seq: torch.Tensor,
+        time_delta_seq: torch.Tensor,
+        event_seq: torch.Tensor,
+        compute_last_step_only: bool = True
+    ) -> torch.Tensor:
+        """
+        Utility method to predict the next time delta using the event sampler.
+        
+        Args:
+            time_seq (torch.Tensor): Time sequence [batch_size, seq_len]
+            time_delta_seq (torch.Tensor): Time delta sequence [batch_size, seq_len]
+            event_seq (torch.Tensor): Event type sequence [batch_size, seq_len]
+            compute_last_step_only (bool): Whether to compute only the last step
+            
+        Returns:
+            torch.Tensor: Predicted time deltas [batch_size, 1] if compute_last_step_only=True
+        """
+        # Determine possible event times
+        dtime_boundary = time_delta_seq + self.dtime_max
+        accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
+            time_seq, dtime_boundary, event_seq, dtime_boundary,
+            self.compute_intensities_at_sample_times, compute_last_step_only=compute_last_step_only
+        )
+
+        # Estimate next time delta
+        dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1) #[batch_size, 1]
+        
+        return dtimes_pred

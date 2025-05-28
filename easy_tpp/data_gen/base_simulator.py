@@ -4,7 +4,8 @@ import json
 import os
 from typing import List, Tuple, Dict, Optional
 from tqdm import tqdm
-
+import matplotlib.pyplot as plt
+from collections import defaultdict
 
 class BaseSimulator(ABC):
     """
@@ -263,3 +264,146 @@ class BaseSimulator(ABC):
             Dict: Métadonnées spécifiques au simulateur
         """
         return {}  # Par défaut, pas de métadonnées spécifiques
+    
+    
+    def intensity_graph(self,
+                       precision: int = 1000,
+                       plot: bool = False,
+                       save_plot: bool = False,
+                       save_data: bool = False,
+                       save_dir: str = './',
+                       **kwargs) -> tuple[np.ndarray, np.ndarray, dict[int, np.ndarray]]:
+        """
+        Génère et affiche la courbe d'intensité théorique du simulateur.
+        
+        Cette méthode génère d'abord une simulation, puis calcule les intensités théoriques
+        aux instants échantillonnés pour visualiser leur évolution.
+        
+        Args:
+            precision (int): Nombre de points temporels pour l'échantillonnage
+            plot (bool): Indique s'il faut afficher le graphique
+            save_plot (bool): Indique s'il faut sauvegarder le graphique
+            save_data (bool): Indique s'il faut sauvegarder les données d'intensité
+            save_dir (str): Répertoire de sauvegarde du graphique et des données
+            
+        Returns:
+            tuple:
+                - np.ndarray: Matrice des intensités [num_sample_points, num_event_types]
+                - np.ndarray: Points de temps correspondant [num_sample_points]
+                - dict[int, np.ndarray]: Dictionnaire des temps d'événements par type
+        """
+        # Générer une simulation pour avoir des événements
+        events_by_dim = self.simulate()
+        
+        # Créer des points temporels uniformément espacés
+        time_points = np.linspace(self.start_time, self.end_time, precision)
+        
+        # Calculer les intensités théoriques à chaque point temporel
+        intensities = self.compute_theoretical_intensities(time_points, events_by_dim)
+        
+        # Organiser les événements par type pour l'affichage
+        marked_times = {}
+        for dim, timestamps in enumerate(events_by_dim):
+            marked_times[dim] = timestamps
+        
+        # Sauvegarder les données d'intensité si demandé
+        if save_data:
+            os.makedirs(save_dir, exist_ok=True)
+            
+            # Sauvegarder les intensités et les points temporels
+            intensity_data = {
+                'time_points': time_points.tolist(),
+                'intensities': intensities.tolist(),
+                'marked_times': {str(dim): times.tolist() for dim, times in marked_times.items()},
+                'metadata': {
+                    'precision': precision,
+                    'start_time': self.start_time,
+                    'end_time': self.end_time,
+                    'dim_process': self.dim_process,
+                    'simulator_type': self.__class__.__name__
+                }
+            }
+            
+            data_file = f'{self.__class__.__name__}_intensity_data.json'
+            data_file = os.path.join(save_dir, data_file)
+            
+            with open(data_file, 'w') as f:
+                json.dump(intensity_data, f, indent=2)
+            print(f"Données d'intensité sauvegardées dans {data_file}")
+        
+        # Affichage et/ou sauvegarde du graphe si demandé
+        if plot or save_plot:
+            # Créer le répertoire s'il n'existe pas
+            if save_plot:
+                os.makedirs(save_dir, exist_ok=True)
+            
+            fig, axes = plt.subplots(self.dim_process, 1, figsize=(12, 3 * self.dim_process))
+            
+            # Gestion du cas où dim_process == 1
+            if self.dim_process == 1:
+                axes = [axes]
+            
+            # Liste de marqueurs pour distinguer les événements
+            markers = ['o', 'D', ',', 'x', '+', '^', 'v', '<', '>', 's', 'p', '*']
+            
+            for i in range(self.dim_process):
+                ax = axes[i]
+                
+                # Tracé de l'intensité en fonction du temps
+                ax.plot(time_points, intensities[:, i], 
+                       color=f'C{i}', linewidth=2, label=f'Intensity Dim {i}')
+                
+                # Ajout des événements observés sous forme de points
+                if len(marked_times[i]) > 0:
+                    # Filtrer les événements dans la fenêtre temporelle
+                    events_in_window = marked_times[i][
+                        (marked_times[i] >= self.start_time) & 
+                        (marked_times[i] <= self.end_time)
+                    ]
+                    
+                    if len(events_in_window) > 0:
+                        ax.scatter(events_in_window,
+                                  np.zeros_like(events_in_window) - 0.05 * intensities[:, i].max(),
+                                  s=30, color=f'C{i}',
+                                  marker=markers[i % len(markers)],
+                                  label=f'Events Dim {i}',
+                                  alpha=0.8)
+                
+                ax.set_title(f"Intensité pour la dimension {i}")
+                ax.set_xlabel("Temps")
+                ax.set_ylabel("Intensité")
+                ax.legend()
+                ax.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
+            
+            # Sauvegarder le graphique si demandé
+            if save_plot:
+                save_file = f'{self.__class__.__name__}_intensity_graph.png'
+                save_file = os.path.join(save_dir, save_file)
+                plt.savefig(save_file, dpi=150, bbox_inches='tight')
+                print(f"Graphique d'intensité sauvegardé dans {save_file}")
+            
+            # Afficher le graphique si demandé
+            if plot:
+                plt.show()
+            else:
+                plt.close()
+        
+        return intensities, time_points, marked_times
+    
+    @abstractmethod
+    def compute_theoretical_intensities(self, 
+                                      time_points: np.ndarray, 
+                                      events_by_dim: Tuple[np.ndarray, ...]) -> np.ndarray:
+        """
+        Calcule les intensités théoriques aux points temporels donnés.
+        
+        Args:
+            time_points (np.ndarray): Points temporels où calculer les intensités
+            events_by_dim (Tuple[np.ndarray, ...]): Événements générés par dimension
+            
+        Returns:
+            np.ndarray: Matrice des intensités [len(time_points), dim_process]
+        """
+        pass

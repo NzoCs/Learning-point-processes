@@ -104,3 +104,37 @@ class HawkesSimulator(BaseSimulator):
                 'beta': self.beta.tolist()
             }
         }
+    
+    def compute_theoretical_intensities(self, 
+                                      time_points: np.ndarray, 
+                                      events_by_dim: Tuple[np.ndarray, ...]) -> np.ndarray:
+        """
+        Calcule les intensités théoriques du processus de Hawkes aux points temporels donnés.
+        
+        Pour un processus de Hawkes : λ_i(t) = μ_i + Σ_j Σ_{t_k^j < t} α_{ij} * exp(-β_{ij} * (t - t_k^j))
+        
+        Args:
+            time_points (np.ndarray): Points temporels où calculer les intensités
+            events_by_dim (Tuple[np.ndarray, ...]): Événements générés par dimension
+            
+        Returns:
+            np.ndarray: Matrice des intensités [len(time_points), dim_process]
+        """
+        intensities = np.zeros((len(time_points), self.dim_process))
+        
+        for t_idx, t in enumerate(time_points):
+            for i in range(self.dim_process):
+                # Intensité de base
+                intensity = self.mu[i]
+                
+                # Contribution des événements passés
+                for j in range(self.dim_process):
+                    past_events = events_by_dim[j][events_by_dim[j] < t]
+                    if len(past_events) > 0:
+                        # Somme des contributions exponentielles décroissantes
+                        contributions = self.alpha[i, j] * np.exp(-self.beta[i, j] * (t - past_events))
+                        intensity += np.sum(contributions)
+                
+                intensities[t_idx, i] = max(intensity, 0)  # Intensité positive
+        
+        return intensities

@@ -84,6 +84,46 @@ class SelfCorrecting(BaseSimulator):
                 'alpha': self.alpha.tolist()
             }
         }
+    
+    def compute_theoretical_intensities(self, 
+                                      time_points: np.ndarray, 
+                                      events_by_dim: Tuple[np.ndarray, ...]) -> np.ndarray:
+        """
+        Calcule les intensités théoriques du processus auto-correctif aux points temporels donnés.
+        
+        Pour un processus auto-correctif : λ_i(t) = μ_i * exp(x_i(t))
+        où x_i(t) = μ_i * (t - t_last) - α_i * N_i(t)
+        
+        Args:
+            time_points (np.ndarray): Points temporels où calculer les intensités
+            events_by_dim (Tuple[np.ndarray, ...]): Événements générés par dimension
+            
+        Returns:
+            np.ndarray: Matrice des intensités [len(time_points), dim_process]
+        """
+        intensities = np.zeros((len(time_points), self.dim_process))
+        
+        for t_idx, t in enumerate(time_points):
+            for i in range(self.dim_process):
+                # Événements passés pour cette dimension
+                past_events = events_by_dim[i][events_by_dim[i] < t]
+                
+                # Temps du dernier événement (ou start_time si aucun événement)
+                if len(past_events) > 0:
+                    t_last = past_events[-1]
+                    num_events = len(past_events)
+                else:
+                    t_last = self.start_time
+                    num_events = 0
+                
+                # Calcul de x(t)
+                x_t = self.mu[i] * (t - t_last) - self.alpha[i] * num_events
+                
+                # Intensité
+                intensity = self.mu[i] * np.exp(x_t)
+                intensities[t_idx, i] = max(intensity, 0)  # Intensité positive
+        
+        return intensities
 
 class MultivariableSelfCorrecting(BaseSimulator):
     """
@@ -187,3 +227,44 @@ class MultivariableSelfCorrecting(BaseSimulator):
                 'alpha_matrix': self.alpha_matrix.tolist()
             }
         }
+    
+    def compute_theoretical_intensities(self, 
+                                      time_points: np.ndarray, 
+                                      events_by_dim: Tuple[np.ndarray, ...]) -> np.ndarray:
+        """
+        Calcule les intensités théoriques du processus auto-correctif multivariable.
+        
+        Args:
+            time_points (np.ndarray): Points temporels où calculer les intensités
+            events_by_dim (Tuple[np.ndarray, ...]): Événements générés par dimension
+            
+        Returns:
+            np.ndarray: Matrice des intensités [len(time_points), dim_process]
+        """
+        intensities = np.zeros((len(time_points), self.dim_process))
+        
+        for t_idx, t in enumerate(time_points):
+            for i in range(self.dim_process):
+                # État x_i(t) basé sur tous les événements passés
+                x_i = 0
+                
+                # Contribution de chaque dimension
+                for j in range(self.dim_process):
+                    past_events = events_by_dim[j][events_by_dim[j] < t]
+                    
+                    if len(past_events) > 0:
+                        # Temps depuis le dernier événement de la dimension j
+                        t_last = past_events[-1]
+                        x_i += self.mu[i] * (t - t_last)
+                        
+                        # Réduction due aux événements de la dimension j
+                        x_i -= self.alpha_matrix[i, j] * len(past_events)
+                    else:
+                        # Pas d'événements dans cette dimension
+                        x_i += self.mu[i] * (t - self.start_time)
+                
+                # Intensité
+                intensity = self.mu[i] * np.exp(x_i)
+                intensities[t_idx, i] = max(intensity, 0)  # Intensité positive
+        
+        return intensities

@@ -87,16 +87,6 @@ class MetricsCompute:
         true_time_seqs, true_type_seqs, true_time_delta_seqs, sim_time_seqs, sim_type_seqs, sim_mask = self.get_simulation_values(batch, pred)
 
         try:
-            # Extract device from input tensors
-            device = true_time_seqs.device if hasattr(true_time_seqs, 'device') else sim_time_seqs.device
-            
-            # Ensure all tensors are on the same device
-            if not isinstance(true_time_seqs, torch.Tensor):
-                true_time_seqs = torch.stack(true_time_seqs).to(device)
-            if not isinstance(sim_time_seqs, torch.Tensor):
-                sim_time_seqs = torch.stack(sim_time_seqs).to(device)
-            if not isinstance(sim_mask, torch.Tensor):
-                sim_mask = torch.stack(sim_mask).to(device)
 
             # Calculate Wasserstein 1D distance per sequence
             wasserstein_distances = self._batch_wasserstein_1d(true_time_seqs, sim_time_seqs, sim_mask)
@@ -147,6 +137,7 @@ class MetricsCompute:
                 x = true_sorted[i, :n].cpu().numpy()
                 y = sim_sorted[i, :n].cpu().numpy()
                 dists[i] = wasserstein_distance(x, y)
+                
         return dists
 
     def _batch_mmd_rbf_padded(self, true_seqs: torch.Tensor, sim_seqs: torch.Tensor, mask: torch.Tensor, sigma: float = 1.0) -> torch.Tensor:
@@ -172,6 +163,7 @@ class MetricsCompute:
         # Préparer padding
         true_pad = torch.zeros(batch_size, max_len, device=true_seqs.device)
         sim_pad = torch.zeros(batch_size, max_len, device=sim_seqs.device)
+
         for i in range(batch_size):
             n = lengths[i].item()
             if n > 0:

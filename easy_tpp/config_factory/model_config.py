@@ -284,6 +284,7 @@ class ModelSpecsConfig:
     
     def __init__(self, **kwargs):
         """Initialize the Config class."""
+
         self.rnn_type = kwargs.get('rnn_type', 'LSTM')
         self.hidden_size = kwargs.get('hidden_size', 32)
         self.time_emb_size = kwargs.get('time_emb_size', 16)
@@ -400,6 +401,7 @@ class ModelConfig(Config):
         for key in ['hidden_size', 'rnn_type', 'time_emb_size', 'num_layers', 'num_heads', 'sharing_param_layer', 'loss_integral_num_sample_per_step', 'use_norm', 'num_mlp_layers', 'proper_marked_intensities', 'num_mix_components', 'mean_log_inter_time', 'std_log_inter_time', 'ode_num_sample_per_step', 'mu', 'alpha', 'beta']:
             if key in kwargs and key not in specs_dict:
                 specs_dict[key] = kwargs[key]
+                
         self.specs = ModelSpecsConfig.parse_from_yaml_config(specs_dict)
 
         self.base_config = BaseConfig.parse_from_yaml_config(kwargs.get('base_config', {}))

@@ -1,14 +1,13 @@
 #!/bin/bash
-#SBATCH --output=err_logs/test_hawkes_%A_%a.out
-#SBATCH --error=err_logs/test_hawkes_%A_%a.err
-#SBATCH --partition=gpua100
+#SBATCH --job-name=train_cpu
+#SBATCH --output=err_logs/train_gpu_%A_%a.out
+#SBATCH --error=err_logs/train_gpu_%A_%a.err
 #SBATCH --time=24:00:00
-#SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=100G
-#SBATCH --gres=gpu:1
-#SBATCH --array=0-1%5
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=80G
+#SBATCH --partition=cpu_long
+#SBATCH --array=0-47%5
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge

@@ -245,8 +245,6 @@ class Trainer:
                 json.dump(results[0], f, indent=4)
             
             logger.info(f"Test results saved to {results_file}")
-                
-        return results
     
     def predict(self) -> None:
         """
@@ -279,5 +277,3 @@ class Trainer:
         logger.info(f"Predictions saved to {data_save_dir}")
 
         self.model.intensity_graph(save_dir=data_save_dir)
-        
-        return predictions

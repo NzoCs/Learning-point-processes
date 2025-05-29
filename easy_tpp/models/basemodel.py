@@ -399,8 +399,6 @@ class BaseModel(pl.LightningModule, ABC):
         one_step_metrics = one_step_metrics_compute.compute_all_metrics(
             batch = label_batch,
             pred = pred)
-        for key in one_step_metrics : 
-            self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
 
         if self.compute_simulation:
             # Compute simulation metrics
@@ -415,9 +413,6 @@ class BaseModel(pl.LightningModule, ABC):
                 batch = label_batch,
                 pred = simulation
             )
-
-            for key in simulation_metrics :
-                self.log(f"{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
 
             simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = simulation
 

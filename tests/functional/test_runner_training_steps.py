@@ -201,7 +201,7 @@ class TestRunnerTrainingSteps:
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup') as mock_setup:
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.test_dataloader', return_value=mock_test_loader) as mock_test_dl:
                 with patch('pytorch_lightning.Trainer.predict', return_value=mock_predictions) as mock_predict:
-                    with patch('easy_tpp.evaluate.new_comparator.NewDistribComparator') as mock_comparator:
+                    with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator') as mock_comparator:
                         # Build config and create trainer
                         config = Config.build_from_yaml_file(
                             yaml_dir=config_path,
@@ -387,7 +387,7 @@ class TestRunnerTrainingSteps:
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.test_dataloader'):
                 with patch('pytorch_lightning.Trainer.predict', return_value=[Mock()]) as mock_predict:
-                    with patch('easy_tpp.evaluate.new_comparator.NewDistribComparator'):
+                    with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator'):
                         # Build config and create trainer with checkpoint
                         config = Config.build_from_yaml_file(
                             yaml_dir=config_path,
@@ -469,7 +469,7 @@ class TestRunnerTrainingSteps:
                                 with patch('pytorch_lightning.Trainer.predict', return_value=[Mock()]) as mock_predict:
                                     with patch('builtins.open', create=True):
                                         with patch('json.dump'):
-                                            with patch('easy_tpp.evaluate.new_comparator.NewDistribComparator'):
+                                            with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator'):
                                                 # Build config and create trainer
                                                 config = Config.build_from_yaml_file(
                                                     yaml_dir=config_path,

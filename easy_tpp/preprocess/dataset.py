@@ -12,10 +12,9 @@ from easy_tpp.utils import py_assert, is_tf_available
 class TPPDataset(Dataset):
     def __init__(self, data: Dict):
         
-        self.data_dict = data
-        self.time_seqs = self.data_dict['time_seqs']
-        self.time_delta_seqs = self.data_dict['time_delta_seqs']
-        self.type_seqs = self.data_dict['type_seqs']
+        self.time_seqs = data['time_seqs']
+        self.time_delta_seqs = data['time_delta_seqs']
+        self.type_seqs = data['type_seqs']
 
     def __len__(self):
         """
@@ -126,30 +125,3 @@ class TPPDataset(Dataset):
         print(f'min_dt: {min_dt}')
         print(f'max_dt: {max_dt}')
         return x_bar, (s_2_x ** 0.5), min_dt, max_dt
-
-
-def get_data_loader(dataset: TPPDataset, backend: str, tokenizer: EventTokenizer, **kwargs):
-    use_torch = backend == 'torch'
-
-    padding = True if tokenizer.padding_strategy is None else tokenizer.padding_strategy
-    truncation = False if tokenizer.truncation_strategy is None else tokenizer.truncation_strategy
-
-    if use_torch:
-        data_collator = TPPDataCollator(tokenizer=tokenizer,
-                                        return_tensors='pt',
-                                        max_length=tokenizer.model_max_length,
-                                        padding=padding,
-                                        truncation=truncation)
-
-        return DataLoader(dataset,
-                          collate_fn=data_collator,
-                          **kwargs)
-    else:
-        # we pass to placeholders
-        data_collator = TPPDataCollator(tokenizer=tokenizer,
-                                        return_tensors='np',
-                                        max_length=tokenizer.model_max_length,
-                                        padding=padding,
-                                        truncation=truncation)
-
-        return dataset.to_tf_dataset(data_collator, **kwargs)

@@ -2,7 +2,7 @@ from easy_tpp.models import BaseModel
 from easy_tpp.preprocess import TPPDataModule
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.utils import logger
-from easy_tpp.evaluate.new_comparator import NewDistribComparator
+from easy_tpp.evaluate.distribution_analysis_helper import TemporalPointProcessComparatorFactory
 from ..utils.model_utils import flexible_state_dict_loading, compare_model_configs
 
 import torch
@@ -262,18 +262,15 @@ class Trainer:
             model=self.model,
             dataloaders=predict_dataloader,
             ckpt_path=self.checkpoint_path
-        )
-
-        # save the predictions in the model parent directory
+        )        # save the predictions in the model parent directory
         
         # Ensure the directory exists
-
         output_dir = os.path.dirname(self.dirpath)
         data_save_dir = os.path.join(output_dir, 'distributions_comparisons')
         self.model.format_and_save_simulations(save_dir=data_save_dir)
 
-        NewDistribComparator(
-            label_data_loader = self.datamodule.test_dataloader(),
+        TemporalPointProcessComparatorFactory.create_comparator(
+            label_data = self.datamodule.test_dataset,
             simulation = self.model.simulations,
             num_event_types = self.datamodule.num_event_types,
             output_dir = data_save_dir

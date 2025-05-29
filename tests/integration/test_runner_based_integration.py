@@ -300,7 +300,7 @@ class TestRunnerBasedIntegration:
                         mock_model.format_and_save_simulations = Mock()
                         mock_model.simulations = Mock()
                         
-                        with patch('easy_tpp.evaluate.new_comparator.NewDistribComparator'):
+                        with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator'):
                             # Build config and create trainer
                             config = Config.build_from_yaml_file(
                                 yaml_dir=config_path,

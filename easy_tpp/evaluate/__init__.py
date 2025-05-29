@@ -1,10 +1,26 @@
-from easy_tpp.evaluate.distribution_comparison import DistribComparator
-from easy_tpp.evaluate.metrics_compute import MetricsCompute, EvaluationMode
-from easy_tpp.evaluate.new_comparator import NewDistribComparator
+
+# Import from our new modular distribution analysis helper package
+from easy_tpp.evaluate.distribution_analysis_helper import TemporalPointProcessComparator, DistributionAnalyzer
+
+# Import from the new modular metrics helper package
+from easy_tpp.evaluate.metrics_helper import (
+    MetricsComputerInterface,
+    PredictionMetricsComputer,
+    SimulationMetricsComputer,
+    MaskedValues
+)
+from easy_tpp.evaluate.metrics_helper.main_metrics_helper import MetricsHelper
 
 __all__ = [
     'DistribComparator',
     'EvaluationMode',
-    'MetricsCompute',
+    'MetricsHelper',  # Legacy
     'NewDistribComparator',
+    'TemporalPointProcessComparator',
+    'DistributionAnalyzer',
+    # New modular exports
+    'MetricsComputerInterface',
+    'PredictionMetricsComputer',
+    'SimulationMetricsComputer',
+    'MaskedValues'
 ]

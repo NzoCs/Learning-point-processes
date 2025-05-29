@@ -236,7 +236,7 @@ class TPPDataModule(pl.LightningDataModule):
                 )
         
         return DataLoader(
-            self.predict_dataset, 
+            self.test_dataset, 
             batch_size = self.batch_size, 
             shuffle = False, 
             collate_fn = collatefn,

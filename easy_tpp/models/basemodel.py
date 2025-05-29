@@ -13,7 +13,7 @@ import os
 
 from easy_tpp.models.thinning import EventSampler
 from easy_tpp.config_factory import ModelConfig
-from easy_tpp.evaluate.metrics_compute import MetricsCompute, EvaluationMode
+from easy_tpp.evaluate.metrics_helper import MetricsHelper, EvaluationMode
 from easy_tpp.utils import logger, format_multivariate_simulations, save_json
 
 class BaseModel(pl.LightningModule, ABC):
@@ -348,7 +348,7 @@ class BaseModel(pl.LightningModule, ABC):
         #Compute some validation metrics
         pred = self.predict_one_step_at_every_event(batch)
         
-        one_step_metrics_compute = MetricsCompute(
+        one_step_metrics_compute = MetricsHelper(
             num_event_types = self.num_event_types,
             mode = EvaluationMode.PREDICTION
             )
@@ -392,7 +392,7 @@ class BaseModel(pl.LightningModule, ABC):
         # Compute some prediction metrics
         pred = self.predict_one_step_at_every_event(batch)
         
-        one_step_metrics_compute = MetricsCompute(
+        one_step_metrics_compute = MetricsHelper(
             num_event_types = self.num_event_types,
             mode = EvaluationMode.PREDICTION
             )
@@ -406,7 +406,7 @@ class BaseModel(pl.LightningModule, ABC):
             # Compute simulation metrics
             simulation = self.simulate(batch = batch)
 
-            simulation_metrics_compute = MetricsCompute(
+            simulation_metrics_compute = MetricsHelper(
                 num_event_types = self.num_event_types,
                 mode = EvaluationMode.SIMULATION
                 )

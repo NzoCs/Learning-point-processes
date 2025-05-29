@@ -143,9 +143,9 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
         sns.set_theme(style="whitegrid")
         plt.figure(figsize=(10, 6))
         
-        sns.histplot(label_lengths, label='Ground Truth', kde=True, 
+        sns.histplot(label_lengths, label='Ground Truth', kde=False, 
                   stat='density', bins='auto', color='royalblue', alpha=0.6)
-        sns.histplot(simulated_lengths, label='Simulation', kde=True, 
+        sns.histplot(simulated_lengths, label='Simulation', kde=False, 
                   stat='density', bins='auto', color='crimson', alpha=0.6)
         
         # Calculate statistics

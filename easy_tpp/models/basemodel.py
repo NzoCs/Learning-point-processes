@@ -447,7 +447,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Stop if simulation limit is reached
         if self.sim_events_counter >= self.max_simul_events:
-            logger.warning(f"Simulation limit reached: {self.sim_events_counter} events generated, max is {self.max_simul_events}.")
+            
             return self.simulations
 
         # Fix: always convert dict.values() to tuple

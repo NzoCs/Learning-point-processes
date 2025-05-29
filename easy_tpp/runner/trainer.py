@@ -260,7 +260,7 @@ class Trainer:
             model=self.model,
             dataloaders=predict_dataloader,
             ckpt_path=self.checkpoint_path
-        )        # save the predictions in the model parent directory
+        )        
         
         # Ensure the directory exists
         output_dir = os.path.dirname(self.dirpath)

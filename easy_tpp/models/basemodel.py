@@ -444,6 +444,12 @@ class BaseModel(pl.LightningModule, ABC):
         Returns:
             STEP_OUTPUT: The output of the prediction step
         """
+
+        # Stop if simulation limit is reached
+        if self.sim_events_counter >= self.max_simul_events:
+            logger.warning(f"Simulation limit reached: {self.sim_events_counter} events generated, max is {self.max_simul_events}.")
+            return self.simulations
+
         # Fix: always convert dict.values() to tuple
         if not isinstance(batch, tuple):
             batch = tuple(batch.values())
@@ -451,17 +457,13 @@ class BaseModel(pl.LightningModule, ABC):
         time_seq, time_delta_seq, type_seq, batch_non_pad_mask, attention_mask = batch
 
         device = self.device
-        
+
         # Run simulation
         simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = self.simulate(
             batch=batch,
         )
         
         batch_size = simul_time_seq.size(0)
-
-        if self.sim_events_counter >= self.max_simul_events:
-            logger.warning(f"Simulation limit reached: {self.sim_events_counter} events generated, max is {self.max_simul_events}.")
-            return self.simulations
         
         self.sim_events_counter += simul_mask.sum().item()
 

@@ -34,9 +34,9 @@ hawkes1 :
 
 hawkes2 :
   data_format: json
-  train_dir: NzoCs/hawkes2-temporal-dataset
-  valid_dir: NzoCs/hawkes2-temporal-dataset
-  test_dir:  NzoCs/hawkes2-temporal-dataset
+  train_dir: NzoCs/hawkes2_-temporal-dataset
+  valid_dir: NzoCs/hawkes2_-temporal-dataset
+  test_dir:  NzoCs/hawkes2_-temporal-dataset
   data_specs:
     num_event_types: 2
 

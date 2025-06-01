@@ -16,7 +16,7 @@ module purge
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
-experiments=(NHP THP IntensityFree RMTPP AttNHP SAHP)
+experiments=(NHP THP IntensityFree SAHP)
 datasets=(hawkes1 H2expc H2expi self_correcting hawkes2 taxi taobao amazon)
 
 # Mapping index → combinaison
@@ -25,4 +25,4 @@ exp=${experiments[$(( idx / ${#datasets[@]} ))]}
 data=${datasets[$(( idx % ${#datasets[@]} ))]}
 
 # Lancement avec srun
-srun python train.py --experiment_id "${exp}" --dataset_id "${data}"
+srun python train.py --experiment_id "${exp}" --dataset_id "${data}" --phase "all"

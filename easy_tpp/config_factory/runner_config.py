@@ -6,7 +6,6 @@ from easy_tpp.utils import logger
 
 import torch
 import os
-import random
 
 class TrainerConfig:
     
@@ -19,15 +18,9 @@ class TrainerConfig:
     
     def __init__(self, **kwargs):
         
-        self.stage = kwargs.get('stage', 'train')
         
-        if self.stage not in ['train', 'test']:
-            raise ValueError("Invalid stage. Choose either 'train' or 'test'.")
-        
-        if self.stage == 'test':
-            kwargs['max_epochs'] = 1
-            
-        required_fields = ['max_epochs', 'dataset_id', "model_id"]
+        required_fields = ['dataset_id', 'model_id']
+
         # Check for required fields
         missing_fields = [field for field in required_fields if field not in kwargs]
         if missing_fields:
@@ -45,11 +38,7 @@ class TrainerConfig:
             
         dirpath = kwargs.get('save_dir', f"./{ckpt}/{self.model_id}/{self.dataset_id}/")
 
-        if self.stage == 'train':
-            os.makedirs(dirpath, exist_ok=True)
-        else: #stage == 'test'
-            if not os.path.exists(dirpath):
-                logger.warning(f"Checkpoint directory {dirpath} does not exist. The model wont be loaded.")
+        os.makedirs(dirpath, exist_ok=True)
             
         logger_config = kwargs.get("logger_config", {})
         
@@ -177,7 +166,7 @@ class RunnerConfig(Config):
         if model_id is None:
             raise ValueError("model_id is required in the model_config")
         
-        trainer_config = exp_yaml_config.get('trainer_config')
+        trainer_config = exp_yaml_config.get('trainer_config', {})
         trainer_config['model_id'] = model_id
         trainer_config['dataset_id'] = dataset_id
         trainer_config = TrainerConfig.parse_from_yaml_config(trainer_config)

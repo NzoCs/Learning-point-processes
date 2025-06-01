@@ -6,13 +6,10 @@ from collections import defaultdict
 
 from easy_tpp.preprocess.dataset import TPPDataset
 from easy_tpp.preprocess.event_tokenizer import EventTokenizer
-from easy_tpp.utils import load_pickle, py_assert
+from easy_tpp.utils import load_pickle, py_assert, logger
 from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.preprocess.data_collator import TPPDataCollator
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # PyTorch Lightning DataModule for TPP
 class TPPDataModule(pl.LightningDataModule):

@@ -7,9 +7,9 @@ model_config: !!python/object:easy_tpp.config_factory.model_config.ModelConfig
     dropout: 0.0
     lr: 0.001
     lr_scheduler: true
-    max_epochs: 1000
+    max_epochs: 400
     stage: train
-  compute_simulation: false
+  compute_simulation_metrics: false
   device: cuda
   gpu: 0
   is_training: false
@@ -17,20 +17,11 @@ model_config: !!python/object:easy_tpp.config_factory.model_config.ModelConfig
   num_event_types: 2
   num_event_types_pad: 3
   pad_token_id: 2
-  pretrain_model_path: null
-  simulation_config: !!python/object:easy_tpp.config_factory.model_config.SimulationConfig
-    batch_size: 32
-    end_time: 200
-    max_sim_events: 100000
-    seed: 42
-    start_time: 100
+  simulation_config: null
   specs: !!python/object:easy_tpp.config_factory.model_config.ModelSpecsConfig
-    alpha: null
-    beta: null
     hidden_size: 16
     loss_integral_num_sample_per_step: 20
     mean_log_inter_time: 0.0
-    mu: null
     num_heads: 2
     num_layers: 1
     num_mix_components: 1
@@ -45,7 +36,7 @@ model_config: !!python/object:easy_tpp.config_factory.model_config.ModelConfig
   thinning: !!python/object:easy_tpp.config_factory.model_config.ThinningConfig
     dtime_max: 5.0
     num_exp: 500
-    num_sample: 60
+    num_sample: 30
     num_samples_boundary: 30
     num_steps: 10
     over_sample_rate: 1.5

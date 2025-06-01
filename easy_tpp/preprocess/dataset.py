@@ -10,6 +10,7 @@ from easy_tpp.utils import py_assert, is_tf_available
 
 
 class TPPDataset(Dataset):
+    
     def __init__(self, data: Dict):
         
         self.time_seqs = data['time_seqs']

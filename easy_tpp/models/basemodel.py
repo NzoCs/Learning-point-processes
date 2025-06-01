@@ -97,19 +97,9 @@ class BaseModel(pl.LightningModule, ABC):
 
         gen_config = self.gen_config
 
-        if self.phase == "train":
+        num_sample = 1 if self.phase == "simulate" else gen_config.num_sample
 
-            event_sampler = EventSampler(num_sample = gen_config.num_sample,
-                                num_exp = gen_config.num_exp,
-                                over_sample_rate = gen_config.over_sample_rate,
-                                num_samples_boundary = gen_config.num_samples_boundary,
-                                dtime_max = gen_config.dtime_max,
-                                device = self._device
-                            )
-        
-        elif self.phase == "simulate":
-
-            event_sampler =  EventSampler(num_sample = 1,
+        event_sampler = EventSampler(num_sample = num_sample,
                                 num_exp = gen_config.num_exp,
                                 over_sample_rate = gen_config.over_sample_rate,
                                 num_samples_boundary = gen_config.num_samples_boundary,
@@ -345,6 +335,9 @@ class BaseModel(pl.LightningModule, ABC):
         
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss/num_events
+
+        self.log('val_loss', avg_loss.item(), prog_bar=True, sync_dist=True, on_epoch=True, on_step=False)
+
         #Compute some validation metrics
         pred = self.predict_one_step_at_every_event(batch)
         
@@ -356,8 +349,6 @@ class BaseModel(pl.LightningModule, ABC):
         one_step_metrics = one_step_metrics_compute.compute_all_metrics(
             batch = label_batch,
             pred = pred)
-        
-        self.log('val_loss', avg_loss.item(), prog_bar=True, sync_dist=True)
         
         for key in one_step_metrics : 
             self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
@@ -399,6 +390,9 @@ class BaseModel(pl.LightningModule, ABC):
         one_step_metrics = one_step_metrics_compute.compute_all_metrics(
             batch = label_batch,
             pred = pred)
+        
+        for key in one_step_metrics:
+            self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
 
         if self.compute_simulation:
             # Compute simulation metrics
@@ -413,6 +407,9 @@ class BaseModel(pl.LightningModule, ABC):
                 batch = label_batch,
                 pred = simulation
             )
+
+            for key in simulation_metrics:
+                self.log(f"sim_{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
 
             simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = simulation
 
@@ -595,7 +592,7 @@ class BaseModel(pl.LightningModule, ABC):
         # [batch_size, seq_len]
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)  # compute the expected next event time
         
-        return dtimes_pred.to(self.device), types_pred.to(self.device)
+        return dtimes_pred, types_pred
 
     def predict_multi_step_since_last_event(
         self,
@@ -665,8 +662,8 @@ class BaseModel(pl.LightningModule, ABC):
             time_delta_seq = torch.cat([time_delta_seq, dtimes_pred_], dim=-1)
             event_seq = torch.cat([event_seq, types_pred_], dim=-1)
 
-        return time_delta_seq[:, -num_step - 1:].to(self.device), event_seq[:, -num_step - 1:].to(self.device), \
-               time_delta_seq_label[:, -num_step - 1:].to(self.device), event_seq_label[:, -num_step - 1:].to(self.device)
+        return time_delta_seq[:, -num_step - 1:], event_seq[:, -num_step - 1:], \
+               time_delta_seq_label[:, -num_step - 1:], event_seq_label[:, -num_step - 1:]
             
     def simulate(
         self,
@@ -726,11 +723,7 @@ class BaseModel(pl.LightningModule, ABC):
         else :
             batch_size = batch[0].size(0)
         
-        time_seq_label, time_delta_seq_label, event_seq_label, non_pad_mask, _ = batch
-        
-        time_seq = time_seq_label
-        time_delta_seq = time_delta_seq_label
-        event_seq = event_seq_label
+        time_seq, time_delta_seq, event_seq, non_pad_mask, _ = batch
         
         num_mark = self.num_event_types
         num_step = 0
@@ -740,7 +733,7 @@ class BaseModel(pl.LightningModule, ABC):
         
         for mark in range(num_mark):
             # Create a mask for each mark separately to avoid broadcasting issues
-            mark_mask = (event_seq_label == mark).to(self.device)
+            mark_mask = (event_seq == mark).to(self.device)
             masked_time_seq = torch.where(mark_mask, time_seq, 0).to(self.device)
             marked_last_time_label, _ = masked_time_seq.max(dim=1)
             last_event_time[:,mark] = marked_last_time_label
@@ -750,40 +743,33 @@ class BaseModel(pl.LightningModule, ABC):
         pbar = tqdm(total = end_time, desc="Simulating sequences", unit="time", leave=False)
         
         while current_time < end_time:
+
             num_step += 1
 
-            # Use the utility function to predict next time delta
-            dtimes_pred = self.predict_dtime_one_step(
-                time_seq, time_delta_seq, event_seq, compute_last_step_only=True
-            )
-            
-            time_pred_ = time_seq[:, -1:] + dtimes_pred
-            min_time = time_pred_.min()
-            current_time = min_time.item()
-            pbar.n = min(current_time, end_time)
-            pbar.refresh()
+            # Use the utility function to predict next time delta and event type
+            try :
 
+                dtimes_pred, type_pred = self.predict_one_step(
+                    time_seq, time_delta_seq, event_seq
+                )
+
+            except Exception as e:
+                logger.error(f"Error during prediction: {e}")
+                break
+            
+            # refresh the progress bar with the current time
+            if num_step % 10 == 0 or num_step == 1:
+                time_pred_ = time_seq[:, -1:] + dtimes_pred
+                min_time = time_pred_.min()
+                current_time = min_time.item()
+                pbar.n = min(current_time, end_time)
+                pbar.refresh()
+
+            # break if the current time exceeds the end time
             if current_time >= end_time:
                 break
 
             seq_len += 1
-
-            # Select next event type based on intensities
-            intensities_at_times = self.compute_intensities_at_sample_times(
-                time_seq,
-                time_delta_seq,
-                event_seq,
-                dtimes_pred[:, :, None],
-                compute_last_step_only=True
-            ).view(batch_size, num_mark) #[batch_size, num_event_types]
-
-            total_intensities = intensities_at_times.sum(dim=-1)
-            
-            if torch.any(total_intensities == 0):
-                break
-            
-            probs = intensities_at_times / total_intensities[:,None]
-            type_pred = torch.multinomial(probs, num_samples=1)
             
             # Update last event times for each mark
             for mark in range(num_mark):
@@ -827,7 +813,7 @@ class BaseModel(pl.LightningModule, ABC):
         # change phase back to train
         self.phase = "train"
 
-        return time_seq.to(self.device), time_delta_seq.to(self.device), event_seq.to(self.device), simul_mask
+        return time_seq, time_delta_seq, event_seq, simul_mask
     
     def intensity_graph(
         self,
@@ -1026,12 +1012,11 @@ class BaseModel(pl.LightningModule, ABC):
         
         return metadata
 
-    def predict_dtime_one_step(
+    def predict_one_step(
         self,
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
-        compute_last_step_only: bool = True
+        event_seq: torch.Tensor
     ) -> torch.Tensor:
         """
         Utility method to predict the next time delta using the event sampler.
@@ -1049,10 +1034,28 @@ class BaseModel(pl.LightningModule, ABC):
         dtime_boundary = time_delta_seq + self.dtime_max
         accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
             time_seq, dtime_boundary, event_seq, dtime_boundary,
-            self.compute_intensities_at_sample_times, compute_last_step_only=compute_last_step_only
+            self.compute_intensities_at_sample_times, compute_last_step_only=True
         )
 
         # Estimate next time delta
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1) #[batch_size, 1]
+        batch_size, num_mark = time_seq.size(0), self.num_event_types
+
+        # Select next event type based on intensities
+        intensities_at_times = self.compute_intensities_at_sample_times(
+            time_seq,
+            time_delta_seq,
+            event_seq,
+            dtimes_pred[:, :, None],
+            compute_last_step_only=True
+        ).view(batch_size, num_mark) #[batch_size, num_event_types]
+
+        total_intensities = intensities_at_times.sum(dim=-1)
         
-        return dtimes_pred
+        if torch.any(total_intensities == 0):
+            raise ValueError("Total intensities is null, simulation stops.")
+        
+        probs = intensities_at_times / total_intensities[:,None]
+        type_pred = torch.multinomial(probs, num_samples=1)
+
+        return dtimes_pred, type_pred

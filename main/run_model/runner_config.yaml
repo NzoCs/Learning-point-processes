@@ -1,0 +1,420 @@
+pipeline_config_id: runner_config
+
+data:
+
+  taxi:
+    data_format: json
+    train_dir: easytpp/taxi
+    valid_dir: easytpp/taxi
+    test_dir: easytpp/taxi
+    data_specs:
+      num_event_types: 10
+      pad_token_id: 10
+      padding_side: left
+ 
+  taobao:
+    data_format: json
+    train_dir: easytpp/taobao
+    valid_dir: easytpp/taobao
+    test_dir: easytpp/taobao
+    data_specs:
+      num_event_types: 17
+      pad_token_id: 17
+      padding_side: left
+
+  amazon:
+    data_format: json
+    train_dir: easytpp/amazon
+    valid_dir: easytpp/amazon
+    test_dir: easytpp/amazon
+    data_specs:
+      num_event_types: 16
+      pad_token_id: 16
+      padding_side: left
+
+  test:
+    data_format: json
+    train_dir: NzoCs/test_dataset
+    valid_dir: NzoCs/test_dataset
+    test_dir: NzoCs/test_dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+      
+  H2expi:
+    data_format: json
+    train_dir: NzoCs/H2expi
+    valid_dir: NzoCs/H2expi
+    test_dir: NzoCs/H2expi
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  H2expc:
+    data_format: json
+    train_dir: NzoCs/H2expc
+    valid_dir: NzoCs/H2expc
+    test_dir: NzoCs/H2expc
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  hawkes1:
+    data_format: json
+    train_dir: NzoCs/hawkes1
+    valid_dir: NzoCs/hawkes1
+    test_dir: NzoCs/hawkes1
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+  
+  hawkes2:
+    data_format: json
+    train_dir: NzoCs/hawkes2
+    valid_dir: NzoCs/hawkes2
+    test_dir: NzoCs/hawkes2
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  self_correcting:
+    data_format: json
+    train_dir: NzoCs/self_correcting
+    valid_dir: NzoCs/self_correcting
+    test_dir: NzoCs/self_correcting
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+
+test_HawkesModel :
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 1
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [0.2, 0.2]
+      alpha: [[0.4, 0], [0, 8.0]]
+      beta: [[1.0, 0], [0, 20.0]]
+    thinning:
+      num_exp: 60
+      num_sample: 60
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+hawkes1 :
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 1
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: 0.2
+      alpha: 0.8
+      beta: 1
+    thinning:
+      num_exp: 60
+      num_sample: 60
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+hawkes2 :
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 4
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [0.2, 0.2]
+      alpha: [[0.4, 0], [0, 8.0]]
+      beta: [[1.0, 0], [0, 20.0]]
+    thinning:
+      num_exp: 60
+      num_sample: 60
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+H2expi :
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 4
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [1, 1]
+      alpha: [[0.7, 0], [0, 1.5]]
+      beta: [[1.0, 0], [0,5.0]]
+    thinning:
+      num_exp: 60
+      num_sample: 60
+      over_sample_rate: 1.5
+      dtime_max: 5
+  
+H2expc :
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 4
+    
+  model_config:
+    model_id: HawkesModel
+    specs:
+      mu: [1, 1]
+      alpha: [[0.5, 0.9], [0.5, 2.0]]
+      beta: [[1.0, 3.0], [2.0,5.0]]
+    thinning:
+      num_exp: 60
+      num_sample: 60
+      over_sample_rate: 1.5
+      dtime_max: 5
+
+NHP:
+
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 4
+    
+  model_config:
+    model_id: NHP
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      num_sample: 60
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    simulation_config:
+      start_time: 100
+      end_time: 200
+      max_sim_events : 100000
+
+  trainer_config:
+    
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 1
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: logs
+
+RMTPP:
+
+  data_loading_specs:
+    batch_size: 256
+    num_workers: 4
+    
+  model_config:
+    model_id: RMTPP
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      num_sample: 60
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    simulation_config:
+      start_time: 100
+      end_time: 200
+      max_sim_events : 100000
+
+  trainer_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 1
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: logs
+
+AttNHP:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: AttNHP
+    specs:
+      hidden_size: 16
+      time_emb_size: 16
+      num_layers: 1
+      num_heads: 2
+    thinning:
+      num_exp: 300 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      num_sample: 60
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    simulation_config:
+      start_time: 100
+      end_time: 200
+      max_sim_events : 100000
+
+  trainer_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 2
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: logs
+
+SAHP:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: SAHP
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+      num_heads: 2
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      num_sample: 60
+    simulation_config:
+      start_time: 100
+      end_time: 200
+      max_sim_events : 100000
+
+  trainer_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 2
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: logs
+
+THP:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: THP
+    specs:
+      hidden_size: 64
+      time_emb_size: 16
+      num_layers: 2
+      num_heads: 2
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500
+      over_sample_rate: 1.5
+      dtime_max: 5
+      num_sample: 60
+    simulation_config:
+      start_time: 100
+      end_time: 200
+      max_sim_events : 100000
+
+  trainer_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 2
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: logs
+
+FullyNN:
+
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  model_config:
+    model_id: FullyNN
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      num_sample: 60
+    simulation_config:
+      start_time: 100
+      end_time: 200
+      max_sim_events : 100000
+      
+  trainer_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 1
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: logs
+
+IntensityFree:
+
+  data_loading_specs:
+    batch_size: 256
+    num_workers: 4
+    
+  model_config:
+    model_id: IntensityFree
+    specs:
+      hidden_size: 32
+      time_emb_size: 16
+      num_layers: 2
+    thinning:
+      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      over_sample_rate: 1.5
+      dtime_max: 5
+      num_sample: 60
+    base_config:
+      lr: 0.001
+      lr_scheduler: True
+    simulation_config:
+      start_time: 100
+      end_time: 200
+      max_sim_events : 100000
+      
+  trainer_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 1
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: logs

@@ -140,6 +140,7 @@ class HawkesModel(BaseModel):
             intensities = intensities.squeeze(2)
 
         return intensities
+    
 
     def compute_intensities_at_sample_times(self,
                                             time_seq: torch.Tensor,
@@ -166,38 +167,38 @@ class HawkesModel(BaseModel):
         batch_size, seq_len = time_seq.shape
         num_samples = sample_dtimes.shape[-1]
         device = self.device
-
-        time_seq = time_seq.to(device)
-        type_seq = type_seq.to(device)
-        sample_dtimes = sample_dtimes.to(device)
-
-        if compute_last_step_only:
-            # Only compute for the last event in the sequence
-            time_seq = time_seq[:, -1:]
-            type_seq = type_seq[:, -1:]
-            sample_dtimes = sample_dtimes[:, -1:, :]
-            seq_len = 1
         
-        type_seq_exp = type_seq.reshape(batch_size, seq_len, 1, 1).expand(-1, -1, num_samples, self.num_event_types)
+        if compute_last_step_only: 
+
+            safe_type_seq = type_seq[:, -1:]  # Only keep the last event's type
+            safe_sample_dtimes = sample_dtimes[:, -1:, :]  # Only keep the last event's sampled deltas
+
+        else:
+            safe_type_seq = type_seq
+            safe_sample_dtimes = sample_dtimes
+
+        # Recuperate the times for the sample_dtimes
+        type_seq_exp = safe_type_seq.reshape(batch_size, seq_len, 1, 1).expand(-1, -1, num_samples, self.num_event_types)
 
         mask = torch.where(type_seq_exp == torch.arange(self.num_event_types).view(1, 1, 1, -1).to(device), 1, 0)
 
-        sample_dtimes_exp = sample_dtimes.unsqueeze(-1).expand(-1, -1, -1, self.num_event_types)
+        sample_dtimes_exp = safe_sample_dtimes.unsqueeze(-1).expand(-1, -1, -1, self.num_event_types)
         sample_dtimes_exp_masked = sample_dtimes_exp * mask
         sample_times_exp_masked = sample_dtimes_exp_masked.cumsum(dim=2)
         query_times = torch.zeros(batch_size, seq_len, num_samples).to(device)
 
         for i in range(self.num_event_types):
             query_times += torch.where(mask[:, :, :, i] == 1, sample_times_exp_masked[:, :, :, i], 0)
-        
+
         intensities = self.compute_intensities_at_times(
-            time_seq=time_seq,
-            time_delta_seq=None,
-            type_seq=type_seq,
-            query_times=query_times
+            time_seq = time_seq,
+            time_delta_seq = None,
+            type_seq = type_seq,
+            query_times = query_times
         )
 
         return intensities
+    
         
     def loglike_loss(self, batch):
         """Compute the log-likelihood loss for the Hawkes model.
@@ -261,4 +262,5 @@ class HawkesModel(BaseModel):
         )
 
         loss = - (event_ll - non_event_ll).sum()
+        
         return loss, num_events

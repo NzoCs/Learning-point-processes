@@ -131,7 +131,7 @@ class IntensityFree(BaseModel):
                                 num_layers=1,  # used in original paper
                                 batch_first=True)
 
-        self.mark_linear = nn.Linear(self.hidden_size, self.num_event_types_pad)
+        self.mark_linear = nn.Linear(self.hidden_size, self.num_event_types)
         self.linear = nn.Linear(self.hidden_size, 3 * self.num_mix_components)
 
     def forward(self, time_delta_seqs, type_seqs):
@@ -208,7 +208,7 @@ class IntensityFree(BaseModel):
 
         return loss, num_events
 
-    def predict_dtime_one_step(
+    def predict_one_step(
         self,
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,
@@ -216,7 +216,7 @@ class IntensityFree(BaseModel):
         compute_last_step_only: bool = True
     ) -> torch.Tensor:
         """
-        Utility method to predict the next time delta using intensity-free approach.
+        Utility method to predict the next time delta and type using intensity-free approach.
 
         Args:
             time_seq (torch.Tensor): Time sequence [batch_size, seq_len]
@@ -225,12 +225,15 @@ class IntensityFree(BaseModel):
             compute_last_step_only (bool): Whether to compute only the last step
 
         Returns:
-            torch.Tensor: Predicted time deltas
+            tuple: tensors of predicted time deltas and event types
         """
         # [batch_size, seq_len, hidden_size]
         context = self.forward(time_delta_seq, event_seq)
 
-        # [batch_size, seq_len, 3 * num_mix_components]
+        # [batch_size, 1, hidden_size]
+        context = context[:, -1:, :]
+
+        # [batch_size, 1, 3 * num_mix_components]
         raw_params = self.linear(context)
         locs = raw_params[..., :self.num_mix_components]
         log_scales = raw_params[..., self.num_mix_components: (2 * self.num_mix_components)]
@@ -246,16 +249,18 @@ class IntensityFree(BaseModel):
             std_log_inter_time=self.std_log_inter_time
         )
 
-        # [num_samples, batch_size, seq_len]
+        # [num_samples, batch_size, 1]
         accepted_dtimes = inter_time_dist.sample((self.event_sampler.num_sample,))
         dtimes_pred = accepted_dtimes.mean(dim=0)
 
-        if compute_last_step_only:
-            # Return only the last step: [batch_size, 1]
-            return dtimes_pred[:, -1:]
-        else:
-            # Return all steps: [batch_size, seq_len]
-            return dtimes_pred
+        batch_size = context.size(0)
+        num_marks = self.num_event_types
+        
+        # [batch_size, 1, num_marks]
+        mark_logits = torch.softmax(self.mark_linear(context), dim=-1).view(batch_size, num_marks)  # Marks are modeled conditionally independently from times
+        types_pred = torch.multinomial(mark_logits, num_samples=1)  # [batch_size, 1]
+
+        return dtimes_pred, types_pred
 
     def predict_one_step_at_every_event(self, batch):
         """One-step prediction for every event in the sequence.
@@ -300,4 +305,5 @@ class IntensityFree(BaseModel):
         # [batch_size, seq_len, num_marks]
         mark_logits = torch.log_softmax(self.mark_linear(context), dim=-1)  # Marks are modeled conditionally independently from times
         types_pred = torch.argmax(mark_logits, dim=-1)
+
         return dtimes_pred, types_pred

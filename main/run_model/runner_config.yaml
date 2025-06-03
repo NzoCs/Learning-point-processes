@@ -200,7 +200,7 @@ NHP:
     simulation_config:
       start_time: 100
       end_time: 200
-      max_sim_events : 100000
+      max_sim_events : 50000
 
   trainer_config:
     
@@ -235,7 +235,7 @@ RMTPP:
     simulation_config:
       start_time: 100
       end_time: 200
-      max_sim_events : 100000
+      max_sim_events : 50000
 
   trainer_config:
     max_epochs: 1000
@@ -270,7 +270,7 @@ AttNHP:
     simulation_config:
       start_time: 100
       end_time: 200
-      max_sim_events : 100000
+      max_sim_events : 50000
 
   trainer_config:
     max_epochs: 1000
@@ -305,7 +305,7 @@ SAHP:
     simulation_config:
       start_time: 100
       end_time: 200
-      max_sim_events : 100000
+      max_sim_events : 50000
 
   trainer_config:
     max_epochs: 1000
@@ -340,7 +340,7 @@ THP:
     simulation_config:
       start_time: 100
       end_time: 200
-      max_sim_events : 100000
+      max_sim_events : 50000
 
   trainer_config:
     max_epochs: 1000
@@ -374,7 +374,7 @@ FullyNN:
     simulation_config:
       start_time: 100
       end_time: 200
-      max_sim_events : 100000
+      max_sim_events : 50000
       
   trainer_config:
     max_epochs: 1000
@@ -408,7 +408,7 @@ IntensityFree:
     simulation_config:
       start_time: 100
       end_time: 200
-      max_sim_events : 100000
+      max_sim_events : 50000
       
   trainer_config:
     max_epochs: 1000

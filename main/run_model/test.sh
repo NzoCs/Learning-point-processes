@@ -9,7 +9,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=0
 #SBATCH --gres=gpu:1
-#SBATCH --array=0-31%5
+#SBATCH --array=0-3%5
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge
@@ -18,8 +18,8 @@ module purge
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
-experiments=(THP SAHP)
-datasets=(hawkes1 H2expc H2expi self_correcting hawkes2 taxi taobao amazon)
+experiments=(THP SAHP NHP)
+datasets=(H2expc H2expi)
 
 # Mapping index → combinaison
 idx=$SLURM_ARRAY_TASK_ID
@@ -27,4 +27,4 @@ exp=${experiments[$(( idx / ${#datasets[@]} ))]}
 data=${datasets[$(( idx % ${#datasets[@]} ))]}
 
 # Lancement avec srun
-srun python run.py --experiment_id "${exp}" --dataset_id "${data}" --phase "[test]"
+srun python run.py --experiment_id "${exp}" --dataset_id "${data}" --phase "test"

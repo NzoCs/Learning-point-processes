@@ -6,6 +6,7 @@ import copy
 import traceback
 
 class Runner:
+    
     """
     Runner class that manages the training, validation, testing, and prediction phases
     of a temporal point process model with intelligent logging management.
@@ -29,7 +30,7 @@ class Runner:
         # Store original logger config to restore it later
         self.original_logger_config = config.trainer_config.logger_config
         
-        logger.info(f"Runner initialized for model: {config.model_config.model_id} on dataset: {config.data_config.dataset_id}")
+        logger.critical(f"Runner initialized for model: {config.model_config.model_id} on dataset: {config.data_config.dataset_id}")
     
     def _create_trainer(self, enable_logging: bool = True) -> Trainer:
         """
@@ -73,7 +74,7 @@ class Runner:
         Returns:
             dict: Test results if available, None otherwise.
         """
-        logger.info("=== TESTING PHASE ===")
+        logger.critical("=== TESTING PHASE ===")
         trainer = self._create_trainer(enable_logging=False)
         trainer.test()  # This method doesn't return results but saves them to file
         
@@ -86,7 +87,7 @@ class Runner:
         Returns:
             str: Path to the directory where predictions are saved, None if error.
         """
-        logger.info("=== PREDICTION PHASE ===")
+        logger.critical("=== PREDICTION PHASE ===")
         trainer = self._create_trainer(enable_logging=False)
         trainer.predict()  # This method doesn't return predictions but saves them
         

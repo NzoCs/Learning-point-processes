@@ -46,23 +46,33 @@ def reset_seed():
 def sample_model_config():
     """Create a sample model configuration for testing."""
     num_event_types = DEFAULT_NUM_EVENT_TYPES
+    model_id = DEFAULT_MODEL_ID
+    if model_id in ["NHP", "RMTPP"]:
+        specs = {
+            'hidden_size': 32,
+            'max_seq_len': DEFAULT_MAX_SEQ_LEN
+        }
+    elif model_id == "HawkesModel":
+        specs = {
+            'mu': [0.5] * num_event_types,
+            'alpha': [[0.8] * num_event_types for _ in range(num_event_types)],
+            'beta': [[1.2] * num_event_types for _ in range(num_event_types)]
+        }
+    else:
+        specs = {}
     config_dict = {
-        'model_id': DEFAULT_MODEL_ID,
-        'hidden_size': 32,
+        'model_id': model_id,
         'num_event_types': num_event_types,
         'num_event_types_pad': num_event_types + 1,
-        'max_seq_len': DEFAULT_MAX_SEQ_LEN,
-        'lr': 0.001,
-        'batch_size': 16,
-        'device_id': -1,  # CPU by default
-        'compute_simulation': DEFAULT_COMPUTE_SIMULATION,  # Added for predict/test step
+        'compute_simulation': DEFAULT_COMPUTE_SIMULATION,
         'thinning': {
             'num_sample': 10,
             'num_exp': 200,
             'num_steps': 10,
             'over_sample_rate': 1.5,
             'num_samples_boundary': 5,
-            'dtime_max': 5.0        },
+            'dtime_max': 5.0
+        },
         'simulation_config': {
             'start_time': 0.0,
             'end_time': 10.0,
@@ -70,15 +80,9 @@ def sample_model_config():
             'max_sim_events': 1000,
             'seed': 42
         },
-        'specs': {
-            'hidden_size': 32,
-            # Hawkes-specific parameters as arrays
-            'mu': [0.5] * num_event_types,
-            'alpha': [[0.8] * num_event_types for _ in range(num_event_types)],
-            'beta': [[1.2] * num_event_types for _ in range(num_event_types)]
-        }
+        'specs': specs
     }
-    return ModelConfig(**config_dict)
+    return ModelConfig.from_dict(config_dict)
 
 
 @pytest.fixture

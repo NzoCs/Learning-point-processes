@@ -11,7 +11,8 @@ import yaml
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from easy_tpp.config_factory import Config
+# from easy_tpp.config_factory import Config
+from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.runner import Trainer
 from easy_tpp.utils.torch_utils import set_seed
 
@@ -183,11 +184,18 @@ class TestRunnerBasedIntegration:
             'Hawkes': hawkes_config
         }
     
-    def _create_temp_config_file(self, config_dict, temp_dir):
-        """Create a temporary YAML config file."""
+    def _create_temp_config_file(self, config_dict, temp_dir, experiment_id=None):
+        """Create a temporary YAML config file, flattening experiment-specific config."""
         config_path = temp_dir / 'test_config.yaml'
+        # If experiment_id is provided and present in config_dict, flatten it
+        if experiment_id and experiment_id in config_dict:
+            flat_config = dict(config_dict)  # shallow copy
+            exp_cfg = flat_config.pop(experiment_id)
+            flat_config.update(exp_cfg)
+        else:
+            flat_config = config_dict
         with open(config_path, 'w') as f:
-            yaml.dump(config_dict, f, default_flow_style=False)
+            yaml.dump(flat_config, f, default_flow_style=False)
         return str(config_path)
     
     @pytest.mark.parametrize("model_name", ["NHP", "RMTPP"])
@@ -205,12 +213,10 @@ class TestRunnerBasedIntegration:
                 with patch('easy_tpp.preprocess.data_loader.TPPDataModule.val_dataloader'):
                     with patch('easy_tpp.preprocess.data_loader.TPPDataModule.test_dataloader'):
                         # Build config from YAML
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
-                            experiment_id=experiment_id,
-                            dataset_id='test_data'
-                        )
-                        
+                        config = RunnerConfig.load_from_yaml_file(config_path)
+                        # Set experiment_id and dataset_id if needed
+                        config.experiment_id = experiment_id
+                        config.dataset_id = 'test_data'
                         # Create trainer instance
                         trainer = Trainer(config, output_dir=str(temporary_directory))
                         
@@ -237,12 +243,9 @@ class TestRunnerBasedIntegration:
                 with patch('easy_tpp.preprocess.data_loader.TPPDataModule.val_dataloader', return_value=mock_val_loader):
                     with patch('pytorch_lightning.Trainer.fit') as mock_fit:
                         # Build config and create trainer
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
-                            experiment_id=experiment_id,
-                            dataset_id='test_data'
-                        )
-                        
+                        config = RunnerConfig.load_from_yaml_file(config_path)
+                        config.experiment_id = experiment_id
+                        config.dataset_id = 'test_data'
                         trainer = Trainer(config, output_dir=str(temporary_directory))
                         
                         # Test training
@@ -267,12 +270,9 @@ class TestRunnerBasedIntegration:
                 with patch('pytorch_lightning.Trainer.test', return_value=[{'test_loss': 0.5}]) as mock_test:
                     with patch('builtins.open', create=True) as mock_open:
                         # Build config and create trainer
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
-                            experiment_id=experiment_id,
-                            dataset_id='test_data'
-                        )
-                        
+                        config = RunnerConfig.load_from_yaml_file(config_path)
+                        config.experiment_id = experiment_id
+                        config.dataset_id = 'test_data'
                         trainer = Trainer(config, output_dir=str(temporary_directory))
                         
                         # Test testing
@@ -302,12 +302,9 @@ class TestRunnerBasedIntegration:
                         
                         with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator'):
                             # Build config and create trainer
-                            config = Config.build_from_yaml_file(
-                                yaml_dir=config_path,
-                                experiment_id=experiment_id,
-                                dataset_id='test_data'
-                            )
-                            
+                            config = RunnerConfig.load_from_yaml_file(config_path)
+                            config.experiment_id = experiment_id
+                            config.dataset_id = 'test_data'
                             trainer = Trainer(config, output_dir=str(temporary_directory))
                             trainer.model = mock_model
                             
@@ -321,19 +318,16 @@ class TestRunnerBasedIntegration:
     def test_hawkes_model_runner(self, temporary_directory):
         """Test Hawkes model specifically through runner."""
         config_dict = self.test_configs['Hawkes']
-        config_path = self._create_temp_config_file(config_dict, temporary_directory)
+        config_path = self._create_temp_config_file(config_dict, temporary_directory, experiment_id="Hawkes_test")
         
         experiment_id = "Hawkes_test"
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.test_dataloader'):
                 # Build config and create trainer
-                config = Config.build_from_yaml_file(
-                    yaml_dir=config_path,
-                    experiment_id=experiment_id,
-                    dataset_id='test_data'
-                )
-                
+                config = RunnerConfig.load_from_yaml_file(config_path)
+                config.experiment_id = experiment_id
+                config.dataset_id = 'test_data'
                 trainer = Trainer(config, output_dir=str(temporary_directory))
                 
                 # Verify Hawkes model was created
@@ -344,20 +338,16 @@ class TestRunnerBasedIntegration:
     def test_config_override_through_runner(self, temporary_directory):
         """Test configuration override capabilities through runner."""
         config_dict = self.test_configs['NHP']
-        config_path = self._create_temp_config_file(config_dict, temporary_directory)
-        
         experiment_id = "NHP_test"
+        config_path = self._create_temp_config_file(config_dict, temporary_directory, experiment_id=experiment_id)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.train_dataloader'):
                 with patch('easy_tpp.preprocess.data_loader.TPPDataModule.val_dataloader'):
                     # Build config with custom output directory
-                    config = Config.build_from_yaml_file(
-                        yaml_dir=config_path,
-                        experiment_id=experiment_id,
-                        dataset_id='test_data'
-                    )
-                    
+                    config = RunnerConfig.load_from_yaml_file(config_path)
+                    config.experiment_id = experiment_id
+                    config.dataset_id = 'test_data'
                     custom_output_dir = str(temporary_directory / 'custom_output')
                     trainer = Trainer(config, output_dir=custom_output_dir)
                     
@@ -367,7 +357,7 @@ class TestRunnerBasedIntegration:
     def test_checkpoint_loading_through_runner(self, temporary_directory):
         """Test checkpoint loading capabilities through runner."""
         config_dict = self.test_configs['NHP']
-        config_path = self._create_temp_config_file(config_dict, temporary_directory)
+        config_path = self._create_temp_config_file(config_dict, temporary_directory, experiment_id = experiment_id)
         
         experiment_id = "NHP_test"
         
@@ -379,12 +369,9 @@ class TestRunnerBasedIntegration:
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
             # Build config and create trainer with checkpoint
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
-                experiment_id=experiment_id,
-                dataset_id='test_data'
-            )
-            
+            config = RunnerConfig.load_from_yaml_file(config_path)
+            config.experiment_id = experiment_id
+            config.dataset_id = 'test_data'
             trainer = Trainer(config, checkpoint_path='best', output_dir=str(checkpoint_dir))
             
             # Verify checkpoint path is correctly set
@@ -402,12 +389,9 @@ class TestRunnerBasedIntegration:
             experiment_id = f"{model_name}_test"
             
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-                config = Config.build_from_yaml_file(
-                    yaml_dir=config_path,
-                    experiment_id=experiment_id,
-                    dataset_id='test_data'
-                )
-                
+                config = RunnerConfig.load_from_yaml_file(config_path)
+                config.experiment_id = experiment_id
+                config.dataset_id = 'test_data'
                 trainer = Trainer(config, output_dir=str(temporary_directory / model_name))
                 trainers[model_name] = trainer
           # Verify all models were created successfully

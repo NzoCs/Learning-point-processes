@@ -1,7 +1,8 @@
 import argparse
 
-from easy_tpp.config_factory import Config
+from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.runner import Runner
+from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
 
 
 def main():
@@ -27,20 +28,17 @@ def main():
                         help='Output directory for saving results')
 
     args = parser.parse_args()
+
+    # Build configuration from YAML using the utility
+    config_dict = parse_runner_yaml_config(args.config_dir, args.experiment_id, args.dataset_id)
     
-    # Build configuration
-    config = Config.build_from_yaml_file(
-        yaml_dir=args.config_dir, 
-        experiment_id=args.experiment_id, 
-        dataset_id=args.dataset_id
-    )
-    
+    config = RunnerConfig.from_dict(config_dict)
+
     runner = Runner(
         config=config,
         checkpoint_path=args.checkpoint_path,
         output_dir=args.output_dir
     )
-    
     runner.run(phase=args.phase)
     
 

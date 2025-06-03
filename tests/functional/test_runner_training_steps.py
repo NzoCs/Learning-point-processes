@@ -11,7 +11,8 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock, call
 
-from easy_tpp.config_factory import Config
+# from easy_tpp.config_factory import Config
+from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.runner import Trainer
 from easy_tpp.utils.torch_utils import set_seed
 
@@ -26,7 +27,7 @@ class TestRunnerTrainingSteps:
     
     def _create_training_config(self, model_id='NHP', temp_dir=None):
         """Create a training configuration."""
-        config = {
+        config_dict = {
             'pipeline_config_id': 'runner_config',
             'data': {
                 'test_data': {
@@ -94,12 +95,12 @@ class TestRunnerTrainingSteps:
         
         # Clean up None values for specific models
         if model_id == 'HawkesModel':
-            config[f'{model_id}_train']['model_config'] = {
-                k: v for k, v in config[f'{model_id}_train']['model_config'].items() 
+            config_dict[f'{model_id}_train']['model_config'] = {
+                k: v for k, v in config_dict[f'{model_id}_train']['model_config'].items() 
                 if v is not None
             }
         
-        return config
+        return config_dict
     
     def _create_temp_config_file(self, config_dict, temp_dir):
         """Create a temporary YAML config file."""
@@ -123,8 +124,8 @@ class TestRunnerTrainingSteps:
                 with patch('easy_tpp.preprocess.data_loader.TPPDataModule.val_dataloader', return_value=mock_val_loader) as mock_val_dl:
                     with patch('pytorch_lightning.Trainer.fit') as mock_fit:
                         # Build config and create trainer
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
+                        config = RunnerConfig.load_from_yaml_file(
+                            config_path,
                             experiment_id=f'{model_id}_train',
                             dataset_id='test_data'
                         )
@@ -162,8 +163,8 @@ class TestRunnerTrainingSteps:
                     with patch('builtins.open', create=True) as mock_open:
                         with patch('json.dump') as mock_json_dump:
                             # Build config and create trainer
-                            config = Config.build_from_yaml_file(
-                                yaml_dir=config_path,
+                            config = RunnerConfig.load_from_yaml_file(
+                                config_path,
                                 experiment_id=f'{model_id}_train',
                                 dataset_id='test_data'
                             )
@@ -203,8 +204,8 @@ class TestRunnerTrainingSteps:
                 with patch('pytorch_lightning.Trainer.predict', return_value=mock_predictions) as mock_predict:
                     with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator') as mock_comparator:
                         # Build config and create trainer
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
+                        config = RunnerConfig.load_from_yaml_file(
+                            config_path,
                             experiment_id=f'{model_id}_train',
                             dataset_id='test_data'
                         )
@@ -246,8 +247,8 @@ class TestRunnerTrainingSteps:
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.train_dataloader'):
                 with patch('easy_tpp.preprocess.data_loader.TPPDataModule.val_dataloader'):
                     # Build config and create trainer
-                    config = Config.build_from_yaml_file(
-                        yaml_dir=config_path,
+                    config = RunnerConfig.load_from_yaml_file(
+                        yaml_path=config_path,
                         experiment_id='NHP_train',
                         dataset_id='test_data'
                     )
@@ -265,8 +266,8 @@ class TestRunnerTrainingSteps:
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
             # Build config and create trainer
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_train',
                 dataset_id='test_data'
             )
@@ -292,8 +293,8 @@ class TestRunnerTrainingSteps:
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
             # Build config and create trainer
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_train',
                 dataset_id='test_data'
             )
@@ -322,8 +323,8 @@ class TestRunnerTrainingSteps:
                 with patch('easy_tpp.preprocess.data_loader.TPPDataModule.val_dataloader'):
                     with patch('pytorch_lightning.Trainer.fit') as mock_fit:
                         # Build config and create trainer with checkpoint
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
+                        config = RunnerConfig.load_from_yaml_file(
+                            config_path,
                             experiment_id='NHP_train',
                             dataset_id='test_data'
                         )
@@ -356,8 +357,8 @@ class TestRunnerTrainingSteps:
                     with patch('builtins.open', create=True):
                         with patch('json.dump'):
                             # Build config and create trainer with checkpoint
-                            config = Config.build_from_yaml_file(
-                                yaml_dir=config_path,
+                            config = RunnerConfig.load_from_yaml_file(
+                                config_path,
                                 experiment_id='NHP_train',
                                 dataset_id='test_data'
                             )
@@ -389,8 +390,8 @@ class TestRunnerTrainingSteps:
                 with patch('pytorch_lightning.Trainer.predict', return_value=[Mock()]) as mock_predict:
                     with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator'):
                         # Build config and create trainer with checkpoint
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
+                        config = RunnerConfig.load_from_yaml_file(
+                            config_path,
                             experiment_id='NHP_train',
                             dataset_id='test_data'
                         )
@@ -422,8 +423,8 @@ class TestRunnerTrainingSteps:
                 with patch('easy_tpp.preprocess.data_loader.TPPDataModule.val_dataloader'):
                     with patch('pytorch_lightning.Trainer.fit', side_effect=Exception("Training failed")):
                         # Build config and create trainer
-                        config = Config.build_from_yaml_file(
-                            yaml_dir=config_path,
+                        config = RunnerConfig.load_from_yaml_file(
+                            config_path,
                             experiment_id='NHP_train',
                             dataset_id='test_data'
                         )
@@ -443,8 +444,8 @@ class TestRunnerTrainingSteps:
             
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
                 # Build config and create trainer
-                config = Config.build_from_yaml_file(
-                    yaml_dir=config_path,
+                config = RunnerConfig.load_from_yaml_file(
+                    yaml_path=config_path,
                     experiment_id='NHP_train',
                     dataset_id='test_data'
                 )
@@ -471,8 +472,8 @@ class TestRunnerTrainingSteps:
                                         with patch('json.dump'):
                                             with patch('easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator'):
                                                 # Build config and create trainer
-                                                config = Config.build_from_yaml_file(
-                                                    yaml_dir=config_path,
+                                                config = RunnerConfig.load_from_yaml_file(
+                                                    yaml_path=config_path,
                                                     experiment_id='NHP_train',
                                                     dataset_id='test_data'
                                                 )

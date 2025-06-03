@@ -5,7 +5,6 @@ import os
 from typing import List, Tuple, Dict, Optional
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from collections import defaultdict
 
 class BaseSimulator(ABC):
     """

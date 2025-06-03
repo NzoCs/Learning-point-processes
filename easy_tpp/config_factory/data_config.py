@@ -1,54 +1,36 @@
-from easy_tpp.config_factory import Config
-import multiprocessing
+from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
+from easy_tpp.config_factory.base import BaseConfig, ConfigValidationError, config_factory, config_class
 
 
-class TokenizerConfig(Config):
-    def __init__(self, **kwargs):
-        """Initialize the Config class.
-        """
-        
-        self.num_event_types = kwargs.get('num_event_types')
-        self.pad_token_id = kwargs.get('pad_token_id', self.num_event_types)
-        self.padding_side = kwargs.get('padding_side', 'left')
-        self.truncation_side = kwargs.get('truncation_side', 'left')
-        self.padding_strategy = kwargs.get('padding_strategy', 'longest')
-        self.max_len = kwargs.get('max_len')
-        self.truncation_strategy = kwargs.get('truncation_strategy')
-        try:
+@config_class('tokenizer_config')
+@dataclass
+class TokenizerConfig(BaseConfig):
+    """Configuration for event tokenizer."""
+    num_event_types: int = 0
+    pad_token_id: Optional[int] = None
+    padding_side: str = 'left'
+    truncation_side: str = 'left'
+    padding_strategy: str = 'longest'
+    max_len: Optional[int] = None
+    truncation_strategy: Optional[str] = None
+    num_event_types_pad: Optional[int] = None
+    model_input_names: Optional[Any] = None
+
+    def __post_init__(self):
+        if self.pad_token_id is None:
+            self.pad_token_id = self.num_event_types
+        if self.num_event_types_pad is None and self.num_event_types is not None:
             self.num_event_types_pad = self.num_event_types + 1
-        except:
-            self.num_event_types_pad = None
+        if self.padding_side not in ["right", "left"]:
+            raise ConfigValidationError(
+                f"Padding side should be 'right' or 'left', got: {self.padding_side}", "padding_side")
+        if self.truncation_side not in ["right", "left"]:
+            raise ConfigValidationError(
+                f"Truncation side should be 'right' or 'left', got: {self.truncation_side}", "truncation_side")
+        super().__post_init__()
 
-        self.model_input_names = kwargs.get('model_input_names')
-
-        if self.padding_side is not None and self.padding_side not in ["right", "left"]:
-            raise ValueError(
-                f"Padding side should be selected between 'right' and 'left', current value: {self.padding_side}"
-            )
-
-        if self.truncation_side is not None and self.truncation_side not in ["right", "left"]:
-            raise ValueError(
-                f"Truncation side should be selected between 'right' and 'left', current value: {self.truncation_side}"
-            )
-    
-    def set_attribute(self, name, value):
-        """Set the attribute of the config.
-
-        Args:
-            name (str): name of the attribute.
-            value (any): value of the attribute.
-        """
-        if hasattr(self, name):
-            setattr(self, name, value)
-        else:
-            raise AttributeError(f"Attribute {name} not found in config.")
-
-    def get_yaml_config(self):
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the data specs in dict format.
-        """
+    def get_yaml_config(self) -> Dict[str, Any]:
         return {
             'num_event_types': self.num_event_types,
             'pad_token_id': self.pad_token_id,
@@ -57,73 +39,45 @@ class TokenizerConfig(Config):
             'padding_strategy': self.padding_strategy,
             'truncation_strategy': self.truncation_strategy,
             'max_len': self.max_len
-        }
-
-    @staticmethod
-    def parse_from_yaml_config(yaml_config):
-        """Parse from the yaml to generate the config object.
-
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            TokenizerConfig: Config class for tokenizer specs.
-        """
-        return TokenizerConfig(**yaml_config)
-
-    def copy(self):
-        """Copy the config.
-
-        Returns:
-            TokenizerConfig: A copy of current config.
-        """
-        return TokenizerConfig(
-            num_event_types=self.num_event_types,
-            pad_token_id=self.pad_token_id,
-            padding_side=self.padding_side,
-            truncation_side=self.truncation_side,
-            padding_strategy=self.padding_strategy,
-            truncation_strategy=self.truncation_strategy,
-            max_len=self.max_len,
-            model_input_names=self.model_input_names
-        )
-
-
-class DataLoadingSpecsConfig(Config):
-    """Configuration class for data specifications.
+        }    
     
-    This class manages parameters related to data loading and processing.
-    """
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'TokenizerConfig':
+        return cls(**config_dict)
+
+    def get_required_fields(self):
+        return []
     
-    def __init__(self, **kwargs):
-        """Initialize the DataLoadingSpecsConfig class.
-        
-        Args:
-            batch_size (int, optional): Size of each batch. Defaults to 1.
-            num_workers (int, optional): Number of workers for data loading. If None, uses CPU count.
-            shuffle (bool, optional): Whether to shuffle the data. Defaults to None.
-            padding (bool, optional): Whether to pad sequences. Defaults to None.
-            truncation (bool, optional): Whether to truncate sequences. Defaults to None.
-            tensor_type (str, optional): Type of tensor to return ('pt', 'tf', etc.). Defaults to 'pt'.
-            max_len (int, optional): Maximum sequence length. Defaults to None.
+    def pop(self, key: str, default=None):
         """
-        
-        
-        
-        self.batch_size = kwargs.get('batch_size', 32)
-        self.num_workers = kwargs.get('num_workers', 1)
-        self.shuffle = kwargs.get('shuffle', None)
-        self.padding = kwargs.get('padding', None)
-        self.truncation = kwargs.get('truncation', None)
-        self.tensor_type = kwargs.get('tensor_type', 'pt')
-        self.max_length = kwargs.get('max_len', None)
-
-    def get_yaml_config(self):
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the data specs in dict format.
+        Pop method to make TokenizerConfig compatible with EventTokenizer.
+        Returns the attribute value and removes it from the object, or returns default if not found.
         """
+        if hasattr(self, key):
+            value = getattr(self, key)
+            # For special keys that the tokenizer expects to pop, return the value but don't actually remove
+            # the attribute since this is a dataclass configuration object
+            return value
+        return default
+
+
+@config_class('data_loading_specs_config')
+@dataclass
+class DataLoadingSpecsConfig(BaseConfig):
+    batch_size: int = 32
+    num_workers: int = 1
+    shuffle: Optional[bool] = None
+    padding: Optional[bool] = None
+    truncation: Optional[bool] = None
+    tensor_type: str = 'pt'
+    max_len: Optional[int] = None
+
+    @property
+    def max_length(self) -> Optional[int]:
+        """Compatibility property for max_length (maps to max_len)."""
+        return self.max_len
+
+    def get_yaml_config(self) -> Dict[str, Any]:
         return {
             'batch_size': self.batch_size,
             'tensor_type': self.tensor_type,
@@ -131,83 +85,39 @@ class DataLoadingSpecsConfig(Config):
             'shuffle': self.shuffle,
             'padding': self.padding,
             'truncation': self.truncation,
-            'max_len': self.max_length
+            'max_len': self.max_len
         }
 
-    @staticmethod
-    def parse_from_yaml_config(yaml_config):
-        """Parse from the yaml to generate the config object.
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'DataLoadingSpecsConfig':
+        return cls(**config_dict)
 
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            DataLoadingSpecsConfig: Config class for data specs.
-        """
-        return DataLoadingSpecsConfig(**yaml_config)
-
-    def copy(self):
-        """Copy the config.
-
-        Returns:
-            DataLoadingSpecsConfig: a copy of current config.
-        """
-        return DataLoadingSpecsConfig(
-            batch_size=self.batch_size,
-            tensor_type=self.tensor_type,
-            num_workers=self.num_workers,
-            shuffle=self.shuffle,
-            padding=self.padding,
-            truncation=self.truncation,
-            max_len=self.max_length
-        )
+    def get_required_fields(self):
+        return []
 
 
-@Config.register('data_config')
-class DataConfig(Config):
-    def __init__(self, **kwargs):
-        """Initialize the DataConfig object.
+@config_class('data_config')
+@dataclass
+class DataConfig(BaseConfig):
+    train_dir: Optional[str] = None
+    valid_dir: Optional[str] = None
+    test_dir: Optional[str] = None
+    source_dir: Optional[str] = None
+    data_format: Optional[str] = None
+    dataset_id: Optional[str] = None
+    data_loading_specs: DataLoadingSpecsConfig = field(default_factory=DataLoadingSpecsConfig)
+    data_specs: TokenizerConfig = field(default_factory=TokenizerConfig)
+    
 
-        Args:
-            train_dir (str): dir of train set.
-            valid_dir (str): dir of valid set.
-            test_dir (str): dir of test set.
-            source_dir (str): dir of dataset if there is no split.
-            data_format (str, optional): format of the data. Defaults to None.
-            data_specs (dict, optional): specs of dataset. Defaults to None.
-            tokenizer_config (dict, optional): tokenizer configuration. Defaults to None.
-        """
-        self.train_dir = kwargs.get("train_dir")
-        self.valid_dir = kwargs.get('valid_dir')
-        self.test_dir = kwargs.get("test_dir")
-        self.source_dir = kwargs.get("source_dir")
-        self.data_format = kwargs.get('data_format')
-        self.dataset_id = kwargs.get('dataset_id')
-        
+    def __post_init__(self):
         if self.data_format is None:
             if self.train_dir is not None:
                 self.data_format = self.train_dir.split('.')[-1]
             elif self.source_dir is not None:
                 self.data_format = self.source_dir.split('.')[-1]
+        super().__post_init__()
 
-        data_loading_specs = kwargs.get("data_loading_specs", {})
-        if isinstance(data_loading_specs, DataLoadingSpecsConfig):
-            self.data_loading_specs = data_loading_specs
-        else:
-            self.data_loading_specs = DataLoadingSpecsConfig.parse_from_yaml_config(data_loading_specs)
-        
-        data_specs = kwargs.get("data_specs", {})
-        if isinstance(data_specs, TokenizerConfig):
-            self.data_specs = data_specs
-        else:
-            self.data_specs = TokenizerConfig.parse_from_yaml_config(data_specs)
-            
-    def get_yaml_config(self):
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the data in dict format.
-        """
+    def get_yaml_config(self) -> Dict[str, Any]:
         return {
             'train_dir': self.train_dir,
             'valid_dir': self.valid_dir,
@@ -215,56 +125,20 @@ class DataConfig(Config):
             'source_dir': self.source_dir,
             'data_format': self.data_format,
             'dataset_id': self.dataset_id,
-            'data_loading_specs': self.data_loading_specs.get_yaml_config(),
-            'data_specs': self.data_specs.get_yaml_config(),
+            'data_loading_specs': self.data_loading_specs.get_yaml_config() if hasattr(self.data_loading_specs, 'get_yaml_config') else self.data_loading_specs,
+            'data_specs': self.data_specs.get_yaml_config() if hasattr(self.data_specs, 'get_yaml_config') else self.data_specs,
         }
 
-    @staticmethod
-    def parse_from_yaml_config(yaml_config: dict, **kwargs):
-        """Parse from the yaml to generate the config object.
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'DataConfig':
+        dls = config_dict.get('data_loading_specs', {})
+        ds = config_dict.get('data_specs', {})
+        config_dict = dict(config_dict)
+        config_dict['data_loading_specs'] = DataLoadingSpecsConfig.from_dict(dls) if not isinstance(dls, DataLoadingSpecsConfig) else dls
+        config_dict['data_specs'] = TokenizerConfig.from_dict(ds) if not isinstance(ds, TokenizerConfig) else ds
+        return cls(**config_dict)
 
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            PLDataConfig: Config class for data.
-        """
-        
-        experiment_id = kwargs.get('experiment_id')
-        if experiment_id is not None : 
-            exp_yaml_config = yaml_config[experiment_id]
-            exp_yaml_config['dataset_id'] = experiment_id
-        else:
-            exp_yaml_config = yaml_config
-        
-        return DataConfig(**exp_yaml_config)
-
-    def copy(self):
-        """Copy the config.
-
-        Returns:
-            PLDataConfig: a copy of current config.
-        """
-        return DataConfig(
-            train_dir=self.train_dir,
-            valid_dir=self.valid_dir,
-            test_dir=self.test_dir,
-            source_dir=self.source_dir,
-            data_format=self.data_format,
-            data_loading_specs=self.data_loading_specs,
-            data_specs=self.data_specs
-        )
-
-    def get_data_dir(self, split = None):
-        """Get the dir of the source raw data.
-
-        Args:
-            split (str): dataset split notation, 'train', 'dev' or 'valid', 'test' or None if the dataset does not have a split,
-            then the config must have a source dir.
-
-        Returns:
-            str: dir of the source raw data file.
-        """
+    def get_data_dir(self, split=None) -> Optional[str]:
         if split in ['train', 'dev', 'valid', 'test']:
             split = split.lower()
             if split == 'train':
@@ -276,7 +150,10 @@ class DataConfig(Config):
         if split is None:
             if self.source_dir is None:
                 raise ValueError("The dataset does not have a split, please provide the source dir.")
-        else:
-            raise ValueError(f"Unknown split: {split}. Please provide a valid split name.")    
-            
+            return self.source_dir
+        raise ValueError(f"Unknown split: {split}. Please provide a valid split name.")
+
+    def get_required_fields(self):
+        return []
+
 

@@ -6,7 +6,7 @@ from easy_tpp.evaluate.distribution_analysis_helper import TemporalPointProcessC
 from ..utils.model_utils import flexible_state_dict_loading, compare_model_configs
 
 import torch
-from typing import Optional, List
+from typing import Optional
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from pytorch_lightning.strategies import DDPStrategy
@@ -57,13 +57,12 @@ class Trainer:
         # Initialize Dataloaders
         self.datamodule = TPPDataModule(data_config)
         
-        
-        # Initialize Train params
+          # Initialize Train params
         self.log_freq = trainer_config.log_freq
         self.checkpoints_freq = trainer_config.checkpoints_freq
         self.patience = trainer_config.patience
         self.devices = trainer_config.devices
-        self.logger_config = trainer_config.get('logger_config')
+        self.logger_config = trainer_config.logger_config
         self.val_freq = trainer_config.val_freq
         self.use_precision_16 = trainer_config.use_precision_16
         self.accumulate_grad_batches = trainer_config.accumulate_grad_batches
@@ -239,7 +238,7 @@ class Trainer:
         if results and len(results) > 0:
             import json
             
-            results_file = os.path.join(self.dirpath, f'test_results.json')
+            results_file = os.path.join(self.dirpath, 'test_results.json')
             
             with open(results_file, 'w') as f:
                 json.dump(results[0], f, indent=4)
@@ -256,7 +255,7 @@ class Trainer:
         self.datamodule.setup(stage='predict')
         predict_dataloader = self.datamodule.test_dataloader()  # ou un dataloader spécifique
 
-        predictions = trainer.predict(
+        trainer.predict(
             model=self.model,
             dataloaders=predict_dataloader,
             ckpt_path=self.checkpoint_path

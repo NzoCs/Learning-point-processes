@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=80G
 #SBATCH --partition=cpu_long
-#SBATCH --array=0-47%5
+#SBATCH --array=0-31%5
 
 # Nettoie l'environnement module pour éviter les conflits
 module purge
@@ -25,4 +25,4 @@ exp=${experiments[$(( idx / ${#datasets[@]} ))]}
 data=${datasets[$(( idx % ${#datasets[@]} ))]}
 
 # Lancement avec srun
-srun python train.py --experiment_id "${exp}" --dataset_id "${data}" --phase "all"
+srun python run.py --experiment_id "${exp}" --dataset_id "${data}" --phase "all"

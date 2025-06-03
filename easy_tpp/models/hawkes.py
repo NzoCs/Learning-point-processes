@@ -167,37 +167,86 @@ class HawkesModel(BaseModel):
         batch_size, seq_len = time_seq.shape
         num_samples = sample_dtimes.shape[-1]
         device = self.device
+
+        num_samples = sample_dtimes.shape[-1] if sample_dtimes.dim() == 3 else 1
         
         if compute_last_step_only: 
-
-            safe_type_seq = type_seq[:, -1:]  # Only keep the last event's type
-            safe_sample_dtimes = sample_dtimes[:, -1:, :]  # Only keep the last event's sampled deltas
+            time_seq_clone = time_seq[:, -2:]
+            safe_dtimes = time_seq_clone.diff(dim=1).unsqueeze(-1)  # [B, 1, 1]
+            ratios = torch.linspace(0, 1, num_samples, device=device).view(1, 1, num_samples)  # [1, 1, N_samples]
+            query_times = time_seq + safe_dtimes * ratios
 
         else:
-            safe_type_seq = type_seq
-            safe_sample_dtimes = sample_dtimes
-
-        # Recuperate the times for the sample_dtimes
-        type_seq_exp = safe_type_seq.reshape(batch_size, seq_len, 1, 1).expand(-1, -1, num_samples, self.num_event_types)
-
-        mask = torch.where(type_seq_exp == torch.arange(self.num_event_types).view(1, 1, 1, -1).to(device), 1, 0)
-
-        sample_dtimes_exp = safe_sample_dtimes.unsqueeze(-1).expand(-1, -1, -1, self.num_event_types)
-        sample_dtimes_exp_masked = sample_dtimes_exp * mask
-        sample_times_exp_masked = sample_dtimes_exp_masked.cumsum(dim=2)
-        query_times = torch.zeros(batch_size, seq_len, num_samples).to(device)
-
-        for i in range(self.num_event_types):
-            query_times += torch.where(mask[:, :, :, i] == 1, sample_times_exp_masked[:, :, :, i], 0)
+            time_seq_clone = time_seq
+            safe_dtimes = time_seq_clone.diff(dim=1).unsqueeze(-1)  # [B, L-1, 1]
+            ratios = torch.linspace(0, 1, num_samples, device=device).view(1, 1, num_samples)  # [1, 1, N_samples]
+            query_times = time_seq[:,:-1] + safe_dtimes * ratios
 
         intensities = self.compute_intensities_at_times(
-            time_seq = time_seq,
+            time_seq = time_seq[:, :-1],
             time_delta_seq = None,
-            type_seq = type_seq,
+            type_seq = type_seq[:,:-1],
             query_times = query_times
         )
 
         return intensities
+    
+    # def compute_intensities_at_sample_times(self,
+    #                                         time_seq: torch.Tensor,
+    #                                         time_delta_seq: torch.Tensor, # Not directly used here
+    #                                         type_seq: torch.Tensor,
+    #                                         sample_dtimes: torch.Tensor,
+    #                                         compute_last_step_only: bool = False,
+    #                                         **kwargs):
+    #     """
+    #     Computes intensities at sampled times relative to each event in the sequence.
+    #     Required by BaseModel for prediction and loss calculation.
+    #     Calculates lambda(t_k + delta_t) using history up to event k (time_seq[k]).
+
+    #     Args:
+    #         time_seq (torch.Tensor): Event timestamps [B, L].
+    #         time_delta_seq (torch.Tensor): Time differences between events [B, L].
+    #         type_seq (torch.Tensor): Event types [B, L].
+    #         sample_dtimes (torch.Tensor): Sampled time deltas relative to each event [B, L, N_samples].
+    #         compute_last_step_only (bool): If True, only compute for the last event in the sequence.
+
+    #     Returns:
+    #         torch.Tensor: Intensities lambda_i(t_k + delta_t). Shape [B, L, N_samples, D] or [B, 1, N_samples, D] if compute_last_step_only.
+    #     """
+    #     batch_size, seq_len = time_seq.shape
+    #     num_samples = sample_dtimes.shape[-1]
+    #     device = self.device
+        
+    #     if compute_last_step_only: 
+
+    #         safe_type_seq = type_seq[:, -1:]  # Only keep the last event's type
+    #         safe_sample_dtimes = sample_dtimes[:, -1:, :]  # Only keep the last event's sampled deltas
+
+    #     else:
+    #         safe_type_seq = type_seq
+    #         safe_sample_dtimes = sample_dtimes
+
+    #     # Recuperate the times for the sample_dtimes
+    #     type_seq_exp = safe_type_seq.reshape(batch_size, seq_len, 1, 1).expand(-1, -1, num_samples, self.num_event_types)
+
+    #     mask = torch.where(type_seq_exp == torch.arange(self.num_event_types).view(1, 1, 1, -1).to(device), 1, 0)
+
+    #     sample_dtimes_exp = safe_sample_dtimes.unsqueeze(-1).expand(-1, -1, -1, self.num_event_types)
+    #     sample_dtimes_exp_masked = sample_dtimes_exp * mask
+    #     sample_times_exp_masked = sample_dtimes_exp_masked.cumsum(dim=2)
+    #     query_times = torch.zeros(batch_size, seq_len, num_samples).to(device)
+
+    #     for i in range(self.num_event_types):
+    #         query_times += torch.where(mask[:, :, :, i] == 1, sample_times_exp_masked[:, :, :, i], 0)
+
+    #     intensities = self.compute_intensities_at_times(
+    #         time_seq = time_seq,
+    #         time_delta_seq = None,
+    #         type_seq = type_seq,
+    #         query_times = query_times
+    #     )
+
+    #     return intensities
     
         
     def loglike_loss(self, batch):

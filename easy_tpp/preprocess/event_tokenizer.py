@@ -6,7 +6,7 @@ import numpy as np
 
 from easy_tpp.utils import is_torch_available, is_tf_available, logger, TruncationStrategy, PaddingStrategy, \
     TensorType, is_torch_device, requires_backends, is_numpy_array, py_assert
-
+from easy_tpp.config_factory import TokenizerConfig
 
 class BatchEncoding(UserDict):
     """
@@ -144,7 +144,7 @@ class EventTokenizer:
     truncation_side: str = "right"
     model_input_names: List[str] = ["time_seqs", "time_delta_seqs", "type_seqs", "seq_non_pad_mask", "attention_mask"]
 
-    def __init__(self, config):
+    def __init__(self, config: TokenizerConfig):
         config = copy.deepcopy(config)
         self.num_event_types = config.num_event_types
         self.pad_token_id = config.pad_token_id
@@ -158,7 +158,7 @@ class EventTokenizer:
         # is changed.
         self.padding_side = config.pop("padding_side", self.padding_side)
         self.truncation_side = config.pop("truncation_side", self.truncation_side)
-        self.model_input_names = config.pop("model_input_names", self.model_input_names)
+        self.model_input_names = config.pop("model_input_names") if config.model_input_names is not None else self.model_input_names
 
     def _get_padding_truncation_strategies(
             self, padding=False, truncation=None, max_length=None, verbose=False, **kwargs

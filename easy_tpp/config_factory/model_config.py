@@ -1,466 +1,456 @@
-from easy_tpp.config_factory.config import Config
+"""
+Unified model configuration with comprehensive validation and type safety.
+
+This module provides a refactored ModelConfig implementation that follows
+best practices for configuration management with proper validation,
+error handling, and maintainable architecture.
+"""
+
+from typing import Dict, Any, List, Optional, Union
+from dataclasses import dataclass, field
+from enum import Enum
+import logging
+
+from easy_tpp.config_factory.base import BaseConfig, ConfigValidationError, config_factory, config_class
 from easy_tpp.utils.const import Backend
 
-from typing import Optional, Union
+logger = logging.getLogger(__name__)
 
-def get_available_gpu():
-    """Detect available GPUs on the machine.
-    
-    Returns:
-        int: GPU ID (0 if available, -1 if no GPU available)
-    """
+
+class ModelType(Enum):
+    """Enumeration of supported model types."""
+    NHP = "NHP"
+    RMTPP = "RMTPP"
+    THP = "THP"
+    SAHP = "SAHP"
+    AttNHP = "AttNHP"
+    IntensityFree = "IntensityFree"
+    Hawkes = "Hawkes"
+    FullyNN = "FullyNN"
+    ANHN = "ANHN"
+    ODE_TPP = "ODE_TPP"
+    SelfCorrecting = "SelfCorrecting"
+
+
+def get_available_gpu() -> int:
+    """Get the available GPU device ID or -1 for CPU."""
     try:
         import torch
-        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
-            return 0
+        if torch.cuda.is_available():
+            return 0  # Return first available GPU
+        return -1
     except ImportError:
-        pass
+        logger.warning("PyTorch not available, defaulting to CPU")
+        return -1
+
+
+@config_class('thinning_config')
+@dataclass
+class ThinningConfig(BaseConfig):
+    """Configuration for thinning process in temporal point processes."""
     
-    return -1
-
-
-class ThinningConfig(Config):
-    """Configuration class for the thinning algorithms.
+    num_sample: int = 10
+    num_exp: int = 200
+    num_steps: int = 10
+    over_sample_rate: float = 1.5
+    num_samples_boundary: int = 5
+    dtime_max: float = 5.0
     
-    Attributes:
-        num_sample (int): Number of sampled next event times (default: 1)
-        num_exp (int): Number of i.i.d. Exp(intensity_bound) draws (default: 500)
-        num_steps (int): Number of steps for multiple step predictions (default: 10)
-        over_sample_rate (float): Multiplier for intensity upper bound (default: 5.0)
-        num_samples_boundary (int): Samples for intensity boundary computation (default: 5)
-        dtime_max (float): Maximum delta time in sampling (default: 5.0)
-    """
+    def get_required_fields(self) -> List[str]:
+        """Return list of required field names."""
+        return []  # All fields have defaults
     
-    def __init__(self, 
-                 num_sample: int = 30,
-                 num_exp: int = 500,
-                 num_steps: int = 10,
-                 over_sample_rate: float = 1.5,
-                 num_samples_boundary: int = 30,
-                 dtime_max: float = 10.0) -> None:
-        """Initialize ThinningConfig with type-safe parameters."""
-        self.num_sample = int(num_sample)
-        self.num_exp = int(num_exp)
-        self.num_steps = int(num_steps)
-        self.over_sample_rate = float(over_sample_rate)
-        self.num_samples_boundary = int(num_samples_boundary)
-        self.dtime_max = float(dtime_max)
-
-        self._validate_parameters()
-
-    def _validate_parameters(self) -> None:
-        """Validate configuration parameters."""
-        if self.num_sample <= 0:
-            raise ValueError("num_sample must be positive")
-        if self.num_exp <= 0:
-            raise ValueError("num_exp must be positive")
-        if self.over_sample_rate <= 0:
-            raise ValueError("over_sample_rate must be positive")
-        if self.num_samples_boundary <= 0:
-            raise ValueError("num_samples_boundary must be positive")
-        if self.dtime_max <= 0:
-            raise ValueError("dtime_max must be positive")
-
-    def get_yaml_config(self) -> dict:
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the thinning specs in dict format.
-        """
-        return {'num_sample': self.num_sample,
-                'num_exp': self.num_exp,
-                'over_sample_rate': self.over_sample_rate,
-                'num_samples_boundary': self.num_samples_boundary,
-                'dtime_max': self.dtime_max}
-
-    @staticmethod
-    def parse_from_yaml_config(yaml_config) -> 'ThinningConfig':
-        """Parse from the yaml to generate the config object.
-
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            EasyTPP.ThinningConfig: Config class for thinning algorithms.
-        """
-        return ThinningConfig(**yaml_config) if yaml_config is not None else None
-
-    def copy(self):
-        """Copy the config.
-
-        Returns:
-            EasyTPP.ThinningConfig: a copy of current config.
-        """
-        return ThinningConfig(
-            num_sample=self.num_sample,
-            num_exp=self.num_exp,
-            over_sample_rate=self.over_sample_rate,
-            num_samples_boundary=self.num_samples_boundary,
-            dtime_max=self.dtime_max
-            )
-
-class SimulationConfig(Config):
-    """Configuration class for simulation parameters.
-    
-    Attributes:
-        start_time (float): Start time for the simulation.
-        end_time (float): End time for the simulation.
-        batch_size (int): Batch size for training/testing.
-    """
-    
-    def __init__(self, **kwargs):
-        """Initialize the Config class."""
-        
-        required_keys = ['start_time', 'end_time']
-        for key in required_keys:
-            if key not in kwargs:
-                raise ValueError(f"Missing required config key: {key}")
-            
-        self.start_time = kwargs.get('start_time')
-        self.end_time = kwargs.get('end_time')
-        self.batch_size = kwargs.get('batch_size', 32)
-        self.max_sim_events = kwargs.get('max_sim_events', 10**5)
-        self.seed = kwargs.get('seed', 42)
-
-    def get_yaml_config(self) -> dict:
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the thinning specs in dict format.
-        """
-        return {'start_time': self.start_time,
-                'end_time': self.end_time,
-                'batch_size': self.batch_size}
-    
-    def copy(self) -> 'SimulationConfig':
-        """Copy the config.
-
-        Returns:
-            SimulationConfig: a copy of current config.
-        """
-        return SimulationConfig(
-            start_time=self.start_time,
-            end_time=self.end_time,
-            batch_size=self.batch_size
-            )
-        
-    @staticmethod
-    def parse_from_yaml_config(yaml_config) -> 'SimulationConfig':
-        """Parse from the yaml to generate the config object.
-
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            SimulationConfig: Config class for simulation specs.
-        """
-        return SimulationConfig(**yaml_config) if yaml_config is not None else None
-
-class BaseConfig(Config):
-    """Base configuration for the EasyTPP library.
-    
-    Attributes:
-        stage (str): Training stage ('train' or 'test')
-        backend (Backend): Computation backend (Torch or TensorFlow)
-        dataset_id (str): Dataset identifier
-        lr (float): Learning rate
-        lr_scheduler (bool): Enable learning rate scheduling
-        max_epochs (int | None): Maximum training epochs
-        base_dir (str): Base directory for model/logs
-    """
-    
-    VALID_STAGES = {'train', 'test', 'val'}
-    
-    def __init__(
-            self,
-            stage: str = 'train',
-            backend: str = 'torch',
-            dataset_id: Optional[str] = None,
-            dropout_rate: float = 0.0,
-            lr: float = 0.001,
-            lr_scheduler: bool = False,
-            max_epochs: Optional[int] = None,
-            base_dir: Optional[str] = None
-            ) -> None:
-        
-        """Initialize BaseConfig with type-safe parameters."""
-        self.stage = self._validate_stage(stage)
-        self.lr = float(lr)
-        self.lr_scheduler = bool(lr_scheduler)
-        
-        self.dropout = float(dropout_rate)
-        self.max_epochs = int(max_epochs) if max_epochs is not None else None
-        self.dataset_id = dataset_id
-        self.base_dir = base_dir
-        self.backend = self.set_backend(backend)
-
-        self._validate_parameters()
-
-    def _validate_stage(self, stage: str) -> str:
-        """Validate training stage."""
-        stage = stage.lower()
-        if stage not in self.VALID_STAGES:
-            raise ValueError(f"Stage must be one of {self.VALID_STAGES}")
-        return stage
-
-    def _validate_parameters(self) -> None:
-        """Validate configuration parameters."""
-        if self.lr <= 0:
-            raise ValueError("Learning rate must be positive")
-        if self.lr_scheduler and self.max_epochs is None:
-            raise ValueError("max_epochs required when lr_scheduler is enabled")
-        if self.max_epochs is not None and self.max_epochs <= 0:
-            raise ValueError("max_epochs must be positive")
-
-    @staticmethod
-    def set_backend(backend):
-        if backend.lower() in ['torch', 'pytorch']:
-            return Backend.Torch
-        elif backend.lower() in ['tf', 'tensorflow']:
-            return Backend.TF
-        else:
-            raise ValueError(
-                f"Backend should be selected between 'torch or pytorch' and 'tf or tensorflow', "
-                f"current value: {backend}"
-            )
-
-    def get_yaml_config(self) -> dict:
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the base config specs in dict format.
-        """
-        return {'stage': self.stage,
-                'backend': str(self.backend),
-                'dataset_id': self.dataset_id,
-                'base_dir': self.base_dir,
-                'lr': self.lr,
-                'lr_scheduler': self.lr_scheduler,
-                'max_epochs': self.max_epochs,
-                'dropout_rate': self.dropout}
-
-    @staticmethod
-    def parse_from_yaml_config(yaml_config) -> 'BaseConfig':
-        """Parse from the yaml to generate the config object.
-
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            BaseConfig: Config class for trainer specs.
-        """
-        return BaseConfig(**yaml_config)
-
-    def copy(self):
-        """Copy the config.
-
-        Returns:
-            BaseConfig: a copy of current config.
-        """
-        return BaseConfig(stage=self.stage,
-                          backend=self.backend,
-                          dataset_id=self.dataset_id,
-                          base_dir=self.base_dir,
-                          dropout_rate=self.dropout,
-                          lr=self.lr,
-                          lr_scheduler=self.lr_scheduler,
-                          max_epochs=self.max_epochs)
-
-
-class ModelSpecsConfig:
-    """Configuration class for the model specifications.
-    This class is used to define the configuration for the model specifications.
-    
-    Attributes:
-        rnn_type (str): Type of RNN to be used (e.g., 'LSTM', 'GRU').
-        hidden_size (int): Size of the hidden layer.
-        time_emb_size (int): Size of the time embedding layer.
-        num_layers (int): Number of layers in the RNN.
-        num_heads (int): Number of attention heads.
-        sharing_param_layer (bool): Whether to share parameters across layers.
-        use_mc_samples (bool): Whether to use Monte Carlo samples for log-likelihood computation.
-        loss_integral_num_sample_per_step (int): Number of samples per step for loss integral computation.
-    """
-    
-    def __init__(self, **kwargs):
-        """Initialize the Config class."""
-
-        self.rnn_type = kwargs.get('rnn_type', 'LSTM')
-        self.hidden_size = kwargs.get('hidden_size', 32)
-        self.time_emb_size = kwargs.get('time_emb_size', 16)
-        self.num_layers = kwargs.get('num_layers', 2)
-        self.num_heads = kwargs.get('num_heads', 2)
-        self.sharing_param_layer = kwargs.get('sharing_param_layer', False)
-        self.loss_integral_num_sample_per_step = kwargs.get('loss_integral_num_sample_per_step', 20)  # mc_num_sample_per_step
-        self.use_ln = kwargs.get('use_norm', False)
-
-        #for cumulative hazard function network of the FullyNN model
-        self.num_mlp_layers = kwargs.get('num_mlp_layers', 2)
-        self.proper_marked_intensities = kwargs.get('proper_marked_intensities', False)
-        
-        #for IntensityFree model
-        self.num_mix_components = kwargs.get('num_mix_components', 1)
-        self.mean_log_inter_time = kwargs.get('mean_log_inter_time', 0.0)
-        self.std_log_inter_time = kwargs.get('std_log_inter_time', 1.0)
-
-        #for ODETPP model
-        self.ode_num_sample_per_step = kwargs.get('ode_num_sample_per_step', 20)
-
-        #for Hawkes model
-        self.mu = kwargs.get('mu')
-        self.alpha = kwargs.get('alpha')
-        self.beta = kwargs.get('beta')
-
-    @staticmethod
-    def parse_from_yaml_config(yaml_config) -> 'ModelSpecsConfig':
-        """Parse from the yaml to generate the config object.
-
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            ModelConfig: Config class for trainer specs.
-        """
-        return ModelSpecsConfig(**yaml_config)
-    
-    def copy(self) -> 'ModelSpecsConfig':
-        """Copy the config.
-
-        Returns:
-            ModelSpecsConfig: a copy of current config.
-        """
-        return ModelSpecsConfig(rnn_type=self.rnn_type,
-                                hidden_size=self.hidden_size,
-                                time_emb_size=self.time_emb_size,
-                                num_layers=self.num_layers,
-                                num_heads=self.num_heads,
-                                sharing_param_layer=self.sharing_param_layer,
-                                loss_integral_num_sample_per_step=self.loss_integral_num_sample_per_step,
-                                use_norm=self.use_ln)
-    
-    def get_yaml_config(self) -> dict:
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the model specs in dict format.
-        """
-        return {'rnn_type': self.rnn_type,
-                'hidden_size': self.hidden_size,
-                'time_emb_size': self.time_emb_size,
-                'num_layers': self.num_layers,
-                'num_heads': self.num_heads,
-                'sharing_param_layer': self.sharing_param_layer,
-                'loss_integral_num_sample_per_step': self.loss_integral_num_sample_per_step,
-                'use_norm': self.use_ln}
-                
-                
-@Config.register('model_config')
-class ModelConfig(Config):
-    """
-    Configuration class for the model.
-    This class is used to define the configuration for the model.
-    
-    Attributes:
-        dropout_rate (float): Dropout rate for the model.
-        use_ln (bool): Whether to use layer normalization.
-        thinning (ThinningConfig): Configuration for the thinning process.  
-        is_training (bool): Whether the model is in training mode.
-        num_event_types_pad (int): Number of event types for padding.
-        num_event_types (int): Number of event types.
-        pad_token_id (int): Padding token ID.
-        model_id (str): Model ID.
-        gpu (int): GPU ID to be used for training.
-        model_specs (ModelSpecsConfig): Configuration for the model specifications."""
-    
-    def __init__(self, **kwargs):
-        """Initialize the Config class."""
-        
-        required_keys = ['num_event_types', 'model_id']
-        for key in required_keys:
-            if key not in kwargs:
-                raise ValueError(f"Missing required config key: {key}")
-        
-        self.is_training = kwargs.get('training', False)
-        self.num_event_types = kwargs.get('num_event_types')
-        self.num_event_types_pad = kwargs.get('num_event_types_pad', self.num_event_types + 1)
-        self.pad_token_id = kwargs.get('event_pad_index', self.num_event_types)
-        # Use available GPU if not specified
-        self.gpu = kwargs.get('gpu', get_available_gpu())
-        self.model_id = kwargs.get('model_id')
-        
-        self.use_mc_samples = kwargs.get('use_mc_samples', True)  # if using MC samples in computing log-likelihood
-        
-        self.device = kwargs.get('device', 'cuda' if self.gpu >= 0 else 'cpu')
-
-        self.compute_simulation = kwargs.get('compute_simulation', False)
-        
-        self.thinning = ThinningConfig.parse_from_yaml_config(kwargs.get('thinning', {}))
-        
-        # Propagate top-level model spec keys into specs if not already present
-        specs_dict = dict(kwargs.get('specs', {}))
-        for key in ['hidden_size', 'rnn_type', 'time_emb_size', 'num_layers', 'num_heads', 'sharing_param_layer', 'loss_integral_num_sample_per_step', 'use_norm', 'num_mlp_layers', 'proper_marked_intensities', 'num_mix_components', 'mean_log_inter_time', 'std_log_inter_time', 'ode_num_sample_per_step', 'mu', 'alpha', 'beta']:
-            if key in kwargs and key not in specs_dict:
-                specs_dict[key] = kwargs[key]
-                
-        self.specs = ModelSpecsConfig.parse_from_yaml_config(specs_dict)
-
-        self.base_config = BaseConfig.parse_from_yaml_config(kwargs.get('base_config', {}))
-        
-        self.pretrain_model_path = kwargs.get('model_path', None)
-
-        self.simulation_config = kwargs.get('simulation_config', None)
-        
-        if self.simulation_config is not None:
-            self.simulation_config = SimulationConfig.parse_from_yaml_config(self.simulation_config)
-        
-        
-    def get_yaml_config(self):
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: config of the model config specs in dict format.
-        """
-        
+    def get_yaml_config(self) -> Dict[str, Any]:
+        """Get configuration as YAML-compatible dictionary."""
         return {
-            'use_mc_samples': self.use_mc_samples,
-            'thinning': self.thinning.get_yaml_config(),
-            'training': self.is_training,
-            "pretrain_model_path" : self.pretrain_model_path,
-            'num_event_types_pad': self.num_event_types_pad,
-            'num_event_types': self.num_event_types,
-            'event_pad_index': self.pad_token_id,
-            'model_id': self.model_id,
-            'gpu': self.gpu,
-            'model_specs': self.specs.get_yaml_config(),
-            'base_config': self.base_config.get_yaml_config()
+            'num_sample': self.num_sample,
+            'num_exp': self.num_exp,
+            'num_steps': self.num_steps,
+            'over_sample_rate': self.over_sample_rate,
+            'num_samples_boundary': self.num_samples_boundary,
+            'dtime_max': self.dtime_max
+        }
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'ThinningConfig':
+        """Create configuration from dictionary."""
+        return cls(**config_dict)
+    
+    def validate(self) -> None:
+        """Validate thinning configuration."""
+        super().validate()
+        
+        if self.num_sample <= 0:
+            raise ConfigValidationError("num_sample must be positive", "num_sample")
+        
+        if self.num_exp <= 0:
+            raise ConfigValidationError("num_exp must be positive", "num_exp")
+        
+        if self.over_sample_rate <= 1.0:
+            raise ConfigValidationError("over_sample_rate must be greater than 1.0", "over_sample_rate")
+        
+        if self.dtime_max <= 0:
+            raise ConfigValidationError("dtime_max must be positive", "dtime_max")
+
+
+@config_class('simulation_config')
+@dataclass
+class SimulationConfig(BaseConfig):
+    """Configuration for event sequence simulation."""
+    
+    start_time: float = 0.0
+    end_time: float = 100.0
+    batch_size: int = 32
+    max_sim_events: int = 10000
+    seed: int = 42
+    
+    def get_required_fields(self) -> List[str]:
+        """Return list of required field names."""
+        return []  # All fields have defaults
+    
+    def get_yaml_config(self) -> Dict[str, Any]:
+        """Get configuration as YAML-compatible dictionary."""
+        return {
+            'start_time': self.start_time,
+            'end_time': self.end_time,
+            'batch_size': self.batch_size,
+            'max_sim_events': self.max_sim_events,
+            'seed': self.seed
+        }
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'SimulationConfig':
+        """Create configuration from dictionary."""
+        return cls(**config_dict)
+    
+    def validate(self) -> None:
+        """Validate simulation configuration."""
+        super().validate()
+        
+        if self.start_time < 0:
+            raise ConfigValidationError("start_time must be non-negative", "start_time")
+        
+        if self.end_time <= self.start_time:
+            raise ConfigValidationError("end_time must be greater than start_time", "end_time")
+        
+        if self.batch_size <= 0:
+            raise ConfigValidationError("batch_size must be positive", "batch_size")
+        
+        if self.max_sim_events <= 0:
+            raise ConfigValidationError("max_sim_events must be positive", "max_sim_events")
+
+
+@config_class('training_config')
+@dataclass
+class TrainingConfig(BaseConfig):
+    """Configuration for model training parameters."""
+    
+    lr: float = 0.001
+    lr_scheduler: bool = True
+    max_epochs: int = 1000
+    dropout: float = 0.0
+    stage: str = "train"
+    backend: Backend = Backend.Torch
+    dataset_id: Optional[str] = None
+    base_dir: Optional[str] = None
+    
+    def get_required_fields(self) -> List[str]:
+        """Return list of required field names."""
+        return []  # All fields have defaults
+    
+    def get_yaml_config(self) -> Dict[str, Any]:
+        """Get configuration as YAML-compatible dictionary."""
+        return {
+            'lr': self.lr,
+            'lr_scheduler': self.lr_scheduler,
+            'max_epochs': self.max_epochs,
+            'dropout': self.dropout,
+            'stage': self.stage,
+            'backend': str(self.backend),
+            'dataset_id': self.dataset_id,
+            'base_dir': self.base_dir
+        }
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'TrainingConfig':
+        """Create configuration from dictionary."""
+        # Map legacy 'dropout_rate' to 'dropout' if present
+        if 'dropout_rate' in config_dict and 'dropout' not in config_dict:
+            config_dict['dropout'] = config_dict['dropout_rate']
+        # Handle backend conversion
+        backend = config_dict.get('backend', Backend.Torch)
+        if isinstance(backend, str):
+            if backend.lower() in ['torch', 'pytorch']:
+                backend = Backend.Torch
+            elif backend.lower() in ['tf', 'tensorflow']:
+                backend = Backend.TF
+            else:
+                raise ConfigValidationError(f"Unknown backend: {backend}", "backend")
+        config_dict['backend'] = backend
+        return cls(**config_dict)
+    
+    def validate(self) -> None:
+        """Validate training configuration."""
+        super().validate()
+        
+        if self.lr <= 0:
+            raise ConfigValidationError("Learning rate must be positive", "lr")
+        
+        if self.max_epochs <= 0:
+            raise ConfigValidationError("max_epochs must be positive", "max_epochs")
+        
+        if not (0.0 <= self.dropout <= 1.0):
+            raise ConfigValidationError("dropout must be between 0.0 and 1.0", "dropout")
+        
+        valid_stages = ["train", "eval", "test"]
+        if self.stage not in valid_stages:
+            raise ConfigValidationError(f"stage must be one of {valid_stages}", "stage")
+
+
+@config_class('model_specs_config')
+@dataclass
+class ModelSpecsConfig(BaseConfig):
+    """Configuration for model-specific parameters."""
+    
+    # Core model parameters
+    hidden_size: int = 64
+    rnn_type: str = "LSTM"
+    time_emb_size: int = 32
+    num_layers: int = 2
+    num_heads: int = 8
+    sharing_param_layer: bool = False
+    use_ln: bool = True
+    loss_integral_num_sample_per_step: int = 100
+    max_seq_len: int = 100
+    
+    # IntensityFree model specific parameters
+    num_mix_components: int = 1
+    mean_log_inter_time: float = 0.0
+    std_log_inter_time: float = 1.0
+    
+    # Additional model parameters
+    num_mlp_layers: int = 2
+    ode_num_sample_per_step: int = 20
+    proper_marked_intensities: bool = False
+    
+    # Hawkes model parameters (optional, can be None)
+    mu: Optional[float] = None
+    alpha: Optional[float] = None
+    beta: Optional[float] = None
+    
+    def get_required_fields(self) -> List[str]:
+        """Return list of required field names."""
+        return []  # All fields have defaults
+    
+    def get_yaml_config(self) -> Dict[str, Any]:
+        """Get configuration as YAML-compatible dictionary."""
+        return {
+            'hidden_size': self.hidden_size,
+            'rnn_type': self.rnn_type,
+            'time_emb_size': self.time_emb_size,
+            'num_layers': self.num_layers,
+            'num_heads': self.num_heads,
+            'sharing_param_layer': self.sharing_param_layer,
+            'use_ln': self.use_ln,
+            'loss_integral_num_sample_per_step': self.loss_integral_num_sample_per_step,
+            'max_seq_len': self.max_seq_len,
+            'num_mix_components': self.num_mix_components,
+            'mean_log_inter_time': self.mean_log_inter_time,
+            'std_log_inter_time': self.std_log_inter_time,
+            'num_mlp_layers': self.num_mlp_layers,
+            'ode_num_sample_per_step': self.ode_num_sample_per_step,
+            'proper_marked_intensities': self.proper_marked_intensities,
+            'mu': self.mu,
+            'alpha': self.alpha,
+            'beta': self.beta
+        }
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'ModelSpecsConfig':
+        """Create configuration from dictionary."""
+        return cls(**config_dict)
+    
+    def validate(self) -> None:
+        """Validate model specifications."""
+        super().validate()
+        
+        if self.hidden_size <= 0:
+            raise ConfigValidationError("hidden_size must be positive", "hidden_size")
+        
+        if self.time_emb_size <= 0:
+            raise ConfigValidationError("time_emb_size must be positive", "time_emb_size")
+        
+        if self.num_layers <= 0:
+            raise ConfigValidationError("num_layers must be positive", "num_layers")
+        
+        if self.num_heads <= 0:
+            raise ConfigValidationError("num_heads must be positive", "num_heads")
+        
+        if self.num_mix_components <= 0:
+            raise ConfigValidationError("num_mix_components must be positive", "num_mix_components")
+        
+        if self.num_mlp_layers <= 0:
+            raise ConfigValidationError("num_mlp_layers must be positive", "num_mlp_layers")
+        
+        if self.ode_num_sample_per_step <= 0:
+            raise ConfigValidationError("ode_num_sample_per_step must be positive", "ode_num_sample_per_step")
+        
+        valid_rnn_types = ["LSTM", "GRU", "RNN"]
+        if self.rnn_type not in valid_rnn_types:
+            raise ConfigValidationError(f"rnn_type must be one of {valid_rnn_types}", "rnn_type")
+
+
+@config_class('hawkes_specs_config')
+@dataclass
+class HawkesSpecsConfig(BaseConfig):
+    """Configuration for Hawkes process parameters."""
+    mu: list = field(default_factory=list)
+    alpha: list = field(default_factory=list)
+    beta: list = field(default_factory=list)
+
+    def get_required_fields(self) -> List[str]:
+        return ['mu', 'alpha', 'beta']
+
+    def get_yaml_config(self) -> Dict[str, Any]:
+        return {
+            'mu': self.mu,
+            'alpha': self.alpha,
+            'beta': self.beta
         }
 
-    @staticmethod
-    def parse_from_yaml_config(yaml_config):
-        """Parse from the yaml to generate the config object.
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'HawkesSpecsConfig':
+        return cls(**config_dict)
 
-        Args:
-            yaml_config (dict): configs from yaml file.
+    def validate(self) -> None:
+        super().validate()
+        if not self.mu or not self.alpha or not self.beta:
+            raise ConfigValidationError("mu, alpha, and beta must be provided for HawkesSpecsConfig", "hawkes_specs")
 
-        Returns:
-            ModelConfig: Config class for trainer specs.
-        """
-        return ModelConfig(**yaml_config)
 
-    def copy(self):
-        """Copy the config.
+@config_class('model_config')
+@dataclass
+class ModelConfig(BaseConfig):
+    """
+    Unified model configuration with comprehensive validation and type safety.
+    This replaces both the legacy and enhanced configs.
+    """
+    
+    model_id: str
+    num_event_types: int
+    num_event_types_pad: Optional[int] = None
+    pad_token_id: Optional[int] = None
+    device: str = "auto"
+    gpu: int = field(default_factory=get_available_gpu)
+    is_training: bool = False
+    compute_simulation: bool = False
+    use_mc_samples: bool = True
+    pretrain_model_path: Optional[str] = None
+    
+    # Sub-configurations
+    base_config: TrainingConfig = field(default_factory=TrainingConfig)
+    specs: Union[ModelSpecsConfig, HawkesSpecsConfig] = field(default_factory=ModelSpecsConfig)
+    thinning: ThinningConfig = field(default_factory=ThinningConfig)
+    simulation_config: SimulationConfig = field(default_factory=SimulationConfig)
+    
+    def __post_init__(self):
+        """Post-initialization processing."""
+        # Set defaults based on other fields
+        if self.num_event_types_pad is None:
+            self.num_event_types_pad = self.num_event_types + 1
+        
+        if self.pad_token_id is None:
+            self.pad_token_id = self.num_event_types
+        
+        # Set device
+        if self.device == "auto":
+            self.device = "cuda" if self.gpu >= 0 else "cpu"
+        
+        super().__post_init__()
+    
+    def get_required_fields(self) -> List[str]:
+        """Return list of required field names."""
+        return ["model_id", "num_event_types"]
+    
+    def get_yaml_config(self) -> Dict[str, Any]:
+        """Get configuration as YAML-compatible dictionary."""
+        return {
+            'model_id': self.model_id,
+            'num_event_types': self.num_event_types,
+            'num_event_types_pad': self.num_event_types_pad,
+            'pad_token_id': self.pad_token_id,
+            'device': self.device,
+            'gpu': self.gpu,
+            'is_training': self.is_training,
+            'compute_simulation': self.compute_simulation,
+            'use_mc_samples': self.use_mc_samples,
+            'pretrain_model_path': self.pretrain_model_path,
+            'base_config': self.base_config.get_yaml_config(),
+            'specs': self.specs.get_yaml_config(),
+            'thinning': self.thinning.get_yaml_config(),
+            'simulation_config': self.simulation_config.get_yaml_config()
+        }
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'ModelConfig':
+        """Create configuration from dictionary."""
+        # Extract sub-configurations
+        base_config_dict = config_dict.pop('base_config', {})
+        specs_dict = config_dict.pop('specs', {})
+        thinning_dict = config_dict.pop('thinning', {})
+        simulation_dict = config_dict.pop('simulation_config', {})
 
-        Returns:
-            ModelConfig: a copy of current config.
-        """
-        return ModelConfig(
-            use_mc_samples=self.use_mc_samples,
-            thinning=self.thinning.copy(),
-            num_event_types_pad=self.num_event_types_pad,
-            num_event_types=self.num_event_types,
-            event_pad_index=self.pad_token_id,
-            gpu=self.gpu,
-            pretrain_model_path = self.pretrain_model_path,
-            model_specs=self.specs.copy(),
-            base_config=self.base_config.copy()
+        # Select correct specs config based on model_id
+        model_id = config_dict.get('model_id', '').lower()
+        if model_id in ['hawkes', 'hawkesmodel']:
+            specs = HawkesSpecsConfig.from_dict(specs_dict)
+        else:
+            specs = ModelSpecsConfig.from_dict(specs_dict)
+        base_config = TrainingConfig.from_dict(base_config_dict)
+        thinning = ThinningConfig.from_dict(thinning_dict)
+        simulation_config = SimulationConfig.from_dict(simulation_dict)
+
+        return cls(
+            base_config=base_config,
+            specs=specs,
+            thinning=thinning,
+            simulation_config=simulation_config,
+            **config_dict
         )
+    
+    @staticmethod
+    def parse_from_yaml_config(yaml_config: Dict[str, Any], **kwargs) -> 'ModelConfig':
+        """Parse from YAML configuration."""
+        config_dict = dict(yaml_config)
+        config_dict.update(kwargs)
+        return ModelConfig.from_dict(config_dict)
+    
+    def copy(self) -> 'ModelConfig':
+        """Create a copy of the configuration."""
+        return ModelConfig.from_dict(self.get_yaml_config())
+    
+    def validate(self) -> None:
+        """Validate the model configuration."""
+        super().validate()
+        
+        # Validate model_id
+        try:
+            ModelType(self.model_id)
+        except ValueError:
+            valid_models = [model.value for model in ModelType]
+            logger.warning(f"model_id '{self.model_id}' not in known models {valid_models}")
+        
+        # Validate num_event_types
+        if self.num_event_types <= 0:
+            raise ConfigValidationError("num_event_types must be positive", "num_event_types")
+        
+        # Validate device configuration
+        valid_devices = ["cpu", "cuda", "auto"]
+        if self.device not in valid_devices and not self.device.startswith("cuda:"):
+            raise ConfigValidationError(f"device must be one of {valid_devices} or 'cuda:N'", "device")
+        
+        # Validate sub-configurations
+        self.base_config.validate()
+        self.specs.validate()
+        self.thinning.validate()
+        self.simulation_config.validate()

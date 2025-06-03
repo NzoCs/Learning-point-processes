@@ -24,4 +24,4 @@ exp=${experiments[$idx]}
 data=${exp}
 
 # Lancement avec srun
-srun python run.py --experiment_id "${exp}" --dataset_id "${data}" --phase "test"
+srun python run.py --experiment_id "${exp}" --dataset_id "${data}" --phase "[test, predict]"

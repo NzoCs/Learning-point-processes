@@ -1,10 +1,8 @@
 from enum import Enum
-from typing import Dict, Any, Optional, Union, List, Type, get_type_hints
+from typing import Dict, Any, Optional, Union, List
 from abc import ABC, abstractmethod
 import os
-import importlib
 from contextlib import contextmanager
-import copy
 from pytorch_lightning.loggers import (
     WandbLogger,
     TensorBoardLogger,
@@ -13,8 +11,9 @@ from pytorch_lightning.loggers import (
     NeptuneLogger,
     CometLogger  # for example, for Comet.ml
 )
-from easy_tpp.config_factory.config import Config
 from easy_tpp.utils import logger
+from dataclasses import dataclass, field
+from easy_tpp.config_factory.base import BaseConfig, ConfigValidationError, config_factory, config_class
 
 class LoggerType(Enum):
     CSV = 'csv'
@@ -87,18 +86,14 @@ class WandBLoggerAdapter(BaseLoggerAdapter):
         """
         Configures and returns an instance of WandbLogger using the provided parameters.
         """
-        
         save_dir = config['save_dir']
         os.makedirs(save_dir, exist_ok=True)
-        
-        try :
+        try:
             import wandb
             wandb.finish()
-            wandb.init(dir = save_dir)
-            
+            wandb.init(dir=save_dir)
             return WandbLogger(**config)
-        
-        except :
+        except Exception:
             return WandbLogger(**config)
     
     
@@ -144,12 +139,14 @@ class NeptuneLoggerAdapter(BaseLoggerAdapter):
 class TensorboardLoggerAdapter(BaseLoggerAdapter):
     @classmethod
     def get_required_params(cls) -> List[str]:
-        return ['save_dir', 'name']
+        return ['save_dir']
     
     @classmethod
     def configure(cls, config: Dict[str, Any]) -> Any:
         
-        
+        if not config.get('name'):
+            config['name'] = 'tb_logs'
+
         return TensorBoardLogger(**config)
 
 # Registry of adapters
@@ -162,127 +159,89 @@ LOGGER_ADAPTERS = {
     LoggerType.TENSORBOARD: TensorboardLoggerAdapter
 }
 
-class  LoggerConfig(Config):
+@config_class('logger_config')
+@dataclass
+class LoggerConfig(BaseConfig):
     """
-    Class to configure a specific logger type.
-    
-    This class allows configuring a single logger at a time
-    based on the specified LoggerType.
+    Configuration for logging in experiments. This class allows you to specify the type of logger
+    (e.g., CSV, WandB, MLFlow) and its parameters. It also provides methods to validate and configure
+    the logger based on the specified type.
     """
-    
-    def __init__(self, **kwargs):
-        """
-        Initializes the configuration for a specific logger type.
-        
-        Args:
-            logger_type: Type of logger to configure (LoggerType or string)
-            **kwargs: Configuration parameters specific to the logger type
-        
-        Raises:
-            ValueError: If the logger type is unknown or required parameters are missing
-            TypeError: If the logger type is not a LoggerType or str
-        """
-        
-        logger_type = kwargs.pop('type', None)
-        
-        # Convert string to LoggerType if necessary
-        if isinstance(logger_type, str):
+
+    save_dir: Optional[str] = None
+    log_level: Optional[str] = None
+    logger_type: Optional[LoggerType] = None
+    config: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        # Convert string logger_type to LoggerType if needed
+        if isinstance(self.logger_type, str):
             try:
-                self.logger_type = LoggerType(logger_type)
+                self.logger_type = LoggerType(self.logger_type)
             except ValueError:
-                raise ValueError(f"Unknown logger type: {logger_type}")
-        else:
-            self.logger_type = logger_type
-        
+                raise ConfigValidationError(f"Unknown logger type: {self.logger_type}", "logger_type")
         # Get the adapter for this logger type
         self.adapter = LOGGER_ADAPTERS.get(self.logger_type)
         if not self.adapter:
             logger.warning(f"No adapter available for logger type: {self.logger_type}")
             logger.warning("The logger will not be configured.")
-        
         # Validate and initialize the configuration
-        if self.adapter is not None :
-            self.config = self.adapter.validate_config(kwargs)
-    
-    def get_config(self) -> Dict[str, Any]:
-        """
-        Retrieves the current configuration, possibly modified by the mode.
-        
-        Returns:
-            Dict[str, Any]: Logger configuration
-        """
-        config = self.config.copy()
-        return config
-    
-    def get_yaml_config(self):
-        """Get the yaml format config from self.
+        if self.adapter is not None:
+            self.config = self.adapter.validate_config(self.config)
+            # If save_dir is provided, ensure it's in config
+            if self.save_dir is not None:
+                self.config['save_dir'] = self.save_dir
+            if self.log_level is not None:
+                self.config['log_level'] = self.log_level
+        super().__post_init__()
 
-        Returns:
-            dict: Configuration in yaml format
-        """
-        yaml_config = {
-            'logger_type': self.logger_type.value,
+    def get_yaml_config(self) -> Dict[str, Any]:
+        return {
+            'logger_type': self.logger_type.value if self.logger_type else None,
             'logger_config': self.config
         }
-        return yaml_config
+
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'LoggerConfig':
+        # Accept both 'logger_type' and 'type' as keys
+        logger_type = config_dict.get('logger_type') or config_dict.get('type')
+        config = dict(config_dict.get('logger_config', {}))  # copy to avoid mutating input
+        # Inject save_dir if present at the top level
+        save_dir = config_dict.get('save_dir')
+        if save_dir is not None:
+            config['save_dir'] = save_dir
+        # Filter out invalid keys for LoggerConfig
+        valid_keys = set(cls.__dataclass_fields__.keys())
+        filtered = {k: v for k, v in config_dict.items() if k in valid_keys}
+        # Set logger_type and config explicitly
+        filtered['logger_type'] = logger_type
+        filtered['config'] = config
+        dropped = set(config_dict.keys()) - valid_keys
+        if dropped:
+            logger.warning(f"Filtered out invalid LoggerConfig keys: {dropped}")
+        return cls(**filtered)
 
     @staticmethod
     def parse_from_yaml_config(config, **kwargs):
-        """Parse from the yaml to generate the config object.
-
-        Args:
-            yaml_config (dict): configs from yaml file.
-
-        Returns:
-            LoggerConfig: Config class for logger.
-        """
-        
-        # Update config with any additional kwargs
         if kwargs:
             config.update(kwargs)
-            
-        return LoggerConfig(**config)
+        return LoggerConfig.from_dict(config)
 
-    def copy(self):
-        """Get a same and freely modifiable copy of self.
-
-        Returns:
-            LoggerConfig: A copy of the current config.
-        """
-        return LoggerConfig.parse_from_yaml_config(copy.deepcopy(self.get_yaml_config()))
-    
     def configure_logger(self) -> Any:
-        """
-        Configures and returns a logger instance according to the specified type.
-            
-        Returns:
-            Any: Configured logger instance
-            
-        Raises:
-            ImportError: If the required dependencies are not installed
-        """
-        config = self.get_config()
+        config = self.config.copy()
         return self.adapter.configure(config)
-    
+
     @classmethod
     def list_required_params(cls, logger_type: Union[LoggerType, str]) -> List[str]:
-        """
-        Lists required parameters for a logger type.
-        
-        Args:
-            logger_type: Logger type
-            
-        Returns:
-            List[str]: List of required parameters
-        """
         if isinstance(logger_type, str):
             try:
                 logger_type = LoggerType(logger_type)
             except ValueError:
                 raise ValueError(f"Unknown logger type: {logger_type}")
-                
         adapter = LOGGER_ADAPTERS.get(logger_type)
         if not adapter:
             raise ValueError(f"No adapter available for logger type: {logger_type}")
-            
         return adapter.get_required_params()
+
+    def get_required_fields(self):
+        return []

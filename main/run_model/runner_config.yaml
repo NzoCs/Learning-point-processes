@@ -112,7 +112,7 @@ test_HawkesModel :
 hawkes1 :
   data_loading_specs:
     batch_size: 32
-    num_workers: 1
+    num_workers: 4
     
   model_config:
     model_id: HawkesModel
@@ -180,7 +180,7 @@ H2expc :
 NHP:
 
   data_loading_specs:
-    batch_size: 128
+    batch_size: 64
     num_workers: 4
     
   model_config:
@@ -190,10 +190,10 @@ NHP:
       time_emb_size: 16
       num_layers: 2
     thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 60
+      num_sample: 30
     base_config:
       lr: 0.001
       lr_scheduler: True
@@ -215,7 +215,7 @@ NHP:
 RMTPP:
 
   data_loading_specs:
-    batch_size: 256
+    batch_size: 128
     num_workers: 4
     
   model_config:
@@ -225,10 +225,10 @@ RMTPP:
       time_emb_size: 16
       num_layers: 2
     thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 60
+      num_sample: 30
     base_config:
       lr: 0.001
       lr_scheduler: True
@@ -260,10 +260,10 @@ AttNHP:
       num_layers: 1
       num_heads: 2
     thinning:
-      num_exp: 300 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 60
+      num_sample: 30
     base_config:
       lr: 0.001
       lr_scheduler: True
@@ -298,10 +298,10 @@ SAHP:
       lr: 0.001
       lr_scheduler: True
     thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 60
+      num_sample: 30
     simulation_config:
       start_time: 100
       end_time: 200
@@ -333,10 +333,10 @@ THP:
       lr: 0.001
       lr_scheduler: True
     thinning:
-      num_exp: 500
+      num_exp: 100
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 60
+      num_sample: 30
     simulation_config:
       start_time: 100
       end_time: 200
@@ -367,7 +367,7 @@ FullyNN:
       lr: 0.001
       lr_scheduler: True
     thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 200 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 60
@@ -398,10 +398,10 @@ IntensityFree:
       time_emb_size: 16
       num_layers: 2
     thinning:
-      num_exp: 500 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
-      num_sample: 60
+      num_sample: 30
     base_config:
       lr: 0.001
       lr_scheduler: True

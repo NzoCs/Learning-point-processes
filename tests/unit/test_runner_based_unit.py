@@ -10,7 +10,8 @@ import yaml
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
-from easy_tpp.config_factory import Config
+# from easy_tpp.config_factory import Config
+from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.runner import Trainer
 from easy_tpp.utils.torch_utils import set_seed
 
@@ -25,7 +26,7 @@ class TestRunnerBasedUnit:
     
     def _create_minimal_config(self, model_id='NHP', temp_dir=None):
         """Create a minimal configuration for testing."""
-        config = {
+        config_dict = {
             'pipeline_config_id': 'runner_config',
             'data': {
                 'test_data': {
@@ -83,12 +84,12 @@ class TestRunnerBasedUnit:
         
         # Remove None values for Hawkes model
         if model_id == 'HawkesModel':
-            config[f'{model_id}_test']['model_config'] = {
-                k: v for k, v in config[f'{model_id}_test']['model_config'].items() 
+            config_dict[f'{model_id}_test']['model_config'] = {
+                k: v for k, v in config_dict[f'{model_id}_test']['model_config'].items() 
                 if v is not None
             }
         
-        return config
+        return config_dict
     
     def _create_temp_config_file(self, config_dict, temp_dir):
         """Create a temporary YAML config file."""
@@ -103,8 +104,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -121,8 +122,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='RMTPP_test',
                 dataset_id='test_data'
             )
@@ -139,8 +140,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='HawkesModel_test',
                 dataset_id='test_data'
             )
@@ -158,8 +159,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -177,8 +178,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -197,8 +198,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -225,8 +226,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -252,8 +253,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -278,8 +279,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -299,8 +300,8 @@ class TestRunnerBasedUnit:
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-            config = Config.build_from_yaml_file(
-                yaml_dir=config_path,
+            config = RunnerConfig.load_from_yaml_file(
+                yaml_path=config_path,
                 experiment_id='NHP_test',
                 dataset_id='test_data'
             )
@@ -333,8 +334,8 @@ class TestRunnerBasedUnit:
         
         with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
             with pytest.raises(Exception):  # Should raise an error for invalid model
-                config = Config.build_from_yaml_file(
-                    yaml_dir=config_path,
+                config = RunnerConfig.load_from_yaml_file(
+                    yaml_path=config_path,
                     experiment_id='NHP_test',
                     dataset_id='test_data'
                 )
@@ -354,8 +355,8 @@ class TestRunnerBasedUnit:
             with patch('easy_tpp.config_factory.runner_config.TrainerConfig.get_logger') as mock_logger:
                 mock_logger.return_value = Mock()
                 
-                config = Config.build_from_yaml_file(
-                    yaml_dir=config_path,
+                config = RunnerConfig.load_from_yaml_file(
+                    yaml_path=config_path,
                     experiment_id='NHP_test',
                     dataset_id='test_data'
                 )
@@ -375,8 +376,8 @@ class TestRunnerBasedUnit:
             config_path = self._create_temp_config_file(config_dict, temporary_directory)
             
             with patch('easy_tpp.preprocess.data_loader.TPPDataModule.setup'):
-                config = Config.build_from_yaml_file(
-                    yaml_dir=config_path,
+                config = RunnerConfig.load_from_yaml_file(
+                    yaml_path=config_path,
                     experiment_id='NHP_test',
                     dataset_id='test_data'
                 )

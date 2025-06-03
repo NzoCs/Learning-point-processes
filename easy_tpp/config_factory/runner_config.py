@@ -1,196 +1,159 @@
+from dataclasses import dataclass, field
+from typing import Optional, Dict, Any
+import os
+import torch
+from easy_tpp.config_factory.base import BaseConfig, ConfigValidationError, config_factory, config_class
 from easy_tpp.config_factory.model_config import ModelConfig
-from easy_tpp.config_factory.config import Config
 from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.config_factory.logger_config import LoggerConfig
 from easy_tpp.utils import logger
 
-import torch
-import os
+@config_class('trainer_config')
+@dataclass
+class TrainerConfig(BaseConfig):
+    dataset_id: str
+    model_id: str
+    batch_size: int = 32
+    max_epochs: Optional[int] = None
+    val_freq: int = 10
+    patience: int = 20
+    log_freq: int = 1
+    checkpoints_freq: int = 1
+    accumulate_grad_batches: int = 1
+    use_precision_16: bool = False
+    devices: Optional[int] = None
+    save_dir: Optional[str] = None
+    checkpoint_dir: Optional[str] = None
+    save_model_dir: Optional[str] = None
+    logger_config: LoggerConfig = field(default_factory=LoggerConfig)
+    dropout_rate: Optional[float] = None
+    dropout: Optional[float] = None
 
-class TrainerConfig:
-    
-    @staticmethod
-    def detect_available_devices():
-        """Detect available hardware and return appropriate device settings."""
-        if torch.cuda.is_available():
-            return torch.cuda.device_count()
-        return -1  # Use CPU
-    
-    def __init__(self, **kwargs):
-        
-        
-        required_fields = ['dataset_id', 'model_id']
-
-        # Check for required fields
-        missing_fields = [field for field in required_fields if field not in kwargs]
-        if missing_fields:
-            raise ValueError(f"Missing required configuration fields: {missing_fields}")
-        
-        self.dataset_id = kwargs.get('dataset_id')
-        self.model_id = kwargs.get('model_id')
-        
-        checkpoint_dir = kwargs.get('checkpoint_dir', None)
-        # Setup save directories with random names
-        if checkpoint_dir is None:
-            ckpt = "checkpoints"
-        else : 
-            ckpt = checkpoint_dir
-            
-        dirpath = kwargs.get('save_dir', f"./{ckpt}/{self.model_id}/{self.dataset_id}/")
-
+    def __post_init__(self):
+        # Directory setup
+        ckpt = self.checkpoint_dir or "checkpoints"
+        dirpath = self.save_dir or f"./{ckpt}/{self.model_id}/{self.dataset_id}/"
         os.makedirs(dirpath, exist_ok=True)
-            
-        logger_config = kwargs.get("logger_config", {})
-        
-        if logger_config.get("save_dir") is None:
-            logger_config["save_dir"] = dirpath
-            
-        self.logger_config = LoggerConfig.parse_from_yaml_config(logger_config)
-        
-        self.dataset_id = kwargs.get('dataset_id', None)
-        self.batch_size = kwargs.get('batch_size', 32)
-        self.max_epochs = kwargs.get('max_epochs')
-        self.checkpoints_freq = kwargs.get('val_freq', 10)
-        self.patience = kwargs.get('patience', 20)
-        self.val_freq = kwargs.get('val_freq', 10)
-        self.use_precision_16 = kwargs.get('use_precision_16', False)
-        
-        self.log_freq = kwargs.get('log_freq', 1)
-        self.accumulate_grad_batches = kwargs.get('accumulate_grad_batches', 1)
-        # Auto-detect devices if not specified
-        self.devices = kwargs.get('devices', self.detect_available_devices())
         self.save_model_dir = os.path.join(dirpath, "trained_models")
         os.makedirs(self.save_model_dir, exist_ok=True)
-        
-    def get(self, att):
-        try:
-            return getattr(self, att)
-        except:
-            return None
-    
-    def get_logger(self):
-        
-        return self.logger_config.configure_logger()
-    
+        # Logger config
+        if not self.logger_config.save_dir:
+            self.logger_config.save_dir = dirpath
+        # Devices
+        if self.devices is None:
+            self.devices = self.detect_available_devices()
+        # Dropout validation (optional)
+        if self.dropout is not None:
+            if not (0.0 <= self.dropout <= 1.0):
+                raise ConfigValidationError("dropout must be between 0 and 1", "dropout")
+        super().__post_init__()
+
     @staticmethod
-    def parse_from_yaml_config(yaml_config: dict) -> 'TrainerConfig':
-        """Parse configuration from a YAML dictionary.
-        
-        Args:
-            yaml_config (dict): Configuration dictionary from YAML
-            **kwargs: Additional keyword arguments
-            
-        Returns:
-            PLTrainerConfig: Configured trainer instance
-            
-        Raises:
-            ValueError: If required parameters are missing
-        """
-            
-        return TrainerConfig(**yaml_config)
+    def detect_available_devices() -> int:
+        try:
+            if torch.cuda.is_available():
+                return torch.cuda.device_count()
+        except Exception:
+            pass
+        return -1
 
-    def get_yaml_config(self) -> dict:
-        """Return the config in dict (yaml compatible) format.
-
-        Returns:
-            dict: Configuration including all non-None parameters
-        """
-        config = {
+    def get_yaml_config(self) -> Dict[str, Any]:
+        return {
+            'dataset_id': self.dataset_id,
+            'model_id': self.model_id,
             'batch_size': self.batch_size,
             'max_epochs': self.max_epochs,
             'val_freq': self.val_freq,
             'patience': self.patience,
             'log_freq': self.log_freq,
+            'checkpoints_freq': self.checkpoints_freq,
             'devices': self.devices,
             'save_model_dir': self.save_model_dir,
-            'patience_max': self.patience if self.patience != float('inf') else None,
-            "logger_config": self.logger_config.get_yaml_config(),
-            "accumulate_grad_batches": self.accumulate_grad_batches
+            'logger_config': self.logger_config.get_yaml_config() if hasattr(self.logger_config, 'get_yaml_config') and callable(self.logger_config.get_yaml_config) and getattr(self.logger_config, 'logger_type', None) is not None else {},
+            'accumulate_grad_batches': self.accumulate_grad_batches,
+            'use_precision_16': self.use_precision_16
         }
-        return {k: v for k, v in config.items() if v is not None}
-        
     
-@Config.register('runner_config')
-class RunnerConfig(Config):
-    """Configuration class for PyTorch Lightning Runner."""
-    
-    def __init__(self, trainer_config: TrainerConfig, model_config: ModelConfig, data_config: DataConfig):
-        """Initialize PLRunnerConfig.
-        
-        Args:
-            trainer_config (PLTrainerConfig): Training configuration
-            model_config (ModelConfig): Model configuration
-            data_config (PLDataConfig): Data configuration
-        """
-            
-        self.trainer_config = trainer_config
-        self.model_config = model_config
-        self.data_config = data_config
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'TrainerConfig':
+        logger_cfg = config_dict.get('logger_config', {})
+        if not isinstance(logger_cfg, LoggerConfig):
+            # Calculate save_dir early to pass to logger config
+            ckpt = config_dict.get('checkpoint_dir', 'checkpoints')
+            model_id = config_dict.get('model_id', 'unknown')
+            dataset_id = config_dict.get('dataset_id', 'unknown')
+            save_dir = config_dict.get('save_dir') or f"./{ckpt}/{model_id}/{dataset_id}/"
+            logger_cfg = LoggerConfig.parse_from_yaml_config(logger_cfg, save_dir=save_dir)
+        config_dict = dict(config_dict)
+        config_dict['logger_config'] = logger_cfg
+        # Alias: if 'dropout_rate' is present, also set 'dropout'
+        if 'dropout_rate' in config_dict and 'dropout' not in config_dict:
+            config_dict['dropout'] = config_dict['dropout_rate']
+        return cls(**config_dict)
 
-    @staticmethod
-    def parse_from_yaml_config(yaml_config: dict, **kwargs) -> 'RunnerConfig':
-        """Parse configuration from YAML dictionary.
-        
-        Args:
-            yaml_config (dict): Configuration dictionary from YAML
-            **kwargs: Additional keyword arguments
-            
-        Returns:
-            PLRunnerConfig: Configured runner instance
-            
-        Raises:
-            ValueError: If required configurations are missing
-        """
-        
-        experiment_id = kwargs.get('experiment_id')
-        dataset_id = kwargs.get('dataset_id')
-        
-        if experiment_id is not None : 
-            exp_yaml_config = yaml_config[experiment_id]
-        else : 
-            exp_yaml_config = yaml_config
-        
-        #Initilize data_config
-        data_loading_specs = exp_yaml_config.get('data_loading_specs', {})
-        
-        data_config_dict = yaml_config.get('data').get(dataset_id)
-        data_config_dict['data_loading_specs'] = data_loading_specs
-        data_config_dict['dataset_id'] = dataset_id
+    def get_required_fields(self):
+        return ['dataset_id', 'model_id']
 
-        data_config = DataConfig.parse_from_yaml_config(data_config_dict)
-        
-        #Initialize model_config and trainer_config
-        model_config = exp_yaml_config.get('model_config', {})
-        model_config['num_event_types'] = data_config.data_specs.num_event_types
-        model_id = model_config.get('model_id', None)
-        if model_id is None:
-            raise ValueError("model_id is required in the model_config")
-        
-        trainer_config = exp_yaml_config.get('trainer_config', {})
-        trainer_config['model_id'] = model_id
-        trainer_config['dataset_id'] = dataset_id
-        trainer_config = TrainerConfig.parse_from_yaml_config(trainer_config)
-        
-        if hasattr(model_config, 'base_config') :
-            model_config['base_config']['max_epochs'] = trainer_config.max_epochs
-            
-        
-        model_config = ModelConfig.parse_from_yaml_config(model_config)
-    
-        return RunnerConfig(
-            model_config=model_config,
-            trainer_config=trainer_config,
-            data_config=data_config
-        )
+@config_class('runner_config')
+@dataclass
+class RunnerConfig(BaseConfig):
+    trainer_config: TrainerConfig
+    model_config: ModelConfig
+    data_config: DataConfig
 
-    def get_yaml_config(self) -> dict:
-        """Return the complete configuration in YAML compatible format.
-
-        Returns:
-            dict: Complete configuration including trainer, model and data configs
-        """
+    def get_yaml_config(self) -> Dict[str, Any]:
         return {
             'trainer_config': self.trainer_config.get_yaml_config(),
             'model_config': self.model_config.get_yaml_config(),
             'data_config': self.data_config.get_yaml_config()
-        }
+        }    
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'RunnerConfig':
+        """
+        Create a RunnerConfig instance from a dictionary, ensuring all sub-configs are properly initialized.    
+        """
+        # Ensure all sub-configs are initialized correctly
+        trainer = config_dict['trainer_config']
+        if not isinstance(trainer, TrainerConfig):
+            # Filter out invalid keys for TrainerConfig
+            valid_keys = set(TrainerConfig.__dataclass_fields__.keys())
+            filtered = {k: v for k, v in trainer.items() if k in valid_keys}
+            dropped = set(trainer.keys()) - valid_keys
+            if dropped:
+                logger.warning(f"Filtered out invalid TrainerConfig keys: {dropped}")
+            trainer = TrainerConfig.from_dict(filtered)
+        model = config_dict['model_config']
+        if not isinstance(model, ModelConfig):
+            # Always convert sub-configs to dicts if possible
+            if hasattr(model, 'get_yaml_config'):
+                model = model.get_yaml_config()
+            elif isinstance(model, dict):
+                for subkey, subcls in [
+                    ('base_config', getattr(ModelConfig, 'BaseConfig', None)),
+                    ('specs', getattr(ModelConfig, 'ModelSpecsConfig', None)),
+                    ('thinning', getattr(ModelConfig, 'ThinningConfig', None)),
+                    ('simulation_config', getattr(ModelConfig, 'SimulationConfig', None)),
+                ]:
+                    if subkey in model and isinstance(model[subkey], dict) and subcls is not None:
+                        model[subkey] = subcls.from_dict(model[subkey])
+            # Filter out invalid keys for ModelConfig
+            valid_keys = set(ModelConfig.__dataclass_fields__.keys())
+            filtered = {k: v for k, v in model.items() if k in valid_keys}
+            dropped = set(model.keys()) - valid_keys
+            if dropped:
+                logger.warning(f"Filtered out invalid ModelConfig keys: {dropped}")
+            model = ModelConfig.from_dict(filtered)
+        data = config_dict['data_config']
+        if not isinstance(data, DataConfig):
+            # Filter out invalid keys for DataConfig
+            valid_keys = set(DataConfig.__dataclass_fields__.keys())
+            filtered = {k: v for k, v in data.items() if k in valid_keys}
+            dropped = set(data.keys()) - valid_keys
+            if dropped:
+                logger.warning(f"Filtered out invalid DataConfig keys: {dropped}")
+            data = DataConfig.from_dict(filtered)
+        return cls(trainer_config=trainer, model_config=model, data_config=data)
+
+    def get_required_fields(self):
+        return ['trainer_config', 'model_config', 'data_config']

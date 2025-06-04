@@ -1,23 +1,0 @@
-[33;20m2025-06-03 04:01:28,473 - logger_config.py[pid:16513;line:221:from_dict] - WARNING: Filtered out invalid LoggerConfig keys: {'type', 'name'}[0m
-[31;1m2025-06-03 04:01:29,083 - runner.py[pid:16513;line:33:__init__] - CRITICAL: Runner initialized for model: SAHP on dataset: H2expc[0m
-[38;20m2025-06-03 04:01:29,083 - runner.py[pid:16513;line:121:run] - INFO: Runner executing phases: ['test'][0m
-[31;1m2025-06-03 04:01:29,083 - runner.py[pid:16513;line:77:test] - CRITICAL: === TESTING PHASE ===[0m
-[38;20m2025-06-03 04:01:29,383 - trainer.py[pid:16513;line:35:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores. GPU capability: (8, 0)[0m
-[38;20m2025-06-03 04:01:30,559 - trainer.py[pid:16513;line:102:__init__] - INFO: No valid checkpoint found. Starting from scratch.[0m
-[31;1m2025-06-03 04:01:30,559 - trainer.py[pid:16513;line:110:__init__] - CRITICAL: Logging is disabled for this run. Error: 'TrainerConfig' object has no attribute 'get_logger'[0m
-[38;20m2025-06-03 04:01:30,559 - trainer.py[pid:16513;line:224:test] - INFO: --- Starting Testing for Model : SAHP on dataset : H2expc ---[0m
-Testing: |          | 0/? [00:00<?, ?it/s]Testing:   0%|          | 0/19 [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s]Testing DataLoader 0:   5%|▌         | 1/19 [00:06<01:57,  0.15it/s]Testing DataLoader 0:  11%|█         | 2/19 [00:06<00:56,  0.30it/s]Testing DataLoader 0:  16%|█▌        | 3/19 [00:06<00:35,  0.45it/s]Testing DataLoader 0:  21%|██        | 4/19 [00:06<00:25,  0.59it/s]Testing DataLoader 0:  26%|██▋       | 5/19 [00:06<00:19,  0.74it/s]Testing DataLoader 0:  32%|███▏      | 6/19 [00:06<00:14,  0.88it/s]Testing DataLoader 0:  37%|███▋      | 7/19 [00:06<00:11,  1.01it/s]Testing DataLoader 0:  42%|████▏     | 8/19 [00:06<00:09,  1.15it/s]Testing DataLoader 0:  47%|████▋     | 9/19 [00:07<00:07,  1.28it/s]Testing DataLoader 0:  53%|█████▎    | 10/19 [00:07<00:06,  1.41it/s]Testing DataLoader 0:  58%|█████▊    | 11/19 [00:07<00:05,  1.54it/s]Testing DataLoader 0:  63%|██████▎   | 12/19 [00:07<00:04,  1.67it/s]Testing DataLoader 0:  68%|██████▊   | 13/19 [00:07<00:03,  1.79it/s]Testing DataLoader 0:  74%|███████▎  | 14/19 [00:07<00:02,  1.91it/s]Testing DataLoader 0:  79%|███████▉  | 15/19 [00:07<00:01,  2.03it/s]Testing DataLoader 0:  84%|████████▍ | 16/19 [00:07<00:01,  2.14it/s]Testing DataLoader 0:  89%|████████▉ | 17/19 [00:07<00:00,  2.26it/s]Testing DataLoader 0:  95%|█████████▍| 18/19 [00:07<00:00,  2.37it/s]Testing DataLoader 0: 100%|██████████| 19/19 [00:07<00:00,  2.49it/s]Testing DataLoader 0: 100%|██████████| 19/19 [00:07<00:00,  2.49it/s]
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        Test metric        ┃       DataLoader 0        ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│       cross_entropy       │    0.7982456684112549     │
-│       macro_f1score       │     35.15574645996094     │
-│       micro_f1score       │     51.50139236450195     │
-│         precision         │     51.56951141357422     │
-│          recall           │     50.07835388183594     │
-│         test_loss         │    0.7743120193481445     │
-│         time_mae          │    0.6127775311470032     │
-│         time_rmse         │    0.8171108365058899     │
-│       type_accuracy       │     51.50139236450195     │
-└───────────────────────────┴───────────────────────────┘
-[38;20m2025-06-03 04:02:14,714 - trainer.py[pid:16513;line:246:test] - INFO: Test results saved to ./checkpoints/SAHP/H2expc/trained_models/test_results.json[0m

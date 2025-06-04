@@ -1,6 +1,0 @@
-GPU available: True (cuda), used: True
-TPU available: False, using: 0 TPU cores
-HPU available: False, using: 0 HPUs
-LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
-SLURM auto-requeueing enabled. Setting signal handlers.
-/gpfs/workdir/regnaguen/LTPP/lib/python3.9/site-packages/pytorch_lightning/trainer/connectors/data_connector.py:425: The 'test_dataloader' does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` to `num_workers=3` in the `DataLoader` to improve performance.

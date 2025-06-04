@@ -18,8 +18,8 @@ module purge
 source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
-experiments=(THP SAHP NHP)
-datasets=(H2expc H2expi hawkes2)
+experiments=(THP SAHP)
+datasets=(hawkes2)
 
 # Mapping index → combinaison
 idx=$SLURM_ARRAY_TASK_ID

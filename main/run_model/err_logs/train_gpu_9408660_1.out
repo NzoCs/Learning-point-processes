@@ -1,0 +1,12 @@
+[33;20m2025-06-03 03:55:52,838 - logger_config.py[pid:8339;line:221:from_dict] - WARNING: Filtered out invalid LoggerConfig keys: {'type', 'name'}[0m
+[31;1m2025-06-03 03:55:52,993 - runner.py[pid:8339;line:33:__init__] - CRITICAL: Runner initialized for model: THP on dataset: H2expi[0m
+[38;20m2025-06-03 03:55:52,993 - runner.py[pid:8339;line:121:run] - INFO: Runner executing phases: ['test'][0m
+[31;1m2025-06-03 03:55:52,993 - runner.py[pid:8339;line:77:test] - CRITICAL: === TESTING PHASE ===[0m
+[38;20m2025-06-03 03:55:53,365 - trainer.py[pid:8339;line:35:__init__] - INFO: Set torch.set_float32_matmul_precision('medium') for Tensor Cores. GPU capability: (8, 0)[0m
+[38;20m2025-06-03 03:55:53,736 - trainer.py[pid:8339;line:89:__init__] - INFO: Checkpoint found: loading from ./checkpoints/THP/H2expi/trained_models/best.ckpt[0m
+[38;20m2025-06-03 03:55:53,736 - trainer.py[pid:8339;line:100:__init__] - INFO: Loading model from checkpoint: ./checkpoints/THP/H2expi/trained_models/best.ckpt.[0m
+[31;1m2025-06-03 03:55:53,736 - trainer.py[pid:8339;line:110:__init__] - CRITICAL: Logging is disabled for this run. Error: 'TrainerConfig' object has no attribute 'get_logger'[0m
+[38;20m2025-06-03 03:55:53,737 - trainer.py[pid:8339;line:224:test] - INFO: --- Starting Testing for Model : THP on dataset : H2expi ---[0m
+[31;20m2025-06-03 03:56:32,964 - runner.py[pid:8339;line:167:run] - ERROR: Error in phase 'test': Can't instantiate abstract class BaseConfig with abstract methods from_dict, get_required_fields, get_yaml_config[0m
+[31;20m2025-06-03 03:56:32,964 - runner.py[pid:8339;line:168:run] - ERROR: Error location: File: /gpfs/softs/spack_0.17/opt/spack/linux-centos7-cascadelake/gcc-11.2.0/python-3.9.10-vbc5su2pswnex4cavi6abfzkbtrpecsj/lib/python3.9/pickle.py, Line: 1513, Function: load_newobj[0m
+[31;20m2025-06-03 03:56:32,964 - runner.py[pid:8339;line:169:run] - ERROR: Error code: Code: obj = cls.__new__(cls, *args)[0m

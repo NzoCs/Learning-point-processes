@@ -207,7 +207,7 @@ NHP:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
-    patience: 20
+    patience: 5
     logger_config:
       type: tensorboard
       name: logs
@@ -241,7 +241,7 @@ RMTPP:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
-    patience: 20
+    patience: 5
     logger_config:
       type: tensorboard
       name: logs
@@ -276,7 +276,7 @@ AttNHP:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 2
-    patience: 20
+    patience: 5
     logger_config:
       type: tensorboard
       name: logs
@@ -311,7 +311,7 @@ SAHP:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 2
-    patience: 20
+    patience: 5
     logger_config:
       type: tensorboard
       name: logs
@@ -346,7 +346,7 @@ THP:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 2
-    patience: 20
+    patience: 5
     logger_config:
       type: tensorboard
       name: logs
@@ -380,7 +380,7 @@ FullyNN:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
-    patience: 20
+    patience: 5
     logger_config:
       type: tensorboard
       name: logs
@@ -414,7 +414,7 @@ IntensityFree:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
-    patience: 20
+    patience: 5
     logger_config:
       type: tensorboard
       name: logs

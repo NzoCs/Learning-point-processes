@@ -11,13 +11,13 @@ def main():
     parser.add_argument('--config_dir', type=str, required=False, default='./runner_config.yaml',
                         help='Dir of configuration yaml to train and evaluate the model.')
     
-    parser.add_argument('--experiment_id', type=str, required=False, default='IntensityFree',
+    parser.add_argument('--experiment_id', type=str, required=False, default='THP',
                         help='Experiment id in the config file.')
     
-    parser.add_argument('--dataset_id', type=str, required=False, default='test',
+    parser.add_argument('--dataset_id', type=str, required=False, default='H2expc',
                         help='Dataset id in the config file.')
     
-    parser.add_argument('--phase', type=str, required=False, default='predict',
+    parser.add_argument('--phase', type=str, required=False, default='test',
                         choices=['train', 'test', 'predict', 'validation', 'all'],
                         help='Phase to execute: train, test, predict, validation, or all')
     

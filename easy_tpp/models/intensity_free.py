@@ -197,7 +197,12 @@ class IntensityFree(BaseModel):
         # [batch_size, seq_len, num_marks]
         mark_logits = torch.log_softmax(self.mark_linear(context), dim=-1)
         mark_dist = Categorical(logits=mark_logits)
-        mark_ll = mark_dist.log_prob(type_seqs[:, 1:]) * event_mask
+
+        # Remplace temporairement les pad_token par 0 (ou n'importe quelle valeur valide)
+        type_seqs_safe = type_seqs[:, 1:].clone()
+        type_seqs_safe[type_seqs_safe == self.pad_token_id] = 0  # Valeur arbitraire (0 ou 1)
+
+        mark_ll = mark_dist.log_prob(type_seqs_safe) * event_mask
 
         log_p = time_ll + mark_ll
 

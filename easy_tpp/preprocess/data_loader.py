@@ -1,8 +1,5 @@
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
-import numpy as np
-import logging
-from collections import defaultdict
 
 from easy_tpp.preprocess.dataset import TPPDataset
 from easy_tpp.preprocess.event_tokenizer import EventTokenizer

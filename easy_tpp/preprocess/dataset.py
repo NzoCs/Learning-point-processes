@@ -2,10 +2,9 @@ import math
 from typing import Dict
 
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 from easy_tpp.preprocess.data_collator import TPPDataCollator
-from easy_tpp.preprocess.event_tokenizer import EventTokenizer
 from easy_tpp.utils import py_assert, is_tf_available
 
 

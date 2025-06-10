@@ -19,8 +19,8 @@ import seaborn as sns
 
 class InterEventTimePlotGenerator(BasePlotGenerator):
     """Generates inter-event time distribution plots (OCP)."""
-    
-    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+
+    def generate_plot(self, data: Dict[str, Any], output_path: str, qq_plot: bool = False) -> None:
         label_data = data['label_time_deltas']
         simulation_data = data['simulated_time_deltas']
         
@@ -54,13 +54,15 @@ class InterEventTimePlotGenerator(BasePlotGenerator):
         
         # Generate QQ plot
         qq_path = output_path.replace('.png', '_qq.png')
-        DistributionAnalyzer.create_qq_plot(
-            label_data,
-            simulation_data,
-            "QQ Plot: Inter-Event Times (Ground Truth vs Simulation)",
-            qq_path,
-            log_scale=True
-        )
+
+        if qq_plot :
+            DistributionAnalyzer.create_qq_plot(
+                label_data,
+                simulation_data,
+                "QQ Plot: Inter-Event Times (Ground Truth vs Simulation)",
+                qq_path,
+                log_scale=True
+            )
 
 
 class EventTypePlotGenerator(BasePlotGenerator):
@@ -132,7 +134,7 @@ class EventTypePlotGenerator(BasePlotGenerator):
 class SequenceLengthPlotGenerator(BasePlotGenerator):
     """Generates sequence length distribution plots (OCP)."""
     
-    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+    def generate_plot(self, data: Dict[str, Any], output_path: str, qq_plot : bool = False) -> None:
         label_lengths = np.asarray(data['label_sequence_lengths'])
         simulated_lengths = np.asarray(data['simulated_sequence_lengths'])
         
@@ -188,13 +190,15 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
         
         # Add QQ plot
         qq_path = output_path.replace('.png', '_qq.png')
-        DistributionAnalyzer.create_qq_plot(
-            label_lengths, 
-            simulated_lengths, 
-            'QQ Plot: Sequence Lengths (Ground Truth vs Simulation)',
-            qq_path,
-            log_scale=False
-        )
+
+        if qq_plot :
+            DistributionAnalyzer.create_qq_plot(
+                label_lengths, 
+                simulated_lengths, 
+                'QQ Plot: Sequence Lengths (Ground Truth vs Simulation)',
+                qq_path,
+                log_scale=False
+            )
 
 
 class CrossCorrelationPlotGenerator(BasePlotGenerator):

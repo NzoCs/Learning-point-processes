@@ -60,7 +60,7 @@ class CSVLoggerAdapter(BaseLoggerAdapter):
         return ['save_dir', 'name']
 
     @classmethod
-    def configure(cls, config: Dict[str, Any]) -> Any:
+    def configure(cls, config: Dict[str, Any]) -> CSVLogger:
         """
         Configures and returns an instance of CSVLogger using the provided parameters.
         """
@@ -82,7 +82,7 @@ class WandBLoggerAdapter(BaseLoggerAdapter):
     
     
     @classmethod
-    def configure(cls, config: Dict[str, Any]) -> Any:
+    def configure(cls, config: Dict[str, Any]) -> WandbLogger:
         """
         Configures and returns an instance of WandbLogger using the provided parameters.
         """
@@ -106,7 +106,7 @@ class MLflowLoggerAdapter(BaseLoggerAdapter):
         return ['experiment_name']
 
     @classmethod
-    def configure(cls, config: Dict[str, Any]) -> Any:
+    def configure(cls, config: Dict[str, Any]) -> MLFlowLogger:
         """
         Checks required parameters, configures and returns an instance of MLFlowLogger
         using the provided parameters.
@@ -121,7 +121,7 @@ class CometLoggerAdapter(BaseLoggerAdapter):
         return ['api_key', 'project_name']
     
     @classmethod
-    def configure(cls, config: Dict[str, Any]) -> Any:
+    def configure(cls, config: Dict[str, Any]) -> CometLogger:
         
         return CometLogger(**config)
 
@@ -132,7 +132,7 @@ class NeptuneLoggerAdapter(BaseLoggerAdapter):
         return ['api_token', 'project']
     
     @classmethod
-    def configure(cls, config: Dict[str, Any]) -> Any:
+    def configure(cls, config: Dict[str, Any]) -> NeptuneLogger:
         
         return NeptuneLogger(**config)
 
@@ -142,7 +142,7 @@ class TensorboardLoggerAdapter(BaseLoggerAdapter):
         return ['save_dir']
     
     @classmethod
-    def configure(cls, config: Dict[str, Any]) -> Any:
+    def configure(cls, config: Dict[str, Any]) -> TensorBoardLogger:
         
         if not config.get('name'):
             config['name'] = 'tb_logs'

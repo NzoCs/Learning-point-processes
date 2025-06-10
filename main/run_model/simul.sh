@@ -19,7 +19,7 @@ source /gpfs/workdir/regnaguen/LTPP/bin/activate
 
 # Définition des combinaisons exp/dataset
 experiments=(IntensityFree)
-datasets=(H2expc H2expi hawkes1 hawkes2 self_correcting)
+datasets=(taobao taxi amazon)
 
 # Mapping index → combinaison
 idx=$SLURM_ARRAY_TASK_ID

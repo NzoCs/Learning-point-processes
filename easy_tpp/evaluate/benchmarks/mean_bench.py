@@ -12,7 +12,7 @@ import yaml
 
 from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.utils import logger
-from .base_bench import BaseBenchmark, run_benchmark
+from .base_bench import BaseBenchmark, BenchmarkMode, run_benchmark
 
 
 class MeanInterTimeBenchmark(BaseBenchmark):
@@ -29,7 +29,8 @@ class MeanInterTimeBenchmark(BaseBenchmark):
             experiment_id: Experiment ID
             save_dir: Directory to save results
         """
-        super().__init__(data_config, experiment_id, save_dir)
+        # This benchmark focuses on time prediction, so default to TIME_ONLY
+        super().__init__(data_config, experiment_id, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY)
         self.mean_inter_time = None
     
     @property
@@ -41,10 +42,11 @@ class MeanInterTimeBenchmark(BaseBenchmark):
         """
         Compute the mean inter-time from the training dataset.
         """
-        train_loader = self.data_module.train_dataloader()
-        all_inter_times = []
+        train_loader = self.data_module.test_dataloader()
         
         logger.info("Computing mean inter-time from training data...")
+        cumsum_inter_times = 0.0
+        event_count = 0
         
         for batch in train_loader:
             # Extract inter-times from batch
@@ -59,34 +61,28 @@ class MeanInterTimeBenchmark(BaseBenchmark):
             else:
                 valid_inter_times = time_delta_seqs.flatten()
             
-            all_inter_times.extend(valid_inter_times.cpu().numpy().tolist())
+            cumsum_inter_times += valid_inter_times.sum().item()
+            event_count += valid_inter_times.numel()
         
-        self.mean_inter_time = np.mean(all_inter_times)
+        self.mean_inter_time = cumsum_inter_times / event_count if event_count > 0 else 0.0
         logger.info(f"Computed mean inter-time: {self.mean_inter_time:.6f}")
     
-    def _create_predictions(self, batch: Tuple) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _create_time_predictions(self, batch: Tuple) -> torch.Tensor:
         """
-        Create predictions using the mean inter-time.
+        Create time predictions using the mean inter-time.
         
         Args:
             batch: Input batch
             
         Returns:
-            Tuple of (predicted_inter_times, predicted_types)
+            Tensor of predicted inter-times
         """
-        # Extract batch components
-        # Unpack batch dict
         time_delta_seqs = batch['time_delta_seqs']
-        type_seqs = batch['type_seqs']
-        batch_size, seq_len = time_delta_seqs.shape
         
         # Create predictions with mean inter-time
         pred_inter_times = torch.full_like(time_delta_seqs, self.mean_inter_time)
         
-        # For types, just copy the true types (this benchmark focuses on time prediction)
-        pred_types = type_seqs.clone()
-        
-        return pred_inter_times, pred_types
+        return pred_inter_times
     
     def _get_custom_results_info(self) -> Dict[str, Any]:
         """Add custom information specific to this benchmark."""
@@ -103,14 +99,20 @@ def run_mean_benchmark(config_path: str, experiment_id: str, save_dir: str = Non
         config_path: Path to configuration file
         experiment_id: Experiment ID in the configuration
         save_dir: Directory to save results
-        
-    Returns:
+          Returns:
         Benchmark results
     """
     with open(config_path, "r") as f:
         config_dict = yaml.safe_load(f)
     data_config = DataConfig.from_dict(config_dict["data_config"])
-    return run_benchmark(MeanInterTimeBenchmark, data_config, experiment_id, save_dir)
+    benchmark = MeanInterTimeBenchmark(data_config, experiment_id, save_dir)
+    results = benchmark.evaluate()
+    
+    logger.info("Mean Inter-Time Benchmark completed successfully!")
+    logger.info(f"Time RMSE: {results['metrics'].get('time_rmse_mean', 'N/A'):.6f}")
+    logger.info(f"Time MAE: {results['metrics'].get('time_mae_mean', 'N/A'):.6f}")
+    
+    return results
 
 
 if __name__ == "__main__":

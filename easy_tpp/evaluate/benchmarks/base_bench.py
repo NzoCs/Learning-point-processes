@@ -9,14 +9,22 @@ import os
 import json
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Type, Union, Optional
 import torch
 import yaml
+from enum import Enum
 
 from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.preprocess.data_loader import TPPDataModule
 from easy_tpp.evaluate.metrics_helper import MetricsHelper, EvaluationMode
 from easy_tpp.utils import logger
+
+
+class BenchmarkMode(Enum):
+    """Defines what type of predictions and metrics to compute."""
+    TIME_ONLY = "time_only"
+    TYPE_ONLY = "type_only" 
+    BOTH = "both"
 
 
 class BaseBenchmark(ABC):
@@ -27,7 +35,8 @@ class BaseBenchmark(ABC):
     should inherit from. It handles data loading, metrics computation, result
     aggregation, and file saving.
     """
-    def __init__(self, data_config: DataConfig, experiment_id: str, save_dir: str = None):
+    def __init__(self, data_config: DataConfig, experiment_id: str, save_dir: str = None, 
+                 benchmark_mode: str = BenchmarkMode.BOTH):
         """
         Initialize the base benchmark.
         
@@ -35,14 +44,16 @@ class BaseBenchmark(ABC):
             data_config: DataConfig object
             experiment_id: Name/ID of the experiment or dataset
             save_dir: Directory to save results
+            benchmark_mode: What to evaluate - "time_only", "type_only", or "both"
         """
         self.data_config = data_config
         self.save_dir = save_dir or "./benchmark_results"
         self.dataset_name = experiment_id
+        self.benchmark_mode = benchmark_mode
+        self.pad_token = data_config.data_specs.pad_token_id
         
         # Initialize data module with data_config
         self.data_module = TPPDataModule(data_config)
-        self.data_module.setup('fit')  # Setup train and validation data
         self.data_module.setup('test')  # Setup test data
         
         # Initialize metrics helper
@@ -70,10 +81,9 @@ class BaseBenchmark(ABC):
         Prepare the benchmark by computing any necessary statistics or parameters
         from the training data. This method should be implemented by subclasses
         to perform benchmark-specific preparation.
-        """
+        """        
         pass
     
-    @abstractmethod
     def _create_predictions(self, batch: Tuple) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Create predictions for a given batch using the benchmark strategy.
@@ -85,6 +95,34 @@ class BaseBenchmark(ABC):
             Tuple of (predicted_inter_times, predicted_types)
         """
         pass
+    
+    def _create_time_predictions(self, batch: Tuple) -> torch.Tensor:
+        """
+        Create time predictions for a given batch using the benchmark strategy.
+        
+        Args:
+            batch: Input batch from the data loader
+            
+        Returns:
+            Tensor of predicted inter-times
+        """
+        # Default implementation uses the legacy method
+        pred_times, _ = self._create_predictions(batch)
+        return pred_times
+    
+    def _create_type_predictions(self, batch: Tuple) -> torch.Tensor:
+        """
+        Create type predictions for a given batch using the benchmark strategy.
+        
+        Args:
+            batch: Input batch from the data loader
+            
+        Returns:
+            Tensor of predicted types
+        """
+        # Default implementation uses the legacy method
+        _, pred_types = self._create_predictions(batch)
+        return pred_types
     
     def evaluate(self) -> Dict[str, Any]:
         """
@@ -103,18 +141,31 @@ class BaseBenchmark(ABC):
         
         # Prepare benchmark-specific parameters
         self._prepare_benchmark()
-        
-        # Evaluate on test data
+          # Evaluate on test data
         test_loader = self.data_module.test_dataloader()
         all_metrics = []
         
         for batch_idx, batch in enumerate(test_loader):
-            # Create predictions using benchmark strategy
-            pred_inter_times, pred_types = self._create_predictions(batch)
-            predictions = (pred_inter_times, pred_types)
+            # Convert batch to values for compatibility
+            batch_values = batch.values()
             
-            # Compute metrics
-            metrics = self.metrics_helper.compute_all_metrics(batch, predictions)
+            # Compute metrics based on benchmark mode
+            if self.benchmark_mode == BenchmarkMode.TIME_ONLY:
+                # Only compute time metrics
+                time_predictions = self._create_time_predictions(batch)
+                metrics = self.metrics_helper.compute_all_time_metrics(batch_values, time_predictions)
+                
+            elif self.benchmark_mode == BenchmarkMode.TYPE_ONLY:
+                # Only compute type metrics
+                type_predictions = self._create_type_predictions(batch)
+                metrics = self.metrics_helper.compute_all_type_metrics(batch_values, type_predictions)
+                
+            else:  # BenchmarkMode.BOTH
+                # Compute all metrics (legacy behavior)
+                pred_inter_times, pred_types = self._create_predictions(batch)
+                predictions = (pred_inter_times, pred_types)
+                metrics = self.metrics_helper.compute_all_metrics(batch_values, predictions)
+            
             all_metrics.append(metrics)
             
             if (batch_idx + 1) % 100 == 0:
@@ -146,13 +197,76 @@ class BaseBenchmark(ABC):
         """
         if not all_metrics:
             return {}
-        
-        # Get all metric names
+          # Get all metric names
         metric_names = all_metrics[0].keys()
         aggregated = {}
-        
         for metric_name in metric_names:
-            values = [m[metric_name] for m in all_metrics if not np.isnan(m[metric_name])]
+            # Skip aggregation for non-scalar metrics like confusion matrices
+            if 'confusion' in metric_name.lower() or 'matrix' in metric_name.lower():
+                # For confusion matrices, sum them up instead of averaging
+                try:
+                    confusion_matrices = []
+                    for m in all_metrics:
+                        if metric_name in m:
+                            value = m[metric_name]
+                            if hasattr(value, 'cpu'):
+                                value = value.cpu().detach()
+                            confusion_matrices.append(value)
+                    
+                    if confusion_matrices:
+                        # Sum all confusion matrices
+                        if isinstance(confusion_matrices[0], torch.Tensor):
+                            total_confusion = torch.stack(confusion_matrices).sum(dim=0)
+                            aggregated[metric_name] = total_confusion.tolist()
+                        else:
+                            total_confusion = np.sum(confusion_matrices, axis=0)
+                            aggregated[metric_name] = total_confusion.tolist()
+                except Exception as e:
+                    logger.warning(f"Could not aggregate confusion matrix {metric_name}: {e}")
+                continue
+            
+            # Extract values and convert tensors to scalars for regular metrics
+            values = []
+            for m in all_metrics:
+                if metric_name in m:
+                    value = m[metric_name]
+                    
+                    # Handle different types of values
+                    try:
+                        # For torch tensors
+                        if hasattr(value, 'item'):
+                            # Single element tensor
+                            if value.numel() == 1:
+                                value = value.item()
+                            else:
+                                # Multi-element tensor - convert to float and take mean
+                                if value.dtype in [torch.long, torch.int, torch.int32, torch.int64]:
+                                    value = value.float()
+                                value = float(value.mean().item())
+                        elif hasattr(value, 'cpu'):
+                            # Tensor that needs to be moved to CPU first
+                            cpu_value = value.cpu().detach()
+                            if cpu_value.numel() == 1:
+                                value = float(cpu_value.numpy())
+                            else:
+                                # Convert to float if integer type
+                                if cpu_value.dtype in [torch.long, torch.int, torch.int32, torch.int64]:
+                                    cpu_value = cpu_value.float()
+                                value = float(cpu_value.mean().numpy())
+                        elif hasattr(value, '__len__') and len(value) > 1:
+                            # Array-like object
+                            value = float(np.mean(value))
+                        else:
+                            # Already a scalar
+                            value = float(value)
+                        
+                        # Check if value is not NaN
+                        if not np.isnan(value):
+                            values.append(value)
+                    except Exception as e:
+                        logger.warning(f"Could not process metric {metric_name} with value {value}: {e}")
+                        continue
+            
             if values:
                 aggregated[f"{metric_name}_mean"] = float(np.mean(values))
                 aggregated[f"{metric_name}_std"] = float(np.std(values))
@@ -254,7 +368,7 @@ class BaseBenchmark(ABC):
         return self.metrics_helper.get_available_metrics()
 
 
-def run_benchmark(benchmark_class, config_path: str, experiment_id: str, 
+def run_benchmark(benchmark_class: Type[BaseBenchmark], config_path: str, experiment_id: str, 
                  save_dir: str = None, **kwargs) -> Dict[str, Any]:
     """
     Generic function to run any benchmark.

@@ -7,17 +7,82 @@ following the Single Responsibility Principle.
 
 import torch
 import numpy as np
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional, Union
 from scipy.stats import wasserstein_distance
-from .interfaces import MetricsComputerInterface, DataExtractorInterface
+from .interfaces import MetricsComputerInterface, DataExtractorInterface, SimulationTimeExtractorInterface, SimulationTypeExtractorInterface
+from .shared_types import SimulationMetrics, SimulationTimeValues, SimulationTypeValues, SimulationValues
 from easy_tpp.utils import logger
 
 
-class SimulationDataExtractor(DataExtractorInterface):
-    """Extracts simulation data from batch and predictions."""
+class SimulationTimeDataExtractor(SimulationTimeExtractorInterface):
+    """Extracts time-related data from simulation batch and predictions."""
     
     def __init__(self, num_event_types: int):
         self.num_event_types = num_event_types
+    
+    def extract_simulation_time_values(self, batch: Any, pred: Any) -> SimulationTimeValues:
+        """
+        Extract simulation time values for metrics computation.
+        
+        Args:
+            batch: Input batch data
+            pred: Simulation predictions
+        """
+        if len(batch) >= 4:
+            true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask = batch[:4]
+        else:
+            true_time_seqs, true_time_delta_seqs, true_type_seqs = batch[:3]
+            batch_non_pad_mask = (true_type_seqs != self.num_event_types).float()
+        
+        sim_time_seqs, sim_time_delta_seqs, sim_type_seqs = pred[:3]
+        sim_mask = pred[3] if len(pred) >= 4 else torch.ones_like(sim_type_seqs, dtype=torch.bool)
+        
+        return SimulationTimeValues(
+            true_time_seqs=true_time_seqs,
+            true_time_delta_seqs=true_time_delta_seqs,
+            sim_time_seqs=sim_time_seqs,
+            sim_time_delta_seqs=sim_time_delta_seqs,
+            sim_mask=sim_mask
+        )
+
+
+class SimulationTypeDataExtractor(SimulationTypeExtractorInterface):
+    """Extracts type-related data from simulation batch and predictions."""
+    
+    def __init__(self, num_event_types: int):
+        self.num_event_types = num_event_types
+    
+    def extract_simulation_type_values(self, batch: Any, pred: Any) -> SimulationTypeValues:
+        """
+        Extract simulation type values for metrics computation.
+        
+        Args:
+            batch: Input batch data
+            pred: Simulation predictions
+        """
+        if len(batch) >= 4:
+            true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask = batch[:4]
+        else:
+            true_time_seqs, true_time_delta_seqs, true_type_seqs = batch[:3]
+            batch_non_pad_mask = (true_type_seqs != self.num_event_types).float()
+        
+        sim_time_seqs, sim_time_delta_seqs, sim_type_seqs = pred[:3]
+        sim_mask = pred[3] if len(pred) >= 4 else torch.ones_like(sim_type_seqs, dtype=torch.bool)
+        
+        return SimulationTypeValues(
+            true_type_seqs=true_type_seqs,
+            sim_type_seqs=sim_type_seqs,
+            sim_mask=sim_mask
+        )
+
+
+class SimulationDataExtractor(DataExtractorInterface):
+    """Extracts simulation data from batch and predictions - legacy compatibility."""
+    
+    def __init__(self, num_event_types: int):
+        self.num_event_types = num_event_types
+        self.time_extractor = SimulationTimeDataExtractor(num_event_types)
+        self.type_extractor = SimulationTypeDataExtractor(num_event_types)
     
     def extract_values(self, batch: Any, pred: Any) -> Tuple[torch.Tensor, ...]:
         """Extract simulation values for metrics computation."""
@@ -38,30 +103,69 @@ class SimulationMetricsComputer(MetricsComputerInterface):
     Computes simulation-specific metrics.
     
     This class focuses solely on simulation metrics computation,
-    adhering to the Single Responsibility Principle.
+    adhering to the Single Responsibility Principle. Now includes
+    separate time and type metric computation methods.
     """
     
-    def __init__(self, num_event_types: int, data_extractor: DataExtractorInterface = None):
+    def __init__(
+        self, 
+        num_event_types: int, 
+        data_extractor: DataExtractorInterface = None,
+        time_extractor: SimulationTimeExtractorInterface = None,
+        type_extractor: SimulationTypeExtractorInterface = None,
+        selected_metrics: Optional[List[Union[str, SimulationMetrics]]] = None
+    ):
         """
         Initialize the simulation metrics computer.
         
         Args:
             num_event_types: Number of event types
-            data_extractor: Custom data extractor (optional)
+            data_extractor: Custom data extractor (optional, for compatibility)
+            time_extractor: Custom time extractor (optional)
+            type_extractor: Custom type extractor (optional)
+            selected_metrics: List of metrics to compute. If None, compute all available metrics.
+                             Can be strings or SimulationMetrics enum values.
         """
         self.num_event_types = num_event_types
         self._data_extractor = data_extractor or SimulationDataExtractor(num_event_types)
-    
+        self._time_extractor = time_extractor or SimulationTimeDataExtractor(num_event_types)
+        self._type_extractor = type_extractor or SimulationTypeDataExtractor(num_event_types)
+        
+        # Process selected metrics
+        if selected_metrics is None:
+            # By default, compute all available metrics
+            self.selected_metrics = set(self.get_available_metrics())
+        else:
+            # Convert to set of strings for faster lookup
+            processed_metrics = []
+            for metric in selected_metrics:
+                if isinstance(metric, SimulationMetrics):
+                    processed_metrics.append(metric.value)
+                else:
+                    processed_metrics.append(str(metric))
+            
+            # Validate that all selected metrics are available
+            available = set(self.get_available_metrics())
+            selected_set = set(processed_metrics)
+            invalid_metrics = selected_set - available
+            if invalid_metrics:
+                logger.warning(f"Invalid simulation metrics requested: {invalid_metrics}. "
+                             f"Available metrics: {available}")
+                # Keep only valid metrics
+                selected_set = selected_set & available
+            
+            self.selected_metrics = selected_set
+
     def compute_metrics(self, batch: Any, pred: Any) -> Dict[str, float]:
         """
-        Compute all simulation metrics.
+        Compute selected simulation metrics.
         
         Args:
             batch: Input batch data
             pred: Model predictions
             
         Returns:
-            Dictionary of computed metrics
+            Dictionary of computed metrics (only selected ones)
         """
         try:
             extracted_values = self._data_extractor.extract_values(batch, pred)
@@ -69,23 +173,85 @@ class SimulationMetricsComputer(MetricsComputerInterface):
             
             metrics = {}
             
-            # Calculate Wasserstein 1D distance per sequence
-            wasserstein_distances = self._batch_wasserstein_1d(true_time_seqs, sim_time_seqs, sim_mask)
-            metrics['wasserstein_1d'] = float(wasserstein_distances.mean().item())
+            # Calculate only selected metrics
+            if SimulationMetrics.WASSERSTEIN_1D.value in self.selected_metrics:
+                wasserstein_distances = self._batch_wasserstein_1d(true_time_seqs, sim_time_seqs, sim_mask)
+                metrics['wasserstein_1d'] = float(wasserstein_distances.mean().item())
 
-            # Calculate MMD RBF with padding
-            mmd_rbf = self._batch_mmd_rbf_padded(true_time_seqs, sim_time_seqs, sim_mask)
-            metrics['mmd_rbf_padded'] = float(mmd_rbf.item())
+            if SimulationMetrics.MMD_RBF_PADDED.value in self.selected_metrics:
+                mmd_rbf = self._batch_mmd_rbf_padded(true_time_seqs, sim_time_seqs, sim_mask)
+                metrics['mmd_rbf_padded'] = float(mmd_rbf.item())
 
-            # Calculate MMD with Wasserstein kernel
-            mmd_wasserstein = self._batch_mmd_wasserstein(true_time_seqs, sim_time_seqs, sim_mask)
-            metrics['mmd_wasserstein'] = float(mmd_wasserstein.item())
+            if SimulationMetrics.MMD_WASSERSTEIN.value in self.selected_metrics:
+                mmd_wasserstein = self._batch_mmd_wasserstein(true_time_seqs, sim_time_seqs, sim_mask)
+                metrics['mmd_wasserstein'] = float(mmd_wasserstein.item())
 
             return metrics
             
         except Exception as e:
             logger.error(f"Error computing simulation metrics: {e}")
             return self._get_nan_metrics()
+    
+    def compute_all_time_metrics(self, batch: Any, pred: Any) -> Dict[str, Any]:
+        """
+        Compute all time-related simulation metrics using the time extractor.
+        
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+            
+        Returns:
+            Dictionary of computed time metrics
+        """
+        try:
+            metrics = {}
+            time_values = self._time_extractor.extract_simulation_time_values(batch, pred)
+            
+            # Compute time-based metrics (all current simulation metrics are time-based)
+            wasserstein_distances = self._batch_wasserstein_1d_from_time_values(time_values)
+            metrics['wasserstein_1d'] = float(wasserstein_distances.mean().item())
+
+            mmd_rbf = self._batch_mmd_rbf_padded_from_time_values(time_values)
+            metrics['mmd_rbf_padded'] = float(mmd_rbf.item())
+
+            mmd_wasserstein = self._batch_mmd_wasserstein_from_time_values(time_values)
+            metrics['mmd_wasserstein'] = float(mmd_wasserstein.item())
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"Error computing simulation time metrics: {e}")
+            return {
+                'wasserstein_1d': float('nan'),
+                'mmd_rbf_padded': float('nan'),
+                'mmd_wasserstein': float('nan')
+            }
+    
+    def compute_all_type_metrics(self, batch: Any, pred: Any) -> Dict[str, Any]:
+        """
+        Compute all type-related simulation metrics using the type extractor.
+        
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+            
+        Returns:
+            Dictionary of computed type metrics (currently empty for simulation)
+        """
+        try:
+            metrics = {}
+            # Currently, simulation metrics are primarily time-based
+            # This method is included for consistency and future extensions
+            # that might include type-specific simulation metrics
+            
+            # Future type-based simulation metrics could be added here
+            # For example: type sequence similarity, type distribution comparisons, etc.
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"Error computing simulation type metrics: {e}")
+            return {}
     
     def get_available_metrics(self) -> List[str]:
         """Get list of available simulation metrics."""
@@ -214,6 +380,58 @@ class SimulationMetricsComputer(MetricsComputerInterface):
         K_ts = torch.exp(-X**2/(2*sigma**2)).mean()
 
         return K_tt + K_ss - 2*K_ts
+    
+    def _batch_wasserstein_1d_from_time_values(self, time_values: SimulationTimeValues) -> torch.Tensor:
+        """
+        Calculate Wasserstein 1D distance from SimulationTimeValues.
+        
+        Args:
+            time_values: SimulationTimeValues container
+            
+        Returns:
+            torch.Tensor: [batch_size] Wasserstein distances
+        """
+        return self._batch_wasserstein_1d(
+            time_values.true_time_seqs, 
+            time_values.sim_time_seqs, 
+            time_values.sim_mask
+        )
+    
+    def _batch_mmd_rbf_padded_from_time_values(self, time_values: SimulationTimeValues, sigma: float = 1.0) -> torch.Tensor:
+        """
+        Calculate MMD RBF padded from SimulationTimeValues.
+        
+        Args:
+            time_values: SimulationTimeValues container
+            sigma: RBF bandwidth parameter
+            
+        Returns:
+            torch.Tensor: MMD squared value
+        """
+        return self._batch_mmd_rbf_padded(
+            time_values.true_time_seqs, 
+            time_values.sim_time_seqs, 
+            time_values.sim_mask, 
+            sigma
+        )
+    
+    def _batch_mmd_wasserstein_from_time_values(self, time_values: SimulationTimeValues, sigma: float = 1.0) -> torch.Tensor:
+        """
+        Calculate MMD Wasserstein from SimulationTimeValues.
+        
+        Args:
+            time_values: SimulationTimeValues container
+            sigma: RBF bandwidth parameter
+            
+        Returns:
+            torch.Tensor: MMD squared value
+        """
+        return self._batch_mmd_wasserstein(
+            time_values.true_time_seqs, 
+            time_values.sim_time_seqs, 
+            time_values.sim_mask, 
+            sigma
+        )
     
     def _get_nan_metrics(self) -> Dict[str, float]:
         """Get a dictionary of NaN metrics for error cases."""

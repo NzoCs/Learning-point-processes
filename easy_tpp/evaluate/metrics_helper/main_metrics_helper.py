@@ -9,9 +9,9 @@ This class follows SOLID principles:
 - Dependency Inversion: Depends on abstractions, not concretions
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from .interfaces import MetricsComputerInterface
-from .shared_types import EvaluationMode
+from .shared_types import EvaluationMode, PredictionMetrics, SimulationMetrics
 from .prediction_metrics_computer import PredictionMetricsComputer
 from .simulation_metrics_computer import SimulationMetricsComputer
 
@@ -29,7 +29,9 @@ class MetricsHelper:
         mode: EvaluationMode = EvaluationMode.PREDICTION,
         save_dir: Optional[str] = None,
         prediction_computer: Optional[MetricsComputerInterface] = None,
-        simulation_computer: Optional[MetricsComputerInterface] = None
+        simulation_computer: Optional[MetricsComputerInterface] = None,
+        selected_prediction_metrics: Optional[List[Union[str, PredictionMetrics]]] = None,
+        selected_simulation_metrics: Optional[List[Union[str, SimulationMetrics]]] = None
     ):
         """
         Initialize the metrics helper.
@@ -40,14 +42,22 @@ class MetricsHelper:
             save_dir: Directory for saving results (optional)
             prediction_computer: Custom prediction metrics computer (optional)
             simulation_computer: Custom simulation metrics computer (optional)
+            selected_prediction_metrics: List of prediction metrics to compute. If None, compute all.
+            selected_simulation_metrics: List of simulation metrics to compute. If None, compute all.
         """
         self.num_event_types = num_event_types
         self.mode = mode
         self.save_dir = save_dir
         
         # Use dependency injection with default implementations
-        self._prediction_computer = prediction_computer or PredictionMetricsComputer(num_event_types)
-        self._simulation_computer = simulation_computer or SimulationMetricsComputer(num_event_types)
+        self._prediction_computer = prediction_computer or PredictionMetricsComputer(
+            num_event_types, 
+            selected_metrics=selected_prediction_metrics
+        )
+        self._simulation_computer = simulation_computer or SimulationMetricsComputer(
+            num_event_types,
+            selected_metrics=selected_simulation_metrics
+        )
         
         # Select strategy based on mode
         self._current_computer = self._get_computer_for_mode(mode)
@@ -82,6 +92,86 @@ class MetricsHelper:
             Dictionary of computed metrics
         """
         return self._current_computer.compute_metrics(batch, pred)
+    
+    def compute_all_time_metrics(self, batch, pred) -> Dict[str, float]:
+        """
+        Compute all time-related metrics using the prediction computer.
+        
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+            
+        Returns:
+            Dictionary of computed time metrics
+        """
+        if self.mode != EvaluationMode.PREDICTION:
+            raise ValueError("Time metrics are only available in prediction mode")
+        
+        # Type check to ensure we have the right computer type
+        if hasattr(self._prediction_computer, 'compute_all_time_metrics'):
+            return self._prediction_computer.compute_all_time_metrics(batch, pred)
+        else:
+            raise AttributeError("Prediction computer does not support time-only metrics computation")
+    
+    def compute_all_type_metrics(self, batch, pred) -> Dict[str, float]:
+        """
+        Compute all type-related metrics using the prediction computer.
+        
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+            
+        Returns:
+            Dictionary of computed type metrics
+        """
+        if self.mode != EvaluationMode.PREDICTION:
+            raise ValueError("Type metrics are only available in prediction mode")
+        
+        # Type check to ensure we have the right computer type
+        if hasattr(self._prediction_computer, 'compute_all_type_metrics'):
+            return self._prediction_computer.compute_all_type_metrics(batch, pred)
+        else:
+            raise AttributeError("Prediction computer does not support type-only metrics computation")
+    
+    def compute_all_simulation_time_metrics(self, batch, pred) -> Dict[str, float]:
+        """
+        Compute all time-related simulation metrics using the simulation computer.
+        
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+            
+        Returns:
+            Dictionary of computed simulation time metrics
+        """
+        if self.mode != EvaluationMode.SIMULATION:
+            raise ValueError("Simulation time metrics are only available in simulation mode")
+        
+        # Type check to ensure we have the right computer type
+        if hasattr(self._simulation_computer, 'compute_all_time_metrics'):
+            return self._simulation_computer.compute_all_time_metrics(batch, pred)
+        else:
+            raise AttributeError("Simulation computer does not support time-only metrics computation")
+    
+    def compute_all_simulation_type_metrics(self, batch, pred) -> Dict[str, float]:
+        """
+        Compute all type-related simulation metrics using the simulation computer.
+        
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+            
+        Returns:
+            Dictionary of computed simulation type metrics
+        """
+        if self.mode != EvaluationMode.SIMULATION:
+            raise ValueError("Simulation type metrics are only available in simulation mode")
+        
+        # Type check to ensure we have the right computer type
+        if hasattr(self._simulation_computer, 'compute_all_type_metrics'):
+            return self._simulation_computer.compute_all_type_metrics(batch, pred)
+        else:
+            raise AttributeError("Simulation computer does not support type-only metrics computation")
     
     def get_available_metrics(self) -> List[str]:
         """Get available metrics for the current mode."""

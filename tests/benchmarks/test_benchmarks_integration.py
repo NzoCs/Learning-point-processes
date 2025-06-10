@@ -23,14 +23,9 @@ def real_data_config():
     return DataConfig.from_dict(data_config_dict)
 
 def _check_json_file_created(save_dir, dataset_name, bench):
-    # Map test expectation to actual benchmark_name property
-    name_map = {
-        'intertime_distribution_sampling': 'sample_distrib_intertime_bench',
-        'last_mark_benchmark': 'last_mark_bench',
-    }
+    # Use the actual benchmark_name property
     if hasattr(bench, 'benchmark_name'):
         bench_name = bench.benchmark_name
-        bench_name = name_map.get(bench_name, bench_name)
     else:
         bench_name = bench
     path = os.path.join(save_dir, dataset_name, f"{bench_name}_results.json")

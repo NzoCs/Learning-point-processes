@@ -47,7 +47,7 @@ def test_mark_distribution_benchmark_runs():
         bench.data_module.train_dataloader = lambda: []
         bench.data_module.test_dataloader = lambda: []
         bench.mark_probabilities = np.array([0.5, 0.5])
-        result = bench._prepare_benchmark_results({'type_accuracy_mean': 1.0}, 0)
+        result = bench._prepare_results({'type_accuracy_mean': 1.0}, 0)
         assert 'distribution_stats' in result
 
 def test_intertime_distribution_benchmark_runs():
@@ -63,15 +63,15 @@ def test_intertime_distribution_benchmark_runs():
             bench.benchmark_name = 'intertime_distribution'
         if not hasattr(bench, '_prepare_benchmark'):
             bench._prepare_benchmark = lambda: None
-        result = bench._prepare_benchmark_results({'time_rmse_mean': 0.0}, 0)
+        result = bench._prepare_results({'time_rmse_mean': 0.0}, 0)
         assert 'distribution_stats' in result
 
 def test_last_mark_benchmark_runs():
     data_config = get_dummy_data_config()
     with patch_setup():
-        bench = LastMarkBenchmark(data_config, EXPERIMENT_ID)
+        bench = LastMarkBenchmark(data_config, EXPERIMENT_ID)        
         bench.data_module.train_dataloader = lambda: []
         bench.data_module.test_dataloader = lambda: []
-        bench.most_common_mark = 0
-        result = bench._prepare_benchmark_results({'type_accuracy_mean': 1.0}, 0)
-        assert 'most_common_mark' in result
+        bench._create_predictions = lambda: 0
+        result = bench._prepare_results({'type_accuracy_mean': 1.0}, 0)
+        assert 'strategy' in result

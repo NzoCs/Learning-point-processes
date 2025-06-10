@@ -3,6 +3,7 @@ from easy_tpp.preprocess import TPPDataModule
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.utils import logger
 from easy_tpp.evaluate.distribution_analysis_helper import TemporalPointProcessComparatorFactory
+from easy_tpp.config_factory.logger_config import BaseLoggerAdapter
 from ..utils.model_utils import flexible_state_dict_loading, compare_model_configs
 
 import torch
@@ -104,7 +105,7 @@ class Trainer:
         self.dataset_id = data_config.dataset_id
 
         try:
-            self.logger = trainer_config.get_logger()
+            self.logger = BaseLoggerAdapter.configure(trainer_config.logger_config())
         except Exception as e:
             self.logger = False
             logger.critical(f"Logging is disabled for this run. Error: {str(e)}")

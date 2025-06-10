@@ -6,6 +6,10 @@ easy_tpp.egg-info
 # python temp
 *.pyc
 
+# models
+*.ckpt
+*.pth
+
 #venv
 .venv-py312
 

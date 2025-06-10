@@ -5,7 +5,7 @@ Interfaces for metrics computation following SOLID principles.
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Tuple
 import torch
-from .shared_types import MaskedValues
+from .shared_types import MaskedValues, TimeValues, TypeValues, SimulationTimeValues, SimulationTypeValues
 
 
 class MetricsComputerInterface(ABC):
@@ -47,4 +47,40 @@ class DataExtractorInterface(ABC):
     @abstractmethod
     def extract_values(self, batch: Any, pred: Any) -> Any:
         """Extract relevant values from batch and predictions."""
+        pass
+
+
+class TimeExtractorInterface(ABC):
+    """Interface for time-specific data extraction."""
+    
+    @abstractmethod
+    def extract_time_values(self, batch: Any, pred: Any) -> TimeValues:
+        """Extract time-related values from batch and predictions."""
+        pass
+
+
+class TypeExtractorInterface(ABC):
+    """Interface for type-specific data extraction."""
+    
+    @abstractmethod
+    def extract_type_values(self, batch: Any, pred: Any) -> TypeValues:
+        """Extract type-related values from batch and predictions."""
+        pass
+
+
+class SimulationTimeExtractorInterface(ABC):
+    """Interface for simulation time-specific data extraction."""
+    
+    @abstractmethod
+    def extract_simulation_time_values(self, batch: Any, pred: Any) -> SimulationTimeValues:
+        """Extract simulation time-related values from batch and predictions."""
+        pass
+
+
+class SimulationTypeExtractorInterface(ABC):
+    """Interface for simulation type-specific data extraction."""
+    
+    @abstractmethod
+    def extract_simulation_type_values(self, batch: Any, pred: Any) -> SimulationTypeValues:
+        """Extract simulation type-related values from batch and predictions."""
         pass

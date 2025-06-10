@@ -215,8 +215,6 @@ class EventSampler(nn.Module):
         # [batch_size, seq_len, num_sample, num_exp]
         unif_numbers = self.sample_uniform_distribution(intensity_upper_bound)
 
-        device = self.device
-
         # 5. find out accepted intensities
         # [batch_size, seq_len, num_sample]
         res = self.sample_accept(unif_numbers, intensity_upper_bound, total_intensities, exp_numbers)

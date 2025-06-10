@@ -7,7 +7,10 @@ from easy_tpp.evaluate.metrics_helper import (
     MetricsComputerInterface,
     PredictionMetricsComputer,
     SimulationMetricsComputer,
-    MaskedValues
+    MaskedValues,
+    PredictionMetrics,
+    SimulationMetrics,
+    EvaluationMode
 )
 from easy_tpp.evaluate.metrics_helper.main_metrics_helper import MetricsHelper
 
@@ -22,5 +25,7 @@ __all__ = [
     'MetricsComputerInterface',
     'PredictionMetricsComputer',
     'SimulationMetricsComputer',
-    'MaskedValues'
+    'MaskedValues',
+    'PredictionMetrics',
+    'SimulationMetrics'
 ]

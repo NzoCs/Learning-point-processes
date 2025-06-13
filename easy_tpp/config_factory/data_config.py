@@ -6,7 +6,18 @@ from easy_tpp.config_factory.base import BaseConfig, ConfigValidationError, conf
 @config_class('tokenizer_config')
 @dataclass
 class TokenizerConfig(BaseConfig):
-    """Configuration for event tokenizer."""
+    """Configuration for event tokenizer.
+    Args:
+        num_event_types (int): Number of event types in the dataset.
+        pad_token_id (Optional[int]): ID of the padding token. Defaults to num_event_types.
+        padding_side (str): Side for padding ('left' or 'right'). Defaults to 'left'.
+        truncation_side (str): Side for truncation ('left' or 'right'). Defaults to 'left'.
+        padding_strategy (str): Strategy for padding ('longest', 'max_length', etc.). Defaults to 'longest'.
+        max_len (Optional[int]): Maximum length of sequences after padding/truncation.
+        truncation_strategy (Optional[str]): Strategy for truncation.
+        num_event_types_pad (Optional[int]): Number of event types including padding.
+        model_input_names (Optional[Any]): Names of model inputs, if applicable.
+    """
     num_event_types: int = 0
     pad_token_id: Optional[int] = None
     padding_side: str = 'left'
@@ -64,6 +75,18 @@ class TokenizerConfig(BaseConfig):
 @config_class('data_loading_specs_config')
 @dataclass
 class DataLoadingSpecsConfig(BaseConfig):
+    """
+    Configuration for data loading specifications.
+    Args:
+        batch_size (int): Number of samples per batch.
+        num_workers (int): Number of subprocesses to use for data loading.
+        shuffle (Optional[bool]): Whether to shuffle the dataset.
+        padding (Optional[bool]): Whether to apply padding to sequences.
+        truncation (Optional[bool]): Whether to truncate sequences to a maximum length.
+        tensor_type (str): Type of tensor to return ('pt' for PyTorch, 'tf' for TensorFlow, etc.).
+        max_len (Optional[int]): Maximum length of sequences after padding/truncation.
+    """
+
     batch_size: int = 32
     num_workers: int = 1
     shuffle: Optional[bool] = None
@@ -99,6 +122,19 @@ class DataLoadingSpecsConfig(BaseConfig):
 @config_class('data_config')
 @dataclass
 class DataConfig(BaseConfig):
+    """
+    Configuration for dataset and data processing.
+    Args:
+        train_dir (Optional[str]): Directory for training data.
+        valid_dir (Optional[str]): Directory for validation data.
+        test_dir (Optional[str]): Directory for test data.
+        source_dir (Optional[str]): Source directory for the dataset.
+        data_format (Optional[str]): Format of the dataset files (e.g., 'csv', 'json').
+        dataset_id (Optional[str]): Identifier for the dataset.
+        data_loading_specs (DataLoadingSpecsConfig): Specifications for loading the data.
+        data_specs (TokenizerConfig): Specifications for tokenization and event types.
+    """
+
     train_dir: Optional[str] = None
     valid_dir: Optional[str] = None
     test_dir: Optional[str] = None

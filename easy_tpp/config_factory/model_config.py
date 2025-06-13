@@ -143,7 +143,17 @@ class SimulationConfig(BaseConfig):
 @config_class('training_config')
 @dataclass
 class TrainingConfig(BaseConfig):
-    """Configuration for model training parameters."""
+    """Configuration for model training parameters.
+    Args:
+        lr (float): Learning rate for the optimizer.
+        lr_scheduler (bool): Whether to use a learning rate scheduler.
+        max_epochs (int): Maximum number of training epochs.
+        dropout (float): Dropout rate for regularization.
+        stage (str): Training stage, e.g., 'train', 'eval', 'test'.
+        backend (Backend): Backend framework to use (e.g., Torch, TensorFlow).
+        dataset_id (Optional[str]): Identifier for the dataset.
+        base_dir (Optional[str]): Base directory for saving outputs.
+    """
     
     lr: float = 0.001
     lr_scheduler: bool = True
@@ -210,7 +220,35 @@ class TrainingConfig(BaseConfig):
 @config_class('model_specs_config')
 @dataclass
 class ModelSpecsConfig(BaseConfig):
-    """Configuration for model-specific parameters."""
+    """Configuration for model-specific parameters.
+    Args:
+        hidden_size (int): Size of the hidden layers.
+        rnn_type (str): Type of RNN to use (e.g., LSTM, GRU).
+        time_emb_size (int): Size of the time embedding.
+        num_layers (int): Number of layers in the model.
+        num_heads (int): Number of attention heads.
+        sharing_param_layer (bool): Whether to share parameters across layers.
+        use_ln (bool): Whether to use layer normalization.
+        loss_integral_num_sample_per_step (int): Number of samples for loss integral approximation.
+        max_seq_len (int): Maximum sequence length for input data.
+
+        #  IntensityFree model specific parameters
+        num_mix_components (int): Number of mixture components for intensity-free models.
+        mean_log_inter_time (float): Mean of the log inter-event time distribution.
+        std_log_inter_time (float): Standard deviation of the log inter-event time distribution.
+
+        #  Ode model specific parameters
+        num_mlp_layers (int): Number of MLP layers in the model.
+        ode_num_sample_per_step (int): Number of samples per step for ODE solvers.
+        proper_marked_intensities (bool): Whether to use proper marked intensities.
+
+        # Hawkes process parameters (optional)
+        mu (Optional[float]): Base intensity for Hawkes processes.
+        alpha (Optional[float]): Excitation parameter for Hawkes processes.
+        beta (Optional[float]): Decay parameter for Hawkes processes.
+
+    This configuration class encapsulates all model-specific parameters
+    """
     
     # Core model parameters
     hidden_size: int = 64
@@ -228,7 +266,7 @@ class ModelSpecsConfig(BaseConfig):
     mean_log_inter_time: float = 0.0
     std_log_inter_time: float = 1.0
     
-    # Additional model parameters
+    # Ode model specific parameters
     num_mlp_layers: int = 2
     ode_num_sample_per_step: int = 20
     proper_marked_intensities: bool = False
@@ -303,7 +341,13 @@ class ModelSpecsConfig(BaseConfig):
 @config_class('hawkes_specs_config')
 @dataclass
 class HawkesSpecsConfig(BaseConfig):
-    """Configuration for Hawkes process parameters."""
+    """Configuration for Hawkes process parameters.
+    
+    Args:
+        mu (list): Base intensity for each event type.
+        alpha (list): Excitation parameter for each event type.
+        beta (list): Decay parameter for each event type.
+    """
     mu: list = field(default_factory=list)
     alpha: list = field(default_factory=list)
     beta: list = field(default_factory=list)
@@ -332,8 +376,27 @@ class HawkesSpecsConfig(BaseConfig):
 @dataclass
 class ModelConfig(BaseConfig):
     """
-    Unified model configuration with comprehensive validation and type safety.
-    This replaces both the legacy and enhanced configs.
+    Configuration for the model architecture and specifications.
+    This class encapsulates all necessary parameters for defining a model,
+    including training settings, model specifications, thinning parameters,
+    and simulation configurations.
+    Args:
+        model_id (str): Identifier for the model type (e.g., 'NHP', 'RMTPP').
+        num_event_types (int): Number of event types in the model.
+        num_event_types_pad (Optional[int]): Padded number of event types, defaults to num_event_types + 1.
+        pad_token_id (Optional[int]): ID for the padding token, defaults to num_event_types.
+        device (str): Device to run the model on ('cpu', 'cuda', or 'auto').
+        gpu (int): GPU device ID, -1 for CPU.
+        is_training (bool): Whether the model is in training mode.
+        compute_simulation (bool): Whether to compute simulations during training.
+        use_mc_samples (bool): Whether to use Monte Carlo samples for training.
+        pretrain_model_path (Optional[str]): Path to a pre-trained model, if applicable.
+
+        # Sub-configurations:
+        base_config (TrainingConfig): Base training configuration.
+        specs (Union[ModelSpecsConfig, HawkesSpecsConfig]): Model specifications, can be either general or Hawkes-specific.
+        thinning (ThinningConfig): Configuration for thinning process.
+        simulation_config (SimulationConfig): Configuration for event sequence simulation.
     """
     
     model_id: str

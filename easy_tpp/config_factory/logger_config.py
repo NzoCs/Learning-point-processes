@@ -166,10 +166,13 @@ class LoggerConfig(BaseConfig):
     Configuration for logging in experiments. This class allows you to specify the type of logger
     (e.g., CSV, WandB, MLFlow) and its parameters. It also provides methods to validate and configure
     the logger based on the specified type.
+    Args:
+        save_dir (Optional[str]): Directory where logs will be saved.
+        logger_type (Optional[LoggerType]): Type of logger to use (e.g., CSV, WandB, MLFlow, Comet, Neptune, TensorBoard).
+        config (Dict[str, Any]): Additional configuration parameters for the logger.
     """
 
     save_dir: Optional[str] = None
-    log_level: Optional[str] = None
     logger_type: Optional[LoggerType] = None
     config: Dict[str, Any] = field(default_factory=dict)
 
@@ -191,8 +194,6 @@ class LoggerConfig(BaseConfig):
             # If save_dir is provided, ensure it's in config
             if self.save_dir is not None:
                 self.config['save_dir'] = self.save_dir
-            if self.log_level is not None:
-                self.config['log_level'] = self.log_level
         super().__post_init__()
 
     def get_yaml_config(self) -> Dict[str, Any]:

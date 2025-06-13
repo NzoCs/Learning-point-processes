@@ -11,14 +11,29 @@ from easy_tpp.utils import logger
 @config_class('trainer_config')
 @dataclass
 class TrainerConfig(BaseConfig):
+    """
+    Configuration for the Trainer, encapsulating training parameters and settings.
+    Args:
+        dataset_id (str): Identifier for the dataset.
+        model_id (str): Identifier for the model.
+        batch_size (int, optional): Batch size for training. Defaults to 32.
+        max_epochs (int, optional): Maximum number of training epochs. Defaults to None.
+        val_freq (int, optional): Frequency of validation checks. Defaults to 10.
+        patience (int, optional): Patience for early stopping. Defaults to 20.
+        log_freq (int, optional): Frequency of logging. Defaults to 5.
+        checkpoints_freq (int, optional): Frequency of saving checkpoints. Defaults to 5.
+        accumulate_grad_batches (int, optional): Number of batches to accumulate gradients. Defaults to 1.
+        use_precision_16 (bool, optional): Whether to use 16-bit precision. Defaults to False. (untested)
+    """
+
     dataset_id: str
     model_id: str
     batch_size: int = 32
     max_epochs: Optional[int] = None
     val_freq: int = 10
     patience: int = 20
-    log_freq: int = 1
-    checkpoints_freq: int = 1
+    log_freq: int = 5
+    checkpoints_freq: int = 5
     accumulate_grad_batches: int = 1
     use_precision_16: bool = False
     devices: Optional[int] = None
@@ -97,6 +112,14 @@ class TrainerConfig(BaseConfig):
 @config_class('runner_config')
 @dataclass
 class RunnerConfig(BaseConfig):
+    """
+    Configuration for the Runner, encapsulating trainer, model, and data configurations.
+    Args:
+        trainer_config (TrainerConfig): Configuration for the training process.
+        model_config (ModelConfig): Configuration for the model architecture and specifications.
+        data_config (DataConfig): Configuration for the dataset and data processing.
+    """
+
     trainer_config: TrainerConfig
     model_config: ModelConfig
     data_config: DataConfig

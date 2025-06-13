@@ -12,6 +12,8 @@ easy_tpp.egg-info
 
 #venv
 .venv-py312
+.venv-py312-new
+.venv-py310
 
 # proto
 protoc

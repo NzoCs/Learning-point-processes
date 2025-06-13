@@ -27,4 +27,4 @@ exp=${experiments[$(( idx / ${#datasets[@]} ))]}
 data=${datasets[$(( idx % ${#datasets[@]} ))]}
 
 # Lancement avec srun
-srun python run.py --experiment_id "${exp}" --dataset_id "${data}" --phase "all"
+srun python run.py --experiment_id "${exp}" --dataset_id "${data}" --phase "test"

@@ -13,7 +13,7 @@ import os
 
 from easy_tpp.models.thinning import EventSampler
 from easy_tpp.config_factory import ModelConfig
-from easy_tpp.evaluate.metrics_helper import MetricsHelper, EvaluationMode
+from easy_tpp.evaluation.metrics_helper import MetricsHelper, EvaluationMode
 from easy_tpp.utils import logger, format_multivariate_simulations, save_json
 
 
@@ -352,6 +352,10 @@ class BaseModel(pl.LightningModule, ABC):
             pred = pred)
         
         for key in one_step_metrics : 
+            if key == 'confusion_matrix':
+                # Skip confusion matrix as it's a 2D tensor that can't be logged directly
+                # We could save it separately or log derived metrics like accuracy
+                continue
             self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
         
         return avg_loss
@@ -392,8 +396,11 @@ class BaseModel(pl.LightningModule, ABC):
         one_step_metrics = one_step_metrics_compute.compute_all_metrics(
             batch = label_batch,
             pred = pred)
-        
         for key in one_step_metrics:
+            if key == 'confusion_matrix':
+                # Skip confusion matrix as it's a 2D tensor that can't be logged directly
+                # We could save it separately or log derived metrics like accuracy
+                continue
             self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
 
         if self.compute_simulation:
@@ -416,10 +423,12 @@ class BaseModel(pl.LightningModule, ABC):
             simulation_metrics = simulation_metrics_compute.compute_all_metrics(
                 batch = label_batch,
                 pred = simulation
-            )
-
-            # Log simulation metrics
+            )            # Log simulation metrics
             for key in simulation_metrics:
+                if key == 'confusion_matrix':
+                    # Skip confusion matrix as it's a 2D tensor that can't be logged directly
+                    # We could save it separately or log derived metrics like accuracy
+                    continue
                 self.log(f"sim_{key}", simulation_metrics[key], prog_bar=False, sync_dist=True)
 
             simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = simulation
@@ -783,7 +792,6 @@ class BaseModel(pl.LightningModule, ABC):
                 valid_mask = max_times != float('-inf')
                 last_event_time[valid_mask, mark] = max_times[valid_mask]
         
-        current_len = initial_len
         current_time = start_time
         
         # Simulation avec moins d'allocations mémoire
@@ -853,9 +861,10 @@ class BaseModel(pl.LightningModule, ABC):
                 except Exception as e:
                     logger.error(f"Error in vectorized simulation: {e}")
                     break
-            
+
             pbar.close()
         
+        current_len = initial_len + step_count
         # Extraction des résultats
         first_pred_idx = initial_len
         final_time_seq = time_buffer[:, first_pred_idx:current_len]
@@ -961,9 +970,10 @@ class BaseModel(pl.LightningModule, ABC):
                 logger.error(f"Error during prediction: {e}")
                 break
             
+            time_pred_ = time_seq[:, -1:] + dtimes_pred
+
             # refresh the progress bar with the current time
-            if num_step % 50 == 0:
-                time_pred_ = time_seq[:, -1:] + dtimes_pred
+            if num_step % 20 == 0:
                 min_time = time_pred_.min()
                 current_time = min_time.item()
                 pbar.n = min(current_time, end_time)

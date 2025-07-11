@@ -11,8 +11,8 @@ import time
 import numpy as np
 import tempfile
 import shutil
-from easy_tpp.preprocess.dataset import TPPDataset
-from easy_tpp.evaluate.distribution_analysis_helper import TemporalPointProcessComparatorFactory
+from easy_tpp.data_preprocess.dataset import TPPDataset
+from easy_tpp.evaluation.distribution_analysis_helper import TemporalPointProcessComparatorFactory
 
 
 class TestTPPDatasetComparatorIntegration:
@@ -95,7 +95,7 @@ class TestTPPDatasetComparatorIntegration:
         assert hasattr(comparator, 'simulation_extractor')
         
         # Check that the correct extractor type is used
-        from easy_tpp.evaluate.distribution_analysis_helper.data_extractors import TPPDatasetExtractor
+        from easy_tpp.evaluation.distribution_analysis_helper.data_extractors import TPPDatasetExtractor
         assert isinstance(comparator.label_extractor, TPPDatasetExtractor)
     
     def test_tpp_dataset_data_extraction(self, sample_tpp_dataset, sample_simulation, temp_output_dir):
@@ -173,7 +173,7 @@ class TestTPPDatasetComparatorIntegration:
         )
         
         # Verify the fallback extractor is used
-        from easy_tpp.evaluate.distribution_analysis_helper.data_extractors import LabelDataExtractor
+        from easy_tpp.evaluation.distribution_analysis_helper.data_extractors import LabelDataExtractor
         assert isinstance(comparator.label_extractor, LabelDataExtractor)
 
 

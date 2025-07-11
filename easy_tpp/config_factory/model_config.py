@@ -338,40 +338,6 @@ class ModelSpecsConfig(BaseConfig):
             raise ConfigValidationError(f"rnn_type must be one of {valid_rnn_types}", "rnn_type")
 
 
-@config_class('hawkes_specs_config')
-@dataclass
-class HawkesSpecsConfig(BaseConfig):
-    """Configuration for Hawkes process parameters.
-    
-    Args:
-        mu (list): Base intensity for each event type.
-        alpha (list): Excitation parameter for each event type.
-        beta (list): Decay parameter for each event type.
-    """
-    mu: list = field(default_factory=list)
-    alpha: list = field(default_factory=list)
-    beta: list = field(default_factory=list)
-
-    def get_required_fields(self) -> List[str]:
-        return ['mu', 'alpha', 'beta']
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        return {
-            'mu': self.mu,
-            'alpha': self.alpha,
-            'beta': self.beta
-        }
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'HawkesSpecsConfig':
-        return cls(**config_dict)
-
-    def validate(self) -> None:
-        super().validate()
-        if not self.mu or not self.alpha or not self.beta:
-            raise ConfigValidationError("mu, alpha, and beta must be provided for HawkesSpecsConfig", "hawkes_specs")
-
-
 @config_class('model_config')
 @dataclass
 class ModelConfig(BaseConfig):
@@ -412,7 +378,7 @@ class ModelConfig(BaseConfig):
     
     # Sub-configurations
     base_config: TrainingConfig = field(default_factory=TrainingConfig)
-    specs: Union[ModelSpecsConfig, HawkesSpecsConfig] = field(default_factory=ModelSpecsConfig)
+    specs: ModelSpecsConfig = field(default_factory=ModelSpecsConfig)
     thinning: ThinningConfig = field(default_factory=ThinningConfig)
     simulation_config: SimulationConfig = field(default_factory=SimulationConfig)
     
@@ -463,12 +429,7 @@ class ModelConfig(BaseConfig):
         thinning_dict = config_dict.pop('thinning', {})
         simulation_dict = config_dict.pop('simulation_config', {})
 
-        # Select correct specs config based on model_id
-        model_id = config_dict.get('model_id', '').lower()
-        if model_id in ['hawkes', 'hawkesmodel']:
-            specs = HawkesSpecsConfig.from_dict(specs_dict)
-        else:
-            specs = ModelSpecsConfig.from_dict(specs_dict)
+        specs = ModelSpecsConfig.from_dict(specs_dict)
         base_config = TrainingConfig.from_dict(base_config_dict)
         thinning = ThinningConfig.from_dict(thinning_dict)
         simulation_config = SimulationConfig.from_dict(simulation_dict)

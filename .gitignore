@@ -5,6 +5,11 @@ easy_tpp.egg-info
 
 # python temp
 *.pyc
+.pytest_cache/
+pytest.ini
+.mypy_cache/
+__pycache__/
+
 
 # models
 *.ckpt
@@ -14,6 +19,12 @@ easy_tpp.egg-info
 .venv-py312
 .venv-py312-new
 .venv-py310
+
+#coverage
+coverage_html*
+coverage.*
+.coveragerc
+coverage.xml
 
 # proto
 protoc

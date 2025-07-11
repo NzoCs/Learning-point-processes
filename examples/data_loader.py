@@ -1,8 +1,8 @@
 import random
 
 from easy_tpp.config_factory import DataSpecConfig
-from easy_tpp.preprocess import EventTokenizer
-from easy_tpp.preprocess.dataset import TPPDataset, get_data_loader
+from easy_tpp.data_preprocess import EventTokenizer
+from easy_tpp.data_preprocess.dataset import TPPDataset, get_data_loader
 
 
 def make_raw_data():

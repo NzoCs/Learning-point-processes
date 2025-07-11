@@ -1,8 +1,8 @@
 import argparse
 
 from easy_tpp.config_factory import Config
-from easy_tpp.preprocess.data_loader import TPPDataModule
-from easy_tpp.preprocess.visualizer import Visualizer
+from easy_tpp.data_preprocess.data_loader import TPPDataModule
+from easy_tpp.data_preprocess.visualizer import Visualizer
 import os
 
 def main():

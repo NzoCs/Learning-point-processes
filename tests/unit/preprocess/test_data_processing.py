@@ -7,10 +7,10 @@ import pickle
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
-from easy_tpp.preprocess.data_loader import DataLoader
-from easy_tpp.preprocess.dataset import TPPDataset
-from easy_tpp.preprocess.data_collator import TPPDataCollator
-from easy_tpp.preprocess.event_tokenizer import EventTokenizer
+from easy_tpp.data_preprocess.data_loader import DataLoader
+from easy_tpp.data_preprocess.dataset import TPPDataset
+from easy_tpp.data_preprocess.data_collator import TPPDataCollator
+from easy_tpp.data_preprocess.event_tokenizer import EventTokenizer
 
 
 # Shared helpers for all test classes

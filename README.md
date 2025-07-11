@@ -32,7 +32,7 @@
 
 
 
-| <a href='#features'>Features</a>  | <a href='#model-list'>Model List</a> | <a href='#dataset'>Dataset</a>  | <a href='#quick-start'>Quick Start</a> | <a href='#benchmark'>Benchmark</a> |<a href='#doc'>Documentation</a> |<a href='#todo'>Todo List</a> | <a href='#citation'>Citation</a> |<a href='#acknowledgment'>Acknowledgement</a> | <a href='#star-history'>Star History</a> | 
+| <a href='#features'>Features</a>  | <a href='#project-setup'>Project Setup</a> | <a href='#model-list'>Model List</a> | <a href='#dataset'>Dataset</a>  | <a href='#quick-start'>Quick Start</a> | <a href='#benchmark'>Benchmark</a> |<a href='#doc'>Documentation</a> |<a href='#todo'>Todo List</a> | <a href='#citation'>Citation</a> |<a href='#acknowledgment'>Acknowledgement</a> | <a href='#star-history'>Star History</a> | 
 
 ## News
 <span id='news'/>
@@ -61,6 +61,90 @@
   be run under Tensorflow (both Tensorflow 1.13.1 and Tensorflow 2.0) and PyTorch 1.7.0+ respectively. While the PyTorch models are more popular among researchers, the compatibility with Tensorflow is important for industrial practitioners.
 - **Reproducible**: all the benchmarks can be easily reproduced.
 - **Hyper-parameter optimization**: a pipeline of [optuna](https://github.com/optuna/optuna)-based HPO is provided.
+
+
+## Project Setup <a href='#top'>[Back to Top]</a>
+<span id='project-setup'/>
+
+This project has been modernized to use `pyproject.toml` for all configuration. Here's how to set it up:
+
+### Prerequisites
+
+- Python 3.8 or higher
+- pip 21.3+ (for full pyproject.toml support)
+- Git
+
+### Quick Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/ant-research/EasyTemporalPointProcess.git
+cd EasyTemporalPointProcess
+
+# Create and activate virtual environment (recommended)
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install in development mode with all dependencies
+pip install -e ".[all]"
+```
+
+### Installation Options
+
+Choose the installation that fits your needs:
+
+```bash
+# Minimal installation (core dependencies only)
+pip install -e .
+
+# Development installation (includes testing, linting, formatting tools)
+pip install -e ".[dev]"
+
+# CLI tools installation (for command-line usage)
+pip install -e ".[cli]"
+
+# Documentation tools (for building docs)
+pip install -e ".[docs]"
+
+# Everything (all optional dependencies)
+pip install -e ".[all]"
+```
+
+### Development Tools
+
+The project includes pre-configured development tools:
+
+- **Code formatting**: `black` for consistent code style
+- **Import sorting**: `isort` for organized imports
+- **Linting**: `flake8` for code quality checks
+- **Type checking**: `mypy` for static type analysis
+- **Testing**: `pytest` with coverage reporting
+- **Pre-commit hooks**: `pre-commit` for automated checks
+
+To set up pre-commit hooks:
+
+```bash
+# Install pre-commit hooks (after installing dev dependencies)
+pre-commit install
+```
+
+### Configuration
+
+All project configuration is centralized in `pyproject.toml`:
+- Build system configuration
+- Dependencies and optional dependency groups
+- Tool configurations (black, isort, pytest, mypy, etc.)
+- Project metadata and URLs
+
+### Dependency Groups Explained
+
+- **`cli`**: Rich terminal interfaces, command-line tools, progress bars
+- **`docs`**: Sphinx documentation system, themes, and extensions
+- **`dev`**: Development workflow tools (testing, linting, formatting)
+- **`all`**: Installs all optional dependencies for complete functionality
 
 
 ## Model List <a href='#top'>[Back to Top]</a>
@@ -124,13 +208,71 @@ To install the latest stable version:
 pip install easy-tpp
 ```
 
-To install the latest on GitHub:
+To install from the source code (modern pyproject.toml setup):
 ```bash
 git clone https://github.com/ant-research/EasyTemporalPointProcess.git
 cd EasyTemporalPointProcess
-python setup.py install
+pip install -e .
 ```
 
+#### Development Installation
+
+For development, install with additional dependencies:
+
+```bash
+# Install with all development tools (recommended for contributors)
+pip install -e ".[dev]"
+
+# Or install specific dependency groups:
+pip install -e ".[cli]"      # CLI tools
+pip install -e ".[docs]"     # Documentation tools  
+pip install -e ".[all]"      # All optional dependencies
+```
+
+#### Available Dependency Groups
+
+- **Base installation**: Core dependencies only
+- **`cli`**: Command-line interface tools (rich, typer, etc.)
+- **`docs`**: Documentation generation (sphinx, themes, etc.)
+- **`dev`**: Development tools (pytest, black, flake8, mypy, pre-commit)
+- **`all`**: All optional dependencies combined
+
+#### Python Environment Setup
+
+This project uses modern Python packaging with `pyproject.toml`. Requirements:
+
+- Python 3.8 or higher
+- pip 21.3+ (for full pyproject.toml support)
+
+Create a virtual environment (recommended):
+
+```bash
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install the package
+pip install -e ".[dev]"
+
+# Verify installation
+python check_installation.py
+```
+
+### Verification
+
+After installation, run the verification script to ensure everything is working:
+
+```bash
+python check_installation.py
+```
+
+This script will check:
+- Python version compatibility
+- Core dependencies installation
+- Optional dependencies availability
+- Import functionality
 
 ### Step 2. Prepare datasets 
 

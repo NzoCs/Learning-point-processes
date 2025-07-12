@@ -4,9 +4,20 @@ from typing import Optional, Union, Dict, Any, List, Mapping
 
 import numpy as np
 
-from easy_tpp.utils import is_torch_available, is_tf_available, logger, TruncationStrategy, PaddingStrategy, \
-    TensorType, is_torch_device, requires_backends, is_numpy_array, py_assert
+from easy_tpp.utils import (
+    is_torch_available,
+    is_tf_available,
+    logger,
+    TruncationStrategy,
+    PaddingStrategy,
+    TensorType,
+    is_torch_device,
+    requires_backends,
+    is_numpy_array,
+    py_assert,
+)
 from easy_tpp.config_factory import TokenizerConfig
+
 
 class BatchEncoding(UserDict):
     """
@@ -30,14 +41,16 @@ class BatchEncoding(UserDict):
     """
 
     def __init__(
-            self,
-            data: Optional[Dict[str, Any]] = None,
-            tensor_type: Union[None, str, TensorType] = None,
-            prepend_batch_axis: bool = False
+        self,
+        data: Optional[Dict[str, Any]] = None,
+        tensor_type: Union[None, str, TensorType] = None,
+        prepend_batch_axis: bool = False,
     ):
         super().__init__(data)
 
-        self.convert_to_tensors(tensor_type=tensor_type, prepend_batch_axis=prepend_batch_axis)
+        self.convert_to_tensors(
+            tensor_type=tensor_type, prepend_batch_axis=prepend_batch_axis
+        )
 
     def keys(self):
         return self.data.keys()
@@ -49,7 +62,9 @@ class BatchEncoding(UserDict):
         return self.data.items()
 
     def convert_to_tensors(
-            self, tensor_type: Optional[Union[str, TensorType]] = None, prepend_batch_axis: bool = False
+        self,
+        tensor_type: Optional[Union[str, TensorType]] = None,
+        prepend_batch_axis: bool = False,
     ):
         """
         Convert the inner content to tensors.
@@ -80,7 +95,9 @@ class BatchEncoding(UserDict):
             is_tensor = tf.is_tensor
         elif tensor_type == TensorType.PYTORCH:
             if not is_torch_available():
-                raise ImportError("Unable to convert output to PyTorch tensors format, PyTorch is not installed.")
+                raise ImportError(
+                    "Unable to convert output to PyTorch tensors format, PyTorch is not installed."
+                )
             import torch
 
             as_tensor = torch.tensor
@@ -129,10 +146,16 @@ class BatchEncoding(UserDict):
         # This check catches things like APEX blindly calling "to" on all inputs to a module
         # Otherwise it passes the casts down and casts the LongTensor containing the token idxs
         # into a HalfTensor
-        if isinstance(device, str) or is_torch_device(device) or isinstance(device, int):
+        if (
+            isinstance(device, str)
+            or is_torch_device(device)
+            or isinstance(device, int)
+        ):
             self.data = {k: v.to(device=device) for k, v in self.data.items()}
         else:
-            logger.warning(f"Attempting to cast a BatchEncoding to type {str(device)}. This is not supported.")
+            logger.warning(
+                f"Attempting to cast a BatchEncoding to type {str(device)}. This is not supported."
+            )
         return self
 
 
@@ -140,9 +163,16 @@ class EventTokenizer:
     """
     Base class for tokenizer event sequences, vendored from huggingface/transformer
     """
+
     padding_side: str = "right"
     truncation_side: str = "right"
-    model_input_names: List[str] = ["time_seqs", "time_delta_seqs", "type_seqs", "seq_non_pad_mask", "attention_mask"]
+    model_input_names: List[str] = [
+        "time_seqs",
+        "time_delta_seqs",
+        "type_seqs",
+        "seq_non_pad_mask",
+        "attention_mask",
+    ]
 
     def __init__(self, config: TokenizerConfig):
         config = copy.deepcopy(config)
@@ -158,10 +188,14 @@ class EventTokenizer:
         # is changed.
         self.padding_side = config.pop("padding_side", self.padding_side)
         self.truncation_side = config.pop("truncation_side", self.truncation_side)
-        self.model_input_names = config.pop("model_input_names") if config.model_input_names is not None else self.model_input_names
+        self.model_input_names = (
+            config.pop("model_input_names")
+            if config.model_input_names is not None
+            else self.model_input_names
+        )
 
     def _get_padding_truncation_strategies(
-            self, padding=False, truncation=None, max_length=None, verbose=False, **kwargs
+        self, padding=False, truncation=None, max_length=None, verbose=False, **kwargs
     ):
         padding_strategy, truncation_strategy = None, None
         # If you only set max_length, it activates truncation for max_length
@@ -184,18 +218,22 @@ class EventTokenizer:
             if padding is True:
                 if verbose:
                     if max_length is not None and (
-                            truncation is None or truncation is False or truncation == "do_not_truncate"
+                        truncation is None
+                        or truncation is False
+                        or truncation == "do_not_truncate"
                     ):
                         logger.warning(
                             "`max_length` is ignored when `padding`=`True` and there is no truncation strategy. "
                             "To pad to max length, use `padding='max_length'`."
                         )
-                padding_strategy = PaddingStrategy.LONGEST  # Default to pad to the longest sequence in the batch
-            elif padding in ['longest', 'max_length', 'do_not_pad'] :
+                padding_strategy = (
+                    PaddingStrategy.LONGEST
+                )  # Default to pad to the longest sequence in the batch
+            elif padding in ["longest", "max_length", "do_not_pad"]:
                 padding_strategy = PaddingStrategy(padding)
             elif isinstance(padding, PaddingStrategy):
                 padding_strategy = padding
-            else : 
+            else:
                 padding_strategy = PaddingStrategy.LONGEST
         else:
             padding_strategy = PaddingStrategy.DO_NOT_PAD
@@ -230,33 +268,41 @@ class EventTokenizer:
 
         return padding_strategy, truncation_strategy, max_length, kwargs
 
-    def _truncate(self,
-                  encoded_inputs: Union[Dict[str, Any],
-                                        Dict[str, List]],
-                  truncation_strategy: TruncationStrategy,
-                  truncation_side: str,
-                  max_length: Optional[int] = None):
+    def _truncate(
+        self,
+        encoded_inputs: Union[Dict[str, Any], Dict[str, List]],
+        truncation_strategy: TruncationStrategy,
+        truncation_side: str,
+        max_length: Optional[int] = None,
+    ):
         if truncation_strategy != TruncationStrategy.DO_NOT_TRUNCATE:
-            py_assert(max_length is not None, ValueError, 'must pass max_length when truncation is activated!')
+            py_assert(
+                max_length is not None,
+                ValueError,
+                "must pass max_length when truncation is activated!",
+            )
             for k, v in encoded_inputs.items():
-                seq_ = [seq[:max_length] for seq in v] if truncation_side == 'right' \
+                seq_ = (
+                    [seq[:max_length] for seq in v]
+                    if truncation_side == "right"
                     else [seq[-max_length:] for seq in v]
+                )
                 encoded_inputs[k] = seq_
 
         return encoded_inputs
 
     def pad(
-            self,
-            encoded_inputs: Union[
-                Dict[str, Any],
-                Dict[str, List],
-            ],
-            padding: Union[bool, str, PaddingStrategy] = True,
-            truncation: Union[bool, str, TruncationStrategy] = False,
-            max_length: Optional[int] = None,
-            return_attention_mask: Optional[bool] = None,
-            return_tensors: Optional[Union[str, TensorType]] = None,
-            verbose: bool = False,
+        self,
+        encoded_inputs: Union[
+            Dict[str, Any],
+            Dict[str, List],
+        ],
+        padding: Union[bool, str, PaddingStrategy] = True,
+        truncation: Union[bool, str, TruncationStrategy] = False,
+        max_length: Optional[int] = None,
+        return_attention_mask: Optional[bool] = None,
+        return_tensors: Optional[Union[str, TensorType]] = None,
+        verbose: bool = False,
     ) -> BatchEncoding:
         """
         Pad a single encoded input or a batch of encoded inputs up to predefined length or to the max sequence length
@@ -313,8 +359,13 @@ class EventTokenizer:
 
         # If we have a list of dicts, let's convert it in a dict of lists
         # We do this to allow using this method as a collate_fn function in PyTorch Dataloader
-        if isinstance(encoded_inputs, (list, tuple)) and isinstance(encoded_inputs[0], Mapping):
-            encoded_inputs = {key: [example[key] for example in encoded_inputs] for key in encoded_inputs[0].keys()}
+        if isinstance(encoded_inputs, (list, tuple)) and isinstance(
+            encoded_inputs[0], Mapping
+        ):
+            encoded_inputs = {
+                key: [example[key] for example in encoded_inputs]
+                for key in encoded_inputs[0].keys()
+            }
 
         # The model's main input name, usually `time_seqs`, has be passed for padding
         if self.model_input_names[0] not in encoded_inputs:
@@ -325,14 +376,21 @@ class EventTokenizer:
 
         required_input = encoded_inputs[self.model_input_names[0]]
 
-        padding_strategy, truncation_strategy, max_length, _ = self._get_padding_truncation_strategies(
-            padding=padding, max_length=max_length, truncation=truncation, verbose=verbose
+        padding_strategy, truncation_strategy, max_length, _ = (
+            self._get_padding_truncation_strategies(
+                padding=padding,
+                max_length=max_length,
+                truncation=truncation,
+                verbose=verbose,
+            )
         )
 
-        encoded_inputs = self._truncate(encoded_inputs,
-                                        truncation_strategy=truncation_strategy,
-                                        max_length=max_length,
-                                        truncation_side=self.truncation_side)
+        encoded_inputs = self._truncate(
+            encoded_inputs,
+            truncation_strategy=truncation_strategy,
+            max_length=max_length,
+            truncation_side=self.truncation_side,
+        )
 
         batch_size = len(required_input)
         assert all(
@@ -340,7 +398,7 @@ class EventTokenizer:
         ), "Some items in the output dictionary have a different batch size than others."
 
         if padding_strategy == PaddingStrategy.LONGEST:
-            
+
             max_length = max(len(inputs) for inputs in required_input)
             padding_strategy = PaddingStrategy.MAX_LENGTH
 
@@ -354,11 +412,11 @@ class EventTokenizer:
         return BatchEncoding(batch_output, tensor_type=return_tensors)
 
     def _pad(
-            self,
-            encoded_inputs: Union[Dict[str, Any], BatchEncoding],
-            max_length: Optional[int] = None,
-            padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
-            return_attention_mask: Optional[bool] = None,
+        self,
+        encoded_inputs: Union[Dict[str, Any], BatchEncoding],
+        max_length: Optional[int] = None,
+        padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
+        return_attention_mask: Optional[bool] = None,
     ) -> dict:
         """
         Pad encoded inputs (on left/right and up to predefined length or max length in the batch)
@@ -397,7 +455,9 @@ class EventTokenizer:
         # Determine if padding is necessary
         sequence_lengths = np.array([len(seq) for seq in required_input])
         is_uniform_length = np.all(sequence_lengths == max_length)
-        requires_padding = padding_strategy != PaddingStrategy.DO_NOT_PAD and not is_uniform_length
+        requires_padding = (
+            padding_strategy != PaddingStrategy.DO_NOT_PAD and not is_uniform_length
+        )
 
         # Initialize output dictionary
         batch_output = dict()
@@ -409,53 +469,63 @@ class EventTokenizer:
                 encoded_inputs[self.model_input_names[0]],
                 0,
                 padding_side=self.padding_side,
-                max_len=max_length
+                max_len=max_length,
             )
-            
+
             # Process time delta sequences
             batch_output[self.model_input_names[1]] = self.make_pad_sequence(
                 encoded_inputs[self.model_input_names[1]],
                 0,
                 padding_side=self.padding_side,
-                max_len=max_length
+                max_len=max_length,
             )
-            
+
             # Process type sequences (with int64 datatype)
             batch_output[self.model_input_names[2]] = self.make_pad_sequence(
                 encoded_inputs[self.model_input_names[2]],
                 self.pad_token_id,
                 padding_side=self.padding_side,
                 max_len=max_length,
-                dtype=np.int64
+                dtype=np.int64,
             )
         else:
             # No padding needed, convert lists to numpy arrays
-            batch_output[self.model_input_names[0]] = np.array(encoded_inputs[self.model_input_names[0]], dtype=np.float32)
-            batch_output[self.model_input_names[1]] = np.array(encoded_inputs[self.model_input_names[1]], dtype=np.float32)
-            batch_output[self.model_input_names[2]] = np.array(encoded_inputs[self.model_input_names[2]], dtype=np.int64)
+            batch_output[self.model_input_names[0]] = np.array(
+                encoded_inputs[self.model_input_names[0]], dtype=np.float32
+            )
+            batch_output[self.model_input_names[1]] = np.array(
+                encoded_inputs[self.model_input_names[1]], dtype=np.float32
+            )
+            batch_output[self.model_input_names[2]] = np.array(
+                encoded_inputs[self.model_input_names[2]], dtype=np.int64
+            )
 
         # Create sequence padding mask based on original sequence lengths
         # True indicates valid tokens, False indicates padding
-        sequence_mask = (batch_output[self.model_input_names[2]] != self.pad_token_id)
+        sequence_mask = batch_output[self.model_input_names[2]] != self.pad_token_id
         batch_output[self.model_input_names[3]] = sequence_mask
 
         if return_attention_mask:
             # attention_mask
-            batch_output[self.model_input_names[4]] = self.make_attn_mask_for_pad_sequence(
-                batch_output[self.model_input_names[2]],
-                self.pad_token_id)
+            batch_output[self.model_input_names[4]] = (
+                self.make_attn_mask_for_pad_sequence(
+                    batch_output[self.model_input_names[2]], self.pad_token_id
+                )
+            )
         else:
             batch_output[self.model_input_names[4]] = []
 
         return batch_output
 
     @staticmethod
-    def make_pad_sequence(seqs,
-                          pad_token_id,
-                          padding_side,
-                          max_len,
-                          dtype=np.float32,
-                          group_by_event_types=False):
+    def make_pad_sequence(
+        seqs,
+        pad_token_id,
+        padding_side,
+        max_len,
+        dtype=np.float32,
+        group_by_event_types=False,
+    ):
         """Pad the sequence batch-wise.
 
         Args:
@@ -484,16 +554,32 @@ class EventTokenizer:
         """
         if not group_by_event_types:
             if padding_side == "right":
-                pad_seq = np.array([seq + [pad_token_id] * (max_len - len(seq)) for seq in seqs], dtype=dtype)
+                pad_seq = np.array(
+                    [seq + [pad_token_id] * (max_len - len(seq)) for seq in seqs],
+                    dtype=dtype,
+                )
             else:
-                pad_seq = np.array([[pad_token_id] * (max_len - len(seq)) + seq for seq in seqs], dtype=dtype)
+                pad_seq = np.array(
+                    [[pad_token_id] * (max_len - len(seq)) + seq for seq in seqs],
+                    dtype=dtype,
+                )
         else:
             pad_seq = []
             for seq in seqs:
                 if padding_side == "right":
-                    pad_seq.append(np.array([s + [pad_token_id] * (max_len - len(s)) for s in seq], dtype=dtype))
+                    pad_seq.append(
+                        np.array(
+                            [s + [pad_token_id] * (max_len - len(s)) for s in seq],
+                            dtype=dtype,
+                        )
+                    )
                 else:
-                    pad_seq.append(np.array([[pad_token_id] * (max_len - len(s)) + s for s in seqs], dtype=dtype))
+                    pad_seq.append(
+                        np.array(
+                            [[pad_token_id] * (max_len - len(s)) + s for s in seqs],
+                            dtype=dtype,
+                        )
+                    )
 
             pad_seq = np.array(pad_seq)
         return pad_seq
@@ -546,7 +632,10 @@ class EventTokenizer:
 
         # [batch_size, seq_len, seq_len]
         attention_key_pad_mask = np.tile(seq_pad_mask[:, None, :], (1, seq_len, 1))
-        subsequent_mask = np.tile(np.triu(np.ones((seq_len, seq_len), dtype=bool), k=1)[None, :, :], (seq_num, 1, 1))
+        subsequent_mask = np.tile(
+            np.triu(np.ones((seq_len, seq_len), dtype=bool), k=1)[None, :, :],
+            (seq_num, 1, 1),
+        )
 
         attention_mask = subsequent_mask | attention_key_pad_mask
 

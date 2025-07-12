@@ -8,10 +8,10 @@ from easy_tpp.models.basemodel import BaseModel
 
 class ANHN(BaseModel):
     """Torch implementation of Attentive Neural Hawkes Network, IJCNN 2021.
-       http://arxiv.org/abs/2211.11758
+    http://arxiv.org/abs/2211.11758
     """
 
-    def __init__(self, model_config : ModelConfig):
+    def __init__(self, model_config: ModelConfig):
         """Initialize the model
 
         Args:
@@ -24,23 +24,30 @@ class ANHN(BaseModel):
 
         self.n_layers = model_config.specs.num_layers
         self.n_head = model_config.specs.num_heads
-        self.layer_rnn = nn.LSTM(input_size=self.hidden_size, hidden_size=self.hidden_size, batch_first=True)
+        self.layer_rnn = nn.LSTM(
+            input_size=self.hidden_size, hidden_size=self.hidden_size, batch_first=True
+        )
 
         self.lambda_w = torch.empty([self.hidden_size, self.num_event_types])
         self.lambda_b = torch.empty([self.num_event_types, 1])
         nn.init.xavier_normal_(self.lambda_w)
         nn.init.xavier_normal_(self.lambda_b)
 
-        self.layer_time_delta = nn.Sequential(nn.Linear(2 * self.hidden_size, self.hidden_size), nn.Softplus())
+        self.layer_time_delta = nn.Sequential(
+            nn.Linear(2 * self.hidden_size, self.hidden_size), nn.Softplus()
+        )
 
-        self.layer_base_intensity = nn.Sequential(nn.Linear(self.hidden_size, self.hidden_size), nn.Sigmoid())
+        self.layer_base_intensity = nn.Sequential(
+            nn.Linear(self.hidden_size, self.hidden_size), nn.Sigmoid()
+        )
 
-        self.layer_att = MultiHeadAttention(self.n_head,
-                                            self.hidden_size,
-                                            self.hidden_size,
-                                            self.dropout)
+        self.layer_att = MultiHeadAttention(
+            self.n_head, self.hidden_size, self.hidden_size, self.dropout
+        )
 
-        self.layer_intensity = nn.Sequential(nn.Linear(self.hidden_size, self.num_event_types), nn.Softplus())
+        self.layer_intensity = nn.Sequential(
+            nn.Linear(self.hidden_size, self.num_event_types), nn.Softplus()
+        )
 
         self.layer_temporal_emb = nn.Linear(1, self.hidden_size)
         # Fix: add missing softplus attribute for intensity computation
@@ -71,11 +78,9 @@ class ANHN(BaseModel):
         intensity_base = self.layer_base_intensity(rnn_output)
 
         # [batch_size, num_head, seq_len, seq_len]
-        _, att_weight = self.layer_att(rnn_output,
-                                       rnn_output,
-                                       rnn_output,
-                                       mask=attention_mask,
-                                       output_weight=True)
+        _, att_weight = self.layer_att(
+            rnn_output, rnn_output, rnn_output, mask=attention_mask, output_weight=True
+        )
 
         # [batch_size, seq_len, seq_len, 1]
         att_weight = torch.sum(att_weight, dim=1)[..., None]
@@ -103,12 +108,15 @@ class ANHN(BaseModel):
         base_dtime, target_cumsum_dtime = self.compute_cumsum_dtime(dtime_seqs)
 
         # [batch_size, max_len, hidden_size]
-        imply_lambdas = self.compute_states_at_event_times(intensity_base,
-                                                           intensity_alpha,
-                                                           intensity_delta,
-                                                           target_cumsum_dtime)
+        imply_lambdas = self.compute_states_at_event_times(
+            intensity_base, intensity_alpha, intensity_delta, target_cumsum_dtime
+        )
 
-        return imply_lambdas, (intensity_base, intensity_alpha, intensity_delta), (base_dtime, target_cumsum_dtime)
+        return (
+            imply_lambdas,
+            (intensity_base, intensity_alpha, intensity_delta),
+            (base_dtime, target_cumsum_dtime),
+        )
 
     def loglike_loss(self, batch):
         """Compute the loglike loss.
@@ -119,12 +127,17 @@ class ANHN(BaseModel):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = batch
+        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = (
+            batch
+        )
 
-        imply_lambdas, (intensity_base, intensity_alpha, intensity_delta), (base_dtime, target_cumsum_dtime) \
-            = self.forward(time_delta_seqs[:, 1:],
-                           type_seqs[:, :-1],
-                           attention_mask[:, 1:, :-1])
+        (
+            imply_lambdas,
+            (intensity_base, intensity_alpha, intensity_delta),
+            (base_dtime, target_cumsum_dtime),
+        ) = self.forward(
+            time_delta_seqs[:, 1:], type_seqs[:, :-1], attention_mask[:, 1:, :-1]
+        )
         lambda_at_event = self.layer_intensity(imply_lambdas)
 
         # Num of samples in each batch and num of event time point in the sequence
@@ -141,18 +154,25 @@ class ANHN(BaseModel):
         # the first dtime is zero, so we use time_delta_seqs[:, 1:]
         interval_t_sample = self.make_dtime_loss_samples(time_delta_seqs[:, 1:])
 
-        state_t_sample = self.compute_states_at_sample_times(intensity_base, intensity_alpha, intensity_delta,
-                                                             base_dtime, interval_t_sample)
+        state_t_sample = self.compute_states_at_sample_times(
+            intensity_base,
+            intensity_alpha,
+            intensity_delta,
+            base_dtime,
+            interval_t_sample,
+        )
         lambda_t_sample = self.layer_intensity(state_t_sample)
 
-        event_ll, non_event_ll, num_events = self.compute_loglikelihood(lambda_at_event=lambda_at_event,
-                                                                        lambdas_loss_samples=lambda_t_sample,
-                                                                        time_delta_seq=time_delta_seqs[:, 1:],
-                                                                        seq_mask=batch_non_pad_mask[:, 1:],
-                                                                        type_seq=type_seqs[:, 1:])
+        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
+            lambda_at_event=lambda_at_event,
+            lambdas_loss_samples=lambda_t_sample,
+            time_delta_seq=time_delta_seqs[:, 1:],
+            seq_mask=batch_non_pad_mask[:, 1:],
+            type_seq=type_seqs[:, 1:],
+        )
 
         # (num_samples, num_times)
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
     def compute_cumsum_dtime(self, dtime_seqs):
@@ -168,17 +188,23 @@ class ANHN(BaseModel):
         # [batch_size, seq_len, num_sample]
         # [0, dt_1, dt_2] => [dt_1 + dt_2, dt_2, 0]
         cum_dtimes = torch.cumsum(torch.flip(dtime_seqs, dims=[-1]), dim=1)
-        cum_dtimes = torch.concat([torch.zeros_like(cum_dtimes[:, :1]), cum_dtimes[:, 1:]], dim=1)
+        cum_dtimes = torch.concat(
+            [torch.zeros_like(cum_dtimes[:, :1]), cum_dtimes[:, 1:]], dim=1
+        )
 
         # [batch_size, seq_len, seq_len, 1] (lower triangular: positive, upper: negative, diagonal: zero)
-        base_elapses = torch.unsqueeze(cum_dtimes[:, None, :] - cum_dtimes[:, :, None], dim=-1)
+        base_elapses = torch.unsqueeze(
+            cum_dtimes[:, None, :] - cum_dtimes[:, :, None], dim=-1
+        )
 
         # [batch_size, seq_len, seq_len， 1]
         target_cumsum = base_elapses + dtime_seqs[:, :, None, None]
 
         return base_elapses, target_cumsum
 
-    def compute_states_at_event_times(self, intensity_base, intensity_alpha, intensity_delta, cumsum_dtimes):
+    def compute_states_at_event_times(
+        self, intensity_base, intensity_alpha, intensity_delta, cumsum_dtimes
+    ):
         """Compute implied lambda based on Equation (3).
 
         Args:
@@ -195,14 +221,22 @@ class ANHN(BaseModel):
         elapse = torch.abs(cumsum_dtimes)
 
         # [batch_size, seq_len, hidden_dim]
-        cumsum_term = torch.sum(intensity_alpha * torch.exp(-intensity_delta * elapse), dim=-2)
+        cumsum_term = torch.sum(
+            intensity_alpha * torch.exp(-intensity_delta * elapse), dim=-2
+        )
         # [batch_size, seq_len, hidden_dim]
         imply_lambdas = intensity_base + cumsum_term
 
         return imply_lambdas
 
-    def compute_states_at_sample_times(self, intensity_base, intensity_alpha, intensity_delta, base_dtime,
-                                       sample_dtimes):
+    def compute_states_at_sample_times(
+        self,
+        intensity_base,
+        intensity_alpha,
+        intensity_delta,
+        base_dtime,
+        sample_dtimes,
+    ):
         """Compute the hidden states at sampled times.
 
         Args:
@@ -230,14 +264,18 @@ class ANHN(BaseModel):
         states_samples = []
         seq_len = intensity_base.size()[1]
         for _ in range(seq_len):
-            states_samples_ = self.compute_states_at_event_times(mu, alpha, delta, base_elapses + sample_dtimes_)
+            states_samples_ = self.compute_states_at_event_times(
+                mu, alpha, delta, base_elapses + sample_dtimes_
+            )
             states_samples.append(states_samples_)
 
         # [batch_size, seq_len, num_sample, hidden_size]
         states_samples = torch.stack(states_samples, dim=1)
         return states_samples
 
-    def compute_intensities_at_sample_times(self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs):
+    def compute_intensities_at_sample_times(
+        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
+    ):
         """Compute the intensity at sampled times.
 
         Args:
@@ -250,21 +288,27 @@ class ANHN(BaseModel):
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
 
-        attention_mask = kwargs.get('attention_mask', None)
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        attention_mask = kwargs.get("attention_mask", None)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         if attention_mask is None:
             batch_size, seq_len = time_seqs.size()
-            attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).unsqueeze(0)
+            attention_mask = torch.triu(
+                torch.ones(seq_len, seq_len), diagonal=1
+            ).unsqueeze(0)
             attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
 
         # [batch_size, seq_len, num_samples]
-        imply_lambdas, (intensity_base, intensity_alpha, intensity_delta), (base_dtime, target_cumsum_dtime) \
-            = self.forward(time_delta_seqs, type_seqs, attention_mask)
+        (
+            imply_lambdas,
+            (intensity_base, intensity_alpha, intensity_delta),
+            (base_dtime, target_cumsum_dtime),
+        ) = self.forward(time_delta_seqs, type_seqs, attention_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
-        encoder_output = self.compute_states_at_sample_times(intensity_base, intensity_alpha, intensity_delta,
-                                                             base_dtime, sample_dtimes)
+        encoder_output = self.compute_states_at_sample_times(
+            intensity_base, intensity_alpha, intensity_delta, base_dtime, sample_dtimes
+        )
 
         if compute_last_step_only:
             lambdas = self.softplus(encoder_output[:, -1:, :, :])

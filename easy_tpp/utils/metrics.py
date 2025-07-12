@@ -6,8 +6,8 @@ from easy_tpp.utils.log_utils import default_logger as logger
 
 
 class MetricsHelper:
-    MAXIMIZE = 'maximize'
-    MINIMIZE = 'minimize'
+    MAXIMIZE = "maximize"
+    MINIMIZE = "minimize"
     _registry_center = defaultdict(tuple)
 
     @staticmethod
@@ -15,7 +15,7 @@ class MetricsHelper:
         if name in MetricsHelper._registry_center:
             return MetricsHelper._registry_center[name][0]
         else:
-            logger.warning(f'Metric is not found: {name}')
+            logger.warning(f"Metric is not found: {name}")
             return None
 
     @staticmethod
@@ -38,7 +38,9 @@ class MetricsHelper:
                 if overwrite:
                     registry_center[name] = (func, direction)
                 else:
-                    logger.warning(f'The metric {name} is already registered, and cannot be overwritten!')
+                    logger.warning(
+                        f"The metric {name} is already registered, and cannot be overwritten!"
+                    )
             else:
                 registry_center[name] = (func, direction)
             return func
@@ -47,16 +49,16 @@ class MetricsHelper:
 
     @staticmethod
     def metrics_dict_to_str(metrics_dict):
-        """ Convert metrics to a string to show in console  """
-        eval_info = ''
+        """Convert metrics to a string to show in console"""
+        eval_info = ""
         for k, v in metrics_dict.items():
-            eval_info += '{0} is {1}, '.format(k, v)
+            eval_info += "{0} is {1}, ".format(k, v)
 
         return eval_info[:-2]
 
     @staticmethod
     def get_metrics_callback_from_names(metric_names):
-        """ Metrics function callbacks    """
+        """Metrics function callbacks"""
         metric_functions = []
         metric_names_ = []
         for name in metric_names:
@@ -66,7 +68,7 @@ class MetricsHelper:
                 metric_names_.append(name)
 
         def metrics(preds, labels, **kwargs):
-            """ call metrics functions """
+            """call metrics functions"""
             res = dict()
             for metric_name, metric_func in zip(metric_names_, metric_functions):
                 res[metric_name.lower()] = metric_func(preds, labels, **kwargs)
@@ -76,15 +78,14 @@ class MetricsHelper:
 
 
 class MetricsTracker:
-    """Track and record the metrics.
-    """
+    """Track and record the metrics."""
 
     def __init__(self):
         self.current_best = {
-            'loglike': np.finfo(float).min,
-            'distance': np.finfo(float).max
+            "loglike": np.finfo(float).min,
+            "distance": np.finfo(float).max,
         }
-        self.episode_best = 'NeverUpdated'
+        self.episode_best = "NeverUpdated"
 
     def update_best(self, key, value, epoch):
         """Update the recorder for the best metrics.
@@ -101,7 +102,7 @@ class MetricsTracker:
             bool: whether the recorder has been updated.
         """
         updated = False
-        if key == 'loglike':
+        if key == "loglike":
             if value > self.current_best[key]:
                 updated = True
                 self.current_best[key] = value

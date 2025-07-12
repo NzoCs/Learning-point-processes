@@ -5,8 +5,10 @@ from easy_tpp.data.preprocess.data_loader import TPPDataModule
 # For backward compatibility
 TPPDataLoader = TPPDataModule
 
-__all__ = ['TPPDataModule',
-           'TPPDataLoader', 
-           'EventTokenizer',
-           'TPPDataset',
-           'get_data_loader']
+__all__ = [
+    "TPPDataModule",
+    "TPPDataLoader",
+    "EventTokenizer",
+    "TPPDataset",
+    "get_data_loader",
+]

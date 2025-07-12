@@ -1,4 +1,5 @@
 """Tests for data preprocessing components."""
+
 import pytest
 import torch
 import numpy as np
@@ -15,17 +16,21 @@ from easy_tpp.data_preprocess.event_tokenizer import EventTokenizer
 
 # Shared helpers for all test classes
 
+
 def _minimal_tokenizer_config(**kwargs):
     # Provide a minimal config object for EventTokenizer
     class Config:
-        num_event_types = kwargs.get('num_event_types', 5)
-        pad_token_id = kwargs.get('pad_token_id', 0)
-        max_len = kwargs.get('max_seq_len', 100)
-        padding_strategy = kwargs.get('padding_strategy', 'max_length')
-        truncation_strategy = kwargs.get('truncation_strategy', 'longest_first')
+        num_event_types = kwargs.get("num_event_types", 5)
+        pad_token_id = kwargs.get("pad_token_id", 0)
+        max_len = kwargs.get("max_seq_len", 100)
+        padding_strategy = kwargs.get("padding_strategy", "max_length")
+        truncation_strategy = kwargs.get("truncation_strategy", "longest_first")
+
         def pop(self, key, default=None):
             return getattr(self, key, default)
+
     return Config()
+
 
 def _minimal_tokenizer():
     config = _minimal_tokenizer_config(pad_token_id=999)
@@ -39,30 +44,44 @@ class TestEventTokenizer:
 
     def test_tokenizer_initialization(self):
         """Test tokenizer initialization."""
-        config = _minimal_tokenizer_config(num_event_types=5, pad_token_id=999, max_seq_len=100, padding_strategy='max_length', truncation_strategy='longest_first')
+        config = _minimal_tokenizer_config(
+            num_event_types=5,
+            pad_token_id=999,
+            max_seq_len=100,
+            padding_strategy="max_length",
+            truncation_strategy="longest_first",
+        )
         tokenizer = EventTokenizer(config)
         assert tokenizer.num_event_types == 5
         assert tokenizer.pad_token_id == 999
-        assert tokenizer.padding_side == 'right'
+        assert tokenizer.padding_side == "right"
         assert tokenizer.model_max_length == 100
 
     def test_tokenizer_padding_left(self):
         """Test left padding functionality."""
-        config = _minimal_tokenizer_config(num_event_types=5, pad_token_id=0, max_seq_len=10)
-        config.padding_side = 'left'
+        config = _minimal_tokenizer_config(
+            num_event_types=5, pad_token_id=0, max_seq_len=10
+        )
+        config.padding_side = "left"
         tokenizer = EventTokenizer(config)
         sequence = [[1, 2, 3]]  # expects a batch of sequences
-        padded = tokenizer.make_pad_sequence(sequence, pad_token_id=0, padding_side='left', max_len=10)
+        padded = tokenizer.make_pad_sequence(
+            sequence, pad_token_id=0, padding_side="left", max_len=10
+        )
         expected = [[0, 0, 0, 0, 0, 0, 0, 1, 2, 3]]
         assert (padded == expected).all() or (padded == np.array(expected)).all()
 
     def test_tokenizer_padding_right(self):
         """Test right padding functionality."""
-        config = _minimal_tokenizer_config(num_event_types=5, pad_token_id=0, max_seq_len=10)
-        config.padding_side = 'right'
+        config = _minimal_tokenizer_config(
+            num_event_types=5, pad_token_id=0, max_seq_len=10
+        )
+        config.padding_side = "right"
         tokenizer = EventTokenizer(config)
         sequence = [[1, 2, 3]]
-        padded = tokenizer.make_pad_sequence(sequence, pad_token_id=0, padding_side='right', max_len=10)
+        padded = tokenizer.make_pad_sequence(
+            sequence, pad_token_id=0, padding_side="right", max_len=10
+        )
         expected = [[1, 2, 3, 0, 0, 0, 0, 0, 0, 0]]
         assert (padded == expected).all() or (padded == np.array(expected)).all()
 
@@ -92,6 +111,7 @@ class TestEventTokenizer:
         """Test batch encoding."""
         pytest.skip("Base EventTokenizer does not implement encode_batch method.")
 
+
 @pytest.mark.unit
 @pytest.mark.data
 class TestCollator:
@@ -110,19 +130,20 @@ class TestCollator:
         batch_items = []
         for seq in sample_event_sequences:
             item = {
-                'time_seqs': seq['time_since_last_event'],
-                'time_delta_seqs': seq['time_since_last_event'],
-                'type_seqs': seq['type_event']
+                "time_seqs": seq["time_since_last_event"],
+                "time_delta_seqs": seq["time_since_last_event"],
+                "type_seqs": seq["type_event"],
             }
             batch_items.append(item)
         batch = collator(batch_items)
         # Accept BatchEncoding or Mapping
         from collections.abc import Mapping
+
         assert isinstance(batch, Mapping)
-        if 'time_seqs' in batch:
-            assert batch['time_seqs'].ndim == 2
-        if 'type_seqs' in batch:
-            assert batch['type_seqs'].ndim == 2
+        if "time_seqs" in batch:
+            assert batch["time_seqs"].ndim == 2
+        if "type_seqs" in batch:
+            assert batch["type_seqs"].ndim == 2
 
     def test_collator_padding_consistency(self):
         """Test padding consistency across batch."""
@@ -130,19 +151,19 @@ class TestCollator:
         collator = TPPDataCollator(tokenizer=tokenizer, max_length=10)
         items = [
             {
-                'time_seqs': [0.1, 0.2],
-                'time_delta_seqs': [0.1, 0.2],
-                'type_seqs': [1, 2]
+                "time_seqs": [0.1, 0.2],
+                "time_delta_seqs": [0.1, 0.2],
+                "type_seqs": [1, 2],
             },
             {
-                'time_seqs': [0.3, 0.4, 0.5, 0.6],
-                'time_delta_seqs': [0.3, 0.4, 0.5, 0.6],
-                'type_seqs': [2, 1, 3, 2]
-            }
+                "time_seqs": [0.3, 0.4, 0.5, 0.6],
+                "time_delta_seqs": [0.3, 0.4, 0.5, 0.6],
+                "type_seqs": [2, 1, 3, 2],
+            },
         ]
         batch = collator(items)
-        if 'time_seqs' in batch and 'type_seqs' in batch:
-            assert batch['time_seqs'].shape[1] == batch['type_seqs'].shape[1]
+        if "time_seqs" in batch and "type_seqs" in batch:
+            assert batch["time_seqs"].shape[1] == batch["type_seqs"].shape[1]
 
     def test_collator_attention_mask(self):
         """Test attention mask creation."""
@@ -150,14 +171,14 @@ class TestCollator:
         collator = TPPDataCollator(tokenizer=tokenizer, max_length=10)
         items = [
             {
-                'time_seqs': [0.1, 0.2, 0.3],
-                'time_delta_seqs': [0.1, 0.2, 0.3],
-                'type_seqs': [1, 2, 1]
+                "time_seqs": [0.1, 0.2, 0.3],
+                "time_delta_seqs": [0.1, 0.2, 0.3],
+                "type_seqs": [1, 2, 1],
             }
         ]
         batch = collator(items)
-        if 'attention_mask' in batch:
-            mask = batch['attention_mask']
+        if "attention_mask" in batch:
+            mask = batch["attention_mask"]
             assert mask.dtype == torch.bool
             # At least one True in the first 3 positions
             assert torch.any(mask[0, :3])
@@ -172,9 +193,9 @@ class TestTPPDataset:
         """Test dataset initialization."""
         # Create dummy data file
         data = {
-            'time_seqs': [[0.1, 0.3, 0.7]],
-            'time_delta_seqs': [[0.1, 0.2, 0.4]],
-            'type_seqs': [[1, 2, 1]]
+            "time_seqs": [[0.1, 0.3, 0.7]],
+            "time_delta_seqs": [[0.1, 0.2, 0.4]],
+            "type_seqs": [[1, 2, 1]],
         }
         dataset = TPPDataset(data)
         assert len(dataset) == 1
@@ -182,22 +203,22 @@ class TestTPPDataset:
     def test_dataset_getitem(self, temporary_directory):
         """Test dataset item retrieval."""
         data = {
-            'time_seqs': [[0.1, 0.3], [0.2, 0.5, 0.8]],
-            'time_delta_seqs': [[0.1, 0.2], [0.2, 0.3, 0.3]],
-            'type_seqs': [[1, 2], [2, 1, 3]]
+            "time_seqs": [[0.1, 0.3], [0.2, 0.5, 0.8]],
+            "time_delta_seqs": [[0.1, 0.2], [0.2, 0.3, 0.3]],
+            "type_seqs": [[1, 2], [2, 1, 3]],
         }
         dataset = TPPDataset(data)
         item = dataset[0]
         assert isinstance(item, dict)
-        assert 'time_seqs' in item
-        assert 'type_seqs' in item
+        assert "time_seqs" in item
+        assert "type_seqs" in item
 
     def test_dataset_length(self, temporary_directory):
         """Test dataset length calculation."""
         data = {
-            'time_seqs': [[i] for i in range(50)],
-            'time_delta_seqs': [[i] for i in range(50)],
-            'type_seqs': [[i] for i in range(50)]
+            "time_seqs": [[i] for i in range(50)],
+            "time_delta_seqs": [[i] for i in range(50)],
+            "type_seqs": [[i] for i in range(50)],
         }
         dataset = TPPDataset(data)
         assert len(dataset) == 50
@@ -205,9 +226,9 @@ class TestTPPDataset:
     def test_dataset_iteration(self, temporary_directory):
         """Test dataset iteration."""
         data = {
-            'time_seqs': [[0], [1, 2, 3], [2]],
-            'time_delta_seqs': [[0], [1, 1, 1], [2]],
-            'type_seqs': [[1, 2], [2, 1, 3], [1]]
+            "time_seqs": [[0], [1, 2, 3], [2]],
+            "time_delta_seqs": [[0], [1, 1, 1], [2]],
+            "type_seqs": [[1, 2], [2, 1, 3], [1]],
         }
         dataset = TPPDataset(data)
         items = list(dataset)
@@ -225,26 +246,26 @@ class TestDataLoader:
     def test_dataloader_creation(self, sample_data_config, temporary_directory):
         """Test dataloader creation."""
         # Create dummy data files
-        for split in ['train', 'valid', 'test']:
+        for split in ["train", "valid", "test"]:
             data_dir = temporary_directory / split
             data_dir.mkdir()
 
-            data_file = data_dir / 'data.pkl'
+            data_file = data_dir / "data.pkl"
             dummy_data = [
                 {
-                    'time_since_start': [0.1, 0.3],
-                    'time_since_last_event': [0.1, 0.2],
-                    'type_event': [1, 2]
+                    "time_since_start": [0.1, 0.3],
+                    "time_since_last_event": [0.1, 0.2],
+                    "type_event": [1, 2],
                 }
             ] * 10  # 10 sequences
 
-            with open(data_file, 'wb') as f:
+            with open(data_file, "wb") as f:
                 pickle.dump(dummy_data, f)
 
         # Update config paths
-        sample_data_config.train_dir = str(temporary_directory / 'train')
-        sample_data_config.valid_dir = str(temporary_directory / 'valid')
-        sample_data_config.test_dir = str(temporary_directory / 'test')
+        sample_data_config.train_dir = str(temporary_directory / "train")
+        sample_data_config.valid_dir = str(temporary_directory / "valid")
+        sample_data_config.test_dir = str(temporary_directory / "test")
 
         try:
             dataloader = DataLoader(sample_data_config)
@@ -263,11 +284,12 @@ class TestDataLoader:
         """Test that dataloader produces consistent batches."""
         # Create test data
         data = {
-            'time_seqs': [[0.1, 0.2, 0.3]] * 20,
-            'time_delta_seqs': [[0.1, 0.1, 0.1]] * 20,
-            'type_seqs': [[1, 2, 1]] * 20
+            "time_seqs": [[0.1, 0.2, 0.3]] * 20,
+            "time_delta_seqs": [[0.1, 0.1, 0.1]] * 20,
+            "type_seqs": [[1, 2, 1]] * 20,
         }
         from torch.utils.data import DataLoader as TorchDataLoader
+
         dataset = TPPDataset(data)
         loader = TorchDataLoader(dataset, batch_size=4, shuffle=False)
         batches = list(loader)
@@ -275,25 +297,21 @@ class TestDataLoader:
 
     def test_dataloader_empty_dataset(self, temporary_directory):
         """Test dataloader with empty dataset."""
-        data = {
-            'time_seqs': [],
-            'time_delta_seqs': [],
-            'type_seqs': []
-        }
+        data = {"time_seqs": [], "time_delta_seqs": [], "type_seqs": []}
         dataset = TPPDataset(data)
         assert len(dataset) == 0
 
     def test_dataloader_data_types(self, temporary_directory):
         """Test dataloader with different data types."""
         data = {
-            'time_seqs': [np.array([0.1, 0.2, 0.3])],
-            'time_delta_seqs': [np.array([0.1, 0.2, 0.3])],
-            'type_seqs': [np.array([1, 2, 1])]
+            "time_seqs": [np.array([0.1, 0.2, 0.3])],
+            "time_delta_seqs": [np.array([0.1, 0.2, 0.3])],
+            "type_seqs": [np.array([1, 2, 1])],
         }
         dataset = TPPDataset(data)
         item = dataset[0]
-        if 'time_seqs' in item:
-            time_tensor = torch.tensor(item['time_seqs'])
+        if "time_seqs" in item:
+            time_tensor = torch.tensor(item["time_seqs"])
             assert time_tensor.dtype in [torch.float32, torch.float64]
 
 
@@ -306,23 +324,29 @@ class TestDataPipelineIntegration:
         """Test complete data pipeline from raw data to model input."""
         # Create synthetic data
         n = 10
-        seqs = [[float(i + j) for j in range(np.random.randint(5, 15))] for i in range(n)]
+        seqs = [
+            [float(i + j) for j in range(np.random.randint(5, 15))] for i in range(n)
+        ]
         data = {
-            'time_seqs': seqs,
-            'time_delta_seqs': [np.diff([0] + s).tolist() for s in seqs],
-            'type_seqs': [np.random.randint(1, 6, len(s)).tolist() for s in seqs]
+            "time_seqs": seqs,
+            "time_delta_seqs": [np.diff([0] + s).tolist() for s in seqs],
+            "type_seqs": [np.random.randint(1, 6, len(s)).tolist() for s in seqs],
         }
         dataset = TPPDataset(data)
         tokenizer = _minimal_tokenizer()
         collator = TPPDataCollator(tokenizer=tokenizer, max_length=20)
         from torch.utils.data import DataLoader as TorchDataLoader
-        loader = TorchDataLoader(dataset, batch_size=4, shuffle=False, collate_fn=collator)
+
+        loader = TorchDataLoader(
+            dataset, batch_size=4, shuffle=False, collate_fn=collator
+        )
         batch = next(iter(loader))
         # Accept BatchEncoding or Mapping
         from collections.abc import Mapping
+
         assert isinstance(batch, Mapping)
         batch_size = 4
-        if 'time_seqs' in batch:
-            value = batch['time_seqs']
-            if hasattr(value, 'ndim') and value.ndim == 2:
+        if "time_seqs" in batch:
+            value = batch["time_seqs"]
+            if hasattr(value, "ndim") and value.ndim == 2:
                 assert value.shape[0] == batch_size

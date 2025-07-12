@@ -1,10 +1,10 @@
-# 🚀 EasyTPP CLI - Comprehensive Temporal Point Process Tool
+# 🚀 New-LTPP CLI - Advanced Temporal Point Process Tool
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](../LICENSE)
 [![CLI Version](https://img.shields.io/badge/CLI%20Version-2.1-brightgreen.svg)](#)
 
-A modern, comprehensive command-line interface for Temporal Point Process (TPP) research with EasyTPP. Now includes data generation, inspection, and benchmarking capabilities.
+A modern, comprehensive command-line interface for Temporal Point Process (TPP) research with New-LTPP. Built with modern Python packaging (`pyproject.toml`) and includes data generation, inspection, and benchmarking capabilities.
 
 ## ✨ Key Features
 
@@ -22,23 +22,57 @@ A modern, comprehensive command-line interface for Temporal Point Process (TPP) 
 
 ## 📦 Quick Installation
 
-1. **Install dependencies**:
+This CLI is part of the New-LTPP project which uses modern Python packaging with `pyproject.toml`.
+
+### Prerequisites
+
+- Python 3.8 or higher
+- pip 21.3+ (for full pyproject.toml support)
+
+### Installation
+
+1. **Install the project from the root directory**:
 
    ```bash
-   python setup_cli.py
+   # Navigate to project root (parent directory of scripts/)
+   cd ..
+   
+   # Install with CLI dependencies
+   pip install -e ".[cli]"
+   
+   # Or install everything
+   pip install -e ".[all]"
    ```
 
-2. **Verify installation**:
+2. **Navigate back to scripts directory**:
+
+   ```bash
+   cd scripts
+   ```
+
+3. **Verify installation**:
 
    ```bash
    python easytpp_cli.py --version
    ```
 
-3. **Quick test**:
+4. **Quick test**:
 
    ```bash
    python easytpp_cli.py --help
    ```
+
+### Alternative Setup (Legacy)
+
+If you prefer to install only CLI dependencies:
+
+```bash
+# Install CLI-specific requirements (if available)
+pip install -r requirements-cli.txt
+
+# Or run setup script (if available)
+python setup_cli.py
+```
 
 ## 🎯 Quick Start
 
@@ -59,22 +93,22 @@ Interactive mode guides you through:
 
 ```bash
 # Run a test experiment
-python easytpp_cli.py run --config configs/runner_config.yaml --experiment THP --dataset H2expc --phase test
+python easytpp_cli.py run --config ../configs/runner_config.yaml --experiment THP --dataset H2expc --phase test
 
 # Generate synthetic data
 python easytpp_cli.py data-gen --type hawkes --num-sims 100 --output ./my_data
 
 # Inspect and visualize data
-python easytpp_cli.py data-inspect --config ./config.yaml --experiment H2expi
+python easytpp_cli.py data-inspect --config ../configs/inspection_config.yaml --experiment H2expi
 
 # Run benchmarks
 python easytpp_cli.py benchmark --type mean --dataset test
 
 # List available configurations
-python easytpp_cli.py list-configs --dir configs
+python easytpp_cli.py list-configs --dir ../configs
 
 # Validate a configuration
-python easytpp_cli.py validate --config configs/runner_config.yaml --experiment THP --dataset H2expc
+python easytpp_cli.py validate --config ../configs/runner_config.yaml --experiment THP --dataset H2expc
 ```
 
 ### Advanced Usage
@@ -82,18 +116,18 @@ python easytpp_cli.py validate --config configs/runner_config.yaml --experiment 
 ```bash
 # Training with checkpoint and custom output directory
 python easytpp_cli.py run \
-  --config configs/advanced_config.yaml \
+  --config ../configs/advanced_config.yaml \
   --experiment TransformerHP \
   --dataset taxi \
   --phase train \
-  --checkpoint checkpoints/model_epoch_50.ckpt \
-  --output experiments/run_001 \
+  --checkpoint ../checkpoints/model_epoch_50.ckpt \
+  --output ../experiments/run_001 \
   --device gpu \
   --seed 42
 
 # Run all phases sequentially
 python easytpp_cli.py run \
-  --config configs/full_pipeline.yaml \
+  --config ../configs/full_pipeline.yaml \
   --experiment THP \
   --dataset H2expc \
   --phase all
@@ -105,20 +139,20 @@ python easytpp_cli.py data-gen \
   --dim 3 \
   --start 0 \
   --end 200 \
-  --output ./experiments/synthetic_data
+  --output ../experiments/synthetic_data
 
 # Run comprehensive benchmarks
 python easytpp_cli.py benchmark \
   --all-benchmarks \
   --all-datasets \
-  --output ./benchmark_results
+  --output ../benchmark_results
 
 # Data inspection with custom output
 python easytpp_cli.py data-inspect \
-  --config ./configs/inspection_config.yaml \
+  --config ../configs/inspection_config.yaml \
   --experiment H2expi \
   --split train \
-  --output ./visualizations
+  --output ../visualizations
 ```
 
 ## 📋 Available Commands
@@ -416,34 +450,52 @@ When the `rich` package is installed, the CLI provides:
 
 ## 📁 Directory Structure
 
+The CLI is located in the `scripts/` directory of the New-LTPP project:
+
 ```text
-New_LTPP/
-├── easytpp_cli.py              # Main CLI
-├── easytpp_modern_cli.py       # Alternative CLI (Typer)
-├── setup_cli.py               # Installation script
-├── easytpp.ps1                # PowerShell wrapper
-├── easytpp.bat                # Batch wrapper
-├── requirements-cli.txt        # CLI dependencies
-├── CLI_README.md              # Detailed documentation
-├── configs/
-│   ├── runner_config_template.yaml
-│   ├── cli_config.yaml
-│   └── bench_config.yaml
-├── examples/
-│   ├── basic_example.py
-│   └── advanced_pipeline.py
-├── main/
-│   ├── data_gen/              # Data generation scripts
-│   ├── data_inspection/       # Data analysis scripts
-│   └── run_benchmarks/        # Benchmark scripts
-├── outputs/                   # Experiment results
-├── logs/                      # Log files
-├── benchmark_results/         # Benchmark outputs
+New-LTPP/                          # Project root
+├── pyproject.toml                 # Modern Python packaging config
+├── README.md                      # Main project documentation
+├── easy_tpp/                      # Core library
+├── configs/                       # Configuration templates
+│   ├── runner_config.yaml         # Main config template
+│   ├── bench_config.yaml          # Benchmark config
+│   └── ...                        # Other configs
+├── scripts/                       # CLI location (you are here)
+│   ├── easytpp_cli.py             # Main CLI
+│   ├── easytpp_modern_cli.py      # Alternative CLI (Typer)
+│   ├── setup_cli.py               # Installation script
+│   ├── CLI_README.md              # This documentation
+│   ├── easytpp.ps1                # PowerShell wrapper
+│   └── easytpp.bat                # Batch wrapper
+├── main/                          # Execution scripts
+│   ├── data_gen/                  # Data generation scripts
+│   ├── data_inspection/           # Data analysis scripts
+│   └── run_benchmarks/            # Benchmark scripts
+├── outputs/                       # Experiment results
+├── logs/                          # Log files
+├── benchmark_results/             # Benchmark outputs
 ├── data/
-│   └── generated/             # Generated datasets
-├── visu/                      # Visualizations
-└── checkpoints/               # Saved models
+│   └── generated/                 # Generated datasets
+├── visu/                          # Visualizations
+└── checkpoints/                   # Saved models
 ```
+
+### Working Directory
+
+When using the CLI, ensure you're in the `scripts/` directory:
+
+```bash
+# From project root
+cd scripts
+
+# Then run CLI commands
+python easytpp_cli.py --help
+```
+
+### Relative Paths
+
+All examples in this documentation assume you're running from the `scripts/` directory. Paths to configs and other resources use `../` to access the parent directories.
 
 ## 🔧 Troubleshooting
 
@@ -452,14 +504,16 @@ New_LTPP/
 1. **Import Errors**: Make sure all dependencies are installed
 
    ```bash
-   pip install -r requirements.txt
-   pip install -r requirements-cli.txt
+   # From project root, install with CLI dependencies
+   pip install -e ".[cli]"
+   # Or install everything
+   pip install -e ".[all]"
    ```
 
-2. **Configuration Not Found**: Check the config file path
+2. **Configuration Not Found**: Check the config file path (use relative paths from scripts/ directory)
 
    ```bash
-   python easytpp_cli.py list-configs
+   python easytpp_cli.py list-configs --dir ../configs
    ```
 
 3. **CUDA Issues**: Check device availability
@@ -472,7 +526,7 @@ New_LTPP/
 
    ```bash
    # Check directory permissions
-   python easytpp_cli.py data-gen --output ./test_data --num-sims 1
+   python easytpp_cli.py data-gen --output ../test_data --num-sims 1
    ```
 
 5. **Benchmark Configuration**: Verify benchmark config file
@@ -629,10 +683,10 @@ done
 
 ### Example Scripts
 
-Explore example scripts in the `examples/` folder:
+Explore example scripts in the `../examples/` folder:
 
 ```bash
-cd examples
+cd ../examples
 python basic_example.py
 python advanced_pipeline.py
 python data_generation_example.py
@@ -643,14 +697,14 @@ python benchmark_comparison.py
 
 Create your own configuration templates:
 
-1. Copy `configs/runner_config_template.yaml`
+1. Copy `../configs/runner_config_template.yaml`
 2. Modify according to your needs
 3. Use with the CLI
 
 ```bash
-cp configs/runner_config_template.yaml configs/my_custom_config.yaml
+cp ../configs/runner_config_template.yaml ../configs/my_custom_config.yaml
 # Edit the file...
-python easytpp_cli.py run --config configs/my_custom_config.yaml --experiment MyExp --dataset MyData
+python easytpp_cli.py run --config ../configs/my_custom_config.yaml --experiment MyExp --dataset MyData
 ```
 
 ## 📝 Logging
@@ -663,10 +717,11 @@ The CLI provides comprehensive logging:
 - **Format**: Structured messages with timestamps
 
 Log files are stored in:
-- `./logs/easytpp_cli.log` - Main CLI log
-- `./logs/experiments/` - Experiment-specific logs
-- `./logs/benchmarks/` - Benchmark logs
-- `./logs/data_generation/` - Data generation logs
+
+- `../logs/easytpp_cli.log` - Main CLI log
+- `../logs/experiments/` - Experiment-specific logs
+- `../logs/benchmarks/` - Benchmark logs
+- `../logs/data_generation/` - Data generation logs
 
 ## 🤝 Contributing
 
@@ -680,14 +735,17 @@ To contribute to the CLI tool:
 ### Development Setup
 
 ```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
+# From project root, install development dependencies
+pip install -e ".[dev]"
 
-# Install CLI in development mode
-pip install -e .
+# Install CLI with all features
+pip install -e ".[all]"
 
-# Run tests
-python -m pytest tests/cli/
+# Navigate to scripts directory
+cd scripts
+
+# Run tests (if available)
+python -m pytest ../tests/cli/
 
 # Check code quality
 flake8 easytpp_cli.py
@@ -698,17 +756,18 @@ black easytpp_cli.py
 
 For support and questions:
 
-- Consult the documentation
-- Open a GitHub issue
-- Contact the EasyTPP team
+- Consult this documentation
+- Check the main project README: `../README.md`
+- Open a GitHub issue on the [New-LTPP repository](https://github.com/NzoCs/Learning-point-processes)
+- Contact the development team
 
 ## 📜 License
 
-This project is licensed under Apache 2.0. See the [LICENSE](LICENSE) file for details.
+This project is licensed under Apache 2.0. See the [LICENSE](../LICENSE) file for details.
 
 ---
 
-**EasyTPP CLI v2.1** - Making Temporal Point Process research accessible and comprehensive.
+**New-LTPP CLI v2.1** - Making Temporal Point Process research accessible and comprehensive with modern Python packaging.
 
 ### 🎯 Next Steps
 
@@ -724,8 +783,8 @@ This project is licensed under Apache 2.0. See the [LICENSE](LICENSE) file for d
 
 ```bash
 # Complete workflow example
-python easytpp_cli.py gen --type hawkes --num-sims 100 --output ./my_data
-python easytpp_cli.py inspect --experiment my_analysis --output ./my_visualizations  
-python easytpp_cli.py run --config configs/runner_config_template.yaml --experiment THP --dataset H2expc --phase test
-python easytpp_cli.py bench --type mean --dataset test --output ./my_benchmarks
+python easytpp_cli.py gen --type hawkes --num-sims 100 --output ../my_data
+python easytpp_cli.py inspect --experiment my_analysis --output ../my_visualizations  
+python easytpp_cli.py run --config ../configs/runner_config_template.yaml --experiment THP --dataset H2expc --phase test
+python easytpp_cli.py bench --type mean --dataset test --output ../my_benchmarks
 ```

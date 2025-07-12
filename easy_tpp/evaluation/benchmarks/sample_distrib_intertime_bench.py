@@ -1,7 +1,7 @@
 """
 Sample Distribution Inter-Time Benchmark
 
-This benchmark creates bins to approximate the distribution of inter-times from the 
+This benchmark creates bins to approximate the distribution of inter-times from the
 training dataset, then predicts inter-times by sampling from these bins.
 """
 
@@ -18,12 +18,17 @@ class InterTimeDistributionBenchmark(BaseBenchmark):
     """
     Benchmark that samples inter-times from the empirical distribution of training data.
     """
-    
-    def __init__(self, data_config: DataConfig, experiment_id: str, save_dir: str = None, 
-                 num_bins: int = 50):
+
+    def __init__(
+        self,
+        data_config: DataConfig,
+        experiment_id: str,
+        save_dir: str = None,
+        num_bins: int = 50,
+    ):
         """
         Initialize the inter-time distribution benchmark.
-        
+
         Args:
             data_config: Data configuration object
             experiment_id: Experiment ID
@@ -31,178 +36,201 @@ class InterTimeDistributionBenchmark(BaseBenchmark):
             num_bins: Number of bins for histogram approximation
         """
         # This benchmark focuses on time prediction, so default to TIME_ONLY
-        super().__init__(data_config, experiment_id, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY)
+        super().__init__(
+            data_config, experiment_id, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
+        )
         self.num_bins = num_bins
-        
+
         # Distribution parameters
         self.bins = None
         self.bin_probabilities = None
         self.bin_centers = None
-        
+
     def _build_intertime_distribution(self) -> None:
         """
         Build the empirical distribution of inter-times from training data.
         """
         train_loader = self.data_module.test_dataloader()
         all_inter_times = []
-        
+
         logger.info("Collecting inter-times from training data...")
-        
+
         for batch in train_loader:
             # Extract inter-times from batch
             # batch structure: dict with keys: 'time_seqs', 'time_delta_seqs', 'type_seqs', 'batch_non_pad_mask', ...
-            time_delta_seqs = batch['time_delta_seqs']  # Inter-times
-            batch_non_pad_mask = batch.get('batch_non_pad_mask', None)
-            
+            time_delta_seqs = batch["time_delta_seqs"]  # Inter-times
+            batch_non_pad_mask = batch.get("batch_non_pad_mask", None)
+
             if batch_non_pad_mask is not None:
                 # Only consider non-padded values
                 mask = batch_non_pad_mask.bool()
                 valid_inter_times = time_delta_seqs[mask]
             else:
                 valid_inter_times = time_delta_seqs.flatten()
-            
+
             # Filter out zero or negative inter-times
             valid_inter_times = valid_inter_times[valid_inter_times > 0]
             all_inter_times.append(valid_inter_times.cpu())
-        
+
         # Concatenate all inter-times
         all_inter_times = torch.cat(all_inter_times, dim=0)
         logger.info(f"Collected {len(all_inter_times)} inter-time samples")
-        
+
         # Create histogram using PyTorch
         min_time = torch.min(all_inter_times)
         max_time = torch.max(all_inter_times)
-        
+
         # Create bin edges
         bin_edges = torch.linspace(min_time, max_time, self.num_bins + 1)
-        
+
         # Calculate histogram
-        counts = torch.histc(all_inter_times, bins=self.num_bins, min=min_time.item(), max=max_time.item())
-        
+        counts = torch.histc(
+            all_inter_times,
+            bins=self.num_bins,
+            min=min_time.item(),
+            max=max_time.item(),
+        )
+
         # Calculate bin centers
         self.bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-        
+
         # Calculate probabilities
         total_count = torch.sum(counts)
         self.bin_probabilities = counts / total_count
-        
+
         # Store bin edges for reference
         self.bins = bin_edges
-        
+
         logger.info(f"Built distribution with {self.num_bins} bins")
-        logger.info(f"Inter-time range: [{min_time:.6f}, {max_time:.6f}]")        
+        logger.info(f"Inter-time range: [{min_time:.6f}, {max_time:.6f}]")
+
     def _sample_from_distribution(self, size: Tuple[int, int]) -> torch.Tensor:
         """
         Sample inter-times from the empirical distribution.
-        
+
         Args:
             size: Shape of the tensor to generate (batch_size, seq_len)
-            
+
         Returns:
             Tensor of sampled inter-times
         """
         total_samples = size[0] * size[1]
-        
+
         # Sample bin indices according to probabilities using PyTorch
         bin_indices = torch.multinomial(
-            self.bin_probabilities, 
-            num_samples=total_samples, 
-            replacement=True
+            self.bin_probabilities, num_samples=total_samples, replacement=True
         )
-        
+
         # Get values from selected bins (use bin centers)
         sampled_values = self.bin_centers[bin_indices]
-        
+
         # Add some noise within bins for better approximation
         bin_width = self.bins[1] - self.bins[0]  # Assuming uniform bin width
-        noise = torch.rand(total_samples) * bin_width - bin_width/2
+        noise = torch.rand(total_samples) * bin_width - bin_width / 2
         sampled_values = sampled_values + noise
-        
+
         # Ensure positive values
         sampled_values = torch.clamp(sampled_values, min=1e-6)
-        
+
         # Reshape
         sampled_tensor = sampled_values.reshape(size)
-        
+
         return sampled_tensor
-    
+
     def _create_time_predictions(self, batch: Tuple) -> torch.Tensor:
         """
         Create time predictions by sampling from the inter-time distribution.
-        
+
         Args:
             batch: Input batch
-            
+
         Returns:
             Tensor of predicted inter-times
         """
-        time_delta_seqs = batch['time_delta_seqs']
+        time_delta_seqs = batch["time_delta_seqs"]
         batch_size, seq_len = time_delta_seqs.shape
-        
+
         # Sample inter-times from distribution
         pred_inter_times = self._sample_from_distribution((batch_size, seq_len))
-        
+
         # Move to same device as input
         if time_delta_seqs.device != pred_inter_times.device:
             pred_inter_times = pred_inter_times.to(time_delta_seqs.device)
-        
+
         return pred_inter_times
-    
+
     @property
     def benchmark_name(self) -> str:
         return "intertime_distribution_sampling"
 
     def _prepare_benchmark(self) -> None:
         self._build_intertime_distribution()
-    
+
     def _get_custom_results_info(self) -> Dict[str, Any]:
         """Get custom information to add to results."""
-        return {
-            'num_bins': self.num_bins
-        }
+        return {"num_bins": self.num_bins}
 
 
-def run_intertime_distribution_benchmark(config_path: str, experiment_id: str, save_dir: str = None, num_bins: int = 50) -> Dict[str, Any]:
+def run_intertime_distribution_benchmark(
+    config_path: str, experiment_id: str, save_dir: str = None, num_bins: int = 50
+) -> Dict[str, Any]:
     """
     Run the inter-time distribution sampling benchmark.
-    
+
     Args:
         config_path: Path to configuration file
         experiment_id: Experiment ID in the configuration
         save_dir: Directory to save results
         num_bins: Number of bins for histogram approximation
-        
+
     Returns:
         Benchmark results
     """
     with open(config_path, "r") as f:
         config_dict = yaml.safe_load(f)
     data_config = DataConfig.from_dict(config_dict["data_config"])
-    benchmark = InterTimeDistributionBenchmark(data_config, experiment_id, save_dir, num_bins)
+    benchmark = InterTimeDistributionBenchmark(
+        data_config, experiment_id, save_dir, num_bins
+    )
     results = benchmark.evaluate()
-    
+
     logger.info("Inter-Time Distribution Benchmark completed successfully!")
     logger.info(f"Time RMSE: {results['metrics'].get('time_rmse_mean', 'N/A'):.6f}")
     logger.info(f"Time MAE: {results['metrics'].get('time_mae_mean', 'N/A'):.6f}")
-    
+
     return results
 
 
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(description="Run Inter-Time Distribution Benchmark")
-    parser.add_argument('--config_path', type=str, required=True,
-                        help='Path to configuration YAML file')
-    parser.add_argument('--experiment_id', type=str, required=True,
-                        help='Experiment ID in the configuration')
-    parser.add_argument('--save_dir', type=str, default="./benchmark_results",
-                        help='Directory to save results')
-    parser.add_argument('--num_bins', type=int, default=50,
-                        help='Number of bins for histogram approximation')
-    
+
+    parser = argparse.ArgumentParser(
+        description="Run Inter-Time Distribution Benchmark"
+    )
+    parser.add_argument(
+        "--config_path", type=str, required=True, help="Path to configuration YAML file"
+    )
+    parser.add_argument(
+        "--experiment_id",
+        type=str,
+        required=True,
+        help="Experiment ID in the configuration",
+    )
+    parser.add_argument(
+        "--save_dir",
+        type=str,
+        default="./benchmark_results",
+        help="Directory to save results",
+    )
+    parser.add_argument(
+        "--num_bins",
+        type=int,
+        default=50,
+        help="Number of bins for histogram approximation",
+    )
+
     args = parser.parse_args()
-    
+
     run_intertime_distribution_benchmark(
         args.config_path, args.experiment_id, args.save_dir, args.num_bins
     )

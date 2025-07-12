@@ -15,23 +15,18 @@ def inspect_dataset() -> None:
     """Inspect dataset distribution and statistics."""
     # Configuration for data inspection
     data_config = DataConfig(
-        dataset_id="test",
-        data_format="pickle",
-        num_event_types=2,
-        batch_size=32
+        dataset_id="test", data_format="pickle", num_event_types=2, batch_size=32
     )
-    
+
     # Create data module
     datamodule = TPPDataModule(data_config)
     datamodule.setup()
-    
+
     # Create visualizer
     visualizer = Visualizer(
-        data_setup=datamodule,
-        split="train",
-        save_dir="./inspection_plots"
+        data_setup=datamodule, split="train", save_dir="./inspection_plots"
     )
-    
+
     # Generate analysis plots
     visualizer.show_all_distributions(save_graph=True, show_graph=False)
     visualizer.delta_times_distribution(save_graph=True)
@@ -44,18 +39,16 @@ def inspect_synthetic_data() -> None:
     """Inspect synthetic data generated from gen_synthetic_data.py."""
     data_config = DataConfig(
         dataset_id="synthetic_hawkes_data",
-        data_format="json", 
+        data_format="json",
         num_event_types=3,
-        batch_size=16
+        batch_size=16,
     )
-    
+
     datamodule = TPPDataModule(data_config)
     datamodule.setup()
-    
+
     visualizer = Visualizer(
-        data_setup=datamodule,
-        split="train",
-        save_dir="./synthetic_inspection_plots"
+        data_setup=datamodule, split="train", save_dir="./synthetic_inspection_plots"
     )
 
     visualizer.show_all_distributions(save_graph=True, show_graph=False)

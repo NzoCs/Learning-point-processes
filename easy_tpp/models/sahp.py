@@ -1,8 +1,12 @@
 import torch
 import torch.nn as nn
 
-from easy_tpp.models.baselayer import EncoderLayer, MultiHeadAttention, \
-    TimeShiftedPositionalEncoding, ScaledSoftplus
+from easy_tpp.models.baselayer import (
+    EncoderLayer,
+    MultiHeadAttention,
+    TimeShiftedPositionalEncoding,
+    ScaledSoftplus,
+)
 from easy_tpp.models.basemodel import BaseModel
 
 
@@ -27,25 +31,36 @@ class SAHP(BaseModel):
         self.use_norm = model_config.specs.use_ln
 
         # position vector, used for temporal encoding
-        self.layer_position_emb = TimeShiftedPositionalEncoding(d_model=self.d_model,
-                                                                device=self.device)
+        self.layer_position_emb = TimeShiftedPositionalEncoding(
+            d_model=self.d_model, device=self.device
+        )
 
         self.n_layers = model_config.specs.num_layers
         self.n_head = model_config.specs.num_heads
 
         # convert hidden vectors into a scalar
         self.layer_intensity_hidden = nn.Linear(self.d_model, self.num_event_types)
-        self.softplus = ScaledSoftplus(self.num_event_types)  # learnable mark-specific beta
+        self.softplus = ScaledSoftplus(
+            self.num_event_types
+        )  # learnable mark-specific beta
 
         self.stack_layers = nn.ModuleList(
-            [EncoderLayer(
-                self.d_model,
-                MultiHeadAttention(self.n_head, self.d_model, self.d_model, self.dropout,
-                                   output_linear=False),
-
-                use_residual=False,
-                dropout=self.dropout
-            ) for _ in range(self.n_layers)])
+            [
+                EncoderLayer(
+                    self.d_model,
+                    MultiHeadAttention(
+                        self.n_head,
+                        self.d_model,
+                        self.d_model,
+                        self.dropout,
+                        output_linear=False,
+                    ),
+                    use_residual=False,
+                    dropout=self.dropout,
+                )
+                for _ in range(self.n_layers)
+            ]
+        )
 
         if self.use_norm:
             self.norm = nn.LayerNorm(self.d_model)
@@ -78,7 +93,11 @@ class SAHP(BaseModel):
         Returns:
             tensor: hidden states at event times.
         """
-        mu, eta, gamma = self.mu(encode_state), self.eta(encode_state), self.gamma(encode_state)
+        mu, eta, gamma = (
+            self.mu(encode_state),
+            self.eta(encode_state),
+            self.gamma(encode_state),
+        )
 
         # [batch_size, hidden_dim]
         states = mu + (eta - mu) * torch.exp(-gamma * duration_t)
@@ -102,9 +121,7 @@ class SAHP(BaseModel):
         enc_output = type_embedding + position_embedding
 
         for enc_layer in self.stack_layers:
-            enc_output = enc_layer(
-                enc_output,
-                mask=attention_mask)
+            enc_output = enc_layer(enc_output, mask=attention_mask)
             if self.use_norm:
                 enc_output = self.norm(enc_output)
         # [batch_size, seq_len, hidden_dim]
@@ -119,12 +136,20 @@ class SAHP(BaseModel):
         Returns:
             list: loglike loss, num events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = batch
+        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = (
+            batch
+        )
 
-        enc_out = self.forward(time_seqs[:, :-1], time_delta_seqs[:, :-1], type_seqs[:, :-1], attention_mask[:, :-1, :-1])
+        enc_out = self.forward(
+            time_seqs[:, :-1],
+            time_delta_seqs[:, :-1],
+            type_seqs[:, :-1],
+            attention_mask[:, :-1, :-1],
+        )
 
-        cell_t = self.state_decay(encode_state=enc_out,
-                                  duration_t=time_delta_seqs[:, 1:, None])
+        cell_t = self.state_decay(
+            encode_state=enc_out, duration_t=time_delta_seqs[:, 1:, None]
+        )
 
         # [batch_size, seq_len, num_event_types]
         lambda_at_event = self.softplus(cell_t)
@@ -136,23 +161,24 @@ class SAHP(BaseModel):
 
         # 2.2 compute intensities at sampled times
         # [batch_size, num_times = max_len - 1, num_sample, event_num]
-        state_t_sample = self.compute_states_at_sample_times(encode_state=enc_out,
-                                                             sample_dtimes=sample_dtimes)
+        state_t_sample = self.compute_states_at_sample_times(
+            encode_state=enc_out, sample_dtimes=sample_dtimes
+        )
         lambda_t_sample = self.softplus(state_t_sample)
 
-        event_ll, non_event_ll, num_events = self.compute_loglikelihood(lambda_at_event=lambda_at_event,
-                                                                        lambdas_loss_samples=lambda_t_sample,
-                                                                        time_delta_seq=time_delta_seqs[:, 1:],
-                                                                        seq_mask=batch_non_pad_mask[:, 1:],
-                                                                        type_seq=type_seqs[:, 1:])
+        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
+            lambda_at_event=lambda_at_event,
+            lambdas_loss_samples=lambda_t_sample,
+            time_delta_seq=time_delta_seqs[:, 1:],
+            seq_mask=batch_non_pad_mask[:, 1:],
+            type_seq=type_seqs[:, 1:],
+        )
 
         # compute loss to minimize
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_times(self,
-                                       encode_state,
-                                       sample_dtimes):
+    def compute_states_at_sample_times(self, encode_state, sample_dtimes):
         """Compute the hidden states at sampled times.
 
         Args:
@@ -163,17 +189,15 @@ class SAHP(BaseModel):
             tensor: [batch_size, seq_len, num_samples, hidden_size]， hidden state at each sampled time.
         """
 
-        cell_states = self.state_decay(encode_state[:, :, None, :],
-                                       sample_dtimes[:, :, :, None])
+        cell_states = self.state_decay(
+            encode_state[:, :, None, :], sample_dtimes[:, :, :, None]
+        )
 
         return cell_states
 
-    def compute_intensities_at_sample_times(self,
-                                            time_seqs,
-                                            time_delta_seqs,
-                                            type_seqs,
-                                            sample_dtimes,
-                                            **kwargs):
+    def compute_intensities_at_sample_times(
+        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
+    ):
         """Compute hidden states at sampled times.
 
         Args:
@@ -186,12 +210,14 @@ class SAHP(BaseModel):
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
 
-        attention_mask = kwargs.get('attention_mask', None)
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        attention_mask = kwargs.get("attention_mask", None)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         if attention_mask is None:
             batch_size, seq_len = time_seqs.size()
-            attention_mask = torch.triu(torch.ones(seq_len, seq_len, device=self.device), diagonal=1).unsqueeze(0)
+            attention_mask = torch.triu(
+                torch.ones(seq_len, seq_len, device=self.device), diagonal=1
+            ).unsqueeze(0)
             attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
 
         # [batch_size, seq_len, num_samples]

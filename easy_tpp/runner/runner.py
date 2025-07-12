@@ -5,17 +5,23 @@ from typing import Optional, Union, List
 import copy
 import traceback
 
+
 class Runner:
-    
     """
     Runner class that manages the training, validation, testing, and prediction phases
     of a temporal point process model with intelligent logging management.
     """
-    
-    def __init__(self, config: RunnerConfig, checkpoint_path: Optional[str] = None, output_dir: Optional[str] = None, **kwargs):
+
+    def __init__(
+        self,
+        config: RunnerConfig,
+        checkpoint_path: Optional[str] = None,
+        output_dir: Optional[str] = None,
+        **kwargs,
+    ):
         """
         Initialize the Runner.
-        
+
         Args:
             config (RunnerConfig): Configuration object containing all necessary parameters.
             checkpoint_path (str, optional): Path to a checkpoint file to resume training from.
@@ -26,39 +32,41 @@ class Runner:
         self.checkpoint_path = checkpoint_path
         self.output_dir = output_dir
         self.kwargs = kwargs
-        
+
         # Store original logger config to restore it later
         self.original_logger_config = config.trainer_config.logger_config
-        
-        logger.critical(f"Runner initialized for model: {config.model_config.model_id} on dataset: {config.data_config.dataset_id}")
-    
+
+        logger.critical(
+            f"Runner initialized for model: {config.model_config.model_id} on dataset: {config.data_config.dataset_id}"
+        )
+
     def _create_trainer(self, enable_logging: bool = True) -> Trainer:
         """
         Create a trainer with logging enabled or disabled.
-        
+
         Args:
             enable_logging (bool): Whether to enable logging for this trainer.
-            
+
         Returns:
             Trainer: Configured trainer instance.
         """
         # Create a copy of the config to avoid modifying the original
         config_copy = copy.deepcopy(self.config)
-        
+
         if not enable_logging:
             # Disable logging by setting logger_config to None
             config_copy.trainer_config.logger_config = None
             logger.debug("Logging disabled for this phase")
         else:
             logger.debug("Logging enabled for this phase")
-        
+
         return Trainer(
             config=config_copy,
             checkpoint_path=self.checkpoint_path,
             output_dir=self.output_dir,
-            **self.kwargs
+            **self.kwargs,
         )
-    
+
     def train(self) -> None:
         """Execute the training phase with logging enabled."""
         logger.info("=== TRAINING PHASE ===")
@@ -70,33 +78,33 @@ class Runner:
     def test(self) -> Optional[dict]:
         """
         Execute the testing phase with logging disabled.
-        
+
         Returns:
             dict: Test results if available, None otherwise.
         """
         logger.critical("=== TESTING PHASE ===")
         trainer = self._create_trainer(enable_logging=False)
         trainer.test()  # This method doesn't return results but saves them to file
-        
+
         return None
-    
+
     def predict(self) -> Optional[str]:
         """
         Execute the prediction phase with logging disabled.
-        
+
         Returns:
             str: Path to the directory where predictions are saved, None if error.
         """
         logger.critical("=== PREDICTION PHASE ===")
         trainer = self._create_trainer(enable_logging=False)
         trainer.predict()  # This method doesn't return predictions but saves them
-        
+
         return None
-    
+
     def run(self, phase: Union[str, List[str]] = "all") -> dict:
         """
         Execute one or multiple phases based on the phase parameter.
-        
+
         Args:
             phase (Union[str, List[str]]): Phase(s) to execute. Options:
                 - "train": Only training
@@ -104,58 +112,61 @@ class Runner:
                 - "predict": Only prediction
                 - "all": All phases in sequence (train -> test -> predict)
                 - List of phases: e.g., ["train", "test"]
-        
+
         Returns:
             dict: Results from executed phases.
         """
 
         results = {}
-        
+
         # Convert single phase to list for uniform processing
         if isinstance(phase, str):
             if phase == "all":
                 phases = ["train", "test", "predict"]
             else:
-                phases = [phase]     
-        
+                phases = [phase]
+
         logger.info(f"Runner executing phases: {phases}")
-        
+
         for current_phase in phases:
-                
+
             if current_phase == "train":
                 result = self.train()
                 results[current_phase] = "completed"
-            
+
             elif current_phase == "test":
                 result = self.test()
                 results[current_phase] = "completed"
-            
+
             elif current_phase == "predict":
                 result = self.predict()
                 results[current_phase] = "completed"
-            
+
             else:
                 logger.error(f"Unknown phase: {current_phase}")
                 results[current_phase] = "error: unknown phase"
-            
+
         return results
 
+
 # Convenience function for backward compatibility and simple usage
-def run_experiment(config: RunnerConfig, 
-                  phase: Union[str, List[str]] = "all",
-                  checkpoint_path: Optional[str] = None,
-                  output_dir: Optional[str] = None,
-                  **kwargs) -> dict:
+def run_experiment(
+    config: RunnerConfig,
+    phase: Union[str, List[str]] = "all",
+    checkpoint_path: Optional[str] = None,
+    output_dir: Optional[str] = None,
+    **kwargs,
+) -> dict:
     """
     Convenience function to run an experiment with a single function call.
-    
+
     Args:
         config (RunnerConfig): Configuration object.
         phase (Union[str, List[str]]): Phase(s) to execute.
         checkpoint_path (str, optional): Path to checkpoint file.
         output_dir (str, optional): Output directory.
         **kwargs: Additional arguments for the Trainer.
-    
+
     Returns:
         dict: Results from executed phases.
     """

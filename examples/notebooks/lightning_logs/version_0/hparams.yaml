@@ -1,0 +1,52 @@
+model_config:
+  model_id: NHP
+  num_event_types: 2
+  num_event_types_pad: 3
+  pad_token_id: 2
+  device: cpu
+  gpu: -1
+  is_training: false
+  compute_simulation: false
+  use_mc_samples: true
+  pretrain_model_path: null
+  base_config:
+    lr: 0.001
+    lr_scheduler: true
+    max_epochs: 1000
+    dropout: 0.0
+    stage: train
+    backend: Torch
+    dataset_id: null
+    base_dir: null
+  specs:
+    hidden_size: 64
+    rnn_type: LSTM
+    time_emb_size: 16
+    num_layers: 2
+    num_heads: 8
+    sharing_param_layer: false
+    use_ln: true
+    loss_integral_num_sample_per_step: 100
+    max_seq_len: 100
+    num_mix_components: 1
+    mean_log_inter_time: 0.0
+    std_log_inter_time: 1.0
+    num_mlp_layers: 2
+    ode_num_sample_per_step: 20
+    proper_marked_intensities: false
+    mu: null
+    alpha: null
+    beta: null
+  thinning:
+    num_sample: 30
+    num_exp: 100
+    num_steps: 10
+    over_sample_rate: 1.5
+    num_samples_boundary: 5
+    dtime_max: 5.0
+  simulation_config:
+    start_time: 100.0
+    end_time: 200.0
+    batch_size: 32
+    max_sim_events: 50000
+    seed: 42

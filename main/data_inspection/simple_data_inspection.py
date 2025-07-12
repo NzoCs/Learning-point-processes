@@ -19,18 +19,15 @@ from easy_tpp.data.preprocess import TPPDataset
 def main() -> None:
     # Load dataset
     dataset = TPPDataset.load_from_file("path/to/your/data.json")
-    
+
     # Create analyzer
-    analyzer = DistributionAnalyzer(
-        dataset=dataset,
-        output_dir="./inspection_results"
-    )
-    
+    analyzer = DistributionAnalyzer(dataset=dataset, output_dir="./inspection_results")
+
     # Run analysis
     analyzer.analyze_temporal_patterns()
     analyzer.analyze_event_types()
     analyzer.generate_summary_report()
-    
+
     print("Data inspection completed. Results saved to ./inspection_results")
 
 

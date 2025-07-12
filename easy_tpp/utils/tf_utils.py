@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from easy_tpp.utils.import_utils import is_tf_gpu_available
 
-if tf.__version__ >= '2.0':
+if tf.__version__ >= "2.0":
     tf = tf.compat.v1
     tf.disable_v2_behavior()
 
@@ -30,9 +30,9 @@ def set_device(gpu=-1):
         gpu (int, optional): Defaults to -1.
     """
     if gpu >= 0 and is_tf_gpu_available():
-        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
     else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = ''
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
     return
 
 
@@ -50,7 +50,7 @@ def set_optimizer(optimizer, lr):
     Returns:
         tf.train.optimzer: tf optimizer.
     """
-    optimizer = optimizer.capitalize() + 'Optimizer'
+    optimizer = optimizer.capitalize() + "Optimizer"
     try:
         optimizer = getattr(tf.train, optimizer)(learning_rate=lr)
     except Exception:
@@ -74,7 +74,7 @@ def get_shape_list(x):
 
 
 def tensordot(tensor_a, tensor_b):
-    """ Tensor dot function. The last dimension of tensor_a and the first dimension of tensor_b must be the same.
+    """Tensor dot function. The last dimension of tensor_a and the first dimension of tensor_b must be the same.
 
     Args:
         tensor_a (tensor): input tensor.

@@ -22,29 +22,24 @@ def main() -> None:
     config_path = Path(__file__).parent / "runner_config.yaml"
     config_dict = parse_runner_yaml_config(str(config_path), "NHP", "test")
     config = RunnerConfig.from_dict(config_dict)
-    
+
     # Create runner
     runner = Runner(config=config, output_dir="./results/complete_pipeline")
-    
+
     # Run complete pipeline: train -> test -> predict
     print("🚀 Lancement du pipeline complet...")
-    
+
     # 1. Training
     print("📚 Phase d'entraînement...")
     runner.run(phase="train")
-    
-    # 2. Testing 
+
+    # 2. Testing
     print("🧪 Phase de test...")
     runner.run(phase="test")
-    
+
     # 3. Prediction and distribution comparison
     print("🔮 Phase de prédiction et comparaison des distributions...")
     runner.run(phase="predict")
-    
-    print("✅ Pipeline terminé!")
-    print("📊 Vérifiez les résultats dans:")
-    print("   - ./results/complete_pipeline/ (modèle et métriques)")
-    print("   - ./results/distributions_comparisons/ (comparaisons de distributions)")
 
 
 if __name__ == "__main__":

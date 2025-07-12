@@ -33,12 +33,12 @@ def make_config_string(config, max_num_key=4):
     Returns:
         dict: a concatenated string from config dict.
     """
-    str_config = ''
+    str_config = ""
     num_key = 0
     for k, v in config.items():
         if num_key < max_num_key:  # for the moment we only record model name
-            if k == 'name':
-                str_config += str(v) + '_'
+            if k == "name":
+                str_config += str(v) + "_"
                 num_key += 1
     return str_config[:-1]
 
@@ -53,23 +53,26 @@ def save_yaml_config(save_dir, config):
     prt_dir = os.path.dirname(save_dir)
 
     from collections import OrderedDict
+
     # add yaml representer for different type
     yaml.add_representer(
         OrderedDict,
-        lambda dumper, data: dumper.represent_mapping('tag:yaml.org,2002:map', data.items())
+        lambda dumper, data: dumper.represent_mapping(
+            "tag:yaml.org,2002:map", data.items()
+        ),
     )
 
-    if prt_dir != '' and not os.path.exists(prt_dir):
+    if prt_dir != "" and not os.path.exists(prt_dir):
         os.makedirs(prt_dir)
 
-    with open(save_dir, 'w') as f:
+    with open(save_dir, "w") as f:
         yaml.dump(config, stream=f, default_flow_style=False, sort_keys=False)
 
     return
 
 
 def load_yaml_config(config_dir):
-    """ Load yaml config file from disk.
+    """Load yaml config file from disk.
 
     Args:
         config_dir: str or Path
@@ -87,9 +90,9 @@ def load_yaml_config(config_dir):
 
 def get_stage(stage):
     stage = stage.lower()
-    if stage in ['train', 'training']:
+    if stage in ["train", "training"]:
         return RunnerPhase.TRAIN
-    elif stage in ['valid', 'dev', 'eval']:
+    elif stage in ["valid", "dev", "eval"]:
         return RunnerPhase.VALIDATE
     else:
         return RunnerPhase.PREDICT
@@ -116,9 +119,9 @@ def load_pickle(file_dir):
     Returns:
         any type: the loaded data.
     """
-    with open(file_dir, 'rb') as file:
+    with open(file_dir, "rb") as file:
         try:
-            data = pickle.load(file, encoding='latin-1')
+            data = pickle.load(file, encoding="latin-1")
         except Exception:
             data = pickle.load(file)
 
@@ -150,7 +153,7 @@ def save_json(data, file_dir):
     Raises:
         IOError: If the file cannot be opened or written to.
     """
-    with open(file_dir, 'w') as outfile:
+    with open(file_dir, "w") as outfile:
         json.dump(data, outfile, indent=4)
     print(f"Data successfully saved to {file_dir}")
 
@@ -169,7 +172,7 @@ def load_json(file_dir):
         IOError: If the file cannot be opened or read.
         json.JSONDecodeError: If the file is not a valid JSON.
     """
-    with open(file_dir, 'r') as infile:
+    with open(file_dir, "r") as infile:
         data = json.load(infile)
     return data
 
@@ -205,13 +208,13 @@ def array_pad_cols(arr, max_num_cols, pad_index):
     """
     res = np.ones((arr.shape[0], max_num_cols)) * pad_index
 
-    res[:, :arr.shape[1]] = arr
+    res[:, : arr.shape[1]] = arr
 
     return res
 
 
 def concat_element(arrs, pad_index):
-    """ Concat element from each batch output  """
+    """Concat element from each batch output"""
 
     n_lens = len(arrs)
     n_elements = len(arrs[0])
@@ -223,7 +226,9 @@ def concat_element(arrs, pad_index):
     for j in range(n_elements):
         a_output = []
         for i in range(n_lens):
-            arrs_ = array_pad_cols(arrs[i][j], max_num_cols=max_len, pad_index=pad_index)
+            arrs_ = array_pad_cols(
+                arrs[i][j], max_num_cols=max_len, pad_index=pad_index
+            )
             a_output.append(arrs_)
 
         concated_outputs.append(np.concatenate(a_output, axis=0))
@@ -235,7 +240,7 @@ def concat_element(arrs, pad_index):
 def to_dict(obj, classkey=None):
     if isinstance(obj, dict):
         data = {}
-        for (k, v) in obj.items():
+        for k, v in obj.items():
             data[k] = to_dict(v, classkey)
         return data
     elif hasattr(obj, "_ast"):
@@ -244,11 +249,15 @@ def to_dict(obj, classkey=None):
         return [to_dict(v, classkey) for v in obj]
     elif hasattr(obj, "__dict__"):
         # Python 3: use .items() instead of .iteritems()
-        data = dict([
-            (key, to_dict(value, classkey))
-            for key, value in obj.__dict__.items()
-            if not callable(value) and not key.startswith('_') and key not in ['name']
-        ])
+        data = dict(
+            [
+                (key, to_dict(value, classkey))
+                for key, value in obj.__dict__.items()
+                if not callable(value)
+                and not key.startswith("_")
+                and key not in ["name"]
+            ]
+        )
         if classkey is not None and hasattr(obj, "__class__"):
             data[classkey] = obj.__class__.__name__
         return data
@@ -257,7 +266,7 @@ def to_dict(obj, classkey=None):
 
 
 def dict_deep_update(target, source, is_add_new_key=True):
-    """ Update 'target' dict by 'source' dict deeply, and return a new dict copied from target and source deeply.
+    """Update 'target' dict by 'source' dict deeply, and return a new dict copied from target and source deeply.
 
     Args:
         target: dict
@@ -285,5 +294,7 @@ def dict_deep_update(target, source, is_add_new_key=True):
         if type(result[key]) in base_type_list or type(source[key]) in base_type_list:
             result[key] = value
         else:
-            result[key] = dict_deep_update(result[key], source[key], is_add_new_key=is_add_new_key)
+            result[key] = dict_deep_update(
+                result[key], source[key], is_add_new_key=is_add_new_key
+            )
     return result

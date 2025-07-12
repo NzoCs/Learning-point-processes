@@ -14,7 +14,7 @@ class AttNHP(BaseModel):
     Source code: https://github.com/yangalan123/anhp-andtt/blob/master/anhp/model/xfmr_nhp_fast.py
     """
 
-    def __init__(self, model_config : ModelConfig):
+    def __init__(self, model_config: ModelConfig):
         """Initialize the model
 
         Args:
@@ -25,8 +25,9 @@ class AttNHP(BaseModel):
         self.use_norm = model_config.specs.use_ln
         self.d_time = model_config.specs.time_emb_size
 
-        self.div_term = torch.exp(torch.arange(0, self.d_time, 2) * -(math.log(10000.0) / self.d_time)).reshape(1, 1,
-                                                                                                                -1)
+        self.div_term = torch.exp(
+            torch.arange(0, self.d_time, 2) * -(math.log(10000.0) / self.d_time)
+        ).reshape(1, 1, -1)
 
         self.n_layers = model_config.specs.num_layers
         self.n_head = model_config.specs.num_heads
@@ -35,14 +36,19 @@ class AttNHP(BaseModel):
         for i in range(self.n_head):
             self.heads.append(
                 nn.ModuleList(
-                    [EncoderLayer(
-                        self.d_model + self.d_time,
-                        MultiHeadAttention(1, self.d_model + self.d_time, self.d_model, self.dropout,
-                                           output_linear=False),
-
-                        use_residual=False,
-                        dropout=self.dropout
-                    )
+                    [
+                        EncoderLayer(
+                            self.d_model + self.d_time,
+                            MultiHeadAttention(
+                                1,
+                                self.d_model + self.d_time,
+                                self.d_model,
+                                self.dropout,
+                                output_linear=False,
+                            ),
+                            use_residual=False,
+                            dropout=self.dropout,
+                        )
                         for _ in range(self.n_layers)
                     ]
                 )
@@ -52,7 +58,9 @@ class AttNHP(BaseModel):
         if self.use_norm:
             self.norm = nn.LayerNorm(self.d_model)
         self.inten_linear = nn.Linear(self.d_model * self.n_head, self.num_event_types)
-        self.softplus = ScaledSoftplus(self.num_event_types)  # learnable mark-specific beta
+        self.softplus = ScaledSoftplus(
+            self.num_event_types
+        )  # learnable mark-specific beta
         self.layer_event_emb = nn.Linear(self.d_model + self.d_time, self.d_model)
         self.layer_intensity = nn.Sequential(self.inten_linear, self.softplus)
         self.eps = torch.finfo(torch.float32).eps
@@ -76,7 +84,9 @@ class AttNHP(BaseModel):
 
         return pe
 
-    def forward_pass(self, init_cur_layer, time_emb, sample_time_emb, event_emb, combined_mask):
+    def forward_pass(
+        self, init_cur_layer, time_emb, sample_time_emb, event_emb, combined_mask
+    ):
         """update the structure sequentially.
 
         Args:
@@ -151,7 +161,11 @@ class AttNHP(BaseModel):
             a diagonal matrix, [batch_size, seq_len, seq_len]
         """
         # [batch_size, seq_len, seq_len]
-        layer_mask = (torch.eye(attention_mask.size(1), device=self.device) < 1).unsqueeze(0).expand_as(attention_mask)
+        layer_mask = (
+            (torch.eye(attention_mask.size(1), device=self.device) < 1)
+            .unsqueeze(0)
+            .expand_as(attention_mask)
+        )
         return layer_mask
 
     def make_combined_att_mask(self, attention_mask, layer_mask):
@@ -167,7 +181,9 @@ class AttNHP(BaseModel):
         # [batch_size, seq_len, seq_len * 2]
         combined_mask = torch.cat([attention_mask, layer_mask], dim=-1)
         # [batch_size, seq_len, seq_len * 2]
-        contextual_mask = torch.cat([attention_mask, torch.ones_like(layer_mask)], dim=-1)
+        contextual_mask = torch.cat(
+            [attention_mask, torch.ones_like(layer_mask)], dim=-1
+        )
         # [batch_size, seq_len * 2, seq_len * 2]
         combined_mask = torch.cat([contextual_mask, combined_mask], dim=1)
         return combined_mask
@@ -192,7 +208,9 @@ class AttNHP(BaseModel):
         else:
             sample_time_emb = self.compute_temporal_embedding(sample_times)
         combined_mask = self.make_combined_att_mask(attention_mask, layer_mask)
-        cur_layer_ = self.forward_pass(init_cur_layer, time_emb, sample_time_emb, event_emb, combined_mask)
+        cur_layer_ = self.forward_pass(
+            init_cur_layer, time_emb, sample_time_emb, event_emb, combined_mask
+        )
 
         return cur_layer_
 
@@ -205,11 +223,18 @@ class AttNHP(BaseModel):
         Returns:
             list: loglike loss, num events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = batch
+        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = (
+            batch
+        )
         # 1. compute event-loglik
         # the prediction of last event has no label, so we proceed to the last but one
         # att mask => diag is False, not mask.
-        enc_out = self.forward(time_seqs[:, :-1], type_seqs[:, :-1], attention_mask[:, :-1, :-1], time_seqs[:, 1:])
+        enc_out = self.forward(
+            time_seqs[:, :-1],
+            type_seqs[:, :-1],
+            attention_mask[:, :-1, :-1],
+            time_seqs[:, 1:],
+        )
         # [batch_size, seq_len, num_event_types]
         lambda_at_event = self.layer_intensity(enc_out)
 
@@ -223,27 +248,29 @@ class AttNHP(BaseModel):
 
         # 2.2 compute intensities at sampled times
         # [batch_size, seq_len = max_len - 1, num_sample, event_num]
-        lambda_t_sample = self.compute_intensities_at_sample_times(time_seqs[:, :-1],
-                                                                   time_delta_seqs[:, :-1],  # not used
-                                                                   type_seqs[:, :-1],
-                                                                   sample_times,
-                                                                   attention_mask=attention_mask[:, :-1, :-1])
+        lambda_t_sample = self.compute_intensities_at_sample_times(
+            time_seqs[:, :-1],
+            time_delta_seqs[:, :-1],  # not used
+            type_seqs[:, :-1],
+            sample_times,
+            attention_mask=attention_mask[:, :-1, :-1],
+        )
 
-        event_ll, non_event_ll, num_events = self.compute_loglikelihood(lambda_at_event=lambda_at_event,
-                                                                        lambdas_loss_samples=lambda_t_sample,
-                                                                        time_delta_seq=time_delta_seqs[:, 1:],
-                                                                        seq_mask=batch_non_pad_mask[:, 1:],
-                                                                        type_seq=type_seqs[:, 1:])
+        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
+            lambda_at_event=lambda_at_event,
+            lambdas_loss_samples=lambda_t_sample,
+            time_delta_seq=time_delta_seqs[:, 1:],
+            seq_mask=batch_non_pad_mask[:, 1:],
+            type_seq=type_seqs[:, 1:],
+        )
 
         # compute loss to minimize
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_times(self,
-                                       time_seqs,
-                                       type_seqs,
-                                       attention_mask,
-                                       sample_times):
+    def compute_states_at_sample_times(
+        self, time_seqs, type_seqs, attention_mask, sample_times
+    ):
         """Compute the states at sampling times.
 
         Args:
@@ -265,18 +292,21 @@ class AttNHP(BaseModel):
         # [num_samples * batch_size, seq_len]
         _sample_time = sample_times.reshape(num_samples * batch_size, -1)
         # [num_samples * batch_size, seq_len]
-        _types = type_seqs.expand(num_samples, -1, -1).reshape(num_samples * batch_size, -1)
+        _types = type_seqs.expand(num_samples, -1, -1).reshape(
+            num_samples * batch_size, -1
+        )
         # [num_samples * batch_size, seq_len]
-        _times = time_seqs.expand(num_samples, -1, -1).reshape(num_samples * batch_size, -1)
+        _times = time_seqs.expand(num_samples, -1, -1).reshape(
+            num_samples * batch_size, -1
+        )
         # [num_samples * batch_size, seq_len]
-        _attn_mask = attention_mask.unsqueeze(0).expand(num_samples, -1, -1, -1).reshape(num_samples * batch_size,
-                                                                                         seq_len,
-                                                                                         seq_len)
+        _attn_mask = (
+            attention_mask.unsqueeze(0)
+            .expand(num_samples, -1, -1, -1)
+            .reshape(num_samples * batch_size, seq_len, seq_len)
+        )
         # [num_samples * batch_size, seq_len, hidden_size]
-        encoder_output = self.forward(_times,
-                                      _types,
-                                      _attn_mask,
-                                      _sample_time)
+        encoder_output = self.forward(_times, _types, _attn_mask, _sample_time)
 
         # [num_samples, batch_size, seq_len, hidden_size]
         encoder_output = encoder_output.reshape(num_samples, batch_size, seq_len, -1)
@@ -284,7 +314,9 @@ class AttNHP(BaseModel):
         encoder_output = encoder_output.permute((1, 2, 0, 3))
         return encoder_output
 
-    def compute_intensities_at_sample_times(self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs):
+    def compute_intensities_at_sample_times(
+        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
+    ):
         """Compute the intensity at sampled times.
 
         Args:
@@ -296,22 +328,30 @@ class AttNHP(BaseModel):
         Returns:
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
-        attention_mask = kwargs.get('attention_mask', None)
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        attention_mask = kwargs.get("attention_mask", None)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         if attention_mask is None:
             batch_size, seq_len = time_seqs.size()
-            attention_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).unsqueeze(0).to(type_seqs.device)
+            attention_mask = (
+                torch.triu(torch.ones(seq_len, seq_len), diagonal=1)
+                .unsqueeze(0)
+                .to(type_seqs.device)
+            )
             attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
 
         if sample_dtimes.size()[1] < time_seqs.size()[1]:
             # we pass sample_dtimes for last time step here
             # we do a temp solution
             # [batch_size, seq_len, num_samples]
-            sample_dtimes = time_seqs[:, :, None] + torch.tile(sample_dtimes, [1, time_seqs.size()[1], 1])
+            sample_dtimes = time_seqs[:, :, None] + torch.tile(
+                sample_dtimes, [1, time_seqs.size()[1], 1]
+            )
 
         # [batch_size, seq_len, num_samples, hidden_size]
-        encoder_output = self.compute_states_at_sample_times(time_seqs, type_seqs, attention_mask, sample_dtimes)
+        encoder_output = self.compute_states_at_sample_times(
+            time_seqs, type_seqs, attention_mask, sample_dtimes
+        )
 
         if compute_last_step_only:
             lambdas = self.layer_intensity(encoder_output[:, -1:, :, :])

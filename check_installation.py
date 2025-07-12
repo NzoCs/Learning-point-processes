@@ -8,8 +8,8 @@ This script checks if the installation was successful and all core dependencies 
 Run this after installation to verify everything is working correctly.
 """
 
-import sys
 import importlib.util
+import sys
 from typing import List, Tuple
 
 
@@ -39,11 +39,11 @@ def check_package(package_name: str, import_name: Optional[str] = None) -> bool:
 def check_installation() -> Tuple[int, int]:
     """Check the installation status of EasyTPP and its dependencies."""
     print("🔍 Checking EasyTPP Installation\n")
-    
+
     # Check Python version
     python_ok = check_python_version()
     print()
-    
+
     # Core dependencies
     print("📦 Checking Core Dependencies:")
     core_deps = [
@@ -56,38 +56,47 @@ def check_installation() -> Tuple[int, int]:
         ("seaborn", "seaborn"),
         ("scipy", "scipy"),
     ]
-    
+
     core_success = 0
     for package, import_name in core_deps:
         if check_package(package, import_name):
             core_success += 1
-    
+
     print(f"\nCore dependencies: {core_success}/{len(core_deps)} installed")
-    
+
     # Optional dependencies
     print("\n🔧 Checking Optional Dependencies:")
     optional_deps = [
-        ("Development tools", [
-            ("pytest", "pytest"),
-            ("black", "black"),
-            ("flake8", "flake8"),
-            ("isort", "isort"),
-            ("mypy", "mypy"),
-        ]),
-        ("CLI tools", [
-            ("rich", "rich"),
-            ("typer", "typer"),
-            ("click", "click"),
-        ]),
-        ("Documentation", [
-            ("sphinx", "sphinx"),
-            ("myst_parser", "myst_parser"),
-        ]),
+        (
+            "Development tools",
+            [
+                ("pytest", "pytest"),
+                ("black", "black"),
+                ("flake8", "flake8"),
+                ("isort", "isort"),
+                ("mypy", "mypy"),
+            ],
+        ),
+        (
+            "CLI tools",
+            [
+                ("rich", "rich"),
+                ("typer", "typer"),
+                ("click", "click"),
+            ],
+        ),
+        (
+            "Documentation",
+            [
+                ("sphinx", "sphinx"),
+                ("myst_parser", "myst_parser"),
+            ],
+        ),
     ]
-    
+
     optional_success = 0
     optional_total = 0
-    
+
     for category, deps in optional_deps:
         print(f"\n  {category}:")
         category_success = 0
@@ -97,11 +106,11 @@ def check_installation() -> Tuple[int, int]:
                 optional_success += 1
             optional_total += 1
         print(f"    → {category_success}/{len(deps)} installed")
-    
+
     print(f"\nOptional dependencies: {optional_success}/{optional_total} installed")
-    
+
     # Summary
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     if python_ok and core_success == len(core_deps):
         print("🎉 Installation successful! EasyTPP is ready to use.")
         print("\nNext steps:")
@@ -114,14 +123,14 @@ def check_installation() -> Tuple[int, int]:
             print("- Upgrade to Python 3.8 or higher")
         if core_success < len(core_deps):
             print("- Install missing core dependencies with: pip install -e .")
-    
+
     if optional_success < optional_total:
         print(f"\n💡 To install optional dependencies:")
-        print("   pip install -e \".[dev]\"    # Development tools")
-        print("   pip install -e \".[cli]\"    # CLI tools")
-        print("   pip install -e \".[docs]\"   # Documentation")
-        print("   pip install -e \".[all]\"    # All optional dependencies")
-    
+        print('   pip install -e ".[dev]"    # Development tools')
+        print('   pip install -e ".[cli]"    # CLI tools')
+        print('   pip install -e ".[docs]"   # Documentation')
+        print('   pip install -e ".[all]"    # All optional dependencies')
+
     return core_success, len(core_deps)
 
 

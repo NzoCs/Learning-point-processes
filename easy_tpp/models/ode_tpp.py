@@ -18,7 +18,9 @@ def flatten_parameters(model):
 class NeuralODEAdjoint(torch.autograd.Function):
 
     @staticmethod
-    def forward(ctx, z_init, delta_t, ode_fn, solver, num_sample_times, *model_parameters):
+    def forward(
+        ctx, z_init, delta_t, ode_fn, solver, num_sample_times, *model_parameters
+    ):
         """
 
         Args:
@@ -73,10 +75,12 @@ class NeuralODEAdjoint(torch.autograd.Function):
                 tmp_z = tmp_z.detach().requires_grad_(True)
                 func_eval = ode_fn(tmp_z)
                 tmp_ds = torch.autograd.grad(
-                    (func_eval,), (tmp_z, *model_parameters),
+                    (func_eval,),
+                    (tmp_z, *model_parameters),
                     grad_outputs=tmp_neg_a,
                     allow_unused=True,
-                    retain_graph=True)
+                    retain_graph=True,
+                )
 
             neg_adfdz = tmp_ds[0]
             neg_adfdtheta = [torch.flatten(var) for var in tmp_ds[1:]]
@@ -89,7 +93,9 @@ class NeuralODEAdjoint(torch.autograd.Function):
         with torch.no_grad():
             # Construct back-state for ode solver
             # reshape variable \theta for batch solving
-            init_var_grad = [torch.zeros_like(torch.flatten(var)) for var in model_parameters]
+            init_var_grad = [
+                torch.zeros_like(torch.flatten(var)) for var in model_parameters
+            ]
 
             # [z(t_1), a(t_1), \theta]
             z1 = output_state
@@ -101,8 +107,10 @@ class NeuralODEAdjoint(torch.autograd.Function):
 
             grad_z0 = states[1]
 
-            grad_theta = [torch.reshape(torch.mean(var_grad, dim=0), var.shape) for var, var_grad in
-                          zip(model_parameters, states[2:])]
+            grad_theta = [
+                torch.reshape(torch.mean(var_grad, dim=0), var.shape)
+                for var, var_grad in zip(model_parameters, states[2:])
+            ]
 
         return (grad_z0, None, None, None, None, *grad_theta)
 
@@ -126,12 +134,14 @@ class NeuralODE(nn.Module):
         Returns:
 
         """
-        output_state = NeuralODEAdjoint.apply(input_state,
-                                              delta_time,
-                                              self.model,
-                                              self.solver,
-                                              self.num_sample_times,
-                                              *self.params)
+        output_state = NeuralODEAdjoint.apply(
+            input_state,
+            delta_time,
+            self.model,
+            self.solver,
+            self.num_sample_times,
+            *self.params,
+        )
 
         # [batch_size, num_sample_times, hidden_size]
         return output_state
@@ -155,20 +165,23 @@ class ODETPP(BaseModel):
         super(ODETPP, self).__init__(model_config)
 
         self.layer_intensity = nn.Sequential(
-            nn.Linear(self.hidden_size, self.num_event_types),
-            nn.Softplus())
+            nn.Linear(self.hidden_size, self.num_event_types), nn.Softplus()
+        )
 
-        self.event_model = DNN(inputs_dim=self.hidden_size,
-                               hidden_size=[self.hidden_size])
+        self.event_model = DNN(
+            inputs_dim=self.hidden_size, hidden_size=[self.hidden_size]
+        )
 
         self.ode_num_sample_per_step = model_config.specs.ode_num_sample_per_step
 
         self.solver = rk4_step_method
 
-        self.layer_neural_ode = NeuralODE(model=self.event_model,
-                                          solver=self.solver,
-                                          num_sample_times=self.ode_num_sample_per_step,
-                                          device=self.device)
+        self.layer_neural_ode = NeuralODE(
+            model=self.event_model,
+            solver=self.solver,
+            num_sample_times=self.ode_num_sample_per_step,
+            device=self.device,
+        )
 
     def forward(self, time_delta_seqs, type_seqs):
         """Call the model.
@@ -187,8 +200,9 @@ class ODETPP(BaseModel):
 
         left_limits, right_limits = [], []
         right_limit = torch.zeros_like(type_seq_emb[:, 0, :], device=self.device)
-        for type_emb, dt in zip(torch.unbind(type_seq_emb, dim=-2),
-                                torch.unbind(time_delta_seqs_, dim=-2)):
+        for type_emb, dt in zip(
+            torch.unbind(type_seq_emb, dim=-2), torch.unbind(time_delta_seqs_, dim=-2)
+        ):
             left_limit = self.layer_neural_ode(right_limit, dt)
             right_limit = left_limit + type_emb
 
@@ -230,19 +244,23 @@ class ODETPP(BaseModel):
         interval_t_sample = self.make_dtime_loss_samples(time_delta_seqs[:, 1:])
 
         # [batch_size, num_times = max_len - 1, num_mc_sample, hidden_size]
-        sample_state_ti = self.compute_states_at_sample_times(right_limits, interval_t_sample)
+        sample_state_ti = self.compute_states_at_sample_times(
+            right_limits, interval_t_sample
+        )
 
         # [batch_size, num_times = max_len - 1, num_mc_sample, event_num]
         lambda_t_sample = self.layer_intensity(sample_state_ti)
 
-        event_ll, non_event_ll, num_events = self.compute_loglikelihood(lambda_at_event=lambda_at_event,
-                                                                        lambdas_loss_samples=lambda_t_sample,
-                                                                        time_delta_seq=time_delta_seqs[:, 1:],
-                                                                        seq_mask=batch_non_pad_mask[:, 1:],
-                                                                        type_seq=type_seqs[:, 1:])
+        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
+            lambda_at_event=lambda_at_event,
+            lambdas_loss_samples=lambda_t_sample,
+            time_delta_seq=time_delta_seqs[:, 1:],
+            seq_mask=batch_non_pad_mask[:, 1:],
+            type_seq=type_seqs[:, 1:],
+        )
 
         # compute loss to optimize
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
     def compute_states_at_sample_times(self, state_ti_plus, sample_dtimes):
@@ -259,13 +277,17 @@ class ODETPP(BaseModel):
         # Use broadcasting to compute the decays at all time steps
         # at all sample points
         # h_ts shape (batch_size, seq_len, num_samples, hidden_dim)
-        state = self.solver(diff_func=self.event_model,
-                            dt=sample_dtimes[..., None],  # [batch_size, seq_len, num_samples, 1]
-                            z0=state_ti_plus[..., None, :])  # [batch_size, seq_len, 1, hidden_size]
+        state = self.solver(
+            diff_func=self.event_model,
+            dt=sample_dtimes[..., None],  # [batch_size, seq_len, num_samples, 1]
+            z0=state_ti_plus[..., None, :],
+        )  # [batch_size, seq_len, 1, hidden_size]
 
         return state
 
-    def compute_intensities_at_sample_times(self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs):
+    def compute_intensities_at_sample_times(
+        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
+    ):
         """Compute the intensity at sampled times, not only event times.
 
         Args:
@@ -279,12 +301,14 @@ class ODETPP(BaseModel):
                     intensity at each timestamp for each event type.
         """
 
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         _, right_limits = self.forward(time_delta_seqs, type_seqs)
 
         # [batch_size, num_sample_times, num_mc_sample, hidden_size]
-        sample_state_ti = self.compute_states_at_sample_times(right_limits, sample_dtimes)
+        sample_state_ti = self.compute_states_at_sample_times(
+            right_limits, sample_dtimes
+        )
 
         if compute_last_step_only:
             # [batch_size, 1, num_mc_sample, num_event_types]

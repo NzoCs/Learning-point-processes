@@ -3,12 +3,12 @@ import time
 
 
 def is_master_process():
-    """ Check if the process is the master process in all machines.
+    """Check if the process is the master process in all machines.
 
     Returns:
         bool
     """
-    rank = 0 if os.getenv('RANK') is None else int(os.getenv('RANK'))
+    rank = 0 if os.getenv("RANK") is None else int(os.getenv("RANK"))
     if rank == 0:
         return True
     else:
@@ -16,13 +16,17 @@ def is_master_process():
 
 
 def is_local_master_process():
-    """ Check if the process is the master process in the local machine.
+    """Check if the process is the master process in the local machine.
 
     Returns:
         bool
     """
-    rank = 0 if os.getenv('RANK') is None else int(os.getenv('RANK'))
-    local_world_size = 1 if os.getenv('LOCAL_WORLD_SIZE') is None else int(os.getenv('LOCAL_WORLD_SIZE'))
+    rank = 0 if os.getenv("RANK") is None else int(os.getenv("RANK"))
+    local_world_size = (
+        1
+        if os.getenv("LOCAL_WORLD_SIZE") is None
+        else int(os.getenv("LOCAL_WORLD_SIZE"))
+    )
     if local_world_size == 0 or rank % local_world_size == 0:
         return True
     else:
@@ -30,32 +34,34 @@ def is_local_master_process():
 
 
 def get_now_timestamp_id():
-    """ Get the current timestamp string.
+    """Get the current timestamp string.
 
     Returns:
         A string like yyMMdd_hhmmss
     """
     import datetime
-    return datetime.datetime.now().strftime('%y%m%d-%H%M%S')
+
+    return datetime.datetime.now().strftime("%y%m%d-%H%M%S")
 
 
 def get_unique_id():
-    """ Generate a unique id string based on process id (pid), thread id and timestamp.
+    """Generate a unique id string based on process id (pid), thread id and timestamp.
 
     Returns:
         Unique id: str
     """
     import os
     import threading
+
     pid = os.getpid()
     tid = threading.currentThread().ident
     ts_id = get_now_timestamp_id()
 
-    return '{}_{}_{}'.format(pid, tid, ts_id)
+    return "{}_{}_{}".format(pid, tid, ts_id)
 
 
 def parse_uri_to_protocol_and_path(uri):
-    """ Parse a uri into two parts, protocol and path. Set 'file' as default protocol when lack protocol.
+    """Parse a uri into two parts, protocol and path. Set 'file' as default protocol when lack protocol.
 
     Args:
         uri: str
@@ -68,33 +74,32 @@ def parse_uri_to_protocol_and_path(uri):
 
     if uri is None:
         return None, None
-    tokens = uri.split('://')
+    tokens = uri.split("://")
     if len(tokens) == 2:
         protocol = tokens[0]
         path = tokens[1]
     elif len(tokens) == 1:
-        protocol = 'file'
+        protocol = "file"
         path = tokens[0]
     else:
-        raise RuntimeError(f'Wrong url format: {uri}')
+        raise RuntimeError(f"Wrong url format: {uri}")
 
     return protocol, path
 
 
 class Timer:
-    """Count the elapsing time between start and end.
-    """
+    """Count the elapsing time between start and end."""
 
-    def __init__(self, unit='m'):
+    def __init__(self, unit="m"):
         unit = unit.lower()
-        if unit == 's':
+        if unit == "s":
             self._unit = 1
-        elif unit == 'm':
+        elif unit == "m":
             self._unit = 60
-        elif unit == 'h':
+        elif unit == "h":
             self._unit = 1440
         else:
-            raise RuntimeError('Unknown unit:', unit)
+            raise RuntimeError("Unknown unit:", unit)
 
         self.unit = unit
         # default start time is set to the time the object initialized
@@ -108,7 +113,7 @@ class Timer:
         cost = (end_time - self._start_time) / self._unit
         # reset the start time using the end time
         self._start_time = end_time
-        return '%.3f%s' % (cost, self.unit)
+        return "%.3f%s" % (cost, self.unit)
 
 
 # -------------------------- Singleton Object --------------------------

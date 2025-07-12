@@ -1,7 +1,12 @@
 import torch
 import torch.nn as nn
 
-from easy_tpp.models.baselayer import EncoderLayer, MultiHeadAttention, TimePositionalEncoding, ScaledSoftplus
+from easy_tpp.models.baselayer import (
+    EncoderLayer,
+    MultiHeadAttention,
+    TimePositionalEncoding,
+    ScaledSoftplus,
+)
 from easy_tpp.models.basemodel import BaseModel
 
 
@@ -24,34 +29,51 @@ class THP(BaseModel):
         self.n_layers = model_config.specs.num_layers
         self.n_head = model_config.specs.num_heads
 
-        self.layer_temporal_encoding = TimePositionalEncoding(self.d_model, device=self.device)
+        self.layer_temporal_encoding = TimePositionalEncoding(
+            self.d_model, device=self.device
+        )
 
-        self.factor_intensity_base = nn.Parameter(torch.empty([1, self.num_event_types], device=self.device))
-        self.factor_intensity_decay = nn.Parameter(torch.empty([1, self.num_event_types], device=self.device))
+        self.factor_intensity_base = nn.Parameter(
+            torch.empty([1, self.num_event_types], device=self.device)
+        )
+        self.factor_intensity_decay = nn.Parameter(
+            torch.empty([1, self.num_event_types], device=self.device)
+        )
         nn.init.xavier_normal_(self.factor_intensity_base)
         nn.init.xavier_normal_(self.factor_intensity_decay)
 
         # convert hidden vectors into event-type-sized vector
         self.layer_intensity_hidden = nn.Linear(self.d_model, self.num_event_types)
-        self.softplus = ScaledSoftplus(self.num_event_types)   # learnable mark-specific beta
+        self.softplus = ScaledSoftplus(
+            self.num_event_types
+        )  # learnable mark-specific beta
 
         # Add MLP layer
         # Equation (5)
         self.feed_forward = nn.Sequential(
             nn.Linear(self.d_model, self.d_model * 2),
             nn.ReLU(),
-            nn.Linear(self.d_model * 2, self.d_model)
+            nn.Linear(self.d_model * 2, self.d_model),
         )
 
         self.stack_layers = nn.ModuleList(
-            [EncoderLayer(
-                self.d_model,
-                MultiHeadAttention(self.n_head, self.d_model, self.d_model, self.dropout,
-                                   output_linear=False),
-                use_residual=False,
-                feed_forward=self.feed_forward,
-                dropout=self.dropout
-            ) for _ in range(self.n_layers)])
+            [
+                EncoderLayer(
+                    self.d_model,
+                    MultiHeadAttention(
+                        self.n_head,
+                        self.d_model,
+                        self.d_model,
+                        self.dropout,
+                        output_linear=False,
+                    ),
+                    use_residual=False,
+                    feed_forward=self.feed_forward,
+                    dropout=self.dropout,
+                )
+                for _ in range(self.n_layers)
+            ]
+        )
 
     def forward(self, time_seqs, type_seqs, attention_mask):
         """Call the model
@@ -71,9 +93,7 @@ class THP(BaseModel):
         # [batch_size, seq_len, hidden_size]
         for enc_layer in self.stack_layers:
             enc_output += tem_enc
-            enc_output = enc_layer(
-                enc_output,
-                mask=attention_mask)
+            enc_output = enc_layer(enc_output, mask=attention_mask)
 
         return enc_output
 
@@ -86,11 +106,15 @@ class THP(BaseModel):
         Returns:
             tuple: loglike loss, num events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = batch
+        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = (
+            batch
+        )
 
         # 1. compute event-loglik
         # [batch_size, seq_len, hidden_size]
-        enc_out = self.forward(time_seqs[:, :-1], type_seqs[:, :-1], attention_mask[:, :-1, :-1])
+        enc_out = self.forward(
+            time_seqs[:, :-1], type_seqs[:, :-1], attention_mask[:, :-1, :-1]
+        )
 
         # [batch_size, seq_len, num_event_types]
         # update time decay based on Equation (6)
@@ -100,8 +124,11 @@ class THP(BaseModel):
 
         # update time decay based on Equation (6)
         # [batch_size, seq_len, num_event_types]
-        intensity_states = factor_intensity_decay * time_delta_seqs[:, 1:, None] + self.layer_intensity_hidden(
-            enc_out) + factor_intensity_base
+        intensity_states = (
+            factor_intensity_decay * time_delta_seqs[:, 1:, None]
+            + self.layer_intensity_hidden(enc_out)
+            + factor_intensity_base
+        )
 
         lambda_at_event = self.softplus(intensity_states)
 
@@ -112,18 +139,21 @@ class THP(BaseModel):
 
         # 2.2 compute intensities at sampled times
         # [batch_size, num_times = max_len - 1, num_sample, event_num]
-        state_t_sample = self.compute_states_at_sample_times(event_states=enc_out,
-                                                             sample_dtimes=sample_dtimes)
+        state_t_sample = self.compute_states_at_sample_times(
+            event_states=enc_out, sample_dtimes=sample_dtimes
+        )
         lambda_t_sample = self.softplus(state_t_sample)
 
-        event_ll, non_event_ll, num_events = self.compute_loglikelihood(lambda_at_event=lambda_at_event,
-                                                                        lambdas_loss_samples=lambda_t_sample,
-                                                                        time_delta_seq=time_delta_seqs[:, 1:],
-                                                                        seq_mask=batch_non_pad_mask[:, 1:],
-                                                                        type_seq=type_seqs[:, 1:])
+        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
+            lambda_at_event=lambda_at_event,
+            lambdas_loss_samples=lambda_t_sample,
+            time_delta_seq=time_delta_seqs[:, 1:],
+            seq_mask=batch_non_pad_mask[:, 1:],
+            type_seq=type_seqs[:, 1:],
+        )
 
         # compute loss to minimize
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
     def compute_states_at_sample_times(self, event_states, sample_dtimes):
@@ -148,17 +178,17 @@ class THP(BaseModel):
 
         # update time decay based on Equation (6)
         # [batch_size, seq_len, num_samples, num_event_types]
-        intensity_states = factor_intensity_decay * sample_dtimes + self.layer_intensity_hidden(
-            event_states) + factor_intensity_base
+        intensity_states = (
+            factor_intensity_decay * sample_dtimes
+            + self.layer_intensity_hidden(event_states)
+            + factor_intensity_base
+        )
 
         return intensity_states
 
-    def compute_intensities_at_sample_times(self,
-                                            time_seqs,
-                                            time_delta_seqs,
-                                            type_seqs,
-                                            sample_dtimes,
-                                            **kwargs):
+    def compute_intensities_at_sample_times(
+        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
+    ):
         """Compute hidden states at sampled times.
 
         Args:
@@ -171,12 +201,14 @@ class THP(BaseModel):
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
 
-        attention_mask = kwargs.get('attention_mask', None)
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        attention_mask = kwargs.get("attention_mask", None)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         if attention_mask is None:
             batch_size, seq_len = time_seqs.size()
-            attention_mask = torch.triu(torch.ones(seq_len, seq_len, device=self.device), diagonal=1).unsqueeze(0)
+            attention_mask = torch.triu(
+                torch.ones(seq_len, seq_len, device=self.device), diagonal=1
+            ).unsqueeze(0)
             attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
 
         # [batch_size, seq_len, num_samples]

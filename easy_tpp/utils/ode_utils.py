@@ -58,7 +58,10 @@ def rk2_step_method(diff_func, dt, z0):
     k2 = diff_func(ode_update_op(z0, k1, dt))
 
     if isinstance(z0, list) or isinstance(z0, tuple):
-        return [item_z + (item_k1 + item_k2) * dt * 0.5 for item_z, item_k1, item_k2 in zip(z0, k1, k2)]
+        return [
+            item_z + (item_k1 + item_k2) * dt * 0.5
+            for item_z, item_k1, item_k2 in zip(z0, k1, k2)
+        ]
     else:
         return z0 + dt * (k1 + k2) * 0.5
 
@@ -85,7 +88,9 @@ def rk4_step_method(diff_func, dt, z0):
     k4 = diff_func(ode_update_op(z0, k3, dt))
 
     if isinstance(z0, list) or isinstance(z0, tuple):
-        return [item_z + (item_k1 + 2.0 * item_k2 + 2.0 * item_k3 + item_k4) * dt / 6.0
-                for item_z, item_k1, item_k2, item_k3, item_k4 in zip(z0, k1, k2, k3, k4)]
+        return [
+            item_z + (item_k1 + 2.0 * item_k2 + 2.0 * item_k3 + item_k4) * dt / 6.0
+            for item_z, item_k1, item_k2, item_k3, item_k4 in zip(z0, k1, k2, k3, k4)
+        ]
     else:
         return z0 + dt * (k1 + k2 * 2.0 + k3 * 2.0 + k4) / 6.0

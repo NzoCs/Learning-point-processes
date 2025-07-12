@@ -37,7 +37,7 @@ class TPPDataCollator:
     def __call__(self, features, return_tensors=None):
         if return_tensors is None:
             return_tensors = self.return_tensors
-        
+
         batch = self.tokenizer.pad(
             features,
             padding=self.padding,

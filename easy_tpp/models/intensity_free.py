@@ -34,8 +34,7 @@ class Normal(TorchNormal):
 
 
 class MixtureSameFamily(TorchMixtureSameFamily):
-    """Mixture (same-family) distribution, redefined `log_cdf` and `log_survival_function`.
-    """
+    """Mixture (same-family) distribution, redefined `log_cdf` and `log_survival_function`."""
 
     def log_cdf(self, x):
         x = self._pad(x)
@@ -62,14 +61,24 @@ class LogNormalMixtureDistribution(TransformedDistribution):
         std_log_inter_time (float): Std of log-inter-event-times.
     """
 
-    def __init__(self, locs, log_scales, log_weights, mean_log_inter_time, std_log_inter_time, validate_args=None):
+    def __init__(
+        self,
+        locs,
+        log_scales,
+        log_weights,
+        mean_log_inter_time,
+        std_log_inter_time,
+        validate_args=None,
+    ):
         mixture_dist = D.Categorical(logits=log_weights)
         component_dist = Normal(loc=locs, scale=log_scales.exp())
         GMM = MixtureSameFamily(mixture_dist, component_dist)
         if mean_log_inter_time == 0.0 and std_log_inter_time == 1.0:
             transforms = []
         else:
-            transforms = [D.AffineTransform(loc=mean_log_inter_time, scale=std_log_inter_time)]
+            transforms = [
+                D.AffineTransform(loc=mean_log_inter_time, scale=std_log_inter_time)
+            ]
         self.mean_log_inter_time = mean_log_inter_time
         self.std_log_inter_time = std_log_inter_time
         transforms.append(D.ExpTransform())
@@ -126,10 +135,12 @@ class IntensityFree(BaseModel):
 
         self.num_features = 1 + self.hidden_size
 
-        self.layer_rnn = nn.GRU(input_size=self.num_features,
-                                hidden_size=self.hidden_size,
-                                num_layers=1,  # used in original paper
-                                batch_first=True)
+        self.layer_rnn = nn.GRU(
+            input_size=self.num_features,
+            hidden_size=self.hidden_size,
+            num_layers=1,  # used in original paper
+            batch_first=True,
+        )
 
         self.mark_linear = nn.Linear(self.hidden_size, self.num_event_types)
         self.linear = nn.Linear(self.hidden_size, 3 * self.num_mix_components)
@@ -175,9 +186,11 @@ class IntensityFree(BaseModel):
 
         # [batch_size, seq_len, 3 * num_mix_components]
         raw_params = self.linear(context)
-        locs = raw_params[..., :self.num_mix_components]
-        log_scales = raw_params[..., self.num_mix_components: (2 * self.num_mix_components)]
-        log_weights = raw_params[..., (2 * self.num_mix_components):]
+        locs = raw_params[..., : self.num_mix_components]
+        log_scales = raw_params[
+            ..., self.num_mix_components : (2 * self.num_mix_components)
+        ]
+        log_weights = raw_params[..., (2 * self.num_mix_components) :]
 
         log_scales = clamp_preserve_gradients(log_scales, -5.0, 3.0)
         log_weights = torch.log_softmax(log_weights, dim=-1)
@@ -186,12 +199,14 @@ class IntensityFree(BaseModel):
             log_scales=log_scales,
             log_weights=log_weights,
             mean_log_inter_time=self.mean_log_inter_time,
-            std_log_inter_time=self.std_log_inter_time
+            std_log_inter_time=self.std_log_inter_time,
         )
 
         inter_times = time_delta_seqs[:, 1:].clamp(min=1e-5)
         # [batch_size, seq_len]
-        event_mask = torch.logical_and(batch_non_pad_mask[:, 1:], type_seqs[:, 1:] != self.pad_token_id)
+        event_mask = torch.logical_and(
+            batch_non_pad_mask[:, 1:], type_seqs[:, 1:] != self.pad_token_id
+        )
         time_ll = inter_time_dist.log_prob(inter_times) * event_mask
 
         # [batch_size, seq_len, num_marks]
@@ -200,7 +215,9 @@ class IntensityFree(BaseModel):
 
         # Remplace temporairement les pad_token par 0 (ou n'importe quelle valeur valide)
         type_seqs_safe = type_seqs[:, 1:].clone()
-        type_seqs_safe[type_seqs_safe == self.pad_token_id] = 0  # Valeur arbitraire (0 ou 1)
+        type_seqs_safe[type_seqs_safe == self.pad_token_id] = (
+            0  # Valeur arbitraire (0 ou 1)
+        )
 
         mark_ll = mark_dist.log_prob(type_seqs_safe) * event_mask
 
@@ -218,7 +235,7 @@ class IntensityFree(BaseModel):
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,
         event_seq: torch.Tensor,
-        compute_last_step_only: bool = True
+        compute_last_step_only: bool = True,
     ) -> torch.Tensor:
         """
         Utility method to predict the next time delta and type using intensity-free approach.
@@ -240,9 +257,11 @@ class IntensityFree(BaseModel):
 
         # [batch_size, 1, 3 * num_mix_components]
         raw_params = self.linear(context)
-        locs = raw_params[..., :self.num_mix_components]
-        log_scales = raw_params[..., self.num_mix_components: (2 * self.num_mix_components)]
-        log_weights = raw_params[..., (2 * self.num_mix_components):]
+        locs = raw_params[..., : self.num_mix_components]
+        log_scales = raw_params[
+            ..., self.num_mix_components : (2 * self.num_mix_components)
+        ]
+        log_weights = raw_params[..., (2 * self.num_mix_components) :]
 
         log_scales = clamp_preserve_gradients(log_scales, -5.0, 3.0)
         log_weights = torch.log_softmax(log_weights, dim=-1)
@@ -251,7 +270,7 @@ class IntensityFree(BaseModel):
             log_scales=log_scales,
             log_weights=log_weights,
             mean_log_inter_time=self.mean_log_inter_time,
-            std_log_inter_time=self.std_log_inter_time
+            std_log_inter_time=self.std_log_inter_time,
         )
 
         # [num_samples, batch_size, 1]
@@ -260,9 +279,11 @@ class IntensityFree(BaseModel):
 
         batch_size = context.size(0)
         num_marks = self.num_event_types
-        
+
         # [batch_size, 1, num_marks]
-        mark_logits = torch.softmax(self.mark_linear(context), dim=-1).view(batch_size, num_marks)  # Marks are modeled conditionally independently from times
+        mark_logits = torch.softmax(self.mark_linear(context), dim=-1).view(
+            batch_size, num_marks
+        )  # Marks are modeled conditionally independently from times
         types_pred = torch.multinomial(mark_logits, num_samples=1)  # [batch_size, 1]
 
         return dtimes_pred, types_pred
@@ -282,16 +303,22 @@ class IntensityFree(BaseModel):
 
         # remove the last event, as the prediction based on the last event has no label
         # time_delta_seq should start from 1, because the first one is zero
-        time_seq, time_delta_seq, event_seq = time_seq[:, :-1], time_delta_seq[:, :-1], event_seq[:, :-1]
+        time_seq, time_delta_seq, event_seq = (
+            time_seq[:, :-1],
+            time_delta_seq[:, :-1],
+            event_seq[:, :-1],
+        )
 
         # [batch_size, seq_len, hidden_size]
         context = self.forward(time_delta_seq, event_seq)
 
         # [batch_size, seq_len, 3 * num_mix_components]
         raw_params = self.linear(context)
-        locs = raw_params[..., :self.num_mix_components]
-        log_scales = raw_params[..., self.num_mix_components: (2 * self.num_mix_components)]
-        log_weights = raw_params[..., (2 * self.num_mix_components):]
+        locs = raw_params[..., : self.num_mix_components]
+        log_scales = raw_params[
+            ..., self.num_mix_components : (2 * self.num_mix_components)
+        ]
+        log_weights = raw_params[..., (2 * self.num_mix_components) :]
 
         log_scales = clamp_preserve_gradients(log_scales, -5.0, 3.0)
         log_weights = torch.log_softmax(log_weights, dim=-1)
@@ -300,7 +327,7 @@ class IntensityFree(BaseModel):
             log_scales=log_scales,
             log_weights=log_weights,
             mean_log_inter_time=self.mean_log_inter_time,
-            std_log_inter_time=self.std_log_inter_time
+            std_log_inter_time=self.std_log_inter_time,
         )
 
         # [num_samples, batch_size, seq_len]
@@ -308,7 +335,9 @@ class IntensityFree(BaseModel):
         dtimes_pred = accepted_dtimes.mean(dim=0)
 
         # [batch_size, seq_len, num_marks]
-        mark_logits = torch.log_softmax(self.mark_linear(context), dim=-1)  # Marks are modeled conditionally independently from times
+        mark_logits = torch.log_softmax(
+            self.mark_linear(context), dim=-1
+        )  # Marks are modeled conditionally independently from times
         types_pred = torch.argmax(mark_logits, dim=-1)
 
         return dtimes_pred, types_pred

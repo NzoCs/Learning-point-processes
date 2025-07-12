@@ -1,0 +1,17 @@
+{
+  "benchmark_name": "mean_inter_time",
+  "dataset_name": "mean_baseline",
+  "num_event_types": 2,
+  "metrics": {
+    "time_rmse_mean": 2.772637367248535,
+    "time_rmse_std": 0.0,
+    "time_rmse_min": 2.772637367248535,
+    "time_rmse_max": 2.772637367248535,
+    "time_mae_mean": 1.8403947353363037,
+    "time_mae_std": 0.0,
+    "time_mae_min": 1.8403947353363037,
+    "time_mae_max": 1.8403947353363037
+  },
+  "num_batches_evaluated": 1,
+  "mean_inter_time_used": 1.5062450681413924
+}

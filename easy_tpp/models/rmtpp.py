@@ -5,6 +5,7 @@ from torch.nn import functional as F
 
 from easy_tpp.models.basemodel import BaseModel
 
+
 class RMTPP(BaseModel):
     """Torch implementation of Recurrent Marked Temporal Point Processes, KDD 2016.
     https://www.kdd.org/kdd2016/papers/files/rpp1081-duA.pdf
@@ -20,25 +21,40 @@ class RMTPP(BaseModel):
         # self.hidden_size is now set in BaseModel's __init__ via model_config.hidden_size
 
         self.layer_temporal_emb = nn.Linear(1, self.hidden_size)
-        self.layer_rnn = nn.RNN(input_size=self.hidden_size, hidden_size=self.hidden_size,
-                                num_layers=1, nonlinearity='relu', batch_first=True)
+        self.layer_rnn = nn.RNN(
+            input_size=self.hidden_size,
+            hidden_size=self.hidden_size,
+            num_layers=1,
+            nonlinearity="relu",
+            batch_first=True,
+        )
 
-        self.hidden_to_intensity_logits = nn.Linear(self.hidden_size, self.num_event_types)
+        self.hidden_to_intensity_logits = nn.Linear(
+            self.hidden_size, self.num_event_types
+        )
         self.b_t = nn.Parameter(torch.zeros(1, self.num_event_types))
         self.w_t = nn.Parameter(torch.zeros(1, self.num_event_types))
         nn.init.xavier_normal_(self.b_t)
         nn.init.xavier_normal_(self.w_t)
 
-
     def evolve_and_get_intentsity(self, right_hiddens_BNH, dts_BNG):
         """
         Eq.11 that computes intensity.
         """
-    
-        past_influence_BNGM = self.hidden_to_intensity_logits(right_hiddens_BNH[..., None, :])
-        intensity_BNGM = (past_influence_BNGM + self.w_t[None, None, :] * dts_BNG[..., None]
-                        + self.b_t[None, None, :]).clamp(max=math.log(1e5)).exp()
-        
+
+        past_influence_BNGM = self.hidden_to_intensity_logits(
+            right_hiddens_BNH[..., None, :]
+        )
+        intensity_BNGM = (
+            (
+                past_influence_BNGM
+                + self.w_t[None, None, :] * dts_BNG[..., None]
+                + self.b_t[None, None, :]
+            )
+            .clamp(max=math.log(1e5))
+            .exp()
+        )
+
         return intensity_BNGM
 
     def forward(self, batch):
@@ -55,23 +71,27 @@ class RMTPP(BaseModel):
         """
 
         if isinstance(batch, dict):
-            t_BN = batch['time_seqs']
+            t_BN = batch["time_seqs"]
             # Use time_seqs as time_delta_seqs if not explicitly provided, common in some test setups
-            dt_BN = batch.get('time_delta_seqs') 
-            marks_BN = batch['type_seqs']
+            dt_BN = batch.get("time_delta_seqs")
+            marks_BN = batch["type_seqs"]
             # Other elements like attention_mask, batch_non_pad_mask, type_mask can be accessed if needed
         elif isinstance(batch, (tuple, list)) and len(batch) >= 3:
             t_BN, dt_BN, marks_BN = batch[0], batch[1], batch[2]
             # Assuming the first three elements are time_seqs, time_delta_seqs, type_seqs
             # This might need adjustment if the tuple structure is different
         else:
-            raise ValueError(f"Unexpected batch type or structure in RMTPP forward: {type(batch)}, len: {len(batch) if hasattr(batch, '__len__') else 'N/A'}")
+            raise ValueError(
+                f"Unexpected batch type or structure in RMTPP forward: {type(batch)}, len: {len(batch) if hasattr(batch, '__len__') else 'N/A'}"
+            )
 
         mark_emb_BNH = self.layer_type_emb(marks_BN)
         time_emb_BNH = self.layer_temporal_emb(t_BN[..., None])
         rnn_input = mark_emb_BNH + time_emb_BNH
         right_hiddens_BNH, _ = self.layer_rnn(rnn_input)
-        left_intensity_B_Nm1_G_M = self.evolve_and_get_intentsity(right_hiddens_BNH[:, :-1, :], dt_BN[:, 1:][...,None])
+        left_intensity_B_Nm1_G_M = self.evolve_and_get_intentsity(
+            right_hiddens_BNH[:, :-1, :], dt_BN[:, 1:][..., None]
+        )
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
 
@@ -85,40 +105,59 @@ class RMTPP(BaseModel):
             tuple: loglikelihood loss and num of events.
         """
         if isinstance(batch, dict):
-            ts_BN = batch['time_seqs']
-            dts_BN = batch.get('time_delta_seqs', ts_BN)
-            marks_BN = batch['type_seqs']
-            batch_non_pad_mask = batch['batch_non_pad_mask']
+            ts_BN = batch["time_seqs"]
+            dts_BN = batch.get("time_delta_seqs", ts_BN)
+            marks_BN = batch["type_seqs"]
+            batch_non_pad_mask = batch["batch_non_pad_mask"]
             # type_mask = batch.get('type_mask') # Optional
-        elif isinstance(batch, (tuple, list)) and len(batch) >=4:
-            ts_BN, dts_BN, marks_BN, batch_non_pad_mask = batch[0], batch[1], batch[2], batch[3]
-            if dts_BN is None: # Handle cases where dt_BN might be None
+        elif isinstance(batch, (tuple, list)) and len(batch) >= 4:
+            ts_BN, dts_BN, marks_BN, batch_non_pad_mask = (
+                batch[0],
+                batch[1],
+                batch[2],
+                batch[3],
+            )
+            if dts_BN is None:  # Handle cases where dt_BN might be None
                 dts_BN = ts_BN
             # type_mask = batch[4] if len(batch) > 4 else None # Optional
         else:
-            raise ValueError(f"Unexpected batch type or structure in RMTPP loglike_loss: {type(batch)}")
+            raise ValueError(
+                f"Unexpected batch type or structure in RMTPP loglike_loss: {type(batch)}"
+            )
 
         # Pass a tuple to self.forward, as it expects
-        forward_batch = (ts_BN, dts_BN, marks_BN, batch_non_pad_mask, None) # Pass None for the 5th element if not used by forward
+        forward_batch = (
+            ts_BN,
+            dts_BN,
+            marks_BN,
+            batch_non_pad_mask,
+            None,
+        )  # Pass None for the 5th element if not used by forward
         left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward(forward_batch)
-        right_hiddens_B_Nm1_H = right_hiddens_BNH[..., :-1, :]  # discard right limit at t_N for logL
+        right_hiddens_B_Nm1_H = right_hiddens_BNH[
+            ..., :-1, :
+        ]  # discard right limit at t_N for logL
 
         dts_sample_B_Nm1_G = self.make_dtime_loss_samples(dts_BN[:, 1:])
-        intensity_dts_B_Nm1_G_M = self.evolve_and_get_intentsity(right_hiddens_B_Nm1_H, dts_sample_B_Nm1_G)
+        intensity_dts_B_Nm1_G_M = self.evolve_and_get_intentsity(
+            right_hiddens_B_Nm1_H, dts_sample_B_Nm1_G
+        )
 
         event_ll, non_event_ll, num_events = self.compute_loglikelihood(
             lambda_at_event=left_intensity_B_Nm1_M,
             lambdas_loss_samples=intensity_dts_B_Nm1_G_M,
             time_delta_seq=dts_BN[:, 1:],
             seq_mask=batch_non_pad_mask[:, 1:],
-            type_seq=marks_BN[:, 1:]
+            type_seq=marks_BN[:, 1:],
         )
 
         # compute loss to minimize
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_intensities_at_sample_times(self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs):
+    def compute_intensities_at_sample_times(
+        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
+    ):
         """Compute the intensity at sampled times, not only event times.
 
         Args:
@@ -132,13 +171,17 @@ class RMTPP(BaseModel):
                     intensity at each timestamp for each event type.
         """
 
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         _input = time_seqs, time_delta_seqs, type_seqs, None, None
         _, right_hiddens_BNH = self.forward(_input)
 
         if compute_last_step_only:
-            sampled_intensities = self.evolve_and_get_intentsity(right_hiddens_BNH[:, -1:, :], sample_dtimes[:, -1:, :])
+            sampled_intensities = self.evolve_and_get_intentsity(
+                right_hiddens_BNH[:, -1:, :], sample_dtimes[:, -1:, :]
+            )
         else:
-            sampled_intensities = self.evolve_and_get_intentsity(right_hiddens_BNH, sample_dtimes)  # shape: [B, N, G, M]
+            sampled_intensities = self.evolve_and_get_intentsity(
+                right_hiddens_BNH, sample_dtimes
+            )  # shape: [B, N, G, M]
         return sampled_intensities

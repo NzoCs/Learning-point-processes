@@ -1,6 +1,7 @@
 """
 Unit tests for the refactored TrainerConfig and RunnerConfig.
 """
+
 import pytest
 from easy_tpp.config_factory.runner_config import TrainerConfig, RunnerConfig
 from easy_tpp.config_factory.model_config import ModelConfig
@@ -20,16 +21,16 @@ def test_trainer_config_defaults(tmp_path):
 
 def test_trainer_config_from_dict(tmp_path):
     d = {
-        'dataset_id': 'ds2',
-        'model_id': 'm2',
-        'batch_size': 64,
-        'logger_config': {'log_level': 'DEBUG'},
-        'save_dir': str(tmp_path)
+        "dataset_id": "ds2",
+        "model_id": "m2",
+        "batch_size": 64,
+        "logger_config": {"log_level": "DEBUG"},
+        "save_dir": str(tmp_path),
     }
     config = TrainerConfig.from_dict(d)
-    assert config.dataset_id == 'ds2'
+    assert config.dataset_id == "ds2"
     assert config.batch_size == 64
-    assert config.logger_config.log_level == 'DEBUG'
+    assert config.logger_config.log_level == "DEBUG"
 
 
 def test_trainer_config_required_fields():
@@ -40,12 +41,8 @@ def test_trainer_config_required_fields():
 def test_runner_config_from_dict(tmp_path):
     trainer = TrainerConfig(dataset_id="ds3", model_id="m3", save_dir=str(tmp_path))
     model = ModelConfig(model_id="NHP", num_event_types=5)
-    data = DataConfig(train_dir="train.csv", data_specs={'num_event_types': 5})
-    d = {
-        'trainer_config': trainer,
-        'model_config': model,
-        'data_config': data
-    }
+    data = DataConfig(train_dir="train.csv", data_specs={"num_event_types": 5})
+    d = {"trainer_config": trainer, "model_config": model, "data_config": data}
     config = RunnerConfig.from_dict(d)
     assert isinstance(config.trainer_config, TrainerConfig)
     assert isinstance(config.model_config, ModelConfig)
@@ -55,9 +52,9 @@ def test_runner_config_from_dict(tmp_path):
 def test_runner_config_yaml():
     trainer = TrainerConfig(dataset_id="ds4", model_id="m4")
     model = ModelConfig(model_id="NHP", num_event_types=5)
-    data = DataConfig(train_dir="train.csv", data_specs={'num_event_types': 5})
+    data = DataConfig(train_dir="train.csv", data_specs={"num_event_types": 5})
     config = RunnerConfig(trainer_config=trainer, model_config=model, data_config=data)
     yaml_dict = config.get_yaml_config()
-    assert 'trainer_config' in yaml_dict
-    assert 'model_config' in yaml_dict
-    assert 'data_config' in yaml_dict
+    assert "trainer_config" in yaml_dict
+    assert "model_config" in yaml_dict
+    assert "data_config" in yaml_dict

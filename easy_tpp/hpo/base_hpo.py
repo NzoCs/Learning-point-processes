@@ -17,7 +17,7 @@ class HyperTuner(Registrable):
         """
         self.config = config
         self.trial_end_callbacks = trial_end_callbacks or []
-        logger.info(f'Storage of hpo framework: {self.config.hpo_config.storage_uri}')
+        logger.info(f"Storage of hpo framework: {self.config.hpo_config.storage_uri}")
 
     @abstractmethod
     def get_all_best_runner_configs(self):
@@ -72,12 +72,16 @@ class HyperTuner(Registrable):
             if model_id in register_center[cls]:
                 if overwrite:
                     register_center[cls][model_id] = func
-                    logger.info(f'The trial for {model_id} is already registered, but overwrite it.')
+                    logger.info(
+                        f"The trial for {model_id} is already registered, but overwrite it."
+                    )
                 else:
-                    logger.warn(f'The trial for {model_id} is already registered, and cannot be overwritten!')
+                    logger.warn(
+                        f"The trial for {model_id} is already registered, and cannot be overwritten!"
+                    )
             else:
                 register_center[cls][model_id] = func
-                logger.info(f'Trial register: {cls.get_registered_name()} - {model_id}')
+                logger.info(f"Trial register: {cls.get_registered_name()} - {model_id}")
             return func
 
         return _register_trial
@@ -97,13 +101,13 @@ class HyperTuner(Registrable):
         """
         cls_trial_rc = HyperTuner._trial_register_center[cls]
         if name not in cls_trial_rc:
-            if 'default' in cls_trial_rc:
+            if "default" in cls_trial_rc:
                 logger.warn(
-                    f'Trial for {name} in {cls.get_registered_name()} is not existed, and use default trial!'
+                    f"Trial for {name} in {cls.get_registered_name()} is not existed, and use default trial!"
                 )
-                name = 'default'
+                name = "default"
             else:
-                raise RuntimeError(f'This HPO Framework is not registered!')
+                raise RuntimeError(f"This HPO Framework is not registered!")
         return cls_trial_rc[name]
 
     @classmethod
@@ -118,7 +122,7 @@ class HyperTuner(Registrable):
             if cls in hpo_cls:
                 return registered_name
 
-        logger.warn(f'The hpo framework is not registered: {cls}')
+        logger.warn(f"The hpo framework is not registered: {cls}")
         return None
 
     @abstractmethod

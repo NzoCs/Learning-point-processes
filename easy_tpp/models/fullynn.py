@@ -6,12 +6,13 @@ from torch.autograd import grad
 from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.config_factory import ModelConfig
 
+
 class CumulHazardFunctionNetwork(nn.Module):
     """Cumulative Hazard Function Network
     ref: https://github.com/wassname/torch-neuralpointprocess
     """
 
-    def __init__(self, model_config : ModelConfig):
+    def __init__(self, model_config: ModelConfig):
         super(CumulHazardFunctionNetwork, self).__init__()
         self.hidden_size = model_config.specs.hidden_size
         self.num_mlp_layers = model_config.specs.num_mlp_layers
@@ -22,18 +23,26 @@ class CumulHazardFunctionNetwork(nn.Module):
         self.layer_dense_1 = nn.Linear(in_features=1, out_features=self.hidden_size)
 
         # concat rnn states and inter-event time embedding
-        self.layer_dense_2 = nn.Linear(in_features=self.hidden_size * 2, out_features=self.hidden_size)
+        self.layer_dense_2 = nn.Linear(
+            in_features=self.hidden_size * 2, out_features=self.hidden_size
+        )
 
         # mlp layers
         self.module_list = nn.ModuleList(
-            [nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size) for _ in
-             range(self.num_mlp_layers - 1)])
+            [
+                nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size)
+                for _ in range(self.num_mlp_layers - 1)
+            ]
+        )
 
-        self.layer_dense_3 = nn.Sequential(nn.Linear(in_features=self.hidden_size,
-                                                     out_features=self.num_event_types),
-                                           nn.Softplus())
+        self.layer_dense_3 = nn.Sequential(
+            nn.Linear(in_features=self.hidden_size, out_features=self.num_event_types),
+            nn.Softplus(),
+        )
 
-        self.params_eps = torch.finfo(torch.float32).eps  # ensure positiveness of parameters
+        self.params_eps = torch.finfo(
+            torch.float32
+        ).eps  # ensure positiveness of parameters
 
         self.init_weights_positive()
 
@@ -65,48 +74,63 @@ class CumulHazardFunctionNetwork(nn.Module):
             if self.proper_marked_intensities:
                 derivative_integral_lambdas = []
                 for i in range(integral_lambda.shape[-1]):  # iterate over marks
-                    derivative_integral_lambdas.append(grad(
-                        integral_lambda[..., i].mean(),
-                        time_delta_seqs,
-                        create_graph=True, retain_graph=True)[0])
-                derivative_integral_lambda = torch.stack(derivative_integral_lambdas, dim=-1)  # TODO: Check that it is okay to iterate over marks like this
+                    derivative_integral_lambdas.append(
+                        grad(
+                            integral_lambda[..., i].mean(),
+                            time_delta_seqs,
+                            create_graph=True,
+                            retain_graph=True,
+                        )[0]
+                    )
+                derivative_integral_lambda = torch.stack(
+                    derivative_integral_lambdas, dim=-1
+                )  # TODO: Check that it is okay to iterate over marks like this
             else:
                 derivative_integral_lambda = grad(
                     integral_lambda.sum(dim=-1).mean(),
                     time_delta_seqs,
-                    create_graph=True, retain_graph=True)[0]
-                derivative_integral_lambda = derivative_integral_lambda.unsqueeze(-1).expand(*derivative_integral_lambda.shape, self.num_event_types) / self.num_event_types
+                    create_graph=True,
+                    retain_graph=True,
+                )[0]
+                derivative_integral_lambda = (
+                    derivative_integral_lambda.unsqueeze(-1).expand(
+                        *derivative_integral_lambda.shape, self.num_event_types
+                    )
+                    / self.num_event_types
+                )
 
         return integral_lambda, derivative_integral_lambda
 
 
 class FullyNN(BaseModel):
     """Torch implementation of
-        Fully Neural Network based Model for General Temporal Point Processes, NeurIPS 2019.
-        https://arxiv.org/abs/1905.09690
+    Fully Neural Network based Model for General Temporal Point Processes, NeurIPS 2019.
+    https://arxiv.org/abs/1905.09690
 
-        ref: https://github.com/KanghoonYoon/torch-neuralpointprocess/blob/master/module.py;
-            https://github.com/wassname/torch-neuralpointprocess
+    ref: https://github.com/KanghoonYoon/torch-neuralpointprocess/blob/master/module.py;
+        https://github.com/wassname/torch-neuralpointprocess
     """
 
-    def __init__(self, model_config : ModelConfig):
+    def __init__(self, model_config: ModelConfig):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(FullyNN, self).__init__(model_config )
+        super(FullyNN, self).__init__(model_config)
 
         self.rnn_type = model_config.specs.rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
         self.n_layers = model_config.specs.num_layers
         for sub_rnn_class in self.rnn_list:
             if sub_rnn_class.__name__ == self.rnn_type:
-                self.layer_rnn = sub_rnn_class(input_size=1 + self.hidden_size,
-                                               hidden_size=self.hidden_size,
-                                               num_layers=self.n_layers,
-                                               batch_first=True,
-                                               dropout=self.dropout)
+                self.layer_rnn = sub_rnn_class(
+                    input_size=1 + self.hidden_size,
+                    hidden_size=self.hidden_size,
+                    num_layers=self.n_layers,
+                    batch_first=True,
+                    dropout=self.dropout,
+                )
 
         self.layer_intensity = CumulHazardFunctionNetwork(model_config)
 
@@ -152,7 +176,9 @@ class FullyNN(BaseModel):
             type_seqs[:, :-1],
         )
         # [batch_size, seq_len, num_event_types]
-        integral_lambda, derivative_integral_lambda = self.layer_intensity(hidden_states, time_delta_seqs[:, 1:])
+        integral_lambda, derivative_integral_lambda = self.layer_intensity(
+            hidden_states, time_delta_seqs[:, 1:]
+        )
 
         # First, add an epsilon to every marked intensity for stability
         derivative_integral_lambda += self.eps
@@ -162,28 +188,25 @@ class FullyNN(BaseModel):
 
         # Compute event LL - [batch_size, seq_len]
         event_ll = -F.nll_loss(
-            log_marked_event_lambdas.permute(0, 2, 1),  # mark dimension needs to come second, not third to match nll_loss specs
+            log_marked_event_lambdas.permute(
+                0, 2, 1
+            ),  # mark dimension needs to come second, not third to match nll_loss specs
             target=type_seqs[:, 1:],
             ignore_index=self.pad_token_id,  # Padded events have a pad_token_id as a value
-            reduction='none', # Does not aggregate, and replaces what would have been the log(marked intensity) with 0.
+            reduction="none",  # Does not aggregate, and replaces what would have been the log(marked intensity) with 0.
         )
 
         # [batch_size, seq_len]
         # multiplied by sequence mask
         non_event_ll = integral_lambda.sum(-1) * batch_non_pad_mask[:, 1:]
         num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
 
         return loss, num_events
 
     def compute_intensities_at_sample_times(
-        self,
-        time_seqs,
-        time_delta_seqs,
-        type_seqs,
-        sample_dtimes,
-        **kwargs
-        ):
+        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
+    ):
         """Compute hidden states at sampled times.
 
         Args:
@@ -196,7 +219,7 @@ class FullyNN(BaseModel):
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
 
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         # [batch_size, seq_len, hidden_size]
         hidden_states = self.forward(
@@ -208,7 +231,9 @@ class FullyNN(BaseModel):
         num_samples = sample_dtimes.size()[-1]
         batch_size, seq_len, hidden_size = hidden_states.shape
 
-        hidden_states_ = hidden_states[..., None, :].expand(batch_size, seq_len, num_samples, hidden_size)
+        hidden_states_ = hidden_states[..., None, :].expand(
+            batch_size, seq_len, num_samples, hidden_size
+        )
         _, derivative_integral_lambda = self.layer_intensity.forward(
             hidden_states=hidden_states_,
             time_delta_seqs=sample_dtimes,

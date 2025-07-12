@@ -11,7 +11,9 @@ else:
     import importlib.metadata as importlib_metadata
 
 
-def _is_package_available(pkg_name: str, return_version: bool = False) -> Union[Tuple[bool, str], bool]:
+def _is_package_available(
+    pkg_name: str, return_version: bool = False
+) -> Union[Tuple[bool, str], bool]:
     # Check we're not importing a "pkg_name" directory somewhere but the actual library by trying to grab the version
     package_exists = importlib.util.find_spec(pkg_name) is not None
     package_version = "N/A"
@@ -87,13 +89,15 @@ def is_tf_available():
 def is_tf_gpu_available():
     if is_tf_available():
         import tensorflow as tf
-        if tf.__version__ >= '2.0':
+
+        if tf.__version__ >= "2.0":
             return bool(tf.config.list_physical_devices("GPU"))
         else:
             from tensorflow.python.client import device_lib
+
             local_device_protos = device_lib.list_local_devices()
             for device in local_device_protos:
-                if device.device_type == 'GPU':
+                if device.device_type == "GPU":
                     return True
     else:
         return False
@@ -103,7 +107,8 @@ def is_torch_mps_available():
     if is_torch_available():
         try:
             import torch
-            torch.device('mps')
+
+            torch.device("mps")
             return True
         except RuntimeError:
             return False
@@ -190,10 +195,13 @@ Please note that you may need to restart your runtime after installation.
 
 BACKENDS_MAPPING = OrderedDict(
     [
-        ("tensorflow_probability", (is_tensorflow_probability_available, TENSORFLOW_PROBABILITY_IMPORT_ERROR)),
+        (
+            "tensorflow_probability",
+            (is_tensorflow_probability_available, TENSORFLOW_PROBABILITY_IMPORT_ERROR),
+        ),
         ("tf", (is_tf_available, TENSORFLOW_IMPORT_ERROR)),
         ("torch", (is_torch_available, PYTORCH_IMPORT_ERROR)),
-        ("torchvision", (is_torchvision_available, TORCHVISION_IMPORT_ERROR))
+        ("torchvision", (is_torchvision_available, TORCHVISION_IMPORT_ERROR)),
     ]
 )
 
@@ -205,11 +213,21 @@ def requires_backends(obj, backends):
     name = obj.__name__ if hasattr(obj, "__name__") else obj.__class__.__name__
 
     # Raise an error for users who might not realize that classes without "TF" are torch-only
-    if "torch" in backends and "tf" not in backends and not is_torch_available() and is_tf_available():
+    if (
+        "torch" in backends
+        and "tf" not in backends
+        and not is_torch_available()
+        and is_tf_available()
+    ):
         raise ImportError(PYTORCH_IMPORT_ERROR_WITH_TF.format(name))
 
     # Raise the inverse error for PyTorch users trying to load TF classes
-    if "tf" in backends and "torch" not in backends and is_torch_available() and not is_tf_available():
+    if (
+        "tf" in backends
+        and "torch" not in backends
+        and is_torch_available()
+        and not is_tf_available()
+    ):
         raise ImportError(TF_IMPORT_ERROR_WITH_PYTORCH.format(name))
 
     checks = (BACKENDS_MAPPING[backend] for backend in backends)

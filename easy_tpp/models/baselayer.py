@@ -3,7 +3,8 @@ import math
 import torch
 from torch import nn
 
-#ajouter des attentions layer plus efficaces
+# ajouter des attentions layer plus efficaces
+
 
 def attention(query, key, value, mask=None, dropout=None):
     d_k = query.size(-1)
@@ -18,18 +19,21 @@ def attention(query, key, value, mask=None, dropout=None):
 
 
 class ScaledSoftplus(nn.Module):
-    '''
+    """
     Use different beta for mark-specific intensities
-    '''
-    def __init__(self, num_marks, threshold=20.):
+    """
+
+    def __init__(self, num_marks, threshold=20.0):
         super(ScaledSoftplus, self).__init__()
         self.threshold = threshold
-        self.log_beta = nn.Parameter(torch.zeros(num_marks), requires_grad=True)  # [num_marks]
+        self.log_beta = nn.Parameter(
+            torch.zeros(num_marks), requires_grad=True
+        )  # [num_marks]
 
     def forward(self, x):
-        '''
+        """
         :param x: [..., num_marks]
-        '''
+        """
         beta = self.log_beta.exp()
         beta_x = beta * x
         return torch.where(
@@ -51,9 +55,15 @@ class MultiHeadAttention(nn.Module):
 
         if output_linear:
             self.linears = nn.ModuleList(
-                [nn.Linear(d_input, d_model) for _ in range(3)] + [nn.Linear(d_model, d_model), ])
+                [nn.Linear(d_input, d_model) for _ in range(3)]
+                + [
+                    nn.Linear(d_model, d_model),
+                ]
+            )
         else:
-            self.linears = nn.ModuleList([nn.Linear(d_input, d_model) for _ in range(3)])
+            self.linears = nn.ModuleList(
+                [nn.Linear(d_input, d_model) for _ in range(3)]
+            )
 
         self.dropout = nn.Dropout(p=dropout)
 
@@ -68,8 +78,7 @@ class MultiHeadAttention(nn.Module):
         ]
         x, attn_weight = attention(query, key, value, mask=mask, dropout=self.dropout)
 
-        x = x.transpose(1, 2).contiguous() \
-            .view(nbatches, -1, self.n_head * self.d_k)
+        x = x.transpose(1, 2).contiguous().view(nbatches, -1, self.n_head * self.d_k)
 
         if self.output_linear:
             if output_weight:
@@ -95,13 +104,17 @@ class SublayerConnection(nn.Module):
 
 
 class EncoderLayer(nn.Module):
-    def __init__(self, d_model, self_attn, feed_forward=None, use_residual=False, dropout=0.1):
+    def __init__(
+        self, d_model, self_attn, feed_forward=None, use_residual=False, dropout=0.1
+    ):
         super(EncoderLayer, self).__init__()
         self.self_attn = self_attn
         self.feed_forward = feed_forward
         self.use_residual = use_residual
         if use_residual:
-            self.sublayer = nn.ModuleList([SublayerConnection(d_model, dropout) for _ in range(2)])
+            self.sublayer = nn.ModuleList(
+                [SublayerConnection(d_model, dropout) for _ in range(2)]
+            )
         self.d_model = d_model
 
     def forward(self, x, mask):
@@ -120,14 +133,13 @@ class EncoderLayer(nn.Module):
 
 
 class TimePositionalEncoding(nn.Module):
-    """Temporal encoding in THP, ICML 2020
-    """
+    """Temporal encoding in THP, ICML 2020"""
 
-    def __init__(self, d_model, max_len=5000, device='cpu'):
+    def __init__(self, d_model, max_len=5000, device="cpu"):
         super().__init__()
         i = torch.arange(0, d_model, 1, device=device)
         div_term = (2 * (i // 2).float() * -(math.log(10000.0) / d_model)).exp()
-        self.register_buffer('div_term', div_term)
+        self.register_buffer("div_term", div_term)
 
     def forward(self, x):
         """Compute time positional encoding defined in Equation (2) in THP model.
@@ -146,20 +158,22 @@ class TimePositionalEncoding(nn.Module):
 
 
 class TimeShiftedPositionalEncoding(nn.Module):
-    """Time shifted positional encoding in SAHP, ICML 2020
-    """
+    """Time shifted positional encoding in SAHP, ICML 2020"""
 
-    def __init__(self, d_model, max_len=5000, device='cpu'):
+    def __init__(self, d_model, max_len=5000, device="cpu"):
         super().__init__()
         # [max_len, 1]
         position = torch.arange(0, max_len, device=device).float().unsqueeze(1)
         # [model_dim //2 ]
-        div_term = (torch.arange(0, d_model, 2, device=device).float() * -(math.log(10000.0) / d_model)).exp()
+        div_term = (
+            torch.arange(0, d_model, 2, device=device).float()
+            * -(math.log(10000.0) / d_model)
+        ).exp()
 
         self.layer_time_delta = nn.Linear(1, d_model // 2, bias=False)
 
-        self.register_buffer('position', position)
-        self.register_buffer('div_term', div_term)
+        self.register_buffer("position", position)
+        self.register_buffer("div_term", div_term)
 
     def forward(self, x, interval):
         """
@@ -189,11 +203,17 @@ class TimeShiftedPositionalEncoding(nn.Module):
 
 
 class GELU(nn.Module):
-    """GeLu activation function
-    """
+    """GeLu activation function"""
 
     def forward(self, x):
-        return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3))))
+        return (
+            0.5
+            * x
+            * (
+                1
+                + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * torch.pow(x, 3)))
+            )
+        )
 
 
 class Identity(nn.Module):
@@ -211,15 +231,15 @@ def activation_layer(act_name):
 
     """
     if isinstance(act_name, str):
-        if act_name.lower() == 'sigmoid':
+        if act_name.lower() == "sigmoid":
             act_layer = nn.Sigmoid()
-        elif act_name.lower() == 'linear':
+        elif act_name.lower() == "linear":
             act_layer = Identity()
-        elif act_name.lower() == 'relu':
+        elif act_name.lower() == "relu":
             act_layer = nn.ReLU(inplace=True)
-        elif act_name.lower() == 'prelu':
+        elif act_name.lower() == "prelu":
             act_layer = nn.PReLU()
-        elif act_name.lower() == 'gelu':
+        elif act_name.lower() == "gelu":
             act_layer = GELU()
     elif issubclass(act_name, nn.Module):
         act_layer = act_name()
@@ -231,25 +251,33 @@ def activation_layer(act_name):
 
 class DNN(nn.Module):
     """The Multi Layer Percetron
-      Input shape
-        - nD tensor with shape: ``(batch_size, ..., input_dim)``.
-        The most common situation would be a 2D input with shape ``(batch_size, input_dim)``.
-      Output shape
-        - nD tensor with shape: ``(batch_size, ..., hidden_size[-1])``.
-        For instance, for a 2D input with shape ``(batch_size, input_dim)``,
-        the output would have shape ``(batch_size, hidden_size[-1])``.
-      Arguments
-        - **inputs_dim**: input feature dimension.
-        - **hidden_size**:list of positive integer, the layer number and units in each layer.
-        - **activation**: Activation function to use.
-        - **l2_reg**: float between 0 and 1. L2 regularizer strength applied to the kernel weights matrix.
-        - **dropout_rate**: float in [0,1). Fraction of the units to dropout.
-        - **use_bn**: bool. Whether use BatchNormalization before activation or not.
-        - **seed**: A Python integer to use as random seed.
+    Input shape
+      - nD tensor with shape: ``(batch_size, ..., input_dim)``.
+      The most common situation would be a 2D input with shape ``(batch_size, input_dim)``.
+    Output shape
+      - nD tensor with shape: ``(batch_size, ..., hidden_size[-1])``.
+      For instance, for a 2D input with shape ``(batch_size, input_dim)``,
+      the output would have shape ``(batch_size, hidden_size[-1])``.
+    Arguments
+      - **inputs_dim**: input feature dimension.
+      - **hidden_size**:list of positive integer, the layer number and units in each layer.
+      - **activation**: Activation function to use.
+      - **l2_reg**: float between 0 and 1. L2 regularizer strength applied to the kernel weights matrix.
+      - **dropout_rate**: float in [0,1). Fraction of the units to dropout.
+      - **use_bn**: bool. Whether use BatchNormalization before activation or not.
+      - **seed**: A Python integer to use as random seed.
     """
 
-    def __init__(self, inputs_dim, hidden_size, activation='relu', l2_reg=0, dropout_rate=0, use_bn=False,
-                 init_std=0.0001):
+    def __init__(
+        self,
+        inputs_dim,
+        hidden_size,
+        activation="relu",
+        l2_reg=0,
+        dropout_rate=0,
+        use_bn=False,
+        init_std=0.0001,
+    ):
         super(DNN, self).__init__()
         self.dropout_rate = dropout_rate
         self.dropout = nn.Dropout(dropout_rate)
@@ -260,17 +288,26 @@ class DNN(nn.Module):
         hidden_size = [inputs_dim] + list(hidden_size)
 
         self.linears = nn.ModuleList(
-            [nn.Linear(hidden_size[i], hidden_size[i + 1]) for i in range(len(hidden_size) - 1)])
+            [
+                nn.Linear(hidden_size[i], hidden_size[i + 1])
+                for i in range(len(hidden_size) - 1)
+            ]
+        )
 
         if self.use_bn:
             self.bn = nn.ModuleList(
-                [nn.BatchNorm1d(hidden_size[i + 1]) for i in range(len(hidden_size) - 1)])
+                [
+                    nn.BatchNorm1d(hidden_size[i + 1])
+                    for i in range(len(hidden_size) - 1)
+                ]
+            )
 
         self.activation_layers = nn.ModuleList(
-            [activation_layer(activation) for i in range(len(hidden_size) - 1)])
+            [activation_layer(activation) for i in range(len(hidden_size) - 1)]
+        )
 
         for name, tensor in self.linears.named_parameters():
-            if 'weight' in name:
+            if "weight" in name:
                 nn.init.normal_(tensor, mean=0, std=init_std)
 
     def forward(self, inputs):

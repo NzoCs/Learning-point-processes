@@ -18,16 +18,12 @@ from easy_tpp.data.generation import HawkesGenerator
 def main() -> None:
     # Create simple Hawkes generator
     generator = HawkesGenerator(
-        num_sequences=100,
-        max_time=10.0,
-        mu=0.5,
-        alpha=0.8,
-        beta=1.0
+        num_sequences=100, max_time=10.0, mu=0.5, alpha=0.8, beta=1.0
     )
-    
+
     # Generate data
     sequences = generator.generate()
-    
+
     # Save to file
     output_path = Path("./generated_hawkes_data.json")
     generator.save_sequences(sequences, output_path)

@@ -86,7 +86,7 @@ This framework goes beyond traditional TPP implementations by introducing:
 ## Project Setup
 <span id='project-setup'/>
 
-This project uses modern Python packaging with `pyproject.toml` and PyTorch Lightning for enhanced performance.
+This project uses modern Python packaging with `pyproject.toml` and includes a comprehensive CLI interface located in the `scripts/` directory.
 
 ### Prerequisites
 
@@ -133,9 +133,27 @@ pip install -e ".[docs]"
 pip install -e ".[all]"
 ```
 
+### CLI Interface
+
+The project includes a comprehensive CLI interface located in the `scripts/` directory. After installation, you can access the CLI:
+
+```bash
+# Navigate to the scripts directory
+cd scripts
+
+# Run the main CLI
+python easytpp_cli.py --help
+
+# Quick installation verification
+python easytpp_cli.py info
+
+# Interactive mode for guided setup
+python easytpp_cli.py interactive
+```
+
 ### Development Tools
 
-The project includes pre-configured development tools:
+The project includes pre-configured development tools via `pyproject.toml`:
 
 - **Code formatting**: `black` for consistent code style
 - **Import sorting**: `isort` for organized imports
@@ -166,6 +184,20 @@ All project configuration is centralized in `pyproject.toml`:
 - **`docs`**: Sphinx documentation system, themes, and extensions
 - **`dev`**: Development workflow tools (testing, linting, formatting)
 - **`all`**: Installs all optional dependencies for complete functionality
+
+### Verification
+
+After installation, verify everything is working:
+
+```bash
+# Run the installation check script
+python check_installation.py
+
+# Test the CLI interface
+cd scripts
+python easytpp_cli.py --version
+python easytpp_cli.py info
+```
 
 
 ## Model List
@@ -229,78 +261,85 @@ We provide an end-to-end example for users to run a standard TPP model with `Eas
 
 ### Step 1. Installation
 
-First of all, we can install the package either by using pip or from the source code on Github.
+This project uses modern Python packaging with `pyproject.toml` for simplified dependency management.
 
-To install the latest stable version:
-```bash
-pip install easy-tpp
-```
+#### Prerequisites
 
-To install from the source code (modern pyproject.toml setup):
-```bash
-git clone https://github.com/ant-research/EasyTemporalPointProcess.git
-cd EasyTemporalPointProcess
-pip install -e .
-```
-
-#### Development Installation
-
-For development, install with additional dependencies:
-
-```bash
-# Install with all development tools (recommended for contributors)
-pip install -e ".[dev]"
-
-# Or install specific dependency groups:
-pip install -e ".[cli]"      # CLI tools
-pip install -e ".[docs]"     # Documentation tools  
-pip install -e ".[all]"      # All optional dependencies
-```
-
-#### Available Dependency Groups
-
-- **Base installation**: Core dependencies only
-- **`cli`**: Command-line interface tools (rich, typer, etc.)
-- **`docs`**: Documentation generation (sphinx, themes, etc.)
-- **`dev`**: Development tools (pytest, black, flake8, mypy, pre-commit)
-- **`all`**: All optional dependencies combined
-
-#### Python Environment Setup
-
-This project uses modern Python packaging with `pyproject.toml`. Requirements:
-
-- Python 3.8 or higher
+- Python 3.8 or higher  
 - pip 21.3+ (for full pyproject.toml support)
 
-Create a virtual environment (recommended):
+#### Quick Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/NzoCs/Learning-point-processes.git
+cd Learning-point-processes
+
+# Create virtual environment (recommended)
 python -m venv venv
 # On Windows:
 venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
 
-# Install the package
+# Install with all features
+pip install -e ".[all]"
+```
+
+#### Installation Options
+
+Choose the installation that fits your needs:
+
+```bash
+# Core dependencies only
+pip install -e .
+
+# CLI tools (for command-line interface)
+pip install -e ".[cli]"
+
+# Development tools (testing, linting, formatting)
 pip install -e ".[dev]"
+
+# Documentation tools
+pip install -e ".[docs]"
+
+# All optional dependencies
+pip install -e ".[all]"
+```
+
+#### CLI Interface Setup
+
+The project includes a comprehensive CLI located in the `scripts/` directory:
+
+```bash
+# Navigate to scripts directory
+cd scripts
+
+# Test CLI installation
+python easytpp_cli.py --version
+python easytpp_cli.py --help
+
+# Run interactive setup
+python easytpp_cli.py interactive
+
+# Display system information
+python easytpp_cli.py info
+```
+
+#### Development Setup
+
+For development work, install additional tools:
+
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Set up pre-commit hooks (optional)
+pre-commit install
 
 # Verify installation
 python check_installation.py
 ```
-
-### Verification
-
-After installation, run the verification script to ensure everything is working:
-
-```bash
-python check_installation.py
-```
-
-This script will check:
-- Python version compatibility
-- Core dependencies installation
-- Optional dependencies availability
-- Import functionality
 
 ### Step 2. Prepare datasets 
 
@@ -365,66 +404,305 @@ A more detailed example can be found at [OnlineDoc - QuickStart](https://ant-res
 
 ### Modern CLI Interface
 
-This project now includes a modern CLI interface integrated into the Makefile for easy access:
+This project includes a comprehensive CLI interface located in the `scripts/` directory. The CLI provides an intuitive way to run experiments, generate data, and manage configurations.
 
 #### Quick CLI Commands
 
 ```bash
-# Show all available commands
-make help
+# Navigate to scripts directory
+cd scripts
+
+# Show all available commands  
+python easytpp_cli.py --help
 
 # Show system information
-make info
+python easytpp_cli.py info
 
 # List available configurations
-make configs
+python easytpp_cli.py list-configs --dir ../configs
 
-# Run interactive mode
-make interactive
+# Run interactive mode (recommended for beginners)
+python easytpp_cli.py interactive
 
 # Validate a configuration
-make validate CONFIG=configs/examples_runner_config.yaml EXP=THP DATASET=H2expc
+python easytpp_cli.py validate --config ../configs/runner_config.yaml --experiment THP --dataset H2expc
 
 # Run an experiment
-make run CONFIG=configs/examples_runner_config.yaml EXP=THP DATASET=H2expc PHASE=test
+python easytpp_cli.py run --config ../configs/runner_config.yaml --experiment THP --dataset H2expc --phase test
+```
+
+#### Advanced CLI Features
+
+The CLI supports comprehensive TPP workflows:
+
+```bash
+# Generate synthetic data
+python easytpp_cli.py data-gen --type hawkes --num-sims 100 --output ./data/synthetic
+
+# Inspect and visualize data  
+python easytpp_cli.py data-inspect --experiment H2expi --output ./visualizations
+
+# Run benchmarks for comparison
+python easytpp_cli.py benchmark --type mean --dataset test --output ./benchmark_results
+
+# Train a model with custom parameters
+python easytpp_cli.py run \
+  --config ../configs/training_config.yaml \
+  --experiment THP \
+  --dataset taxi \
+  --phase train \
+  --device gpu \
+  --seed 42
 ```
 
 #### CLI Command Reference
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `make cli-info` | Display system information | `make cli-info` |
-| `make cli-list-configs` | List configuration files | `make cli-list-configs DIR=./configs` |
-| `make cli-interactive` | Launch interactive mode | `make cli-interactive` |
-| `make cli-validate` | Validate configuration | `make cli-validate CONFIG=config.yaml EXP=THP DATASET=H2expc` |
-| `make cli-run` | Run experiment | `make cli-run CONFIG=config.yaml EXP=THP DATASET=H2expc PHASE=test` |
+| `info` | Display system information | `python easytpp_cli.py info` |
+| `list-configs` | List configuration files | `python easytpp_cli.py list-configs --dir ../configs` |
+| `interactive` | Launch interactive mode | `python easytpp_cli.py interactive` |
+| `validate` | Validate configuration | `python easytpp_cli.py validate --config config.yaml --experiment THP` |
+| `run` | Run experiment | `python easytpp_cli.py run --config config.yaml --experiment THP --phase test` |
+| `data-gen` | Generate synthetic data | `python easytpp_cli.py data-gen --type hawkes --num-sims 100` |
+| `data-inspect` | Visualize and analyze data | `python easytpp_cli.py data-inspect --experiment H2expi` |
+| `benchmark` | Run performance benchmarks | `python easytpp_cli.py benchmark --type mean --dataset test` |
 
-#### Advanced Usage
+#### Interactive Mode
+
+For beginners, the interactive mode provides guided setup:
 
 ```bash
-# Run with custom parameters
-make cli-run CONFIG=configs/examples_runner_config.yaml EXP=THP DATASET=H2expc PHASE=train DEVICE=cpu VERBOSE=1
-
-# Quick system test
-make cli-quick-test
-
-# Pre-defined examples
-make cli-example-thp    # THP model example
-make cli-example-nhp    # NHP model example
+cd scripts
+python easytpp_cli.py interactive
 ```
 
-#### Parameters
+This will guide you through:
 
-- `CONFIG`: Path to configuration YAML file
-- `EXP`: Experiment ID (e.g., THP, NHP, SAHP)
-- `DATASET`: Dataset ID (e.g., H2expc, taxi, retweet)
-- `PHASE`: Execution phase (train, test, predict, validation, all)
-- `CHECKPOINT`: Path to checkpoint file (optional)
-- `OUTPUT`: Output directory (optional)
-- `DEVICE`: Computation device (auto, cpu, gpu)
-- `SEED`: Random seed (optional)
-- `VERBOSE`: Enable verbose logging (optional)
-- `DIR`: Directory for configuration listing (optional)
+- Configuration file selection
+- Experiment and dataset selection  
+- Parameter configuration
+- Execution confirmation
+
+#### CLI Parameters
+
+Common parameters for CLI commands:
+
+- `--config, -c`: Path to YAML configuration file
+- `--experiment, -e`: Experiment ID (e.g., THP, NHP, SAHP)
+- `--dataset, -d`: Dataset ID (e.g., H2expc, taxi, retweet)
+- `--phase, -p`: Execution phase (train, test, predict, validation, all)
+- `--device`: Computation device (auto, cpu, gpu)
+- `--output, -o`: Output directory for results
+- `--seed`: Random seed for reproducibility
+- `--verbose, -v`: Enable verbose logging
+
+## 📁 Codebase Structure
+
+The New-LTPP framework is organized with a modular architecture that separates core functionality, configuration, examples, and tools:
+
+```text
+New-LTPP/
+├── 📦 Core Framework
+│   ├── pyproject.toml                 # Modern Python packaging configuration
+│   ├── README.md                      # Main documentation  
+│   ├── SETUP_GUIDE.md                # Detailed setup instructions
+│   ├── check_installation.py         # Installation verification script
+│   └── Makefile                      # Build automation
+│
+├── 🧠 Core Library (easy_tpp/)
+│   ├── config_factory/               # Configuration management system
+│   │   ├── __init__.py
+│   │   ├── base.py                   # Base configuration classes
+│   │   ├── data_config.py           # Data loading configurations
+│   │   ├── model_config.py          # Model-specific configurations
+│   │   ├── runner_config.py         # Training pipeline configurations
+│   │   ├── logger_config.py         # Logging configurations
+│   │   └── hpo_config.py            # Hyperparameter optimization configs
+│   ├── models/                       # TPP model implementations
+│   │   ├── __init__.py
+│   │   ├── basemodel.py             # Base model interface
+│   │   ├── nhp.py                   # Neural Hawkes Process
+│   │   ├── thp.py                   # Transformer Hawkes Process
+│   │   ├── rmtpp.py                 # Recurrent Marked TPP
+│   │   ├── sahp.py                  # Self-Attentive Hawkes Process
+│   │   ├── attnhp.py               # Attentive Neural Hawkes Process
+│   │   └── ...                      # Additional model implementations
+│   ├── data/                        # Data processing and generation
+│   │   ├── preprocess/              # Data preprocessing utilities
+│   │   └── generation/              # Synthetic data generation
+│   ├── evaluation/                  # Advanced evaluation metrics
+│   │   ├── benchmarks/              # Baseline comparison tools
+│   │   ├── metrics/                 # Custom evaluation metrics
+│   │   └── distribution_analysis/   # Temporal distribution analysis
+│   ├── runner/                      # Training and execution pipeline
+│   │   ├── __init__.py
+│   │   ├── base_runner.py          # Base runner interface
+│   │   └── lightning_runner.py     # PyTorch Lightning integration
+│   ├── hpo/                        # Hyperparameter optimization
+│   │   ├── __init__.py
+│   │   ├── optuna_tuner.py         # Optuna-based optimization
+│   │   └── hypertuner.py           # Custom hyperparameter tuning
+│   └── utils/                       # Utility functions
+│       ├── torch_utils.py          # PyTorch utilities
+│       ├── device_utils.py         # Device management
+│       ├── generic.py              # Generic helper functions
+│       └── ...                     # Additional utilities
+│
+├── ⚙️ Configuration Templates (configs/)
+│   ├── runner_config.yaml           # Main training configuration
+│   ├── bench_config.yaml            # Benchmark configuration
+│   └── hpo_config.yaml             # HPO configuration template
+│
+├── 🚀 Command Line Interface (scripts/)
+│   ├── easytpp_cli.py              # Main CLI application
+│   ├── CLI_README.md               # Detailed CLI documentation
+│   └── setup_cli.py                # CLI setup and utilities
+│
+├── 🎯 Execution Workflows (main/)
+│   ├── data_gen/                   # Data generation workflows
+│   │   ├── run_gen.py              # Generate synthetic data
+│   │   └── simple_data_gen.py      # Simple generation examples
+│   ├── data_inspection/            # Data analysis workflows
+│   │   ├── run_insp.py             # Data inspection pipeline
+│   │   ├── simple_data_inspection.py
+│   │   └── config.yaml             # Inspection configuration
+│   ├── run_benchmarks/             # Benchmark execution
+│   │   ├── run_bench.py            # Benchmark runner
+│   │   ├── simple_benchmark.py     # Simple benchmark examples
+│   │   ├── bench_config.yaml       # Benchmark settings
+│   │   └── README.md               # Benchmark documentation
+│   └── run_model/                  # Model training workflows
+│       ├── run_model.py            # Main model runner
+│       ├── train_example.py        # Training examples
+│       ├── minimal_example.py      # Minimal usage example
+│       ├── runner_config.yaml      # Model training configuration
+│       ├── run_all_pipeline.sh     # Batch execution script
+│       └── train_ruche_cpu.sh      # HPC execution script
+│
+├── 📚 Examples & Tutorials (examples/)
+│   ├── simple_example.py           # Basic usage example
+│   ├── prediction_analysis.py      # Prediction and analysis
+│   ├── train_nhp.py               # NHP training example
+│   ├── train_nhp_hpo.py           # HPO example
+│   ├── benchmark.py               # Benchmarking example
+│   ├── data_inspection.py         # Data analysis example
+│   ├── gen_synthetic_data.py      # Data generation example
+│   ├── hf_data_loader.py          # HuggingFace data loading
+│   ├── runner_config.yaml         # Example configuration
+│   ├── script_data_processing/    # Data processing scripts
+│   │   ├── taxi.py                # Taxi dataset processing
+│   │   ├── earthquake.py          # Earthquake data processing
+│   │   ├── volcano.py             # Volcano data processing
+│   │   ├── taobao.py             # Taobao dataset processing
+│   │   └── make_hf_dataset.py     # HuggingFace dataset creation
+│   └── train_experiment/          # Training experiments
+│       ├── run_retweet.py         # Retweet dataset experiment
+│       └── retweet_config.yaml    # Retweet configuration
+│
+├── 📓 Interactive Tutorials (notebooks/)
+│   └── EasyTPP_Getting_Started.ipynb  # Comprehensive tutorial notebook
+│
+├── 🧪 Test Suite (tests/)
+│   ├── unit/                       # Unit tests
+│   │   ├── config/                 # Configuration tests
+│   │   ├── models/                 # Model tests
+│   │   ├── preprocess/             # Data processing tests
+│   │   ├── runner/                 # Runner tests
+│   │   └── utils/                  # Utility tests
+│   ├── integration/                # Integration tests
+│   ├── functional/                 # Functional tests
+│   ├── benchmarks/                 # Benchmark tests
+│   ├── device/                     # Device consistency tests
+│   ├── conftest.py                # Test configuration
+│   └── test_cli.py                # CLI tests
+│
+├── 📖 Documentation (docs/)
+│   ├── make.bat                    # Windows documentation build
+│   ├── Makefile                    # Unix documentation build
+│   └── source/                     # Sphinx documentation source
+│
+├── 🐳 Deployment (docker/)
+│   └── ...                        # Docker configurations
+│
+├── 📊 Results & Outputs
+│   ├── checkpoints/               # Model checkpoints
+│   │   ├── NHP/                   # NHP model checkpoints
+│   │   └── THP/                   # THP model checkpoints
+│   ├── lightning_logs/            # PyTorch Lightning logs
+│   └── coverage_html/             # Test coverage reports
+│
+└── 📋 Project Configuration
+    ├── .github/                   # GitHub Actions workflows
+    ├── .gitignore                 # Git ignore rules
+    ├── .coveragerc               # Coverage configuration
+    ├── pytest.ini               # Pytest configuration
+    ├── pyproject.toml            # Modern Python packaging
+    └── Makefile                  # Build automation
+```
+
+### 📋 Typical Data Structure
+
+When working with New-LTPP, your data should be organized as follows:
+
+```text
+data/
+├── taxi/                          # Dataset name
+│   ├── train.pkl                  # Training data (pickle format)
+│   ├── dev.pkl                    # Development/validation data  
+│   ├── test.pkl                   # Test data
+│   └── metadata.json             # Dataset metadata (optional)
+├── retweet/                       # Another dataset
+│   ├── train.pkl
+│   ├── dev.pkl
+│   └── test.pkl
+└── synthetic/                     # Generated synthetic data
+    ├── hawkes_sim/
+    │   ├── train.pkl
+    │   ├── dev.pkl
+    │   └── test.pkl
+    └── generated_metadata.json
+```
+
+### 🎯 Configuration Structure
+
+Configuration files follow a hierarchical structure:
+
+```text
+configs/
+├── runner_config.yaml             # Main configuration template
+│   ├── pipeline_config_id         # Configuration identifier
+│   ├── data_config                # Data loading settings
+│   │   ├── train_dir              # Training data directory
+│   │   ├── valid_dir              # Validation data directory  
+│   │   ├── test_dir               # Test data directory
+│   │   ├── data_format            # Data format (json/pickle)
+│   │   └── data_loading_specs     # Batch size, workers, etc.
+│   ├── model_config               # Model-specific settings
+│   │   ├── model_id               # Model type (NHP, THP, etc.)
+│   │   ├── hidden_size            # Model dimensions
+│   │   ├── num_layers             # Network depth
+│   │   └── model_specs            # Model-specific parameters
+│   ├── trainer_config             # Training configuration
+│   │   ├── max_epochs             # Training epochs
+│   │   ├── learning_rate          # Learning rate
+│   │   ├── batch_size             # Training batch size
+│   │   └── optimizer_specs        # Optimizer settings
+│   └── logger_config              # Logging configuration
+├── bench_config.yaml              # Benchmark settings
+└── hpo_config.yaml               # HPO configuration
+```
+
+### Key Directories
+
+- **`easy_tpp/`**: Core library with model implementations and utilities
+- **`scripts/`**: Command-line interface and automation tools  
+- **`configs/`**: Configuration templates and examples
+- **`main/`**: High-level execution scripts for different workflows
+- **`tests/`**: Comprehensive test suite
+- **`docs/`**: Documentation source files
+
+For detailed CLI documentation, see [`scripts/CLI_README.md`](scripts/CLI_README.md).
 
 
 ## Documentation <a href='#top'>[Back to Top]</a>

@@ -4,7 +4,6 @@ from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.config_factory.model_config import ModelConfig
 
 
-
 class HawkesModel(BaseModel):
     """
     PyTorch implementation of the Hawkes process model.
@@ -12,10 +11,7 @@ class HawkesModel(BaseModel):
     methods like predict_one_step_at_every_event.
     """
 
-    def __init__(
-            self, 
-            model_config: ModelConfig, 
-            **kwargs) -> None:
+    def __init__(self, model_config: ModelConfig, **kwargs) -> None:
         """
         Initialize the Hawkes model.
 
@@ -32,34 +28,43 @@ class HawkesModel(BaseModel):
         # beta: [num_event_types, num_event_types] (beta[i, j] decay rate for effect of type j on type i)
 
         # Convert parameters to tensors and move to the correct device
-        mu = torch.tensor(model_config.specs.mu, dtype=torch.float32).view(self.num_event_types)
-        alpha = torch.tensor(model_config.specs.alpha, dtype=torch.float32).view(self.num_event_types, self.num_event_types)
-        beta = torch.tensor(model_config.specs.beta, dtype=torch.float32).view(self.num_event_types, self.num_event_types)
+        mu = torch.tensor(model_config.specs.mu, dtype=torch.float32).view(
+            self.num_event_types
+        )
+        alpha = torch.tensor(model_config.specs.alpha, dtype=torch.float32).view(
+            self.num_event_types, self.num_event_types
+        )
+        beta = torch.tensor(model_config.specs.beta, dtype=torch.float32).view(
+            self.num_event_types, self.num_event_types
+        )
 
-        if mu.shape[0] != self.num_event_types or \
-           alpha.shape != (self.num_event_types, self.num_event_types) or \
-           beta.shape != (self.num_event_types, self.num_event_types):
-            raise ValueError(f"Hawkes parameter dimensions mismatch. Expected mu: ({self.num_event_types},), "
-                             f"alpha/beta: ({self.num_event_types}, {self.num_event_types}). "
-                             f"Got mu: {mu.shape}, alpha: {alpha.shape}, beta: {beta.shape}")
+        if (
+            mu.shape[0] != self.num_event_types
+            or alpha.shape != (self.num_event_types, self.num_event_types)
+            or beta.shape != (self.num_event_types, self.num_event_types)
+        ):
+            raise ValueError(
+                f"Hawkes parameter dimensions mismatch. Expected mu: ({self.num_event_types},), "
+                f"alpha/beta: ({self.num_event_types}, {self.num_event_types}). "
+                f"Got mu: {mu.shape}, alpha: {alpha.shape}, beta: {beta.shape}"
+            )
 
         # Ensure beta values are positive for numerical stability
         beta = torch.clamp(beta, min=self.eps)
 
         # Register parameters as buffers (non-trainable)
-        self.register_buffer('mu', mu)
-        self.register_buffer('alpha', alpha)
-        self.register_buffer('beta', beta)
-
+        self.register_buffer("mu", mu)
+        self.register_buffer("alpha", alpha)
+        self.register_buffer("beta", beta)
 
     def compute_intensities_at_times(
-            self,
-            time_seq: torch.Tensor,
-            time_delta_seq: torch.Tensor, # Not directly used here
-            type_seq: torch.Tensor,
-            query_times: torch.Tensor,
-            **kwargs
-            ) -> torch.Tensor:
+        self,
+        time_seq: torch.Tensor,
+        time_delta_seq: torch.Tensor,  # Not directly used here
+        type_seq: torch.Tensor,
+        query_times: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
         """
         Computes the intensity lambda(t) for all event types at specified query times.
         lambda_i(t) = mu_i + sum_{j=1}^{D} sum_{t_k < t, type_k=j} alpha_{ij} * exp(-beta_{ij} * (t - t_k))
@@ -87,10 +92,10 @@ class HawkesModel(BaseModel):
         # Reshape for broadcasting
         # query_times: [B, L_query, N_samples] -> [B, L_query, N_samples, 1]
         query_times_exp = query_times.unsqueeze(-1).to(device)
-        
+
         # time_seq: [B, L_hist] -> [B, 1, 1, L_hist]
         time_seq_exp = time_seq.unsqueeze(1).unsqueeze(2).to(device)
-        
+
         # type_seq: [B, L_hist] -> [B, 1, 1, L_hist]
         type_seq_exp = type_seq.unsqueeze(1).unsqueeze(2).to(device)
 
@@ -105,7 +110,7 @@ class HawkesModel(BaseModel):
         # Replace pad_token_id with a valid index (0) to avoid indexing errors
         safe_type_seq = type_seq_exp.clone()
         safe_type_seq[type_seq_exp == self.pad_token_id] = 0
-        
+
         # Index alpha and beta: alpha[target_type, source_type]
         # alpha is [D, D]. We need alpha[:, safe_type_seq] -> [D, B, 1, 1, L_hist]
         alpha_indexed = self.alpha[:, safe_type_seq]
@@ -118,7 +123,7 @@ class HawkesModel(BaseModel):
         # Calculate exponential decay term: exp(-beta * delta_t)
         # beta_gathered: [B, L_query, N_samples, L_hist, D]
         # time_diffs: [B, L_query, N_samples, L_hist] -> unsqueeze(-1) -> [B, L_query, N_samples, L_hist, 1]
-        exp_decay = torch.exp(-beta_gathered * time_diffs.unsqueeze(-1)) 
+        exp_decay = torch.exp(-beta_gathered * time_diffs.unsqueeze(-1))
 
         # Calculate contribution from each historical event: alpha * exp_decay
         # Shape: [B, L_query, N_samples, L_hist, D]
@@ -127,7 +132,9 @@ class HawkesModel(BaseModel):
         # Apply mask to zero out contributions from invalid events (padding or future events)
         # valid_event_mask: [B, L_query, N_samples, L_hist] -> unsqueeze(-1) -> [B, L_query, N_samples, L_hist, 1]
         masked_contributions = event_contributions * valid_event_mask.unsqueeze(-1)
-        masked_contributions = torch.nan_to_num(masked_contributions, nan=0.0, posinf=0.0, neginf=0.0)
+        masked_contributions = torch.nan_to_num(
+            masked_contributions, nan=0.0, posinf=0.0, neginf=0.0
+        )
 
         # Sum contributions over the history dimension (L_hist)
         # Shape: [B, L_query, N_samples, D]
@@ -145,17 +152,16 @@ class HawkesModel(BaseModel):
             intensities = intensities.squeeze(2)
 
         return intensities
-    
 
     def compute_intensities_at_sample_times(
-            self, 
-            time_seq: torch.Tensor, 
-            time_delta_seq: torch.Tensor,
-            type_seq: torch.Tensor,
-            sample_dtimes: torch.Tensor, 
-            compute_last_step_only: bool = False, 
-            **kwargs
-            ) -> torch.Tensor:
+        self,
+        time_seq: torch.Tensor,
+        time_delta_seq: torch.Tensor,
+        type_seq: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        compute_last_step_only: bool = False,
+        **kwargs,
+    ) -> torch.Tensor:
         """
         Computes intensities at sampled times relative to each event in the sequence.
         Required by BaseModel for prediction and loss calculation.
@@ -176,33 +182,38 @@ class HawkesModel(BaseModel):
         device = self.device
 
         num_samples = sample_dtimes.shape[-1] if sample_dtimes.dim() == 3 else 1
-        
-        if compute_last_step_only: 
+
+        if compute_last_step_only:
             time_seq_clone = time_seq[:, -2:]
             safe_dtimes = time_seq_clone.diff(dim=1).unsqueeze(-1)  # [B, 1, 1]
-            ratios = torch.linspace(0, 1, num_samples, device=device).view(1, 1, num_samples)  # [1, 1, N_samples]
+            ratios = torch.linspace(0, 1, num_samples, device=device).view(
+                1, 1, num_samples
+            )  # [1, 1, N_samples]
             query_times = time_seq + safe_dtimes * ratios
 
         else:
             time_seq_clone = time_seq
             safe_dtimes = time_seq_clone.diff(dim=1).unsqueeze(-1)  # [B, L-1, 1]
-            ratios = torch.linspace(0, 1, num_samples, device=device).view(1, 1, num_samples)  # [1, 1, N_samples]
-            query_times = time_seq[:,:-1] + safe_dtimes * ratios
+            ratios = torch.linspace(0, 1, num_samples, device=device).view(
+                1, 1, num_samples
+            )  # [1, 1, N_samples]
+            query_times = time_seq[:, :-1] + safe_dtimes * ratios
 
         intensities = self.compute_intensities_at_times(
-            time_seq = time_seq[:, :-1],
-            time_delta_seq = None,
-            type_seq = type_seq[:,:-1],
-            query_times = query_times
+            time_seq=time_seq[:, :-1],
+            time_delta_seq=None,
+            type_seq=type_seq[:, :-1],
+            query_times=query_times,
         )
 
         return intensities
 
-
     def loglike_loss(
-            self, 
-            batch : tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
-            ) -> tuple[torch.Tensor, int]:
+        self,
+        batch: tuple[
+            torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
+        ],
+    ) -> tuple[torch.Tensor, int]:
         """Compute the log-likelihood loss for the Hawkes model.
 
         Args:
@@ -225,7 +236,7 @@ class HawkesModel(BaseModel):
             time_seq=time_seq_BN,
             time_delta_seq=None,
             type_seq=type_seq_BN,
-            query_times=query_times_for_event_ll
+            query_times=query_times_for_event_ll,
         ).squeeze(-2)
 
         # For integral term: intervals (t_0,t_1), ..., (t_{N-1}, t_N)
@@ -234,7 +245,9 @@ class HawkesModel(BaseModel):
 
         # dts_samples_for_integral: Samples within each interval (t_0,t_1), ..., (t_{N-1}, t_N)
         # Shape: [B, L-1, G]
-        dts_samples_for_integral = self.make_dtime_loss_samples(time_delta_seq_for_integral)
+        dts_samples_for_integral = self.make_dtime_loss_samples(
+            time_delta_seq_for_integral
+        )
 
         # History for integral calculation: events up to t_{N-1}
         # For interval (t_k, t_{k+1}), use history up to t_k
@@ -247,7 +260,7 @@ class HawkesModel(BaseModel):
             time_delta_seq=None,
             type_seq=type_seq_hist_for_integral,
             sample_dtimes=dts_samples_for_integral,
-            compute_last_step_only=False
+            compute_last_step_only=False,
         )
 
         # Prepare other arguments for compute_loglikelihood
@@ -260,9 +273,9 @@ class HawkesModel(BaseModel):
             lambdas_loss_samples=lambdas_loss_samples,
             time_delta_seq=time_delta_seq_for_integral,
             seq_mask=seq_mask_for_loss,
-            type_seq=type_seq_for_loss
+            type_seq=type_seq_for_loss,
         )
 
-        loss = - (event_ll - non_event_ll).sum()
-        
+        loss = -(event_ll - non_event_ll).sum()
+
         return loss, num_events

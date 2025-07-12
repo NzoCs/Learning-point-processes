@@ -6,8 +6,7 @@ from easy_tpp.models.baselayer import ScaledSoftplus
 
 
 class ContTimeLSTMCell(nn.Module):
-    """LSTM Cell in Neural Hawkes Process, NeurIPS'17.
-    """
+    """LSTM Cell in Neural Hawkes Process, NeurIPS'17."""
 
     def __init__(self, hidden_dim):
         """Initialize the continuous LSTM cell.
@@ -44,7 +43,9 @@ class ContTimeLSTMCell(nn.Module):
 
         x_i_ = torch.cat((x_i, hidden_ti_minus), dim=1)
 
-        i_i, i_bar_i, f_i, f_bar_i, z_i, o_i, delta_i = self.linear_layer(x_i_).chunk(7, dim=-1)
+        i_i, i_bar_i, f_i, f_bar_i, z_i, o_i, delta_i = self.linear_layer(x_i_).chunk(
+            7, dim=-1
+        )
 
         i_i, i_bar_i, f_i, f_bar_i, z_i, o_i, delta_i = (
             torch.sigmoid(i_i),  # Eq (5a)
@@ -53,7 +54,7 @@ class ContTimeLSTMCell(nn.Module):
             torch.sigmoid(f_bar_i),  # Eq (5b) - Bar version
             torch.tanh(z_i),  # Eq (5c)
             torch.sigmoid(o_i),  # Eq (5d)
-            self.softplus(delta_i)  # Eq (6c)
+            self.softplus(delta_i),  # Eq (6c)
         )
 
         # Eq (6a)
@@ -85,7 +86,7 @@ class ContTimeLSTMCell(nn.Module):
 
 class NHP(BaseModel):
     """Torch implementation of The Neural Hawkes Process: A Neurally Self-Modulating Multivariate Point Process,
-       NeurIPS 2017, https://arxiv.org/abs/1612.09328.
+    NeurIPS 2017, https://arxiv.org/abs/1612.09328.
     """
 
     def __init__(self, model_config, **kwargs):
@@ -96,23 +97,28 @@ class NHP(BaseModel):
         """
         super(NHP, self).__init__(model_config, **kwargs)
         self.model_config = model_config  # Store for test compatibility
-        self.beta = kwargs.get('beta', 1.0)
-        self.bias = kwargs.get('bias', True)
+        self.beta = kwargs.get("beta", 1.0)
+        self.bias = kwargs.get("bias", True)
         self.rnn_cell = ContTimeLSTMCell(self.hidden_size)
 
         self.layer_intensity = nn.Sequential(  # eq. 4a,
             nn.Linear(self.hidden_size, self.num_event_types, self.bias),
-            ScaledSoftplus(self.num_event_types))  # learnable mark-specific beta
+            ScaledSoftplus(self.num_event_types),
+        )  # learnable mark-specific beta
 
     def get_init_state(self, batch_size):
         c_t, c_bar_t, delta_t, o_t = torch.zeros(
-            batch_size,
-            4 * self.hidden_size,
-            device=self.device).chunk(4, dim=1)
-        return c_t, c_bar_t, delta_t, o_t  # Okay to initialize delta to be zero because c==c_bar at the beginning
+            batch_size, 4 * self.hidden_size, device=self.device
+        ).chunk(4, dim=1)
+        return (
+            c_t,
+            c_bar_t,
+            delta_t,
+            o_t,
+        )  # Okay to initialize delta to be zero because c==c_bar at the beginning
 
     def forward(self, batch):
-        '''
+        """
         Suppose we have inputs with original sequence length N+1
         ts: [t0, t1, ..., t_N]
         dts: [0, t1 - t0, t2 - t1, ..., t_N - t_{N-1}]
@@ -125,17 +131,21 @@ class NHP(BaseModel):
 
         > rnn_cell.recurrence(event_emb_t, h_tm1, c_tm1, c_bar_tm1) -> c_t, c_bar_t, gate_delta, gate_o
         > rnn_cell.decay(c_t, c_bar_t, delta_t, o_t, dt) -> c_d_t, h_d_t
-        '''
+        """
         t_BN, dt_BN, marks_BN, _, _ = batch
         B, N = dt_BN.shape
         left_hs = []
         right_states = []
 
         all_event_emb_BNP = self.layer_type_emb(marks_BN)
-        c_t, c_bar_t, delta_t, o_t = self.get_init_state(B)  # initialize the right limits
+        c_t, c_bar_t, delta_t, o_t = self.get_init_state(
+            B
+        )  # initialize the right limits
         for i in range(N):
             # Take last right limit and evolve into left limit; we will discard this value for t0 because dt=0
-            ct_d_t, h_d_t = self.rnn_cell.decay(c_t, c_bar_t, delta_t, o_t, dt_BN[..., i][..., None])
+            ct_d_t, h_d_t = self.rnn_cell.decay(
+                c_t, c_bar_t, delta_t, o_t, dt_BN[..., i][..., None]
+            )
 
             # Take left limit and update to be right limit
             event_emb_t = all_event_emb_BNP[..., i, :]
@@ -149,8 +159,12 @@ class NHP(BaseModel):
             left_hs.append(h_d_t)
             right_states.append(torch.cat((c_t, c_bar_t, delta_t, o_t), dim=-1))
 
-        left_hiddens = torch.stack(left_hs[1:], dim=-2)  # (batch_size, seq_len - 1, hidden_dim)
-        right_hiddens = torch.stack(right_states, dim=-2)  # (batch_size, seq_len, 4 * hidden_dim)
+        left_hiddens = torch.stack(
+            left_hs[1:], dim=-2
+        )  # (batch_size, seq_len - 1, hidden_dim)
+        right_hiddens = torch.stack(
+            right_states, dim=-2
+        )  # (batch_size, seq_len, 4 * hidden_dim)
         return left_hiddens, right_hiddens
 
     def get_states(self, right_hiddens, sample_dts):
@@ -161,11 +175,13 @@ class NHP(BaseModel):
         > rnn_cell.decay(c_t, c_bar_t, delta_t, o_t, dt) -> c_d_t, h_d_t
         """
         c_t, c_bar_t, delta_t, o_t = torch.chunk(right_hiddens, 4, dim=-1)
-        _, h_ts = self.rnn_cell.decay(c_t[:, :, None, :],
-                                      c_bar_t[:, :, None, :],
-                                      delta_t[:, :, None, :],
-                                      o_t[:, :, None, :],
-                                      sample_dts[..., None])
+        _, h_ts = self.rnn_cell.decay(
+            c_t[:, :, None, :],
+            c_bar_t[:, :, None, :],
+            delta_t[:, :, None, :],
+            o_t[:, :, None, :],
+            sample_dts[..., None],
+        )
         return h_ts
 
     def loglike_loss(self, batch):
@@ -182,8 +198,12 @@ class NHP(BaseModel):
         # 1. compute hidden states at event time
         # left limits of [t_1, ..., t_N]
         # right limits of [t_0, ..., t_{N-1}, t_N]
-        left_hiddens, right_hiddens = self.forward((ts_BN, dts_BN, marks_BN, None, None))
-        right_hiddens = right_hiddens[..., :-1, :]  # discard right limit at t_N for logL
+        left_hiddens, right_hiddens = self.forward(
+            (ts_BN, dts_BN, marks_BN, None, None)
+        )
+        right_hiddens = right_hiddens[
+            ..., :-1, :
+        ]  # discard right limit at t_N for logL
 
         # 2. evaluate intensity values at each event *from the left limit*
         intensity_B_Nm1_M = self.layer_intensity(left_hiddens)
@@ -192,27 +212,30 @@ class NHP(BaseModel):
         dts_sample_B_Nm1_G = self.make_dtime_loss_samples(dts_BN[:, 1:])
 
         # 4. evaluate intensity at dt_samples for MC *from the left limit* after decay -> shape (B, N-1, G, M)
-        intensity_dts_B_Nm1_G_M = self.layer_intensity(self.get_states(right_hiddens, dts_sample_B_Nm1_G))
+        intensity_dts_B_Nm1_G_M = self.layer_intensity(
+            self.get_states(right_hiddens, dts_sample_B_Nm1_G)
+        )
 
         event_ll, non_event_ll, num_events = self.compute_loglikelihood(
             lambda_at_event=intensity_B_Nm1_M,
             lambdas_loss_samples=intensity_dts_B_Nm1_G_M,
             time_delta_seq=dts_BN[:, 1:],
             seq_mask=batch_non_pad_mask[:, 1:],
-            type_seq=marks_BN[:, 1:])
+            type_seq=marks_BN[:, 1:],
+        )
 
         # compute loss to minimize
-        loss = - (event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
     def compute_intensities_at_sample_times(
         self,
-        time_seqs : torch.Tensor,
-        time_delta_seqs : torch.Tensor,
-        type_seqs : torch.Tensor,
-        sample_dtimes : torch.Tensor, 
-        **kwargs
-        ) -> torch.Tensor :
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
         """Compute the intensity at sampled times, not only event times.
 
         Args:
@@ -226,7 +249,7 @@ class NHP(BaseModel):
                     intensity at each timestamp for each event type.
         """
 
-        compute_last_step_only = kwargs.get('compute_last_step_only', False)
+        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         _input = time_seqs, time_delta_seqs, type_seqs, None, None
 
@@ -237,11 +260,13 @@ class NHP(BaseModel):
 
         if compute_last_step_only:
             interval_t_sample = sample_dtimes[:, -1:, :, None]
-            _, h_ts = self.rnn_cell.decay(c_i[:, -1:, None, :],
-                                          c_bar_i[:, -1:, None, :],
-                                          delta_i[:, -1:, None, :],
-                                          o_i[:, -1:, None, :],
-                                          interval_t_sample)
+            _, h_ts = self.rnn_cell.decay(
+                c_i[:, -1:, None, :],
+                c_bar_i[:, -1:, None, :],
+                delta_i[:, -1:, None, :],
+                o_i[:, -1:, None, :],
+                interval_t_sample,
+            )
 
             # [batch_size, 1, num_mc_sample, num_marks]
             sampled_intensities = self.layer_intensity(h_ts)
@@ -253,11 +278,13 @@ class NHP(BaseModel):
             # at all sample points
             # h_ts shape (batch_size, seq_len, num_mc_sample, hidden_dim)
             # cells[:, :, None, :]  (batch_size, seq_len, 1, hidden_dim)
-            _, h_ts = self.rnn_cell.decay(c_i[:, :, None, :],
-                                          c_bar_i[:, :, None, :],
-                                          delta_i[:, :, None, :],
-                                          o_i[:, :, None, :],
-                                          interval_t_sample)
+            _, h_ts = self.rnn_cell.decay(
+                c_i[:, :, None, :],
+                c_bar_i[:, :, None, :],
+                delta_i[:, :, None, :],
+                o_i[:, :, None, :],
+                interval_t_sample,
+            )
 
             # [batch_size, seq_len, num_mc_sample, num_marks]
             sampled_intensities = self.layer_intensity(h_ts)

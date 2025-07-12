@@ -26,7 +26,7 @@ dependencies = [
     "numpy",
     "pandas",
     "torch",
-    "pytorch-lightning",
+    "lightning",
     "matplotlib",
     "seaborn",
     "scipy",

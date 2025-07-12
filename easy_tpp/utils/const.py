@@ -39,38 +39,40 @@ class TensorType(ExplicitEnum):
 
 
 class RunnerPhase(ExplicitEnum):
-    """Model runner phase enum.
-    """
-    TRAIN = 'train'
-    VALIDATE = 'validate'
-    PREDICT = 'predict'
+    """Model runner phase enum."""
+
+    TRAIN = "train"
+    VALIDATE = "validate"
+    PREDICT = "predict"
 
 
 class LossFunction(ExplicitEnum):
-    """Loss function for neural TPP model.
-    """
-    LOGLIKE = 'loglike'
-    PARTIAL_TIME_LOSS = 'rmse'
-    PARTIAL_EVENT_LOSS = 'accuracy'
+    """Loss function for neural TPP model."""
+
+    LOGLIKE = "loglike"
+    PARTIAL_TIME_LOSS = "rmse"
+    PARTIAL_EVENT_LOSS = "accuracy"
 
 
 class LogConst:
-    """Format for log handler.
-    """
-    DEFAULT_FORMAT = '[%(asctime)s] [%(levelname)s] %(message)s'
-    DEFAULT_FORMAT_LONG = '%(asctime)s - %(filename)s[pid:%(process)d;line:%(lineno)d:%(funcName)s]' \
-                          ' - %(levelname)s: %(message)s'
+    """Format for log handler."""
+
+    DEFAULT_FORMAT = "[%(asctime)s] [%(levelname)s] %(message)s"
+    DEFAULT_FORMAT_LONG = (
+        "%(asctime)s - %(filename)s[pid:%(process)d;line:%(lineno)d:%(funcName)s]"
+        " - %(levelname)s: %(message)s"
+    )
 
 
 class PredOutputIndex:
-    """Positional index for the output tuple in ModelRunner.
-    """
+    """Positional index for the output tuple in ModelRunner."""
+
     TimePredIndex = 0
     TypePredIndex = 1
 
 
 class DefaultRunnerConfig:
-    DEFAULT_DATASET_ID = 'conttime'
+    DEFAULT_DATASET_ID = "conttime"
 
 
 class TruncationStrategy(ExplicitEnum):
@@ -89,5 +91,5 @@ class Backend(ExplicitEnum):
     an IDE.
     """
 
-    Torch = 'torch'
-    TF = 'tensorflow'
+    Torch = "torch"
+    TF = "tensorflow"

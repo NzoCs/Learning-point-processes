@@ -23,10 +23,13 @@ def make_raw_data() -> List[List[Dict[str, Any]]]:
         for k in range(j):
             delta_t = random.random()
             start_time += delta_t
-            data[i].append({"time_since_last_event": delta_t,
-                            "time_since_start": start_time,
-                            "type_event": random.randint(0, 10)
-                            })
+            data[i].append(
+                {
+                    "time_since_last_event": delta_t,
+                    "time_since_start": start_time,
+                    "type_event": random.randint(0, 10),
+                }
+            )
     return data
 
 
@@ -37,26 +40,25 @@ def main() -> None:
     type_seqs = [[x["type_event"] for x in seq] for seq in source_data]
     time_delta_seqs = [[x["time_since_last_event"] for x in seq] for seq in source_data]
 
-    input_data = {'time_seqs': time_seqs,
-                  'type_seqs': type_seqs,
-                  'time_delta_seqs': time_delta_seqs}
+    input_data = {
+        "time_seqs": time_seqs,
+        "type_seqs": type_seqs,
+        "time_delta_seqs": time_delta_seqs,
+    }
 
     # Use modern API
-    config = TokenizerConfig(
-        num_event_types=11,
-        pad_token_id=11
-    )
+    config = TokenizerConfig(num_event_types=11, pad_token_id=11)
 
     tokenizer = EventTokenizer(config)
-    
+
     # Tokenize and pad data
-    output = tokenizer.pad(input_data, return_tensors='pt')
-    
+    output = tokenizer.pad(input_data, return_tensors="pt")
+
     print("Tokenized output:")
     print(f"Time sequences shape: {output['time_seqs'].shape}")
     print(f"Type sequences shape: {output['type_seqs'].shape}")
     print(f"Time delta sequences shape: {output['time_delta_seqs'].shape}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

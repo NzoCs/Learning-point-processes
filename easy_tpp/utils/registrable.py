@@ -110,6 +110,7 @@ class Registrable:
             submodule = ".".join(parts[:-1])
             class_name = parts[-1]
             import importlib
+
             try:
                 module = importlib.import_module(submodule)
             except ModuleNotFoundError:

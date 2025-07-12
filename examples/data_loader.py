@@ -23,10 +23,13 @@ def make_raw_data() -> List[List[Dict[str, Any]]]:
         for k in range(j):
             delta_t = random.random()
             start_time += delta_t
-            data[i].append({"time_since_last_event": delta_t,
-                            "time_since_start": start_time,
-                            "type_event": random.randint(0, 10)
-                            })
+            data[i].append(
+                {
+                    "time_since_last_event": delta_t,
+                    "time_since_start": start_time,
+                    "type_event": random.randint(0, 10),
+                }
+            )
     return data
 
 
@@ -37,23 +40,23 @@ def main() -> None:
         data_format="dict",
         num_event_types=11,
         pad_token_id=11,
-        batch_size=2
+        batch_size=2,
     )
-    
+
     # Create data module
     datamodule = TPPDataModule(data_config)
-    
+
     # Setup data module
-    datamodule.setup(stage='fit')
-    
+    datamodule.setup(stage="fit")
+
     # Get data loaders
     train_loader = datamodule.train_dataloader()
     val_loader = datamodule.val_dataloader()
     test_loader = datamodule.test_dataloader()
-    
+
     print("Train loader created successfully")
     print(f"Number of batches in train loader: {len(train_loader)}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

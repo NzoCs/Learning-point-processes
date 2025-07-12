@@ -16,6 +16,7 @@ __pycache__/
 *.pth
 
 #venv
+.venv
 .venv-py312
 .venv-py312-new
 .venv-py310

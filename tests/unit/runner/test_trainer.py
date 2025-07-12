@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 import pytorch_lightning as pl
 
-from easy_tpp.runner.trainer import Trainer
+from easy_tpp.runner.lightning_runner import Trainer
 from easy_tpp.config_factory import RunnerConfig, ModelConfig
 from easy_tpp.models.nhp import NHP
 

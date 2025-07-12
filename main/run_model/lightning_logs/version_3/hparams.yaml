@@ -1,0 +1,52 @@
+model_config:
+  model_id: HawkesModel
+  num_event_types: 1
+  num_event_types_pad: 2
+  pad_token_id: 1
+  device: cpu
+  gpu: -1
+  is_training: false
+  compute_simulation: false
+  use_mc_samples: true
+  pretrain_model_path: null
+  base_config:
+    lr: 0.001
+    lr_scheduler: true
+    max_epochs: 1000
+    dropout: 0.0
+    stage: train
+    backend: Torch
+    dataset_id: null
+    base_dir: null
+  specs:
+    hidden_size: 64
+    rnn_type: LSTM
+    time_emb_size: 32
+    num_layers: 2
+    num_heads: 8
+    sharing_param_layer: false
+    use_ln: true
+    loss_integral_num_sample_per_step: 100
+    max_seq_len: 100
+    num_mix_components: 1
+    mean_log_inter_time: 0.0
+    std_log_inter_time: 1.0
+    num_mlp_layers: 2
+    ode_num_sample_per_step: 20
+    proper_marked_intensities: false
+    mu: 0.2
+    alpha: 0.8
+    beta: 1.0
+  thinning:
+    num_sample: 60
+    num_exp: 60
+    num_steps: 10
+    over_sample_rate: 1.5
+    num_samples_boundary: 5
+    dtime_max: 5.0
+  simulation_config:
+    start_time: 0.0
+    end_time: 100.0
+    batch_size: 32
+    max_sim_events: 10000
+    seed: 42

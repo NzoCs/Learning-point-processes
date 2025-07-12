@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Test Script pour EasyTPP CLI
+Test Script for EasyTPP CLI
 
-Ce script teste toutes les fonctionnalités principales du CLI
-pour s'assurer qu'elles fonctionnent correctement.
+This script tests all main CLI functionalities
+to ensure they work correctly.
 """
 
 import subprocess
@@ -22,9 +22,9 @@ class CLITester:
         self.test_failed = 0
         
     def run_command(self, command, expect_success=True):
-        """Exécute une commande et vérifie le résultat"""
+        """Execute a command and verify the result"""
         try:
-            print(f"🔧 Testing: {command}")
+            print(f"+ Testing: {command}")
             result = subprocess.run(
                 command, 
                 shell=True, 
@@ -35,35 +35,35 @@ class CLITester:
             
             if expect_success:
                 if result.returncode == 0:
-                    print("✅ PASSED")
+                    print("+ PASSED")
                     self.test_passed += 1
                     return True
                 else:
-                    print(f"❌ FAILED: {result.stderr}")
+                    print(f"- FAILED: {result.stderr}")
                     self.test_failed += 1
                     return False
             else:
                 if result.returncode != 0:
-                    print("✅ PASSED (Expected failure)")
+                    print("+ PASSED (Expected failure)")
                     self.test_passed += 1
                     return True
                 else:
-                    print("❌ FAILED: Command should have failed")
+                    print("- FAILED: Command should have failed")
                     self.test_failed += 1
                     return False
                     
         except subprocess.TimeoutExpired:
-            print("❌ FAILED: Command timed out")
+            print("- FAILED: Command timed out")
             self.test_failed += 1
             return False
         except Exception as e:
-            print(f"❌ FAILED: Exception {str(e)}")
+            print(f"- FAILED: Exception {str(e)}")
             self.test_failed += 1
             return False
     
     def test_basic_commands(self):
-        """Test des commandes de base"""
-        print("\n📋 Testing Basic Commands")
+        """Test basic commands"""
+        print("\n== Testing Basic Commands ==")
         print("=" * 40)
         
         # Test help
@@ -76,8 +76,8 @@ class CLITester:
         self.run_command(f"python {self.cli_script} info")
         
     def test_config_commands(self):
-        """Test des commandes de configuration"""
-        print("\n⚙️ Testing Configuration Commands")
+        """Test configuration commands"""
+        print("\n== Testing Configuration Commands ==")
         print("=" * 40)
         
         # Test list-configs
@@ -87,8 +87,8 @@ class CLITester:
         self.run_command(f"python {self.cli_script} list-configs --dir /non/existent/dir", expect_success=False)
         
     def test_validation(self):
-        """Test de validation des configurations"""
-        print("\n✅ Testing Configuration Validation")
+        """Test configuration validation"""
+        print("\n== Testing Configuration Validation ==")
         print("=" * 40)
         
         # Create a minimal test config
@@ -142,8 +142,8 @@ class CLITester:
                 test_config_path.unlink()
     
     def test_error_handling(self):
-        """Test de la gestion d'erreurs"""
-        print("\n🛡️ Testing Error Handling")
+        """Test error handling"""
+        print("\n== Testing Error Handling ==")
         print("=" * 40)
         
         # Test missing required arguments
@@ -156,16 +156,16 @@ class CLITester:
         self.run_command(f"python {self.cli_script} run --config /non/existent.yaml --experiment THP --dataset H2expc", expect_success=False)
     
     def test_verbose_mode(self):
-        """Test du mode verbeux"""
-        print("\n🔍 Testing Verbose Mode")
+        """Test verbose mode"""
+        print("\n== Testing Verbose Mode ==")
         print("=" * 40)
         
         # Test verbose flag
         self.run_command(f"python {self.cli_script} --verbose info")
     
     def test_modern_cli(self):
-        """Test du CLI moderne (Typer)"""
-        print("\n🚀 Testing Modern CLI (Typer)")
+        """Test modern CLI (Typer)"""
+        print("\n== Testing Modern CLI (Typer) ==")
         print("=" * 40)
         
         modern_cli_script = self.project_root / "easytpp_modern_cli.py"
@@ -181,20 +181,20 @@ class CLITester:
             # Test list-configs
             self.run_command(f"python {modern_cli_script} list-configs --dir {self.config_dir}")
         else:
-            print("⚠️ Modern CLI script not found, skipping tests")
+            print("! Modern CLI script not found, skipping tests")
     
     def test_installation_scripts(self):
-        """Test des scripts d'installation"""
-        print("\n📦 Testing Installation Scripts")
+        """Test installation scripts"""
+        print("\n== Testing Installation Scripts ==")
         print("=" * 40)
         
         setup_script = self.project_root / "setup_cli.py"
         
         if setup_script.exists():
-            print("✅ Setup script found")
+            print("+ Setup script found")
             self.test_passed += 1
         else:
-            print("❌ Setup script not found")
+            print("- Setup script not found")
             self.test_failed += 1
         
         # Test wrapper scripts
@@ -202,15 +202,15 @@ class CLITester:
         for wrapper in wrappers:
             wrapper_path = self.project_root / wrapper
             if wrapper_path.exists():
-                print(f"✅ {wrapper} found")
+                print(f"+ {wrapper} found")
                 self.test_passed += 1
             else:
-                print(f"❌ {wrapper} not found")
+                print(f"- {wrapper} not found")
                 self.test_failed += 1
     
     def test_documentation(self):
-        """Test de la documentation"""
-        print("\n📚 Testing Documentation")
+        """Test documentation"""
+        print("\n== Testing Documentation ==")
         print("=" * 40)
         
         docs = [
@@ -221,23 +221,23 @@ class CLITester:
         for doc in docs:
             doc_path = self.project_root / doc
             if doc_path.exists():
-                print(f"✅ {doc} found")
+                print(f"+ {doc} found")
                 self.test_passed += 1
             else:
-                print(f"❌ {doc} not found")
+                print(f"- {doc} not found")
                 self.test_failed += 1
     
     def run_all_tests(self):
-        """Exécute tous les tests"""
-        print("🧪 EasyTPP CLI Test Suite")
+        """Execute all tests"""
+        print("EasyTPP CLI Test Suite")
         print("=" * 50)
         
-        # Vérifier que le script CLI existe
+        # Check if CLI script exists
         if not self.cli_script.exists():
-            print(f"❌ CLI script not found: {self.cli_script}")
+            print(f"- CLI script not found: {self.cli_script}")
             return False
         
-        # Exécuter tous les tests
+        # Execute all tests
         self.test_basic_commands()
         self.test_config_commands()
         self.test_validation()
@@ -247,36 +247,36 @@ class CLITester:
         self.test_installation_scripts()
         self.test_documentation()
         
-        # Afficher le résumé
+        # Display summary
         print("\n" + "=" * 50)
-        print("📊 Test Results Summary")
+        print("Test Results Summary")
         print("=" * 50)
-        print(f"✅ Tests Passed: {self.test_passed}")
-        print(f"❌ Tests Failed: {self.test_failed}")
-        print(f"📈 Success Rate: {self.test_passed / (self.test_passed + self.test_failed) * 100:.1f}%")
+        print(f"+ Tests Passed: {self.test_passed}")
+        print(f"- Tests Failed: {self.test_failed}")
+        print(f"Success Rate: {self.test_passed / (self.test_passed + self.test_failed) * 100:.1f}%")
         
         if self.test_failed == 0:
-            print("\n🎉 All tests passed! CLI is working correctly.")
+            print("\nAll tests passed! CLI is working correctly.")
             return True
         else:
-            print(f"\n⚠️ {self.test_failed} tests failed. Please check the issues above.")
+            print(f"\n{self.test_failed} tests failed. Please check the issues above.")
             return False
 
 
 def main():
-    """Fonction principale"""
+    """Main function"""
     tester = CLITester()
     success = tester.run_all_tests()
     
     if success:
-        print("\n🚀 CLI is ready for use!")
+        print("\nCLI is ready for use!")
         print("\nQuick start commands:")
         print("  python easytpp_cli.py --help")
         print("  python easytpp_cli.py interactive")
         print("  python easytpp_cli.py info")
         sys.exit(0)
     else:
-        print("\n❌ Some tests failed. Please fix the issues before using the CLI.")
+        print("\nSome tests failed. Please fix the issues before using the CLI.")
         sys.exit(1)
 
 

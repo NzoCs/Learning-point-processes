@@ -42,8 +42,8 @@ class ExperimentInfo:
 
 class ModelRunner:
     """Runner for executing TPP model experiments."""
-    
-    def __init__(self, config_path: str = None, output_dir: str = None, debug: bool = False):
+
+    def __init__(self, config_path: Optional[str] = None, output_dir: Optional[str] = None, debug: bool = False):
         """
         Initialize the model runner.
         
@@ -211,7 +211,7 @@ class ModelRunner:
         return results
 
 
-def main():
+def main() -> int:
     """Main function to parse arguments and execute experiments."""
     parser = argparse.ArgumentParser(
         description="Outil en ligne de commande pour exécuter les expériences EasyTPP",

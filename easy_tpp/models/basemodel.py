@@ -565,8 +565,8 @@ class BaseModel(pl.LightningModule, ABC):
         save_json(formatted_data, save_data_path)
 
         return formatted_data
-    
-    def save_metadata(self, save_dir, formatted_data: list[dict]) -> None:
+
+    def save_metadata(self, save_dir: str, formatted_data: list[dict]) -> None:
         """
         Saves metadata about the simulation run, including configuration details
         and total event counts.
@@ -797,11 +797,11 @@ class BaseModel(pl.LightningModule, ABC):
         # Simulation avec moins d'allocations mémoire
         with torch.no_grad():  # Pas besoin de gradients pour la simulation
             pbar = tqdm(total=end_time, desc="Vectorized simulation", leave=False)
-            
+
             step_count = 0
             batch_active = torch.ones(batch_size, dtype=torch.bool, device=self.device)
-            
-            while current_time < end_time and current_len < max_seq_len - 1:
+
+            while current_time < end_time and step_count < max_seq_len - 1:
                 if not batch_active.any():
                     break
                     
@@ -811,6 +811,8 @@ class BaseModel(pl.LightningModule, ABC):
                 if len(active_indices) == 0:
                     break
                 
+                current_len = initial_len + step_count
+
                 # Prédiction sur les séquences actives seulement
                 active_time_seq = time_buffer[active_indices, :current_len]
                 active_time_delta = time_delta_buffer[active_indices, :current_len]
@@ -851,7 +853,6 @@ class BaseModel(pl.LightningModule, ABC):
                         exceed_indices = active_indices[exceed_time_mask]
                         batch_active[exceed_indices] = False
                     
-                    current_len += 1
                     step_count += 1
                     
                     if step_count % 50 == 0:
@@ -864,7 +865,6 @@ class BaseModel(pl.LightningModule, ABC):
 
             pbar.close()
         
-        current_len = initial_len + step_count
         # Extraction des résultats
         first_pred_idx = initial_len
         final_time_seq = time_buffer[:, first_pred_idx:current_len]

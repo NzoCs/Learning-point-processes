@@ -1,5 +1,5 @@
 from easy_tpp.config_factory import RunnerConfig
-from easy_tpp.runner.trainer import Trainer
+from easy_tpp.runner.lightning_runner import Trainer
 from easy_tpp.utils import logger
 from typing import Optional, Union, List
 import copy

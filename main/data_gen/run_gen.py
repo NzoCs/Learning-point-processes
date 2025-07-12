@@ -1,4 +1,4 @@
-from easy_tpp.data_generation import HawkesSimulator, SelfCorrecting
+from easy_tpp.data.generation import HawkesSimulator, SelfCorrecting
 
 
 def main():

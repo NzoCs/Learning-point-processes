@@ -12,7 +12,10 @@ class HawkesModel(BaseModel):
     methods like predict_one_step_at_every_event.
     """
 
-    def __init__(self, model_config: ModelConfig, **kwargs):
+    def __init__(
+            self, 
+            model_config: ModelConfig, 
+            **kwargs) -> None:
         """
         Initialize the Hawkes model.
 
@@ -49,12 +52,14 @@ class HawkesModel(BaseModel):
         self.register_buffer('beta', beta)
 
 
-    def compute_intensities_at_times(self,
-                                     time_seq: torch.Tensor,
-                                     time_delta_seq: torch.Tensor, # Not directly used here
-                                     type_seq: torch.Tensor,
-                                     query_times: torch.Tensor,
-                                     **kwargs):
+    def compute_intensities_at_times(
+            self,
+            time_seq: torch.Tensor,
+            time_delta_seq: torch.Tensor, # Not directly used here
+            type_seq: torch.Tensor,
+            query_times: torch.Tensor,
+            **kwargs
+            ) -> torch.Tensor:
         """
         Computes the intensity lambda(t) for all event types at specified query times.
         lambda_i(t) = mu_i + sum_{j=1}^{D} sum_{t_k < t, type_k=j} alpha_{ij} * exp(-beta_{ij} * (t - t_k))
@@ -142,13 +147,15 @@ class HawkesModel(BaseModel):
         return intensities
     
 
-    def compute_intensities_at_sample_times(self,
-                                            time_seq: torch.Tensor,
-                                            time_delta_seq: torch.Tensor, # Not directly used here
-                                            type_seq: torch.Tensor,
-                                            sample_dtimes: torch.Tensor,
-                                            compute_last_step_only: bool = False,
-                                            **kwargs):
+    def compute_intensities_at_sample_times(
+            self, 
+            time_seq: torch.Tensor, 
+            time_delta_seq: torch.Tensor,
+            type_seq: torch.Tensor,
+            sample_dtimes: torch.Tensor, 
+            compute_last_step_only: bool = False, 
+            **kwargs
+            ) -> torch.Tensor:
         """
         Computes intensities at sampled times relative to each event in the sequence.
         Required by BaseModel for prediction and loss calculation.
@@ -190,9 +197,12 @@ class HawkesModel(BaseModel):
         )
 
         return intensities
-    
-        
-    def loglike_loss(self, batch):
+
+
+    def loglike_loss(
+            self, 
+            batch : tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
+            ) -> tuple[torch.Tensor, int]:
         """Compute the log-likelihood loss for the Hawkes model.
 
         Args:

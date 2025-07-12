@@ -1,6 +1,6 @@
-from easy_tpp.data_preprocess.event_tokenizer import EventTokenizer
-from easy_tpp.data_preprocess.dataset import TPPDataset
-from easy_tpp.data_preprocess.data_loader import TPPDataModule
+from easy_tpp.data.preprocess.event_tokenizer import EventTokenizer
+from easy_tpp.data.preprocess.dataset import TPPDataset
+from easy_tpp.data.preprocess.data_loader import TPPDataModule
 
 # For backward compatibility
 TPPDataLoader = TPPDataModule

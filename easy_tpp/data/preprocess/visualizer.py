@@ -170,7 +170,7 @@ class Visualizer:
             json.dump(metadata, f, indent=4)
         print(f"Metadata saved to {json_filename}")
 
-    def plot_inter_event_time_distribution(self, filename: str = "inter_event_time_dist.png"):
+    def delta_times_distribution(self, filename: str = "inter_event_time_dist.png"):
         """
         Plots and saves the distribution of inter-event times.
         In comparison mode, plots both datasets.
@@ -379,7 +379,7 @@ class Visualizer:
         plt.close()
         print(f"QQ plot saved to {save_path}")
 
-    def plot_event_type_distribution(self, filename: str = "event_type_dist.png"):
+    def event_type_distribution(self, filename: str = "event_type_dist.png"):
         """
         Plots and saves the distribution of event types.
         In comparison mode, plots both datasets.
@@ -458,7 +458,7 @@ class Visualizer:
         plt.close()
         print(f"Event type distribution plot saved to {filepath}")
 
-    def plot_sequence_length_distribution(self, filename: str = "sequence_length_dist.png"):
+    def sequence_length_distribution(self, filename: str = "sequence_length_dist.png"):
         """
         Plots and saves the distribution of sequence lengths.
         In comparison mode, plots both datasets.
@@ -536,26 +536,15 @@ class Visualizer:
                 log_scale=False
             )
 
-    def run_visualization(self):
+    def show_all_distributions(self):
         """
         Run all visualization functions and save the plots.
         """
         print("Generating visualization plots...")
         try:
-            self.plot_inter_event_time_distribution()
-            self.plot_event_type_distribution()
-            self.plot_sequence_length_distribution()
+            self.delta_times_distribution()
+            self.event_type_distribution()
+            self.sequence_length_distribution()
             print("All plots generated successfully!")
         except Exception as e:
             print(f"Error occurred during plot generation: {e}")
-            
-    def delta_times_distribution(
-        self, plot=False, save_graph=False, bins=50, figsize=(10, 6), color='royalblue', log_scale=False,
-    ) -> np.ndarray:
-        """
-        Legacy method preserved for backward compatibility.
-        Now calls plot_inter_event_time_distribution instead.
-        """
-        if plot or save_graph:
-            self.plot_inter_event_time_distribution()
-        return self.all_time_deltas

@@ -1,72 +1,92 @@
-# EasyTPP [ICLR 2024]
+# New-LTPP: Advanced Temporal Point Process Framework
 
 <div align="center">
   <a href="PyVersion">
-    <img alt="Python Version" src="https://img.shields.io/badge/python-3.9+-blue.svg">
+    <img alt="Python Version" src="https://img.shields.io/badge/python-3.8+-blue.svg">
   </a>
   <a href="LICENSE-CODE">
     <img alt="Code License" src="https://img.shields.io/badge/license-Apache-000000.svg?&color=f5de53">
   </a>
   <a href="commit">
-    <img alt="Last Commit" src="https://img.shields.io/github/last-commit/ant-research/EasyTemporalPointProcess">
+    <img alt="Last Commit" src="https://img.shields.io/github/last-commit/NzoCs/Learning-point-processes">
   </a>
 </div>
 
 <div align="center">
-<a href="https://pypi.python.org/pypi/easy-tpp/"> 
-  <img alt="PyPI version" src="https://img.shields.io/pypi/v/easy-tpp.svg?style=flat-square&color=b7534" />
+<a href="https://pytorch.org/"> 
+  <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch&logoColor=white" />
 </a>
-<a href="https://static.pepy.tech/personalized-badge/easy-tpp"> 
-  <img alt="Downloads" src="https://static.pepy.tech/personalized-badge/easy-tpp?period=total&units=international_system&left_color=black&right_color=blue&left_text=Downloads" />
+<a href="https://lightning.ai/"> 
+  <img alt="Lightning" src="https://img.shields.io/badge/Lightning-2.0+-792ee5?logo=pytorch-lightning&logoColor=white" />
 </a>
-<a href="https://huggingface.co/easytpp" target="_blank">
-    <img alt="Hugging Face" src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-EasyTPP-ffc107?color=ffc107&logoColor=white" />
+<a href="https://github.com/NzoCs/Learning-point-processes/issues">
+  <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/NzoCs/Learning-point-processes" />
 </a>
-<a href="https://github.com/ant-research/EasyTemporalPointProcess/issues">
-  <img alt="Open Issues" src="https://img.shields.io/github/issues-raw/ant-research/EasyTemporalPointProcess" />
+<a href="https://github.com/NzoCs/Learning-point-processes/stargazers">
+  <img alt="Stars" src="https://img.shields.io/github/stars/NzoCs/Learning-point-processes" />
 </a>
 </div>
 
-`EasyTPP` is an easy-to-use development and application toolkit for [Temporal Point Process](https://mathworld.wolfram.com/TemporalPointProcess.html) (TPP), with key features in configurability, compatibility and reproducibility. We hope this project could benefit both researchers and practitioners with the goal of easily customized development and open benchmarking in TPP.
+**New-LTPP** is a modern, advanced framework for [Temporal Point Process](https://mathworld.wolfram.com/TemporalPointProcess.html) (TPP) research and development. Originally inspired by [EasyTPP](https://github.com/ant-research/EasyTemporalPointProcess), this project has evolved into a comprehensive toolkit with significant enhancements in performance, usability, and research capabilities.
+
+## 🚀 Key Innovations
+
+This framework goes beyond traditional TPP implementations by introducing:
+
+- **🔥 PyTorch Lightning Integration**: Enhanced performance, scalability, and training efficiency
+- **📊 Advanced Loss Functions**: Implementation of cutting-edge losses including MMD, Sinkhorn, and Wasserstein distances
+- **🎯 Robust Evaluation Metrics**: Comprehensive validation using Wasserstein distance and other advanced metrics
+- **🔬 Simulation & Analysis**: Built-in capabilities for model simulation and temporal distribution analysis
+- **⚡ Modern Architecture**: Streamlined, modular design with improved maintainability
+- **🛠️ Enhanced CLI**: Professional command-line interface with interactive modes
 <span id='top'/>
 
+| [Features](#features) | [Project Setup](#project-setup) | [Model List](#model-list) | [Dataset](#dataset) | [Quick Start](#quick-start) | [Benchmark](#benchmark) | [Documentation](#doc) | [Todo List](#todo) | [Citation](#citation) | [Acknowledgment](#acknowledgment) |
 
-
-| <a href='#features'>Features</a>  | <a href='#project-setup'>Project Setup</a> | <a href='#model-list'>Model List</a> | <a href='#dataset'>Dataset</a>  | <a href='#quick-start'>Quick Start</a> | <a href='#benchmark'>Benchmark</a> |<a href='#doc'>Documentation</a> |<a href='#todo'>Todo List</a> | <a href='#citation'>Citation</a> |<a href='#acknowledgment'>Acknowledgement</a> | <a href='#star-history'>Star History</a> | 
-
-## News
+## 🆕 What's New
 <span id='news'/>
 
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [02-17-2024] EasyTPP supports HuggingFace dataset API: all datasets have been published in [HuggingFace Repo](https://huggingface.co/easytpp) and see [tutorial notebook](https://github.com/ant-research/EasyTemporalPointProcess/blob/main/notebooks/easytpp_1_dataset.ipynb) for an example of usage.
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [01-16-2024] Our paper [EasyTPP: Towards Open Benchmarking Temporal Point Process](https://arxiv.org/abs/2307.08097) is accepted by ICLR'2024! 
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [09-30-2023] We published two textual event sequence datasets [GDELT](https://drive.google.com/drive/folders/1Ms-ATMMFf6v4eesfJndyuPLGtX58fCnk) and [Amazon-text-review](https://drive.google.com/drive/folders/1-SLYyrl7ucEG7NpSIF0eSoG9zcbZagZw) that are used in our paper [LAMP](https://arxiv.org/abs/2305.16646), where LLM can be applied for event prediction! See [Documentation](https://ant-research.github.io/EasyTemporalPointProcess/user_guide/dataset.html#preprocessed-datasets) for more details.
-- ![new](https://img.alicdn.com/imgextra/i4/O1CN01kUiDtl1HVxN6G56vN_!!6000000000764-2-tps-43-19.png) [09-30-2023] Two of our papers [Language Model Can Improve Event Prediction by Few-Shot Abductive Reasoning](https://arxiv.org/abs/2305.16646) (LAMP) and [Prompt-augmented Temporal Point Process for Streaming Event Sequence](https://arxiv.org/abs/2310.04993) (PromptTPP) are accepted by NeurIPS'2023!
-<details>
-  <summary>Click to see previous news</summary>
-  <p>
-- [09-02-2023] We published two non-anthropogenic datasets [earthquake](https://drive.google.com/drive/folders/1ubeIz_CCNjHyuu6-XXD0T-gdOLm12rf4) and [volcano eruption](https://drive.google.com/drive/folders/1KSWbNi8LUwC-dxz1T5sOnd9zwAot95Tp?usp=drive_link)! See <a href='#dataset'>Dataset</a> for details.
-- [05-29-2023] We released ``EasyTPP`` v0.0.1!
-- [12-27-2022] Our paper [Bellman Meets Hawkes: Model-Based Reinforcement Learning via Temporal Point Processes](https://arxiv.org/abs/2201.12569) was accepted by AAAI'2023!
-- [10-01-2022] Our paper [HYPRO: A Hybridly Normalized Probabilistic Model for Long-Horizon Prediction of Event Sequences](https://arxiv.org/abs/2210.01753) was accepted by NeurIPS'2022!
-- [05-01-2022] We started to develop `EasyTPP`.</p>
-</details>
+- **[2025-07]** 🔥 **Major Framework Overhaul**: Complete rewrite with PyTorch Lightning integration
+- **[2025-07]** 📊 **Advanced Loss Functions**: Added MMD, Sinkhorn, and Wasserstein distance implementations  
+- **[2025-07]** 🎯 **Enhanced Evaluation**: Comprehensive validation metrics including distributional analysis
+- **[2025-07]** 🛠️ **Modern CLI**: Professional command-line interface with interactive modes
+- **[2025-07]** ⚡ **Performance Boost**: Significant training speed improvements through Lightning optimization
+- **[2025-07]** 🔬 **Simulation Capabilities**: Built-in model simulation and temporal pattern analysis
 
 
-## Features <a href='#top'>[Back to Top]</a>
+## Features
 <span id='features'/>
 
-- **Configurable and customizable**: models are modularized and configurable，with abstract classes to support developing customized
-  TPP models.
-- **Compatible with both Tensorflow and PyTorch framework**: `EasyTPP` implements two equivalent sets of models, which can
-  be run under Tensorflow (both Tensorflow 1.13.1 and Tensorflow 2.0) and PyTorch 1.7.0+ respectively. While the PyTorch models are more popular among researchers, the compatibility with Tensorflow is important for industrial practitioners.
-- **Reproducible**: all the benchmarks can be easily reproduced.
-- **Hyper-parameter optimization**: a pipeline of [optuna](https://github.com/optuna/optuna)-based HPO is provided.
+### 🔥 Core Enhancements
+
+- **Lightning-Powered Performance**: Built on PyTorch Lightning for optimized training, automatic mixed precision, and distributed computing support
+- **Advanced Loss Functions**: Implementation of cutting-edge losses for better model training:
+  - **MMD (Maximum Mean Discrepancy)**: For distribution matching and domain adaptation
+  - **Sinkhorn Loss**: Optimal transport-based loss for sequence alignment
+  - **Wasserstein Distance**: Earth mover's distance for robust evaluation
+- **Comprehensive Evaluation**: Beyond traditional metrics with distributional analysis and temporal pattern validation
+- **Modern Architecture**: Clean, modular codebase with enhanced maintainability and extensibility
+
+### ⚡ Performance & Usability
+
+- **Faster Training**: Significant speed improvements through Lightning optimizations
+- **Better Resource Management**: Automatic GPU utilization and memory optimization
+- **Enhanced CLI**: Professional command-line interface with interactive modes
+- **Real-time Monitoring**: Integrated logging and visualization capabilities
+- **Flexible Configuration**: YAML-based configuration system with validation
+
+### 🔬 Research Capabilities
+
+- **Model Simulation**: Built-in simulation tools for temporal pattern generation
+- **Distribution Analysis**: Comprehensive analysis of generated temporal sequences
+- **Robust Evaluation**: Advanced metrics encouraging more thorough model assessment
+- **Extensible Framework**: Easy integration of new models, losses, and evaluation metrics
 
 
-## Project Setup <a href='#top'>[Back to Top]</a>
+## Project Setup
 <span id='project-setup'/>
 
-This project has been modernized to use `pyproject.toml` for all configuration. Here's how to set it up:
+This project uses modern Python packaging with `pyproject.toml` and PyTorch Lightning for enhanced performance.
 
 ### Prerequisites
 
@@ -77,9 +97,9 @@ This project has been modernized to use `pyproject.toml` for all configuration. 
 ### Quick Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/ant-research/EasyTemporalPointProcess.git
-cd EasyTemporalPointProcess
+# Clone this repository
+git clone https://github.com/NzoCs/Learning-point-processes.git
+cd Learning-point-processes
 
 # Create and activate virtual environment (recommended)
 python -m venv venv
@@ -134,6 +154,7 @@ pre-commit install
 ### Configuration
 
 All project configuration is centralized in `pyproject.toml`:
+
 - Build system configuration
 - Dependencies and optional dependency groups
 - Tool configurations (black, isort, pytest, mypy, etc.)
@@ -147,21 +168,28 @@ All project configuration is centralized in `pyproject.toml`:
 - **`all`**: Installs all optional dependencies for complete functionality
 
 
-## Model List <a href='#top'>[Back to Top]</a>
+## Model List
 <span id='model-list'/>
 
-We provide reference implementations of various state-of-the-art TPP papers:
+New-LTPP implements state-of-the-art TPP models with Lightning integration and enhanced loss functions:
 
-| No  | Publication |     Model     | Paper                                                                                                                                    | Implementation                                                                                                             |
+| No  | Publication |     Model     | Paper                                                                                                                                    | Lightning Implementation                                                                                                   |
 |:---:|:-----------:|:-------------:|:-----------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
-|  1  |   KDD'16    |     RMTPP     | [Recurrent Marked Temporal Point Processes: Embedding Event History to Vector](https://www.kdd.org/kdd2016/papers/files/rpp1081-duA.pdf) | [Tensorflow](easy_tpp/model/tf_model/tf_rmtpp.py)<br/>[Torch](easy_tpp/model/torch_model/torch_rmtpp.py)                   |
-|  2  | NeurIPS'17  |      NHP      | [The Neural Hawkes Process: A Neurally Self-Modulating Multivariate Point Process](https://arxiv.org/abs/1612.09328)                     | [Tensorflow](easy_tpp/model/tf_model/tf_nhp.py)<br/>[Torch](easy_tpp/model/torch_model/torch_nhp.py)                       |
-|  3  | NeurIPS'19  |    FullyNN    | [Fully Neural Network based Model for General Temporal Point Processes](https://arxiv.org/abs/1905.09690)                                | [Tensorflow](easy_tpp/model/tf_model/tf_fullnn.py)<br/>[Torch](easy_tpp/model/torch_model/torch_fullynn.py)                |
-|  4  |   ICML'20   |     SAHP      | [Self-Attentive Hawkes process](https://arxiv.org/abs/1907.07561)                                                                        | [Tensorflow](easy_tpp/model/tf_model/tf_sahp.py)<br/>[Torch](easy_tpp/model/torch_model/torch_sahp.py)                     |
-|  5  |   ICML'20   |      THP      | [Transformer Hawkes process](https://arxiv.org/abs/2002.09291)                                                                           | [Tensorflow](easy_tpp/model/tf_model/tf_thp.py)<br/>[Torch](easy_tpp/model/torch_model/torch_thp.py)                       |
-|  6  |   ICLR'20   | IntensityFree | [Intensity-Free Learning of Temporal Point Processes](https://arxiv.org/abs/1909.12127)                                                  | [Tensorflow](easy_tpp/model/tf_model/tf_intensity_free.py)<br/>[Torch](easy_tpp/model/torch_model/torch_intensity_free.py) |
-|  7  |   ICLR'21   |    ODETPP     | [Neural Spatio-Temporal Point Processes (simplified)](https://arxiv.org/abs/2011.04583)                                                  | [Tensorflow](easy_tpp/model/tf_model/tf_ode_tpp.py)<br/>[Torch](easy_tpp/model/torch_model/torch_ode_tpp.py)               |
-|  8  |   ICLR'22   |    AttNHP     | [Transformer Embeddings of Irregularly Spaced Events and Their Participants](https://arxiv.org/abs/2201.00044)                           | [Tensorflow](easy_tpp/model/tf_model/tf_attnhp.py)<br/>[Torch](easy_tpp/model/torch_model/torch_attnhp.py)                 |
+|  1  |   KDD'16    |     RMTPP     | [Recurrent Marked Temporal Point Processes: Embedding Event History to Vector](https://www.kdd.org/kdd2016/papers/files/rpp1081-duA.pdf) | [Lightning Module](easy_tpp/model/torch_model/torch_rmtpp.py)                   |
+|  2  | NeurIPS'17  |      NHP      | [The Neural Hawkes Process: A Neurally Self-Modulating Multivariate Point Process](https://arxiv.org/abs/1612.09328)                     | [Lightning Module](easy_tpp/model/torch_model/torch_nhp.py)                       |
+|  3  | NeurIPS'19  |    FullyNN    | [Fully Neural Network based Model for General Temporal Point Processes](https://arxiv.org/abs/1905.09690)                                | [Lightning Module](easy_tpp/model/torch_model/torch_fullynn.py)                |
+|  4  |   ICML'20   |     SAHP      | [Self-Attentive Hawkes process](https://arxiv.org/abs/1907.07561)                                                                        | [Lightning Module](easy_tpp/model/torch_model/torch_sahp.py)                     |
+|  5  |   ICML'20   |      THP      | [Transformer Hawkes process](https://arxiv.org/abs/2002.09291)                                                                           | [Lightning Module](easy_tpp/model/torch_model/torch_thp.py)                       |
+|  6  |   ICLR'20   | IntensityFree | [Intensity-Free Learning of Temporal Point Processes](https://arxiv.org/abs/1909.12127)                                                  | [Lightning Module](easy_tpp/model/torch_model/torch_intensity_free.py) |
+|  7  |   ICLR'21   |    ODETPP     | [Neural Spatio-Temporal Point Processes (simplified)](https://arxiv.org/abs/2011.04583)                                                  | [Lightning Module](easy_tpp/model/torch_model/torch_ode_tpp.py)               |
+|  8  |   ICLR'22   |    AttNHP     | [Transformer Embeddings of Irregularly Spaced Events and Their Participants](https://arxiv.org/abs/2201.00044)                           | [Lightning Module](easy_tpp/model/torch_model/torch_attnhp.py)                 |
+
+### 🆕 Enhanced Loss Functions
+
+- **MMD Loss**: Maximum Mean Discrepancy for distribution matching
+- **Sinkhorn Loss**: Optimal transport-based sequence alignment
+- **Wasserstein Loss**: Earth mover's distance for robust training
+- **Custom Validation Metrics**: Advanced evaluation beyond traditional TPP metrics
 
 
 
@@ -335,6 +363,69 @@ if __name__ == '__main__':
 
 A more detailed example can be found at [OnlineDoc - QuickStart](https://ant-research.github.io/EasyTemporalPointProcess/get_started/quick_start.html).
 
+### Modern CLI Interface
+
+This project now includes a modern CLI interface integrated into the Makefile for easy access:
+
+#### Quick CLI Commands
+
+```bash
+# Show all available commands
+make help
+
+# Show system information
+make info
+
+# List available configurations
+make configs
+
+# Run interactive mode
+make interactive
+
+# Validate a configuration
+make validate CONFIG=configs/examples_runner_config.yaml EXP=THP DATASET=H2expc
+
+# Run an experiment
+make run CONFIG=configs/examples_runner_config.yaml EXP=THP DATASET=H2expc PHASE=test
+```
+
+#### CLI Command Reference
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `make cli-info` | Display system information | `make cli-info` |
+| `make cli-list-configs` | List configuration files | `make cli-list-configs DIR=./configs` |
+| `make cli-interactive` | Launch interactive mode | `make cli-interactive` |
+| `make cli-validate` | Validate configuration | `make cli-validate CONFIG=config.yaml EXP=THP DATASET=H2expc` |
+| `make cli-run` | Run experiment | `make cli-run CONFIG=config.yaml EXP=THP DATASET=H2expc PHASE=test` |
+
+#### Advanced Usage
+
+```bash
+# Run with custom parameters
+make cli-run CONFIG=configs/examples_runner_config.yaml EXP=THP DATASET=H2expc PHASE=train DEVICE=cpu VERBOSE=1
+
+# Quick system test
+make cli-quick-test
+
+# Pre-defined examples
+make cli-example-thp    # THP model example
+make cli-example-nhp    # NHP model example
+```
+
+#### Parameters
+
+- `CONFIG`: Path to configuration YAML file
+- `EXP`: Experiment ID (e.g., THP, NHP, SAHP)
+- `DATASET`: Dataset ID (e.g., H2expc, taxi, retweet)
+- `PHASE`: Execution phase (train, test, predict, validation, all)
+- `CHECKPOINT`: Path to checkpoint file (optional)
+- `OUTPUT`: Output directory (optional)
+- `DEVICE`: Computation device (auto, cpu, gpu)
+- `SEED`: Random seed (optional)
+- `VERBOSE`: Enable verbose logging (optional)
+- `DIR`: Directory for configuration listing (optional)
+
 
 ## Documentation <a href='#top'>[Back to Top]</a>
 <span id='doc'/>
@@ -370,22 +461,102 @@ python run_retweet.py
 This project is licensed under the [Apache License (Version 2.0)](https://github.com/alibaba/EasyNLP/blob/master/LICENSE). This toolkit also contains some code modified from other repos under other open-source licenses. See the [NOTICE](https://github.com/ant-research/EasyTPP/blob/master/NOTICE) file for more information.
 
 
-## Todo List <a href='#top'>[Back to Top]</a>
+## Todo List
+
 <span id='todo'/>
 
-- [x] New dataset:
-  - [x] Earthquake: the source data is available in [USGS](https://www.usgs.gov/programs/earthquake-hazards/science/earthquake-data).
-  - [x] Volcano eruption: the source data is available in [NCEI](https://www.ngdc.noaa.gov/hazard/volcano.shtml).
-- [ ] New model:
-  - [ ] Meta Temporal Point Process, ICLR 2023.
-  - [ ] Model-based RL via TPP, AAAI 2022. 
+### 🔥 Upcoming Features
 
-## Citation <a href='#top'>[Back to Top]</a>
+#### Advanced Loss Functions & Metrics
+
+- [ ] **Optimal Transport Losses**:
+  - [ ] Gromov-Wasserstein distance implementation
+  - [ ] Fused optimal transport for multivariate sequences
+- [ ] **Information-Theoretic Metrics**:
+  - [ ] Mutual information-based evaluation
+  - [ ] KL divergence variants for temporal distributions
+- [ ] **Geometric Deep Learning**:
+  - [ ] Graph neural network integration for event dependencies
+  - [ ] Manifold learning for temporal embeddings
+
+#### Enhanced Model Capabilities
+
+- [ ] **Multi-scale Temporal Modeling**:
+  - [ ] Hierarchical attention mechanisms
+  - [ ] Wavelet-based temporal decomposition
+- [ ] **Causal Discovery**:
+  - [ ] Granger causality integration
+  - [ ] Causal inference for event relationships
+- [ ] **Meta-Learning**:
+  - [ ] Few-shot adaptation for new event types
+  - [ ] Transfer learning across domains
+
+#### Advanced Evaluation & Analysis
+
+- [ ] **Distributional Testing**:
+  - [ ] Kolmogorov-Smirnov tests for generated sequences
+  - [ ] Anderson-Darling goodness-of-fit tests
+- [ ] **Temporal Pattern Mining**:
+  - [ ] Automatic pattern discovery in generated sequences
+  - [ ] Burst detection and analysis
+- [ ] **Uncertainty Quantification**:
+  - [ ] Conformal prediction intervals
+  - [ ] Bayesian neural network integration
+
+#### Performance & Scalability
+
+- [ ] **Distributed Training**:
+  - [ ] Multi-GPU scaling improvements
+  - [ ] Distributed data parallel optimization
+- [ ] **Model Compression**:
+  - [ ] Knowledge distillation for TPP models
+  - [ ] Pruning and quantization techniques
+- [ ] **Streaming Inference**:
+  - [ ] Real-time prediction capabilities
+  - [ ] Online learning adaptation
+
+### 🛠️ Technical Improvements
+
+- [ ] **Enhanced CLI**:
+  - [ ] Configuration templates for common use cases
+  - [ ] Automated hyperparameter suggestions
+- [ ] **Documentation**:
+  - [ ] Comprehensive tutorials for advanced features
+  - [ ] Best practices guide for evaluation metrics
+- [ ] **Testing & Quality**:
+  - [ ] Comprehensive unit test coverage
+  - [ ] Integration tests for all loss functions
+  - [ ] Performance benchmarking suite
+
+### 📊 Research Extensions
+
+- [ ] **New Datasets**:
+  - [ ] Financial market events integration
+  - [ ] Social media temporal patterns
+  - [ ] IoT sensor event sequences
+- [ ] **Benchmark Studies**:
+  - [ ] Comprehensive comparison with traditional metrics
+  - [ ] Robustness analysis under distribution shift
+  - [ ] Computational efficiency comparisons
+
+### 🔬 Experimental Features
+
+- [ ] **Generative Modeling**:
+  - [ ] VAE integration for temporal point processes
+  - [ ] GAN-based sequence generation
+- [ ] **Reinforcement Learning**:
+  - [ ] RL-based sequence optimization
+  - [ ] Multi-agent temporal modeling
+
+## Citation
 
 <span id='citation'/>
 
-If you find `EasyTPP` useful for your research or development, please cite the following <a href="https://arxiv.org/abs/2307.08097" target="_blank">paper</a>:
-```
+### Original EasyTPP Citation
+
+This project is greatly inspired by the original EasyTPP framework. If you use this work, please cite the original paper:
+
+```bibtex
 @inproceedings{xue2024easytpp,
       title={EasyTPP: Towards Open Benchmarking Temporal Point Processes}, 
       author={Siqiao Xue and Xiaoming Shi and Zhixuan Chu and Yan Wang and Hongyan Hao and Fan Zhou and Caigao Jiang and Chen Pan and James Y. Zhang and Qingsong Wen and Jun Zhou and Hongyuan Mei},
@@ -395,24 +566,39 @@ If you find `EasyTPP` useful for your research or development, please cite the f
 }
 ```
 
-## Acknowledgment <a href='#top'>[Back to Top]</a>
+### This Project
+
+If you find New-LTPP useful for your research, please consider citing this repository:
+
+```bibtex
+@software{new_ltpp2025,
+      title={New-LTPP: Advanced Temporal Point Process Framework},
+      author={Enzo Cao},
+      year={2025},
+      url={https://github.com/NzoCs/Learning-point-processes},
+      note={Advanced TPP framework with Lightning integration and enhanced evaluation metrics}
+}
+```
+
+## Acknowledgment
+
 <span id='acknowledgment'/>
 
-The project is jointly initiated by Machine Intelligence Group, Alipay and DAMO Academy, Alibaba. 
+### Original EasyTPP Team
 
-The following repositories are used in `EasyTPP`, either in close to original form or as an inspiration:
+This project builds upon the excellent foundation provided by the [EasyTPP](https://github.com/ant-research/EasyTemporalPointProcess) team from Machine Intelligence Group, Alipay and DAMO Academy, Alibaba. We are grateful for their pioneering work in making TPP research more accessible.
 
-- [EasyRec](https://github.com/alibaba/EasyRec)
-- [EasyNLP](https://github.com/alibaba/EasyNLP)
-- [FuxiCTR](https://github.com/xue-pai/FuxiCTR)
-- [Neural Hawkes Process](https://github.com/hongyuanmei/neurawkes)
-- [Neural Hawkes Particle Smoothing](https://github.com/hongyuanmei/neural-hawkes-particle-smoothing)
-- [Attentive Neural Hawkes Process](https://github.com/yangalan123/anhp-andtt)
-- [Huggingface - transformers](https://github.com/huggingface/transformers)
+### Key Inspirations
 
+The following repositories and frameworks have influenced this work:
 
-## Star History <a href='#top'>[Back to Top]</a>
-<span id='star-history'/>
+- **[EasyTPP](https://github.com/ant-research/EasyTemporalPointProcess)**: Original foundation and inspiration
+- **[PyTorch Lightning](https://lightning.ai/)**: High-performance training framework
+- **[Neural Hawkes Process](https://github.com/hongyuanmei/neurawkes)**: Fundamental TPP implementations
+- **[Neural Hawkes Particle Smoothing](https://github.com/hongyuanmei/neural-hawkes-particle-smoothing)**: Advanced TPP techniques
+- **[Attentive Neural Hawkes Process](https://github.com/yangalan123/anhp-andtt)**: Attention mechanisms in TPP
 
-![Star History Chart](https://api.star-history.com/svg?repos=ant-research/EasyTemporalPointProcess&type=Date)
+### Advanced Metrics & Losses
+
+Special thanks to the research community for developing the advanced evaluation metrics and loss functions implemented in this framework, including contributions from optimal transport, distributional analysis, and robust machine learning communities.
 

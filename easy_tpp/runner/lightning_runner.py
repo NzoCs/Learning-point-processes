@@ -1,5 +1,5 @@
 from easy_tpp.models import BaseModel
-from easy_tpp.data_preprocess import TPPDataModule
+from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.utils import logger
 from easy_tpp.evaluation.distribution_analysis_helper import TemporalPointProcessComparatorFactory
@@ -15,9 +15,9 @@ import os
 
 
 class Trainer:
-    
-    def __init__(self, config: RunnerConfig, checkpoint_path : Optional[str] = None, output_dir=None, **kwargs):
-        
+
+    def __init__(self, config: RunnerConfig, checkpoint_path: Optional[str] = None, output_dir=None, **kwargs) -> None:
+
         """_summary__.
         Args:
             config (RunnerConfig): Configuration object containing all the necessary parameters for training.

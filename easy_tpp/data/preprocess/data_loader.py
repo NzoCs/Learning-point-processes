@@ -36,7 +36,7 @@ class TPPDataModule(pl.LightningDataModule):
         self.test_data = None
         self.predict_data = None
 
-    def build_input(self, source_dir, data_format, split):
+    def build_input(self, source_dir: str, data_format: str = "json", split: str = 'train') -> dict:
         """Helper function to load and process dataset based on file format.
 
         Args:
@@ -57,7 +57,7 @@ class TPPDataModule(pl.LightningDataModule):
                 logger.error(f"Error loading data from {source_dir}: {e}")
                 raise e
 
-    def _build_input_from_pkl(self, source_dir, split):
+    def _build_input_from_pkl(self, source_dir: str, split: str) -> dict:
         """Load and process data from a pickle file.
 
         Args:
@@ -78,7 +78,7 @@ class TPPDataModule(pl.LightningDataModule):
             'time_delta_seqs': [[x["time_since_last_event"] for x in seq] for seq in source_data]
         }
 
-    def _build_input_from_json(self, source_dir, split):
+    def _build_input_from_json(self, source_dir: str, split: str) -> dict:
         """Load and process data from a JSON file.
 
         Args:
@@ -113,7 +113,7 @@ class TPPDataModule(pl.LightningDataModule):
         """Prepare data if needed (download data, etc.)."""
         # This method is called only once and on only one GPU
         pass
-    
+
     def setup(self, stage=None):
         """Set up datasets for each stage.
         
@@ -133,16 +133,11 @@ class TPPDataModule(pl.LightningDataModule):
             logger.info(f"Validation dataset created with {len(self.val_dataset)} sequences")
         
         # Set up dataset for testing
-        if stage == 'test' or "predict" or "simul":
+        if stage == 'test' or stage == 'predict' or stage == 'simulation':
             test_data_dir = self.data_config.get_data_dir('test')
             self.test_data = self.build_input(test_data_dir, self.data_config.data_format, 'test')
             self.test_dataset = TPPDataset(self.test_data)
-        
-        if stage is None :
-            logger.info("No stage specified, loading all data")
-            data_dir = self.data_config.get_data_dir()
-            self.data = self.build_input(data_dir, self.data_config.data_format, split=None)
-            self.dataset = TPPDataset(self.data)
+
             
     def train_dataloader(self):
         """Return the training data loader.

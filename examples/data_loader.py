@@ -1,11 +1,18 @@
+#!/usr/bin/env python3
 import random
+import sys
+from pathlib import Path
+from typing import List, Dict, Any
 
-from easy_tpp.config_factory import DataSpecConfig
-from easy_tpp.data_preprocess import EventTokenizer
-from easy_tpp.data_preprocess.dataset import TPPDataset, get_data_loader
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from easy_tpp.config_factory import DataConfig
+from easy_tpp.data.preprocess import TPPDataModule
 
 
-def make_raw_data():
+def make_raw_data() -> List[List[Dict[str, Any]]]:
     data = [
         [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 0}],
         [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 1}],
@@ -20,32 +27,32 @@ def make_raw_data():
                             "time_since_start": start_time,
                             "type_event": random.randint(0, 10)
                             })
-
     return data
 
 
-def main():
-    source_data = make_raw_data()
-
-    time_seqs = [[x["time_since_start"] for x in seq] for seq in source_data]
-    type_seqs = [[x["type_event"] for x in seq] for seq in source_data]
-    time_delta_seqs = [[x["time_since_last_event"] for x in seq] for seq in source_data]
-
-    input_data = {'time_seqs': time_seqs,
-                  'type_seqs': type_seqs,
-                  'time_delta_seqs': time_delta_seqs}
-
-    config = DataSpecConfig.parse_from_yaml_config({'num_event_types': 11, 'batch_size': 1,
-                                                    'pad_token_id': 11})
-
-    dataset = TPPDataset(input_data)
-
-    tokenizer = EventTokenizer(config)
-
-    loader = get_data_loader(dataset, 'torch', tokenizer)
-
-    for batch in loader:
-        print(batch)
+def main() -> None:
+    # Create data config
+    data_config = DataConfig(
+        dataset_id="example_data",
+        data_format="dict",
+        num_event_types=11,
+        pad_token_id=11,
+        batch_size=2
+    )
+    
+    # Create data module
+    datamodule = TPPDataModule(data_config)
+    
+    # Setup data module
+    datamodule.setup(stage='fit')
+    
+    # Get data loaders
+    train_loader = datamodule.train_dataloader()
+    val_loader = datamodule.val_dataloader()
+    test_loader = datamodule.test_dataloader()
+    
+    print("Train loader created successfully")
+    print(f"Number of batches in train loader: {len(train_loader)}")
 
 
 if __name__ == '__main__':

@@ -1,0 +1,91 @@
+data:
+
+  taxi:
+    data_format: json
+    train_dir: easytpp/taxi
+    valid_dir: easytpp/taxi
+    test_dir: easytpp/taxi
+    data_specs:
+      num_event_types: 10
+      pad_token_id: 10
+      padding_side: left
+ 
+  taobao:
+    data_format: json
+    train_dir: easytpp/taobao
+    valid_dir: easytpp/taobao
+    test_dir: easytpp/taobao
+    data_specs:
+      num_event_types: 17
+      pad_token_id: 17
+      padding_side: left
+
+  amazon:
+    data_format: json
+    train_dir: easytpp/amazon
+    valid_dir: easytpp/amazon
+    test_dir: easytpp/amazon
+    data_specs:
+      num_event_types: 16
+      pad_token_id: 16
+      padding_side: left
+
+  test:
+    data_format: json
+    train_dir: NzoCs/test_dataset
+    valid_dir: NzoCs/test_dataset
+    test_dir: NzoCs/test_dataset
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+      
+  H2expi:
+    data_format: json
+    train_dir: NzoCs/H2expi
+    valid_dir: NzoCs/H2expi
+    test_dir: NzoCs/H2expi
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  H2expc:
+    data_format: json
+    train_dir: NzoCs/H2expc
+    valid_dir: NzoCs/H2expc
+    test_dir: NzoCs/H2expc
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  hawkes1:
+    data_format: json
+    train_dir: NzoCs/hawkes1
+    valid_dir: NzoCs/hawkes1
+    test_dir: NzoCs/hawkes1
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left
+  
+  hawkes2:
+    data_format: json
+    train_dir: NzoCs/hawkes2
+    valid_dir: NzoCs/hawkes2
+    test_dir: NzoCs/hawkes2
+    data_specs:
+      num_event_types: 2
+      pad_token_id: 2
+      padding_side: left
+
+  self_correcting:
+    data_format: json
+    train_dir: NzoCs/self_correcting
+    valid_dir: NzoCs/self_correcting
+    test_dir: NzoCs/self_correcting
+    data_specs:
+      num_event_types: 1
+      pad_token_id: 1
+      padding_side: left

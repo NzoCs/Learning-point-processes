@@ -1,6 +1,14 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union, List
 from easy_tpp.config_factory.base import BaseConfig, ConfigValidationError, config_factory, config_class
+
+
+@dataclass
+class SplitDirectories:
+    """Lightweight dataclass containing the three required split directories."""
+    train_dir: str
+    valid_dir: str
+    test_dir: str
 
 
 @config_class('tokenizer_config')
@@ -125,20 +133,14 @@ class DataConfig(BaseConfig):
     """
     Configuration for dataset and data processing.
     Args:
-        train_dir (Optional[str]): Directory for training data.
-        valid_dir (Optional[str]): Directory for validation data.
-        test_dir (Optional[str]): Directory for test data.
-        source_dir (Optional[str]): Source directory for the dataset.
+        data_dirs (Union[SplitDirectories, str]): Either split directories or source directory.
         data_format (Optional[str]): Format of the dataset files (e.g., 'csv', 'json').
         dataset_id (Optional[str]): Identifier for the dataset.
         data_loading_specs (DataLoadingSpecsConfig): Specifications for loading the data.
         data_specs (TokenizerConfig): Specifications for tokenization and event types.
     """
 
-    train_dir: Optional[str] = None
-    valid_dir: Optional[str] = None
-    test_dir: Optional[str] = None
-    source_dir: Optional[str] = None
+    data_dirs: Union[SplitDirectories, str]
     data_format: Optional[str] = None
     dataset_id: Optional[str] = None
     data_loading_specs: DataLoadingSpecsConfig = field(default_factory=DataLoadingSpecsConfig)
@@ -147,29 +149,83 @@ class DataConfig(BaseConfig):
 
     def __post_init__(self):
         if self.data_format is None:
-            if self.train_dir is not None:
-                self.data_format = self.train_dir.split('.')[-1]
-            elif self.source_dir is not None:
-                self.data_format = self.source_dir.split('.')[-1]
+            if isinstance(self.data_dirs, SplitDirectories):
+                self.data_format = self.data_dirs.train_dir.split('.')[-1]
+            elif isinstance(self.data_dirs, str):
+                self.data_format = self.data_dirs.split('.')[-1]
         super().__post_init__()
 
+    @property
+    def train_dir(self) -> Optional[str]:
+        """Access to train directory."""
+        return self.data_dirs.train_dir if isinstance(self.data_dirs, SplitDirectories) else None
+
+    @property
+    def valid_dir(self) -> Optional[str]:
+        """Access to validation directory."""
+        return self.data_dirs.valid_dir if isinstance(self.data_dirs, SplitDirectories) else None
+
+    @property
+    def test_dir(self) -> Optional[str]:
+        """Access to test directory."""
+        return self.data_dirs.test_dir if isinstance(self.data_dirs, SplitDirectories) else None
+
+    @property
+    def source_dir(self) -> Optional[str]:
+        """Access to source directory."""
+        return self.data_dirs if isinstance(self.data_dirs, str) else None
+
     def get_yaml_config(self) -> Dict[str, Any]:
-        return {
-            'train_dir': self.train_dir,
-            'valid_dir': self.valid_dir,
-            'test_dir': self.test_dir,
-            'source_dir': self.source_dir,
+        config = {
             'data_format': self.data_format,
             'dataset_id': self.dataset_id,
             'data_loading_specs': self.data_loading_specs.get_yaml_config() if hasattr(self.data_loading_specs, 'get_yaml_config') else self.data_loading_specs,
             'data_specs': self.data_specs.get_yaml_config() if hasattr(self.data_specs, 'get_yaml_config') else self.data_specs,
         }
+        
+        if isinstance(self.data_dirs, SplitDirectories):
+            config.update({
+                'train_dir': self.data_dirs.train_dir,
+                'valid_dir': self.data_dirs.valid_dir,
+                'test_dir': self.data_dirs.test_dir
+            })
+        else:
+            config['source_dir'] = self.data_dirs
+            
+        return config
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> 'DataConfig':
         dls = config_dict.get('data_loading_specs', {})
         ds = config_dict.get('data_specs', {})
         config_dict = dict(config_dict)
+        
+        # Handle backward compatibility: convert old format to new format
+        train_dir = config_dict.pop('train_dir', None)
+        valid_dir = config_dict.pop('valid_dir', None) 
+        test_dir = config_dict.pop('test_dir', None)
+        source_dir = config_dict.pop('source_dir', None)
+        
+        # Determine data_dirs based on provided parameters
+        if train_dir or valid_dir or test_dir:
+            if not all([train_dir, valid_dir, test_dir]):
+                raise ConfigValidationError(
+                    "When providing split directories, all three (train_dir, valid_dir, test_dir) must be specified.",
+                    "split_directories"
+                )
+            config_dict['data_dirs'] = SplitDirectories(
+                train_dir=train_dir,
+                valid_dir=valid_dir, 
+                test_dir=test_dir
+            )
+        elif source_dir:
+            config_dict['data_dirs'] = source_dir
+        else:
+            raise ConfigValidationError(
+                "Either provide split directories (train_dir, valid_dir, test_dir) or a source_dir.",
+                "data_directories"
+            )
+        
         config_dict['data_loading_specs'] = DataLoadingSpecsConfig.from_dict(dls) if not isinstance(dls, DataLoadingSpecsConfig) else dls
         config_dict['data_specs'] = TokenizerConfig.from_dict(ds) if not isinstance(ds, TokenizerConfig) else ds
         return cls(**config_dict)
@@ -177,16 +233,22 @@ class DataConfig(BaseConfig):
     def get_data_dir(self, split=None) -> Optional[str]:
         if split in ['train', 'dev', 'valid', 'test']:
             split = split.lower()
-            if split == 'train':
-                return self.train_dir
-            elif split in ['dev', 'valid']:
-                return self.valid_dir
+            if isinstance(self.data_dirs, SplitDirectories):
+                if split == 'train':
+                    return self.data_dirs.train_dir
+                elif split in ['dev', 'valid']:
+                    return self.data_dirs.valid_dir
+                else:  # test
+                    return self.data_dirs.test_dir
             else:
-                return self.test_dir
+                raise ValueError(f"Cannot get split '{split}' from source directory. Use split=None for source directory.")
+        
         if split is None:
-            if self.source_dir is None:
-                raise ValueError("The dataset does not have a split, please provide the source dir.")
-            return self.source_dir
+            if isinstance(self.data_dirs, str):
+                return self.data_dirs
+            else:
+                raise ValueError("The dataset has splits, please provide a split name (train, valid, test).")
+        
         raise ValueError(f"Unknown split: {split}. Please provide a valid split name.")
 
     def get_required_fields(self):

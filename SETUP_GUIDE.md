@@ -1,202 +1,196 @@
-# EasyTPP - Guide de Configuration Rapide
+# EasyTPP - Quick Setup Guide
 
-Ce guide vous aide à configurer rapidement le projet EasyTPP avec le nouveau système `pyproject.toml`.
+This guide helps you quickly set up the EasyTPP project with the new `pyproject.toml` system.
 
-## Prérequis
+## Prerequisites
 
-- Python 3.8 ou supérieur
-- pip 21.3+ (pour le support complet de pyproject.toml)
+- Python 3.8 or higher
+- pip 21.3+ (for full pyproject.toml support)
 - Git
 
-## Installation Rapide
+## Quick Installation
 
-### 1. Cloner le projet
+### 1. Clone the project
 
 ```bash
 git clone https://github.com/ant-research/EasyTemporalPointProcess.git
 cd EasyTemporalPointProcess
 ```
 
-### 2. Créer un environnement virtuel (recommandé)
+### 2. Create a virtual environment (recommended)
 
 ```bash
-# Créer l'environnement virtuel
+# Create virtual environment
 python -m venv venv
 
-# Activer l'environnement
-# Sur Windows :
+# Activate environment
+# On Windows:
 venv\Scripts\activate
-# Sur macOS/Linux :
+# On macOS/Linux:
 source venv/bin/activate
 ```
 
-### 3. Installer le projet
+### 3. Install the project
 
 ```bash
-# Installation complète (recommandée pour le développement)
+# Full installation (recommended for development)
 pip install -e ".[all]"
 
-# Ou installation minimale
+# Or minimal installation
 pip install -e .
 ```
 
-### 4. Vérifier l'installation
+### 4. Verify installation
 
 ```bash
 python check_installation.py
 ```
 
-## Options d'Installation
+## Installation Options
 
-Choisissez l'installation qui correspond à vos besoins :
+Choose the installation that matches your needs:
 
 ```bash
-# Installation de base (dépendances principales uniquement)
+# Basic installation (main dependencies only)
 pip install -e .
 
-# Outils de développement (tests, linting, formatage)
+# Development tools (tests, linting, formatting)
 pip install -e ".[dev]"
 
-# Outils CLI (interfaces en ligne de commande)
+# CLI tools (command line interfaces)
 pip install -e ".[cli]"
 
-# Outils de documentation
+# Documentation tools
 pip install -e ".[docs]"
 
-# Tout installer
+# Install everything
 pip install -e ".[all]"
 ```
 
-## Configuration des Outils de Développement
+## Development Tools Configuration
 
-Le projet inclut des outils préconfigurés pour le développement :
+The project includes preconfigured tools for development:
 
-### Makefile (Unix/Linux/Windows avec Git Bash)
+### Makefile (Unix/Linux/Windows with Git Bash)
 
-Le projet utilise un Makefile pour automatiser les tâches courantes. Sur Windows, vous devez avoir installé :
-- `make` (installé via `winget install ezwinports.make`)
-- Les outils Unix de Git Bash (inclus avec Git)
+The project uses a Makefile to automate common tasks. On Windows, you must have installed:
 
-**Configuration automatique sur Windows :**
+- `make`
+- Git Bash Unix tools (to use make on windows too)
+
+**Automatic setup on Windows:**
+
 ```bash
-# Ajouter make et les outils Unix au PATH
+# Add make and Unix tools to PATH
 $makePath = "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\ezwinports.make_Microsoft.Winget.Source_8wekyb3d8bbwe\bin"
 $gitUnixPath = "C:\Program Files\Git\usr\bin"
 $env:PATH += ";$makePath;$gitUnixPath"
 ```
 
-**Commandes Makefile disponibles :**
+**Available Makefile commands:**
+
 ```bash
-make help          # Afficher l'aide
-make install-all   # Installation complète
-make check         # Vérification de l'installation
-make test          # Exécuter les tests
-make format        # Formater le code
-make lint          # Vérifier le code
-make clean         # Nettoyer les fichiers temporaires
-make demo          # Démonstration rapide
+make help          # Show help
+make install-all   # Full installation
+make check         # Installation verification
+make test          # Run tests
+make format        # Format code
+make lint          # Check code
+make clean         # Clean temporary files
+make demo          # Quick demonstration
 ```
 
 ### Pre-commit hooks
 
 ```bash
-# Installer les hooks pre-commit (après avoir installé les dépendances dev)
+# Install pre-commit hooks (after installing dev dependencies)
 pre-commit install
 ```
 
-### Outils disponibles
+### Available tools
 
-- **black** : Formatage automatique du code
-- **isort** : Organisation des imports
-- **flake8** : Vérification de la qualité du code
-- **mypy** : Vérification des types statiques
-- **pytest** : Tests avec couverture
+- **black**: Automatic code formatting
+- **isort**: Import organization
+- **flake8**: Code quality checking
+- **mypy**: Static type checking
+- **pytest**: Testing with coverage
 
-### Utilisation des outils
+### Using the tools
 
 ```bash
-# Formater le code
+# Format code
 black .
 
-# Organiser les imports
+# Organize imports
 isort .
 
-# Vérifier le code
+# Check code
 flake8
 
-# Vérifier les types
+# Check types
 mypy easy_tpp
 
-# Lancer les tests
+# Run tests
 pytest
 ```
 
-## Structure du Projet
+## Project Structure
 
 ```
 EasyTemporalPointProcess/
-├── pyproject.toml          # Configuration principale du projet
-├── check_installation.py   # Script de vérification
-├── README.md              # Documentation principale
-├── easy_tpp/              # Code source principal
-├── examples/              # Exemples d'utilisation
-├── tests/                 # Tests unitaires
+├── pyproject.toml          # Main project configuration
+├── check_installation.py   # Verification script
+├── README.md              # Main documentation
+├── easy_tpp/              # Main source code
+├── examples/              # Usage examples
+├── tests/                 # Unit tests
 └── docs/                  # Documentation
 ```
 
-## Configuration pyproject.toml
+## pyproject.toml Configuration
 
-Toute la configuration du projet est centralisée dans `pyproject.toml` :
+All project configuration is centralized in `pyproject.toml`:
 
-- Configuration du système de build
-- Dépendances et groupes de dépendances optionnelles
-- Configuration des outils (black, isort, pytest, mypy, etc.)
-- Métadonnées du projet et URLs
+- Build system configuration
+- Dependencies and optional dependency groups
+- Tool configuration (black, isort, pytest, mypy, etc.)
+- Project metadata and URLs
 
-## Groupes de Dépendances
+## Dependency Groups
 
-- **`cli`** : Interfaces terminal riches, outils en ligne de commande
-- **`docs`** : Système de documentation Sphinx, thèmes et extensions
-- **`dev`** : Outils de workflow de développement (tests, linting, formatage)
-- **`all`** : Installe toutes les dépendances optionnelles
+- **`cli`**: Rich terminal interfaces, command line tools
+- **`docs`**: Sphinx documentation system, themes and extensions
+- **`dev`**: Development workflow tools (tests, linting, formatting)
+- **`all`**: Installs all optional dependencies
 
-## Résolution de Problèmes
+## Troubleshooting
 
-### Erreur de version Python
+### Python version error
 
 ```bash
-# Vérifier votre version Python
+# Check your Python version
 python --version
 
-# Mise à jour recommandée vers Python 3.8+
+# Recommended upgrade to Python 3.8+
 ```
 
-### Erreur de pip
+### pip error
 
 ```bash
-# Mettre à jour pip
+# Update pip
 python -m pip install --upgrade pip
 
-# Utiliser python -m pip au lieu de pip directement
+# Use python -m pip instead of pip directly
 python -m pip install -e ".[all]"
-```
-
-### Problèmes d'environnement virtuel
-
-```bash
-# Recréer l'environnement virtuel
-rm -rf venv  # ou rmdir /s venv sur Windows
-python -m venv venv
-# Réactiver et réinstaller
 ```
 
 ## Support
 
-Si vous rencontrez des problèmes :
+If you encounter problems:
 
-1. Vérifiez que Python 3.8+ est installé
-2. Lancez `python check_installation.py` pour diagnostiquer
-3. Consultez la documentation complète dans README.md
-4. Créez une issue sur GitHub si le problème persiste
+1. Check that Python 3.8+ is installed
+2. Run `python check_installation.py` to diagnose
+3. Consult the complete documentation in README.md
+4. Create an issue on GitHub if the problem persists
 
 ---

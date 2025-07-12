@@ -1,90 +1,84 @@
-# Makefile pour EasyTPP
-# Automatise l'installation et les tâches communes avec pyproject.toml
+# Makefile for EasyTPP
+# Automates installation and common tasks with pyproject.toml
 
-.PHONY: help install install-dev install-all test clean setup docs format lint check
+.PHONY: help install install-dev install-all test clean setup docs format lint check cli-run cli-interactive cli-list-configs cli-validate cli-info
 
 # Variables
 PYTHON = python
 PIP = pip
+CLI_SCRIPT = scripts/easytpp_cli.py
 
-# Couleurs pour l'affichage
-BLUE = \033[1;34m
-GREEN = \033[1;32m
-YELLOW = \033[1;33m
-RED = \033[1;31m
-NC = \033[0m # No Color
-
-help: ## Affiche cette aide
-	@echo "$(BLUE)EasyTPP - Commandes disponibles:$(NC)"
+help: ## Display this help
+	@echo "EasyTPP - Available commands:"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "$(GREEN)%-15s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-15s %s\n", $$1, $$2}'
 
-install: ## Installation de base (dépendances principales uniquement)
-	@echo "$(BLUE)🔧 Installation de base d'EasyTPP...$(NC)"
+install: ## Basic installation (main dependencies only)
+	@echo "Installing EasyTPP basic..."
 	@$(PIP) install -e .
-	@echo "$(GREEN)✅ Installation de base terminée!$(NC)"
+	@echo "Basic installation completed!"
 
-install-dev: ## Installation avec outils de développement
-	@echo "$(BLUE)🛠️ Installation avec outils de développement...$(NC)"
+install-dev: ## Installation with development tools
+	@echo "Installing with development tools..."
 	@$(PIP) install -e ".[dev]"
-	@echo "$(GREEN)✅ Installation dev terminée!$(NC)"
+	@echo "Dev installation completed!"
 
-install-cli: ## Installation avec outils CLI
-	@echo "$(BLUE)📟 Installation avec outils CLI...$(NC)"
+install-cli: ## Installation with CLI tools
+	@echo "Installing with CLI tools..."
 	@$(PIP) install -e ".[cli]"
-	@echo "$(GREEN)✅ Installation CLI terminée!$(NC)"
+	@echo "CLI installation completed!"
 
-install-docs: ## Installation avec outils de documentation
-	@echo "$(BLUE)📚 Installation avec outils de documentation...$(NC)"
+install-docs: ## Installation with documentation tools
+	@echo "Installing with documentation tools..."
 	@$(PIP) install -e ".[docs]"
-	@echo "$(GREEN)✅ Installation docs terminée!$(NC)"
+	@echo "Docs installation completed!"
 
-install-all: ## Installation complète (toutes les dépendances)
-	@echo "$(BLUE)� Installation complète d'EasyTPP...$(NC)"
+install-all: ## Complete installation (all dependencies)
+	@echo "Complete EasyTPP installation..."
 	@$(PIP) install -e ".[all]"
-	@echo "$(GREEN)✅ Installation complète terminée!$(NC)"
+	@echo "Complete installation finished!"
 
-setup-dev: ## Configuration des outils de développement
-	@echo "$(BLUE)⚙️ Configuration des outils de développement...$(NC)"
+setup-dev: ## Configure development tools
+	@echo "Configuring development tools..."
 	@pre-commit install
-	@echo "$(GREEN)✅ Pre-commit hooks installés!$(NC)"
+	@echo "Pre-commit hooks installed!"
 
-check: ## Vérification de l'installation
-	@echo "$(BLUE)� Vérification de l'installation...$(NC)"
+check: ## Verify installation
+	@echo "Verifying installation..."
 	@$(PYTHON) check_installation.py
 
-test: ## Exécute les tests
-	@echo "$(BLUE)🧪 Exécution des tests...$(NC)"
+test: ## Run tests
+	@echo "Running tests..."
 	@pytest
 
-test-cov: ## Exécute les tests avec couverture
-	@echo "$(BLUE)📊 Tests avec couverture...$(NC)"
+test-cov: ## Run tests with coverage
+	@echo "Tests with coverage..."
 	@pytest --cov=easy_tpp --cov-report=html
 
-format: ## Formate le code avec Black
-	@echo "$(BLUE)🎨 Formatage du code...$(NC)"
+format: ## Format code with Black
+	@echo "Formatting code..."
 	@black .
-	@echo "$(GREEN)✅ Code formaté!$(NC)"
+	@echo "Code formatted!"
 
-format-check: ## Vérifie le formatage sans modifier
-	@echo "$(BLUE)🔍 Vérification du formatage...$(NC)"
+format-check: ## Check formatting without modifying
+	@echo "Checking formatting..."
 	@black --check .
 
-isort: ## Organise les imports
-	@echo "$(BLUE)📋 Organisation des imports...$(NC)"
+isort: ## Organize imports
+	@echo "Organizing imports..."
 	@isort .
-	@echo "$(GREEN)✅ Imports organisés!$(NC)"
+	@echo "Imports organized!"
 
-lint: ## Vérifie le code avec flake8
-	@echo "$(BLUE)🔍 Vérification du code avec flake8...$(NC)"
+lint: ## Check code with flake8
+	@echo "Checking code with flake8..."
 	@flake8
 
-type-check: ## Vérifie les types avec mypy
-	@echo "$(BLUE)� Vérification des types...$(NC)"
+type-check: ## Check types with mypy
+	@echo "Checking types..."
 	@mypy easy_tpp
 
-clean: ## Nettoie les fichiers temporaires
-	@echo "$(BLUE)🧹 Nettoyage...$(NC)"
+clean: ## Clean temporary files
+	@echo "Cleaning..."
 	@find . -type f -name "*.pyc" -delete
 	@find . -type d -name "__pycache__" -exec rm -rf {} +
 	@find . -type f -name "*.log" -delete
@@ -95,69 +89,210 @@ clean: ## Nettoie les fichiers temporaires
 	@rm -rf build
 	@rm -rf dist
 	@rm -rf *.egg-info
-	@echo "$(GREEN)✅ Nettoyage terminé!$(NC)"
+	@echo "Cleaning completed!"
 
-docs: ## Génère la documentation
-	@echo "$(BLUE)📚 Génération de la documentation...$(NC)"
+docs: ## Generate documentation
+	@echo "Generating documentation..."
 	@cd docs && make html
-	@echo "$(GREEN)✅ Documentation générée!$(NC)"
+	@echo "Documentation generated!"
 
-docs-serve: ## Serve la documentation localement
-	@echo "$(BLUE)🌐 Serveur de documentation...$(NC)"
+docs-serve: ## Serve documentation locally
+	@echo "Documentation server..."
 	@cd docs && sphinx-autobuild . _build/html
 
-check-deps: ## Vérifie les dépendances principales
-	@echo "$(BLUE)📦 Vérification des dépendances...$(NC)"
-	@$(PYTHON) -c "import torch; print('✅ PyTorch:', torch.__version__)" || echo "❌ PyTorch non installé"
-	@$(PYTHON) -c "import pytorch_lightning; print('✅ PyTorch Lightning')" || echo "❌ PyTorch Lightning non installé"
-	@$(PYTHON) -c "import numpy; print('✅ NumPy')" || echo "❌ NumPy non installé"
-	@$(PYTHON) -c "import pandas; print('✅ Pandas')" || echo "❌ Pandas non installé"
-	@$(PYTHON) -c "import easy_tpp; print('✅ EasyTPP')" || echo "❌ EasyTPP non installé"
+check-deps: ## Check main dependencies
+	@echo "Checking dependencies..."
+	@$(PYTHON) -c "import torch; print('OK PyTorch:', torch.__version__)" || echo "ERROR PyTorch not installed"
+	@$(PYTHON) -c "import pytorch_lightning; print('OK PyTorch Lightning')" || echo "ERROR PyTorch Lightning not installed"
+	@$(PYTHON) -c "import numpy; print('OK NumPy')" || echo "ERROR NumPy not installed"
+	@$(PYTHON) -c "import pandas; print('OK Pandas')" || echo "ERROR Pandas not installed"
+	@$(PYTHON) -c "import easy_tpp; print('OK EasyTPP')" || echo "ERROR EasyTPP not installed"
 
-build: ## Construit le package
-	@echo "$(BLUE)� Construction du package...$(NC)"
+build: ## Build package
+	@echo "Building package..."
 	@$(PYTHON) -m build
-	@echo "$(GREEN)✅ Package construit!$(NC)"
+	@echo "Package built!"
 
-quality: ## Exécute tous les contrôles qualité
-	@echo "$(BLUE)� Contrôles qualité...$(NC)"
+quality: ## Run all quality checks
+	@echo "Quality checks..."
 	@make format-check
 	@make lint
 	@make type-check
 	@make test
-	@echo "$(GREEN)✅ Tous les contrôles qualité passés!$(NC)"
+	@echo "All quality checks passed!"
 
-pre-commit: ## Exécute les hooks pre-commit sur tous les fichiers
-	@echo "$(BLUE)🔄 Exécution des hooks pre-commit...$(NC)"
+pre-commit: ## Run pre-commit hooks on all files
+	@echo "Running pre-commit hooks..."
 	@pre-commit run --all-files
 
-quick-start: ## Guide de démarrage rapide
-	@echo "$(BLUE)🚀 Guide de Démarrage Rapide EasyTPP$(NC)"
+quick-start: ## Quick start guide
+	@echo "EasyTPP Quick Start Guide"
 	@echo ""
-	@echo "$(YELLOW)Étape 1:$(NC) Installation complète"
+	@echo "Step 1: Complete installation"
 	@echo "  make install-all"
 	@echo ""
-	@echo "$(YELLOW)Étape 2:$(NC) Configuration développement"
+	@echo "Step 2: Development configuration"
 	@echo "  make setup-dev"
 	@echo ""
-	@echo "$(YELLOW)Étape 3:$(NC) Vérification"
+	@echo "Step 3: Verification"
 	@echo "  make check"
 	@echo ""
-	@echo "$(YELLOW)Étape 4:$(NC) Tests"
+	@echo "Step 4: Tests"
 	@echo "  make test"
 	@echo ""
-	@echo "$(GREEN)📚 Documentation: README.md et SETUP_GUIDE.md$(NC)"
+	@echo "Documentation: README.md and SETUP_GUIDE.md"
 
-demo: ## Démonstration rapide
-	@echo "$(BLUE)🎬 Démonstration EasyTPP$(NC)"
+demo: ## Quick demonstration with framework introduction
+	@echo "=================================================="
+	@echo "      EASYTPP DEMO - ADVANCED TPP FRAMEWORK"
+	@echo "=================================================="
 	@echo ""
-	@echo "$(YELLOW)1. Vérification de l'installation:$(NC)"
+	@echo "INTRODUCTION TO THE FRAMEWORK:"
+	@echo "EasyTPP is a modern framework for Temporal Point Processes (TPP)"
+	@echo "that models sequences of events occurring over time."
+	@echo ""
+	@echo "KEY CONCEPTS:"
+	@echo "* TPP: Models when and what type of event will occur"
+	@echo "* Supported models: NHP, THP, SAHP, RMTPP, FullyNN, etc."
+	@echo "* Lightning Framework: Optimized and scalable training"
+	@echo "* Advanced metrics: Wasserstein, MMD, Sinkhorn distance"
+	@echo ""
+	@echo "ARCHITECTURE:"
+	@echo "* YAML configuration to define experiments"
+	@echo "* Runner to orchestrate train/test/predict phases"
+	@echo "* Interactive CLI for easy usage"
+	@echo "* Multi-GPU and distributed training support"
+	@echo ""
+	@echo "=================================================="
+	@echo "STEP 1: Installation Check"
+	@echo "=================================================="
 	@make check
 	@echo ""
-	@echo "$(YELLOW)2. Test d'import:$(NC)"
-	@$(PYTHON) -c "import easy_tpp; print('✅ EasyTPP importé avec succès!')"
+	@echo "=================================================="
+	@echo "STEP 2: System Information via CLI"
+	@echo "=================================================="
+	@make cli-info
 	@echo ""
-	@echo "$(GREEN)✅ Démonstration terminée!$(NC)"
+	@echo "=================================================="
+	@echo "STEP 3: Available Configurations"
+	@echo "=================================================="
+	@make cli-list-configs
+	@echo ""
+	@echo "=================================================="
+	@echo "STEP 4: Configuration Validation"
+	@echo "=================================================="
+	@make cli-validate CONFIG=./configs/runner_config.yaml EXP=THP DATASET=H2expc
+	@echo ""
+	@echo "=================================================="
+	@echo "STEP 5: Core Components Test"
+	@echo "=================================================="
+	@$(PYTHON) -c "import easy_tpp; print('+ EasyTPP successfully imported')"
+	@$(PYTHON) -c "from easy_tpp.config_factory import RunnerConfig; print('+ Configuration factory available')"
+	@$(PYTHON) -c "from easy_tpp.runner import Runner; print('+ Runner available')"
+	@$(PYTHON) -c "from easy_tpp.models.basemodel import BaseModel; print('+ Base models available')"
+	@echo ""
+	@echo "=================================================="
+	@echo "STEP 6: LIVE DEMO - Running THP Model Test"
+	@echo "=================================================="
+	@echo "Now demonstrating a real TPP experiment..."
+	@echo "Running: THP (Transformer Hawkes Process) on test phase"
+	@echo ""
+	@make cli-run CONFIG=./configs/runner_config.yaml EXP=THP DATASET=test PHASE=test VERBOSE=1
+	@echo ""
+	@echo "=================================================="
+	@echo "NEXT STEPS SUGGESTIONS"
+	@echo "=================================================="
+	@echo "Now you can:"
+	@echo ""
+	@echo "Run complete examples:"
+	@echo "  make cli-example-thp     # THP (Transformer Hawkes Process)"
+	@echo "  make cli-example-nhp     # NHP (Neural Hawkes Process)"
+	@echo ""
+	@echo "Interactive mode:"
+	@echo "  make cli-interactive     # Interactive interface for experiments"
+	@echo ""
+	@echo "Launch your own experiment:"
+	@echo "  make cli-run CONFIG=config.yaml EXP=THP DATASET=H2expc PHASE=train"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  * README.md - Overview and installation"
+	@echo "  * SETUP_GUIDE.md - Detailed configuration guide"
+	@echo "  * examples/ - Practical examples and notebooks"
+	@echo ""
+	@echo "CLI Help:"
+	@echo "  make cli-help           # Detailed CLI help"
+	@echo "  make help              # All Makefile commands"
+	@echo ""
+	@echo "=================================================="
+	@echo "      DEMONSTRATION COMPLETED SUCCESSFULLY!"
+	@echo "=================================================="
+
+# ============================================================================
+# EASYTPP CLI COMMANDS
+# ============================================================================
+
+cli-run: ## [RUN] Execute TPP experiment (usage: make cli-run CONFIG=config.yaml EXP=THP DATASET=H2expc PHASE=test)
+	@echo "Launching EasyTPP experiment..."
+	@$(PYTHON) $(CLI_SCRIPT) run \
+		--config $(or $(CONFIG),./configs/examples_runner_config.yaml) \
+		--experiment $(or $(EXP),THP) \
+		--dataset $(or $(DATASET),H2expc) \
+		--phase $(or $(PHASE),test) \
+		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) \
+		$(if $(OUTPUT),--output $(OUTPUT),) \
+		$(if $(DEVICE),--device $(DEVICE),) \
+		$(if $(SEED),--seed $(SEED),) \
+		$(if $(VERBOSE),--verbose,)
+
+cli-interactive: ## [INT] Interactive mode to configure and launch experiments
+	@echo "EasyTPP interactive mode..."
+	@$(PYTHON) $(CLI_SCRIPT) interactive
+
+cli-list-configs: ## [LIST] List available configuration files (usage: make cli-list-configs [DIR=./configs])
+	@echo "Configuration list..."
+	@$(PYTHON) $(CLI_SCRIPT) list-configs $(if $(DIR),--dir $(DIR),--dir ./configs)
+
+cli-validate: ## [OK] Validate configuration file (usage: make cli-validate CONFIG=config.yaml EXP=THP DATASET=H2expc)
+	@echo "Configuration validation..."
+	@$(PYTHON) $(CLI_SCRIPT) validate \
+		--config $(or $(CONFIG),./configs/examples_runner_config.yaml) \
+		--experiment $(or $(EXP),THP) \
+		--dataset $(or $(DATASET),H2expc) \
+		$(if $(VERBOSE),--verbose,)
+
+cli-info: ## [INFO] Display system and environment information
+	@echo "System information..."
+	@$(PYTHON) $(CLI_SCRIPT) info
+
+cli-help: ## [HELP] Display EasyTPP CLI help
+	@echo "EasyTPP CLI help..."
+	@$(PYTHON) $(CLI_SCRIPT) --help
+
+# Popular CLI shortcuts
+run: cli-run ## [RUN] Shortcut for cli-run
+interactive: cli-interactive ## [INT] Shortcut for cli-interactive 
+configs: cli-list-configs ## [LIST] Shortcut for cli-list-configs
+validate: cli-validate ## [OK] Shortcut for cli-validate
+info: cli-info ## [INFO] Shortcut for cli-info
+
+# Predefined examples
+cli-example-thp: ## [TEST] Example: THP on H2expc in test mode
+	@echo "THP example..."
+	@make cli-run CONFIG=./configs/examples_runner_config.yaml EXP=THP DATASET=H2expc PHASE=test
+
+cli-example-nhp: ## [TEST] Example: NHP on H2expc in train mode
+	@echo "NHP example..."
+	@make cli-run CONFIG=./configs/examples_runner_config.yaml EXP=NHP DATASET=H2expc PHASE=train
+
+cli-quick-test: ## [QUICK] Quick system test with validation
+	@echo "Quick system test..."
+	@make cli-info
+	@echo ""
+	@make cli-list-configs
+	@echo ""
+	@make cli-validate
+
+# ============================================================================
 
 # Targets par défaut
 all: install-all setup-dev check test

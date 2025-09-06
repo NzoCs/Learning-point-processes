@@ -35,7 +35,7 @@ class TemporalPointProcessComparator:
         plot_generators: List[PlotGenerator],
         metrics_calculator: MetricsCalculator,
         output_dir: str,
-        auto_run: bool = True,
+        auto_run: bool = False,
     ):
         """
         Initialize with dependency injection (DIP).

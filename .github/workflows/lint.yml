@@ -2,9 +2,9 @@ name: Code Quality & Linting
 
 on:
   push:
-    branches: [main, master, enzo]
+    branches: [main, master]
   pull_request:
-    branches: [main, master, enzo]
+    branches: [main, master]
   workflow_dispatch:
 
 env:

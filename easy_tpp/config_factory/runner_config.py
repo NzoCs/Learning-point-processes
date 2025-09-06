@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import os
 import torch
 from easy_tpp.config_factory.base import (
@@ -30,6 +30,7 @@ class TrainerConfig(BaseConfig):
         checkpoints_freq (int, optional): Frequency of saving checkpoints. Defaults to 5.
         accumulate_grad_batches (int, optional): Number of batches to accumulate gradients. Defaults to 1.
         use_precision_16 (bool, optional): Whether to use 16-bit precision. Defaults to False. (untested)
+        activate_logging (bool, optional): Whether to activate logging. Defaults to False.
     """
 
     dataset_id: str
@@ -46,7 +47,8 @@ class TrainerConfig(BaseConfig):
     save_dir: Optional[str] = None
     checkpoint_dir: Optional[str] = None
     save_model_dir: Optional[str] = None
-    logger_config: LoggerConfig = field(default_factory=LoggerConfig)
+    activate_logging: bool = False
+    logger_config: Optional[LoggerConfig] = None
     dropout_rate: Optional[float] = None
     dropout: Optional[float] = None
 
@@ -57,9 +59,22 @@ class TrainerConfig(BaseConfig):
         os.makedirs(dirpath, exist_ok=True)
         self.save_model_dir = os.path.join(dirpath, "trained_models")
         os.makedirs(self.save_model_dir, exist_ok=True)
-        # Logger config
-        if not self.logger_config.save_dir:
-            self.logger_config.save_dir = dirpath
+        
+        # Logger config - only if logging is activated
+        if self.activate_logging:
+            if self.logger_config is None:
+                # Create default logger config if none provided
+                self.logger_config = LoggerConfig(
+                    save_dir=dirpath,
+                    logger_type="tensorboard"
+                )
+            elif not self.logger_config.save_dir:
+                # Set save_dir if not already set
+                self.logger_config.save_dir = dirpath
+        else:
+            # If logging is not activated, set logger_config to None
+            self.logger_config = None
+            
         # Devices
         if self.devices is None:
             self.devices = self.detect_available_devices()
@@ -81,7 +96,7 @@ class TrainerConfig(BaseConfig):
         return -1
 
     def get_yaml_config(self) -> Dict[str, Any]:
-        return {
+        config = {
             "dataset_id": self.dataset_id,
             "model_id": self.model_id,
             "batch_size": self.batch_size,
@@ -92,37 +107,42 @@ class TrainerConfig(BaseConfig):
             "checkpoints_freq": self.checkpoints_freq,
             "devices": self.devices,
             "save_model_dir": self.save_model_dir,
-            "logger_config": (
-                self.logger_config.get_yaml_config()
-                if hasattr(self.logger_config, "get_yaml_config")
-                and callable(self.logger_config.get_yaml_config)
-                and getattr(self.logger_config, "logger_type", None) is not None
-                else {}
-            ),
             "accumulate_grad_batches": self.accumulate_grad_batches,
             "use_precision_16": self.use_precision_16,
+            "activate_logging": self.activate_logging,
         }
+        
+        # Only include logger_config if logging is activated
+        if self.activate_logging and self.logger_config is not None:
+            config["logger_config"] = self.logger_config.get_yaml_config()
+            
+        return config
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TrainerConfig":
-        logger_cfg = config_dict.get("logger_config", {})
-        if not isinstance(logger_cfg, LoggerConfig):
-            # Calculate save_dir early to pass to logger config
-            ckpt = config_dict.get("checkpoint_dir", "checkpoints")
-            model_id = config_dict.get("model_id", "unknown")
-            dataset_id = config_dict.get("dataset_id", "unknown")
-            save_dir = (
-                config_dict.get("save_dir") or f"./{ckpt}/{model_id}/{dataset_id}/"
-            )
-            logger_cfg = LoggerConfig.parse_from_yaml_config(
-                logger_cfg, save_dir=save_dir
-            )
-        config_dict = dict(config_dict)
-        config_dict["logger_config"] = logger_cfg
-        # Alias: if 'dropout_rate' is present, also set 'dropout'
-        if "dropout_rate" in config_dict and "dropout" not in config_dict:
-            config_dict["dropout"] = config_dict["dropout_rate"]
-        return cls(**config_dict)
+        from easy_tpp.config_factory.config_utils import ConfigValidator
+        
+        # 1. Validate the dictionary
+        ConfigValidator.validate_required_fields(
+            config_dict, cls._get_required_fields_list(), "TrainerConfig"
+        )
+        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
+        
+        # 2. Create sub-configuration instances if needed
+        activate_logging = filtered_dict.get("activate_logging", False)
+        if activate_logging and "logger_config" in filtered_dict and isinstance(filtered_dict["logger_config"], dict):
+            filtered_dict["logger_config"] = LoggerConfig.from_dict(filtered_dict["logger_config"])
+        elif not activate_logging:
+            # Remove logger_config if logging is not activated
+            filtered_dict.pop("logger_config", None)
+        
+        # 3. Create the instance
+        return cls(**filtered_dict)
+    
+    @classmethod
+    def _get_required_fields_list(cls) -> List[str]:
+        """Get required fields as a list for validation."""
+        return ["dataset_id", "model_id"]
 
     def get_required_fields(self):
         return ["dataset_id", "model_id"]
@@ -151,58 +171,39 @@ class RunnerConfig(BaseConfig):
         }
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "RunnerConfig":
-        """
-        Create a RunnerConfig instance from a dictionary, ensuring all sub-configs are properly initialized.
-        """
-        # Ensure all sub-configs are initialized correctly
-        trainer = config_dict["trainer_config"]
-        if not isinstance(trainer, TrainerConfig):
-            # Filter out invalid keys for TrainerConfig
-            valid_keys = set(TrainerConfig.__dataclass_fields__.keys())
-            filtered = {k: v for k, v in trainer.items() if k in valid_keys}
-            dropped = set(trainer.keys()) - valid_keys
-            if dropped:
-                logger.warning(f"Filtered out invalid TrainerConfig keys: {dropped}")
-            trainer = TrainerConfig.from_dict(filtered)
-        model = config_dict["model_config"]
-        if not isinstance(model, ModelConfig):
-            # Always convert sub-configs to dicts if possible
-            if hasattr(model, "get_yaml_config"):
-                model = model.get_yaml_config()
-            elif isinstance(model, dict):
-                for subkey, subcls in [
-                    ("base_config", getattr(ModelConfig, "BaseConfig", None)),
-                    ("specs", getattr(ModelConfig, "ModelSpecsConfig", None)),
-                    ("thinning", getattr(ModelConfig, "ThinningConfig", None)),
-                    (
-                        "simulation_config",
-                        getattr(ModelConfig, "SimulationConfig", None),
-                    ),
-                ]:
-                    if (
-                        subkey in model
-                        and isinstance(model[subkey], dict)
-                        and subcls is not None
-                    ):
-                        model[subkey] = subcls.from_dict(model[subkey])
-            # Filter out invalid keys for ModelConfig
-            valid_keys = set(ModelConfig.__dataclass_fields__.keys())
-            filtered = {k: v for k, v in model.items() if k in valid_keys}
-            dropped = set(model.keys()) - valid_keys
-            if dropped:
-                logger.warning(f"Filtered out invalid ModelConfig keys: {dropped}")
-            model = ModelConfig.from_dict(filtered)
-        data = config_dict["data_config"]
-        if not isinstance(data, DataConfig):
-            # Filter out invalid keys for DataConfig
-            valid_keys = set(DataConfig.__dataclass_fields__.keys())
-            filtered = {k: v for k, v in data.items() if k in valid_keys}
-            dropped = set(data.keys()) - valid_keys
-            if dropped:
-                logger.warning(f"Filtered out invalid DataConfig keys: {dropped}")
-            data = DataConfig.from_dict(filtered)
-        return cls(trainer_config=trainer, model_config=model, data_config=data)
+    def from_dict(cls, config_dict: Dict[str, Dict[str, Any]]) -> "RunnerConfig":
+        from easy_tpp.config_factory.config_utils import ConfigValidator
+        
+        # 1. Validate the dictionary
+        ConfigValidator.validate_required_fields(
+            config_dict, cls._get_required_fields_list(), "RunnerConfig"
+        )
+        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
+        
+        # 2. Create sub-configuration instances
+        trainer_config = filtered_dict["trainer_config"]
+        if not isinstance(trainer_config, TrainerConfig):
+            trainer_config = TrainerConfig.from_dict(trainer_config)
+            
+        model_config = filtered_dict["model_config"]
+        if not isinstance(model_config, ModelConfig):
+            model_config = ModelConfig.from_dict(model_config)
+            
+        data_config = filtered_dict["data_config"]
+        if not isinstance(data_config, DataConfig):
+            data_config = DataConfig.from_dict(data_config)
+            
+        # 3. Create the instance
+        return cls(
+            trainer_config=trainer_config,
+            model_config=model_config,
+            data_config=data_config
+        )
+    
+    @classmethod
+    def _get_required_fields_list(cls) -> List[str]:
+        """Get required fields as a list for validation."""
+        return ["trainer_config", "model_config", "data_config"]
 
     def get_required_fields(self):
         return ["trainer_config", "model_config", "data_config"]

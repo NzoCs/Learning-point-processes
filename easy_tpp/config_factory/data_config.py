@@ -65,7 +65,21 @@ class TokenizerConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TokenizerConfig":
-        return cls(**config_dict)
+        from easy_tpp.config_factory.config_utils import ConfigValidator
+        
+        # 1. Validate the dictionary
+        ConfigValidator.validate_required_fields(
+            config_dict, cls._get_required_fields_list(), "TokenizerConfig"
+        )
+        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
+        
+        # 2. Create the instance
+        return cls(**filtered_dict)
+    
+    @classmethod
+    def _get_required_fields_list(cls) -> List[str]:
+        """Get required fields as a list for validation."""
+        return []
 
     def get_required_fields(self):
         return []
@@ -124,7 +138,21 @@ class DataLoadingSpecsConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "DataLoadingSpecsConfig":
-        return cls(**config_dict)
+        from easy_tpp.config_factory.config_utils import ConfigValidator
+        
+        # 1. Validate the dictionary
+        ConfigValidator.validate_required_fields(
+            config_dict, cls._get_required_fields_list(), "DataLoadingSpecsConfig"
+        )
+        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
+        
+        # 2. Create the instance
+        return cls(**filtered_dict)
+    
+    @classmethod
+    def _get_required_fields_list(cls) -> List[str]:
+        """Get required fields as a list for validation."""
+        return []
 
     def get_required_fields(self):
         return []
@@ -184,61 +212,30 @@ class DataConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "DataConfig":
-        dls = config_dict.get("data_loading_specs", {})
-        ds = config_dict.get("data_specs", {})
-        config_dict = dict(config_dict)
-
-        # Handle backward compatibility: convert old format to new format
-        train_dir = config_dict.pop("train_dir", None)
-        valid_dir = config_dict.pop("valid_dir", None)
-        test_dir = config_dict.pop("test_dir", None)
-        source_dir = config_dict.pop("source_dir", None)
-
-        # Check for conflicting parameters
-        has_split_dirs = any([train_dir, valid_dir, test_dir])
-        if has_split_dirs and source_dir:
-            raise ConfigValidationError(
-                "Cannot specify both split directories (train_dir, valid_dir, test_dir) and source_dir. "
-                "Please use either split directories OR source_dir, not both.",
-                "conflicting_directory_parameters",
-            )
-
-        # Determine directories based on provided parameters
-        if train_dir and valid_dir and test_dir:
-            # All three directories provided - use them directly
-            config_dict["train_dir"] = train_dir
-            config_dict["valid_dir"] = valid_dir
-            config_dict["test_dir"] = test_dir
-        elif source_dir:
-            # Only source_dir provided - use it for all three with warning
-            default_logger.warning(
-                f"Only source_dir provided ({source_dir}). Using it for train_dir, valid_dir, and test_dir. "
-                "Consider providing separate directories for better data organization."
-            )
-            config_dict["train_dir"] = source_dir
-            config_dict["valid_dir"] = source_dir
-            config_dict["test_dir"] = source_dir
-        elif train_dir or valid_dir or test_dir:
-            # Partial directories provided - require all three
-            raise ConfigValidationError(
-                "When providing split directories, all three (train_dir, valid_dir, test_dir) must be specified.",
-                "split_directories",
-            )
-        else:
-            raise ConfigValidationError(
-                "Either provide split directories (train_dir, valid_dir, test_dir) or a source_dir.",
-                "data_directories",
-            )
-
-        config_dict["data_loading_specs"] = (
-            DataLoadingSpecsConfig.from_dict(dls)
-            if not isinstance(dls, DataLoadingSpecsConfig)
-            else dls
+        from easy_tpp.config_factory.config_utils import ConfigValidator
+        
+        # 1. Validate the dictionary
+        ConfigValidator.validate_required_fields(
+            config_dict, cls._get_required_fields_list(), "DataConfig"
         )
-        config_dict["data_specs"] = (
-            TokenizerConfig.from_dict(ds) if not isinstance(ds, TokenizerConfig) else ds
-        )
-        return cls(**config_dict)
+        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
+        
+        # 2. Create sub-configuration instances if needed
+        if "data_loading_specs" in filtered_dict and isinstance(filtered_dict["data_loading_specs"], dict):
+            filtered_dict["data_loading_specs"] = DataLoadingSpecsConfig.from_dict(
+                filtered_dict["data_loading_specs"]
+            )
+            
+        if "data_specs" in filtered_dict and isinstance(filtered_dict["data_specs"], dict):
+            filtered_dict["data_specs"] = TokenizerConfig.from_dict(filtered_dict["data_specs"])
+        
+        # 3. Create the instance
+        return cls(**filtered_dict)
+    
+    @classmethod
+    def _get_required_fields_list(cls) -> List[str]:
+        """Get required fields as a list for validation."""
+        return ["train_dir", "valid_dir", "test_dir"]
 
     def get_data_dir(self, split: str) -> str:
         """Get directory path for a specific split or raise error if split is invalid."""

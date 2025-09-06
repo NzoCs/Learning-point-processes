@@ -6,7 +6,6 @@ from easy_tpp.evaluation.distribution_analysis_helper import (
     TemporalPointProcessComparatorFactory,
 )
 from easy_tpp.config_factory.logger_config import BaseLoggerAdapter
-from ..utils.model_utils import flexible_state_dict_loading, compare_model_configs
 
 import torch
 from typing import Optional
@@ -22,7 +21,7 @@ class Trainer:
         self,
         config: RunnerConfig,
         checkpoint_path: Optional[str] = None,
-        output_dir=None,
+        output_dir: Optional[str] = None,
         **kwargs,
     ) -> None:
         """_summary__.
@@ -294,13 +293,18 @@ class Trainer:
         data_save_dir = os.path.join(output_dir, "distributions_comparisons")
         self.model.format_and_save_simulations(save_dir=data_save_dir)
 
-        TemporalPointProcessComparatorFactory.create_comparator(
+        comparator = TemporalPointProcessComparatorFactory.create_comparator(
             label_data=self.datamodule.test_dataset,
             simulation=self.model.simulations,
             num_event_types=self.datamodule.num_event_types,
             output_dir=data_save_dir,
         )
 
-        logger.info(f"Predictions saved to {data_save_dir}")
+        logger.info(
+            "Running comprehensive evaluation of temporal point process distributions..."
+        )
+        comparator.run_comprehensive_evaluation()
+        logger.info(f"Simulations saved to {data_save_dir}")
 
+        logger.info("Generating intensity graph...")
         self.model.intensity_graph(save_dir=data_save_dir)

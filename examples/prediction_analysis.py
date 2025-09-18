@@ -1,19 +1,9 @@
-#!/usr/bin/env python3
-"""
-Complete example with predictions and distribution analysis
-
-Usage:
-    python prediction_analysis.py
-"""
-
-import sys
 from pathlib import Path
 
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+CONFIGS_DIR = Path(__file__).parent / "configs" / "test_runner_configs.yaml"
 
 from easy_tpp.config_factory import RunnerConfig
-from easy_tpp.runner import Runner
+from easy_tpp.runners import Runner
 from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
 
 
@@ -22,7 +12,7 @@ def train_and_analyze_model(model_name: str, dataset_name: str) -> None:
     print(f"🧠 {model_name} on {dataset_name}")
 
     # Configuration
-    config_path = Path(__file__).parent / "runner_config.yaml"
+    config_path = CONFIGS_DIR
     config_dict = parse_runner_yaml_config(str(config_path), model_name, dataset_name)
     config = RunnerConfig.from_dict(config_dict)
 

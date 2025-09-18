@@ -8,8 +8,8 @@ from optuna.trial import TrialState
 
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.hpo.base_hpo import HyperTuner
-from easy_tpp.data_preprocess import TPPDataLoader
-from easy_tpp.runner import Runner
+from easy_tpp.data.preprocess.data_loader import TPPDataModule
+from easy_tpp.runners import Runner
 from easy_tpp.utils import Timer, dict_deep_update
 from easy_tpp.utils.log_utils import get_logger
 
@@ -43,7 +43,7 @@ class OptunaTuner(HyperTuner):
         data_config = self.runner_config.data_config
         backend = self.runner_config.base_config.backend
         kwargs = self.runner_config.trainer_config.get_yaml_config()
-        self._data_loader = TPPDataLoader(
+        self._data_loader = TPPDataModule(
             data_config=data_config, backend=backend, **kwargs
         )
 

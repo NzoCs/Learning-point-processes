@@ -1,11 +1,11 @@
 # Makefile for EasyTPP
 # Automates installation and common tasks with pyproject.toml
 
-.PHONY: help install install-dev install-all test clean setup docs format lint check cli-run cli-interactive cli-list-configs cli-validate cli-info
+.PHONY: help install install-dev install-all test clean setup docs format lint check cli-run cli-interactive cli-list-configs cli-validate cli-info uv-sync uv-lock uv-add uv-remove uv-list uv-pip-list uv-init uv-check uv-clean
 
 # Variables
 PYTHON = python
-PIP = pip
+UV = uv
 CLI_SCRIPT = scripts/easytpp_cli.py
 
 help: ## Display this help
@@ -15,28 +15,72 @@ help: ## Display this help
 
 install: ## Basic installation (main dependencies only)
 	@echo "Installing EasyTPP basic..."
-	@$(PIP) install -e .
+	@$(UV) sync
 	@echo "Basic installation completed!"
 
 install-dev: ## Installation with development tools
 	@echo "Installing with development tools..."
-	@$(PIP) install -e ".[dev]"
+	@$(UV) sync --group dev
 	@echo "Dev installation completed!"
 
 install-cli: ## Installation with CLI tools
 	@echo "Installing with CLI tools..."
-	@$(PIP) install -e ".[cli]"
+	@$(UV) sync --group cli
 	@echo "CLI installation completed!"
 
 install-docs: ## Installation with documentation tools
 	@echo "Installing with documentation tools..."
-	@$(PIP) install -e ".[docs]"
+	@$(UV) sync --group docs
 	@echo "Docs installation completed!"
 
 install-all: ## Complete installation (all dependencies)
 	@echo "Complete EasyTPP installation..."
-	@$(PIP) install -e ".[all]"
+	@$(UV) sync --all-groups
 	@echo "Complete installation finished!"
+
+uv-sync: ## Sync dependencies with uv.lock
+	@echo "Syncing dependencies with uv..."
+	@$(UV) sync
+	@echo "Dependencies synced!"
+
+uv-lock: ## Update uv.lock file
+	@echo "Updating uv.lock file..."
+	@$(UV) lock
+	@echo "Lock file updated!"
+
+uv-add: ## Add new dependency (usage: make uv-add PACKAGE=package_name)
+	@echo "Adding package: $(PACKAGE)..."
+	@$(UV) add $(PACKAGE)
+	@echo "Package added!"
+
+uv-remove: ## Remove dependency (usage: make uv-remove PACKAGE=package_name)
+	@echo "Removing package: $(PACKAGE)..."
+	@$(UV) remove $(PACKAGE)
+	@echo "Package removed!"
+
+uv-list: ## List installed packages with uv
+	@echo "Installed packages:"
+	@$(UV) tree
+
+uv-pip-list: ## List packages in pip format
+	@echo "Packages (pip format):"
+	@$(UV) pip list
+
+uv-init: ## Initialize uv project (if needed)
+	@echo "Initializing uv project..."
+	@$(UV) init
+	@echo "Project initialized!"
+
+uv-check: ## Check uv installation and project status
+	@echo "Checking uv status..."
+	@$(UV) --version
+	@echo "Project status:"
+	@$(UV) tree --depth 1
+
+uv-clean: ## Clean uv cache
+	@echo "Cleaning uv cache..."
+	@$(UV) cache clean
+	@echo "Cache cleaned!"
 
 setup-dev: ## Configure development tools
 	@echo "Configuring development tools..."
@@ -126,19 +170,30 @@ pre-commit: ## Run pre-commit hooks on all files
 	@pre-commit run --all-files
 
 quick-start: ## Quick start guide
-	@echo "EasyTPP Quick Start Guide"
+	@echo "EasyTPP Quick Start Guide (using uv)"
 	@echo ""
-	@echo "Step 1: Complete installation"
+	@echo "Step 1: Check uv installation"
+	@echo "  make uv-check"
+	@echo ""
+	@echo "Step 2: Sync all dependencies"
+	@echo "  make uv-sync"
+	@echo ""
+	@echo "Step 3: Install with all groups"
 	@echo "  make install-all"
 	@echo ""
-	@echo "Step 2: Development configuration"
+	@echo "Step 4: Development configuration"
 	@echo "  make setup-dev"
 	@echo ""
-	@echo "Step 3: Verification"
+	@echo "Step 5: Verification"
 	@echo "  make check"
 	@echo ""
-	@echo "Step 4: Tests"
+	@echo "Step 6: Tests"
 	@echo "  make test"
+	@echo ""
+	@echo "Useful uv commands:"
+	@echo "  make uv-list     # Show dependency tree"
+	@echo "  make uv-add PACKAGE=name  # Add dependency"
+	@echo "  make uv-remove PACKAGE=name  # Remove dependency"
 	@echo ""
 	@echo "Documentation: README.md and SETUP_GUIDE.md"
 

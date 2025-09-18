@@ -38,10 +38,10 @@ results = benchmark.evaluate()
 ### Analyse de distribution
 
 ```python
-from easy_tpp.evaluation.distribution_analysis_helper import TemporalPointProcessComparator
+from easy_tpp.evaluation.distribution_analysis_helper import NTPPComparator
 
 # Analyser les distributions de données
-comparator = TemporalPointProcessComparator(
+comparator = NTPPComparator(
     label_extractor=label_extractor,
     simulation_extractor=simulation_extractor,
     output_dir="./analysis_results"
@@ -52,19 +52,25 @@ comparator.run_analysis()
 ## Composants
 
 ### Benchmarks
+
 Modèles de base simples pour la comparaison de performance :
+
 - **LastMarkBenchmark** : Prédit le type d'événement suivant avec le type précédent
 - **MeanInterTimeBenchmark** : Prédit les temps avec la moyenne des données d'entraînement
 - **Distribution-based benchmarks** : Échantillonnent depuis les distributions empiriques
 
 ### Metrics Helper  
+
 Calcul de métriques d'évaluation pour les modèles TPP :
+
 - **Métriques temporelles** : RMSE, MAE, MAPE
 - **Métriques de types** : Précision, F1-score, Precision/Recall
 - **Métriques de simulation** : Distance de Wasserstein, MMD
 
 ### Distribution Analysis
+
 Outils d'analyse statistique et de visualisation :
+
 - **Extracteurs de données** : Extraction depuis différentes sources
 - **Générateurs de graphiques** : Visualisations de comparaison
 - **Analyse statistique** : Métriques de comparaison de distributions
@@ -72,10 +78,12 @@ Outils d'analyse statistique et de visualisation :
 ## Métriques disponibles
 
 ### Métriques basées sur le temps
+
 - RMSE, MAE, MAPE
 - Distance de Wasserstein (pour les simulations)
 
 ### Métriques basées sur les types  
+
 - Précision de classification
 - F1-score (macro/micro)
 - Precision/Recall

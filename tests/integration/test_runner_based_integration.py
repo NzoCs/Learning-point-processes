@@ -291,7 +291,7 @@ class TestRunnerBasedIntegration:
                         mock_model.simulations = Mock()
 
                         with patch(
-                            "easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator"
+                            "easy_tpp.evaluate.distribution_analysis_helper.NTPPComparator"
                         ):
                             # Build config and create trainer
                             config = RunnerConfig.load_from_yaml_file(config_path)

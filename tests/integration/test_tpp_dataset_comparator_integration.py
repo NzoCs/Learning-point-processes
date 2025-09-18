@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Integration tests for TPPDataset with TemporalPointProcessComparatorFactory.
+Integration tests for TPPDataset with NTPPComparatorFactory.
 
 This module tests the performance improvement when using TPPDataset directly
 instead of DataLoader for data extraction in the comparator factory.
@@ -13,7 +13,7 @@ import tempfile
 import shutil
 from easy_tpp.data_preprocess.dataset import TPPDataset
 from easy_tpp.evaluation.distribution_analysis_helper import (
-    TemporalPointProcessComparatorFactory,
+    NTPPComparatorFactory,
 )
 
 
@@ -81,7 +81,7 @@ class TestTPPDatasetComparatorIntegration:
         self, sample_tpp_dataset, sample_simulation, temp_output_dir
     ):
         """Test that the factory correctly creates comparator with TPPDataset."""
-        comparator = TemporalPointProcessComparatorFactory.create_comparator(
+        comparator = NTPPComparatorFactory.create_comparator(
             label_data=sample_tpp_dataset,
             simulation=sample_simulation,
             num_event_types=3,
@@ -106,7 +106,7 @@ class TestTPPDatasetComparatorIntegration:
         self, sample_tpp_dataset, sample_simulation, temp_output_dir
     ):
         """Test data extraction functionality with TPPDataset."""
-        comparator = TemporalPointProcessComparatorFactory.create_comparator(
+        comparator = NTPPComparatorFactory.create_comparator(
             label_data=sample_tpp_dataset,
             simulation=sample_simulation,
             num_event_types=3,
@@ -143,7 +143,7 @@ class TestTPPDatasetComparatorIntegration:
         """Test that TPPDataset extraction performs as expected."""
         start_time = time.time()
 
-        comparator = TemporalPointProcessComparatorFactory.create_comparator(
+        comparator = NTPPComparatorFactory.create_comparator(
             label_data=sample_tpp_dataset,
             simulation=sample_simulation,
             num_event_types=3,
@@ -178,7 +178,7 @@ class TestTPPDatasetComparatorIntegration:
         mock_dataloader = MockDataLoader()
 
         # This should not raise an error, but fall back to LabelDataExtractor
-        comparator = TemporalPointProcessComparatorFactory.create_comparator(
+        comparator = NTPPComparatorFactory.create_comparator(
             label_data=mock_dataloader,
             simulation=sample_simulation,
             num_event_types=3,
@@ -235,7 +235,7 @@ def test_integration_standalone():
 
     # Test factory
     with tempfile.TemporaryDirectory() as temp_dir:
-        comparator = TemporalPointProcessComparatorFactory.create_comparator(
+        comparator = NTPPComparatorFactory.create_comparator(
             label_data=tpp_dataset,
             simulation=simulation,
             num_event_types=2,

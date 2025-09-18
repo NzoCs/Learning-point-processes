@@ -22,10 +22,9 @@ from typing import Dict, List, Any, Union
 import os
 
 
-class TemporalPointProcessComparator:
+class NTPPComparator:
     """
-    Main orchestrator class that follows Dependency Inversion Principle.
-    Depends on abstractions rather than concrete implementations.
+    A class to compare neural temporal point process models.
     """
 
     def __init__(
@@ -102,8 +101,8 @@ class TemporalPointProcessComparator:
             return {}
 
 
-class TemporalPointProcessComparatorFactory:
-    """Factory for creating comparator with proper dependency injection.
+class NTPPComparatorFactory:
+    """Factory to create NTPPComparator.
 
     This factory now supports both TPPDataset objects and legacy DataLoader objects
     for improved performance and reduced conversion time.
@@ -117,7 +116,7 @@ class TemporalPointProcessComparatorFactory:
         output_dir: str,
         dataset_size: int = 10**5,
         auto_run: bool = True,
-    ) -> TemporalPointProcessComparator:
+    ) -> NTPPComparator:
         """Create comparator with all dependencies properly injected.
 
         Args:
@@ -130,7 +129,7 @@ class TemporalPointProcessComparatorFactory:
             auto_run: Whether to run evaluation automatically
 
         Returns:
-            TemporalPointProcessComparator: Configured comparator instance
+            NTPPComparator: Configured comparator instance
 
         Note:
             When using TPPDataset, data extraction is significantly faster as it
@@ -160,7 +159,7 @@ class TemporalPointProcessComparatorFactory:
         metrics_calculator = MetricsCalculatorImpl()
 
         # Create and return comparator
-        return TemporalPointProcessComparator(
+        return NTPPComparator(
             label_extractor=label_extractor,
             simulation_extractor=simulation_extractor,
             plot_generators=plot_generators,

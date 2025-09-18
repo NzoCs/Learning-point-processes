@@ -25,7 +25,7 @@ Ce package fournit des outils pour :
 
 ```python
 from easy_tpp.evaluate.distribution_analysis_helper import (
-    TemporalPointProcessComparator,
+    NTPPComparator,
     TPPDatasetExtractor,
     SimulationDataExtractor,
     MetricsCalculatorImpl
@@ -51,7 +51,7 @@ plot_generators = [
 metrics_calculator = MetricsCalculatorImpl()
 
 # Créer le comparateur et lancer l'analyse
-comparator = TemporalPointProcessComparator(
+comparator = NTPPComparator(
     label_extractor=label_extractor,
     simulation_extractor=simulation_extractor,
     plot_generators=plot_generators,

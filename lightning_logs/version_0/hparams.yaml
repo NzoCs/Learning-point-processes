@@ -1,5 +1,5 @@
 model_config:
-  model_id: NHP
+  model_id: THP
   num_event_types: 2
   num_event_types_pad: 3
   pad_token_id: 2
@@ -23,7 +23,7 @@ model_config:
     rnn_type: LSTM
     time_emb_size: 16
     num_layers: 2
-    num_heads: 8
+    num_heads: 2
     sharing_param_layer: false
     use_ln: true
     loss_integral_num_sample_per_step: 100

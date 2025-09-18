@@ -3,7 +3,7 @@ from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.utils import logger
 from easy_tpp.evaluation.distribution_analysis_helper import (
-    TemporalPointProcessComparatorFactory,
+    NTPPComparatorFactory,
 )
 from easy_tpp.config_factory.logger_config import BaseLoggerAdapter
 
@@ -293,7 +293,7 @@ class Trainer:
         data_save_dir = os.path.join(output_dir, "distributions_comparisons")
         self.model.format_and_save_simulations(save_dir=data_save_dir)
 
-        comparator = TemporalPointProcessComparatorFactory.create_comparator(
+        comparator = NTPPComparatorFactory.create_comparator(
             label_data=self.datamodule.test_dataset,
             simulation=self.model.simulations,
             num_event_types=self.datamodule.num_event_types,

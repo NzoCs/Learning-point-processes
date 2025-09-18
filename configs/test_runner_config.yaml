@@ -22,7 +22,7 @@ NHP:
       time_emb_size: 16
       num_layers: 2
     thinning:
-      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 10 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 30
@@ -30,9 +30,9 @@ NHP:
       lr: 0.001
       lr_scheduler: True
     simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 50000
+      start_time: 10
+      end_time: 100
+      max_sim_events : 50
 
   trainer_config:
     
@@ -57,7 +57,7 @@ RMTPP:
       time_emb_size: 16
       num_layers: 2
     thinning:
-      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 10 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 30
@@ -65,9 +65,9 @@ RMTPP:
       lr: 0.001
       lr_scheduler: True
     simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 50000
+      start_time: 10
+      end_time: 100
+      max_sim_events : 50
 
   trainer_config:
     max_epochs: 5
@@ -92,7 +92,7 @@ AttNHP:
       num_layers: 1
       num_heads: 2
     thinning:
-      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 10 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 30
@@ -100,9 +100,9 @@ AttNHP:
       lr: 0.001
       lr_scheduler: True
     simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 50000
+      start_time: 10
+      end_time: 100
+      max_sim_events : 50
 
   trainer_config:
     max_epochs: 5
@@ -130,14 +130,14 @@ SAHP:
       lr: 0.001
       lr_scheduler: True
     thinning:
-      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 10 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 30
     simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 50000
+      start_time: 10
+      end_time: 100
+      max_sim_events : 50
 
   trainer_config:
     max_epochs: 5
@@ -165,14 +165,14 @@ THP:
       lr: 0.001
       lr_scheduler: True
     thinning:
-      num_exp: 100
+      num_exp: 10
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 30
     simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 50000
+      start_time: 10
+      end_time: 100
+      max_sim_events : 50
 
   trainer_config:
     max_epochs: 5
@@ -199,14 +199,14 @@ FullyNN:
       lr: 0.001
       lr_scheduler: True
     thinning:
-      num_exp: 200 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 60
     simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 50000
+      start_time: 10
+      end_time: 100
+      max_sim_events : 50
       
   trainer_config:
     max_epochs: 5
@@ -230,7 +230,7 @@ IntensityFree:
       time_emb_size: 16
       num_layers: 2
     thinning:
-      num_exp: 100 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
+      num_exp: 10 # number of i.i.d. Exp(intensity_bound) draws at one time in thinning algorithm
       over_sample_rate: 1.5
       dtime_max: 5
       num_sample: 30
@@ -238,9 +238,9 @@ IntensityFree:
       lr: 0.001
       lr_scheduler: True
     simulation_config:
-      start_time: 100
-      end_time: 200
-      max_sim_events : 50000
+      start_time: 10
+      end_time: 100
+      max_sim_events : 50
       
   trainer_config:
     max_epochs: 5

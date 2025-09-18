@@ -30,8 +30,8 @@ from .plot_generators import (
 )
 from .metrics_calculator import MetricsCalculatorImpl
 from .comparator import (
-    TemporalPointProcessComparator,
-    TemporalPointProcessComparatorFactory,
+    NTPPComparator,
+    NTPPComparatorFactory,
 )
 
 __all__ = [
@@ -53,6 +53,6 @@ __all__ = [
     # Metrics
     "MetricsCalculatorImpl",
     # Main Classes
-    "TemporalPointProcessComparator",
-    "TemporalPointProcessComparatorFactory",
+    "NTPPComparator",
+    "NTPPComparatorFactory",
 ]

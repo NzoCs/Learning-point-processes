@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List
 import os
+from pathlib import Path
 import torch
+
 from easy_tpp.config_factory.base import (
     BaseConfig,
     ConfigValidationError,
@@ -12,6 +14,7 @@ from easy_tpp.config_factory.model_config import ModelConfig
 from easy_tpp.config_factory.data_config import DataConfig
 from easy_tpp.config_factory.logger_config import LoggerConfig
 from easy_tpp.utils import logger
+
 
 
 @config_class("trainer_config")
@@ -33,6 +36,7 @@ class TrainerConfig(BaseConfig):
         activate_logging (bool, optional): Whether to activate logging. Defaults to False.
     """
 
+    ROOT_DIR = Path(__file__).resolve().parent.parent.parent / "artifacts"
     dataset_id: str
     model_id: str
     batch_size: int = 32
@@ -46,19 +50,16 @@ class TrainerConfig(BaseConfig):
     devices: Optional[int] = None
     save_dir: Optional[str] = None
     checkpoint_dir: Optional[str] = None
-    save_model_dir: Optional[str] = None
     activate_logging: bool = False
     logger_config: Optional[LoggerConfig] = None
-    dropout_rate: Optional[float] = None
     dropout: Optional[float] = None
 
     def __post_init__(self):
         # Directory setup
         ckpt = self.checkpoint_dir or "checkpoints"
-        dirpath = self.save_dir or f"./{ckpt}/{self.model_id}/{self.dataset_id}/"
-        os.makedirs(dirpath, exist_ok=True)
-        self.save_model_dir = os.path.join(dirpath, "trained_models")
-        os.makedirs(self.save_model_dir, exist_ok=True)
+        dirpath = self.ROOT_DIR / (self.save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/")
+        self.save_model_dir = dirpath / "saved_model"
+        self.save_model_dir.mkdir(parents=True, exist_ok=True)
         
         # Logger config - only if logging is activated
         if self.activate_logging:

@@ -23,17 +23,12 @@ Usage:
 """
 
 import sys
-import os
 import logging
 from pathlib import Path
 from typing import Optional, List, Union, Any, Dict
 from typing_extensions import Annotated
 from datetime import datetime
-import json
 
-# Add project root to path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
 
 # Try to import required packages
 try:

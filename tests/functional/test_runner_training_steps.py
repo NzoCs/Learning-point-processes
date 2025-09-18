@@ -218,7 +218,7 @@ class TestRunnerTrainingSteps:
                     "pytorch_lightning.Trainer.predict", return_value=mock_predictions
                 ) as mock_predict:
                     with patch(
-                        "easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator"
+                        "easy_tpp.evaluate.distribution_analysis_helper.NTPPComparator"
                     ) as mock_comparator:
                         # Build config and create trainer
                         config = RunnerConfig.load_from_yaml_file(
@@ -414,7 +414,7 @@ class TestRunnerTrainingSteps:
                     "pytorch_lightning.Trainer.predict", return_value=[Mock()]
                 ) as mock_predict:
                     with patch(
-                        "easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator"
+                        "easy_tpp.evaluate.distribution_analysis_helper.NTPPComparator"
                     ):
                         # Build config and create trainer with checkpoint
                         config = RunnerConfig.load_from_yaml_file(
@@ -519,7 +519,7 @@ class TestRunnerTrainingSteps:
                                     with patch("builtins.open", create=True):
                                         with patch("json.dump"):
                                             with patch(
-                                                "easy_tpp.evaluate.distribution_analysis_helper.TemporalPointProcessComparator"
+                                                "easy_tpp.evaluate.distribution_analysis_helper.NTPPComparator"
                                             ):
                                                 # Build config and create trainer
                                                 config = (

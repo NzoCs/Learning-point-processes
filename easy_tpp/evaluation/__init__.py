@@ -1,6 +1,6 @@
 # Import from our new modular distribution analysis helper package
 from easy_tpp.evaluation.distribution_analysis_helper import (
-    TemporalPointProcessComparator,
+    NTPPComparator,
     DistributionAnalyzer,
 )
 
@@ -21,7 +21,7 @@ __all__ = [
     "EvaluationMode",
     "MetricsHelper",  # Legacy
     "NewDistribComparator",
-    "TemporalPointProcessComparator",
+    "NTPPComparator",
     "DistributionAnalyzer",
     # New modular exports
     "MetricsComputerInterface",

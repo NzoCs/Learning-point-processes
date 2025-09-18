@@ -28,15 +28,17 @@ def check_package(package_name: str, import_name: Optional[str] = None) -> bool:
     """Check if a package is installed and importable."""
     import_name = import_name or package_name
     try:
-        importlib.import_module(import_name)
-        print(f"✅ {package_name}")
+        module = importlib.import_module(import_name)
+        # Try to get version if available
+        version = getattr(module, '__version__', 'installed')
+        print(f"✅ {package_name} ({version})")
         return True
     except ImportError:
         print(f"❌ {package_name} (not found)")
         return False
 
 
-def check_installation() -> Tuple[int, int]:
+def check_installation() -> Tuple[int, int, int, int]:
     """Check the installation status of EasyTPP and its dependencies."""
     print("🔍 Checking EasyTPP Installation\n")
 
@@ -63,6 +65,25 @@ def check_installation() -> Tuple[int, int]:
             core_success += 1
 
     print(f"\nCore dependencies: {core_success}/{len(core_deps)} installed")
+    
+    # Test specific easy_tpp modules
+    print("\n🧪 Testing EasyTPP Modules:")
+    easytpp_modules = [
+        ("config_factory", "easy_tpp.config_factory"),
+        ("models", "easy_tpp.models"),
+        ("data", "easy_tpp.data"),
+        ("runner", "easy_tpp.runner"),
+        ("evaluation", "easy_tpp.evaluation"),
+        ("utils", "easy_tpp.utils"),
+        ("hpo", "easy_tpp.hpo"),
+    ]
+    
+    easytpp_success = 0
+    for module_name, import_name in easytpp_modules:
+        if check_package(f"  {module_name}", import_name):
+            easytpp_success += 1
+    
+    print(f"\nEasyTPP modules: {easytpp_success}/{len(easytpp_modules)} importable")
 
     # Optional dependencies
     print("\n🔧 Checking Optional Dependencies:")
@@ -75,6 +96,8 @@ def check_installation() -> Tuple[int, int]:
                 ("flake8", "flake8"),
                 ("isort", "isort"),
                 ("mypy", "mypy"),
+                ("pre-commit", "pre_commit"),
+                ("pytest-cov", "pytest_cov"),
             ],
         ),
         (
@@ -83,13 +106,24 @@ def check_installation() -> Tuple[int, int]:
                 ("rich", "rich"),
                 ("typer", "typer"),
                 ("click", "click"),
+                ("colorama", "colorama"),
+                ("questionary", "questionary"),
+                ("tabulate", "tabulate"),
             ],
         ),
         (
             "Documentation",
             [
                 ("sphinx", "sphinx"),
-                ("myst_parser", "myst_parser"),
+                ("myst-parser", "myst_parser"),
+                ("sphinx-rtd-theme", "sphinx_rtd_theme"),
+                ("nbsphinx", "nbsphinx"),
+            ],
+        ),
+        (
+            "HPO tools",
+            [
+                ("optuna", "optuna"),
             ],
         ),
     ]
@@ -111,33 +145,43 @@ def check_installation() -> Tuple[int, int]:
 
     # Summary
     print("\n" + "=" * 50)
-    if python_ok and core_success == len(core_deps):
+    if python_ok and core_success == len(core_deps) and easytpp_success >= 6:  # Allow hpo to fail
         print("🎉 Installation successful! EasyTPP is ready to use.")
         print("\nNext steps:")
         print("1. Check out the examples/ directory")
         print("2. Read the documentation")
-        print("3. Try running a simple model")
+        print("3. Try running: make demo")
+        print("4. Or start with: make quick-start")
+        if easytpp_success < len(easytpp_modules):
+            print("\n⚠️  Note: Some optional modules (like HPO) may need additional dependencies.")
     else:
         print("⚠️  Installation incomplete.")
         if not python_ok:
             print("- Upgrade to Python 3.8 or higher")
         if core_success < len(core_deps):
-            print("- Install missing core dependencies with: pip install -e .")
+            print("- Install missing core dependencies with: make uv-sync")
 
     if optional_success < optional_total:
-        print(f"\n💡 To install optional dependencies:")
-        print('   pip install -e ".[dev]"    # Development tools')
-        print('   pip install -e ".[cli]"    # CLI tools')
-        print('   pip install -e ".[docs]"   # Documentation')
-        print('   pip install -e ".[all]"    # All optional dependencies')
+        print(f"\n💡 To install optional dependencies with uv:")
+        print('   make install-dev     # Development tools')
+        print('   make install-cli     # CLI tools')
+        print('   make install-docs    # Documentation')
+        print('   make install-all     # All optional dependencies')
+        print("\n   Or manually with uv:")
+        print('   uv sync --group dev      # Development tools')
+        print('   uv sync --group cli      # CLI tools')
+        print('   uv sync --group docs     # Documentation')
+        print('   uv sync --all-groups     # All groups')
 
-    return core_success, len(core_deps)
+    return core_success, len(core_deps), easytpp_success, len(easytpp_modules)
 
 
 if __name__ == "__main__":
     try:
-        success, total = check_installation()
-        sys.exit(0 if success == total else 1)
+        core_success, core_total, easytpp_success, easytpp_total = check_installation()
+        # Consider installation successful if core deps are OK and most easy_tpp modules work
+        success = (core_success == core_total) and (easytpp_success >= easytpp_total - 1)
+        sys.exit(0 if success else 1)
     except KeyboardInterrupt:
         print("\n\n❌ Installation check interrupted.")
         sys.exit(1)

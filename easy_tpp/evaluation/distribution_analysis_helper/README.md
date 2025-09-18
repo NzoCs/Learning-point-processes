@@ -65,19 +65,23 @@ comparator = TemporalPointProcessComparator(
 ## Types de graphiques générés
 
 ### 1. Distribution des temps inter-événements
+
 - Histogrammes de densité avec échelle logarithmique
 - Analyse de régression pour identifier les patterns exponentiels
 - Graphiques QQ pour évaluer la similarité des distributions
 
 ### 2. Distribution des types d'événements
+
 - Graphiques en barres comparatifs pour chaque type d'événement
 - Résumé statistique des 3 types les plus fréquents
 
 ### 3. Distribution des longueurs de séquences
+
 - Histogrammes comparatifs normalisés par densité
 - Annotations statistiques (moyenne, médiane, écart-type)
 
 ### 4. Analyse de corrélation croisée
+
 - Fonction de corrélation croisée entre processus
 - Analyse des dépendances temporelles et patterns de clustering
 
@@ -99,6 +103,7 @@ output_dir/
 ## Résultats
 
 L'analyse produit :
+
 - **Graphiques de visualisation** : Comparaisons de densités, analyses de distribution, graphiques de corrélation
 - **Métriques JSON** : Résumés statistiques complets et métriques de comparaison
 - **Analyse de régression** : Analyse des relations statistiques entre distributions

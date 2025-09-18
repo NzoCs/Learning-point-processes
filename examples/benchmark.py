@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-import sys
-from pathlib import Path
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
 from easy_tpp.config_factory import DataConfig
 from easy_tpp.evaluation.benchmarks.mean_bench import MeanInterTimeBenchmark
 from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (

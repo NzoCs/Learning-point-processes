@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch
 
 # from easy_tpp.config_factory import Config
 from easy_tpp.config_factory import RunnerConfig
-from easy_tpp.runner import Trainer
+from easy_tpp.runners import Trainer
 from easy_tpp.utils.torch_utils import set_seed
 
 

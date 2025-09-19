@@ -1,6 +1,6 @@
 from pathlib import Path
 
-CONFIGS_DIR = Path(__file__).parent / "configs" / "test_runner_configs.yaml"
+CONFIGS_DIR = Path(__file__).parent.parent / "configs" / "test_runner_config.yaml"
 
 from easy_tpp.config_factory import RunnerConfig
 from easy_tpp.runners import Runner
@@ -14,18 +14,18 @@ def main() -> None:
     config = RunnerConfig.from_dict(config_dict)
 
     # Create runner
-    runner = Runner(config=config, output_dir="./results/complete_pipeline")
+    runner = Runner(config=config)
 
     # Run complete pipeline: train -> test -> predict
     print("🚀 Lancement du pipeline complet...")
 
-    # 1. Training
-    print("📚 Phase d'entraînement...")
-    runner.run(phase="train")
+    # # 1. Training
+    # print("📚 Phase d'entraînement...")
+    # runner.run(phase="train")
 
-    # 2. Testing
-    print("🧪 Phase de test...")
-    runner.run(phase="test")
+    # # 2. Testing
+    # print("🧪 Phase de test...")
+    # runner.run(phase="test")
 
     # 3. Prediction and distribution comparison
     print("🔮 Phase de prédiction et comparaison des distributions...")

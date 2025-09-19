@@ -50,7 +50,7 @@ class TrainerConfig(BaseConfig):
     devices: Optional[int] = None
     save_dir: Optional[str] = None
     checkpoint_dir: Optional[str] = None
-    activate_logging: bool = False
+    activate_logging: bool = True
     logger_config: Optional[LoggerConfig] = None
     dropout: Optional[float] = None
 
@@ -64,17 +64,14 @@ class TrainerConfig(BaseConfig):
         # Logger config - only if logging is activated
         if self.activate_logging:
             if self.logger_config is None:
-                # Create default logger config if none provided
-                self.logger_config = LoggerConfig(
-                    save_dir=dirpath,
-                    logger_type="tensorboard"
-                )
+                    # Create default logger config if none provided
+                    self.logger_config = LoggerConfig(
+                        save_dir=dirpath,
+                        logger_type="tensorboard"
+                    )
             elif not self.logger_config.save_dir:
                 # Set save_dir if not already set
                 self.logger_config.save_dir = dirpath
-        else:
-            # If logging is not activated, set logger_config to None
-            self.logger_config = None
             
         # Devices
         if self.devices is None:

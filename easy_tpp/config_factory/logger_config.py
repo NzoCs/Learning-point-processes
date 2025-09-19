@@ -278,3 +278,8 @@ class LoggerConfig(BaseConfig):
 
     def get_required_fields(self):
         return ["save_dir"]
+
+class LoggerFactory:
+    @staticmethod
+    def create_logger(config: LoggerConfig):
+        return config.configure_logger()

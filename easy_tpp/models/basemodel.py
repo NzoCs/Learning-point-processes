@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 from matplotlib import pyplot as plt
 import os
+from typing import Optional
 
 
 from easy_tpp.models.thinning import EventSampler
@@ -73,7 +74,6 @@ class BaseModel(pl.LightningModule, ABC):
         self.dtime_max = self.gen_config.dtime_max
 
         simulation_config = model_config.simulation_config
-        self.phase = "train"  # Default phase is train
 
         # Simulation from the model configuration
         if simulation_config is not None:
@@ -85,6 +85,9 @@ class BaseModel(pl.LightningModule, ABC):
 
         self.sim_events_counter = 0
         self.simulations = []
+        
+        # Cache for event samplers to avoid reconstruction
+        self._event_sampler_cache = {}
 
         # Load pretrained model if path is provided
         if pretrain_model_path is not None:
@@ -102,15 +105,29 @@ class BaseModel(pl.LightningModule, ABC):
                 f"Successfully loaded pretrained model from: {pretrain_model_path}"
             )
 
-    @property
     # Set up the event sampler if generation config is provided
-    def event_sampler(self):
-        """Get the event sampler for generating events."""
+    def event_sampler(self, num_sample=None):
+        """Get the event sampler for generating events with caching."""
 
         gen_config = self.gen_config
 
-        num_sample = 1 if self.phase == "simulate" else gen_config.num_sample
+        if num_sample is None:
+            num_sample = gen_config.num_sample
 
+        # Use num_sample as cache key
+        cache_key = num_sample
+        
+        # Check if we have a cached sampler for this num_sample
+        if cache_key in self._event_sampler_cache:
+            cached_sampler = self._event_sampler_cache[cache_key]
+            # Verify that the cached sampler's device matches current device
+            if cached_sampler.device == self._device:
+                return cached_sampler
+            else:
+                # Device mismatch, remove from cache
+                del self._event_sampler_cache[cache_key]
+
+        # Create new event sampler
         event_sampler = EventSampler(
             num_sample=num_sample,
             num_exp=gen_config.num_exp,
@@ -119,7 +136,10 @@ class BaseModel(pl.LightningModule, ABC):
             dtime_max=gen_config.dtime_max,
             device=self._device,
         )
-
+        
+        # Cache the new sampler
+        self._event_sampler_cache[cache_key] = event_sampler
+        
         return event_sampler
 
     @property
@@ -141,9 +161,8 @@ class BaseModel(pl.LightningModule, ABC):
         # Update our stored device if a new one was specified
         if device is not None:
             model._device = device
-            # Update the event_sampler device if it exists
-            if model.event_sampler is not None:
-                model.event_sampler.device = device
+            # Clear event sampler cache when device changes
+            model._event_sampler_cache.clear()
 
         return model
 
@@ -461,7 +480,7 @@ class BaseModel(pl.LightningModule, ABC):
                 return avg_loss
 
             # Compute simulation metrics
-            simulation = self.simulate_vectorized(batch=batch)
+            simulation = self.simulate(batch=batch)
 
             simulation_metrics_compute = MetricsHelper(
                 num_event_types=self.num_event_types, mode=EvaluationMode.SIMULATION
@@ -548,7 +567,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         # 4) Appel à la simulation « vectorisée » (retourne tout sur le device GPU/CPU interne)
         simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = (
-            self.simulate_vectorized(batch=batch)
+            self.simulate(batch=batch)
         )
 
         # simul_time_seq, simul_time_delta_seq, simul_event_seq  sont des tenseurs sur self.device,
@@ -689,7 +708,7 @@ class BaseModel(pl.LightningModule, ABC):
         )
 
         # [batch_size, seq_len, num_sample]
-        accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
+        accepted_dtimes, weights = self.event_sampler().draw_next_time_one_step(
             time_seq,
             time_delta_seq,
             event_seq,
@@ -752,67 +771,71 @@ class BaseModel(pl.LightningModule, ABC):
         if num_step is None:
             num_step = self.num_step_gen
 
+        batch_size = time_seq_label.size(0)
+        
         if not forward:
-            time_seq = time_seq_label[:, :-num_step]
-            time_delta_seq = time_delta_seq_label[:, :-num_step]
-            event_seq = event_seq_label[:, :-num_step]
+            initial_seq = time_seq_label[:, :-num_step]
+            initial_delta = time_delta_seq_label[:, :-num_step]
+            initial_event = event_seq_label[:, :-num_step]
         else:
-            time_seq, time_delta_seq, event_seq = (
-                time_seq_label,
-                time_delta_seq_label,
-                event_seq_label,
+            initial_seq = time_seq_label
+            initial_delta = time_delta_seq_label
+            initial_event = event_seq_label
+
+        initial_len = initial_seq.size(1)
+        total_len = initial_len + num_step
+
+        # Pré-allocation des buffers pour éviter les torch.cat
+        time_buffer = torch.zeros(
+            batch_size, total_len, dtype=initial_seq.dtype, device=initial_seq.device
+        ).contiguous()
+        time_delta_buffer = torch.zeros(
+            batch_size, total_len, dtype=initial_delta.dtype, device=initial_delta.device
+        ).contiguous()
+        event_buffer = torch.zeros(
+            batch_size, total_len, dtype=initial_event.dtype, device=initial_event.device
+        ).contiguous()
+
+        # Copier les séquences initiales dans les buffers
+        time_buffer[:, :initial_len].copy_(initial_seq)
+        time_delta_buffer[:, :initial_len].copy_(initial_delta)
+        event_buffer[:, :initial_len].copy_(initial_event)
+
+        current_len = initial_len
+
+        # Boucle de prédiction avec indexation directe sur les buffers
+        for _ in range(num_step):
+            current_len += 1
+            
+            # Obtenir les vues actuelles des séquences (pas de copie)
+            current_time_seq = time_buffer[:, :current_len]
+            current_time_delta = time_delta_buffer[:, :current_len]
+            current_event_seq = event_buffer[:, :current_len]
+            
+            # Utiliser predict_one_step pour éviter la duplication de code
+            dtimes_pred, types_pred = self.predict_one_step(
+                current_time_seq,
+                current_time_delta, 
+                current_event_seq
             )
 
-        for i in range(num_step):
-            # [batch_size, seq_len]
-            dtime_boundary = time_delta_seq + self.dtime_max
+            # Calcul du nouveau temps
+            time_pred_step = current_time_seq[:, -1:] + dtimes_pred
 
-            # [batch_size, 1, num_sample]
-            accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
-                time_seq,
-                time_delta_seq,
-                event_seq,
-                dtime_boundary,
-                self.compute_intensities_at_sample_times,
-                compute_last_step_only=True,
-            )
+            # Écriture directe dans les buffers (pas de concatenation)
+            time_buffer[:, current_len] = time_pred_step.squeeze(-1)
+            time_delta_buffer[:, current_len] = dtimes_pred.squeeze(-1)
+            event_buffer[:, current_len] = types_pred.squeeze(-1)
 
-            # [batch_size, 1]
-            dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)
-
-            # [batch_size, seq_len, 1, event_num]
-            intensities_at_times = self.compute_intensities_at_sample_times(
-                time_seq,
-                time_delta_seq,
-                event_seq,
-                dtimes_pred[:, :, None],
-                max_steps=event_seq.size()[1],
-            )
-
-            # [batch_size, seq_len, event_num]
-            intensities_at_times = intensities_at_times.squeeze(dim=-2)
-
-            # [batch_size, seq_len]
-            types_pred = torch.argmax(intensities_at_times, dim=-1)
-
-            # [batch_size, 1]
-            types_pred_ = types_pred[:, -1:]
-            dtimes_pred_ = dtimes_pred[:, -1:]
-            time_pred_ = time_seq[:, -1:] + dtimes_pred_
-
-            # concat to the prefix sequence
-            time_seq = torch.cat([time_seq, time_pred_], dim=-1)
-            time_delta_seq = torch.cat([time_delta_seq, dtimes_pred_], dim=-1)
-            event_seq = torch.cat([event_seq, types_pred_], dim=-1)
-
+        # Extraction des résultats finaux
         return (
-            time_delta_seq[:, -num_step - 1 :],
-            event_seq[:, -num_step - 1 :],
+            time_delta_buffer[:, -num_step - 1 :],
+            event_buffer[:, -num_step - 1 :],
             time_delta_seq_label[:, -num_step - 1 :],
             event_seq_label[:, -num_step - 1 :],
         )
 
-    def simulate_vectorized(
+    def simulate(
         self,
         batch: tuple[
             torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
@@ -836,7 +859,6 @@ class BaseModel(pl.LightningModule, ABC):
         if batch_size is None:
             batch_size = self.simulation_batch_size
 
-        self.phase = "simulate"
 
         # Initialize sequences
         if batch is None:
@@ -865,32 +887,32 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size, max_seq_len, device=self.device, dtype=torch.long
         ).contiguous()
 
-        # Copie initiale avec des opérations optimisées
+        # Copie initiale 
         initial_len = time_seq.size(1)
         time_buffer[:, :initial_len].copy_(time_seq)
         time_delta_buffer[:, :initial_len].copy_(time_delta_seq)
         event_buffer[:, :initial_len].copy_(event_seq)
 
         # Calcul vectorisé optimisé de last_event_time
-        last_event_time = torch.full(
-            (batch_size, num_mark), start_time, device=self.device, dtype=torch.float32
+        last_event_time = torch.zeros(
+            (batch_size, num_mark), device=self.device, dtype=torch.float32
         )
 
         # Utilisation de advanced indexing pour l'optimisation
         for mark in range(num_mark):
-            mark_mask = event_seq == mark
+            mark_mask = (event_seq == mark)  # [batch_size, seq_len]
             if mark_mask.any():
                 # Opération vectorisée avec masquage efficace
                 masked_times = time_seq.masked_fill(~mark_mask, float("-inf"))
                 max_times, _ = masked_times.max(dim=1)
-                valid_mask = max_times != float("-inf")
+                valid_mask = (max_times != float("-inf"))
                 last_event_time[valid_mask, mark] = max_times[valid_mask]
 
         current_time = start_time
 
         # Simulation avec moins d'allocations mémoire
         with torch.no_grad():  # Pas besoin de gradients pour la simulation
-            pbar = tqdm(total=end_time, desc="Vectorized simulation", leave=False)
+            pbar = tqdm(total=end_time, desc="Simulation", leave=False)
 
             step_count = 0
             batch_active = torch.ones(batch_size, dtype=torch.bool, device=self.device)
@@ -914,7 +936,7 @@ class BaseModel(pl.LightningModule, ABC):
 
                 try:
                     dtimes_pred, type_pred = self.predict_one_step(
-                        active_time_seq, active_time_delta, active_event_seq
+                        active_time_seq, active_time_delta, active_event_seq, num_sample=1
                     )
 
                     # Calcul des nouveaux temps
@@ -922,12 +944,13 @@ class BaseModel(pl.LightningModule, ABC):
 
                     # Mise à jour vectorisée de last_event_time pour les séquences actives
                     active_batch_size = len(active_indices)
-
-                    for i, batch_idx in enumerate(active_indices):
-                        predicted_type = type_pred[i].squeeze().item()
-                        last_event_time[batch_idx, predicted_type] = active_time_seq[
-                            i, -1
-                        ].item()
+                    
+                    # Vectorisation complète : utiliser advanced indexing pour mettre à jour last_event_time
+                    type_pred_flat = type_pred.squeeze(-1)  # [active_batch_size]
+                    last_times_flat = active_time_seq[:, -1]  # [active_batch_size]
+                    
+                    # Mise à jour vectorisée avec scatter_
+                    last_event_time[active_indices, type_pred_flat] = last_times_flat
 
                     # Recalcul des deltas
                     batch_indices_active = torch.arange(
@@ -976,164 +999,7 @@ class BaseModel(pl.LightningModule, ABC):
             final_time_seq >= start_time, final_time_seq <= end_time
         )
 
-        self.phase = "train"
-
         return final_time_seq, final_time_delta, final_event_seq, simul_mask
-
-    def simulate(
-        self,
-        batch: tuple[
-            torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
-        ] = None,
-        start_time: float = None,
-        end_time: float = None,
-        batch_size: int = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-
-        Attention pad the sequence on the right side or the predictions will be wrong.
-
-        Simulate a sequence of events from the model taking into account batch.
-        Returns only events between `start_time` and `end_time`.
-
-        Args:
-            start_time (float): Start time of the generated sequence.
-            end_time (float): End time of the generated sequence.
-            batch (dict[str, torch.Tensor], optional):
-                batch of event sequences, in the form of a dictionary with keys:
-                - 'time_seqs': Tensor of dimension [batch_size, seq_len] representing timestamps of past events.
-                - 'time_delta_seqs': Tensor [batch_size, seq_len] of time differences between events.
-                - 'type_seqs': Tensor [batch_size, seq_len] of event types.
-
-                If `None`, batch is initialized to an empty sequence.
-
-        Returns:
-            dict[str, torch.Tensor]: Dictionary containing the generated sequence, with the same keys as `batch`:
-                - 'time_seqs': Tensor containing timestamps of generated events.
-                - 'time_delta_seqs': Tensor of time differences between events.
-                - 'type_seqs': Tensor of generated event types.
-        """
-
-        if start_time is None:
-            start_time = self.simulation_start_time
-            if not isinstance(start_time, (int, float)):
-                raise ValueError(
-                    "Valid start_time must be provided for simulations in the config or as an argument."
-                )
-        if end_time is None:
-            end_time = self.simulation_end_time
-            if not isinstance(end_time, (int, float)):
-                raise ValueError(
-                    "end_time must be provided for simulations in the config or as an argument."
-                )
-        if batch_size is None:
-            batch_size = self.simulation_batch_size
-            if not isinstance(batch_size, int):
-                raise ValueError(
-                    "Valid batch_size must be provided for simulations in the config or as an argument."
-                )
-
-        # change phase to simulate
-        self.phase = "simulate"
-
-        # Initialize sequences
-        if batch is None:
-            batch = [
-                torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
-                torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
-                torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
-            ] + [None, None]
-        else:
-            batch_size = batch[0].size(0)
-
-        time_seq, time_delta_seq, event_seq, non_pad_mask, _ = batch
-
-        num_mark = self.num_event_types
-        num_step = 0
-
-        last_event_time = torch.zeros(batch_size, num_mark, device=self.device)
-
-        for mark in range(num_mark):
-            # Create a mask for each mark separately to avoid broadcasting issues
-            mark_mask = (event_seq == mark).to(self.device)
-            masked_time_seq = torch.where(mark_mask, time_seq, 0).to(self.device)
-            marked_last_time_label, _ = masked_time_seq.max(dim=1)
-            last_event_time[:, mark] = marked_last_time_label
-
-        min_time = torch.min(last_event_time)
-        current_time = min_time.item()
-        pbar = tqdm(
-            total=end_time, desc="Simulating sequences", unit="time", leave=False
-        )
-
-        while current_time < end_time:
-
-            # Use the utility function to predict next time delta and event type
-            try:
-
-                dtimes_pred, type_pred = self.predict_one_step(
-                    time_seq, time_delta_seq, event_seq
-                )
-
-            except Exception as e:
-                logger.error(f"Error during prediction: {e}")
-                break
-
-            time_pred_ = time_seq[:, -1:] + dtimes_pred
-
-            # refresh the progress bar with the current time
-            if num_step % 20 == 0:
-                min_time = time_pred_.min()
-                current_time = min_time.item()
-                pbar.n = min(current_time, end_time)
-                pbar.refresh()
-
-            # break if the current time exceeds the end time
-            if current_time >= end_time:
-                break
-
-            num_step += 1
-
-            # Update last event times for each mark
-            for mark in range(num_mark):
-                # Create a boolean mask matching the batch dimension
-                mark_mask = (type_pred.squeeze(-1) == mark).to(self.device)
-                # Update last event times if the event happened for this mark
-                marked_last_time = torch.where(
-                    mark_mask, time_seq[:, -1].squeeze(-1), last_event_time[:, mark]
-                )
-                last_event_time[:, mark] = marked_last_time
-
-            # Get the last event times for the predicted types
-            # Gather last event times for the specific types predicted
-            batch_indices = torch.arange(batch_size, device=self.device)
-            last_events = last_event_time[batch_indices, type_pred.squeeze(-1)]
-            last_events = last_events.unsqueeze(-1)  # Add dimension to match time_pred_
-            dtimes_pred = time_pred_ - last_events
-
-            # Update generated sequences
-            time_seq = torch.cat([time_seq, time_pred_], dim=-1)
-            time_delta_seq = torch.cat([time_delta_seq, dtimes_pred], dim=-1)
-            event_seq = torch.cat([event_seq, type_pred], dim=-1)
-
-        pbar.close()
-
-        first_pred_idx = time_delta_seq.size(1) - num_step
-
-        time_seq = time_seq[:, first_pred_idx:]
-        time_delta_seq = time_delta_seq[:, first_pred_idx:]
-        event_seq = event_seq[:, first_pred_idx:]
-
-        # Create mask for events within the time range
-        # Using separate comparisons and combining with logical_and
-        simul_mask = torch.logical_and(time_seq >= start_time, time_seq <= end_time).to(
-            self.device
-        )
-
-        # change phase back to train
-        self.phase = "train"
-
-        return time_seq, time_delta_seq, event_seq, simul_mask
 
     def intensity_graph(
         self,
@@ -1178,7 +1044,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         if self.simulations is None:
 
-            time_seq, time_delta_seq, type_seq, simul_mask = self.simulate_vectorized(
+            time_seq, time_delta_seq, type_seq, simul_mask = self.simulate(
                 start_time=start_time, end_time=end_time, batch_size=1
             )
             # Extract the first (and only) sequence from batch dimension
@@ -1367,6 +1233,7 @@ class BaseModel(pl.LightningModule, ABC):
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,
         event_seq: torch.Tensor,
+        num_sample: Optional[int] = None,
     ) -> torch.Tensor:
         """
         Utility method to predict the next time delta using the event sampler.
@@ -1378,11 +1245,12 @@ class BaseModel(pl.LightningModule, ABC):
             compute_last_step_only (bool): Whether to compute only the last step
 
         Returns:
-            torch.Tensor: Predicted time deltas [batch_size, 1] if compute_last_step_only=True
+            torch.Tensor: Predicted time deltas [batch_size, 1] if compute_last_step_only=True else [batch_size, seq_len]
+            torch.Tensor: Predicted event types [batch_size, 1] if compute_last_step_only=True else [batch_size, seq_len]
         """
         # Determine possible event times
         dtime_boundary = time_delta_seq + self.dtime_max
-        accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
+        accepted_dtimes, weights = self.event_sampler(num_sample=num_sample).draw_next_time_one_step(
             time_seq,
             dtime_boundary,
             event_seq,

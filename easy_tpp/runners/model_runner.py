@@ -5,7 +5,7 @@ from easy_tpp.utils import logger
 from easy_tpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,
 )
-from easy_tpp.config_factory.logger_config import BaseLoggerAdapter
+from easy_tpp.config_factory.logger_config import LoggerConfig, LoggerFactory
 
 import torch
 from typing import Optional
@@ -20,8 +20,8 @@ class Trainer:
     def __init__(
         self,
         config: RunnerConfig,
+        enable_logging: bool = True,
         checkpoint_path: Optional[str] = None,
-        output_dir: Optional[str] = None,
         **kwargs,
     ) -> None:
         """_summary__.
@@ -78,13 +78,8 @@ class Trainer:
         self.val_freq = trainer_config.val_freq
         self.use_precision_16 = trainer_config.use_precision_16
         self.accumulate_grad_batches = trainer_config.accumulate_grad_batches
-
-        # Use the dirpath directly from the trainer_config
-        if output_dir is not None:
-
-            self.dirpath = output_dir
-        else:
-            self.dirpath = trainer_config.save_model_dir
+        
+        self.dirpath = trainer_config.save_model_dir
 
         if checkpoint_path is None:
             # Liste des checkpoints à tester, par ordre de priorité
@@ -116,12 +111,10 @@ class Trainer:
             logger.info("No valid checkpoint found. Starting from scratch.")
 
         self.dataset_id = data_config.dataset_id
+        self.enable_logging = enable_logging
+        self._cached_trainer = None  # Cache for the trainer
 
-        try:
-            self.logger = BaseLoggerAdapter.configure(trainer_config.logger_config)
-        except Exception as e:
-            self.logger = False
-            logger.critical(f"Logging is disabled for this run. Error: {str(e)}")
+        self._configure_logging(enable_logging)
 
     @property
     def checkpoint_path(self):
@@ -131,6 +124,29 @@ class Trainer:
         ):
             return self.checkpoint_path_
         return None
+
+    def _configure_logging(self, enable_logging: bool = True):
+        """Configure logging for the trainer."""
+        if enable_logging:
+            try:
+                self.logger = LoggerFactory.create_logger(self.logger_config)
+            except Exception as e:
+                self.logger = False
+                logger.critical(f"Logging is disabled for this run. Error: {str(e)}")
+        else:
+            self.logger = False
+    
+    def set_logging(self, enable_logging: bool):
+        """Change logging configuration without recreating the trainer."""
+        if self.enable_logging == enable_logging:
+            return  # No change needed
+            
+        self.enable_logging = enable_logging
+        self._configure_logging(enable_logging)
+        
+        # If we have a cached trainer, update its logger
+        if hasattr(self, '_cached_trainer') and self._cached_trainer is not None:
+            self._cached_trainer.logger = self.logger
 
     @property
     def callbacks(self):
@@ -157,6 +173,9 @@ class Trainer:
 
     @property
     def trainer(self) -> pl.Trainer:
+        # Cache the trainer to avoid recreating it
+        if hasattr(self, '_cached_trainer') and self._cached_trainer is not None:
+            return self._cached_trainer
         # If devices is a number > 0, use GPU(s) if available
         # If devices is "auto", let PyTorch Lightning decide
         if (
@@ -213,6 +232,8 @@ class Trainer:
                 accumulate_grad_batches=self.accumulate_grad_batches,
             )
 
+        # Cache the trainer
+        self._cached_trainer = trainer
         return trainer
 
     def train(self) -> None:

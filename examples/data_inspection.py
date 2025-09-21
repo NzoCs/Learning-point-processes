@@ -1,4 +1,4 @@
-from easy_tpp.config_factory import DataConfig
+from easy_tpp.configs import DataConfig
 from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.data.preprocess.visualizer import Visualizer
 
@@ -12,7 +12,7 @@ def inspect_dataset() -> None:
 
     # Create data module
     datamodule = TPPDataModule(data_config)
-    datamodule.setup()
+    datamodule.setup(stage="fit")
 
     # Create visualizer
     visualizer = Visualizer(
@@ -37,7 +37,7 @@ def inspect_synthetic_data() -> None:
     )
 
     datamodule = TPPDataModule(data_config)
-    datamodule.setup()
+    datamodule.setup(stage="fit")
 
     visualizer = Visualizer(
         data_setup=datamodule, split="train", save_dir="./synthetic_inspection_plots"

@@ -1,10 +1,10 @@
 import torch
 
 from easy_tpp.models.basemodel import BaseModel
-from easy_tpp.config_factory.model_config import ModelConfig
+from easy_tpp.configs.model_config import ModelConfig
 
 
-class HawkesModel(BaseModel):
+class Hawkes(BaseModel):
     """
     PyTorch implementation of the Hawkes process model.
     Inherits from BaseModel for integration with the framework, enabling

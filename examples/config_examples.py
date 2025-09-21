@@ -6,11 +6,11 @@ to transform raw YAML configurations before creating configuration instances.
 """
 
 from typing import Dict, Any
-from easy_tpp.config_factory.config_utils import ConfigTransformer
-from easy_tpp.config_factory.runner_config import RunnerConfig
-from easy_tpp.config_factory.model_config import ModelConfig, TrainingConfig
-from easy_tpp.config_factory.data_config import DataConfig
-from easy_tpp.config_factory.logger_config import LoggerConfig
+from easy_tpp.configs.config_utils import ConfigTransformer
+from easy_tpp.configs.runner_config import RunnerConfig
+from easy_tpp.configs.model_config import ModelConfig, TrainingConfig
+from easy_tpp.configs.data_config import DataConfig
+from easy_tpp.configs.logger_config import LoggerConfig
 
 
 def create_runner_config_from_yaml(yaml_config: Dict[str, Any]) -> RunnerConfig:

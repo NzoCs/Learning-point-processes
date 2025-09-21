@@ -1,7 +1,7 @@
 """Unit tests for logger_config.py configuration logic."""
 
 import pytest
-from easy_tpp.config_factory import logger_config
+from easy_tpp.configs import logger_config
 
 
 class DummyLoggerAdapter(logger_config.BaseLoggerAdapter):

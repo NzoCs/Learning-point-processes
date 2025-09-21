@@ -6,7 +6,7 @@ import torch.nn as nn
 from unittest.mock import Mock, patch, MagicMock
 
 from easy_tpp.models.basemodel import BaseModel
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.configs import ModelConfig
 
 
 # Create a concrete implementation for testing

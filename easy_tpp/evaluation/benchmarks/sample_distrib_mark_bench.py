@@ -9,7 +9,7 @@ from typing import Dict, Any, Tuple
 import torch
 import yaml
 
-from easy_tpp.config_factory.data_config import DataConfig
+from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
 from .base_bench import BaseBenchmark, BenchmarkMode
 
@@ -20,19 +20,19 @@ class MarkDistributionBenchmark(BaseBenchmark):
     """
 
     def __init__(
-        self, data_config: DataConfig, experiment_id: str, save_dir: str = None
+        self, data_config: DataConfig, dataset_name: str, save_dir: str = None
     ):
         """
         Initialize the mark distribution benchmark.
 
         Args:
             data_config: Data configuration object
-            experiment_id: Experiment ID
+            dataset_name: Name of the dataset
             save_dir: Directory to save results
         """
         # This benchmark focuses on type prediction, so default to TYPE_ONLY
         super().__init__(
-            data_config, experiment_id, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY
+            data_config, dataset_name, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY
         )
 
         # Distribution parameters
@@ -154,61 +154,3 @@ class MarkDistributionBenchmark(BaseBenchmark):
             }
         }
 
-
-def run_mark_distribution_benchmark(
-    config_path: str, experiment_id: str, save_dir: str = None
-) -> Dict[str, Any]:
-    """
-    Run the mark distribution sampling benchmark.
-
-    Args:
-        config_path: Path to configuration file
-        experiment_id: Experiment ID in the configuration
-        save_dir: Directory to save results
-
-    Returns:
-        Benchmark results
-    """
-    # Load DataConfig from YAML
-    with open(config_path, "r") as f:
-        config_dict = yaml.safe_load(f)
-    data_config = DataConfig.from_dict(config_dict["data_config"])
-
-    # Create and run benchmark
-    benchmark = MarkDistributionBenchmark(data_config, experiment_id, save_dir)
-    results = benchmark.evaluate()
-
-    logger.info("Mark Distribution Benchmark completed successfully!")
-    logger.info(
-        f"Type Accuracy: {results['metrics'].get('type_accuracy_mean', 'N/A'):.6f}"
-    )
-    logger.info(
-        f"Macro F1 Score: {results['metrics'].get('macro_f1score_mean', 'N/A'):.6f}"
-    )
-
-    return results
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Run Mark Distribution Benchmark")
-    parser.add_argument(
-        "--config_path", type=str, required=True, help="Path to configuration YAML file"
-    )
-    parser.add_argument(
-        "--experiment_id",
-        type=str,
-        required=True,
-        help="Experiment ID in the configuration",
-    )
-    parser.add_argument(
-        "--save_dir",
-        type=str,
-        default="./benchmark_results",
-        help="Directory to save results",
-    )
-
-    args = parser.parse_args()
-
-    run_mark_distribution_benchmark(args.config_path, args.experiment_id, args.save_dir)

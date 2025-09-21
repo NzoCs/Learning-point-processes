@@ -2,7 +2,7 @@ from pathlib import Path
 
 CONFIGS_DIR = Path(__file__).parent.parent / "configs" / "test_runner_config.yaml"
 
-from easy_tpp.config_factory import RunnerConfig
+from easy_tpp.configs import RunnerConfig
 from easy_tpp.runners import Runner
 from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
 

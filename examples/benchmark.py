@@ -1,4 +1,4 @@
-from easy_tpp.config_factory import DataConfig
+from easy_tpp.configs import DataConfig
 from easy_tpp.evaluation.benchmarks.mean_bench import MeanInterTimeBenchmark
 from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
     MarkDistributionBenchmark,
@@ -16,7 +16,7 @@ def benchmark_mean_intertime() -> None:
 
     benchmark = MeanInterTimeBenchmark(
         data_config=data_config,
-        experiment_id="mean_test",
+        dataset_name="mean_test",
         save_dir="./benchmark_results",
     )
 
@@ -32,7 +32,7 @@ def benchmark_mark_distribution() -> None:
 
     benchmark = MarkDistributionBenchmark(
         data_config=data_config,
-        experiment_id="mark_test",
+        dataset_name="mark_test",
         save_dir="./benchmark_results",
     )
 
@@ -48,7 +48,7 @@ def benchmark_intertime_distribution() -> None:
 
     benchmark = InterTimeDistributionBenchmark(
         data_config=data_config,
-        experiment_id="intertime_test",
+        dataset_name="intertime_test",
         save_dir="./benchmark_results",
     )
 
@@ -72,7 +72,7 @@ def benchmark_multiple_on_dataset() -> None:
         print(f"Running {name} benchmark...")
         benchmark = benchmark_class(
             data_config=data_config,
-            experiment_id=f"{name}_test",
+            dataset_name=f"{name}_test",
             save_dir="./benchmark_results",
         )
         results = benchmark.evaluate()

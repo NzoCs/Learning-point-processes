@@ -3,12 +3,12 @@ Unit tests for the refactored DataConfig, TokenizerConfig, and DataLoadingSpecsC
 """
 
 import pytest
-from easy_tpp.config_factory.data_config import (
+from easy_tpp.configs.data_config import (
     DataConfig,
     TokenizerConfig,
     DataLoadingSpecsConfig,
 )
-from easy_tpp.config_factory.base import ConfigValidationError
+from easy_tpp.configs.base import ConfigValidationError
 
 
 def test_tokenizer_config_defaults():

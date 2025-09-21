@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, Any
 from unittest.mock import patch, Mock
 
-from easy_tpp.config_factory.base import (
+from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
     ConfigSerializationError,
@@ -19,7 +19,7 @@ from easy_tpp.config_factory.base import (
     ConfigFactory,
     config_factory,
 )
-from easy_tpp.config_factory.model_config import (
+from easy_tpp.configs.model_config import (
     ModelConfig,
     ThinningConfig,
     SimulationConfig,

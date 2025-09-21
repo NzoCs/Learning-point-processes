@@ -89,7 +89,7 @@ comparator = NTPPComparator(
 
 L'analyse génère automatiquement :
 
-```
+```bash
 output_dir/
 ├── inter_event_time_comparison.png
 ├── inter_event_time_comparison_qq.png

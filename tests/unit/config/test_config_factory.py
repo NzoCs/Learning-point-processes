@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 from omegaconf import OmegaConf, DictConfig
 
-from easy_tpp.config_factory import ModelConfig, DataConfig, RunnerConfig
-from easy_tpp.config_factory.base import ConfigValidationError
+from easy_tpp.configs import ModelConfig, DataConfig, RunnerConfig
+from easy_tpp.configs.base import ConfigValidationError
 
 
 @pytest.mark.unit

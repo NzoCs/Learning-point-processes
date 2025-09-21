@@ -14,7 +14,7 @@ import torch
 import yaml
 from enum import Enum
 
-from easy_tpp.config_factory.data_config import DataConfig
+from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.data.preprocess.data_loader import TPPDataModule
 from easy_tpp.evaluation.metrics_helper import MetricsHelper, EvaluationMode
 from easy_tpp.utils import logger
@@ -40,7 +40,7 @@ class BaseBenchmark(ABC):
     def __init__(
         self,
         data_config: DataConfig,
-        experiment_id: str,
+        dataset_name: str,
         save_dir: str = None,
         benchmark_mode: str = BenchmarkMode.BOTH,
     ):
@@ -49,13 +49,13 @@ class BaseBenchmark(ABC):
 
         Args:
             data_config: DataConfig object
-            experiment_id: Name/ID of the experiment or dataset
+            dataset_name: Name of the dataset
             save_dir: Directory to save results
             benchmark_mode: What to evaluate - "time_only", "type_only", or "both"
         """
         self.data_config = data_config
         self.save_dir = save_dir or "./benchmark_results"
-        self.dataset_name = experiment_id
+        self.dataset_name = dataset_name
         self.benchmark_mode = benchmark_mode
         self.pad_token = data_config.data_specs.pad_token_id
 
@@ -396,34 +396,3 @@ class BaseBenchmark(ABC):
             List of metric names
         """
         return self.metrics_helper.get_available_metrics()
-
-
-def run_benchmark(
-    benchmark_class: Type[BaseBenchmark],
-    config_path: str,
-    experiment_id: str,
-    save_dir: str = None,
-    **kwargs,
-) -> Dict[str, Any]:
-    """
-    Generic function to run any benchmark.
-
-    Args:
-        benchmark_class: The benchmark class to instantiate
-        config_path: Path to configuration file
-        experiment_id: Experiment ID in the configuration
-        save_dir: Directory to save results
-        **kwargs: Additional arguments to pass to benchmark constructor
-
-    Returns:
-        Benchmark results
-    """
-    with open(config_path, "r") as f:
-        config_dict = yaml.safe_load(f)
-    from easy_tpp.config_factory.data_config import DataConfig
-
-    data_config = DataConfig.from_dict(config_dict["data_config"])
-    benchmark = benchmark_class(data_config, experiment_id, save_dir, **kwargs)
-    results = benchmark.evaluate()
-
-    return results

@@ -4,15 +4,15 @@ import os
 from pathlib import Path
 import torch
 
-from easy_tpp.config_factory.base import (
+from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
     config_factory,
     config_class,
 )
-from easy_tpp.config_factory.model_config import ModelConfig
-from easy_tpp.config_factory.data_config import DataConfig
-from easy_tpp.config_factory.logger_config import LoggerConfig
+from easy_tpp.configs.model_config import ModelConfig
+from easy_tpp.configs.data_config import DataConfig
+from easy_tpp.configs.logger_config import LoggerConfig
 from easy_tpp.utils import logger
 
 
@@ -47,10 +47,10 @@ class TrainerConfig(BaseConfig):
     checkpoints_freq: int = 5
     accumulate_grad_batches: int = 1
     use_precision_16: bool = False
+    activate_logging: bool = True
     devices: Optional[int] = None
     save_dir: Optional[str] = None
     checkpoint_dir: Optional[str] = None
-    activate_logging: bool = True
     logger_config: Optional[LoggerConfig] = None
     dropout: Optional[float] = None
 
@@ -118,7 +118,7 @@ class TrainerConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TrainerConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
@@ -170,7 +170,7 @@ class RunnerConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Dict[str, Any]]) -> "RunnerConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(

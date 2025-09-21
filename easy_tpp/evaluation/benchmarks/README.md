@@ -54,13 +54,13 @@ for benchmark in benchmarks:
 # Benchmark LastMark
 python -m easy_tpp.evaluate.benchmarks.last_mark_bench \
     --config_path config.yaml \
-    --experiment_id my_experiment \
+    --dataset_name my_dataset \
     --save_dir ./results
 
 # Benchmark MeanInterTime
 python -m easy_tpp.evaluate.benchmarks.mean_bench \
     --config_path config.yaml \
-    --experiment_id my_experiment \
+    --dataset_name my_dataset \
     --save_dir ./results
 ```
 
@@ -71,7 +71,7 @@ Les résultats sont sauvegardés en JSON :
 ```json
 {
   "benchmark_name": "lag1_mark_benchmark",
-  "dataset_name": "experiment_id",
+  "dataset_name": "dataset_name",
   "num_event_types": 5,
   "metrics": {
     "type_accuracy_mean": 0.6234,

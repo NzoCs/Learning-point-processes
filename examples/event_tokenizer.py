@@ -3,7 +3,7 @@ import random
 from typing import List, Dict, Any
 
 from easy_tpp.data.preprocess import EventTokenizer
-from easy_tpp.config_factory import TokenizerConfig
+from easy_tpp.configs import TokenizerConfig
 
 
 def make_raw_data() -> List[List[Dict[str, Any]]]:

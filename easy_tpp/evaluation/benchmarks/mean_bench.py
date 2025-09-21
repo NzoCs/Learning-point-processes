@@ -10,7 +10,7 @@ from typing import Dict, Any, Tuple
 import torch
 import yaml
 
-from easy_tpp.config_factory.data_config import DataConfig
+from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
 from .base_bench import BaseBenchmark, BenchmarkMode, run_benchmark
 
@@ -21,19 +21,19 @@ class MeanInterTimeBenchmark(BaseBenchmark):
     """
 
     def __init__(
-        self, data_config: DataConfig, experiment_id: str, save_dir: str = None
+        self, data_config: DataConfig, dataset_name: str, save_dir: str = None
     ):
         """
         Initialize the mean inter-time benchmark.
 
         Args:
             data_config: Data configuration object
-            experiment_id: Experiment ID
+            dataset_name: Name of the dataset
             save_dir: Directory to save results
         """
         # This benchmark focuses on time prediction, so default to TIME_ONLY
         super().__init__(
-            data_config, experiment_id, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
+            data_config, dataset_name, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
         )
         self.mean_inter_time = None
 
@@ -99,54 +99,3 @@ class MeanInterTimeBenchmark(BaseBenchmark):
                 else None
             )
         }
-
-
-def run_mean_benchmark(
-    config_path: str, experiment_id: str, save_dir: str = None
-) -> Dict[str, Any]:
-    """
-    Run the mean inter-time benchmark.
-
-    Args:
-        config_path: Path to configuration file
-        experiment_id: Experiment ID in the configuration
-        save_dir: Directory to save results
-          Returns:
-        Benchmark results
-    """
-    with open(config_path, "r") as f:
-        config_dict = yaml.safe_load(f)
-    data_config = DataConfig.from_dict(config_dict["data_config"])
-    benchmark = MeanInterTimeBenchmark(data_config, experiment_id, save_dir)
-    results = benchmark.evaluate()
-
-    logger.info("Mean Inter-Time Benchmark completed successfully!")
-    logger.info(f"Time RMSE: {results['metrics'].get('time_rmse_mean', 'N/A'):.6f}")
-    logger.info(f"Time MAE: {results['metrics'].get('time_mae_mean', 'N/A'):.6f}")
-
-    return results
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Run Mean Inter-Time Benchmark")
-    parser.add_argument(
-        "--config_path", type=str, required=True, help="Path to configuration YAML file"
-    )
-    parser.add_argument(
-        "--experiment_id",
-        type=str,
-        required=True,
-        help="Experiment ID in the configuration",
-    )
-    parser.add_argument(
-        "--save_dir",
-        type=str,
-        default="./benchmark_results",
-        help="Directory to save results",
-    )
-
-    args = parser.parse_args()
-
-    run_mean_benchmark(args.config_path, args.experiment_id, args.save_dir)

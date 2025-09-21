@@ -1,11 +1,11 @@
 from easy_tpp.models import BaseModel
 from easy_tpp.data.preprocess import TPPDataModule
-from easy_tpp.config_factory import RunnerConfig
+from easy_tpp.configs import RunnerConfig
 from easy_tpp.utils import logger
 from easy_tpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,
 )
-from easy_tpp.config_factory.logger_config import LoggerConfig, LoggerFactory
+from easy_tpp.configs.logger_config import LoggerConfig, LoggerFactory
 
 import torch
 from typing import Optional

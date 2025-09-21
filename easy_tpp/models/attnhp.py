@@ -3,7 +3,7 @@ import math
 import torch
 from torch import nn
 
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.configs import ModelConfig
 from easy_tpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
 from easy_tpp.models.basemodel import BaseModel
 

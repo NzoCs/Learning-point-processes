@@ -11,7 +11,7 @@ import pytorch_lightning as pl
 from omegaconf import OmegaConf
 
 # Import easy_tpp modules
-from easy_tpp.config_factory import ModelConfig, DataConfig, RunnerConfig
+from easy_tpp.configs import ModelConfig, DataConfig, RunnerConfig
 from easy_tpp.utils.torch_utils import set_device, set_seed
 
 
@@ -103,9 +103,9 @@ def sample_data_config():
 @pytest.fixture
 def sample_runner_config():
     """Create a sample runner configuration for testing."""
-    from easy_tpp.config_factory.runner_config import TrainerConfig
-    from easy_tpp.config_factory.data_config import DataConfig
-    from easy_tpp.config_factory.model_config import ModelConfig
+    from easy_tpp.configs.runner_config import TrainerConfig
+    from easy_tpp.configs.data_config import DataConfig
+    from easy_tpp.configs.model_config import ModelConfig
 
     # Create trainer config
     trainer_config = TrainerConfig(

@@ -1,7 +1,7 @@
 import os
 import tempfile
 import pytest
-from easy_tpp.config_factory.data_config import DataConfig
+from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.evaluation.benchmarks.mean_bench import MeanInterTimeBenchmark
 from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
     MarkDistributionBenchmark,

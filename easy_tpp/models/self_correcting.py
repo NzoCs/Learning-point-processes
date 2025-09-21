@@ -4,10 +4,10 @@ import torch.nn.functional as F  # Added import
 import math
 
 from easy_tpp.models.basemodel import BaseModel
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.configs import ModelConfig
 
 
-class SelfCorrectingModel(BaseModel):
+class SelfCorrecting(BaseModel):
     """
     PyTorch implementation of the Self-Correcting Point Process model.
     Intensity for type i: lambda_i(t) = exp(mu_i + alpha_i * (t - N_i(t)))

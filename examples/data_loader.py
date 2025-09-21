@@ -1,5 +1,5 @@
-from typing import Any, Dict, List
 import random
+from typing import Any, Dict, List
 
 from easy_tpp.configs import DataConfig
 from easy_tpp.data.preprocess import TPPDataModule

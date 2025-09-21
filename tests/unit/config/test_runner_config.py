@@ -3,10 +3,11 @@ Unit tests for the refactored TrainerConfig and RunnerConfig.
 """
 
 import pytest
-from easy_tpp.configs.runner_config import TrainerConfig, RunnerConfig
-from easy_tpp.configs.model_config import ModelConfig
+
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.configs.logger_config import LoggerConfig
+from easy_tpp.configs.model_config import ModelConfig
+from easy_tpp.configs.runner_config import RunnerConfig, TrainerConfig
 
 
 def test_trainer_config_defaults(tmp_path):

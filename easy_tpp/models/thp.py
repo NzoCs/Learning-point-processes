@@ -4,8 +4,8 @@ import torch.nn as nn
 from easy_tpp.models.baselayer import (
     EncoderLayer,
     MultiHeadAttention,
-    TimePositionalEncoding,
     ScaledSoftplus,
+    TimePositionalEncoding,
 )
 from easy_tpp.models.basemodel import BaseModel
 

@@ -41,7 +41,7 @@ This framework goes beyond traditional TPP implementations by introducing:
 - **🛠️ Enhanced CLI**: Professional command-line interface with interactive modes
 <span id='top'/>
 
-| [Features](#features) | [Project Setup](#project-setup) | [Model List](#model-list) | [Dataset](#dataset) | [Quick Start](#quick-start) | [Benchmark](#benchmark) | [Documentation](#doc) | [Todo List](#todo) | [Citation](#citation) | [Acknowledgment](#acknowledgment) |
+| [Features](#features) | [Project Setup](#project-setup) | [Model List](#model-list) | [Dataset](#dataset) | [Quick Start](#quick-start) | [Benchmark](#benchmark) | [Contributing](#contributing) | [Documentation](#doc) | [Todo List](#todo) | [Citation](#citation) | [Acknowledgment](#acknowledgment) |
 
 ## 🆕 What's New
 <span id='news'/>
@@ -811,6 +811,50 @@ This project is licensed under the [Apache License (Version 2.0)](https://github
 - [ ] **Reinforcement Learning**:
   - [ ] RL-based sequence optimization
   - [ ] Multi-agent temporal modeling
+
+## 🤝 Contributing
+
+<span id='contributing'/>
+
+We welcome contributions from the community! This project follows modern development practices and coding standards.
+
+### Quick Start for Contributors
+
+1. **Read the [Contributing Guide](CONTRIBUTING.md)** - Complete guide for contributors
+2. **Check [Open Issues](https://github.com/NzoCs/Learning-point-processes/issues)** - Find something to work on
+3. **Follow our [Git Workflow](.github/README.md)** - Standardized development process
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/NzoCs/Learning-point-processes.git
+cd Learning-point-processes
+uv sync
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run tests
+make test
+```
+
+### Contribution Types
+
+- 🐛 **Bug Fixes**: Help us maintain reliability
+- ✨ **New Features**: Extend the framework capabilities  
+- 📚 **Documentation**: Improve clarity and examples
+- ⚡ **Performance**: Optimize existing implementations
+- 🧪 **Testing**: Improve test coverage and quality
+
+### Standards
+
+- **Code Style**: Black, isort, flake8
+- **Commits**: [Conventional Commits](https://conventionalcommits.org/)
+- **Testing**: Minimum 90% coverage for new code
+- **Documentation**: Google-style docstrings
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## Citation
 

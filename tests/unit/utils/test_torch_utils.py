@@ -1,13 +1,14 @@
 """Tests for torch utilities including device management."""
 
-import pytest
-import torch
 import os
 import random
-import numpy as np
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from easy_tpp.utils.torch_utils import set_seed, set_device, set_optimizer
+import numpy as np
+import pytest
+import torch
+
+from easy_tpp.utils.torch_utils import set_device, set_optimizer, set_seed
 
 
 @pytest.mark.unit

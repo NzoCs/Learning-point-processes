@@ -2,13 +2,17 @@
 Simulation metrics computation class.
 """
 
-import torch
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
-from typing import Dict, List, Any, Tuple, Optional, Union
+import torch
 from scipy.stats import wasserstein_distance
+
+from easy_tpp.utils import logger
+
 from .interfaces import (
-    MetricsComputerInterface,
     DataExtractorInterface,
+    MetricsComputerInterface,
     SimulationTimeExtractorInterface,
     SimulationTypeExtractorInterface,
 )
@@ -18,7 +22,6 @@ from .shared_types import (
     SimulationTypeValues,
     SimulationValues,
 )
-from easy_tpp.utils import logger
 
 
 class SimulationTimeDataExtractor(SimulationTimeExtractorInterface):

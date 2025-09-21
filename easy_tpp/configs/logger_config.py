@@ -1,24 +1,26 @@
-from enum import Enum
-from typing import Dict, Any, Optional, Union, List, Type
-from abc import ABC, abstractmethod
 import os
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional, Type, Union
+
+from pytorch_lightning.loggers import CometLogger  # for example, for Comet.ml
 from pytorch_lightning.loggers import (
-    WandbLogger,
-    TensorBoardLogger,
     CSVLogger,
     MLFlowLogger,
     NeptuneLogger,
-    CometLogger,  # for example, for Comet.ml
+    TensorBoardLogger,
+    WandbLogger,
 )
-from easy_tpp.utils import logger
-from dataclasses import dataclass, field
+
 from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
-    config_factory,
     config_class,
+    config_factory,
 )
+from easy_tpp.utils import logger
 
 
 class LoggerType(Enum):
@@ -155,7 +157,7 @@ class TensorboardLoggerAdapter(BaseLoggerAdapter):
 
 
 # Registry of adapters
-LOGGER_ADAPTERS : Dict[LoggerType, Type[BaseLoggerAdapter]] = {
+LOGGER_ADAPTERS: Dict[LoggerType, Type[BaseLoggerAdapter]] = {
     LoggerType.CSV: CSVLoggerAdapter,
     LoggerType.WandB: WandBLoggerAdapter,
     LoggerType.MLFLOW: MLflowLoggerAdapter,
@@ -170,7 +172,7 @@ LOGGER_ADAPTERS : Dict[LoggerType, Type[BaseLoggerAdapter]] = {
 class LoggerConfig(BaseConfig):
     """
     Configuration for logging in experiments.
-    
+
     Args:
         save_dir (str): Directory where logs will be saved.
         logger_type (LoggerType): Type of logger to use. Defaults to TENSORBOARD.
@@ -190,21 +192,22 @@ class LoggerConfig(BaseConfig):
                 raise ConfigValidationError(
                     f"Unknown logger type: {self.logger_type}", "logger_type"
                 )
-        
+
         # Get the adapter for this logger type
         self.adapter = LOGGER_ADAPTERS.get(self.logger_type)
         if not self.adapter:
             raise ConfigValidationError(
-                f"No adapter available for logger type: {self.logger_type}", "logger_type"
+                f"No adapter available for logger type: {self.logger_type}",
+                "logger_type",
             )
-        
+
         # Prepare config with save_dir
         self.config = dict(self.config)
         self.config["save_dir"] = self.save_dir
-        
+
         # Validate the configuration with the adapter
         self.config = self.adapter.validate_config(self.config)
-            
+
         super().__post_init__()
 
     def get_yaml_config(self) -> Dict[str, Any]:
@@ -217,16 +220,16 @@ class LoggerConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "LoggerConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "LoggerConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -236,11 +239,11 @@ class LoggerConfig(BaseConfig):
     def parse_from_yaml_config(config, **kwargs):
         """
         Compatibility method for parsing from YAML configuration.
-        
+
         Args:
             config: Configuration dictionary
             **kwargs: Additional arguments (e.g., save_dir)
-            
+
         Returns:
             LoggerConfig instance
         """
@@ -252,15 +255,16 @@ class LoggerConfig(BaseConfig):
     def configure_logger(self) -> Any:
         """
         Configure and return a logger instance.
-        
+
         Returns:
             Logger instance
         """
         if self.adapter is None:
             raise ConfigValidationError(
-                f"No adapter available for logger type: {self.logger_type}", "logger_type"
+                f"No adapter available for logger type: {self.logger_type}",
+                "logger_type",
             )
-            
+
         config = self.config.copy()
         return self.adapter.configure(config)
 
@@ -278,6 +282,7 @@ class LoggerConfig(BaseConfig):
 
     def get_required_fields(self):
         return ["save_dir"]
+
 
 class LoggerFactory:
     @staticmethod

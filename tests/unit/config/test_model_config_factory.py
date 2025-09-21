@@ -5,27 +5,28 @@ This module provides thorough testing of the refactored configuration
 system including validation, serialization, and error handling.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
-from unittest.mock import patch, Mock
+from typing import Any, Dict
+from unittest.mock import Mock, patch
+
+import pytest
 
 from easy_tpp.configs.base import (
     BaseConfig,
-    ConfigValidationError,
-    ConfigSerializationError,
-    ConfigValidator,
     ConfigFactory,
+    ConfigSerializationError,
+    ConfigValidationError,
+    ConfigValidator,
     config_factory,
 )
 from easy_tpp.configs.model_config import (
     ModelConfig,
-    ThinningConfig,
-    SimulationConfig,
-    TrainingConfig,
     ModelSpecsConfig,
     ModelType,
+    SimulationConfig,
+    ThinningConfig,
+    TrainingConfig,
 )
 
 

@@ -1,11 +1,13 @@
 """Unit tests for misc.py utility functions."""
 
+import json
 import os
 import tempfile
+
 import numpy as np
 import pytest
 import yaml
-import json
+
 from easy_tpp.utils import misc
 
 

@@ -1,15 +1,16 @@
 """Tests for runner and trainer components."""
 
-import pytest
-import torch
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import pytorch_lightning as pl
+from unittest.mock import MagicMock, Mock, patch
 
-from easy_tpp.runners.model_runner import Trainer
-from easy_tpp.configs import RunnerConfig, ModelConfig
+import pytest
+import pytorch_lightning as pl
+import torch
+
+from easy_tpp.configs import ModelConfig, RunnerConfig
 from easy_tpp.models.nhp import NHP
+from easy_tpp.runners.model_runner import Trainer
 
 
 @pytest.mark.unit

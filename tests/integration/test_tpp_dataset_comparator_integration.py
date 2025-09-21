@@ -6,11 +6,13 @@ This module tests the performance improvement when using TPPDataset directly
 instead of DataLoader for data extraction in the comparator factory.
 """
 
-import pytest
-import time
-import numpy as np
-import tempfile
 import shutil
+import tempfile
+import time
+
+import numpy as np
+import pytest
+
 from easy_tpp.data_preprocess.dataset import TPPDataset
 from easy_tpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,

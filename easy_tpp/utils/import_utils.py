@@ -1,7 +1,7 @@
 import importlib.util
 import sys
 from collections import OrderedDict
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 from easy_tpp.utils.log_utils import default_logger as logger
 

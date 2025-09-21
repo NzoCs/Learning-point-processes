@@ -4,8 +4,9 @@ Unit tests for the THP model.
 
 import pytest
 import torch
-from easy_tpp.models.thp import THP
+
 from easy_tpp.configs import ModelConfig
+from easy_tpp.models.thp import THP
 
 
 @pytest.mark.unit

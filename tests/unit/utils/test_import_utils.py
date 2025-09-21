@@ -1,8 +1,10 @@
 """Unit tests for import_utils.py utility functions."""
 
-import types
-import pytest
 import sys
+import types
+
+import pytest
+
 from easy_tpp.utils import import_utils
 
 

@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, Union, List
+from typing import Any, Dict, List, Optional, Union
+
 from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
-    config_factory,
     config_class,
+    config_factory,
 )
 from easy_tpp.utils.log_utils import default_logger
 
@@ -66,16 +67,16 @@ class TokenizerConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TokenizerConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "TokenizerConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -139,16 +140,16 @@ class DataLoadingSpecsConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "DataLoadingSpecsConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "DataLoadingSpecsConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -213,25 +214,31 @@ class DataConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "DataConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "DataConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create sub-configuration instances if needed
-        if "data_loading_specs" in filtered_dict and isinstance(filtered_dict["data_loading_specs"], dict):
+        if "data_loading_specs" in filtered_dict and isinstance(
+            filtered_dict["data_loading_specs"], dict
+        ):
             filtered_dict["data_loading_specs"] = DataLoadingSpecsConfig.from_dict(
                 filtered_dict["data_loading_specs"]
             )
-            
-        if "data_specs" in filtered_dict and isinstance(filtered_dict["data_specs"], dict):
-            filtered_dict["data_specs"] = TokenizerConfig.from_dict(filtered_dict["data_specs"])
-        
+
+        if "data_specs" in filtered_dict and isinstance(
+            filtered_dict["data_specs"], dict
+        ):
+            filtered_dict["data_specs"] = TokenizerConfig.from_dict(
+                filtered_dict["data_specs"]
+            )
+
         # 3. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -248,7 +255,9 @@ class DataConfig(BaseConfig):
             elif split == "test":
                 return self.test_dir
 
-        raise ValueError(f"Unknown split: {split}. Valid splits are: train, valid, test.")
+        raise ValueError(
+            f"Unknown split: {split}. Valid splits are: train, valid, test."
+        )
 
     def get_required_fields(self):
         return []

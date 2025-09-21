@@ -1,9 +1,10 @@
+import copy
+import traceback
+from typing import List, Optional, Union
+
 from easy_tpp.configs import RunnerConfig
 from easy_tpp.runners.model_runner import Trainer
 from easy_tpp.utils import logger
-from typing import Optional, Union, List
-import copy
-import traceback
 
 
 class Runner:
@@ -11,7 +12,6 @@ class Runner:
     Runner class that manages the training, validation, testing, and prediction phases
     of a temporal point process model with intelligent logging management.
     """
-
 
     def __init__(
         self,
@@ -32,7 +32,6 @@ class Runner:
             f"Runner initialized for model: {config.model_config.model_id} on dataset: {config.data_config.dataset_id}"
         )
 
-
     def setup_trainer(self, enable_logging: bool = True):
         if not self.is_setup:
             # Create trainer for the first time
@@ -51,20 +50,17 @@ class Runner:
             self.trainer.set_logging(enable_logging)
             self.enable_logging = enable_logging
 
-
     def train(self) -> None:
         logger.info("=== TRAINING PHASE ===")
         self.setup_trainer(enable_logging=True)
         self.trainer.train()
         return None
 
-
     def test(self) -> Optional[dict]:
         logger.critical("=== TESTING PHASE ===")
         self.setup_trainer(enable_logging=False)
         self.trainer.test()
         return None
-
 
     def predict(self) -> Optional[str]:
         logger.critical("=== PREDICTION PHASE ===")

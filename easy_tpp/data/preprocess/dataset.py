@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import Dataset
 
 from easy_tpp.data.preprocess.data_collator import TPPDataCollator
-from easy_tpp.utils import py_assert, is_tf_available
+from easy_tpp.utils import is_tf_available, py_assert
 
 
 class TPPDataset(Dataset):

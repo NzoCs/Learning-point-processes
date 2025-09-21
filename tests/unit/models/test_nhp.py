@@ -1,9 +1,10 @@
 """Tests for NHP (Neural Hawkes Process) model."""
 
+from unittest.mock import Mock, patch
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import Mock, patch
 
 from easy_tpp.models.nhp import NHP, ContTimeLSTMCell
 

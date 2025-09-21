@@ -1,6 +1,7 @@
+import math
+
 import torch
 from torch import nn
-import math
 from torch.nn import functional as F
 
 from easy_tpp.models.basemodel import BaseModel

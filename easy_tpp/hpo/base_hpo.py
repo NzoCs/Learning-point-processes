@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections import defaultdict
 from typing import List
 
-from easy_tpp.utils import logger, Registrable
+from easy_tpp.utils import Registrable, logger
 
 
 class HyperTuner(Registrable):

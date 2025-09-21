@@ -2,6 +2,7 @@
 
 import pytest
 import torch
+
 from easy_tpp.models.attnhp import AttNHP
 
 

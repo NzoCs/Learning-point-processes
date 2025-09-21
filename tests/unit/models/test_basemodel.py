@@ -1,12 +1,13 @@
 """Tests for BaseModel class."""
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
 import torch
 import torch.nn as nn
-from unittest.mock import Mock, patch, MagicMock
 
-from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.configs import ModelConfig
+from easy_tpp.models.basemodel import BaseModel
 
 
 # Create a concrete implementation for testing

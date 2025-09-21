@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union, Optional
+from typing import Optional, Union
 
 from easy_tpp.data.preprocess.event_tokenizer import EventTokenizer
 from easy_tpp.utils import PaddingStrategy, TruncationStrategy

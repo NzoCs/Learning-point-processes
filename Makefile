@@ -93,33 +93,34 @@ check: ## Verify installation
 
 test: ## Run tests
 	@echo "Running tests..."
-	@pytest
+	@python -m pytest
 
 test-cov: ## Run tests with coverage
 	@echo "Tests with coverage..."
-	@pytest --cov=easy_tpp --cov-report=html
+	@python -m pytest --cov=easy_tpp --cov-report=html
 
 format: ## Format code with Black
 	@echo "Formatting code..."
-	@black .
+	@python -m black easy_tpp/ tests/ examples/ scripts/
 	@echo "Code formatted!"
 
 format-check: ## Check formatting without modifying
 	@echo "Checking formatting..."
-	@black --check .
+	@python -m black --check easy_tpp/ tests/ examples/ scripts/
 
 isort: ## Organize imports
 	@echo "Organizing imports..."
-	@isort .
+	@python -m isort easy_tpp/ tests/ examples/ scripts/
 	@echo "Imports organized!"
 
 lint: ## Check code with flake8
 	@echo "Checking code with flake8..."
-	@flake8
+	@python -m flake8 easy_tpp/ tests/ examples/ scripts/
+	@echo "Linting completed!"
 
 type-check: ## Check types with mypy
 	@echo "Checking types..."
-	@mypy easy_tpp
+	@python -m mypy easy_tpp
 
 clean: ## Clean temporary files
 	@echo "Cleaning..."
@@ -144,14 +145,6 @@ docs-serve: ## Serve documentation locally
 	@echo "Documentation server..."
 	@cd docs && sphinx-autobuild . _build/html
 
-check-deps: ## Check main dependencies
-	@echo "Checking dependencies..."
-	@$(PYTHON) -c "import torch; print('OK PyTorch:', torch.__version__)" || echo "ERROR PyTorch not installed"
-	@$(PYTHON) -c "import pytorch_lightning; print('OK PyTorch Lightning')" || echo "ERROR PyTorch Lightning not installed"
-	@$(PYTHON) -c "import numpy; print('OK NumPy')" || echo "ERROR NumPy not installed"
-	@$(PYTHON) -c "import pandas; print('OK Pandas')" || echo "ERROR Pandas not installed"
-	@$(PYTHON) -c "import easy_tpp; print('OK EasyTPP')" || echo "ERROR EasyTPP not installed"
-
 build: ## Build package
 	@echo "Building package..."
 	@$(PYTHON) -m build
@@ -164,6 +157,12 @@ quality: ## Run all quality checks
 	@make type-check
 	@make test
 	@echo "All quality checks passed!"
+
+fix-style: ## Auto-fix style issues (format + isort)
+	@echo "Auto-fixing style issues..."
+	@python -m black easy_tpp/ tests/ examples/ scripts/
+	@python -m isort easy_tpp/ tests/ examples/ scripts/
+	@echo "Style issues fixed!"
 
 pre-commit: ## Run pre-commit hooks on all files
 	@echo "Running pre-commit hooks..."

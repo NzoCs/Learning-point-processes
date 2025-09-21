@@ -1,8 +1,9 @@
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 from easy_tpp.configs.base import BaseConfig
 from easy_tpp.configs.runner_config import RunnerConfig
 from easy_tpp.utils import parse_uri_to_protocol_and_path, py_assert
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 
 
 @dataclass

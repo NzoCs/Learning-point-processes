@@ -1,15 +1,17 @@
 import os
 import tempfile
+
 import pytest
+
 from easy_tpp.configs.data_config import DataConfig
+from easy_tpp.evaluation.benchmarks.last_mark_bench import LastMarkBenchmark
 from easy_tpp.evaluation.benchmarks.mean_bench import MeanInterTimeBenchmark
-from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
-    MarkDistributionBenchmark,
-)
 from easy_tpp.evaluation.benchmarks.sample_distrib_intertime_bench import (
     InterTimeDistributionBenchmark,
 )
-from easy_tpp.evaluation.benchmarks.last_mark_bench import LastMarkBenchmark
+from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
+    MarkDistributionBenchmark,
+)
 
 
 # Télécharge un vrai dataset de test depuis HuggingFace

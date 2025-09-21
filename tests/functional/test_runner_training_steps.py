@@ -4,13 +4,14 @@ This module provides functional tests that specifically test the training,
 testing, and validation steps using the runner-based configuration approach.
 """
 
+import json
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, call, patch
+
 import pytest
 import torch
-import tempfile
 import yaml
-import json
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
 
 # from easy_tpp.config_factory import Config
 from easy_tpp.configs import RunnerConfig

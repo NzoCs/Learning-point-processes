@@ -4,12 +4,14 @@ Last Mark Benchmark
 This benchmark predicts the next event mark (type) using the previous event mark (lag-1).
 """
 
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
+
 import torch
 import yaml
 
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
+
 from .base_bench import BaseBenchmark, BenchmarkMode
 
 

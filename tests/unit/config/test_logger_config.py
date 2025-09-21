@@ -1,6 +1,7 @@
 """Unit tests for logger_config.py configuration logic."""
 
 import pytest
+
 from easy_tpp.configs import logger_config
 
 

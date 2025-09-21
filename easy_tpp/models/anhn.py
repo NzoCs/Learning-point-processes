@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.configs import ModelConfig
 from easy_tpp.models.baselayer import MultiHeadAttention
 from easy_tpp.models.basemodel import BaseModel
 

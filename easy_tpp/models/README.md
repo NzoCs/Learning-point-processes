@@ -151,21 +151,25 @@ with torch.no_grad():
 ## Architectures des modèles
 
 ### Neural Hawkes Process (NHP)
+
 - **Architecture** : RNN avec fonction d'intensité neuronale
 - **Avantages** : Simple, efficace, bien établi
 - **Cas d'usage** : Baseline robuste pour la plupart des applications
 
 ### Transformer Hawkes Process (THP)
+
 - **Architecture** : Transformer avec mécanisme d'attention
 - **Avantages** : Capture les dépendances à long terme
 - **Cas d'usage** : Séquences longues, patterns complexes
 
 ### Recurrent Marked TPP (RMTPP)
+
 - **Architecture** : LSTM/GRU avec prédiction continue du temps
 - **Avantages** : Modélisation directe de l'inter-temps
 - **Cas d'usage** : Prédiction précise des temps d'arrivée
 
 ### Self-Attentive Hawkes Process (SAHP)
+
 - **Architecture** : Auto-attention sur l'historique des événements
 - **Avantages** : Flexibilité dans la capture des dépendances
 - **Cas d'usage** : Données avec structures d'attention complexes
@@ -228,7 +232,6 @@ thp_config = ModelConfig(
     }
 )
 ```
-
 
 ### Hyperparamètres recommandés
 

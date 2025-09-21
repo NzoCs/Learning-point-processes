@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from easy_tpp.data.preprocess.dataset import TPPDataset
 from easy_tpp.data.preprocess.event_tokenizer import EventTokenizer
 from easy_tpp.utils import load_pickle, py_assert, logger
-from easy_tpp.config_factory.data_config import DataConfig
+from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.data.preprocess.data_collator import TPPDataCollator
 
 

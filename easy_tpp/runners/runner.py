@@ -1,4 +1,4 @@
-from easy_tpp.config_factory import RunnerConfig
+from easy_tpp.configs import RunnerConfig
 from easy_tpp.runners.model_runner import Trainer
 from easy_tpp.utils import logger
 from typing import Optional, Union, List
@@ -118,28 +118,3 @@ class Runner:
                 results[current_phase] = "error: unknown phase"
 
         return results
-
-
-# Convenience function for backward compatibility and simple usage
-def run_experiment(
-    config: RunnerConfig,
-    phase: Union[str, List[str]] = "all",
-    checkpoint_path: Optional[str] = None,
-    output_dir: Optional[str] = None,
-    **kwargs,
-) -> dict:
-    """
-    Convenience function to run an experiment with a single function call.
-
-    Args:
-        config (RunnerConfig): Configuration object.
-        phase (Union[str, List[str]]): Phase(s) to execute.
-        checkpoint_path (str, optional): Path to checkpoint file.
-        output_dir (str, optional): Output directory.
-        **kwargs: Additional arguments for the Trainer.
-
-    Returns:
-        dict: Results from executed phases.
-    """
-    runner = Runner(config, checkpoint_path, output_dir, **kwargs)
-    return runner.run(phase)

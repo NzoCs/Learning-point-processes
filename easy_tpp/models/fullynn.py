@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from torch.autograd import grad
 
 from easy_tpp.models.basemodel import BaseModel
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.configs import ModelConfig
 
 
 class CumulHazardFunctionNetwork(nn.Module):

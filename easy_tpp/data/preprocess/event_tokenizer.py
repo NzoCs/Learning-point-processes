@@ -16,7 +16,7 @@ from easy_tpp.utils import (
     is_numpy_array,
     py_assert,
 )
-from easy_tpp.config_factory import TokenizerConfig
+from easy_tpp.configs import TokenizerConfig
 
 
 class BatchEncoding(UserDict):

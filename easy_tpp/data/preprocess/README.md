@@ -122,6 +122,7 @@ class TPPDataModule(pl.LightningDataModule):
 ```
 
 **Key Methods:**
+
 - `setup()`: Prepare datasets for training/validation/testing
 - `train_dataloader()`: Get training data loader
 - `val_dataloader()`: Get validation data loader
@@ -179,6 +180,7 @@ dataloader = DataLoader(
 ### Supported Data Formats
 
 #### JSON Format
+
 ```json
 [
   {
@@ -192,7 +194,9 @@ dataloader = DataLoader(
 ```
 
 #### PKL Format
+
 Pickle files containing preprocessed sequences with keys:
+
 - `time_seqs`: Event timestamps
 - `time_delta_seqs`: Inter-event intervals  
 - `type_seqs`: Event type indices
@@ -274,29 +278,37 @@ visualizer = Visualizer(
 ### Available Visualizations
 
 #### 1. Event Type Distribution
+
 ```python
 visualizer.plot_event_type_distribution()
 ```
+
 Shows the frequency distribution of different event types.
 
 #### 2. Inter-Event Time Analysis
+
 ```python
 visualizer.plot_inter_event_time_distribution()
 visualizer.plot_inter_event_time_histogram()
 ```
+
 Analyzes the distribution of time intervals between events.
 
 #### 3. Sequence Statistics
+
 ```python
 visualizer.plot_sequence_length_distribution()
 ```
+
 Shows distribution of sequence lengths in the dataset.
 
 #### 4. Temporal Patterns
+
 ```python
 visualizer.plot_event_intensity_over_time()
 visualizer.plot_event_timeline()
 ```
+
 Visualizes temporal patterns and event intensities.
 
 ### Comparison Mode
@@ -488,21 +500,25 @@ trainer.fit(
 ## Best Practices
 
 ### 1. Memory Management
+
 - Use appropriate `num_workers` for your system
 - Enable `pin_memory=True` for GPU training
 - Consider `drop_last=True` for consistent batch sizes
 
 ### 2. Data Preprocessing
+
 - Validate data formats before training
 - Use appropriate padding strategies for your model
 - Monitor sequence length distributions
 
 ### 3. Performance Optimization
+
 - Cache processed data when possible
 - Use efficient data formats (PKL for large datasets)
 - Profile data loading to identify bottlenecks
 
 ### 4. Data Quality
+
 - Regularly visualize your data
 - Check for data leakage between splits
 - Validate event type ranges and distributions

@@ -14,7 +14,7 @@ from typing import Optional
 
 
 from easy_tpp.models.thinning import EventSampler
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.configs import ModelConfig
 from easy_tpp.evaluation.metrics_helper import MetricsHelper, EvaluationMode
 from easy_tpp.utils import logger, format_multivariate_simulations, save_json
 

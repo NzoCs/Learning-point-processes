@@ -51,7 +51,7 @@ except ImportError:
     RICH_AVAILABLE = False
 
 try:
-    from easy_tpp.config_factory import RunnerConfig
+    from easy_tpp.configs import RunnerConfig
     from easy_tpp.runners import Runner
     from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
     from easy_tpp.data.generation import HawkesSimulator, SelfCorrecting

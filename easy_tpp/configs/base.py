@@ -324,17 +324,3 @@ class ConfigFactory:
     def get_available_config_types(self) -> List[str]:
         """Get list of available configuration types."""
         return list(self._config_registry.keys())
-
-
-def config_class(config_type: str):
-    """Decorator to register a config class with the config factory."""
-
-    def decorator(cls):
-        config_factory.register_config_class(config_type, cls)
-        return cls
-
-    return decorator
-
-
-# Global factory instance
-config_factory = ConfigFactory()

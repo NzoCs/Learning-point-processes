@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch, MagicMock
 import pytorch_lightning as pl
 
 from easy_tpp.runners.model_runner import Trainer
-from easy_tpp.config_factory import RunnerConfig, ModelConfig
+from easy_tpp.configs import RunnerConfig, ModelConfig
 from easy_tpp.models.nhp import NHP
 
 

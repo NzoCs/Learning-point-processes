@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 
-from easy_tpp.config_factory.base import (
+from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
     config_factory,
@@ -80,7 +80,7 @@ class ThinningConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ThinningConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
@@ -142,7 +142,7 @@ class SimulationConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "SimulationConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
@@ -222,7 +222,7 @@ class TrainingConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TrainingConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
@@ -346,7 +346,7 @@ class ModelSpecsConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ModelSpecsConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
@@ -486,7 +486,7 @@ class ModelConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ModelConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(

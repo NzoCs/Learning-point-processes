@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from easy_tpp.models.nhp import NHP
 from easy_tpp.models.rmtpp import RMTPP
 from easy_tpp.utils.torch_utils import set_device
-from easy_tpp.config_factory import ModelConfig
+from easy_tpp.configs import ModelConfig
 from tests.conftest import check_device_consistency, check_tensor_device
 
 

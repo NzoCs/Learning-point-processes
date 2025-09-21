@@ -13,7 +13,7 @@ from pytorch_lightning.loggers import (
 )
 from easy_tpp.utils import logger
 from dataclasses import dataclass, field
-from easy_tpp.config_factory.base import (
+from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
     config_factory,
@@ -216,7 +216,7 @@ class LoggerConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "LoggerConfig":
-        from easy_tpp.config_factory.config_utils import ConfigValidator
+        from easy_tpp.configs.config_utils import ConfigValidator
         
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(

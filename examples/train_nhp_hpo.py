@@ -1,6 +1,6 @@
 import argparse
 
-from easy_tpp.config_factory import Config
+from easy_tpp.configs import Config
 from easy_tpp.hpo import HyperTuner
 
 

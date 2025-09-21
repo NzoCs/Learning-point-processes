@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 import random
 
-from easy_tpp.config_factory import DataConfig
+from easy_tpp.configs import DataConfig
 from easy_tpp.data.preprocess import TPPDataModule
 
 

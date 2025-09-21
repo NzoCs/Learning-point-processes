@@ -4,12 +4,13 @@ This module provides unit tests that use the runner configuration approach
 to test individual components like model creation, data loading, and training steps.
 """
 
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
 import torch
-import tempfile
 import yaml
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 
 # from easy_tpp.config_factory import Config
 from easy_tpp.configs import RunnerConfig

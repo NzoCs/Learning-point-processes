@@ -6,12 +6,12 @@ configuration classes should implement to ensure consistency and
 type safety across the configuration system.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Type, TypeVar, Union, Optional, List
-from pathlib import Path
 import logging
-from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
 from copy import deepcopy
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 from easy_tpp.utils import Registrable
 

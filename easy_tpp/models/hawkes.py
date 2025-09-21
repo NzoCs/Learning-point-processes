@@ -1,7 +1,7 @@
 import torch
 
-from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.configs.model_config import ModelConfig
+from easy_tpp.models.basemodel import BaseModel
 
 
 class Hawkes(BaseModel):

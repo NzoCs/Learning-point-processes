@@ -1,0 +1,21 @@
+# <type>(<scope>): <short description>
+#
+# <body>
+#
+# <footer>
+
+# Type peut être:
+# feat     : Nouvelle fonctionnalité
+# fix      : Correction de bug
+# docs     : Documentation
+# style    : Formatage (pas de changement de code)
+# refactor : Refactoring
+# test     : Tests
+# chore    : Maintenance (dépendances, config)
+
+# Exemples:
+# feat(models): ajouter nouveau modèle SAHP
+# fix(config): corriger validation des paramètres
+# docs(readme): mettre à jour guide d'installation
+# test(models): ajouter tests unitaires pour NHP
+# refactor(factory): simplifier création des modèles

@@ -1,7 +1,8 @@
 """Unit tests for generic.py utility functions."""
 
-import pytest
 import numpy as np
+import pytest
+
 from easy_tpp.utils import generic
 
 

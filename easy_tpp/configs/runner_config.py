@@ -1,20 +1,20 @@
-from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import torch
 
 from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
-    config_factory,
     config_class,
+    config_factory,
 )
-from easy_tpp.configs.model_config import ModelConfig
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.configs.logger_config import LoggerConfig
+from easy_tpp.configs.model_config import ModelConfig
 from easy_tpp.utils import logger
-
 
 
 @config_class("trainer_config")
@@ -57,22 +57,23 @@ class TrainerConfig(BaseConfig):
     def __post_init__(self):
         # Directory setup
         ckpt = self.checkpoint_dir or "checkpoints"
-        dirpath = self.ROOT_DIR / (self.save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/")
+        dirpath = self.ROOT_DIR / (
+            self.save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/"
+        )
         self.save_model_dir = dirpath / "saved_model"
         self.save_model_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Logger config - only if logging is activated
         if self.activate_logging:
             if self.logger_config is None:
-                    # Create default logger config if none provided
-                    self.logger_config = LoggerConfig(
-                        save_dir=dirpath,
-                        logger_type="tensorboard"
-                    )
+                # Create default logger config if none provided
+                self.logger_config = LoggerConfig(
+                    save_dir=dirpath, logger_type="tensorboard"
+                )
             elif not self.logger_config.save_dir:
                 # Set save_dir if not already set
                 self.logger_config.save_dir = dirpath
-            
+
         # Devices
         if self.devices is None:
             self.devices = self.detect_available_devices()
@@ -109,34 +110,40 @@ class TrainerConfig(BaseConfig):
             "use_precision_16": self.use_precision_16,
             "activate_logging": self.activate_logging,
         }
-        
+
         # Only include logger_config if logging is activated
         if self.activate_logging and self.logger_config is not None:
             config["logger_config"] = self.logger_config.get_yaml_config()
-            
+
         return config
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TrainerConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "TrainerConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create sub-configuration instances if needed
         activate_logging = filtered_dict.get("activate_logging", False)
-        if activate_logging and "logger_config" in filtered_dict and isinstance(filtered_dict["logger_config"], dict):
-            filtered_dict["logger_config"] = LoggerConfig.from_dict(filtered_dict["logger_config"])
+        if (
+            activate_logging
+            and "logger_config" in filtered_dict
+            and isinstance(filtered_dict["logger_config"], dict)
+        ):
+            filtered_dict["logger_config"] = LoggerConfig.from_dict(
+                filtered_dict["logger_config"]
+            )
         elif not activate_logging:
             # Remove logger_config if logging is not activated
             filtered_dict.pop("logger_config", None)
-        
+
         # 3. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -171,33 +178,33 @@ class RunnerConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Dict[str, Any]]) -> "RunnerConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "RunnerConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create sub-configuration instances
         trainer_config = filtered_dict["trainer_config"]
         if not isinstance(trainer_config, TrainerConfig):
             trainer_config = TrainerConfig.from_dict(trainer_config)
-            
+
         model_config = filtered_dict["model_config"]
         if not isinstance(model_config, ModelConfig):
             model_config = ModelConfig.from_dict(model_config)
-            
+
         data_config = filtered_dict["data_config"]
         if not isinstance(data_config, DataConfig):
             data_config = DataConfig.from_dict(data_config)
-            
+
         # 3. Create the instance
         return cls(
             trainer_config=trainer_config,
             model_config=model_config,
-            data_config=data_config
+            data_config=data_config,
         )
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""

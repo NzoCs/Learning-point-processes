@@ -1,15 +1,16 @@
 """Device consistency tests for GPU/CPU handling during model training and execution."""
 
+from unittest.mock import Mock, patch
+
 import pytest
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from unittest.mock import Mock, patch
-import pytorch_lightning as pl
 
+from easy_tpp.configs import ModelConfig
 from easy_tpp.models.nhp import NHP
 from easy_tpp.models.rmtpp import RMTPP
 from easy_tpp.utils.torch_utils import set_device
-from easy_tpp.configs import ModelConfig
 from tests.conftest import check_device_consistency, check_tensor_device
 
 

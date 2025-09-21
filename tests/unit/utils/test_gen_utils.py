@@ -1,8 +1,9 @@
 """Unit tests for gen_utils.py utility functions."""
 
-import pytest
 import numpy as np
+import pytest
 import torch
+
 from easy_tpp.utils import gen_utils
 
 

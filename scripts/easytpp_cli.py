@@ -22,13 +22,13 @@ Usage:
     python easytpp_cli.py interactive
 """
 
-import sys
 import logging
-from pathlib import Path
-from typing import Optional, List, Union, Any, Dict
-from typing_extensions import Annotated
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
+from typing_extensions import Annotated
 
 # Try to import required packages
 try:
@@ -40,11 +40,11 @@ except ImportError:
     TYPER_AVAILABLE = False
 
 try:
+    from rich import print as rprint
     from rich.console import Console
-    from rich.table import Table
     from rich.panel import Panel
     from rich.progress import track
-    from rich import print as rprint
+    from rich.table import Table
 
     RICH_AVAILABLE: bool = True
 except ImportError:
@@ -52,19 +52,19 @@ except ImportError:
 
 try:
     from easy_tpp.configs import RunnerConfig
-    from easy_tpp.runners import Runner
-    from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
     from easy_tpp.data.generation import HawkesSimulator, SelfCorrecting
     from easy_tpp.data.preprocess.data_loader import TPPDataModule
     from easy_tpp.data.preprocess.visualizer import Visualizer
+    from easy_tpp.evaluation.benchmarks.last_mark_bench import LastMarkBenchmark
     from easy_tpp.evaluation.benchmarks.mean_bench import MeanInterTimeBenchmark
-    from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
-        MarkDistributionBenchmark,
-    )
     from easy_tpp.evaluation.benchmarks.sample_distrib_intertime_bench import (
         InterTimeDistributionBenchmark,
     )
-    from easy_tpp.evaluation.benchmarks.last_mark_bench import LastMarkBenchmark
+    from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
+        MarkDistributionBenchmark,
+    )
+    from easy_tpp.runners import Runner
+    from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
 
     EASYTPP_AVAILABLE: bool = True
 except ImportError:
@@ -254,7 +254,7 @@ def interactive() -> None:
         print("Install it with: pip install rich")
         raise typer.Exit(1)
 
-    from rich.prompt import Prompt, Confirm
+    from rich.prompt import Confirm, Prompt
 
     console.print("🎯 Starting Interactive Mode", style="bold blue")
     console.print("Follow the prompts to configure your experiment.\n")
@@ -470,9 +470,10 @@ def info() -> None:
     """ℹ️  Display system and environment information."""
 
     try:
-        import torch
-        import pytorch_lightning as pl
         import platform
+
+        import pytorch_lightning as pl
+        import torch
 
         if RICH_AVAILABLE:
             table = Table(title="System Information")

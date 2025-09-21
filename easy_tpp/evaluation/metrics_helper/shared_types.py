@@ -2,9 +2,10 @@
 Shared types and enums for the metrics helper package.
 """
 
-import torch
 from dataclasses import dataclass
 from enum import Enum
+
+import torch
 
 
 class EvaluationMode(Enum):

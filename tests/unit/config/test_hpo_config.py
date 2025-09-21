@@ -1,6 +1,7 @@
 """Unit tests for hpo_config.py configuration logic."""
 
 import pytest
+
 from easy_tpp.configs.hpo_config import HPOConfig
 
 

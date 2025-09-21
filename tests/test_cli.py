@@ -6,11 +6,12 @@ This script tests all main CLI functionalities
 to ensure they work correctly.
 """
 
+import os
 import subprocess
 import sys
-import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import yaml
 
 

@@ -3,14 +3,16 @@ Interfaces for metrics computation.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Tuple
+from typing import Any, Dict, List, Tuple
+
 import torch
+
 from .shared_types import (
     MaskedValues,
-    TimeValues,
-    TypeValues,
     SimulationTimeValues,
     SimulationTypeValues,
+    TimeValues,
+    TypeValues,
 )
 
 

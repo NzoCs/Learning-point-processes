@@ -1,12 +1,13 @@
 """Tests for configuration factory components."""
 
-import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-from omegaconf import OmegaConf, DictConfig
 
-from easy_tpp.configs import ModelConfig, DataConfig, RunnerConfig
+import pytest
+from omegaconf import DictConfig, OmegaConf
+
+from easy_tpp.configs import DataConfig, ModelConfig, RunnerConfig
 from easy_tpp.configs.base import ConfigValidationError
 
 

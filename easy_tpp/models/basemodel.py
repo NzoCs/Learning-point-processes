@@ -1,22 +1,22 @@
 """Base model with common functionality using PyTorch Lightning"""
 
-from collections import defaultdict
-from abc import ABC, abstractmethod
-from tqdm import tqdm
-import torch
-from torch import nn
-from torch.nn import functional as F
-import pytorch_lightning as pl
-from pytorch_lightning.utilities.types import STEP_OUTPUT
-from matplotlib import pyplot as plt
 import os
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import Optional
 
+import pytorch_lightning as pl
+import torch
+from matplotlib import pyplot as plt
+from pytorch_lightning.utilities.types import STEP_OUTPUT
+from torch import nn
+from torch.nn import functional as F
+from tqdm import tqdm
 
-from easy_tpp.models.thinning import EventSampler
 from easy_tpp.configs import ModelConfig
-from easy_tpp.evaluation.metrics_helper import MetricsHelper, EvaluationMode
-from easy_tpp.utils import logger, format_multivariate_simulations, save_json
+from easy_tpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
+from easy_tpp.models.thinning import EventSampler
+from easy_tpp.utils import format_multivariate_simulations, logger, save_json
 
 
 class BaseModel(pl.LightningModule, ABC):
@@ -85,7 +85,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         self.sim_events_counter = 0
         self.simulations = []
-        
+
         # Cache for event samplers to avoid reconstruction
         self._event_sampler_cache = {}
 
@@ -116,7 +116,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Use num_sample as cache key
         cache_key = num_sample
-        
+
         # Check if we have a cached sampler for this num_sample
         if cache_key in self._event_sampler_cache:
             cached_sampler = self._event_sampler_cache[cache_key]
@@ -136,10 +136,10 @@ class BaseModel(pl.LightningModule, ABC):
             dtime_max=gen_config.dtime_max,
             device=self._device,
         )
-        
+
         # Cache the new sampler
         self._event_sampler_cache[cache_key] = event_sampler
-        
+
         return event_sampler
 
     @property
@@ -772,7 +772,7 @@ class BaseModel(pl.LightningModule, ABC):
             num_step = self.num_step_gen
 
         batch_size = time_seq_label.size(0)
-        
+
         if not forward:
             initial_seq = time_seq_label[:, :-num_step]
             initial_delta = time_delta_seq_label[:, :-num_step]
@@ -790,10 +790,16 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size, total_len, dtype=initial_seq.dtype, device=initial_seq.device
         ).contiguous()
         time_delta_buffer = torch.zeros(
-            batch_size, total_len, dtype=initial_delta.dtype, device=initial_delta.device
+            batch_size,
+            total_len,
+            dtype=initial_delta.dtype,
+            device=initial_delta.device,
         ).contiguous()
         event_buffer = torch.zeros(
-            batch_size, total_len, dtype=initial_event.dtype, device=initial_event.device
+            batch_size,
+            total_len,
+            dtype=initial_event.dtype,
+            device=initial_event.device,
         ).contiguous()
 
         # Copier les séquences initiales dans les buffers
@@ -806,17 +812,15 @@ class BaseModel(pl.LightningModule, ABC):
         # Boucle de prédiction avec indexation directe sur les buffers
         for _ in range(num_step):
             current_len += 1
-            
+
             # Obtenir les vues actuelles des séquences (pas de copie)
             current_time_seq = time_buffer[:, :current_len]
             current_time_delta = time_delta_buffer[:, :current_len]
             current_event_seq = event_buffer[:, :current_len]
-            
+
             # Utiliser predict_one_step pour éviter la duplication de code
             dtimes_pred, types_pred = self.predict_one_step(
-                current_time_seq,
-                current_time_delta, 
-                current_event_seq
+                current_time_seq, current_time_delta, current_event_seq
             )
 
             # Calcul du nouveau temps
@@ -859,7 +863,6 @@ class BaseModel(pl.LightningModule, ABC):
         if batch_size is None:
             batch_size = self.simulation_batch_size
 
-
         # Initialize sequences
         if batch is None:
             batch = [
@@ -887,7 +890,7 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size, max_seq_len, device=self.device, dtype=torch.long
         ).contiguous()
 
-        # Copie initiale 
+        # Copie initiale
         initial_len = time_seq.size(1)
         time_buffer[:, :initial_len].copy_(time_seq)
         time_delta_buffer[:, :initial_len].copy_(time_delta_seq)
@@ -900,12 +903,12 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Utilisation de advanced indexing pour l'optimisation
         for mark in range(num_mark):
-            mark_mask = (event_seq == mark)  # [batch_size, seq_len]
+            mark_mask = event_seq == mark  # [batch_size, seq_len]
             if mark_mask.any():
                 # Opération vectorisée avec masquage efficace
                 masked_times = time_seq.masked_fill(~mark_mask, float("-inf"))
                 max_times, _ = masked_times.max(dim=1)
-                valid_mask = (max_times != float("-inf"))
+                valid_mask = max_times != float("-inf")
                 last_event_time[valid_mask, mark] = max_times[valid_mask]
 
         current_time = start_time
@@ -936,7 +939,10 @@ class BaseModel(pl.LightningModule, ABC):
 
                 try:
                     dtimes_pred, type_pred = self.predict_one_step(
-                        active_time_seq, active_time_delta, active_event_seq, num_sample=1
+                        active_time_seq,
+                        active_time_delta,
+                        active_event_seq,
+                        num_sample=1,
                     )
 
                     # Calcul des nouveaux temps
@@ -944,11 +950,11 @@ class BaseModel(pl.LightningModule, ABC):
 
                     # Mise à jour vectorisée de last_event_time pour les séquences actives
                     active_batch_size = len(active_indices)
-                    
+
                     # Vectorisation complète : utiliser advanced indexing pour mettre à jour last_event_time
                     type_pred_flat = type_pred.squeeze(-1)  # [active_batch_size]
                     last_times_flat = active_time_seq[:, -1]  # [active_batch_size]
-                    
+
                     # Mise à jour vectorisée avec scatter_
                     last_event_time[active_indices, type_pred_flat] = last_times_flat
 
@@ -1250,7 +1256,9 @@ class BaseModel(pl.LightningModule, ABC):
         """
         # Determine possible event times
         dtime_boundary = time_delta_seq + self.dtime_max
-        accepted_dtimes, weights = self.event_sampler(num_sample=num_sample).draw_next_time_one_step(
+        accepted_dtimes, weights = self.event_sampler(
+            num_sample=num_sample
+        ).draw_next_time_one_step(
             time_seq,
             dtime_boundary,
             event_seq,

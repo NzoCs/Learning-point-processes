@@ -1,18 +1,20 @@
 import os
 import tempfile
-import yaml
-import torch
+from unittest.mock import patch
+
 import numpy as np
+import torch
+import yaml
+
 from easy_tpp.configs.data_config import DataConfig
+from easy_tpp.evaluation.benchmarks.last_mark_bench import LastMarkBenchmark
 from easy_tpp.evaluation.benchmarks.mean_bench import MeanInterTimeBenchmark
-from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
-    MarkDistributionBenchmark,
-)
 from easy_tpp.evaluation.benchmarks.sample_distrib_intertime_bench import (
     InterTimeDistributionBenchmark,
 )
-from easy_tpp.evaluation.benchmarks.last_mark_bench import LastMarkBenchmark
-from unittest.mock import patch
+from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
+    MarkDistributionBenchmark,
+)
 
 # Minimal DataConfig for testing (adapt as needed for your project)
 MINIMAL_DATA_CONFIG = {

@@ -2,7 +2,8 @@
 Interfaces for Temporal Point Process Distribution Comparison
 """
 
-from typing import Dict, List, Any, Protocol
+from typing import Any, Dict, List, Protocol
+
 import numpy as np
 
 

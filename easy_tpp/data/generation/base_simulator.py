@@ -1,10 +1,11 @@
-from abc import ABC, abstractmethod
-import numpy as np
 import json
 import os
-from typing import List, Tuple, Dict, Optional
-from tqdm import tqdm
+from abc import ABC, abstractmethod
+from typing import Dict, List, Optional, Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
+from tqdm import tqdm
 
 
 class BaseSimulator(ABC):

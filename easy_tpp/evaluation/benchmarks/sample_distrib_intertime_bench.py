@@ -5,12 +5,14 @@ This benchmark creates bins to approximate the distribution of inter-times from 
 training dataset, then predicts inter-times by sampling from these bins.
 """
 
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
+
 import torch
 import yaml
 
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
+
 from .base_bench import BaseBenchmark, BenchmarkMode
 
 
@@ -169,4 +171,3 @@ class InterTimeDistributionBenchmark(BaseBenchmark):
     def _get_custom_results_info(self) -> Dict[str, Any]:
         """Get custom information to add to results."""
         return {"num_bins": self.num_bins}
-

@@ -4,13 +4,14 @@ This module provides integration tests that use the runner configuration approac
 similar to how models are instantiated in the main training scripts.
 """
 
-import pytest
-import torch
-import tempfile
 import os
-import yaml
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
+import torch
+import yaml
 
 # from easy_tpp.config_factory import Config
 from easy_tpp.configs import RunnerConfig

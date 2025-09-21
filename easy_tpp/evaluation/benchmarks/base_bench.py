@@ -5,18 +5,19 @@ This module provides a base class for implementing benchmarks for TPP models.
 It defines the common interface and shared functionality that all benchmarks should implement.
 """
 
-import os
 import json
-import numpy as np
+import os
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Tuple, Type, Union, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+import numpy as np
 import torch
 import yaml
-from enum import Enum
 
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.data.preprocess.data_loader import TPPDataModule
-from easy_tpp.evaluation.metrics_helper import MetricsHelper, EvaluationMode
+from easy_tpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
 from easy_tpp.utils import logger
 
 

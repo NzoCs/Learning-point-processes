@@ -6,16 +6,16 @@ best practices for configuration management with proper validation,
 error handling, and maintainable architecture.
 """
 
-from typing import Dict, Any, List, Optional, Union
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
+from typing import Any, Dict, List, Optional, Union
 
 from easy_tpp.configs.base import (
     BaseConfig,
     ConfigValidationError,
-    config_factory,
     config_class,
+    config_factory,
 )
 from easy_tpp.utils.const import Backend
 
@@ -81,16 +81,16 @@ class ThinningConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ThinningConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "ThinningConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -143,16 +143,16 @@ class SimulationConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "SimulationConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "SimulationConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -223,16 +223,16 @@ class TrainingConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "TrainingConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "TrainingConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -347,16 +347,16 @@ class ModelSpecsConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ModelSpecsConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "ModelSpecsConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""
@@ -487,29 +487,39 @@ class ModelConfig(BaseConfig):
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "ModelConfig":
         from easy_tpp.configs.config_utils import ConfigValidator
-        
+
         # 1. Validate the dictionary
         ConfigValidator.validate_required_fields(
             config_dict, cls._get_required_fields_list(), "ModelConfig"
         )
         filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
+
         # 2. Create sub-configuration instances if needed
-        if "base_config" in filtered_dict and isinstance(filtered_dict["base_config"], dict):
-            filtered_dict["base_config"] = TrainingConfig.from_dict(filtered_dict["base_config"])
-            
+        if "base_config" in filtered_dict and isinstance(
+            filtered_dict["base_config"], dict
+        ):
+            filtered_dict["base_config"] = TrainingConfig.from_dict(
+                filtered_dict["base_config"]
+            )
+
         if "specs" in filtered_dict and isinstance(filtered_dict["specs"], dict):
             filtered_dict["specs"] = ModelSpecsConfig.from_dict(filtered_dict["specs"])
-            
+
         if "thinning" in filtered_dict and isinstance(filtered_dict["thinning"], dict):
-            filtered_dict["thinning"] = ThinningConfig.from_dict(filtered_dict["thinning"])
-            
-        if "simulation_config" in filtered_dict and isinstance(filtered_dict["simulation_config"], dict):
-            filtered_dict["simulation_config"] = SimulationConfig.from_dict(filtered_dict["simulation_config"])
-        
+            filtered_dict["thinning"] = ThinningConfig.from_dict(
+                filtered_dict["thinning"]
+            )
+
+        if "simulation_config" in filtered_dict and isinstance(
+            filtered_dict["simulation_config"], dict
+        ):
+            filtered_dict["simulation_config"] = SimulationConfig.from_dict(
+                filtered_dict["simulation_config"]
+            )
+
         # 3. Create the instance
         return cls(**filtered_dict)
-    
+
     @classmethod
     def _get_required_fields_list(cls) -> List[str]:
         """Get required fields as a list for validation."""

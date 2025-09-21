@@ -1,10 +1,10 @@
 import torch
 from torch import nn
-from torch.nn import functional as F
 from torch.autograd import grad
+from torch.nn import functional as F
 
-from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.configs import ModelConfig
+from easy_tpp.models.basemodel import BaseModel
 
 
 class CumulHazardFunctionNetwork(nn.Module):

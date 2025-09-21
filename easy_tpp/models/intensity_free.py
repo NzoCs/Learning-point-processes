@@ -1,9 +1,10 @@
 import torch
 import torch.distributions as D
 from torch import nn
-from torch.distributions import Categorical, TransformedDistribution
+from torch.distributions import Categorical
 from torch.distributions import MixtureSameFamily as TorchMixtureSameFamily
 from torch.distributions import Normal as TorchNormal
+from torch.distributions import TransformedDistribution
 
 from easy_tpp.models.basemodel import BaseModel
 

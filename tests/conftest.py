@@ -1,19 +1,18 @@
 # Main test configuration and fixtures
-import pytest
-import torch
-import numpy as np
-import tempfile
 import os
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import numpy as np
+import pytest
 import pytorch_lightning as pl
+import torch
 from omegaconf import OmegaConf
 
 # Import easy_tpp modules
-from easy_tpp.configs import ModelConfig, DataConfig, RunnerConfig
+from easy_tpp.configs import DataConfig, ModelConfig, RunnerConfig
 from easy_tpp.utils.torch_utils import set_device, set_seed
-
 
 DEFAULT_NUM_EVENT_TYPES = 5
 DEFAULT_MAX_SEQ_LEN = 100
@@ -103,9 +102,9 @@ def sample_data_config():
 @pytest.fixture
 def sample_runner_config():
     """Create a sample runner configuration for testing."""
-    from easy_tpp.configs.runner_config import TrainerConfig
     from easy_tpp.configs.data_config import DataConfig
     from easy_tpp.configs.model_config import ModelConfig
+    from easy_tpp.configs.runner_config import TrainerConfig
 
     # Create trainer config
     trainer_config = TrainerConfig(

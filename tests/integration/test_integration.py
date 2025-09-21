@@ -1,18 +1,19 @@
 """Integration tests for the complete EasyTPP system."""
 
-import pytest
-import torch
-import tempfile
 import pickle
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+import torch
+
+from easy_tpp.configs import DataConfig, ModelConfig, RunnerConfig
+from easy_tpp.configs.runner_config import TrainerConfig
+from easy_tpp.data_preprocess.data_loader import DataLoader
 from easy_tpp.models.nhp import NHP
 from easy_tpp.models.rmtpp import RMTPP
 from easy_tpp.runners.model_runner import Trainer
-from easy_tpp.configs import ModelConfig, DataConfig, RunnerConfig
-from easy_tpp.configs.runner_config import TrainerConfig
-from easy_tpp.data_preprocess.data_loader import DataLoader
 from easy_tpp.utils.torch_utils import set_device, set_seed
 
 

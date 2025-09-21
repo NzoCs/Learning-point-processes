@@ -7,8 +7,8 @@ from optuna.samplers import TPESampler
 from optuna.trial import TrialState
 
 from easy_tpp.configs import RunnerConfig
-from easy_tpp.hpo.base_hpo import HyperTuner
 from easy_tpp.data.preprocess.data_loader import TPPDataModule
+from easy_tpp.hpo.base_hpo import HyperTuner
 from easy_tpp.runners import Runner
 from easy_tpp.utils import Timer, dict_deep_update
 from easy_tpp.utils.log_utils import get_logger

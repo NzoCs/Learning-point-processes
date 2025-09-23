@@ -243,7 +243,7 @@ demo: ## Quick demonstration with framework introduction
 	@$(PYTHON) -c "import easy_tpp; print('+ EasyTPP successfully imported')"
 	@$(PYTHON) -c "from easy_tpp.config_factory import RunnerConfig; print('+ Configuration factory available')"
 	@$(PYTHON) -c "from easy_tpp.runner import Runner; print('+ Runner available')"
-	@$(PYTHON) -c "from easy_tpp.models.basemodel import BaseModel; print('+ Base models available')"
+	@$(PYTHON) -c "from easy_tpp.models.basemodel import Model; print('+ Base models available')"
 	@echo ""
 	@echo "=================================================="
 	@echo "STEP 6: LIVE DEMO - Running THP Model Test"

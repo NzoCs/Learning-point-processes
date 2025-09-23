@@ -1,18 +1,15 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
-from easy_tpp.configs.base import (
-    BaseConfig,
-    ConfigValidationError,
-    config_class,
-    config_factory,
+from easy_tpp.configs.base_config import (
+    Config,
+    ConfigValidationError
 )
 from easy_tpp.utils.log_utils import default_logger
 
 
-@config_class("tokenizer_config")
 @dataclass
-class TokenizerConfig(BaseConfig):
+class TokenizerConfig(Config):
     """Configuration for event tokenizer.
     Args:
         num_event_types (int): Number of event types in the dataset.
@@ -98,9 +95,8 @@ class TokenizerConfig(BaseConfig):
         return default
 
 
-@config_class("data_loading_specs_config")
 @dataclass
-class DataLoadingSpecsConfig(BaseConfig):
+class DataLoadingSpecsConfig(Config):
     """
     Configuration for data loading specifications.
     Args:
@@ -159,9 +155,8 @@ class DataLoadingSpecsConfig(BaseConfig):
         return []
 
 
-@config_class("data_config")
 @dataclass
-class DataConfig(BaseConfig):
+class DataConfig(Config):
     """
     Configuration for dataset and data processing.
     Args:

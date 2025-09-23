@@ -12,7 +12,8 @@ from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,
 )
-from easy_tpp.models import BaseModel
+from easy_tpp.models import Model
+from easy_tpp.models.model_factory import ModelFactory
 from easy_tpp.utils import logger
 
 
@@ -63,7 +64,12 @@ class Trainer:
         # Initialize your model
         self.max_epochs = trainer_config.max_epochs
 
-        self.model = BaseModel.generate_model_from_config(model_config=model_config)
+        # Utiliser la ModelFactory pour créer le modèle
+        model_factory = ModelFactory()
+        self.model = model_factory.create_model_by_name(
+            model_name=model_config.model_id,
+            model_config=model_config
+        )
 
         self.model_id = model_config.model_id
 

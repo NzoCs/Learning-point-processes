@@ -3,7 +3,7 @@
 import pytest
 import torch
 
-from easy_tpp.models.hawkes import HawkesModel
+from easy_tpp.models.hawkes import Hawkes
 
 
 @pytest.mark.unit
@@ -22,8 +22,8 @@ class TestHawkes:
         ):
             pytest.skip("Hawkes model requires mu, alpha, beta parameters in config")
             try:
-                model = HawkesModel(sample_model_config)
-                assert isinstance(model, HawkesModel)
+                model = Hawkes(sample_model_config)
+                assert isinstance(model, Hawkes)
                 assert hasattr(model, "alpha")
                 assert hasattr(model, "beta")
                 assert hasattr(model, "base_intensity")
@@ -40,7 +40,7 @@ class TestHawkes:
         sample_model_config.model_id = "Hawkes"
 
         try:
-            model = HawkesModel(sample_model_config)
+            model = Hawkes(sample_model_config)
             model.train()
 
             # Forward pass using training_step
@@ -66,7 +66,7 @@ class TestHawkes:
         sample_model_config.model_id = "Hawkes"
 
         try:
-            model = HawkesModel(sample_model_config)
+            model = Hawkes(sample_model_config)
             model.train()
 
             # Forward pass
@@ -89,7 +89,7 @@ class TestHawkes:
         sample_model_config.model_id = "Hawkes"
 
         try:
-            model = HawkesModel(sample_model_config)
+            model = Hawkes(sample_model_config)
             model.eval()
             with torch.no_grad():
                 # Use predict_step for consistent evaluation
@@ -115,7 +115,7 @@ class TestHawkes:
         sample_model_config.specs.hidden_size = hidden_size
 
         try:
-            model = HawkesModel(sample_model_config)
+            model = Hawkes(sample_model_config)
             assert model.hidden_size == hidden_size
         except TypeError as e:
             if "must be real number, not NoneType" in str(e):
@@ -130,7 +130,7 @@ class TestHawkes:
         sample_model_config.model_id = "Hawkes"
 
         try:
-            model = HawkesModel(sample_model_config)
+            model = Hawkes(sample_model_config)
             model = model.to(device)
 
             # Check all parameters are on correct device

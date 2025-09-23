@@ -1,4 +1,4 @@
-"""Tests for BaseModel class."""
+"""Tests for Model class."""
 
 from unittest.mock import MagicMock, Mock, patch
 
@@ -7,12 +7,12 @@ import torch
 import torch.nn as nn
 
 from easy_tpp.configs import ModelConfig
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.basemodel import Model
 
 
 # Create a concrete implementation for testing
-class TestableBaseModel(BaseModel):
-    """Testable implementation of BaseModel."""
+class TestableBaseModel(Model):
+    """Testable implementation of Model."""
 
     def __init__(self, model_config, **kwargs):
         super().__init__(model_config, **kwargs)
@@ -60,7 +60,7 @@ class TestableBaseModel(BaseModel):
 @pytest.mark.unit
 @pytest.mark.model
 class TestBaseModel:
-    """Test cases for BaseModel."""
+    """Test cases for Model."""
 
     def test_model_initialization(self, sample_model_config):
         """Test model initialization."""

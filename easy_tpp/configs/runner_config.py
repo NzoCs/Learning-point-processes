@@ -5,11 +5,9 @@ from typing import Any, Dict, List, Optional
 
 import torch
 
-from easy_tpp.configs.base import (
-    BaseConfig,
-    ConfigValidationError,
-    config_class,
-    config_factory,
+from easy_tpp.configs.base_config import (
+    Config,
+    ConfigValidationError
 )
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.configs.logger_config import LoggerConfig
@@ -17,9 +15,8 @@ from easy_tpp.configs.model_config import ModelConfig
 from easy_tpp.utils import logger
 
 
-@config_class("trainer_config")
 @dataclass
-class TrainerConfig(BaseConfig):
+class TrainerConfig(Config):
     """
     Configuration for the Trainer, encapsulating training parameters and settings.
     Args:
@@ -153,9 +150,8 @@ class TrainerConfig(BaseConfig):
         return ["dataset_id", "model_id"]
 
 
-@config_class("runner_config")
 @dataclass
-class RunnerConfig(BaseConfig):
+class RunnerConfig(Config):
     """
     Configuration for the Runner, encapsulating trainer, model, and data configurations.
     Args:

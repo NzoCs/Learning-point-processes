@@ -17,17 +17,22 @@ from easy_tpp.configs import ModelConfig
 from easy_tpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
 from easy_tpp.models.thinning import EventSampler
 from easy_tpp.utils import format_multivariate_simulations, logger, save_json
+from .model_registry import RegistryMeta
 
 
-class BaseModel(pl.LightningModule, ABC):
+class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
+    """Base model class for all TPP models."""
+
 
     def __init__(self, model_config: ModelConfig, **kwargs):
-        """Initialize the BaseModel
+        """Initialize the Model
 
         Args:
             model_config (EasyTPP.ModelConfig): model spec of configs
         """
-        super(BaseModel, self).__init__()
+        super(Model, self).__init__()
+
+
 
         # Save hyperparameters for later use
         self.save_hyperparameters()
@@ -104,6 +109,52 @@ class BaseModel(pl.LightningModule, ABC):
             logger.info(
                 f"Successfully loaded pretrained model from: {pretrain_model_path}"
             )
+    
+    
+    # Implement for the models based on intensity (not implemented in intensity free)
+    def compute_intensities_at_sample_times(
+        self,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
+        """Compute the intensity at sampled times, not only event times.
+
+        Args:
+            time_seqs (tensor): [batch_size, seq_len], times seqs.
+            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
+            type_seqs (tensor): [batch_size, seq_len], event type seqs.
+            sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
+
+        Returns:
+            tensor: [batch_size, num_times, num_mc_sample, num_event_types],
+                    intensity at each timestamp for each event type."""
+        pass
+
+    
+    @abstractmethod
+    def loglike_loss(
+        self,
+        batch: tuple[
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+        ],
+    ) -> tuple[torch.Tensor, int]:
+        """Compute the log-likelihood loss for a batch of data.
+
+        Args:
+            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+
+        Returns:
+            loss, number of events.
+        """
+        pass
+
 
     # Set up the event sampler if generation config is provided
     def event_sampler(self, num_sample=None):
@@ -165,21 +216,6 @@ class BaseModel(pl.LightningModule, ABC):
             model._event_sampler_cache.clear()
 
         return model
-
-    @staticmethod
-    def generate_model_from_config(model_config: ModelConfig, **kwargs) -> "BaseModel":
-        """Generate the model in derived class based on model config.
-
-        Args:
-            model_config (EasyTPP.ModelConfig): config of model specs.
-        """
-        model_id = model_config.model_id
-
-        for subclass in BaseModel.__subclasses__():
-            if subclass.__name__ == model_id:
-                return subclass(model_config, **kwargs)
-
-        raise RuntimeError("No model named " + model_id)
 
     @staticmethod
     def get_logits_at_last_step(logits, batch_non_pad_mask, sample_len=None):
@@ -281,48 +317,6 @@ class BaseModel(pl.LightningModule, ABC):
         num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
         return event_ll, non_event_ll, num_events
 
-    @abstractmethod
-    def loglike_loss(
-        self,
-        batch: tuple[
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-        ],
-    ) -> tuple[torch.Tensor, int]:
-        """Compute the log-likelihood loss for a batch of data.
-
-        Args:
-            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
-
-        Returns:
-            loss, number of events.
-        """
-        pass
-
-    # Implement for the models based on intensity (not implemented in intensity free)
-    def compute_intensities_at_sample_times(
-        self,
-        time_seqs: torch.Tensor,
-        time_delta_seqs: torch.Tensor,
-        type_seqs: torch.Tensor,
-        sample_dtimes: torch.Tensor,
-        **kwargs,
-    ) -> torch.Tensor:
-        """Compute the intensity at sampled times, not only event times.
-
-        Args:
-            time_seqs (tensor): [batch_size, seq_len], times seqs.
-            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
-            type_seqs (tensor): [batch_size, seq_len], event type seqs.
-            sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
-
-        Returns:
-            tensor: [batch_size, num_times, num_mc_sample, num_event_types],
-                    intensity at each timestamp for each event type."""
-        pass
 
     def configure_optimizers(self):
         """Configure the optimizer for the model.

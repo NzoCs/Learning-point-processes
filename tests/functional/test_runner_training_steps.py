@@ -91,7 +91,7 @@ class TestRunnerTrainingSteps:
         }
 
         # Clean up None values for specific models
-        if model_id == "HawkesModel":
+        if model_id == "Hawkes":
             config_dict[f"{model_id}_train"]["model_config"] = {
                 k: v
                 for k, v in config_dict[f"{model_id}_train"]["model_config"].items()

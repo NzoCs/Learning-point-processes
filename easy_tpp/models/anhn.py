@@ -3,10 +3,10 @@ from torch import nn
 
 from easy_tpp.configs import ModelConfig
 from easy_tpp.models.baselayer import MultiHeadAttention
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.basemodel import Model
 
 
-class ANHN(BaseModel):
+class ANHN(Model):
     """Torch implementation of Attentive Neural Hawkes Network, IJCNN 2021.
     http://arxiv.org/abs/2211.11758
     """

@@ -7,10 +7,10 @@ from easy_tpp.models.baselayer import (
     ScaledSoftplus,
     TimePositionalEncoding,
 )
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.basemodel import Model
 
 
-class THP(BaseModel):
+class THP(Model):
     """Torch implementation of Transformer Hawkes Process, ICML 2020, https://arxiv.org/abs/2002.09291.
     Note: Part of the code is collected from https://github.com/yangalan123/anhp-andtt/tree/master/thp.
     """

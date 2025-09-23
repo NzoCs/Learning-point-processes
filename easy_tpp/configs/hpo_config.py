@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from easy_tpp.configs.base import BaseConfig
+from easy_tpp.configs.base_config import Config
 from easy_tpp.configs.runner_config import RunnerConfig
 from easy_tpp.utils import parse_uri_to_protocol_and_path, py_assert
 
 
 @dataclass
-class HPOConfig(BaseConfig):
+class HPOConfig(Config):
     framework_id: str = "optuna"
     storage_uri: Optional[str] = None
     is_continuous: bool = True
@@ -64,7 +64,7 @@ class HPOConfig(BaseConfig):
 
 
 @dataclass
-class HPORunnerConfig(BaseConfig):
+class HPORunnerConfig(Config):
     hpo_config: HPOConfig = None
     runner_config: RunnerConfig = None
 

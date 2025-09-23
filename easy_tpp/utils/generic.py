@@ -1,6 +1,6 @@
 import numpy as np
 
-from easy_tpp.utils import is_tf_available, is_torch_available
+from easy_tpp.utils.import_utils import is_tf_available, is_torch_available
 
 
 def is_tensor(x):

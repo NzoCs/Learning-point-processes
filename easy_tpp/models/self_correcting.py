@@ -5,15 +5,15 @@ import torch.nn.functional as F  # Added import
 from torch import nn
 
 from easy_tpp.configs import ModelConfig
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.basemodel import Model
 
 
-class SelfCorrecting(BaseModel):
+class SelfCorrecting(Model):
     """
     PyTorch implementation of the Self-Correcting Point Process model.
     Intensity for type i: lambda_i(t) = exp(mu_i + alpha_i * (t - N_i(t)))
     where N_i(t) is the number of events of type i occurred strictly before time t.
-    Inherits from BaseModel.
+    Inherits from Model.
     """
 
     def __init__(self, model_config: ModelConfig, **kwargs):
@@ -190,7 +190,7 @@ class SelfCorrecting(BaseModel):
     ):
         """
         Computes intensities at sampled times relative to each event in the sequence.
-        Required by BaseModel for prediction and loss calculation.
+        Required by Model for prediction and loss calculation.
         Calculates lambda(t_k + delta_t) using history up to event k.
 
         Args:

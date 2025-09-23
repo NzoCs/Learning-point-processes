@@ -1,118 +1,84 @@
 """
 Exemple d'utilisation du ModelRegistry
 
-Ce script montre comment utiliser le registry pour vérifier que l'enum Models
-est à jour avec tous les modèles disponibles.
+Ce script montre comment utiliser le registry automatique pour accéder aux modèles TPP
+sans avoir besoin de les enregistrer manuellement.
 """
 
 from easy_tpp.models.model_registry import ModelRegistry
+from easy_tpp.models import *  # Import tous les modèles pour qu'ils s'enregistrent
 
 
-def example_basic_validation():
-    """Exemple de validation basique."""
-    print("=== Validation basique ===")
-
-    registry = ModelRegistry()
-    is_valid = registry.validate_models()
-
-    print(f"L'enum est-il à jour ? {is_valid}")
-
-
-def example_detailed_report():
-    """Exemple de rapport détaillé."""
-    print("\n=== Rapport détaillé ===")
-
-    registry = ModelRegistry()
-    registry.print_validation_report()
+def example_list_all_models():
+    """Exemple pour lister tous les modèles enregistrés."""
+    print("=== Liste de tous les modèles enregistrés ===")
+    
+    models = ModelRegistry.list_models()
+    print(f"Nombre de modèles enregistrés: {len(models)}")
+    
+    for model_name in sorted(models):
+        model_class = ModelRegistry.get_model(model_name)
+        module_name = model_class.__module__.split('.')[-1]
+        print(f"  - {model_name} (dans {module_name}.py)")
 
 
-def example_check_missing_models():
-    """Exemple pour vérifier les modèles manquants."""
-    print("\n=== Vérification des modèles manquants ===")
-
-    registry = ModelRegistry()
-
-    missing = registry.get_missing_models()
-    if missing:
-        print(f"Modèles manquants: {missing}")
-        print("Vous devriez les ajouter à l'enum Models!")
+def example_get_specific_model():
+    """Exemple pour récupérer un modèle spécifique."""
+    print("\n=== Récupération d'un modèle spécifique ===")
+    
+    # Vérifier si un modèle existe
+    model_name = "NHP"
+    if ModelRegistry.model_exists(model_name):
+        model_class = ModelRegistry.get_model(model_name)
+        print(f"✅ Modèle '{model_name}' trouvé: {model_class}")
+        print(f"   Module: {model_class.__module__}")
+        print(f"   Classe: {model_class.__name__}")
     else:
-        print("Aucun modèle manquant ✅")
-
-    extra = registry.get_extra_models()
-    if extra:
-        print(f"Modèles en trop: {extra}")
-        print("Ces modèles sont dans l'enum mais pas trouvés dans le code")
+        print(f"❌ Modèle '{model_name}' non trouvé")
+    
+    # Tester avec un modèle inexistant
+    fake_model = "FAKE_MODEL"
+    if ModelRegistry.model_exists(fake_model):
+        print(f"✅ Modèle '{fake_model}' trouvé")
     else:
-        print("Aucun modèle en trop ✅")
+        print(f"❌ Modèle '{fake_model}' non trouvé (normal)")
 
 
-def example_generate_enum_code():
-    """Exemple pour générer le code de l'enum."""
-    print("\n=== Génération du code enum ===")
-
-    registry = ModelRegistry()
-    code = registry.generate_enum_code()
-
-    print("Code suggéré pour l'enum Models:")
-    print("-" * 40)
-    print(code)
-
-
-def example_get_all_models():
-    """Exemple pour obtenir tous les modèles."""
-    print("\n=== Liste de tous les modèles ===")
-
-    registry = ModelRegistry()
-
-    discovered = registry.get_all_discovered_models()
-    print(f"Modèles découverts ({len(discovered)}):")
-    for name, model_class in discovered.items():
-        module = model_class.__module__.split(".")[-1]
-        print(f"  - {name} (dans {module}.py)")
-
-    enum_models = registry.get_enum_models()
-    print(f"\nModèles dans l'enum ({len(enum_models)}):")
-    for name in enum_models.keys():
-        print(f"  - {name}")
+def example_get_registry():
+    """Exemple pour obtenir le registry complet."""
+    print("\n=== Registry complet ===")
+    
+    registry = ModelRegistry.get_registry()
+    print(f"Registry contient {len(registry)} modèles:")
+    
+    for name, model_class in registry.items():
+        print(f"  {name}: {model_class.__name__}")
 
 
-def main():
-    """Fonction principale pour tous les exemples."""
-    print("🔍 Exemples ModelRegistry")
-    print("=" * 50)
-
-    try:
-        example_basic_validation()
-        example_detailed_report()
-        example_check_missing_models()
-        example_get_all_models()
-
-        # Générer le code seulement si nécessaire
-        registry = ModelRegistry()
-        if not registry.validate_models():
-            example_generate_enum_code()
-
-    except Exception as e:
-        print(f"Erreur dans les exemples: {e}")
-        import traceback
-
-        traceback.print_exc()
-
-    print("\n" + "=" * 50)
-    print("✅ Exemples terminés!")
-
-
-def quick_check():
-    """Fonction rapide pour un check complet."""
-    print("🚀 Vérification rapide des modèles")
-    print("=" * 40)
-
-    validate_models_registry()
+def example_model_types():
+    """Exemple pour analyser les types de modèles."""
+    print("\n=== Analyse des types de modèles ===")
+    
+    models = ModelRegistry.get_registry()
+    
+    # Grouper par module
+    by_module = {}
+    for name, model_class in models.items():
+        module = model_class.__module__.split('.')[-1]
+        if module not in by_module:
+            by_module[module] = []
+        by_module[module].append(name)
+    
+    for module, model_names in by_module.items():
+        print(f"  {module}.py: {', '.join(sorted(model_names))}")
 
 
 if __name__ == "__main__":
-    # Utiliser quick_check() pour une vérification rapide
-    # ou main() pour tous les exemples détaillés
-    quick_check()
-    # main()
+    print("🔄 Démarrage de l'exemple ModelRegistry")
+    
+    example_list_all_models()
+    example_get_specific_model()
+    example_get_registry()
+    example_model_types()
+    
+    print("\n✅ Exemple terminé avec succès!")

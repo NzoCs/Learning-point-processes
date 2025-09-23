@@ -29,7 +29,7 @@ class BenchmarkMode(Enum):
     BOTH = "both"
 
 
-class BaseBenchmark(ABC):
+class Benchmark(ABC):
     """
     Abstract base class for TPP benchmarks.
 

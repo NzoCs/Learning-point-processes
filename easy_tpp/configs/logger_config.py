@@ -14,8 +14,8 @@ from pytorch_lightning.loggers import (
     WandbLogger,
 )
 
-from easy_tpp.configs.base import (
-    BaseConfig,
+from easy_tpp.configs.base_config import (
+    Config,
     ConfigValidationError,
     config_class,
     config_factory,
@@ -169,7 +169,7 @@ LOGGER_ADAPTERS: Dict[LoggerType, Type[BaseLoggerAdapter]] = {
 
 @config_class("logger_config")
 @dataclass
-class LoggerConfig(BaseConfig):
+class LoggerConfig(Config):
     """
     Configuration for logging in experiments.
 

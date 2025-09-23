@@ -11,31 +11,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from easy_tpp.configs.base import (
-    BaseConfig,
-    ConfigValidationError,
-    config_class,
-    config_factory,
-)
+from easy_tpp.configs.base_config import (
+    Config,
+    ConfigValidationError
+    )
 from easy_tpp.utils.const import Backend
-
-logger = logging.getLogger(__name__)
-
-
-class ModelType(Enum):
-    """Enumeration of supported model types."""
-
-    NHP = "NHP"
-    RMTPP = "RMTPP"
-    THP = "THP"
-    SAHP = "SAHP"
-    AttNHP = "AttNHP"
-    IntensityFree = "IntensityFree"
-    Hawkes = "Hawkes"
-    FullyNN = "FullyNN"
-    ANHN = "ANHN"
-    ODE_TPP = "ODE_TPP"
-    SelfCorrecting = "SelfCorrecting"
+from easy_tpp.utils import logger
 
 
 def get_available_gpu() -> int:
@@ -51,9 +32,9 @@ def get_available_gpu() -> int:
         return -1
 
 
-@config_class("thinning_config")
+
 @dataclass
-class ThinningConfig(BaseConfig):
+class ThinningConfig(Config):
     """Configuration for thinning process in temporal point processes."""
 
     num_sample: int = 10
@@ -115,9 +96,9 @@ class ThinningConfig(BaseConfig):
             raise ConfigValidationError("dtime_max must be positive", "dtime_max")
 
 
-@config_class("simulation_config")
+
 @dataclass
-class SimulationConfig(BaseConfig):
+class SimulationConfig(Config):
     """Configuration for event sequence simulation."""
 
     start_time: float = 0.0
@@ -179,9 +160,9 @@ class SimulationConfig(BaseConfig):
             )
 
 
-@config_class("training_config")
+
 @dataclass
-class TrainingConfig(BaseConfig):
+class TrainingConfig(Config):
     """Configuration for model training parameters.
     Args:
         lr (float): Learning rate for the optimizer.
@@ -258,9 +239,9 @@ class TrainingConfig(BaseConfig):
             raise ConfigValidationError(f"stage must be one of {valid_stages}", "stage")
 
 
-@config_class("model_specs_config")
+
 @dataclass
-class ModelSpecsConfig(BaseConfig):
+class ModelSpecsConfig(Config):
     """Configuration for model-specific parameters.
     Args:
         hidden_size (int): Size of the hidden layers.
@@ -402,9 +383,8 @@ class ModelSpecsConfig(BaseConfig):
             )
 
 
-@config_class("model_config")
 @dataclass
-class ModelConfig(BaseConfig):
+class ModelConfig(Config):
     """
     Configuration for the model architecture and specifications.
     This class encapsulates all necessary parameters for defining a model,
@@ -539,15 +519,6 @@ class ModelConfig(BaseConfig):
     def validate(self) -> None:
         """Validate the model configuration."""
         super().validate()
-
-        # Validate model_id
-        try:
-            ModelType(self.model_id)
-        except ValueError:
-            valid_models = [model.value for model in ModelType]
-            logger.warning(
-                f"model_id '{self.model_id}' not in known models {valid_models}"
-            )
 
         # Validate num_event_types
         if self.num_event_types <= 0:

@@ -13,10 +13,10 @@ import yaml
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
 
-from .base_bench import BaseBenchmark, BenchmarkMode
+from .base_bench import Benchmark, BenchmarkMode
 
 
-class InterTimeDistributionBenchmark(BaseBenchmark):
+class InterTimeDistributionBenchmark(Benchmark):
     """
     Benchmark that samples inter-times from the empirical distribution of training data.
     """

@@ -48,7 +48,7 @@ def sample_model_config():
     model_id = DEFAULT_MODEL_ID
     if model_id in ["NHP", "RMTPP"]:
         specs = {"hidden_size": 32, "max_seq_len": DEFAULT_MAX_SEQ_LEN}
-    elif model_id == "HawkesModel":
+    elif model_id == "Hawkes":
         specs = {
             "mu": [0.5] * num_event_types,
             "alpha": [[0.8] * num_event_types for _ in range(num_event_types)],

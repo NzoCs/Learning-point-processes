@@ -176,10 +176,10 @@ with torch.no_grad():
 
 ## Interface commune
 
-Tous les modèles héritent de `BaseModel` et implémentent :
+Tous les modèles héritent de `Model` et implémentent :
 
 ```python
-class BaseModel(nn.Module):
+class Model(nn.Module):
     def forward(self, batch):
         """Forward pass du modèle"""
         pass

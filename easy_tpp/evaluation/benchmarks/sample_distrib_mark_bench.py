@@ -13,10 +13,10 @@ import yaml
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
 
-from .base_bench import BaseBenchmark, BenchmarkMode
+from .base_bench import Benchmark, BenchmarkMode
 
 
-class MarkDistributionBenchmark(BaseBenchmark):
+class MarkDistributionBenchmark(Benchmark):
     """
     Benchmark that samples event marks from the empirical distribution of training data.
     """

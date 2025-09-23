@@ -17,20 +17,20 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Type, Union
 
-from easy_tpp.evaluation.benchmarks.base_bench import BaseBenchmark
-from easy_tpp.evaluation.benchmarks.last_mark_bench import LastMarkBenchmark
-from easy_tpp.evaluation.benchmarks.mean_bench import MeanInterTimeBenchmark
-from easy_tpp.evaluation.benchmarks.sample_distrib_intertime_bench import (
+from .base_bench import Benchmark
+from .last_mark_bench import LastMarkBenchmark
+from .mean_bench import MeanInterTimeBenchmark
+from .sample_distrib_intertime_bench import (
     InterTimeDistributionBenchmark,
 )
-from easy_tpp.evaluation.benchmarks.sample_distrib_mark_bench import (
+from .sample_distrib_mark_bench import (
     MarkDistributionBenchmark,
 )
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
-class Benchmarks(Enum):
+class BenchmarksEnum(Enum):
     """Enum des benchmarks disponibles."""
 
     MEAN_INTER_TIME = ("mean_inter_time", MeanInterTimeBenchmark)
@@ -41,11 +41,11 @@ class Benchmarks(Enum):
     )
     MARK_DISTRIBUTION = ("mark_distribution_sampling", MarkDistributionBenchmark)
 
-    def __init__(self, benchmark_name: str, benchmark_class: Type[BaseBenchmark]):
+    def __init__(self, benchmark_name: str, benchmark_class: Type[Benchmark]):
         self.benchmark_name = benchmark_name
         self.benchmark_class = benchmark_class
 
-    def get_class(self) -> Type[BaseBenchmark]:
+    def get_class(self) -> Type[Benchmark]:
         """Obtenir la classe du benchmark."""
         return self.benchmark_class
 

@@ -114,7 +114,7 @@ class TestRMTPP:
         seq_len = 10
 
         # Test type embedding
-        # model.num_event_types_pad is set in BaseModel.__init__
+        # model.num_event_types_pad is set in Model.__init__
         event_types = torch.randint(0, model.num_event_types_pad, (batch_size, seq_len))
         type_embeddings = model.layer_type_emb(event_types)
         assert type_embeddings.shape == (

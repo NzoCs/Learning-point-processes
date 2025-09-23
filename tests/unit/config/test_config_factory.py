@@ -8,7 +8,7 @@ import pytest
 from omegaconf import DictConfig, OmegaConf
 
 from easy_tpp.configs import DataConfig, ModelConfig, RunnerConfig
-from easy_tpp.configs.base import ConfigValidationError
+from easy_tpp.configs.base_config import ConfigValidationError
 
 
 @pytest.mark.unit

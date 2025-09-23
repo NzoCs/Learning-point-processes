@@ -12,8 +12,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from easy_tpp.configs.base import (
-    BaseConfig,
+from easy_tpp.configs.base_config import (
+    Config,
     ConfigFactory,
     ConfigSerializationError,
     ConfigValidationError,

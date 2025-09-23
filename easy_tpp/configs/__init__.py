@@ -1,12 +1,18 @@
 # Enhanced configuration system
-from easy_tpp.configs.base import BaseConfig as EnhancedBaseConfig
-from easy_tpp.configs.base import (
-    ConfigFactory,
+from easy_tpp.configs.base_config import Config
+from easy_tpp.configs.base_config import (
     ConfigSerializationError,
     ConfigValidationError,
-    ConfigValidator,
+)
+
+# New Configuration Factory System
+from easy_tpp.configs.config_factory import (
+    ConfigFactory,
+    ConfigType,
     config_factory,
 )
+
+# Legacy configuration imports (maintained for backwards compatibility)
 from easy_tpp.configs.data_config import (
     DataConfig,
     DataLoadingSpecsConfig,
@@ -14,10 +20,8 @@ from easy_tpp.configs.data_config import (
 )
 from easy_tpp.configs.hpo_config import HPOConfig, HPORunnerConfig
 from easy_tpp.configs.model_config import (
-    BaseConfig,
     ModelConfig,
     ModelSpecsConfig,
-    ModelType,
     SimulationConfig,
     ThinningConfig,
     TrainingConfig,
@@ -25,25 +29,25 @@ from easy_tpp.configs.model_config import (
 from easy_tpp.configs.runner_config import RunnerConfig
 
 __all__ = [
+    # New Configuration Factory System
+    "ConfigFactory",
+    "ConfigType", 
+    "config_factory",
+    
     # Legacy exports (maintained for backwards compatibility)
     "DataConfig",
     "TokenizerConfig",
     "DataLoadingSpecsConfig",
     "ModelConfig",
-    "BaseConfig",
+    "Config",
     "RunnerConfig",
     "HPOConfig",
     "HPORunnerConfig",
-    "SynGenConfig",
-    "DistribCompConfig",
-    "SimulatorConfig",
+    
     # Enhanced configuration system
     "EnhancedBaseConfig",
     "ConfigValidationError",
     "ConfigSerializationError",
-    "ConfigValidator",
-    "ConfigFactory",
-    "config_factory",
     "ThinningConfig",
     "SimulationConfig",
     "TrainingConfig",

@@ -1,209 +1,166 @@
-# Configuration Factory for EasyTPP
+# Configuration Factory System
 
-This directory contains the configuration management system for the EasyTPP framework. It provides type-safe, validated configuration classes for all components.
+This module provides a centralized, type-safe configuration factory for EasyTPP that replaces repetitive `from_dict` methods with a unified approach.
 
-## Overview
+## 🏭 Configuration Factory
 
-The configuration factory provides:
+The new `ConfigFactory` centralizes configuration creation logic and provides a type-safe, extensible way to create configuration instances.
 
-- **Type Safety**: Dataclass-based configurations with type hints
-- **Validation**: Comprehensive validation with clear error messages
-- **Serialization**: Support for YAML, JSON, and dictionary formats
-- **Integration**: Seamless integration with all EasyTPP components
+### ✨ Key Features
 
-## Directory Structure
+- **Type Safety**: Uses enums and type hints for configuration types
+- **Centralized Logic**: Single place for configuration creation logic
+- **Validation**: Comprehensive validation with detailed error messages
+- **Extensible**: Easy to register new configuration types
+- **Backward Compatible**: Existing `from_dict` methods still work
+- **YAML Support**: Direct loading from YAML files
 
-```
-config_factory/
-├── base.py              # Base configuration classes and interfaces
-├── data_config.py       # Data loading and preprocessing configurations
-├── model_config.py      # Model architecture and training configurations
-├── runner_config.py     # Training pipeline and experiment configurations
-├── hpo_config.py        # Hyperparameter optimization configurations
-├── logger_config.py     # Logging and experiment tracking configurations
-└── __init__.py          # Module exports and factories
-```
+## 🚀 Quick Start
 
-## Quick Start
-
-### Basic Configuration
+### Basic Usage
 
 ```python
-from easy_tpp.config_factory import DataConfig, ModelConfig, RunnerConfig
+from easy_tpp.configs import ConfigType, config_factory
 
-# Create data configuration
-data_config = DataConfig(
-    data_dir='./data/synthetic',
-    data_format='json',
-    data_specs={
-        'num_event_types': 3,
-        'max_seq_len': 100
-    },
-    data_loading_specs={
-        'batch_size': 32,
-        'shuffle': True
-    }
-)
+# Create a tokenizer configuration
+tokenizer_data = {
+    "num_event_types": 10,
+    "padding_side": "left",
+    "max_len": 512
+}
 
-# Create model configuration
-model_config = ModelConfig(
-    model_type='NHP',
-    model_specs={
-        'hidden_size': 64,
-        'num_layers': 2
-    }
-)
+config = config_factory.create_config(ConfigType.TOKENIZER, tokenizer_data)
 ```
 
-### Configuration from Files
+### Available Configuration Types
 
 ```python
-from easy_tpp.config_factory import config_factory
+from easy_tpp.configs import config_factory
 
-# Load from YAML file
-config = config_factory.from_yaml('config.yaml')
-
-# Load from dictionary  
-config = config_factory.from_dict(config_dict)
+# Get all available configuration types
+config_types = config_factory.get_available_config_types()
+print(config_types)
+# Output: ['tokenizer', 'data', 'model', 'training', ...]
 ```
 
-## Configuration Types
-
-### DataConfig
-Configuration for data loading and preprocessing:
+### Using String Identifiers
 
 ```python
-data_config = DataConfig(
-    data_dir='./data/',
-    data_format='json',
-    data_specs=TokenizerConfig(num_event_types=5),
-    data_loading_specs=DataLoadingSpecsConfig(batch_size=64)
-)
+# You can use string identifiers instead of enums
+model_config = config_factory.create_config("model", {
+    "model_type": "NHP",
+    "hidden_size": 128,
+    "num_layers": 2
+})
 ```
 
-### ModelConfig  
-Configuration for model architecture and training:
+### Loading from YAML
 
 ```python
-model_config = ModelConfig(
-    model_type=ModelType.NHP,
-    model_specs={'hidden_size': 128},
-    training_specs={'learning_rate': 1e-3}
-)
+from easy_tpp.configs import config_factory
+
+config = config_factory.create_from_yaml(ConfigType.MODEL, "path/to/config.yaml")
 ```
 
-### RunnerConfig
-Configuration for training pipeline:
+## 🔧 Advanced Usage
+
+### Custom Validation
 
 ```python
-runner_config = RunnerConfig(
-    dataset_id='experiment_1',
-    model_id='nhp_baseline',
-    max_epochs=100,
-    logger_config=LoggerConfig(logger_type=LoggerType.WandB)
-)
+# Create config with validation disabled
+config = config_factory.create_config(ConfigType.TOKENIZER, data, validate=False)
+
+# Enable validation (default)
+config = config_factory.create_config(ConfigType.TOKENIZER, data, validate=True)
 ```
 
-### HPOConfig
-Configuration for hyperparameter optimization:
+### Registering New Configuration Types
 
 ```python
-hpo_config = HPOConfig(
-    framework_id='optuna',
-    num_trials=100,
-    storage_uri='sqlite:///study.db'
-)
+from easy_tpp.configs import config_factory
+
+# Register a custom configuration class
+config_factory.register_config("my_custom_config", MyCustomConfigClass)
 ```
 
-### LoggerConfig
-Configuration for experiment tracking:
+### Direct Factory Usage
 
 ```python
-logger_config = LoggerConfig(
-    logger_type=LoggerType.WandB,
-    config={
-        'project': 'tpp_experiments',
-        'name': 'experiment_1'
-    }
-)
+from easy_tpp.configs import config_factory
+
+# Use the factory directly for more control
+factory = config_factory
+config = factory.create_config(ConfigType.MODEL, model_data)
 ```
 
-## Validation System
+## 📋 Configuration Types
 
-All configurations include built-in validation:
+| Type | Enum | Description |
+|------|------|-------------|
+| `TokenizerConfig` | `ConfigType.TOKENIZER` | Event tokenization settings |
+| `DataConfig` | `ConfigType.DATA` | Data loading and preprocessing |
+| `ModelConfig` | `ConfigType.MODEL` | Model architecture settings |
+| `TrainingConfig` | `ConfigType.TRAINING` | Training parameters |
+| `RunnerConfig` | `ConfigType.RUNNER` | Experiment runner settings |
+| `HPOConfig` | `ConfigType.HPO` | Hyperparameter optimization |
+| `LoggerConfig` | `ConfigType.LOGGER` | Logging configuration |
+
+## 🔄 Migration from `from_dict`
+
+### Old Pattern (still supported)
+```python
+from easy_tpp.configs.data_config import TokenizerConfig
+
+config = TokenizerConfig.from_dict(config_dict)
+```
+
+### New Pattern (recommended)
+```python
+from easy_tpp.configs import ConfigType, config_factory
+
+config = config_factory.create_config(ConfigType.TOKENIZER, config_dict)
+```
+
+## 🚫 Error Handling
+
+The factory provides detailed error messages for common issues:
 
 ```python
+from easy_tpp.configs import config_factory, ConfigType
+from easy_tpp.configs.base_config import ConfigValidationError
+
 try:
-    config = DataConfig(
-        data_dir='',  # Invalid empty path
-        batch_size=-1  # Invalid negative value
-    )
-    config.validate()
+    config = config_factory.create_config(ConfigType.TOKENIZER, invalid_data)
 except ConfigValidationError as e:
-    print(f"Validation failed: {e}")
+    print(f"Configuration error: {e}")
 ```
 
-## YAML Configuration
+## 📚 Examples
 
-Example configuration file:
+See `examples/config_factory_usage.py` for comprehensive usage examples including:
 
-```yaml
-# config.yaml
-data:
-  data_dir: "./data/synthetic"
-  data_format: "json"
-  data_specs:
-    num_event_types: 3
-  data_loading_specs:
-    batch_size: 64
+- Basic configuration creation
+- Error handling
+- YAML loading
+- Migration patterns
+- Advanced features
 
-model:
-  model_type: "NHP"
-  model_specs:
-    hidden_size: 128
-  
-runner:
-  dataset_id: "experiment_1"
-  model_id: "nhp_baseline"
-  max_epochs: 100
+## 🏗️ Architecture
+
+### Factory Pattern
+
+```
+ConfigFactory
+├── _config_registry: Dict[ConfigType, Type[Config]]
+├── create_config()
+├── register_config()
+└── create_from_yaml()
 ```
 
-Load with:
+## 🎯 Best Practices
 
-```python
-config = config_factory.from_yaml('config.yaml')
-```
-
-## Available Components
-
-- **BaseConfig**: Foundation class for all configurations
-- **ConfigFactory**: Central factory for creating configurations
-- **ConfigValidator**: Extensible validation system
-- **TokenizerConfig**: Event tokenization settings
-- **DataLoadingSpecsConfig**: Data loading specifications
-- **ThinningConfig**: Thinning process configuration
-- **LoggerConfig**: Experiment tracking configuration
-
-## Usage Examples
-
-### Complete Configuration Setup
-
-```python
-# Load base configuration
-config = config_factory.from_yaml('base_config.yaml')
-
-# Access components
-data_module = TPPDataModule(config.data_config)
-model = create_model(config.model_config)
-trainer = create_trainer(config.runner_config)
-```
-
-### Configuration Export
-
-```python
-# Export to YAML
-yaml_config = config.to_yaml()
-
-# Export to dictionary
-config_dict = config.to_dict()
-```
+1. **Use Enums**: Prefer `ConfigType.TOKENIZER` over `"tokenizer"` strings
+2. **Enable Validation**: Keep validation enabled unless you have specific reasons
+3. **Handle Errors**: Always wrap configuration creation in try-catch blocks
+4. **Document Custom Configs**: Add docstrings for custom configuration classes
+5. **Use Factory Methods**: Use `config_factory.create_config()` for type-safe configuration creation

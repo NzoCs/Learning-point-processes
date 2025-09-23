@@ -127,7 +127,7 @@ class TestRunnerBasedIntegration:
             "Hawkes_test": {
                 "data_loading_specs": {"batch_size": 8, "num_workers": 1},
                 "model_config": {
-                    "model_id": "HawkesModel",
+                    "model_id": "Hawkes",
                     "specs": {
                         "mu": [0.1, 0.1],
                         "alpha": [[0.2, 0], [0, 0.4]],
@@ -330,7 +330,7 @@ class TestRunnerBasedIntegration:
                 # Verify Hawkes model was created
                 assert trainer is not None
                 assert trainer.model is not None
-                assert trainer.model_id == "HawkesModel"
+                assert trainer.model_id == "Hawkes"
 
     def test_config_override_through_runner(self, temporary_directory):
         """Test configuration override capabilities through runner."""

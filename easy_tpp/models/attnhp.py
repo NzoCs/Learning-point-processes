@@ -5,10 +5,10 @@ from torch import nn
 
 from easy_tpp.configs import ModelConfig
 from easy_tpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.basemodel import Model
 
 
-class AttNHP(BaseModel):
+class AttNHP(Model):
     """Torch implementation of Attentive Neural Hawkes Process, ICLR 2022.
     https://arxiv.org/abs/2201.00044.
     Source code: https://github.com/yangalan123/anhp-andtt/blob/master/anhp/model/xfmr_nhp_fast.py

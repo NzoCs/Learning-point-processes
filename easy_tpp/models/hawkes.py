@@ -1,13 +1,13 @@
 import torch
 
 from easy_tpp.configs.model_config import ModelConfig
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.basemodel import Model
 
 
-class Hawkes(BaseModel):
+class Hawkes(Model):
     """
     PyTorch implementation of the Hawkes process model.
-    Inherits from BaseModel for integration with the framework, enabling
+    Inherits from Model for integration with the framework, enabling
     methods like predict_one_step_at_every_event.
     """
 
@@ -164,7 +164,7 @@ class Hawkes(BaseModel):
     ) -> torch.Tensor:
         """
         Computes intensities at sampled times relative to each event in the sequence.
-        Required by BaseModel for prediction and loss calculation.
+        Required by Model for prediction and loss calculation.
         Calculates lambda(t_k + delta_t) using history up to event k (time_seq[k]).
 
         Args:

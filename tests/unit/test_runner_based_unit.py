@@ -84,7 +84,7 @@ class TestRunnerBasedUnit:
         }
 
         # Remove None values for Hawkes model
-        if model_id == "HawkesModel":
+        if model_id == "Hawkes":
             config_dict[f"{model_id}_test"]["model_config"] = {
                 k: v
                 for k, v in config_dict[f"{model_id}_test"]["model_config"].items()
@@ -140,7 +140,7 @@ class TestRunnerBasedUnit:
 
     def test_runner_model_creation_hawkes(self, temporary_directory):
         """Test Hawkes model creation through runner."""
-        config_dict = self._create_minimal_config("HawkesModel", temporary_directory)
+        config_dict = self._create_minimal_config("Hawkes", temporary_directory)
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
 
         with patch("easy_tpp.preprocess.data_loader.TPPDataModule.setup"):
@@ -153,8 +153,8 @@ class TestRunnerBasedUnit:
             trainer = Trainer(config, output_dir=str(temporary_directory))
             # Test model properties
             assert trainer.model is not None
-            assert trainer.model_id == "HawkesModel"
-            # Note: HawkesModel doesn't have model_config attribute like other models
+            assert trainer.model_id == "Hawkes"
+            # Note: Hawkes doesn't have model_config attribute like other models
             assert hasattr(trainer.model, "num_event_types")
 
     def test_runner_datamodule_creation(self, temporary_directory):

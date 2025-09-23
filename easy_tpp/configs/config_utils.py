@@ -11,8 +11,8 @@ from dataclasses import fields
 from typing import Any, Dict, List, Optional, Type, Union
 
 from easy_tpp.utils.const import Backend
-
-logger = logging.getLogger(__name__)
+from easy_tpp.utils import logger
+from easy_tpp.configs.config_interface import ConfigInterface, ConfigValidationError
 
 
 class ConfigTransformer:
@@ -310,61 +310,66 @@ class ConfigTransformer:
         prepared["save_dir"] = save_dir
         return ConfigTransformer.transform_logger_config(prepared)
 
+class ConfigValidationError(Exception):
+    """Raised when configuration validation fails."""
+
+    def __init__(self, message: str, field_name: Optional[str] = None):
+        self.field_name = field_name
+        super().__init__(message)
+
 
 class ConfigValidator:
     """
-    Handles validation of configuration dictionaries before object creation.
+    Configuration validator with extensible validation rules.
+
+    Provides a framework for validating configuration objects with
+    clear error reporting and customizable validation rules.
     """
 
-    @staticmethod
-    def validate_required_fields(
-        config_dict: Dict[str, Any], required_fields: List[str], config_name: str
-    ) -> None:
+    def __init__(self):
+        self._validation_rules: List[callable] = []
+
+    def add_rule(self, rule_func: callable) -> None:
+        """Add a validation rule function."""
+        self._validation_rules.append(rule_func)
+
+    def validate(self, config: ConfigInterface) -> List[str]:
         """
-        Validate that required fields are present in the configuration dictionary.
+        Validate configuration and return list of error messages.
 
         Args:
-            config_dict: Configuration dictionary to validate
-            required_fields: List of required field names
-            config_name: Name of the configuration for error messages
-
-        Raises:
-            ValueError: If required fields are missing
-        """
-        missing_fields = []
-        for field in required_fields:
-            if field not in config_dict or config_dict[field] is None:
-                missing_fields.append(field)
-
-        if missing_fields:
-            raise ValueError(
-                f"Missing required fields in {config_name}: {missing_fields}"
-            )
-
-    @staticmethod
-    def filter_invalid_fields(
-        config_dict: Dict[str, Any], config_class: Type
-    ) -> Dict[str, Any]:
-        """
-        Filter out invalid fields from configuration dictionary.
-
-        Args:
-            config_dict: Configuration dictionary to filter
-            config_class: Configuration class to check valid fields against
+            config: Configuration object to validate
 
         Returns:
-            Filtered configuration dictionary
+            List of validation error messages (empty if valid)
         """
-        if not hasattr(config_class, "__dataclass_fields__"):
-            return config_dict
+        errors = []
 
-        valid_keys = set(config_class.__dataclass_fields__.keys())
-        filtered = {k: v for k, v in config_dict.items() if k in valid_keys}
-        dropped = set(config_dict.keys()) - valid_keys
+        for rule in self._validation_rules:
+            try:
+                rule(config)
+            except ConfigValidationError as e:
+                error_msg = f"{e.field_name}: {str(e)}" if e.field_name else str(e)
+                errors.append(error_msg)
+            except Exception as e:
+                errors.append(f"Validation error: {str(e)}")
 
-        if dropped:
-            logger.warning(
-                f"Filtered out invalid {config_class.__name__} keys: {dropped}"
-            )
+        return errors
 
-        return filtered
+    def validate_required_fields(
+        self, config: ConfigInterface, required_fields: List[str]
+    ) -> None:
+        """Validate that required fields are present and not None."""
+        for field_name in required_fields:
+            if not hasattr(config, field_name):
+                raise ConfigValidationError(
+                    f"Required field '{field_name}' is missing", field_name=field_name
+                )
+
+            value = getattr(config, field_name)
+            if value is None:
+                raise ConfigValidationError(
+                    f"Required field '{field_name}' cannot be None",
+                    field_name=field_name,
+                )
+

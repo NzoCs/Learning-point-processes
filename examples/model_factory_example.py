@@ -6,7 +6,8 @@ de manière automatique grâce au système de registry basé sur des métaclasse
 La factory découvre automatiquement tous les modèles disponibles.
 """
 
-from easy_tpp.configs.model_config import ModelConfig
+from easy_tpp.configs.config_builder import ModelConfigBuilder
+from easy_tpp.configs.config_factory import ConfigFactory, ConfigType
 from easy_tpp.models.model_factory import ModelFactory
 
 
@@ -14,11 +15,14 @@ def example_create_model_with_factory():
     """Exemple de création de modèle avec la factory."""
     print("=== Création avec la factory ===")
 
-    # Configuration du modèle (exemple)
-    model_config = ModelConfig(
-        model_id="NHP",
-        num_event_types=10,  # Requis pour la configuration
-    )
+    # Build model config using ModelConfigBuilder + factory
+    builder = ModelConfigBuilder()
+    builder.set_field("model_id", "NHP")
+    builder.set_field("num_event_types", 10)
+    model_config_dict = builder.get_config_dict()
+
+    config_factory = ConfigFactory()
+    model_config = config_factory.create_config(ConfigType.MODEL, model_config_dict)
 
     # Création avec la factory (découverte automatique)
     factory = ModelFactory()
@@ -35,9 +39,17 @@ def example_create_model_by_name():
     factory = ModelFactory()
     models_to_test = ["SAHP", "THP", "AttNHP"]
     
+    def make_model_config(name: str):
+        b = ModelConfigBuilder()
+        b.set_field("model_id", name)
+        b.set_field("num_event_types", 10)
+        cfg = b.get_config_dict()
+        f = ConfigFactory()
+        return f.create_config(ConfigType.MODEL, cfg)
+
     for model_name in models_to_test:
         try:
-            model_config = ModelConfig(model_id=model_name, num_event_types=10)
+            model_config = make_model_config(model_name)
             model = factory.create_model_by_name(model_name, model_config)
             print(f"✅ {model_name}: {model.__class__.__name__}")
         except Exception as e:
@@ -71,7 +83,11 @@ def example_error_handling():
 
     # Test 1: Modèle qui n'existe pas
     try:
-        model_config = ModelConfig(model_id="NONEXISTENT", num_event_types=10)
+        # build a config for the nonexistent model using the builder
+        b = ModelConfigBuilder()
+        b.set_field("model_id", "NONEXISTENT")
+        b.set_field("num_event_types", 10)
+        model_config = ConfigFactory().create_config(ConfigType.MODEL, b.get_config_dict())
         model = factory.create_model_by_name("NONEXISTENT", model_config)
         print("❌ Aucune erreur détectée (inattendu)")
     except ValueError as e:
@@ -102,7 +118,15 @@ def example_advanced_usage():
     
     for model_name in list(available_models)[:3]:  # Prendre les 3 premiers
         try:
-            config = ModelConfig(model_id=model_name, num_event_types=10)
+            config = None
+            try:
+                b = ModelConfigBuilder()
+                b.set_field("model_id", model_name)
+                b.set_field("num_event_types", 10)
+                cfg = b.get_config_dict()
+                config = ConfigFactory().create_config(ConfigType.MODEL, cfg)
+            except Exception:
+                config = None
             model = factory.create_model_by_name(model_name, config)
             models_created.append((model_name, model))
             print(f"  ✅ {model_name}: {model.__class__.__module__}.{model.__class__.__name__}")

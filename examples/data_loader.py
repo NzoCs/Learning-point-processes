@@ -1,7 +1,8 @@
 import random
 from typing import Any, Dict, List
 
-from easy_tpp.configs import DataConfig
+from easy_tpp.configs.config_builder import DataConfigBuilder
+from easy_tpp.configs.config_factory import ConfigFactory, ConfigType
 from easy_tpp.data.preprocess import TPPDataModule
 
 
@@ -27,14 +28,17 @@ def make_raw_data() -> List[List[Dict[str, Any]]]:
 
 
 def main() -> None:
-    # Create data config
-    data_config = DataConfig(
-        dataset_id="example_data",
-        data_format="dict",
-        num_event_types=11,
-        pad_token_id=11,
-        batch_size=2,
-    )
+    # Build data config using the builder + factory pattern
+    builder = DataConfigBuilder()
+    builder.set_field("dataset_id", "example_data")
+    builder.set_field("data_format", "dict")
+    builder.set_field("num_event_types", 11)
+    builder.set_field("pad_token_id", 11)
+    builder.set_field("batch_size", 2)
+
+    config_dict = builder.get_config_dict()
+    config_factory = ConfigFactory()
+    data_config = config_factory.create_config(ConfigType.DATA, config_dict)
 
     # Create data module
     datamodule = TPPDataModule(data_config)

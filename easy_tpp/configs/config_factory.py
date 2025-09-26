@@ -14,18 +14,18 @@ Utilisation:
 from enum import Enum
 from typing import Type
 
-from easy_tpp.configs.base_config import Config, ConfigValidationError
-from easy_tpp.configs.data_config import DataConfig, DataLoadingSpecsConfig, TokenizerConfig
-from easy_tpp.configs.hpo_config import HPOConfig, HPORunnerConfig
-from easy_tpp.configs.logger_config import LoggerConfig
-from easy_tpp.configs.model_config import (
+from .base_config import Config, ConfigValidationError
+from .data_config import DataConfig, DataLoadingSpecsConfig, TokenizerConfig
+from .hpo_config import HPOConfig, HPORunnerConfig
+from .logger_config import LoggerConfig
+from .model_config import (
     ModelConfig,
     ModelSpecsConfig,
     SimulationConfig,
     ThinningConfig,
-    TrainingConfig,
 )
-from easy_tpp.configs.runner_config import RunnerConfig, TrainerConfig
+from .runner_config import RunnerConfig, TrainingConfig
+from .config_utils import ConfigTransformer
 from easy_tpp.utils import logger
 
 
@@ -46,7 +46,7 @@ class ConfigType(Enum):
     
     # Runner configurations
     RUNNER = ("runner_config", RunnerConfig)
-    TRAINER = ("trainer_config", TrainerConfig)
+    TRAINER = ("training_config", TrainingConfig)
     
     # HPO configurations
     HPO = ("hpo_config", HPOConfig)
@@ -95,23 +95,10 @@ class ConfigFactory:
         logger.info(f"Création de la configuration: {config_name}")
 
         try:
-            # Import validation utilities
-            from easy_tpp.configs.config_utils import ConfigValidator
+            # Create the instance directly
+            instance = config_class(**config_data, **kwargs)
             
-            # 1. Validate required fields if the class has this method
-            if hasattr(config_class, '_get_required_fields_list'):
-                required_fields = config_class._get_required_fields_list()
-                ConfigValidator.validate_required_fields(
-                    config_data, required_fields, config_class.__name__
-                )
-            
-            # 2. Filter invalid fields
-            filtered_data = ConfigValidator.filter_invalid_fields(config_data, config_class)
-            
-            # 3. Create the instance
-            instance = config_class(**filtered_data, **kwargs)
-            
-            # 4. Additional validation
+            # Additional validation
             if hasattr(instance, 'validate'):
                 instance.validate()
             

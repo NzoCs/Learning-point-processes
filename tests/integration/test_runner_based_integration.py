@@ -68,7 +68,7 @@ class TestRunnerBasedIntegration:
                         "max_sim_events": 100,
                     },
                 },
-                "trainer_config": {
+                "training_config": {
                     "stage": "train",
                     "max_epochs": 2,
                     "val_freq": 1,
@@ -105,7 +105,7 @@ class TestRunnerBasedIntegration:
                         "max_sim_events": 100,
                     },
                 },
-                "trainer_config": {
+                "training_config": {
                     "stage": "train",
                     "max_epochs": 2,
                     "val_freq": 1,
@@ -140,7 +140,7 @@ class TestRunnerBasedIntegration:
                         "dtime_max": 5,
                     },
                 },
-                "trainer_config": {
+                "training_config": {
                     "stage": "test",
                     "save_model_dir": "test_checkpoints",
                     "devices": 1,

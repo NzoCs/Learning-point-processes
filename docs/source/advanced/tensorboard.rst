@@ -23,7 +23,7 @@ In the ``model config`` (`modeling` attribute of the config), one needs to set `
         runner_id: std_tpp
         model_id: NHP # model name
         base_dir: './checkpoints/'
-      trainer_config:
+      training_config:
         batch_size: 256
         max_epoch: 200
         shuffle: False

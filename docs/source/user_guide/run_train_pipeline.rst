@@ -100,11 +100,11 @@ To be specific, one needs to define the following entries in the config file:
                   dtime_max: 5
 
 
-*trainer_config* contains the training related specifications.
+*training_config* contains the training related specifications.
 
 .. code-block:: yaml
 
-        trainer_config:   # trainer arguments
+        training_config:   # trainer arguments
             seed: 2019
             gpu: 0
             batch_size: 256

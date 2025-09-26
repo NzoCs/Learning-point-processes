@@ -4,7 +4,7 @@ Main MetricsHelper class that orchestrates metrics computation.
 
 from typing import Dict, List, Optional, Union
 
-from .interfaces import MetricsComputerInterface
+from .metrics_interfaces import MetricsComputerInterface
 from .prediction_metrics_computer import PredictionMetricsComputer
 from .shared_types import EvaluationMode, PredictionMetrics, SimulationMetrics
 from .simulation_metrics_computer import SimulationMetricsComputer

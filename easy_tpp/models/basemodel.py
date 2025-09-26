@@ -24,7 +24,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
     """Base model class for all TPP models."""
 
 
-    def __init__(self, model_config: ModelConfig, **kwargs):
+    def __init__(self, model_config: ModelConfig, num_event_types: int, **kwargs):
         """Initialize the Model
 
         Args:
@@ -39,22 +39,15 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Load model configuration
         pretrain_model_path = model_config.pretrain_model_path
-        base_config = model_config.base_config
         model_specs = model_config.specs
+        self.scheduler_config = model_config.scheduler_config
 
         # Load training configuration
         self.compute_simulation = model_config.compute_simulation
-        self.lr = base_config.lr
-        self.lr_scheduler = base_config.lr_scheduler
-        self.max_epochs = base_config.max_epochs
-        self.dropout = base_config.dropout
 
         # Load data and model specifications
-        self.num_event_types = (
-            model_config.num_event_types
-        )  # not include [PAD], [BOS], [EOS]
-        self.num_event_types_pad = model_config.num_event_types_pad
-        self.pad_token_id = model_config.pad_token_id
+        self.num_event_types = num_event_types
+        self.pad_token_id = num_event_types
         self.hidden_size = model_specs.hidden_size
 
         self.loss_integral_num_sample_per_step = (
@@ -65,15 +58,15 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Initialize type embedding
         self.layer_type_emb = nn.Embedding(
-            num_embeddings=self.num_event_types_pad,  # have padding
+            num_embeddings=self.num_event_types + 1,  # have padding
             embedding_dim=self.hidden_size,
             padding_idx=self.pad_token_id,
             device=self.device,
         )
 
         # Model prediction configuration
-        self.gen_config = model_config.thinning
-        self.use_mc_samples = model_config.use_mc_samples
+        self.gen_config = model_config.thinning_config
+        self.use_mc_samples = self.gen_config.use_mc_samples
         self._device = model_config.device
         self.num_step_gen = self.gen_config.num_steps
         self.dtime_max = self.gen_config.dtime_max
@@ -325,14 +318,19 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             optimizer: The optimizer to use for training.
         """
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        # Use Adam optimizer with optional learning rate scheduler
+        lr = self.scheduler_config.lr
+        lr_scheduler = self.scheduler_config.lr_scheduler
+        max_epochs = self.scheduler_config.max_epochs
+
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
 
         # Use cosine decay scheduler instead
-        if hasattr(self, "lr_scheduler") and self.lr_scheduler:
+        if hasattr(self, "lr_scheduler") and lr_scheduler:
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer,
-                T_max=self.max_epochs,  # Total number of epochs
-                eta_min=self.lr * 0.01,  # Minimum learning rate at the end of schedule
+                T_max=max_epochs,  # Total number of epochs
+                eta_min=lr * 0.01,  # Minimum learning rate at the end of schedule
             )
             return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": None}
 
@@ -1081,12 +1079,23 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Calculate intensities on augmented intervals
         # [1, seq_len, precision, num_event_types]
-        intensities = self.compute_intensities_at_sample_times(
-            time_seq[:, 1:],  # [1, seq_len-1]
-            time_delta_seq[:, 1:],  # [1, seq_len-1]
-            type_seq[:, 1:],  # [1, seq_len-1]
-            time_deltas_sample,
-        )
+        # Run the intensity computations in a no-grad context to avoid creating
+        # "inference tensors" that PyTorch disallows being saved for backward.
+        # We then return a cloned/detached tensor so downstream code that may
+        # accidentally run under autograd won't try to save inference-only tensors.
+        with torch.no_grad():
+            intensities = self.compute_intensities_at_sample_times(
+                time_seq[:, 1:],  # [1, seq_len-1]
+                time_delta_seq[:, 1:],  # [1, seq_len-1]
+                type_seq[:, 1:],  # [1, seq_len-1]
+                time_deltas_sample,
+            )
+
+        # Ensure we return a regular Tensor (detach + clone) so it can be
+        # used safely by code paths that expect tensors requiring grad or that
+        # might be captured by autograd later. This avoids the RuntimeError:
+        # "Inference tensors cannot be saved for backward..."
+        intensities = intensities.detach().clone()
 
         time_diffs = time_seq.diff()
 

@@ -43,9 +43,9 @@ def test_runner_config_from_dict(tmp_path):
     trainer = TrainerConfig(dataset_id="ds3", model_id="m3", save_dir=str(tmp_path))
     model = ModelConfig(model_id="NHP", num_event_types=5)
     data = DataConfig(train_dir="train.csv", data_specs={"num_event_types": 5})
-    d = {"trainer_config": trainer, "model_config": model, "data_config": data}
+    d = {"training_config": trainer, "model_config": model, "data_config": data}
     config = RunnerConfig.from_dict(d)
-    assert isinstance(config.trainer_config, TrainerConfig)
+    assert isinstance(config.training_config, TrainerConfig)
     assert isinstance(config.model_config, ModelConfig)
     assert isinstance(config.data_config, DataConfig)
 
@@ -54,8 +54,8 @@ def test_runner_config_yaml():
     trainer = TrainerConfig(dataset_id="ds4", model_id="m4")
     model = ModelConfig(model_id="NHP", num_event_types=5)
     data = DataConfig(train_dir="train.csv", data_specs={"num_event_types": 5})
-    config = RunnerConfig(trainer_config=trainer, model_config=model, data_config=data)
+    config = RunnerConfig(training_config=trainer, model_config=model, data_config=data)
     yaml_dict = config.get_yaml_config()
-    assert "trainer_config" in yaml_dict
+    assert "training_config" in yaml_dict
     assert "model_config" in yaml_dict
     assert "data_config" in yaml_dict

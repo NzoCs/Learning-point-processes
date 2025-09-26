@@ -1,0 +1,448 @@
+# YAML configurations for EasyTPP
+# This file contains configurations for data, models, simulations, and training (trainer)
+
+
+# ===== CONFIGURATIONS DE DONNÉES =====
+data_configs:
+  taxi:
+    data_format: json
+    train_dir: easytpp/taxi
+    valid_dir: easytpp/taxi
+    test_dir: easytpp/taxi
+    data_specs:
+      num_event_types: 10
+      padding_side: left
+  
+  taobao:
+    data_format: json
+    train_dir: easytpp/taobao
+    valid_dir: easytpp/taobao
+    test_dir: easytpp/taobao
+    data_specs:
+      num_event_types: 17
+      padding_side: left
+
+  amazon:
+    data_format: json
+    train_dir: easytpp/amazon
+    valid_dir: easytpp/amazon
+    test_dir: easytpp/amazon
+    data_specs:
+      num_event_types: 16
+      padding_side: left
+
+  test:
+    data_format: json
+    train_dir: NzoCs/test_dataset
+    valid_dir: NzoCs/test_dataset
+    test_dir: NzoCs/test_dataset
+    data_specs:
+      num_event_types: 2
+      padding_side: left
+      
+  hawkes1:
+    data_format: json
+    train_dir: NzoCs/hawkes1
+    valid_dir: NzoCs/hawkes1
+    test_dir: NzoCs/hawkes1
+    data_specs:
+      num_event_types: 1
+      padding_side: left
+
+  hawkes2:
+    data_format: json
+    train_dir: NzoCs/hawkes2
+    valid_dir: NzoCs/hawkes2
+    test_dir: NzoCs/hawkes2
+    data_specs:
+      num_event_types: 2
+      padding_side: left
+
+# ==== LOGGER CONFIGS =====
+logger_configs:
+  tensorboard:
+    type: tensorboard
+    save_dir: logs/tensorboard_logs
+    params:
+      name: tb_logs
+      flush_secs: 120
+      version: 1
+
+  csv:
+    type: csv
+    save_dir: logs/csv_logs
+    params:
+      name: csv_logs
+      version: 1
+
+  wandb:
+    type: wandb
+    project: EasyTPP_Project
+    entity: your_wandb_entity  # Remplacez par votre entité Weights & Biases
+    save_dir: logs/wandb_logs
+    params:
+      notes: "Experiment run"
+      tags: [easy_tpp, experiment]
+      config:
+        resume: false
+        anonymous: false
+
+  mlflow:
+    type: mlflow
+    save_dir: logs/mlflow
+    params:
+      experiment_name: easy_tpp_experiments
+      tracking_uri: http://localhost:5000
+      run_name: run_1
+
+  comet:
+    type: comet
+    save_dir: logs/comet
+    params:
+      api_key: "YOUR_COMET_API_KEY"
+      project_name: easy_tpp_project
+      workspace: your_workspace
+
+  neptune:
+    type: neptune
+    save_dir: logs/neptune
+    params:
+      api_token: "YOUR_NEPTUNE_API_TOKEN"
+      project: your_neptune_project
+      run_name: run_1
+
+# ===== CONFIGURATIONS DE MODÈLES =====
+model_configs:
+
+# Configurations des paramètres spécifiques aux modèles (architecture, hyperparamètres, etc.)
+
+  # Configurations pour modèles neuronaux - Tailles Small
+  neural_small:
+    specs:
+      hidden_size: 16
+      time_emb_size: 8
+      num_layers: 1
+      num_heads: 2  # Pour les modèles avec attention
+
+  # Configurations pour modèles neuronaux - Tailles Medium  
+  neural_medium:
+  specs:
+    hidden_size: 32
+    time_emb_size: 16
+    num_layers: 2
+    num_heads: 4  # Pour les modèles avec attention
+
+  # Configurations pour modèles neuronaux - Tailles Large
+  neural_large:
+  specs:
+    hidden_size: 64
+    time_emb_size: 32
+    num_layers: 3
+    num_heads: 8  # Pour les modèles avec attention
+
+  # Configurations pour modèles neuronaux - Tailles Extra Large
+  neural_xlarge:
+  specs:
+    hidden_size: 128
+    time_emb_size: 64
+    num_layers: 4
+    num_heads: 16  # Pour les modèles avec attention
+
+  # Configurations spécifiques pour Hawkes - Simple (univarié)
+  hawkes_simple:
+  specs:
+    mu: 0.2
+    alpha: 0.8
+    beta: 1.0
+
+  # Configurations spécifiques pour Hawkes - Bivarié
+  hawkes_bivariate:
+  specs:
+    mu: [0.2, 0.2]
+    alpha: [[0.4, 0], [0, 0.8]]
+    beta: [[1.0, 0], [0, 1.0]]
+
+  # Configurations spécifiques pour Hawkes - Multivarié complexe
+  hawkes_multivariate:
+  specs:
+    mu: [0.2, 0.2, 0.1]
+    alpha: [[0.4, 0.1, 0], [0.1, 0.8, 0.2], [0, 0.2, 0.6]]
+    beta: [[1.0, 0.5, 0], [0.5, 1.0, 0.8], [0, 0.8, 1.0]]
+
+
+# ===== CONFIGURATIONS DE THINNING =====
+thinning_configs:
+
+  # Configuration de thinning rapide (pour tests)
+  thinning_fast:
+    num_exp: 50
+    over_sample_rate: 1.2
+    dtime_max: 3
+    num_sample: 15
+
+  # Configuration de thinning standard  
+  thinning_standard:
+    num_exp: 100
+    over_sample_rate: 1.5
+    dtime_max: 5
+    num_sample: 30
+
+  # Configuration de thinning haute qualité
+  thinning_high_quality:
+    num_exp: 150
+    over_sample_rate: 1.8
+    dtime_max: 8
+    num_sample: 50
+
+  # Configuration de thinning pour gros datasets
+  thinning_large_dataset:
+    num_exp: 200
+    over_sample_rate: 2.0
+    dtime_max: 10
+    num_sample: 60
+
+  # Configuration de thinning pour FullyNN (plus d'échantillons)
+  thinning_fullyNN:
+    num_exp: 200
+    over_sample_rate: 1.5
+    dtime_max: 5
+    num_sample: 60
+
+  # Configuration de thinning minimale (debug/CPU)
+  thinning_minimal:
+    num_exp: 20
+    over_sample_rate: 1.1
+    dtime_max: 2
+    num_sample: 10
+
+
+# ===== CONFIGURATIONS DE SIMULATION =====
+simulation_configs:
+
+  # Configuration de simulation rapide (tests)
+  simulation_fast:
+    start_time: 20
+    end_time: 50
+    max_sim_events: 5000
+
+  # Configuration de simulation développement
+  simulation_dev:
+    start_time: 50
+    end_time: 120
+    max_sim_events: 15000
+
+  # Configuration de simulation standard
+  simulation_standard:
+    start_time: 100
+    end_time: 200
+    max_sim_events: 50000
+
+  # Configuration de simulation étendue
+  simulation_extended:
+    start_time: 100
+    end_time: 300
+    max_sim_events: 100000
+
+  # Configuration de simulation pour gros datasets
+  simulation_large:
+    start_time: 100
+    end_time: 400
+    max_sim_events: 150000
+
+  # Configuration de simulation pour validation croisée
+  simulation_cv:
+    start_time: 80
+    end_time: 160
+    max_sim_events: 30000
+
+  # Configuration de simulation pour expérimentations
+  simulation_experiment:
+    start_time: 50
+    end_time: 120
+    max_sim_events: 15000
+
+# ===== CONFIGURATIONS DE CHARGEMENT DE DONNÉES =====
+# Ces configurations contiennent uniquement les paramètres de DataLoader
+
+data_loading_configs:
+
+  quick_test:
+    batch_size: 32
+    num_workers: 1
+
+  dev:
+    batch_size: 64
+    num_workers: 2
+
+  standard:
+    batch_size: 128
+    num_workers: 4
+
+  standard_small_batch:
+    batch_size: 64
+    num_workers: 4
+
+  standard_tiny_batch:
+    batch_size: 32
+    num_workers: 2
+
+  production:
+    batch_size: 256
+    num_workers: 8
+
+  production_medium_batch:
+    batch_size: 128
+    num_workers: 6
+
+  production_small_batch:
+    batch_size: 64
+    num_workers: 4
+
+  production_tiny_batch:
+    batch_size: 32
+    num_workers: 2
+
+  production_micro_batch:
+    batch_size: 16
+    num_workers: 1
+
+  large_dataset:
+    batch_size: 512
+    num_workers: 8
+
+  debug:
+    batch_size: 8
+    num_workers: 1
+
+  experiment:
+    batch_size: 16
+    num_workers: 1
+
+  cross_validation:
+    batch_size: 64
+    num_workers: 4
+
+  hpo:
+    batch_size: 32
+    num_workers: 2
+
+  intensive:
+    batch_size: 1024
+    num_workers: 12
+
+# ===== CONFIGURATIONS D'ENTRAÎNEMENT (TRAINER) =====
+# Ces configurations contiennent uniquement les paramètres d'entraînement
+# Les données, modèles et simulations sont configurés séparément
+
+training_configs:
+  # Configuration pour tests rapides
+  quick_test:
+      max_epochs: 5
+      val_freq: 1
+      accumulate_grad_batches: 1
+      patience: 3
+
+  # Configuration pour développement
+  dev:
+      max_epochs: 50
+      val_freq: 5
+      accumulate_grad_batches: 1
+      patience: 10
+
+  # Configuration pour entraînement standard
+  standard:
+      max_epochs: 500
+      val_freq: 10
+      accumulate_grad_batches: 1
+      patience: 20
+
+  # Configuration standard avec batch plus petit (mémoire limitée)
+  standard_small_batch:
+      max_epochs: 500
+      val_freq: 10
+      accumulate_grad_batches: 2  # Compense le petit batch
+      patience: 20
+
+  # Configuration standard avec très petit batch (mémoire très limitée)
+  standard_tiny_batch:
+      max_epochs: 500
+      val_freq: 10
+      accumulate_grad_batches: 4  # Compense le très petit batch
+      patience: 20
+
+  # Configuration pour entraînement long
+  production:
+      max_epochs: 1000
+      val_freq: 10
+      accumulate_grad_batches: 1
+      patience: 50
+
+  # Configuration production avec batch moyen (mémoire limitée)
+  production_medium_batch:
+      max_epochs: 1000
+      val_freq: 10
+      accumulate_grad_batches: 2  # Compense le batch plus petit
+      patience: 50
+
+  # Configuration production avec petit batch (mémoire très limitée)
+  production_small_batch:
+      max_epochs: 1000
+      val_freq: 10
+      accumulate_grad_batches: 4  # Compense le petit batch
+      patience: 50
+
+  # Configuration production avec très petit batch (GPU faible)
+  production_tiny_batch:
+      max_epochs: 1000
+      val_freq: 10
+      accumulate_grad_batches: 8  # Compense le très petit batch
+      patience: 50
+
+  # Configuration production avec micro batch (CPU ou GPU très faible)
+  production_micro_batch:
+      max_epochs: 1000
+      val_freq: 10
+      accumulate_grad_batches: 16  # Compense le micro batch
+      patience: 50
+
+  # Configuration pour gros datasets (batch plus large)
+  large_dataset:
+      max_epochs: 200
+      val_freq: 5
+      accumulate_grad_batches: 2
+      patience: 30
+
+  # Configuration pour debugging (très petit)
+  debug:
+      max_epochs: 3
+      val_freq: 1
+      accumulate_grad_batches: 1
+      patience: 2
+
+  # Configuration pour expérimentation rapide
+  experiment:
+    max_epochs: 10
+    val_freq: 2
+    accumulate_grad_batches: 1
+    patience: 5
+
+  # Configuration pour validation croisée
+  cross_validation:
+      max_epochs: 100
+      val_freq: 5
+      accumulate_grad_batches: 1
+      patience: 15
+
+  # Configuration pour hyperparameter tuning
+  hpo:
+      max_epochs: 20
+      val_freq: 2
+      accumulate_grad_batches: 1
+      patience: 8
+
+  # Configuration pour entraînement intensif (GPU puissant)
+  intensive:
+      max_epochs: 2000
+      val_freq: 20
+      accumulate_grad_batches: 4
+      patience: 100

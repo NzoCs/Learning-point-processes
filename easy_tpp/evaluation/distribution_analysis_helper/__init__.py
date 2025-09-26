@@ -26,7 +26,7 @@ from .data_extractors import LabelDataExtractor, SimulationDataExtractor
 from .distribution_analyzer import DistributionAnalyzer
 
 # Import all components for easy access
-from .interfaces import DataExtractor, MetricsCalculator, PlotGenerator
+from .distribution_interfaces import DataExtractor, MetricsCalculator, PlotGenerator
 from .metrics_calculator import MetricsCalculatorImpl
 from .plot_generators import (
     CrossCorrelationPlotGenerator,

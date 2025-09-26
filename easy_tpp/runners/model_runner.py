@@ -17,7 +17,7 @@ from easy_tpp.models.model_factory import ModelFactory
 from easy_tpp.utils import logger
 
 
-class Trainer:
+class Runner:
 
     def __init__(
         self,
@@ -59,34 +59,37 @@ class Trainer:
         # Initialize your configs
         data_config = config.data_config
         model_config = config.model_config
-        trainer_config = config.trainer_config
+        training_config = config.training_config
 
         # Initialize your model
-        self.max_epochs = trainer_config.max_epochs
 
         # Utiliser la ModelFactory pour créer le modèle
         model_factory = ModelFactory()
         self.model = model_factory.create_model_by_name(
-            model_name=model_config.model_id,
+            model_name=config.model_id,
+            num_event_types=data_config.data_specs.num_event_types,
             model_config=model_config
         )
 
-        self.model_id = model_config.model_id
+        self.model_id = config.model_id
 
         # Initialize Dataloaders
         self.datamodule = TPPDataModule(data_config)
 
         # Initialize Train params
-        self.log_freq = trainer_config.log_freq
-        self.checkpoints_freq = trainer_config.checkpoints_freq
-        self.patience = trainer_config.patience
-        self.devices = trainer_config.devices
-        self.logger_config = trainer_config.logger_config
-        self.val_freq = trainer_config.val_freq
-        self.use_precision_16 = trainer_config.use_precision_16
-        self.accumulate_grad_batches = trainer_config.accumulate_grad_batches
+        self.max_epochs = training_config.max_epochs
+        self.log_freq = training_config.log_freq
+        self.checkpoints_freq = training_config.checkpoints_freq
+        self.patience = training_config.patience
+        self.devices = training_config.devices
+        self.val_freq = training_config.val_freq
+        self.use_precision_16 = training_config.use_precision_16
+        self.accumulate_grad_batches = training_config.accumulate_grad_batches
 
-        self.dirpath = trainer_config.save_model_dir
+        # Model saving directory
+        self.dirpath = config.save_model_dir
+        self.logger_config = config.logger_config
+
 
         if checkpoint_path is None:
             # Liste des checkpoints à tester, par ordre de priorité

@@ -44,12 +44,6 @@ class Config(ABC):
         """Get configuration as YAML-compatible dictionary."""
         pass
 
-    @classmethod
-    @abstractmethod
-    def from_dict(cls: Type[Self], config_dict: Dict[str, Any]) -> Self:
-        """Create configuration from dictionary."""
-        pass
-
     def validate(self) -> None:
         """
         Validate the configuration.
@@ -118,30 +112,7 @@ class Config(ABC):
             raise ConfigSerializationError(
                 f"Failed to save configuration to {file_path}: {str(e)}"
             )
-
-    @classmethod
-    def load_from_yaml_file(
-        cls: Type[Self], file_path: Union[str, Path]
-    ) -> Self:
-        """
-        Load configuration from YAML file.
-
-        Args:
-            file_path: Path to the YAML file
-
-        Returns:
-            Configuration instance
-        """
-        from omegaconf import OmegaConf
-
-        try:
-            config_dict = OmegaConf.load(file_path)
-            return cls.from_dict(config_dict)
-        except Exception as e:
-            raise ConfigSerializationError(
-                f"Failed to load configuration from {file_path}: {str(e)}"
-            )
-
+        
     def __str__(self) -> str:
         """String representation of the configuration."""
         return f"{self.__class__.__name__}({self.get_yaml_config()})"
@@ -149,20 +120,3 @@ class Config(ABC):
     def __repr__(self) -> str:
         """Detailed string representation of the configuration."""
         return self.__str__()
-
-
-# Alias pour compatibilité
-BaseConfig = Config
-
-
-# Fonctions utilitaires pour compatibilité avec l'ancien système
-def config_class(name: str):
-    """Décorateur pour les classes de configuration (pour compatibilité)."""
-    def decorator(cls):
-        return cls
-    return decorator
-
-
-def config_factory():
-    """Factory function pour compatibilité (retourne None car pas utilisé)."""
-    return None

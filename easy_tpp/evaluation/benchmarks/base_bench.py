@@ -19,6 +19,7 @@ from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.data.preprocess.data_loader import TPPDataModule
 from easy_tpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
 from easy_tpp.utils import logger
+from easy_tpp.evaluation.benchmarks.bench_interfaces import BenchmarkInterface
 
 
 class BenchmarkMode(Enum):
@@ -29,7 +30,7 @@ class BenchmarkMode(Enum):
     BOTH = "both"
 
 
-class Benchmark(ABC):
+class Benchmark(ABC, BenchmarkInterface):
     """
     Abstract base class for TPP benchmarks.
 

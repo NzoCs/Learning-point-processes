@@ -68,7 +68,7 @@ class TestRunnerBasedUnit:
                         else None
                     ),
                 },
-                "trainer_config": {
+                "training_config": {
                     "stage": "train",
                     "max_epochs": 1,
                     "val_freq": 1,
@@ -265,8 +265,8 @@ class TestRunnerBasedUnit:
         """Test precision and device configuration through runner."""
         # Test with different device and precision settings
         config_dict = self._create_minimal_config("NHP", temporary_directory)
-        config_dict["NHP_test"]["trainer_config"]["use_precision_16"] = True
-        config_dict["NHP_test"]["trainer_config"]["devices"] = "auto"
+        config_dict["NHP_test"]["training_config"]["use_precision_16"] = True
+        config_dict["NHP_test"]["training_config"]["devices"] = "auto"
 
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
 
@@ -332,7 +332,7 @@ class TestRunnerBasedUnit:
     def test_runner_logger_configuration(self, temporary_directory):
         """Test logger configuration through runner."""
         config_dict = self._create_minimal_config("NHP", temporary_directory)
-        config_dict["NHP_test"]["trainer_config"]["logger_config"] = {
+        config_dict["NHP_test"]["training_config"]["logger_config"] = {
             "type": "tensorboard",
             "name": "test_logs",
         }

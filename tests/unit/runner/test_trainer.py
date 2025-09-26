@@ -28,11 +28,11 @@ class TestTrainer:
         trainer = Trainer(sample_runner_config)
         pl_trainer = trainer.trainer
         assert isinstance(pl_trainer, pl.Trainer)
-        assert pl_trainer.max_epochs == sample_runner_config.trainer_config.max_epochs
+        assert pl_trainer.max_epochs == sample_runner_config.training_config.max_epochs
 
     def test_trainer_device_configuration(self, sample_runner_config):
         """Test trainer device configuration."""
-        sample_runner_config.trainer_config.accelerator = "cpu"
+        sample_runner_config.training_config.accelerator = "cpu"
         trainer = Trainer(sample_runner_config)
         pl_trainer = trainer.trainer
         # Check for CPU accelerator by class name to avoid import errors
@@ -41,8 +41,8 @@ class TestTrainer:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_trainer_gpu_configuration(self, sample_runner_config):
         """Test trainer GPU configuration."""
-        sample_runner_config.trainer_config.accelerator = "gpu"
-        sample_runner_config.trainer_config.devices = 1
+        sample_runner_config.training_config.accelerator = "gpu"
+        sample_runner_config.training_config.devices = 1
         trainer = Trainer(sample_runner_config)
         pl_trainer = trainer.trainer
         # Check for GPU accelerator by class name to avoid import errors
@@ -51,7 +51,7 @@ class TestTrainer:
 
     def test_trainer_callbacks_setup(self, sample_runner_config):
         """Test trainer callbacks configuration."""
-        sample_runner_config.trainer_config.callbacks = {
+        sample_runner_config.training_config.callbacks = {
             "early_stopping": {"monitor": "val_loss", "patience": 10},
             "model_checkpoint": {"monitor": "val_loss", "save_top_k": 1},
         }
@@ -117,8 +117,8 @@ class TestTrainer:
         """Test trainer checkpointing functionality."""
         checkpoint_dir = temporary_directory / "checkpoints"
         checkpoint_dir.mkdir()
-        sample_runner_config.trainer_config.default_root_dir = str(checkpoint_dir)
-        sample_runner_config.trainer_config.enable_checkpointing = True
+        sample_runner_config.training_config.default_root_dir = str(checkpoint_dir)
+        sample_runner_config.training_config.enable_checkpointing = True
         trainer = Trainer(sample_runner_config)
         pl_trainer = trainer.trainer
         assert getattr(pl_trainer, "enable_checkpointing", True) is True
@@ -130,7 +130,7 @@ class TestTrainer:
         """Test trainer precision settings."""
         precisions = [16, 32, 64]
         for precision in precisions:
-            sample_runner_config.trainer_config.precision = precision
+            sample_runner_config.training_config.precision = precision
             trainer = Trainer(sample_runner_config)
             pl_trainer = trainer.trainer
             if precision == 16:
@@ -143,7 +143,7 @@ class TestTrainer:
 
     def test_trainer_validation_frequency(self, sample_runner_config):
         """Test trainer validation frequency settings."""
-        sample_runner_config.trainer_config.check_val_every_n_epoch = 2
+        sample_runner_config.training_config.check_val_every_n_epoch = 2
         trainer = Trainer(sample_runner_config)
         pl_trainer = trainer.trainer
         # PyTorch Lightning may default to 10, so skip if not settable
@@ -153,8 +153,8 @@ class TestTrainer:
 
     def test_trainer_gradient_clipping(self, sample_runner_config):
         """Test trainer gradient clipping configuration."""
-        sample_runner_config.trainer_config.gradient_clip_val = 1.0
-        sample_runner_config.trainer_config.gradient_clip_algorithm = "norm"
+        sample_runner_config.training_config.gradient_clip_val = 1.0
+        sample_runner_config.training_config.gradient_clip_algorithm = "norm"
         trainer = Trainer(sample_runner_config)
         pl_trainer = trainer.trainer
         # PyTorch Lightning may default to None if not set
@@ -171,9 +171,9 @@ class TestTrainerIntegration:
         self, sample_runner_config, sample_model_config, mock_dataloader
     ):
         """Test trainer integration with model and data."""
-        sample_runner_config.trainer_config.max_epochs = 1
-        sample_runner_config.trainer_config.enable_progress_bar = False
-        sample_runner_config.trainer_config.logger = False
+        sample_runner_config.training_config.max_epochs = 1
+        sample_runner_config.training_config.enable_progress_bar = False
+        sample_runner_config.training_config.logger = False
         trainer = Trainer(sample_runner_config)
         model = NHP(sample_model_config)
         from unittest.mock import PropertyMock
@@ -193,14 +193,14 @@ class TestTrainerIntegration:
         self, sample_runner_config, sample_model_config
     ):
         """Test device consistency between trainer and model."""
-        sample_runner_config.trainer_config.accelerator = "cpu"
+        sample_runner_config.training_config.accelerator = "cpu"
         trainer = Trainer(sample_runner_config)
         model = NHP(sample_model_config)
         pl_trainer = trainer.trainer
         assert "CPUAccelerator" in type(pl_trainer.accelerator).__name__
         if torch.cuda.is_available():
-            sample_runner_config.trainer_config.accelerator = "gpu"
-            sample_runner_config.trainer_config.devices = 1
+            sample_runner_config.training_config.accelerator = "gpu"
+            sample_runner_config.training_config.devices = 1
             gpu_trainer = Trainer(sample_runner_config)
             gpu_pl_trainer = gpu_trainer.trainer
             assert "GPUAccelerator" in type(gpu_pl_trainer.accelerator).__name__
@@ -209,9 +209,9 @@ class TestTrainerIntegration:
         self, sample_runner_config, sample_model_config, mock_dataloader
     ):
         """Test trainer with multiple epochs."""
-        sample_runner_config.trainer_config.max_epochs = 3
-        sample_runner_config.trainer_config.enable_progress_bar = False
-        sample_runner_config.trainer_config.logger = False
+        sample_runner_config.training_config.max_epochs = 3
+        sample_runner_config.training_config.enable_progress_bar = False
+        sample_runner_config.training_config.logger = False
         trainer = Trainer(sample_runner_config)
         model = NHP(sample_model_config)
         from unittest.mock import PropertyMock
@@ -225,11 +225,11 @@ class TestTrainerIntegration:
                 model, train_loader, val_loader
             )
             trainer.fit(model, mock_dataloader, mock_dataloader)
-            assert sample_runner_config.trainer_config.max_epochs == 3
+            assert sample_runner_config.training_config.max_epochs == 3
 
     def test_trainer_early_stopping(self, sample_runner_config, sample_model_config):
         """Test trainer early stopping functionality."""
-        sample_runner_config.trainer_config.callbacks = {
+        sample_runner_config.training_config.callbacks = {
             "early_stopping": {"monitor": "val_loss", "patience": 5, "mode": "min"}
         }
         trainer = Trainer(sample_runner_config)
@@ -267,7 +267,7 @@ class TestTrainerIntegration:
             "global_step": 100,
         }
         torch.save(checkpoint_data, checkpoint_path)
-        sample_runner_config.trainer_config.resume_from_checkpoint = str(
+        sample_runner_config.training_config.resume_from_checkpoint = str(
             checkpoint_path
         )
         trainer = Trainer(sample_runner_config)

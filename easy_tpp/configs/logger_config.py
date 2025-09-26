@@ -16,9 +16,7 @@ from pytorch_lightning.loggers import (
 
 from easy_tpp.configs.base_config import (
     Config,
-    ConfigValidationError,
-    config_class,
-    config_factory,
+    ConfigValidationError
 )
 from easy_tpp.utils import logger
 
@@ -167,7 +165,6 @@ LOGGER_ADAPTERS: Dict[LoggerType, Type[BaseLoggerAdapter]] = {
 }
 
 
-@config_class("logger_config")
 @dataclass
 class LoggerConfig(Config):
     """
@@ -216,41 +213,6 @@ class LoggerConfig(Config):
             "logger_type": self.logger_type.value,
             "config": self.config,
         }
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "LoggerConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "LoggerConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-
-        # 2. Create the instance
-        return cls(**filtered_dict)
-
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return []
-
-    @staticmethod
-    def parse_from_yaml_config(config, **kwargs):
-        """
-        Compatibility method for parsing from YAML configuration.
-
-        Args:
-            config: Configuration dictionary
-            **kwargs: Additional arguments (e.g., save_dir)
-
-        Returns:
-            LoggerConfig instance
-        """
-        if kwargs:
-            config = dict(config)
-            config.update(kwargs)
-        return LoggerConfig.from_dict(config)
 
     def configure_logger(self) -> Any:
         """

@@ -11,11 +11,10 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from easy_tpp.configs.base_config import (
+from .base_config import (
     Config,
     ConfigValidationError
     )
-from easy_tpp.utils.const import Backend
 from easy_tpp.utils import logger
 
 
@@ -32,13 +31,45 @@ def get_available_gpu() -> int:
         return -1
 
 
+@dataclass
+class SchedulerConfig(Config):
+    """ Configuration for the learning rate scheduler and training hyperparameters.
+    Args:
+        lr (float): Learning rate.
+        lr_scheduler (bool): Whether to use a learning rate scheduler.
+        max_epochs (int): Maximum number of training epochs.
+    """
 
+    def __init__(
+        self,
+        max_epochs: int,
+        lr_scheduler: bool,
+        lr: float,
+        **kwargs
+    ):
+        self.lr = lr or 1e-3
+        self.lr_scheduler = lr_scheduler or True
+        self.max_epochs = max_epochs
+        super().__init__(**kwargs)
+    
+    def get_yaml_config(self):
+        
+        return {
+            "lr": self.lr,
+            "lr_scheduler": self.lr_scheduler,
+            "max_epochs": self.max_epochs,
+        }
+    
+    def get_required_fields(self) -> List[str]:
+        return ["max_epochs"]
+    
 @dataclass
 class ThinningConfig(Config):
     """Configuration for thinning process in temporal point processes."""
 
     num_sample: int = 10
     num_exp: int = 200
+    use_mc_samples: bool = True
     num_steps: int = 10
     over_sample_rate: float = 1.5
     num_samples_boundary: int = 5
@@ -58,24 +89,6 @@ class ThinningConfig(Config):
             "num_samples_boundary": self.num_samples_boundary,
             "dtime_max": self.dtime_max,
         }
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "ThinningConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "ThinningConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-
-        # 2. Create the instance
-        return cls(**filtered_dict)
-
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return []  # All fields have defaults
 
     def validate(self) -> None:
         """Validate thinning configuration."""
@@ -101,8 +114,8 @@ class ThinningConfig(Config):
 class SimulationConfig(Config):
     """Configuration for event sequence simulation."""
 
-    start_time: float = 0.0
-    end_time: float = 100.0
+    start_time: float = 100.0
+    end_time: float = 200.0
     batch_size: int = 32
     max_sim_events: int = 10000
     seed: int = 42
@@ -120,24 +133,6 @@ class SimulationConfig(Config):
             "max_sim_events": self.max_sim_events,
             "seed": self.seed,
         }
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "SimulationConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "SimulationConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-
-        # 2. Create the instance
-        return cls(**filtered_dict)
-
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return []  # All fields have defaults
 
     def validate(self) -> None:
         """Validate simulation configuration."""
@@ -158,86 +153,6 @@ class SimulationConfig(Config):
             raise ConfigValidationError(
                 "max_sim_events must be positive", "max_sim_events"
             )
-
-
-
-@dataclass
-class TrainingConfig(Config):
-    """Configuration for model training parameters.
-    Args:
-        lr (float): Learning rate for the optimizer.
-        lr_scheduler (bool): Whether to use a learning rate scheduler.
-        max_epochs (int): Maximum number of training epochs.
-        dropout (float): Dropout rate for regularization.
-        stage (str): Training stage, e.g., 'train', 'eval', 'test'.
-        backend (Backend): Backend framework to use (e.g., Torch, TensorFlow).
-        dataset_id (Optional[str]): Identifier for the dataset.
-        base_dir (Optional[str]): Base directory for saving outputs.
-    """
-
-    lr: float = 0.001
-    lr_scheduler: bool = True
-    max_epochs: int = 1000
-    dropout: float = 0.0
-    stage: str = "train"
-    backend: Backend = Backend.Torch
-    dataset_id: Optional[str] = None
-    base_dir: Optional[str] = None
-
-    def get_required_fields(self) -> List[str]:
-        """Return list of required field names."""
-        return []  # All fields have defaults
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        """Get configuration as YAML-compatible dictionary."""
-        return {
-            "lr": self.lr,
-            "lr_scheduler": self.lr_scheduler,
-            "max_epochs": self.max_epochs,
-            "dropout": self.dropout,
-            "stage": self.stage,
-            "backend": str(self.backend),
-            "dataset_id": self.dataset_id,
-            "base_dir": self.base_dir,
-        }
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "TrainingConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "TrainingConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-
-        # 2. Create the instance
-        return cls(**filtered_dict)
-
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return []  # All fields have defaults
-
-    def validate(self) -> None:
-        """Validate training configuration."""
-        super().validate()
-
-        if self.lr <= 0:
-            raise ConfigValidationError("Learning rate must be positive", "lr")
-
-        if self.max_epochs <= 0:
-            raise ConfigValidationError("max_epochs must be positive", "max_epochs")
-
-        if not (0.0 <= self.dropout <= 1.0):
-            raise ConfigValidationError(
-                "dropout must be between 0.0 and 1.0", "dropout"
-            )
-
-        valid_stages = ["train", "eval", "test"]
-        if self.stage not in valid_stages:
-            raise ConfigValidationError(f"stage must be one of {valid_stages}", "stage")
-
 
 
 @dataclass
@@ -325,24 +240,6 @@ class ModelSpecsConfig(Config):
             "beta": self.beta,
         }
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "ModelSpecsConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "ModelSpecsConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-
-        # 2. Create the instance
-        return cls(**filtered_dict)
-
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return []  # All fields have defaults
-
     def validate(self) -> None:
         """Validate model specifications."""
         super().validate()
@@ -383,13 +280,12 @@ class ModelSpecsConfig(Config):
             )
 
 
+
 @dataclass
 class ModelConfig(Config):
     """
     Configuration for the model architecture and specifications.
-    This class encapsulates all necessary parameters for defining a model,
-    including training settings, model specifications, thinning parameters,
-    and simulation configurations.
+    Cette classe prend des dictionnaires pour les sous-configs et instancie les classes intermédiaires.
     Args:
         model_id (str): Identifier for the model type (e.g., 'NHP', 'RMTPP').
         num_event_types (int): Number of event types in the model.
@@ -401,140 +297,70 @@ class ModelConfig(Config):
         compute_simulation (bool): Whether to compute simulations during training.
         use_mc_samples (bool): Whether to use Monte Carlo samples for training.
         pretrain_model_path (Optional[str]): Path to a pre-trained model, if applicable.
-
-        # Sub-configurations:
-        base_config (TrainingConfig): Base training configuration.
-        specs (Union[ModelSpecsConfig, HawkesSpecsConfig]): Model specifications, can be either general or Hawkes-specific.
-        thinning (ThinningConfig): Configuration for thinning process.
-        simulation_config (SimulationConfig): Configuration for event sequence simulation.
+        base_config (dict): Dictionnaire de config pour TrainingConfig.
+        specs (dict): Dictionnaire de config pour ModelSpecsConfig.
+        thinning (dict): Dictionnaire de config pour ThinningConfig.
+        simulation_config (dict): Dictionnaire de config pour SimulationConfig.
     """
 
-    model_id: str
-    num_event_types: int
-    num_event_types_pad: Optional[int] = None
-    pad_token_id: Optional[int] = None
-    device: str = "auto"
-    gpu: int = field(default_factory=get_available_gpu)
-    is_training: bool = False
-    compute_simulation: bool = False
-    use_mc_samples: bool = True
-    pretrain_model_path: Optional[str] = None
+    def __init__(
+        self,
+        device: str = "auto",
+        gpu: int = None,
+        is_training: bool = False,
+        compute_simulation: bool = False,
+        pretrain_model_path: Optional[str] = None,
+        specs: Union[dict, ModelSpecsConfig] = None,
+        thinning_config: Union[dict, ThinningConfig] = None,
+        simulation_config: Union[dict, SimulationConfig] = None,
+        scheduler_config: Optional[Union[dict, SchedulerConfig]] = None,
+        **kwargs
+    ):
+        self.device = device
+        self.gpu = gpu if gpu is not None else get_available_gpu()
+        self.is_training = is_training
+        self.compute_simulation = compute_simulation
+        self.pretrain_model_path = pretrain_model_path
 
-    # Sub-configurations
-    base_config: TrainingConfig = field(default_factory=TrainingConfig)
-    specs: ModelSpecsConfig = field(default_factory=ModelSpecsConfig)
-    thinning: ThinningConfig = field(default_factory=ThinningConfig)
-    simulation_config: SimulationConfig = field(default_factory=SimulationConfig)
+        # Instancie les sous-configs à partir des dicts
+        self.specs = specs if isinstance(specs, ModelSpecsConfig) else ModelSpecsConfig(**(specs or {}))
+        self.thinning_config = thinning_config if isinstance(thinning_config, ThinningConfig) else ThinningConfig(**(thinning_config or {}))
+        self.simulation_config = simulation_config if isinstance(simulation_config, SimulationConfig) else SimulationConfig(**(simulation_config or {}))
 
-    def __post_init__(self):
-        """Post-initialization processing."""
-        # Set defaults based on other fields
-        if self.num_event_types_pad is None:
-            self.num_event_types_pad = self.num_event_types + 1
+        if scheduler_config is not None:
+            self.scheduler_config = scheduler_config if isinstance(scheduler_config, SchedulerConfig) else SchedulerConfig(**(scheduler_config))
+        else:
+            self.scheduler_config = None
 
-        if self.pad_token_id is None:
-            self.pad_token_id = self.num_event_types
-
-        # Set device
+        # Set device if auto
         if self.device == "auto":
             self.device = "cuda" if self.gpu >= 0 else "cpu"
 
-        super().__post_init__()
+        super().__init__(**kwargs)
 
     def get_required_fields(self) -> List[str]:
-        """Return list of required field names."""
-        return ["model_id", "num_event_types"]
+        return []
 
     def get_yaml_config(self) -> Dict[str, Any]:
-        """Get configuration as YAML-compatible dictionary."""
         return {
-            "model_id": self.model_id,
-            "num_event_types": self.num_event_types,
-            "num_event_types_pad": self.num_event_types_pad,
-            "pad_token_id": self.pad_token_id,
             "device": self.device,
             "gpu": self.gpu,
             "is_training": self.is_training,
             "compute_simulation": self.compute_simulation,
             "use_mc_samples": self.use_mc_samples,
             "pretrain_model_path": self.pretrain_model_path,
-            "base_config": self.base_config.get_yaml_config(),
             "specs": self.specs.get_yaml_config(),
             "thinning": self.thinning.get_yaml_config(),
             "simulation_config": self.simulation_config.get_yaml_config(),
         }
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "ModelConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "ModelConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-
-        # 2. Create sub-configuration instances if needed
-        if "base_config" in filtered_dict and isinstance(
-            filtered_dict["base_config"], dict
-        ):
-            filtered_dict["base_config"] = TrainingConfig.from_dict(
-                filtered_dict["base_config"]
-            )
-
-        if "specs" in filtered_dict and isinstance(filtered_dict["specs"], dict):
-            filtered_dict["specs"] = ModelSpecsConfig.from_dict(filtered_dict["specs"])
-
-        if "thinning" in filtered_dict and isinstance(filtered_dict["thinning"], dict):
-            filtered_dict["thinning"] = ThinningConfig.from_dict(
-                filtered_dict["thinning"]
-            )
-
-        if "simulation_config" in filtered_dict and isinstance(
-            filtered_dict["simulation_config"], dict
-        ):
-            filtered_dict["simulation_config"] = SimulationConfig.from_dict(
-                filtered_dict["simulation_config"]
-            )
-
-        # 3. Create the instance
-        return cls(**filtered_dict)
-
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return ["model_id", "num_event_types"]
-
-    @staticmethod
-    def parse_from_yaml_config(yaml_config: Dict[str, Any], **kwargs) -> "ModelConfig":
-        """Parse from YAML configuration."""
-        config_dict = dict(yaml_config)
-        config_dict.update(kwargs)
-        return ModelConfig.from_dict(config_dict)
-
-    def copy(self) -> "ModelConfig":
-        """Create a copy of the configuration."""
-        return ModelConfig.from_dict(self.get_yaml_config())
-
     def validate(self) -> None:
-        """Validate the model configuration."""
         super().validate()
-
-        # Validate num_event_types
-        if self.num_event_types <= 0:
-            raise ConfigValidationError(
-                "num_event_types must be positive", "num_event_types"
-            )
-
-        # Validate device configuration
         valid_devices = ["cpu", "cuda", "auto"]
         if self.device not in valid_devices and not self.device.startswith("cuda:"):
             raise ConfigValidationError(
                 f"device must be one of {valid_devices} or 'cuda:N'", "device"
             )
-
-        # Validate sub-configurations
-        self.base_config.validate()
         self.specs.validate()
-        self.thinning.validate()
+        self.thinning_config.validate()
         self.simulation_config.validate()

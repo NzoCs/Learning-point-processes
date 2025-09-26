@@ -13,7 +13,7 @@ from .data_extractors import (
     SimulationDataExtractor,
     TPPDatasetExtractor,
 )
-from .interfaces import DataExtractor, MetricsCalculator, PlotGenerator
+from .distribution_interfaces import DataExtractor, MetricsCalculator, PlotGenerator
 from .metrics_calculator import MetricsCalculatorImpl
 from .plot_generators import (
     CrossCorrelationPlotGenerator,

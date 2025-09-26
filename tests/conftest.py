@@ -107,7 +107,7 @@ def sample_runner_config():
     from easy_tpp.configs.runner_config import TrainerConfig
 
     # Create trainer config
-    trainer_config = TrainerConfig(
+    training_config = TrainerConfig(
         max_epochs=1,
         dataset_id="test_dataset",
         model_id="NHP",  # Use a valid model
@@ -140,7 +140,7 @@ def sample_runner_config():
     )
 
     return RunnerConfig(
-        trainer_config=trainer_config,
+        training_config=training_config,
         model_config=model_config,
         data_config=data_config,
     )

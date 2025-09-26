@@ -6,12 +6,14 @@ to transform raw YAML configurations before creating configuration instances.
 """
 
 from typing import Any, Dict
+from easy_tpp.configs.runner_config import RunnerConfig
+from easy_tpp.configs.model_config import ModelConfig, TrainingConfig
+from easy_tpp.configs.data_config import DataConfig
 
 from easy_tpp.configs.config_utils import ConfigTransformer
-from easy_tpp.configs.data_config import DataConfig
+from easy_tpp.configs.config_builder import DataConfigBuilder, ModelConfigBuilder
+from easy_tpp.configs.config_factory import ConfigFactory, ConfigType
 from easy_tpp.configs.logger_config import LoggerConfig
-from easy_tpp.configs.model_config import ModelConfig, TrainingConfig
-from easy_tpp.configs.runner_config import RunnerConfig
 
 
 def create_runner_config_from_yaml(yaml_config: Dict[str, Any]) -> RunnerConfig:
@@ -30,9 +32,23 @@ def create_runner_config_from_yaml(yaml_config: Dict[str, Any]) -> RunnerConfig:
     """
     # 1. Transform the raw configuration to handle legacy formats and type conversions
     transformed_config = ConfigTransformer.transform_runner_config(yaml_config)
-
-    # 2. Create the configuration instance using the clean from_dict method
-    return RunnerConfig.from_dict(transformed_config)
+    cfg = transformed_config
+    # Use Runner-style creation: we build inner configs then create RunnerConfig via factory
+    # Build model config
+    mb = ModelConfigBuilder()
+    mb.config_dict = cfg.get("model_config", {})
+    model_cfg = ConfigFactory().create_config(ConfigType.MODEL, mb.get_config_dict())
+    # Build data config
+    db = DataConfigBuilder()
+    db.config_dict = cfg.get("data_config", {})
+    data_cfg = ConfigFactory().create_config(ConfigType.DATA, db.get_config_dict())
+    # Training is used as-is
+    runner_dict = {
+        "training_config": cfg.get("training_config", {}),
+        "model_config": model_cfg.get_yaml_config() if hasattr(model_cfg, "get_yaml_config") else mb.get_config_dict(),
+        "data_config": data_cfg.get_yaml_config() if hasattr(data_cfg, "get_yaml_config") else db.get_config_dict(),
+    }
+    return ConfigFactory().create_config(ConfigType.RUNNER, runner_dict)
 
 
 def create_model_config_with_legacy_support(yaml_config: Dict[str, Any]) -> ModelConfig:
@@ -47,9 +63,9 @@ def create_model_config_with_legacy_support(yaml_config: Dict[str, Any]) -> Mode
     """
     # Transform to handle legacy field names and format conversions
     transformed_config = ConfigTransformer.transform_model_config(yaml_config)
-
-    # Create using the clean from_dict method
-    return ModelConfig.from_dict(transformed_config)
+    mb = ModelConfigBuilder()
+    mb.config_dict = transformed_config
+    return ConfigFactory().create_config(ConfigType.MODEL, mb.get_config_dict())
 
 
 def create_training_config_with_aliases(yaml_config: Dict[str, Any]) -> TrainingConfig:
@@ -64,9 +80,7 @@ def create_training_config_with_aliases(yaml_config: Dict[str, Any]) -> Training
     """
     # Transform to handle aliases like dropout_rate -> dropout
     transformed_config = ConfigTransformer.transform_training_config(yaml_config)
-
-    # Create using the clean from_dict method
-    return TrainingConfig.from_dict(transformed_config)
+    return transformed_config  # training config remains plain dict for now
 
 
 def create_data_config_with_directory_handling(
@@ -83,9 +97,9 @@ def create_data_config_with_directory_handling(
     """
     # Transform to handle directory structure conversion
     transformed_config = ConfigTransformer.transform_data_config(yaml_config)
-
-    # Create using the clean from_dict method
-    return DataConfig.from_dict(transformed_config)
+    db = DataConfigBuilder()
+    db.config_dict = transformed_config
+    return ConfigFactory().create_config(ConfigType.DATA, db.get_config_dict())
 
 
 def create_logger_config_with_flexible_format(
@@ -125,7 +139,7 @@ class CustomConfigTransformer:
         if "training" in yaml_config and "model" in yaml_config["training"]:
             # Convert nested structure
             config = dict(yaml_config)
-            config["trainer_config"] = yaml_config["training"].get("trainer", {})
+            config["training_config"] = yaml_config["training"].get("trainer", {})
             config["model_config"] = yaml_config["training"]["model"]
             config["data_config"] = yaml_config.get("data", {})
 
@@ -145,7 +159,7 @@ def example_usage():
     """
     # Example 1: Standard usage with transformation
     yaml_config = {
-        "trainer_config": {
+        "training_config": {
             "dataset_id": "synthetic",
             "model_id": "NHP",
             "batch_size": 32,

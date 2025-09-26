@@ -16,6 +16,31 @@ from easy_tpp.configs.config_interface import ConfigInterface, ConfigValidationE
 
 
 class ConfigTransformer:
+    @staticmethod
+    def transform_config(config_type: str, config_dict: dict) -> dict:
+        """
+        Route vers la bonne méthode de transformation selon le type de config à instancier.
+        Args:
+            config_type: Nom du type de config (ex: 'runner', 'model', 'training', ...)
+            config_dict: Dictionnaire brut de config
+        Returns:
+            Dictionnaire transformé prêt à être instancié
+        """
+        type_map = {
+            "runner": ConfigTransformer.transform_runner_config,
+            "model": ConfigTransformer.transform_model_config,
+            "training": ConfigTransformer.transform_training_config,
+            "tokenizer": ConfigTransformer.transform_tokenizer_config,
+            "data": ConfigTransformer.transform_data_config,
+            "logger": ConfigTransformer.transform_logger_config,
+            "model_specs": ConfigTransformer.transform_model_specs_config,
+            "data_loading_specs": ConfigTransformer.transform_data_loading_specs_config,
+        }
+        # Support enum types if needed
+        key = str(config_type).lower()
+        if key in type_map:
+            return type_map[key](config_dict)
+        raise ValueError(f"Unknown config type for transformation: {config_type}")
     """
     Handles transformation of raw configuration dictionaries into validated,
     standardized dictionaries ready for configuration object creation.
@@ -275,9 +300,9 @@ class ConfigTransformer:
         config = dict(config_dict)
 
         # Transform sub-configurations
-        if "trainer_config" in config and isinstance(config["trainer_config"], dict):
-            config["trainer_config"] = ConfigTransformer.transform_trainer_config(
-                config["trainer_config"]
+        if "training_config" in config and isinstance(config["training_config"], dict):
+            config["training_config"] = ConfigTransformer.transform_trainer_config(
+                config["training_config"]
             )
 
         if "model_config" in config and isinstance(config["model_config"], dict):

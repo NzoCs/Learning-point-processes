@@ -8,7 +8,7 @@ quick_test:
     batch_size: 32
     num_workers: 1
     
-  trainer_config:
+  training_config:
     max_epochs: 5
     val_freq: 1
     accumulate_grad_batches: 1
@@ -23,7 +23,7 @@ dev:
     batch_size: 64
     num_workers: 2
     
-  trainer_config:
+  training_config:
     max_epochs: 50
     val_freq: 5
     accumulate_grad_batches: 1
@@ -38,7 +38,7 @@ standard:
     batch_size: 128
     num_workers: 4
     
-  trainer_config:
+  training_config:
     max_epochs: 500
     val_freq: 10
     accumulate_grad_batches: 1
@@ -53,7 +53,7 @@ standard_small_batch:
     batch_size: 64
     num_workers: 4
     
-  trainer_config:
+  training_config:
     max_epochs: 500
     val_freq: 10
     accumulate_grad_batches: 2  # Compense le petit batch
@@ -68,7 +68,7 @@ standard_tiny_batch:
     batch_size: 32
     num_workers: 2
     
-  trainer_config:
+  training_config:
     max_epochs: 500
     val_freq: 10
     accumulate_grad_batches: 4  # Compense le très petit batch
@@ -83,7 +83,7 @@ production:
     batch_size: 256
     num_workers: 8
     
-  trainer_config:
+  training_config:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 1
@@ -98,7 +98,7 @@ production_medium_batch:
     batch_size: 128
     num_workers: 6
     
-  trainer_config:
+  training_config:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 2  # Compense le batch plus petit
@@ -113,7 +113,7 @@ production_small_batch:
     batch_size: 64
     num_workers: 4
     
-  trainer_config:
+  training_config:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 4  # Compense le petit batch
@@ -128,7 +128,7 @@ production_tiny_batch:
     batch_size: 32
     num_workers: 2
     
-  trainer_config:
+  training_config:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 8  # Compense le très petit batch
@@ -143,7 +143,7 @@ production_micro_batch:
     batch_size: 16
     num_workers: 1
     
-  trainer_config:
+  training_config:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 16  # Compense le micro batch
@@ -158,7 +158,7 @@ large_dataset:
     batch_size: 512
     num_workers: 8
     
-  trainer_config:
+  training_config:
     max_epochs: 200
     val_freq: 5
     accumulate_grad_batches: 2
@@ -173,7 +173,7 @@ debug:
     batch_size: 8
     num_workers: 1
     
-  trainer_config:
+  training_config:
     max_epochs: 3
     val_freq: 1
     accumulate_grad_batches: 1
@@ -188,7 +188,7 @@ experiment:
     batch_size: 16
     num_workers: 1
     
-  trainer_config:
+  training_config:
     max_epochs: 10
     val_freq: 2
     accumulate_grad_batches: 1
@@ -203,7 +203,7 @@ cross_validation:
     batch_size: 64
     num_workers: 4
     
-  trainer_config:
+  training_config:
     max_epochs: 100
     val_freq: 5
     accumulate_grad_batches: 1
@@ -218,7 +218,7 @@ hpo:
     batch_size: 32
     num_workers: 2
     
-  trainer_config:
+  training_config:
     max_epochs: 20
     val_freq: 2
     accumulate_grad_batches: 1
@@ -233,7 +233,7 @@ intensive:
     batch_size: 1024
     num_workers: 12
     
-  trainer_config:
+  training_config:
     max_epochs: 2000
     val_freq: 20
     accumulate_grad_batches: 4
@@ -246,7 +246,7 @@ intensive:
 # 
 # Ces configurations de trainer contiennent uniquement les paramètres d'entraînement :
 # - data_loading_specs : taille de batch, nombre de workers
-# - trainer_config : epochs, validation, patience, logging
+# - training_config : epochs, validation, patience, logging
 #
 # Les autres aspects (données, modèles, simulations) sont configurés séparément.
 #

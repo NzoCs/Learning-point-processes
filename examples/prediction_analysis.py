@@ -2,9 +2,10 @@ from pathlib import Path
 
 CONFIGS_DIR = Path(__file__).parent / "configs" / "test_runner_configs.yaml"
 
-from easy_tpp.configs import RunnerConfig
 from easy_tpp.runners import Runner
 from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
+from easy_tpp.configs.config_factory import ConfigFactory, ConfigType
+from easy_tpp.configs.config_builder import RunnerConfigBuilder
 
 
 def train_and_analyze_model(model_name: str, dataset_name: str) -> None:
@@ -14,7 +15,11 @@ def train_and_analyze_model(model_name: str, dataset_name: str) -> None:
     # Configuration
     config_path = CONFIGS_DIR
     config_dict = parse_runner_yaml_config(str(config_path), model_name, dataset_name)
-    config = RunnerConfig.from_dict(config_dict)
+
+    # Build runner config using the builder/factory pattern (consistent with run_all)
+    # If the YAML is already resolved by parse_runner_yaml_config we can directly use the factory
+    config_factory = ConfigFactory()
+    config = config_factory.create_config(ConfigType.RUNNER, config_dict, model_id=model_name)
 
     # Runner
     output_dir = f"./analysis_results/{model_name}_{dataset_name}"

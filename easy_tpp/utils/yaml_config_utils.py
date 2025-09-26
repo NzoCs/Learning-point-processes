@@ -36,18 +36,18 @@ def parse_runner_yaml_config(
         )
 
     # 4. Trainer config (optional, may not be present)
-    trainer_config = exp_section.get("trainer_config", {})
+    training_config = exp_section.get("training_config", {})
     # Add batch_size from data_loading_specs if not present
     data_loading_specs = exp_section.get("data_loading_specs", {})
-    if "batch_size" in data_loading_specs and "batch_size" not in trainer_config:
-        trainer_config["batch_size"] = data_loading_specs["batch_size"]
+    if "batch_size" in data_loading_specs and "batch_size" not in training_config:
+        training_config["batch_size"] = data_loading_specs["batch_size"]
     # Add dataset_id and model_id
-    trainer_config["dataset_id"] = dataset_id
-    trainer_config["model_id"] = model_config["model_id"]
+    training_config["dataset_id"] = dataset_id
+    training_config["model_id"] = model_config["model_id"]
 
     # 5. Compose the final config dict
     return {
-        "trainer_config": trainer_config,
+        "training_config": training_config,
         "model_config": model_config,
         "data_config": data_config,
     }

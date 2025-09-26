@@ -142,44 +142,44 @@ class TestRunnerConfig:
 
     def test_runner_config_initialization(self):
         """Test RunnerConfig initialization."""
-        # RunnerConfig expects trainer_config, model_config, data_config
-        trainer_config = Mock()
+        # RunnerConfig expects training_config, model_config, data_config
+        training_config = Mock()
         model_config = Mock()
         data_config = Mock()
         config = RunnerConfig(
-            trainer_config=trainer_config,
+            training_config=training_config,
             model_config=model_config,
             data_config=data_config,
         )
-        assert hasattr(config, "trainer_config")
+        assert hasattr(config, "training_config")
         assert hasattr(config, "model_config")
         assert hasattr(config, "data_config")
 
     def test_runner_config_trainer_params(self):
         """Test RunnerConfig trainer parameters."""
-        trainer_config = Mock()
+        training_config = Mock()
         model_config = Mock()
         data_config = Mock()
-        trainer_config.max_epochs = 10
+        training_config.max_epochs = 10
         config = RunnerConfig(
-            trainer_config=trainer_config,
+            training_config=training_config,
             model_config=model_config,
             data_config=data_config,
         )
-        if hasattr(config, "trainer_config"):
-            trainer_config = config.trainer_config
-            if hasattr(trainer_config, "max_epochs"):
-                assert trainer_config.max_epochs == 10
+        if hasattr(config, "training_config"):
+            training_config = config.training_config
+            if hasattr(training_config, "max_epochs"):
+                assert training_config.max_epochs == 10
 
     def test_runner_config_logger_params(self):
         """Test RunnerConfig logger parameters."""
-        trainer_config = Mock()
+        training_config = Mock()
         model_config = Mock()
         data_config = Mock()
         logger_config = Mock()
         logger_config.logger_type = "tensorboard"
         config = RunnerConfig(
-            trainer_config=trainer_config,
+            training_config=training_config,
             model_config=model_config,
             data_config=data_config,
         )
@@ -206,9 +206,9 @@ class TestConfigIntegration:
         data_config = Mock()
         data_config.num_event_types = 5
         data_config.max_seq_len = 100
-        trainer_config = Mock()
+        training_config = Mock()
         config = RunnerConfig(
-            trainer_config=trainer_config,
+            training_config=training_config,
             model_config=model_config,
             data_config=data_config,
         )

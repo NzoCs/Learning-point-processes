@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional, Type, Union
 
 from .base_bench import Benchmark
+from .bench_interfaces import BenchmarkInterface
 from .last_mark_bench import LastMarkBenchmark
 from .mean_bench import MeanInterTimeBenchmark
 from .sample_distrib_intertime_bench import (
@@ -54,7 +55,7 @@ class BenchmarksEnum(Enum):
         return self.benchmark_name
 
     @classmethod
-    def get_benchmark_by_name(cls, name: str) -> "Benchmarks":
+    def get_benchmark_by_name(cls, name: str) -> BenchmarkInterface:
         """Obtenir un benchmark par son nom."""
         for benchmark in cls:
             if benchmark.benchmark_name == name:
@@ -91,7 +92,7 @@ class BenchmarkManager:
         self.save_dir = save_dir or ROOT_DIR / "artifacts" / dataset_name / "benchmarks"
         Path(self.save_dir).mkdir(parents=True, exist_ok=True)
 
-    def run_single(self, benchmark: Benchmarks, **kwargs):
+    def run_single(self, benchmark: BenchmarksEnum, **kwargs):
         """Lancer un seul benchmark."""
         print(f"Lancement du benchmark: {benchmark.benchmark_name}")
 
@@ -107,7 +108,7 @@ class BenchmarkManager:
         print(f"Benchmark {benchmark.benchmark_name} terminé")
         return results
 
-    def run_multiple(self, benchmarks: list[Benchmarks], **kwargs):
+    def run_multiple(self, benchmarks: list[BenchmarksEnum], **kwargs):
         """Lancer plusieurs benchmarks."""
         results = {}
         for benchmark in benchmarks:
@@ -116,13 +117,13 @@ class BenchmarkManager:
 
     def run_all(self, **kwargs):
         """Lancer tous les benchmarks disponibles."""
-        all_benchmarks = list(Benchmarks)
+        all_benchmarks = list(BenchmarksEnum)
         return self.run_multiple(all_benchmarks, **kwargs)
 
     def run_by_names(self, benchmark_names: list[str], **kwargs):
         """Lancer des benchmarks par leurs noms."""
         benchmarks = []
         for name in benchmark_names:
-            benchmark = Benchmarks.get_benchmark_by_name(name)
+            benchmark = BenchmarksEnum.get_benchmark_by_name(name)
             benchmarks.append(benchmark)
         return self.run_multiple(benchmarks, **kwargs)

@@ -10,7 +10,7 @@ from scipy.stats import wasserstein_distance
 
 from easy_tpp.utils import logger
 
-from .interfaces import (
+from .metrics_interfaces import (
     DataExtractorInterface,
     MetricsComputerInterface,
     SimulationTimeExtractorInterface,

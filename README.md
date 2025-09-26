@@ -669,7 +669,7 @@ configs/
 │   │   ├── hidden_size            # Model dimensions
 │   │   ├── num_layers             # Network depth
 │   │   └── model_specs            # Model-specific parameters
-│   ├── trainer_config             # Training configuration
+│   ├── training_config             # Training configuration
 │   │   ├── max_epochs             # Training epochs
 │   │   ├── learning_rate          # Learning rate
 │   │   ├── batch_size             # Training batch size

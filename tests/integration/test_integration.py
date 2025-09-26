@@ -68,7 +68,7 @@ class TestEasyTPPIntegration:
             max_seq_len=20,
         )
 
-        trainer_config = TrainerConfig(
+        training_config = TrainerConfig(
             max_epochs=2,
             enable_checkpointing=False,
             logger=False,
@@ -79,7 +79,7 @@ class TestEasyTPPIntegration:
             batch_size=8,
         )
         runner_config = RunnerConfig(
-            trainer_config=trainer_config,
+            training_config=training_config,
             model_config=model_config,
             data_config=data_config,
         )
@@ -228,7 +228,7 @@ class TestEasyTPPIntegration:
             max_seq_len=max_seq_len,
         )
 
-        trainer_config = TrainerConfig(
+        training_config = TrainerConfig(
             max_epochs=1,
             enable_checkpointing=False,
             logger=False,
@@ -240,7 +240,7 @@ class TestEasyTPPIntegration:
         )
         # Remove base_dir argument and use correct RunnerConfig signature
         runner_config = RunnerConfig(
-            trainer_config=trainer_config,
+            training_config=training_config,
             model_config=model_config,
             data_config=data_config,
         )

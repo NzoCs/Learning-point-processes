@@ -74,7 +74,7 @@ class TestRunnerTrainingSteps:
                         else None
                     ),
                 },
-                "trainer_config": {
+                "training_config": {
                     "stage": "train",
                     "max_epochs": 2,
                     "val_freq": 1,
@@ -258,7 +258,7 @@ class TestRunnerTrainingSteps:
         """Test validation step during training through runner."""
         config_dict = self._create_training_config("NHP", temporary_directory)
         # Set validation frequency
-        config_dict["NHP_train"]["trainer_config"]["val_freq"] = 1
+        config_dict["NHP_train"]["training_config"]["val_freq"] = 1
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
 
         with patch("easy_tpp.preprocess.data_loader.TPPDataModule.setup"):
@@ -308,7 +308,7 @@ class TestRunnerTrainingSteps:
         """Test early stopping during training through runner."""
         config_dict = self._create_training_config("NHP", temporary_directory)
         # Set patience for early stopping
-        config_dict["NHP_train"]["trainer_config"]["patience"] = 3
+        config_dict["NHP_train"]["training_config"]["patience"] = 3
         config_path = self._create_temp_config_file(config_dict, temporary_directory)
 
         with patch("easy_tpp.preprocess.data_loader.TPPDataModule.setup"):

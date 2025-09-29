@@ -70,6 +70,7 @@ class ThinningConfig(Config):
     num_sample: int = 10
     num_exp: int = 200
     use_mc_samples: bool = True
+    loss_integral_num_sample_per_step: int = 10
     num_steps: int = 10
     over_sample_rate: float = 1.5
     num_samples_boundary: int = 5
@@ -88,6 +89,8 @@ class ThinningConfig(Config):
             "over_sample_rate": self.over_sample_rate,
             "num_samples_boundary": self.num_samples_boundary,
             "dtime_max": self.dtime_max,
+            "use_mc_samples": self.use_mc_samples,
+            "loss_integral_num_sample_per_step": self.loss_integral_num_sample_per_step,
         }
 
     def validate(self) -> None:
@@ -155,100 +158,9 @@ class SimulationConfig(Config):
             )
 
 
-class ModelSpecsConfig(Config):
-    """Flexible container for model-specific parameters.
-
-    This class intentionally accepts arbitrary keyword arguments and acts as a
-    lightweight container for model specs. It provides sensible defaults for
-    commonly used fields and exposes attribute-style access to stored values.
-
-    Usage:
-        ModelSpecsConfig(hidden_size=128, custom_option=42)
-
-    The intent is that each model may require different arguments; this class
-    therefore does not enforce a rigid schema but will perform minimal
-    validation for common numeric fields when present.
-    """
-
-    # Default values for commonly-used specs
-    _DEFAULTS = {
-        # Core
-        "num_layers": 1,
-        "num_heads": 1,
-        "rnn_type": "LSTM",
-        "sharing_param_layer": False,
-        "use_norm": True,
-        "loss_integral_num_sample_per_step": 100,
-        # IntensityFree
-        "num_mix_components": 1,
-        "mean_log_inter_time": 0.0,
-        "std_log_inter_time": 1.0,
-        # ODE
-        "num_mlp_layers": 2,
-        "ode_num_sample_per_step": 20,
-        "proper_marked_intensities": False
-    }
-
-    def __init__(self, **kwargs):
-        # Merge defaults with user-provided kwargs
-        specs = dict(self._DEFAULTS)
-        specs.update(kwargs or {})
-
-        # store raw dict and also set attributes for convenience
-        object.__setattr__(self, "_specs", specs)
-
-    def get_required_fields(self) -> List[str]:
-        """Return list of required fields (none enforced here)."""
-        return []
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        """Return a YAML-serializable dict of the specs."""
-        # Return a shallow copy to avoid accidental mutation
-        return dict(self._specs)
-
-    def validate(self) -> None:
-        """Minimal validation for commonly used numeric fields.
-
-        This will raise ConfigValidationError for invalid numeric values
-        (non-positive where positivity is required) if those keys exist.
-        """
-        super().validate()
-
-        # Helper to check positive integers/floats when present
-        def _check_positive(key: str):
-            val = self._specs.get(key)
-            if val is None:
-                return
-            try:
-                if float(val) <= 0:
-                    raise ConfigValidationError(f"{key} must be positive", key)
-            except (TypeError, ValueError):
-                raise ConfigValidationError(f"{key} must be numeric and positive", key)
-
-        for k in ("hidden_size", "time_emb_size", "num_layers", "num_heads", "num_mix_components", "num_mlp_layers", "ode_num_sample_per_step"):
-            _check_positive(k)
-
-        valid_rnn_types = ["LSTM", "GRU", "RNN"]
-        rnn_type = self._specs.get("rnn_type")
-        if rnn_type is not None and rnn_type not in valid_rnn_types:
-            raise ConfigValidationError(f"rnn_type must be one of {valid_rnn_types}", "rnn_type")
-
-    def __getattr__(self, item: str) -> Any:
-        # Called when attribute not found on the instance; forward to specs dict
-        specs = object.__getattribute__(self, "_specs")
-        if item in specs:
-            return specs[item]
-        raise AttributeError(f"ModelSpecsConfig has no attribute '{item}'")
-
-    def __setattr__(self, key: str, value: Any) -> None:
-        # Set in the underlying specs dict (except for _specs itself)
-        if key == "_specs":
-            object.__setattr__(self, key, value)
-            return
-        self._specs[key] = value
-
-    def to_dict(self) -> Dict[str, Any]:
-        return dict(self._specs)
+# ModelSpecsConfig is intentionally a thin alias for a plain dict.
+# Each model should define its own defaults and explicit parameters.
+ModelSpecsConfig = dict
 
 
 
@@ -281,7 +193,6 @@ class ModelConfig(Config):
         is_training: bool = False,
         compute_simulation: bool = False,
         pretrain_model_path: Optional[str] = None,
-        specs: Union[dict, ModelSpecsConfig] = None,
         thinning_config: Union[dict, ThinningConfig] = None,
         simulation_config: Union[dict, SimulationConfig] = None,
         scheduler_config: Optional[Union[dict, SchedulerConfig]] = None,
@@ -294,7 +205,6 @@ class ModelConfig(Config):
         self.pretrain_model_path = pretrain_model_path
 
         # Instancie les sous-configs à partir des dicts
-        self.specs = specs if isinstance(specs, ModelSpecsConfig) else ModelSpecsConfig(**(specs or {}))
         self.thinning_config = thinning_config if isinstance(thinning_config, ThinningConfig) else ThinningConfig(**(thinning_config or {}))
         self.simulation_config = simulation_config if isinstance(simulation_config, SimulationConfig) else SimulationConfig(**(simulation_config or {}))
 
@@ -319,7 +229,6 @@ class ModelConfig(Config):
             "is_training": self.is_training,
             "compute_simulation": self.compute_simulation,
             "pretrain_model_path": self.pretrain_model_path,
-            "specs": self.specs.get_yaml_config(),
             "thinning": self.thinning_config.get_yaml_config(),
             "simulation_config": self.simulation_config.get_yaml_config(),
         }
@@ -331,6 +240,5 @@ class ModelConfig(Config):
             raise ConfigValidationError(
                 f"device must be one of {valid_devices} or 'cuda:N'", "device"
             )
-        self.specs.validate()
         self.thinning_config.validate()
         self.simulation_config.validate()

@@ -24,7 +24,13 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
     """Base model class for all TPP models."""
 
 
-    def __init__(self, model_config: ModelConfig, num_event_types: int, **kwargs):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,
+            num_event_types: int,
+            ):
+
         """Initialize the Model
 
         Args:
@@ -39,7 +45,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Load model configuration
         pretrain_model_path = model_config.pretrain_model_path
-        model_specs = model_config.specs
         self.scheduler_config = model_config.scheduler_config
 
         # Load training configuration
@@ -48,21 +53,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         # Load data and model specifications
         self.num_event_types = num_event_types
         self.pad_token_id = num_event_types
-        self.hidden_size = model_specs.hidden_size
 
-        self.loss_integral_num_sample_per_step = (
-            model_specs.loss_integral_num_sample_per_step
-        )
+        self.loss_integral_num_sample_per_step = model_config.thinning_config.loss_integral_num_sample_per_step
 
         self.eps = torch.finfo(torch.float32).eps
 
-        # Initialize type embedding
-        self.layer_type_emb = nn.Embedding(
-            num_embeddings=self.num_event_types + 1,  # have padding
-            embedding_dim=self.hidden_size,
-            padding_idx=self.pad_token_id,
-            device=self.device,
-        )
 
         # Model prediction configuration
         self.gen_config = model_config.thinning_config

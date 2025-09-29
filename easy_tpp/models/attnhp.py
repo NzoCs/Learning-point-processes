@@ -5,32 +5,49 @@ from torch import nn
 
 from easy_tpp.configs import ModelConfig
 from easy_tpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
-from easy_tpp.models.basemodel import Model
+from easy_tpp.models.neural_model import NeuralModel
 
 
-class AttNHP(Model):
+class AttNHP(NeuralModel):
     """Torch implementation of Attentive Neural Hawkes Process, ICLR 2022.
     https://arxiv.org/abs/2201.00044.
     Source code: https://github.com/yangalan123/anhp-andtt/blob/master/anhp/model/xfmr_nhp_fast.py
     """
 
-    def __init__(self, model_config: ModelConfig, ):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,            
+            num_event_types: int,
+            hidden_size: int = 128,
+            dropout: float = 0.1,
+            use_norm: bool = True,
+            time_emb_size: int = 32,
+            num_layers: int = 2,
+            num_heads: int = 2,
+    ):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(AttNHP, self).__init__(model_config)
-        self.d_model = model_config.specs.hidden_size
-        self.use_norm = model_config.specs.use_norm
-        self.d_time = model_config.specs.time_emb_size
+        super(AttNHP, self).__init__(
+            model_config, 
+            num_event_types=num_event_types,
+            hidden_size=hidden_size,
+            dropout=dropout,
+            )
+        
+        self.d_model = self.hidden_size
+        self.use_norm = use_norm
+        self.d_time = time_emb_size
 
         self.div_term = torch.exp(
             torch.arange(0, self.d_time, 2) * -(math.log(10000.0) / self.d_time)
         ).reshape(1, 1, -1)
 
-        self.n_layers = model_config.specs.num_layers
-        self.n_head = model_config.specs.num_heads
+        self.n_layers = num_layers
+        self.n_head = num_heads
 
         self.heads = []
         for i in range(self.n_head):

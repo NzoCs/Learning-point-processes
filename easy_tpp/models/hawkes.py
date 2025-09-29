@@ -11,7 +11,13 @@ class Hawkes(Model):
     methods like predict_one_step_at_every_event.
     """
 
-    def __init__(self, model_config: ModelConfig, num_event_types: int) -> None:
+    def __init__(
+            self,
+            num_event_types: int,
+            mu: list[float],
+            alpha: list[list[float]],
+            beta: list[list[float]],
+            ) -> None:
         """
         Initialize the Hawkes model.
 
@@ -23,13 +29,13 @@ class Hawkes(Model):
         self.num_event_types = num_event_types
 
         # Convert parameters to tensors and move to the correct device
-        mu = torch.tensor(model_config.specs.mu, dtype=torch.float32).view(
+        mu = torch.tensor(mu, dtype=torch.float32).view(
             self.num_event_types
         )
-        alpha = torch.tensor(model_config.specs.alpha, dtype=torch.float32).view(
+        alpha = torch.tensor(alpha, dtype=torch.float32).view(
             self.num_event_types, self.num_event_types
         )
-        beta = torch.tensor(model_config.specs.beta, dtype=torch.float32).view(
+        beta = torch.tensor(beta, dtype=torch.float32).view(
             self.num_event_types, self.num_event_types
         )
 

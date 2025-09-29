@@ -1,3 +1,4 @@
+from typing import Union
 import math
 
 import torch
@@ -16,7 +17,16 @@ class SelfCorrecting(Model):
     Inherits from Model.
     """
 
-    def __init__(self, model_config: ModelConfig, num_event_types: int, **kwargs):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,
+            mu: Union[list, torch.Tensor],
+            alpha: Union[list, torch.Tensor],
+            num_event_types: int, 
+            **kwargs
+            ):
+
         """
         Initialize the Self-Correcting model.
 
@@ -26,17 +36,15 @@ class SelfCorrecting(Model):
                 - 'mu' (list or tensor): Base log-intensity parameter for each type.
                 - 'alpha' (list or tensor): Correction factor for each type (often negative).
         """
+        super(SelfCorrecting, self).__init__(
+            model_config, num_event_types=num_event_types
+        )
 
         self.num_event_types = num_event_types
 
-        if "mu" not in model_config.specs or "alpha" not in model_config.specs:
-            raise ValueError(
-                "SelfCorrecting model requires 'mu' and 'alpha' in model_config.specs"
-            )
-
         # Convert parameters to tensors and move to the correct device
-        mu = torch.tensor(model_config.specs["mu"], dtype=torch.float32)
-        alpha = torch.tensor(model_config.specs["alpha"], dtype=torch.float32)
+        mu = torch.tensor(mu, dtype=torch.float32)
+        alpha = torch.tensor(alpha, dtype=torch.float32)
 
         if (
             mu.shape[0] != self.num_event_types

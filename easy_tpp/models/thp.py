@@ -24,7 +24,7 @@ class THP(Model):
         super(THP, self).__init__(model_config)
         self.d_model = model_config.specs.hidden_size
         self.d_time = model_config.specs.time_emb_size
-        self.use_norm = model_config.specs.use_ln
+        self.use_norm = model_config.specs.use_norm
 
         self.n_layers = model_config.specs.num_layers
         self.n_head = model_config.specs.num_heads

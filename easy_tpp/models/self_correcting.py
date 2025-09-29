@@ -16,7 +16,7 @@ class SelfCorrecting(Model):
     Inherits from Model.
     """
 
-    def __init__(self, model_config: ModelConfig, **kwargs):
+    def __init__(self, model_config: ModelConfig, num_event_types: int, **kwargs):
         """
         Initialize the Self-Correcting model.
 
@@ -26,7 +26,8 @@ class SelfCorrecting(Model):
                 - 'mu' (list or tensor): Base log-intensity parameter for each type.
                 - 'alpha' (list or tensor): Correction factor for each type (often negative).
         """
-        super().__init__(model_config, **kwargs)
+
+        self.num_event_types = num_event_types
 
         if "mu" not in model_config.specs or "alpha" not in model_config.specs:
             raise ValueError(

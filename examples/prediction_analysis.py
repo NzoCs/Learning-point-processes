@@ -2,7 +2,7 @@ from pathlib import Path
 
 CONFIGS_DIR = Path(__file__).parent / "configs" / "test_runner_configs.yaml"
 
-from easy_tpp.runners import Runner
+from easy_tpp.runners import RunnerManager
 from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
 from easy_tpp.configs.config_factory import ConfigFactory, ConfigType
 from easy_tpp.configs.config_builder import RunnerConfigBuilder
@@ -23,7 +23,7 @@ def train_and_analyze_model(model_name: str, dataset_name: str) -> None:
 
     # Runner
     output_dir = f"./analysis_results/{model_name}_{dataset_name}"
-    runner = Runner(config=config, output_dir=output_dir)
+    runner = RunnerManager(config=config, output_dir=output_dir)
 
     # Complete pipeline
     runner.run(phase="train")

@@ -25,7 +25,7 @@ class RMTPP(Model):
         self.layer_rnn = nn.RNN(
             input_size=self.hidden_size,
             hidden_size=self.hidden_size,
-            num_layers=1,
+            num_layers=model_config.specs["num_layers"],
             nonlinearity="relu",
             batch_first=True,
         )

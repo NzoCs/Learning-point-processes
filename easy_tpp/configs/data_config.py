@@ -23,7 +23,7 @@ class TokenizerConfig(Config):
         model_input_names (Optional[Any]): Names of model inputs, if applicable.
     """
 
-    num_event_types: int = 0
+    num_event_types: int 
     padding_side: str = "left"
     truncation_side: str = "left"
     padding_strategy: str = "longest"
@@ -92,7 +92,7 @@ class DataLoadingSpecsConfig(Config):
         max_len (Optional[int]): Maximum length of sequences after padding/truncation.
     """
 
-    batch_size: int = 32
+    batch_size: int
     num_workers: int = 1
     shuffle: Optional[bool] = None
     padding: Optional[bool] = None

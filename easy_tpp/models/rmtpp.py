@@ -5,20 +5,31 @@ from torch import nn
 from torch.nn import functional as F
 
 from easy_tpp.models.basemodel import Model
+from easy_tpp.configs import ModelConfig
+from easy_tpp.models.neural_model import NeuralModel
 
 
-class RMTPP(Model):
+class RMTPP(NeuralModel):
     """Torch implementation of Recurrent Marked Temporal Point Processes, KDD 2016.
     https://www.kdd.org/kdd2016/papers/files/rpp1081-duA.pdf
     """
 
-    def __init__(self, model_config):
+    def __init__(
+            self, 
+            model_config : ModelConfig,
+            *,
+            num_event_types: int,
+            hidden_size: int = 128,
+            dropout: float = 0.1,
+            ) -> None:
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(RMTPP, self).__init__(model_config)
+        super(RMTPP, self).__init__(
+            model_config, num_event_types=num_event_types, hidden_size=hidden_size, dropout=dropout
+        )
         # self.hidden_size is now set in Model's __init__ via model_config.hidden_size
 
         self.layer_temporal_emb = nn.Linear(1, self.hidden_size)

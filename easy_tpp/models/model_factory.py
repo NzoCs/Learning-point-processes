@@ -13,9 +13,9 @@ Utilisation:
 
 from typing import Type
 
-from easy_tpp.configs.model_config import ModelConfig
-from easy_tpp.models.basemodel import Model
-from easy_tpp.models.model_registry import ModelRegistry
+from easy_tpp.configs import ModelConfig, ModelSpecsConfig
+from .basemodel import Model
+from .model_registry import ModelRegistry
 from easy_tpp.utils import logger
 
 
@@ -62,7 +62,7 @@ class ModelFactory:
             raise
 
     def create_model(
-        self, model_class: Type[Model], model_config: ModelConfig, **kwargs
+        self, model_class: Type[Model], model_config: ModelConfig, model_specs: ModelSpecsConfig, **kwargs
     ) -> Model:
         """
         Créer une instance de modèle directement avec la classe.
@@ -79,7 +79,7 @@ class ModelFactory:
         logger.info(f"Création du modèle: {model_name}")
 
         try:
-            instance = model_class(model_config, **kwargs)
+            instance = model_class(model_config, **model_specs, **kwargs)
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
             return instance
 

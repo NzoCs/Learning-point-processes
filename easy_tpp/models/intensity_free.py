@@ -7,6 +7,7 @@ from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
 from easy_tpp.models.basemodel import Model
+from easy_tpp.configs import ModelConfig
 
 
 def clamp_preserve_gradients(x, min_val, max_val):
@@ -121,18 +122,26 @@ class IntensityFree(Model):
     reference: https://github.com/shchur/ifl-tpp
     """
 
-    def __init__(self, model_config):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,
+            num_event_types: int,
+            num_mix_components: int = 32,
+            mean_log_inter_time: float = 0.0,
+            std_log_inter_time: float = 1.0,
+            ):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
 
         """
-        super(IntensityFree, self).__init__(model_config)
+        super(IntensityFree, self).__init__(model_config, num_event_types)
 
-        self.num_mix_components = model_config.specs.num_mix_components
-        self.mean_log_inter_time = model_config.specs.mean_log_inter_time
-        self.std_log_inter_time = model_config.specs.std_log_inter_time
+        self.num_mix_components = num_mix_components
+        self.mean_log_inter_time = mean_log_inter_time
+        self.std_log_inter_time = std_log_inter_time
 
         self.num_features = 1 + self.hidden_size
 

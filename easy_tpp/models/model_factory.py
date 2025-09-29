@@ -62,7 +62,7 @@ class ModelFactory:
             raise
 
     def create_model(
-        self, model_class: Type[Model], model_config: ModelConfig, model_specs: ModelSpecsConfig, **kwargs
+        self, model_class: Type[Model], model_config: ModelConfig, **kwargs
     ) -> Model:
         """
         Créer une instance de modèle directement avec la classe.
@@ -79,6 +79,7 @@ class ModelFactory:
         logger.info(f"Création du modèle: {model_name}")
 
         try:
+            model_specs = model_config.specs if hasattr(model_config, 'specs') else {}
             instance = model_class(model_config, **model_specs, **kwargs)
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
             return instance

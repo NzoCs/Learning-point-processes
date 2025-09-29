@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type, Union
+from pathlib import Path
 
 from pytorch_lightning.loggers import CometLogger  # for example, for Comet.ml
 from pytorch_lightning.loggers import (
@@ -18,6 +19,7 @@ from easy_tpp.configs.base_config import (
     Config,
     ConfigValidationError
 )
+
 from easy_tpp.utils import logger
 
 
@@ -176,25 +178,28 @@ class LoggerConfig(Config):
         config (Dict[str, Any]): Additional configuration parameters for the logger.
     """
 
+
     save_dir: str
-    logger_type: LoggerType = LoggerType.TENSORBOARD
+    type: LoggerType = LoggerType.TENSORBOARD
     config: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         # Convert string logger_type to LoggerType if needed
-        if isinstance(self.logger_type, str):
+
+
+        if isinstance(self.type, str):
             try:
-                self.logger_type = LoggerType(self.logger_type)
+                self.type = LoggerType(self.type)
             except ValueError:
                 raise ConfigValidationError(
-                    f"Unknown logger type: {self.logger_type}", "logger_type"
+                    f"Unknown logger type: {self.type}", "logger_type"
                 )
 
         # Get the adapter for this logger type
-        self.adapter = LOGGER_ADAPTERS.get(self.logger_type)
+        self.adapter = LOGGER_ADAPTERS.get(self.type)
         if not self.adapter:
             raise ConfigValidationError(
-                f"No adapter available for logger type: {self.logger_type}",
+                f"No adapter available for logger type: {self.type}",
                 "logger_type",
             )
 
@@ -210,7 +215,7 @@ class LoggerConfig(Config):
     def get_yaml_config(self) -> Dict[str, Any]:
         return {
             "save_dir": self.save_dir,
-            "logger_type": self.logger_type.value,
+            "logger_type": self.type.value,
             "config": self.config,
         }
 
@@ -223,7 +228,7 @@ class LoggerConfig(Config):
         """
         if self.adapter is None:
             raise ConfigValidationError(
-                f"No adapter available for logger type: {self.logger_type}",
+                f"No adapter available for logger type: {self.type}",
                 "logger_type",
             )
 
@@ -231,15 +236,15 @@ class LoggerConfig(Config):
         return self.adapter.configure(config)
 
     @classmethod
-    def list_required_params(cls, logger_type: Union[LoggerType, str]) -> List[str]:
-        if isinstance(logger_type, str):
+    def list_required_params(cls, type: Union[LoggerType, str]) -> List[str]:
+        if isinstance(type, str):
             try:
-                logger_type = LoggerType(logger_type)
+                type = LoggerType(type)
             except ValueError:
-                raise ValueError(f"Unknown logger type: {logger_type}")
-        adapter = LOGGER_ADAPTERS.get(logger_type)
+                raise ValueError(f"Unknown logger type: {type}")
+        adapter = LOGGER_ADAPTERS.get(type)
         if not adapter:
-            raise ValueError(f"No adapter available for logger type: {logger_type}")
+            raise ValueError(f"No adapter available for logger type: {type}")
         return adapter.get_required_params()
 
     def get_required_fields(self):
@@ -248,5 +253,15 @@ class LoggerConfig(Config):
 
 class LoggerFactory:
     @staticmethod
-    def create_logger(config: LoggerConfig):
-        return config.configure_logger()
+    def create_logger(config: Union[dict, LoggerConfig]) -> Any:
+        """
+        Créer une instance de logger à partir de la configuration.
+
+        Args:
+            config: Configuration du logger
+
+        Returns:
+            Instance du logger
+        """
+        logger_config = LoggerConfig(**config) if isinstance(config, dict) else config
+        return logger_config.configure_logger()

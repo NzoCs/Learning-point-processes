@@ -56,7 +56,8 @@ class RunnerConfigBuilder(ConfigBuilder):
                       data_loading_config_path: str = None,
                       data_specs_path: str = None,
                       simulation_config_path: str = None,
-                      thinning_config_path: str = None  
+                      thinning_config_path: str = None,
+                      logger_config_path: str = None,
                       ) -> List[str]:
         """
         Charge la config complète depuis un YAML en utilisant les autres builders.
@@ -107,6 +108,10 @@ class RunnerConfigBuilder(ConfigBuilder):
         self.config_dict["training_config"] = training_cfg
         self.config_dict["model_config"] = model_cfg
         self.config_dict["data_config"] = data_cfg
+
+        if logger_config_path:
+            logger_cfg = self._get_nested_value(data, logger_config_path)
+            self.config_dict["logger_config"] = logger_cfg
         
         return self.get_missing_fields()
 

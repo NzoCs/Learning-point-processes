@@ -26,7 +26,7 @@ class NeuralModel(Model, ABC):
         """
         super(NeuralModel, self).__init__(
             model_config, 
-            num_event_types,
+            num_event_types=num_event_types,
             )
 
         self.num_event_types = num_event_types

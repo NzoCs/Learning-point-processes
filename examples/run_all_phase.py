@@ -18,6 +18,8 @@ def main() -> None:
 
     # Build runner configuration from YAML
     config_builder = RunnerConfigBuilder()
+
+    # You can modify the paths below to point to different configurations as needed
     config_builder.load_from_yaml(
         yaml_file_path=config_path,
         data_config_path="data_configs.test",
@@ -26,9 +28,13 @@ def main() -> None:
         thinning_config_path="thinning_configs.thinning_fast",
         simulation_config_path="simulation_configs.simulation_fast",
         data_loading_config_path="data_loading_configs.quick_test",
+        logger_config_path="logger_configs.tensorboard",
     )
+
     config_dict = config_builder.config_dict
+
     config_factory = ConfigFactory()
+
     config = config_factory.create_config(ConfigType.RUNNER, config_dict, model_id=model_id)
 
     # Create runner

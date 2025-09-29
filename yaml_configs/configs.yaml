@@ -63,7 +63,7 @@ logger_configs:
   tensorboard:
     type: tensorboard
     save_dir: logs/tensorboard_logs
-    params:
+    config:
       name: tb_logs
       flush_secs: 120
       version: 1
@@ -71,7 +71,7 @@ logger_configs:
   csv:
     type: csv
     save_dir: logs/csv_logs
-    params:
+    config:
       name: csv_logs
       version: 1
 
@@ -80,17 +80,16 @@ logger_configs:
     project: EasyTPP_Project
     entity: your_wandb_entity  # Remplacez par votre entité Weights & Biases
     save_dir: logs/wandb_logs
-    params:
+    config:
       notes: "Experiment run"
       tags: [easy_tpp, experiment]
-      config:
-        resume: false
-        anonymous: false
+      resume: false
+      anonymous: false
 
   mlflow:
     type: mlflow
     save_dir: logs/mlflow
-    params:
+    config:
       experiment_name: easy_tpp_experiments
       tracking_uri: http://localhost:5000
       run_name: run_1
@@ -98,7 +97,7 @@ logger_configs:
   comet:
     type: comet
     save_dir: logs/comet
-    params:
+    config:
       api_key: "YOUR_COMET_API_KEY"
       project_name: easy_tpp_project
       workspace: your_workspace
@@ -106,7 +105,7 @@ logger_configs:
   neptune:
     type: neptune
     save_dir: logs/neptune
-    params:
+    config:
       api_token: "YOUR_NEPTUNE_API_TOKEN"
       project: your_neptune_project
       run_name: run_1
@@ -223,42 +222,49 @@ simulation_configs:
     start_time: 20
     end_time: 50
     max_sim_events: 5000
+    batch_size: 16
 
   # Configuration de simulation développement
   simulation_dev:
     start_time: 50
     end_time: 120
     max_sim_events: 15000
+    batch_size: 32
 
   # Configuration de simulation standard
   simulation_standard:
     start_time: 100
     end_time: 200
     max_sim_events: 50000
+    batch_size: 64
 
   # Configuration de simulation étendue
   simulation_extended:
     start_time: 100
     end_time: 300
     max_sim_events: 100000
+    batch_size: 128
 
   # Configuration de simulation pour gros datasets
   simulation_large:
     start_time: 100
     end_time: 400
     max_sim_events: 150000
+    batch_size: 256
 
   # Configuration de simulation pour validation croisée
   simulation_cv:
     start_time: 80
     end_time: 160
     max_sim_events: 30000
+    batch_size: 64
 
   # Configuration de simulation pour expérimentations
   simulation_experiment:
     start_time: 50
     end_time: 120
     max_sim_events: 15000
+    batch_size: 32
 
 # ===== CONFIGURATIONS DE CHARGEMENT DE DONNÉES =====
 # Ces configurations contiennent uniquement les paramètres de DataLoader

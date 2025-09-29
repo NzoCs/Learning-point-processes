@@ -195,6 +195,7 @@ class ModelConfig(Config):
         pretrain_model_path: Optional[str] = None,
         thinning_config: Union[dict, ThinningConfig] = None,
         simulation_config: Union[dict, SimulationConfig] = None,
+        specs: ModelSpecsConfig = None,
         scheduler_config: Optional[Union[dict, SchedulerConfig]] = None,
         **kwargs
     ):
@@ -205,6 +206,7 @@ class ModelConfig(Config):
         self.pretrain_model_path = pretrain_model_path
 
         # Instancie les sous-configs à partir des dicts
+        self.specs = specs or {}
         self.thinning_config = thinning_config if isinstance(thinning_config, ThinningConfig) else ThinningConfig(**(thinning_config or {}))
         self.simulation_config = simulation_config if isinstance(simulation_config, SimulationConfig) else SimulationConfig(**(simulation_config or {}))
 

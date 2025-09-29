@@ -105,9 +105,7 @@ class RunnerConfig(Config):
     data_config: DataConfig
     model_id: str
     logger_config: Optional[LoggerConfig] = None
-    activate_logging: bool = False
     save_dir: Optional[str] = None
-    checkpoint_dir: Optional[str] = None
 
     def __init__(
             self, 
@@ -116,17 +114,11 @@ class RunnerConfig(Config):
             model_config: Union[ModelConfig, dict], 
             data_config: Union[DataConfig, dict],
             logger_config: Optional[Union[LoggerConfig, dict]] = None,
-            activate_logging: bool = False,
             save_dir: Optional[str] = None,
-            checkpoint_dir: Optional[str] = None,
             **kwargs
             ):
 
         # assign simple attributes first so they are available during setup
-        self.logger_config = logger_config
-        self.activate_logging = activate_logging
-        self.save_dir = save_dir
-        self.checkpoint_dir = checkpoint_dir
 
         # Instancie les configs intermédiaires à partir des dicts
         self.training_config = training_config if isinstance(training_config, TrainingConfig) else TrainingConfig(**training_config)
@@ -138,23 +130,39 @@ class RunnerConfig(Config):
         self.model_id = model_id
 
         # Directory setup
-        ckpt = self.checkpoint_dir or "checkpoints"
+        ckpt =  "checkpoints"
         dirpath = self.ROOT_DIR / (
-            self.save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/"
+            save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/"
         )
         self.save_model_dir = dirpath / "saved_model"
         self.save_model_dir.mkdir(parents=True, exist_ok=True)
 
         # Logger config - only if logging is activated
-        if self.activate_logging:
-            if self.logger_config is None:
-                # Create default logger config if none provided
+        # Ensure save_dir is recorded on the RunnerConfig
+        # store as string (matches dataclass annotation)
+        self.save_dir = str(dirpath)
+
+        # Process the incoming `logger_config` parameter (could be None, dict or LoggerConfig)
+        # Force the logger's save_dir to the runner's dirpath for consistency across artifacts
+        if logger_config is None:
+            # Create default logger config if none provided
+            self.logger_config = LoggerConfig(save_dir=self.save_dir, type="tensorboard")
+        else:
+            # If a dict was passed, make a copy and override save_dir
+            if isinstance(logger_config, dict):
+                cfg = dict(logger_config)
+                # Always override save_dir for consistency
+                cfg["save_dir"] = self.save_dir
+                self.logger_config = LoggerConfig(**cfg)
+            elif isinstance(logger_config, LoggerConfig):
+                # Always ensure logger_config uses the runner save_dir; recreate to be safe
                 self.logger_config = LoggerConfig(
-                    save_dir=dirpath, logger_type="tensorboard"
+                    save_dir=self.save_dir,
+                    type=getattr(logger_config, "type", "tensorboard"),
+                    config=getattr(logger_config, "config", {}),
                 )
-            elif not getattr(self.logger_config, "save_dir", None):
-                # Set save_dir if not already set
-                self.logger_config.save_dir = dirpath
+            else:
+                raise TypeError("logger_config must be None, a dict or a LoggerConfig instance")
 
         super().__init__(**kwargs)
 

@@ -12,7 +12,6 @@ from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,
 )
-from easy_tpp.models import Model
 from easy_tpp.models.model_factory import ModelFactory
 from easy_tpp.utils import logger
 

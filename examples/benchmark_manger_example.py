@@ -8,7 +8,7 @@ le lancement des benchmarks par rapport au code précédent.
 from easy_tpp.configs import DataConfig
 from easy_tpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
-    Benchmarks,
+    BenchmarksEnum as Benchmarks,
 )
 
 

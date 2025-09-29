@@ -27,7 +27,8 @@ class THP(NeuralModel):
             use_norm: bool = True,
             time_emb_size: int = 32,
             num_layers: int = 2,
-            num_heads: int = 4,):
+            num_heads: int = 4,
+            ):
         """Initialize the model
 
         Args:

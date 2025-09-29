@@ -30,7 +30,6 @@ from .sample_distrib_mark_bench import (
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
-
 class BenchmarksEnum(Enum):
     """Enum des benchmarks disponibles."""
 

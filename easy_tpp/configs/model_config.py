@@ -114,10 +114,10 @@ class ThinningConfig(Config):
 class SimulationConfig(Config):
     """Configuration for event sequence simulation."""
 
-    start_time: float = 100.0
-    end_time: float = 200.0
-    batch_size: int = 32
-    max_sim_events: int = 10000
+    start_time: float
+    end_time: float
+    batch_size: int
+    max_sim_events: int
     seed: int = 42
 
     def get_required_fields(self) -> List[str]:
@@ -155,129 +155,100 @@ class SimulationConfig(Config):
             )
 
 
-@dataclass
 class ModelSpecsConfig(Config):
-    """Configuration for model-specific parameters.
-    Args:
-        hidden_size (int): Size of the hidden layers.
-        rnn_type (str): Type of RNN to use (e.g., LSTM, GRU).
-        time_emb_size (int): Size of the time embedding.
-        num_layers (int): Number of layers in the model.
-        num_heads (int): Number of attention heads.
-        sharing_param_layer (bool): Whether to share parameters across layers.
-        use_ln (bool): Whether to use layer normalization.
-        loss_integral_num_sample_per_step (int): Number of samples for loss integral approximation.
-        max_seq_len (int): Maximum sequence length for input data.
+    """Flexible container for model-specific parameters.
 
-        #  IntensityFree model specific parameters
-        num_mix_components (int): Number of mixture components for intensity-free models.
-        mean_log_inter_time (float): Mean of the log inter-event time distribution.
-        std_log_inter_time (float): Standard deviation of the log inter-event time distribution.
+    This class intentionally accepts arbitrary keyword arguments and acts as a
+    lightweight container for model specs. It provides sensible defaults for
+    commonly used fields and exposes attribute-style access to stored values.
 
-        #  Ode model specific parameters
-        num_mlp_layers (int): Number of MLP layers in the model.
-        ode_num_sample_per_step (int): Number of samples per step for ODE solvers.
-        proper_marked_intensities (bool): Whether to use proper marked intensities.
+    Usage:
+        ModelSpecsConfig(hidden_size=128, custom_option=42)
 
-        # Hawkes process parameters (optional)
-        mu (Optional[float]): Base intensity for Hawkes processes.
-        alpha (Optional[float]): Excitation parameter for Hawkes processes.
-        beta (Optional[float]): Decay parameter for Hawkes processes.
-
-    This configuration class encapsulates all model-specific parameters
+    The intent is that each model may require different arguments; this class
+    therefore does not enforce a rigid schema but will perform minimal
+    validation for common numeric fields when present.
     """
 
-    # Core model parameters
-    hidden_size: int = 64
-    rnn_type: str = "LSTM"
-    time_emb_size: int = 32
-    num_layers: int = 2
-    num_heads: int = 8
-    sharing_param_layer: bool = False
-    use_ln: bool = True
-    loss_integral_num_sample_per_step: int = 100
-    max_seq_len: int = 100
+    # Default values for commonly-used specs
+    _DEFAULTS = {
+        # Core
+        "num_layers": 1,
+        "num_heads": 1,
+        "rnn_type": "LSTM",
+        "sharing_param_layer": False,
+        "use_norm": True,
+        "loss_integral_num_sample_per_step": 100,
+        # IntensityFree
+        "num_mix_components": 1,
+        "mean_log_inter_time": 0.0,
+        "std_log_inter_time": 1.0,
+        # ODE
+        "num_mlp_layers": 2,
+        "ode_num_sample_per_step": 20,
+        "proper_marked_intensities": False
+    }
 
-    # IntensityFree model specific parameters
-    num_mix_components: int = 1
-    mean_log_inter_time: float = 0.0
-    std_log_inter_time: float = 1.0
+    def __init__(self, **kwargs):
+        # Merge defaults with user-provided kwargs
+        specs = dict(self._DEFAULTS)
+        specs.update(kwargs or {})
 
-    # Ode model specific parameters
-    num_mlp_layers: int = 2
-    ode_num_sample_per_step: int = 20
-    proper_marked_intensities: bool = False
-
-    # Hawkes model parameters (optional, can be None)
-    mu: Optional[float] = None
-    alpha: Optional[float] = None
-    beta: Optional[float] = None
+        # store raw dict and also set attributes for convenience
+        object.__setattr__(self, "_specs", specs)
 
     def get_required_fields(self) -> List[str]:
-        """Return list of required field names."""
-        return []  # All fields have defaults
+        """Return list of required fields (none enforced here)."""
+        return []
 
     def get_yaml_config(self) -> Dict[str, Any]:
-        """Get configuration as YAML-compatible dictionary."""
-        return {
-            "hidden_size": self.hidden_size,
-            "rnn_type": self.rnn_type,
-            "time_emb_size": self.time_emb_size,
-            "num_layers": self.num_layers,
-            "num_heads": self.num_heads,
-            "sharing_param_layer": self.sharing_param_layer,
-            "use_ln": self.use_ln,
-            "loss_integral_num_sample_per_step": self.loss_integral_num_sample_per_step,
-            "max_seq_len": self.max_seq_len,
-            "num_mix_components": self.num_mix_components,
-            "mean_log_inter_time": self.mean_log_inter_time,
-            "std_log_inter_time": self.std_log_inter_time,
-            "num_mlp_layers": self.num_mlp_layers,
-            "ode_num_sample_per_step": self.ode_num_sample_per_step,
-            "proper_marked_intensities": self.proper_marked_intensities,
-            "mu": self.mu,
-            "alpha": self.alpha,
-            "beta": self.beta,
-        }
+        """Return a YAML-serializable dict of the specs."""
+        # Return a shallow copy to avoid accidental mutation
+        return dict(self._specs)
 
     def validate(self) -> None:
-        """Validate model specifications."""
+        """Minimal validation for commonly used numeric fields.
+
+        This will raise ConfigValidationError for invalid numeric values
+        (non-positive where positivity is required) if those keys exist.
+        """
         super().validate()
 
-        if self.hidden_size <= 0:
-            raise ConfigValidationError("hidden_size must be positive", "hidden_size")
+        # Helper to check positive integers/floats when present
+        def _check_positive(key: str):
+            val = self._specs.get(key)
+            if val is None:
+                return
+            try:
+                if float(val) <= 0:
+                    raise ConfigValidationError(f"{key} must be positive", key)
+            except (TypeError, ValueError):
+                raise ConfigValidationError(f"{key} must be numeric and positive", key)
 
-        if self.time_emb_size <= 0:
-            raise ConfigValidationError(
-                "time_emb_size must be positive", "time_emb_size"
-            )
-
-        if self.num_layers <= 0:
-            raise ConfigValidationError("num_layers must be positive", "num_layers")
-
-        if self.num_heads <= 0:
-            raise ConfigValidationError("num_heads must be positive", "num_heads")
-
-        if self.num_mix_components <= 0:
-            raise ConfigValidationError(
-                "num_mix_components must be positive", "num_mix_components"
-            )
-
-        if self.num_mlp_layers <= 0:
-            raise ConfigValidationError(
-                "num_mlp_layers must be positive", "num_mlp_layers"
-            )
-
-        if self.ode_num_sample_per_step <= 0:
-            raise ConfigValidationError(
-                "ode_num_sample_per_step must be positive", "ode_num_sample_per_step"
-            )
+        for k in ("hidden_size", "time_emb_size", "num_layers", "num_heads", "num_mix_components", "num_mlp_layers", "ode_num_sample_per_step"):
+            _check_positive(k)
 
         valid_rnn_types = ["LSTM", "GRU", "RNN"]
-        if self.rnn_type not in valid_rnn_types:
-            raise ConfigValidationError(
-                f"rnn_type must be one of {valid_rnn_types}", "rnn_type"
-            )
+        rnn_type = self._specs.get("rnn_type")
+        if rnn_type is not None and rnn_type not in valid_rnn_types:
+            raise ConfigValidationError(f"rnn_type must be one of {valid_rnn_types}", "rnn_type")
+
+    def __getattr__(self, item: str) -> Any:
+        # Called when attribute not found on the instance; forward to specs dict
+        specs = object.__getattribute__(self, "_specs")
+        if item in specs:
+            return specs[item]
+        raise AttributeError(f"ModelSpecsConfig has no attribute '{item}'")
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        # Set in the underlying specs dict (except for _specs itself)
+        if key == "_specs":
+            object.__setattr__(self, key, value)
+            return
+        self._specs[key] = value
+
+    def to_dict(self) -> Dict[str, Any]:
+        return dict(self._specs)
 
 
 
@@ -347,10 +318,9 @@ class ModelConfig(Config):
             "gpu": self.gpu,
             "is_training": self.is_training,
             "compute_simulation": self.compute_simulation,
-            "use_mc_samples": self.use_mc_samples,
             "pretrain_model_path": self.pretrain_model_path,
             "specs": self.specs.get_yaml_config(),
-            "thinning": self.thinning.get_yaml_config(),
+            "thinning": self.thinning_config.get_yaml_config(),
             "simulation_config": self.simulation_config.get_yaml_config(),
         }
 

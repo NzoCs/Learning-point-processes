@@ -65,3 +65,4 @@ fullyNN_enhanced:
     hidden_size: 32
     time_emb_size: 16
     num_layers: 2
+

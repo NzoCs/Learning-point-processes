@@ -131,7 +131,7 @@ def sample_runner_config():
             "specs": {
                 "hidden_size": 32,
                 "time_emb_size": 16,
-                "use_ln": True,
+                "use_norm": True,
                 "num_layers": 2,
                 "num_heads": 4,
             },

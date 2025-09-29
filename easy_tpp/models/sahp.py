@@ -28,7 +28,7 @@ class SAHP(Model):
         self.d_model = model_config.specs.hidden_size
         self.d_time = model_config.specs.time_emb_size
 
-        self.use_norm = model_config.specs.use_ln
+        self.use_norm = model_config.specs.use_norm
 
         # position vector, used for temporal encoding
         self.layer_position_emb = TimeShiftedPositionalEncoding(

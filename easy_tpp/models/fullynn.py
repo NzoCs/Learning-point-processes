@@ -13,7 +13,9 @@ class CumulHazardFunctionNetwork(nn.Module):
     """
 
     def __init__(self, model_config: ModelConfig):
+
         super(CumulHazardFunctionNetwork, self).__init__()
+        
         self.hidden_size = model_config.specs.hidden_size
         self.num_mlp_layers = model_config.specs.num_mlp_layers
         self.num_event_types = model_config.num_event_types

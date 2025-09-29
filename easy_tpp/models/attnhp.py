@@ -14,7 +14,7 @@ class AttNHP(Model):
     Source code: https://github.com/yangalan123/anhp-andtt/blob/master/anhp/model/xfmr_nhp_fast.py
     """
 
-    def __init__(self, model_config: ModelConfig):
+    def __init__(self, model_config: ModelConfig, ):
         """Initialize the model
 
         Args:
@@ -22,7 +22,7 @@ class AttNHP(Model):
         """
         super(AttNHP, self).__init__(model_config)
         self.d_model = model_config.specs.hidden_size
-        self.use_norm = model_config.specs.use_ln
+        self.use_norm = model_config.specs.use_norm
         self.d_time = model_config.specs.time_emb_size
 
         self.div_term = torch.exp(

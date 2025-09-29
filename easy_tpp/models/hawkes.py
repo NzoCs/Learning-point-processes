@@ -11,7 +11,7 @@ class Hawkes(Model):
     methods like predict_one_step_at_every_event.
     """
 
-    def __init__(self, model_config: ModelConfig, **kwargs) -> None:
+    def __init__(self, model_config: ModelConfig, num_event_types: int) -> None:
         """
         Initialize the Hawkes model.
 
@@ -19,13 +19,8 @@ class Hawkes(Model):
             model_config (EasyTPP.ModelConfig): Configuration object containing model specs.
                 Expected specs: 'mu' (list), 'alpha' (list of lists), 'beta' (list of lists).
         """
-        super().__init__(model_config, **kwargs)
 
-        # Load Hawkes parameters from config
-        # Ensure they are tensors on the correct device
-        # mu: [num_event_types]
-        # alpha: [num_event_types, num_event_types] (alpha[i, j] effect of type j on type i)
-        # beta: [num_event_types, num_event_types] (beta[i, j] decay rate for effect of type j on type i)
+        self.num_event_types = num_event_types
 
         # Convert parameters to tensors and move to the correct device
         mu = torch.tensor(model_config.specs.mu, dtype=torch.float32).view(

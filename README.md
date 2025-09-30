@@ -408,18 +408,14 @@ def main():
     runner = Runner(config=config)
     
     # Run complete pipeline: train -> test -> predict
-    print("🚀 Lancement du pipeline complet...")
     
     # 1. Training
-    print("📚 Phase d'entraînement...")
     runner.run(phase="train")
     
     # 2. Testing
-    print("🧪 Phase de test...")
     runner.run(phase="test")
     
     # 3. Prediction and distribution comparison
-    print("🔮 Phase de prédiction et comparaison des distributions...")
     runner.run(phase="predict")
 
 

@@ -1,9 +1,8 @@
 import os
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Type, Union
 from pathlib import Path
 
 from pytorch_lightning.loggers import CometLogger  # for example, for Comet.ml
@@ -19,9 +18,7 @@ from easy_tpp.configs.base_config import (
     Config,
     ConfigValidationError
 )
-
 from easy_tpp.utils import logger
-
 
 class LoggerType(Enum):
     CSV = "csv"
@@ -117,7 +114,43 @@ class MLflowLoggerAdapter(BaseLoggerAdapter):
         Checks required parameters, configures and returns an instance of MLFlowLogger
         using the provided parameters.
         """
-        return MLFlowLogger(**config)
+        # Ensure save_dir exists
+        save_dir = config.get("save_dir") or os.getcwd()
+        os.makedirs(save_dir, exist_ok=True)
+
+        # If no tracking URI is provided, default to a local file-based mlflow store
+        if "tracking_uri" not in config or not config.get("tracking_uri"):
+            # create a local mlruns directory inside the save_dir
+            mlruns_path = Path(save_dir).resolve() / "mlruns"
+            mlruns_path.mkdir(parents=True, exist_ok=True)
+            config["tracking_uri"] = f"file://{mlruns_path.as_posix()}"
+
+        # Allow only keys that MLFlowLogger typically accepts to avoid unexpected blocking
+        allowed_keys = {
+            "experiment_name",
+            "tracking_uri",
+            "run_name",
+            "save_dir",
+            "tags",
+            "log_model",
+            "nested",
+            "run_id",
+            "prefix",
+            "artifact_location",
+        }
+
+        filtered_config = {k: v for k, v in config.items() if k in allowed_keys}
+
+        try:
+            return MLFlowLogger(**filtered_config)
+        except Exception as e:
+            # Provide a clearer error describing what was attempted
+            logger.exception(
+                "Failed to configure MLFlowLogger with config: %s", filtered_config
+            )
+            raise RuntimeError(
+                f"Could not create MLFlowLogger. Original error: {e}. Check your tracking_uri and mlflow installation."
+            )
 
 
 class CometLoggerAdapter(BaseLoggerAdapter):
@@ -174,7 +207,7 @@ class LoggerConfig(Config):
 
     Args:
         save_dir (str): Directory where logs will be saved.
-        logger_type (LoggerType): Type of logger to use. Defaults to TENSORBOARD.
+        type (LoggerType): Type of logger to use. Defaults to TENSORBOARD.
         config (Dict[str, Any]): Additional configuration parameters for the logger.
     """
 
@@ -184,7 +217,7 @@ class LoggerConfig(Config):
     config: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        # Convert string logger_type to LoggerType if needed
+        # Convert string type to LoggerType if needed
 
 
         if isinstance(self.type, str):
@@ -192,7 +225,7 @@ class LoggerConfig(Config):
                 self.type = LoggerType(self.type)
             except ValueError:
                 raise ConfigValidationError(
-                    f"Unknown logger type: {self.type}", "logger_type"
+                    f"Unknown logger type: {self.type}"
                 )
 
         # Get the adapter for this logger type

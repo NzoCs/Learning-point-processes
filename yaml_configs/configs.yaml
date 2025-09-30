@@ -77,10 +77,11 @@ logger_configs:
 
   wandb:
     type: wandb
-    project: EasyTPP_Project
-    entity: your_wandb_entity  # Remplacez par votre entité Weights & Biases
     save_dir: logs/wandb_logs
     config:
+      entity: your_wandb_entity
+      project: easytpp_project
+      name: wandb_logs
       notes: "Experiment run"
       tags: [easy_tpp, experiment]
       resume: false

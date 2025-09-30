@@ -7,7 +7,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.strategies import DDPStrategy
 
 from easy_tpp.configs import RunnerConfig
-from easy_tpp.configs.logger_config import LoggerConfig, LoggerFactory
+from easy_tpp.configs.logger_config import LoggerFactory
 from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,

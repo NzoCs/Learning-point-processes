@@ -30,8 +30,6 @@ dependencies = [
     "hydra-core>=1.3.0",
     "omegaconf>=2.3.0",
     "torchmetrics>=1.0.0",
-    "torchtyping>=0.1.5",
-    "typeguard>=4.0.0",
     "tensorboard>=2.15.0",
     "tqdm>=4.65.0",
     "fastdtw>=0.3.4",
@@ -43,6 +41,7 @@ dependencies = [
 ]
 
 [dependency-groups]
+
 cli = [
     # CLI-specific dependencies with proper version constraints
     "rich>=14.1.0",
@@ -60,7 +59,7 @@ cli = [
     "alive-progress>=3.3.0",
 ]
 docs = [
-    "sphinx>=8.2.3",
+    "sphinx>=4.0,<8.2",
     "sphinx_rtd_theme>=3.0.2",
     "myst_parser>=4.0.1",
     "nbsphinx>=0.9.7",
@@ -82,6 +81,15 @@ dev = [
     "flake8-bugbear>=24.0.0",
     "bandit>=1.7.0",
     "pymarkdownlnt>=0.9.32",
+    "torchtyping>=0.1.5",
+]
+
+logging = [
+    # Optional logging backends used by LoggerConfig adapters. Install as:
+    #   pip install .[logging]  or `pip install -e .[logging]` for editable installs
+    "mlflow>=3.4.0",
+    "neptune-client>=1.14.0",
+    "comet-ml>=3.53.0",
 ]
 
 [project.urls]

@@ -2,12 +2,9 @@ from pathlib import Path
 
 CONFIGS_DIR = Path(__file__).parent.parent / "yaml_configs" / "configs.yaml"
 
-from easy_tpp.configs import RunnerConfig
-from easy_tpp.runners import Runner, RunnerManager
-from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
+from easy_tpp.runners import RunnerManager
 from easy_tpp.configs import ConfigType, ConfigFactory
 from easy_tpp.configs.config_builder import RunnerConfigBuilder
-from easy_tpp.models.model_registry import ModelRegistry
 
 
 
@@ -28,7 +25,7 @@ def main() -> None:
         thinning_config_path="thinning_configs.thinning_fast",
         simulation_config_path="simulation_configs.simulation_fast",
         data_loading_config_path="data_loading_configs.quick_test",
-        logger_config_path="logger_configs.tensorboard",
+        logger_config_path="logger_configs.mlflow",
     )
 
     config_dict = config_builder.config_dict
@@ -41,18 +38,14 @@ def main() -> None:
     runner = RunnerManager(config=config)
 
     # Run complete pipeline: train -> test -> predict
-    print("🚀 Lancement du pipeline complet...")
 
     # 1. Training
-    print("📚 Phase d'entraînement...")
     runner.run(phase="train")
 
     # 2. Testing
-    print("🧪 Phase de test...")
     runner.run(phase="test")
 
     # 3. Prediction and distribution comparison
-    print("🔮 Phase de prédiction et comparaison des distributions...")
     runner.run(phase="predict")
 
 

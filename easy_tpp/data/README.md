@@ -11,7 +11,7 @@ The data module consists of two main components:
 
 ## Directory Structure
 
-```
+``` bash
 data/
 ├── generation/           # Synthetic data generation
 │   ├── base_simulator.py    # Abstract base simulator class
@@ -168,7 +168,7 @@ simulator, data_module, visualizer = create_complete_data_pipeline()
 
 ## Data Flow Architecture
 
-```
+``` bash
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Generation    │───▶│   Raw Data       │───▶│  Preprocessing  │
 │                 │    │                  │    │                 │
@@ -190,6 +190,7 @@ simulator, data_module, visualizer = create_complete_data_pipeline()
 ## Key Features
 
 ### Data Generation
+
 - **Multiple TPP Models**: Hawkes processes, self-correcting processes
 - **Multivariate Support**: Cross-dimensional event interactions
 - **Flexible Configuration**: Customizable parameters and time windows
@@ -197,6 +198,7 @@ simulator, data_module, visualizer = create_complete_data_pipeline()
 - **Intensity Analysis**: Built-in visualization and analysis tools
 
 ### Data Preprocessing  
+
 - **Multiple Formats**: JSON, PKL support with automatic detection
 - **PyTorch Lightning**: Seamless integration with modern training pipelines
 - **Dynamic Batching**: Efficient padding and collation for variable-length sequences
@@ -204,6 +206,7 @@ simulator, data_module, visualizer = create_complete_data_pipeline()
 - **Visualization**: Rich analysis and comparison tools
 
 ### Integration Benefits
+
 - **Consistent Format**: Generated data is immediately compatible with preprocessing
 - **End-to-End Pipeline**: From simulation to model training
 - **Quality Assurance**: Built-in validation and analysis tools
@@ -409,18 +412,21 @@ def compare_datasets(real_data_module, synthetic_data_module):
 ## Best Practices
 
 ### 1. Data Generation
+
 - Start with simple parameters and gradually increase complexity
 - Validate generated data matches theoretical expectations
 - Use multiple random seeds for robust experiments
 - Save generation parameters with the data
 
 ### 2. Data Preprocessing
+
 - Always validate data after loading
 - Use appropriate padding strategies for your model
 - Monitor memory usage with large datasets
 - Profile data loading performance
 
 ### 3. Pipeline Integration
+
 - Keep consistent data formats across pipeline stages
 - Document parameter choices and data transformations
 - Use version control for data and configurations

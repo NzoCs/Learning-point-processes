@@ -26,6 +26,8 @@ from easy_tpp.configs.model_config import (
     ThinningConfig
 )
 from easy_tpp.configs.runner_config import RunnerConfig, TrainingConfig
+from easy_tpp.configs.model_config import ModelConfig
+from easy_tpp.configs.config_builder import DataConfigBuilder, RunnerConfigBuilder, ModelConfigBuilder
 
 __all__ = [
     # New Configuration Factory System
@@ -52,4 +54,9 @@ __all__ = [
     "TrainingConfig",
     "ModelSpecsConfig",
     "ModelType",
+
+    # Config builders
+    "DataConfigBuilder",
+    "RunnerConfigBuilder",
+    "ModelConfigBuilder",
 ]

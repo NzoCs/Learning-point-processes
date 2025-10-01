@@ -36,7 +36,7 @@ class Visualizer:
         self.num_event_types = data_module.num_event_types
         self.save_dir = save_dir
         self.is_comparison_mode = comparison_data_module is not None
-
+        # Note: saving/showing graphs are controlled per-method via arguments
         # Validate the split parameter
         valid_splits = {"valid", "test", "train", None}
         if split not in valid_splits:
@@ -217,7 +217,12 @@ class Visualizer:
             json.dump(metadata, f, indent=4)
         print(f"Metadata saved to {json_filename}")
 
-    def delta_times_distribution(self, filename: str = "inter_event_time_dist.png"):
+    def delta_times_distribution(
+        self,
+        filename: str = "inter_event_time_dist.png",
+        save_graph: bool = True,
+        show_graph: bool = False,
+    ):
         """
         Plots and saves the distribution of inter-event times.
         In comparison mode, plots both datasets.
@@ -363,10 +368,36 @@ class Visualizer:
         plt.legend()
         plt.tight_layout()
 
+        # Use the provided flags directly
+        do_save = bool(save_graph)
+        do_show = bool(show_graph)
+
         filepath = os.path.join(self.save_dir, filename)
-        plt.savefig(filepath, dpi=300, bbox_inches="tight")
+        # Save if requested
+        if do_save:
+            plt.savefig(filepath, dpi=300, bbox_inches="tight")
+            # Save metadata alongside the image (same base name)
+            metadata = {
+                "plot_type": "delta_times_distribution",
+                "filename": filename,
+                "is_comparison_mode": self.is_comparison_mode,
+                "split": self.split,
+                "comparison_split": getattr(self, "comparison_split", None),
+                "num_points": int(len(self.all_time_deltas)),
+            }
+            self._save_metadata_to_json(metadata, os.path.splitext(filepath)[0])
+            print(f"Inter-event time distribution plot saved to {filepath}")
+
+        # Show if requested
+        if do_show:
+            try:
+                plt.show()
+            except Exception:
+                # In headless environments plt.show may fail; ignore
+                pass
+
+        # Close the figure if not showing (or after showing)
         plt.close()
-        print(f"Inter-event time distribution plot saved to {filepath}")
 
         # Add QQ plot if in comparison mode
         if self.is_comparison_mode:
@@ -385,6 +416,8 @@ class Visualizer:
         title: str,
         save_path: str,
         log_scale: bool = False,
+        save_graph: bool = True,
+        show_graph: bool = False,
     ):
         """
         Creates and saves a QQ plot comparing two distributions.
@@ -490,12 +523,36 @@ class Visualizer:
             fontsize=9,
         )
 
-        plt.tight_layout()
-        plt.savefig(save_path, dpi=300, bbox_inches="tight")
-        plt.close()
-        print(f"QQ plot saved to {save_path}")
+        # Use provided flags
+        do_save = bool(save_graph)
+        do_show = bool(show_graph)
 
-    def event_type_distribution(self, filename: str = "event_type_dist.png"):
+        if do_save:
+            plt.tight_layout()
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
+            # Save metadata next to QQ plot
+            metadata = {
+                "plot_type": "qq_plot",
+                "title": title,
+                "is_comparison_mode": self.is_comparison_mode,
+            }
+            self._save_metadata_to_json(metadata, os.path.splitext(save_path)[0])
+            print(f"QQ plot saved to {save_path}")
+
+        if do_show:
+            try:
+                plt.show()
+            except Exception:
+                pass
+
+        plt.close()
+
+    def event_type_distribution(
+        self,
+        filename: str = "event_type_dist.png",
+        save_graph: bool = True,
+        show_graph: bool = False,
+    ):
         """
         Plots and saves the distribution of event types.
         In comparison mode, plots both datasets.
@@ -604,12 +661,35 @@ class Visualizer:
 
         plt.tight_layout()
 
-        filepath = os.path.join(self.save_dir, filename)
-        plt.savefig(filepath, dpi=300, bbox_inches="tight")
-        plt.close()
-        print(f"Event type distribution plot saved to {filepath}")
+        do_save = bool(save_graph)
+        do_show = bool(show_graph)
 
-    def sequence_length_distribution(self, filename: str = "sequence_length_dist.png"):
+        filepath = os.path.join(self.save_dir, filename)
+        if do_save:
+            plt.savefig(filepath, dpi=300, bbox_inches="tight")
+            metadata = {
+                "plot_type": "event_type_distribution",
+                "filename": filename,
+                "is_comparison_mode": self.is_comparison_mode,
+                "split": self.split,
+            }
+            self._save_metadata_to_json(metadata, os.path.splitext(filepath)[0])
+            print(f"Event type distribution plot saved to {filepath}")
+
+        if do_show:
+            try:
+                plt.show()
+            except Exception:
+                pass
+
+        plt.close()
+
+    def sequence_length_distribution(
+        self,
+        filename: str = "sequence_length_dist.png",
+        save_graph: bool = True,
+        show_graph: bool = False,
+    ):
         """
         Plots and saves the distribution of sequence lengths.
         In comparison mode, plots both datasets.
@@ -710,10 +790,28 @@ class Visualizer:
         plt.legend(frameon=True)
         plt.tight_layout()
 
+        do_save = bool(save_graph)
+        do_show = bool(show_graph)
+
         filepath = os.path.join(self.save_dir, filename)
-        plt.savefig(filepath, dpi=300, bbox_inches="tight")
+        if do_save:
+            plt.savefig(filepath, dpi=300, bbox_inches="tight")
+            metadata = {
+                "plot_type": "seq_len_distribution",
+                "filename": filename,
+                "is_comparison_mode": self.is_comparison_mode,
+                "split": self.split,
+            }
+            self._save_metadata_to_json(metadata, os.path.splitext(filepath)[0])
+            print(f"Sequence length distribution plot saved to {filepath}")
+
+        if do_show:
+            try:
+                plt.show()
+            except Exception:
+                pass
+
         plt.close()
-        print(f"Sequence length distribution plot saved to {filepath}")
 
         # Add QQ plot if in comparison mode
         if self.is_comparison_mode:
@@ -725,15 +823,15 @@ class Visualizer:
                 log_scale=False,
             )
 
-    def show_all_distributions(self):
+    def show_all_distributions(self, save_graph: bool = True, show_graph: bool = False):
         """
         Run all visualization functions and save the plots.
         """
         print("Generating visualization plots...")
         try:
-            self.delta_times_distribution()
-            self.event_type_distribution()
-            self.sequence_length_distribution()
+            self.delta_times_distribution(save_graph=save_graph, show_graph=show_graph)
+            self.event_type_distribution(save_graph=save_graph, show_graph=show_graph)
+            self.sequence_length_distribution(save_graph=save_graph, show_graph=show_graph)
             print("All plots generated successfully!")
         except Exception as e:
             print(f"Error occurred during plot generation: {e}")

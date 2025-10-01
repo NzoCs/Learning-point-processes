@@ -5,7 +5,7 @@ Cet exemple montre comment utiliser la factory pour simplifier
 le lancement des benchmarks par rapport au code précédent.
 """
 
-from easy_tpp.configs import DataConfig
+from easy_tpp.configs import DataConfig, DataConfigBuilder, config_factory
 from easy_tpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
     BenchmarksEnum as Benchmarks,
@@ -14,25 +14,33 @@ from easy_tpp.evaluation.benchmarks.benchmark_manager import (
 
 def example_simple_benchmark():
     """Exemple simple avec un seul benchmark."""
-    data_config = DataConfig(
-        dataset_id="test", data_format="pickle", num_event_types=2, batch_size=32
+    # Utilisation de DataConfigBuilder pour construire la config
+    builder = DataConfigBuilder()
+    builder.load_from_yaml(
+        yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
+        data_config_path="data_configs.test",
+        data_loading_config_path="data_loading_configs.quick_test",
     )
+    data_config = builder.build()
 
-    factory = BenchmarkManager(data_config, "test_dataset")
+    factory = BenchmarkManager(data_config)
     results = factory.run_single(Benchmarks.MEAN_INTER_TIME)
     print(f"Résultats: {results}")
 
 
 def example_multiple_benchmarks():
     """Exemple avec plusieurs benchmarks."""
-    data_config = DataConfig(
-        dataset_id="test", data_format="pickle", num_event_types=2, batch_size=32
+    builder = DataConfigBuilder()
+    builder.load_from_yaml(
+        yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
+        data_config_path="data_configs.test",
+        data_loading_config_path="data_loading_configs.quick_test",
     )
 
-    # Utiliser la factory pour plusieurs benchmarks
-    factory = BenchmarkManager(data_config, "test_dataset")
+    data_config = builder.build()
 
-    # Lancer plusieurs benchmarks spécifiques
+    factory = BenchmarkManager(data_config)
+
     selected_benchmarks = [
         Benchmarks.MEAN_INTER_TIME,
         Benchmarks.MARK_DISTRIBUTION,
@@ -47,24 +55,31 @@ def example_multiple_benchmarks():
 
 def example_all_benchmarks():
     """Exemple pour lancer tous les benchmarks."""
-    data_config = DataConfig(
-        dataset_id="test", data_format="pickle", num_event_types=2, batch_size=32
+    builder = DataConfigBuilder()
+    builder.load_from_yaml(
+        yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
+        data_config_path="data_configs.test",
+        data_loading_config_path="data_loading_configs.quick_test",
     )
+    data_config = builder.build()
 
-    factory = BenchmarkManager(data_config, "test_dataset")
+    factory = BenchmarkManager(data_config)
     results = factory.run_all()
     print(f"Tous les benchmarks terminés: {len(results)} benchmarks")
 
 
 def example_by_names():
     """Exemple pour lancer des benchmarks par leurs noms."""
-    data_config = DataConfig(
-        dataset_id="test", data_format="pickle", num_event_types=2, batch_size=32
+    builder = DataConfigBuilder()
+    builder.load_from_yaml(
+        yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
+        data_config_path="data_configs.test",
+        data_loading_config_path="data_loading_configs.quick_test",
     )
+    data_config = builder.build()
 
-    factory = BenchmarkManager(data_config, "test_dataset")
+    factory = BenchmarkManager(data_config)
 
-    # Lancer par noms (pratique pour la configuration)
     benchmark_names = ["mean_inter_time", "mark_distribution_sampling"]
     results = factory.run_by_names(benchmark_names)
 
@@ -73,13 +88,16 @@ def example_by_names():
 
 def example_with_parameters():
     """Exemple avec des paramètres personnalisés."""
-    data_config = DataConfig(
-        dataset_id="test", data_format="pickle", num_event_types=2, batch_size=32
+    builder = DataConfigBuilder()
+    builder.load_from_yaml(
+        yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
+        data_config_path="data_configs.test",
+        data_loading_config_path="data_loading_configs.quick_test"
     )
+    data_config = builder.build()
 
-    factory = BenchmarkManager(data_config, "test_dataset", save_dir="./custom_results")
+    factory = BenchmarkManager(data_config)
 
-    # Lancer avec des paramètres spécifiques
     results = factory.run_single(
         Benchmarks.INTERTIME_DISTRIBUTION,
         num_bins=100,  # Paramètre personnalisé pour ce benchmark

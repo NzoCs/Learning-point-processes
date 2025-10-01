@@ -14,7 +14,7 @@ import yaml
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
 
-from .base_bench import Benchmark, BenchmarkMode, run_benchmark
+from .base_bench import Benchmark, BenchmarkMode
 
 
 class MeanInterTimeBenchmark(Benchmark):

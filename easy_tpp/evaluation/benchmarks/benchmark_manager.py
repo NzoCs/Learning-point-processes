@@ -28,7 +28,9 @@ from .sample_distrib_mark_bench import (
     MarkDistributionBenchmark,
 )
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+from easy_tpp.configs import DataConfig
+
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent / "artifacts"
 
 class BenchmarksEnum(Enum):
     """Enum des benchmarks disponibles."""
@@ -74,8 +76,7 @@ class BenchmarkManager:
 
     def __init__(
         self,
-        data_config,
-        dataset_name: str,
+        data_config: DataConfig,
         save_dir: Optional[Union[Path, str]] = None,
     ):
         """
@@ -87,8 +88,8 @@ class BenchmarkManager:
             save_dir: Répertoire pour sauvegarder les résultats
         """
         self.data_config = data_config
-        self.dataset_name = dataset_name
-        self.save_dir = save_dir or ROOT_DIR / "artifacts" / dataset_name / "benchmarks"
+        self.dataset_name = data_config.dataset_id
+        self.save_dir = save_dir or ROOT_DIR / "benchmarks"
         Path(self.save_dir).mkdir(parents=True, exist_ok=True)
 
     def run_single(self, benchmark: BenchmarksEnum, **kwargs):

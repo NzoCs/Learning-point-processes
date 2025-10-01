@@ -44,6 +44,7 @@ dependencies = [
 
 cli = [
     # CLI-specific dependencies with proper version constraints
+    "typer>=0.19.2",
     "rich>=14.1.0",
     "pyyaml>=6.0.2",
     "typer>=0.19.1",

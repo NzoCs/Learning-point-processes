@@ -25,7 +25,6 @@ from .model_config import (
     ThinningConfig,
 )
 from .runner_config import RunnerConfig, TrainingConfig
-from .config_utils import ConfigTransformer
 from easy_tpp.utils import logger
 
 

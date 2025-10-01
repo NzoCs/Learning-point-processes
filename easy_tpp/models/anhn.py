@@ -23,6 +23,7 @@ class ANHN(NeuralModel):
             use_norm: bool = True,
             time_emb_size: int = 32,
             ):
+        
         """Initialize the model
 
         Args:

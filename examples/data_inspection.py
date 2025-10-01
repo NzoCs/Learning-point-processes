@@ -1,22 +1,27 @@
-from easy_tpp.configs import DataConfig
+from easy_tpp.configs import DataConfigBuilder
 from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.data.preprocess.visualizer import Visualizer
 
 
 def inspect_dataset() -> None:
     """Inspect dataset distribution and statistics."""
-    # Configuration for data inspection
-    data_config = DataConfig(
-        dataset_id="test", data_format="pickle", num_event_types=2, batch_size=32
-    )
+    # Configuration for data inspection (use builder)
+    builder = DataConfigBuilder()
+    builder.set_field("dataset_id", "test")
+    builder.set_field("train_dir", "NzoCs/test_dataset")
+    builder.set_field("valid_dir", "NzoCs/test_dataset")
+    builder.set_field("test_dir", "NzoCs/test_dataset")
+    builder.set_field("data_loading_specs", {"batch_size": 32})
+    builder.set_field("data_specs", {"num_event_types": 2})
+    data_config = builder.build()
 
     # Create data module
     datamodule = TPPDataModule(data_config)
-    datamodule.setup(stage="fit")
+    datamodule.setup(stage="test")
 
     # Create visualizer
     visualizer = Visualizer(
-        data_setup=datamodule, split="train", save_dir="./inspection_plots"
+        data_module=datamodule, split="train", save_dir="./inspection_plots"
     )
 
     # Generate analysis plots
@@ -27,30 +32,9 @@ def inspect_dataset() -> None:
     print("Data inspection completed - check ./inspection_plots")
 
 
-def inspect_synthetic_data() -> None:
-    """Inspect synthetic data generated from gen_synthetic_data.py."""
-    data_config = DataConfig(
-        dataset_id="synthetic_hawkes_data",
-        data_format="json",
-        num_event_types=3,
-        batch_size=16,
-    )
-
-    datamodule = TPPDataModule(data_config)
-    datamodule.setup(stage="fit")
-
-    visualizer = Visualizer(
-        data_setup=datamodule, split="train", save_dir="./synthetic_inspection_plots"
-    )
-
-    visualizer.show_all_distributions(save_graph=True, show_graph=False)
-    print("Synthetic data inspection completed - check ./synthetic_inspection_plots")
-
 
 def main() -> None:
     inspect_dataset()
-    inspect_synthetic_data()
-
 
 if __name__ == "__main__":
     main()

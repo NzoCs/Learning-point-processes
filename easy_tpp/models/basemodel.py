@@ -25,7 +25,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
 
     def __init__(
-            self, 
+            self,
             model_config: ModelConfig,
             *,
             num_event_types: int,

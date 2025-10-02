@@ -3,27 +3,44 @@ from torch import nn
 
 from easy_tpp.configs import ModelConfig
 from easy_tpp.models.baselayer import MultiHeadAttention
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.neural_model import NeuralModel
 
 
-class ANHN(BaseModel):
+class ANHN(NeuralModel):
     """Torch implementation of Attentive Neural Hawkes Network, IJCNN 2021.
     http://arxiv.org/abs/2211.11758
     """
 
-    def __init__(self, model_config: ModelConfig):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,
+            hidden_size: int = 128,
+            dropout: float = 0.1,
+            num_event_types: int,
+            num_layers: int = 2,
+            num_heads: int = 2,
+            use_norm: bool = True,
+            time_emb_size: int = 32,
+            ):
+        
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(ANHN, self).__init__(model_config)
+        super(ANHN, self).__init__(
+            model_config, 
+            num_event_types=num_event_types,
+            hidden_size=hidden_size,
+            dropout=dropout,
+            )
 
-        self.d_time = model_config.specs.time_emb_size
-        self.use_norm = model_config.specs.use_ln
+        self.d_time = time_emb_size
+        self.use_norm = use_norm
 
-        self.n_layers = model_config.specs.num_layers
-        self.n_head = model_config.specs.num_heads
+        self.n_layers = num_layers
+        self.n_head = num_heads
         self.layer_rnn = nn.LSTM(
             input_size=self.hidden_size, hidden_size=self.hidden_size, batch_first=True
         )
@@ -42,7 +59,7 @@ class ANHN(BaseModel):
         )
 
         self.layer_att = MultiHeadAttention(
-            self.n_head, self.hidden_size, self.hidden_size, self.dropout
+            self.n_head, self.hidden_size, self.hidden_size, model_config.specs.get("dropout", 0.0),
         )
 
         self.layer_intensity = nn.Sequential(

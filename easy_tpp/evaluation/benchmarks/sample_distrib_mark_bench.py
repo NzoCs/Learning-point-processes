@@ -5,16 +5,18 @@ This benchmark creates bins to approximate the distribution of event marks (type
 from the training dataset, then predicts marks by sampling from this distribution.
 """
 
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
+
 import torch
 import yaml
 
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
-from .base_bench import BaseBenchmark, BenchmarkMode
+
+from .base_bench import Benchmark, BenchmarkMode
 
 
-class MarkDistributionBenchmark(BaseBenchmark):
+class MarkDistributionBenchmark(Benchmark):
     """
     Benchmark that samples event marks from the empirical distribution of training data.
     """
@@ -153,4 +155,3 @@ class MarkDistributionBenchmark(BaseBenchmark):
                 )
             }
         }
-

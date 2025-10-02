@@ -1,7 +1,8 @@
-import torch
 import logging
 import re
-from typing import Dict, Any
+from typing import Any, Dict
+
+import torch
 
 logger = logging.getLogger(__name__)
 

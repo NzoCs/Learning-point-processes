@@ -1,22 +1,22 @@
 import copy
 from collections import UserDict
-from typing import Optional, Union, Dict, Any, List, Mapping
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import numpy as np
 
+from easy_tpp.configs import TokenizerConfig
 from easy_tpp.utils import (
-    is_torch_available,
-    is_tf_available,
-    logger,
-    TruncationStrategy,
     PaddingStrategy,
     TensorType,
-    is_torch_device,
-    requires_backends,
+    TruncationStrategy,
     is_numpy_array,
+    is_tf_available,
+    is_torch_available,
+    is_torch_device,
+    logger,
     py_assert,
+    requires_backends,
 )
-from easy_tpp.configs import TokenizerConfig
 
 
 class BatchEncoding(UserDict):

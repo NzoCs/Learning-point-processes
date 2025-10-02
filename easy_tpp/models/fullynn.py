@@ -1,10 +1,10 @@
 import torch
 from torch import nn
-from torch.nn import functional as F
 from torch.autograd import grad
+from torch.nn import functional as F
 
-from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.configs import ModelConfig
+from easy_tpp.models.basemodel import Model
 
 
 class CumulHazardFunctionNetwork(nn.Module):
@@ -12,31 +12,39 @@ class CumulHazardFunctionNetwork(nn.Module):
     ref: https://github.com/wassname/torch-neuralpointprocess
     """
 
-    def __init__(self, model_config: ModelConfig):
+    def __init__(
+            self, 
+            *,
+            hidden_size: int = 32,
+            num_event_types: int,
+            num_mlp_layers: int = 3,
+            proper_marked_intensities: bool = True,
+            ):
+
         super(CumulHazardFunctionNetwork, self).__init__()
-        self.hidden_size = model_config.specs.hidden_size
-        self.num_mlp_layers = model_config.specs.num_mlp_layers
-        self.num_event_types = model_config.num_event_types
-        self.proper_marked_intensities = model_config.specs.proper_marked_intensities
+
+        self.num_mlp_layers = num_mlp_layers
+        self.num_event_types = num_event_types
+        self.proper_marked_intensities = proper_marked_intensities
 
         # transform inter-event time embedding
-        self.layer_dense_1 = nn.Linear(in_features=1, out_features=self.hidden_size)
+        self.layer_dense_1 = nn.Linear(in_features=1, out_features=hidden_size)
 
         # concat rnn states and inter-event time embedding
         self.layer_dense_2 = nn.Linear(
-            in_features=self.hidden_size * 2, out_features=self.hidden_size
+            in_features=hidden_size * 2, out_features=hidden_size
         )
 
         # mlp layers
         self.module_list = nn.ModuleList(
             [
-                nn.Linear(in_features=self.hidden_size, out_features=self.hidden_size)
-                for _ in range(self.num_mlp_layers - 1)
+                nn.Linear(in_features=hidden_size, out_features=hidden_size)
+                for _ in range(num_mlp_layers - 1)
             ]
         )
 
         self.layer_dense_3 = nn.Sequential(
-            nn.Linear(in_features=self.hidden_size, out_features=self.num_event_types),
+            nn.Linear(in_features=hidden_size, out_features=num_event_types),
             nn.Softplus(),
         )
 
@@ -102,7 +110,7 @@ class CumulHazardFunctionNetwork(nn.Module):
         return integral_lambda, derivative_integral_lambda
 
 
-class FullyNN(BaseModel):
+class FullyNN(Model):
     """Torch implementation of
     Fully Neural Network based Model for General Temporal Point Processes, NeurIPS 2019.
     https://arxiv.org/abs/1905.09690
@@ -111,17 +119,25 @@ class FullyNN(BaseModel):
         https://github.com/wassname/torch-neuralpointprocess
     """
 
-    def __init__(self, model_config: ModelConfig):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,
+            num_event_types: int,
+            num_layers: int = 2,
+            rnn_type: str = "LSTM",
+
+        ):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(FullyNN, self).__init__(model_config)
+        super(FullyNN, self).__init__(model_config, num_event_types)
 
-        self.rnn_type = model_config.specs.rnn_type
+        self.rnn_type = rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
-        self.n_layers = model_config.specs.num_layers
+        self.n_layers = num_layers
         for sub_rnn_class in self.rnn_list:
             if sub_rnn_class.__name__ == self.rnn_type:
                 self.layer_rnn = sub_rnn_class(
@@ -129,7 +145,7 @@ class FullyNN(BaseModel):
                     hidden_size=self.hidden_size,
                     num_layers=self.n_layers,
                     batch_first=True,
-                    dropout=self.dropout,
+                    dropout=self.specs["dropout"],
                 )
 
         self.layer_intensity = CumulHazardFunctionNetwork(model_config)

@@ -5,17 +5,19 @@ This benchmark always predicts the mean inter-time from the training dataset.
 It computes RMSE and other time-based metrics using the metrics helper.
 """
 
+from typing import Any, Dict, Tuple
+
 import numpy as np
-from typing import Dict, Any, Tuple
 import torch
 import yaml
 
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.utils import logger
-from .base_bench import BaseBenchmark, BenchmarkMode, run_benchmark
+
+from .base_bench import Benchmark, BenchmarkMode
 
 
-class MeanInterTimeBenchmark(BaseBenchmark):
+class MeanInterTimeBenchmark(Benchmark):
     """
     Benchmark that predicts the mean inter-time for all events.
     """

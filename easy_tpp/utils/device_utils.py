@@ -1,5 +1,6 @@
+from typing import Any, Tuple, Union
+
 import torch
-from typing import Union, Tuple, Any
 
 
 def ensure_same_device(

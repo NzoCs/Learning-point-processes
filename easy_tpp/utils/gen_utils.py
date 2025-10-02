@@ -1,6 +1,7 @@
 import numpy as np
-from easy_tpp.utils.misc import save_json
 from tqdm import tqdm
+
+from easy_tpp.utils.misc import save_json
 
 
 def generate_synthetic_data(

@@ -2,24 +2,25 @@
 Main Temporal Point Process Comparator
 """
 
+import os
+from typing import Any, Dict, List, Union
+
+from easy_tpp.data.preprocess.dataset import TPPDataset
 from easy_tpp.utils import logger
-from .interfaces import DataExtractor, PlotGenerator, MetricsCalculator
+
 from .data_extractors import (
     LabelDataExtractor,
     SimulationDataExtractor,
     TPPDatasetExtractor,
 )
-from .plot_generators import (
-    InterEventTimePlotGenerator,
-    EventTypePlotGenerator,
-    SequenceLengthPlotGenerator,
-    CrossCorrelationPlotGenerator,
-)
-
+from .distribution_interfaces import DataExtractor, MetricsCalculator, PlotGenerator
 from .metrics_calculator import MetricsCalculatorImpl
-from easy_tpp.data.preprocess.dataset import TPPDataset
-from typing import Dict, List, Any, Union
-import os
+from .plot_generators import (
+    CrossCorrelationPlotGenerator,
+    EventTypePlotGenerator,
+    InterEventTimePlotGenerator,
+    SequenceLengthPlotGenerator,
+)
 
 
 class NTPPComparator:

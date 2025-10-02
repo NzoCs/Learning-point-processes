@@ -2,9 +2,11 @@
 Metrics Calculator for Temporal Point Process Analysis.
 """
 
-from easy_tpp.utils import logger
-from typing import Dict, Any
+from typing import Any, Dict
+
 import numpy as np
+
+from easy_tpp.utils import logger
 
 
 class MetricsCalculatorImpl:

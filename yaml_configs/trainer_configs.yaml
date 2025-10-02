@@ -1,0 +1,288 @@
+# ===== CONFIGURATIONS D'ENTRAÎNEMENT (TRAINER) =====
+# Ces configurations contiennent uniquement les paramètres d'entraînement
+# Les données, modèles et simulations sont configurés séparément
+
+# Configuration pour tests rapides
+quick_test:
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 1
+    
+  training_config:
+    max_epochs: 5
+    val_freq: 1
+    accumulate_grad_batches: 1
+    patience: 3
+    logger_config:
+      type: tensorboard
+      name: quick_test_logs
+
+# Configuration pour développement
+dev:
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 2
+    
+  training_config:
+    max_epochs: 50
+    val_freq: 5
+    accumulate_grad_batches: 1
+    patience: 10
+    logger_config:
+      type: tensorboard
+      name: dev_logs
+
+# Configuration pour entraînement standard
+standard:
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 4
+    
+  training_config:
+    max_epochs: 500
+    val_freq: 10
+    accumulate_grad_batches: 1
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: standard_logs
+
+# Configuration standard avec batch plus petit (mémoire limitée)
+standard_small_batch:
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  training_config:
+    max_epochs: 500
+    val_freq: 10
+    accumulate_grad_batches: 2  # Compense le petit batch
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: standard_small_batch_logs
+
+# Configuration standard avec très petit batch (mémoire très limitée)
+standard_tiny_batch:
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 2
+    
+  training_config:
+    max_epochs: 500
+    val_freq: 10
+    accumulate_grad_batches: 4  # Compense le très petit batch
+    patience: 20
+    logger_config:
+      type: tensorboard
+      name: standard_tiny_batch_logs
+
+# Configuration pour entraînement long
+production:
+  data_loading_specs:
+    batch_size: 256
+    num_workers: 8
+    
+  training_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 1
+    patience: 50
+    logger_config:
+      type: tensorboard
+      name: production_logs
+
+# Configuration production avec batch moyen (mémoire limitée)
+production_medium_batch:
+  data_loading_specs:
+    batch_size: 128
+    num_workers: 6
+    
+  training_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 2  # Compense le batch plus petit
+    patience: 50
+    logger_config:
+      type: tensorboard
+      name: production_medium_batch_logs
+
+# Configuration production avec petit batch (mémoire très limitée)
+production_small_batch:
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  training_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 4  # Compense le petit batch
+    patience: 50
+    logger_config:
+      type: tensorboard
+      name: production_small_batch_logs
+
+# Configuration production avec très petit batch (GPU faible)
+production_tiny_batch:
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 2
+    
+  training_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 8  # Compense le très petit batch
+    patience: 50
+    logger_config:
+      type: tensorboard
+      name: production_tiny_batch_logs
+
+# Configuration production avec micro batch (CPU ou GPU très faible)
+production_micro_batch:
+  data_loading_specs:
+    batch_size: 16
+    num_workers: 1
+    
+  training_config:
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 16  # Compense le micro batch
+    patience: 50
+    logger_config:
+      type: tensorboard
+      name: production_micro_batch_logs
+
+# Configuration pour gros datasets (batch plus large)
+large_dataset:
+  data_loading_specs:
+    batch_size: 512
+    num_workers: 8
+    
+  training_config:
+    max_epochs: 200
+    val_freq: 5
+    accumulate_grad_batches: 2
+    patience: 30
+    logger_config:
+      type: tensorboard
+      name: large_dataset_logs
+
+# Configuration pour debugging (très petit)
+debug:
+  data_loading_specs:
+    batch_size: 8
+    num_workers: 1
+    
+  training_config:
+    max_epochs: 3
+    val_freq: 1
+    accumulate_grad_batches: 1
+    patience: 2
+    logger_config:
+      type: tensorboard
+      name: debug_logs
+
+# Configuration pour expérimentation rapide
+experiment:
+  data_loading_specs:
+    batch_size: 16
+    num_workers: 1
+    
+  training_config:
+    max_epochs: 10
+    val_freq: 2
+    accumulate_grad_batches: 1
+    patience: 5
+    logger_config:
+      type: tensorboard
+      name: experiment_logs
+
+# Configuration pour validation croisée
+cross_validation:
+  data_loading_specs:
+    batch_size: 64
+    num_workers: 4
+    
+  training_config:
+    max_epochs: 100
+    val_freq: 5
+    accumulate_grad_batches: 1
+    patience: 15
+    logger_config:
+      type: tensorboard
+      name: cv_logs
+
+# Configuration pour hyperparameter tuning
+hpo:
+  data_loading_specs:
+    batch_size: 32
+    num_workers: 2
+    
+  training_config:
+    max_epochs: 20
+    val_freq: 2
+    accumulate_grad_batches: 1
+    patience: 8
+    logger_config:
+      type: tensorboard
+      name: hpo_logs
+
+# Configuration pour entraînement intensif (GPU puissant)
+intensive:
+  data_loading_specs:
+    batch_size: 1024
+    num_workers: 12
+    
+  training_config:
+    max_epochs: 2000
+    val_freq: 20
+    accumulate_grad_batches: 4
+    patience: 100
+    logger_config:
+      type: tensorboard
+      name: intensive_logs
+
+# ===== EXEMPLES D'USAGE =====
+# 
+# Ces configurations de trainer contiennent uniquement les paramètres d'entraînement :
+# - data_loading_specs : taille de batch, nombre de workers
+# - training_config : epochs, validation, patience, logging
+#
+# Les autres aspects (données, modèles, simulations) sont configurés séparément.
+#
+# Configurations optimisées selon les contraintes de mémoire :
+#
+# 🔥 GPU Puissant (12GB+ VRAM) :
+# - intensive : batch=1024, epochs=2000
+# - large_dataset : batch=512, epochs=200  
+# - production : batch=256, epochs=1000
+#
+# 💪 GPU Moyen (6-8GB VRAM) :
+# - production_medium_batch : batch=128, epochs=1000
+# - standard : batch=128, epochs=500
+#
+# 🤏 GPU Faible (4GB VRAM) :
+# - production_small_batch : batch=64, epochs=1000
+# - standard_small_batch : batch=64, epochs=500
+#
+# 🐣 GPU Très Faible (2GB VRAM) ou CPU :
+# - production_tiny_batch : batch=32, epochs=1000
+# - production_micro_batch : batch=16, epochs=1000
+# - standard_tiny_batch : batch=32, epochs=500
+#
+# ⚡ Test & Expérimentation :
+# - debug : batch=8, epochs=3
+# - experiment : batch=16, epochs=10
+# - quick_test : batch=32, epochs=5
+# - dev : batch=64, epochs=50
+#
+# 🔍 Recherche & Validation :
+# - hpo : batch=32, epochs=20
+# - cross_validation : batch=64, epochs=100
+#
+# Avantages :
+# - ✅ Gradient accumulation automatique pour compenser les petits batches
+# - ✅ Ajustement des num_workers selon la capacité disponible
+# - ✅ Même qualité d'entraînement indépendamment du batch_size
+# - ✅ Configurations spécialisées pour chaque niveau de mémoire
+# - ✅ Permet d'entraîner sur n'importe quel matériel

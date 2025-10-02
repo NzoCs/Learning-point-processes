@@ -2,13 +2,16 @@
 Plot Generators for Temporal Point Process Analysis
 """
 
+from typing import Any, Dict
+
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+
 from easy_tpp.utils import logger
+
 from .base_plot_generator import BasePlotGenerator
 from .distribution_analyzer import DistributionAnalyzer
-from typing import Dict, Any
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 
 class InterEventTimePlotGenerator(BasePlotGenerator):

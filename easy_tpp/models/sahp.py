@@ -1,16 +1,17 @@
 import torch
 import torch.nn as nn
 
-from easy_tpp.models.baselayer import (
+from easy_tpp.configs.model_config import ModelConfig
+from .baselayer import (
     EncoderLayer,
     MultiHeadAttention,
-    TimeShiftedPositionalEncoding,
     ScaledSoftplus,
+    TimeShiftedPositionalEncoding,
 )
-from easy_tpp.models.basemodel import BaseModel
+from .neural_model import NeuralModel
 
 
-class SAHP(BaseModel):
+class SAHP(NeuralModel):
     """Torch implementation of Self-Attentive Hawkes Process, ICML 2020.
     Part of the code is collected from https://github.com/yangalan123/anhp-andtt/blob/master/sahp
 
@@ -18,25 +19,37 @@ class SAHP(BaseModel):
 
     """
 
-    def __init__(self, model_config):
+    def __init__(self, 
+                 model_config : ModelConfig,
+                 *,
+                 num_event_types: int,
+                 hidden_size: int = 128,
+                dropout: float = 0.1,
+                 use_norm: bool = True,
+                 time_emb_size: int = 32,
+                 num_layers: int = 2,
+                num_heads: int = 4,
+                 ):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(SAHP, self).__init__(model_config)
-        self.d_model = model_config.specs.hidden_size
-        self.d_time = model_config.specs.time_emb_size
+        super(SAHP, self).__init__(
+            model_config, num_event_types=num_event_types, hidden_size=hidden_size, dropout=dropout
+        )
+        self.d_model = self.hidden_size
+        self.d_time = time_emb_size
 
-        self.use_norm = model_config.specs.use_ln
+        self.use_norm = use_norm
 
         # position vector, used for temporal encoding
         self.layer_position_emb = TimeShiftedPositionalEncoding(
             d_model=self.d_model, device=self.device
         )
 
-        self.n_layers = model_config.specs.num_layers
-        self.n_head = model_config.specs.num_heads
+        self.n_layers = num_layers
+        self.n_head = num_heads
 
         # convert hidden vectors into a scalar
         self.layer_intensity_hidden = nn.Linear(self.d_model, self.num_event_types)

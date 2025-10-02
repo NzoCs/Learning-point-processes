@@ -1,5 +1,6 @@
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
-from typing import Optional, List, Tuple, Dict
 from tqdm import tqdm
 
 from easy_tpp.data.generation.base_simulator import BaseSimulator

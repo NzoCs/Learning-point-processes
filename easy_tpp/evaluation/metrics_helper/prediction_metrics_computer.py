@@ -2,18 +2,21 @@
 Prediction metrics computation class.
 """
 
+from typing import Any, Dict, List, Optional, Union
+
 import torch
 import torch.nn.functional as F
 import torchmetrics
-from typing import Dict, List, Any, Optional, Union
-from .interfaces import (
-    MetricsComputerInterface,
+
+from easy_tpp.utils import logger
+
+from .metrics_interfaces import (
     DataExtractorInterface,
+    MetricsComputerInterface,
     TimeExtractorInterface,
     TypeExtractorInterface,
 )
-from .shared_types import MaskedValues, TimeValues, TypeValues, PredictionMetrics
-from easy_tpp.utils import logger
+from .shared_types import MaskedValues, PredictionMetrics, TimeValues, TypeValues
 
 
 class TimeDataExtractor(TimeExtractorInterface):

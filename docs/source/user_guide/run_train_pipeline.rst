@@ -88,7 +88,7 @@ To be specific, one needs to define the following entries in the config file:
             sharing_param_layer: False
             loss_integral_num_sample_per_step: 20
             dropout: 0.0
-            use_ln: False
+            use_norm: False
             thinning_params:   # thinning algorithm for event sampling
                   num_seq: 10
                   num_sample: 1
@@ -100,11 +100,11 @@ To be specific, one needs to define the following entries in the config file:
                   dtime_max: 5
 
 
-*trainer_config* contains the training related specifications.
+*training_config* contains the training related specifications.
 
 .. code-block:: yaml
 
-        trainer_config:   # trainer arguments
+        training_config:   # trainer arguments
             seed: 2019
             gpu: 0
             batch_size: 256
@@ -208,7 +208,7 @@ In the `./checkpoints/` folder, one find the correct subfolder by concatenating 
       sharing_param_layer: false
       loss_integral_num_sample_per_step: 20
       dropout: 0.0
-      use_ln: false
+      use_norm: false
       seed: 2019
       gpu: 0
       thinning_params:

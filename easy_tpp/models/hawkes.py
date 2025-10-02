@@ -1,17 +1,23 @@
 import torch
 
-from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.configs.model_config import ModelConfig
+from easy_tpp.models.basemodel import Model
 
 
-class Hawkes(BaseModel):
+class Hawkes(Model):
     """
     PyTorch implementation of the Hawkes process model.
-    Inherits from BaseModel for integration with the framework, enabling
+    Inherits from Model for integration with the framework, enabling
     methods like predict_one_step_at_every_event.
     """
 
-    def __init__(self, model_config: ModelConfig, **kwargs) -> None:
+    def __init__(
+            self,
+            num_event_types: int,
+            mu: list[float],
+            alpha: list[list[float]],
+            beta: list[list[float]],
+            ) -> None:
         """
         Initialize the Hawkes model.
 
@@ -19,22 +25,17 @@ class Hawkes(BaseModel):
             model_config (EasyTPP.ModelConfig): Configuration object containing model specs.
                 Expected specs: 'mu' (list), 'alpha' (list of lists), 'beta' (list of lists).
         """
-        super().__init__(model_config, **kwargs)
 
-        # Load Hawkes parameters from config
-        # Ensure they are tensors on the correct device
-        # mu: [num_event_types]
-        # alpha: [num_event_types, num_event_types] (alpha[i, j] effect of type j on type i)
-        # beta: [num_event_types, num_event_types] (beta[i, j] decay rate for effect of type j on type i)
+        self.num_event_types = num_event_types
 
         # Convert parameters to tensors and move to the correct device
-        mu = torch.tensor(model_config.specs.mu, dtype=torch.float32).view(
+        mu = torch.tensor(mu, dtype=torch.float32).view(
             self.num_event_types
         )
-        alpha = torch.tensor(model_config.specs.alpha, dtype=torch.float32).view(
+        alpha = torch.tensor(alpha, dtype=torch.float32).view(
             self.num_event_types, self.num_event_types
         )
-        beta = torch.tensor(model_config.specs.beta, dtype=torch.float32).view(
+        beta = torch.tensor(beta, dtype=torch.float32).view(
             self.num_event_types, self.num_event_types
         )
 
@@ -164,7 +165,7 @@ class Hawkes(BaseModel):
     ) -> torch.Tensor:
         """
         Computes intensities at sampled times relative to each event in the sequence.
-        Required by BaseModel for prediction and loss calculation.
+        Required by Model for prediction and loss calculation.
         Calculates lambda(t_k + delta_t) using history up to event k (time_seq[k]).
 
         Args:

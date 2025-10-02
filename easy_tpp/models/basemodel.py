@@ -1,74 +1,67 @@
 """Base model with common functionality using PyTorch Lightning"""
 
-from collections import defaultdict
-from abc import ABC, abstractmethod
-from tqdm import tqdm
-import torch
-from torch import nn
-from torch.nn import functional as F
-import pytorch_lightning as pl
-from pytorch_lightning.utilities.types import STEP_OUTPUT
-from matplotlib import pyplot as plt
 import os
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import Optional
 
+import pytorch_lightning as pl
+import torch
+from matplotlib import pyplot as plt
+from pytorch_lightning.utilities.types import STEP_OUTPUT
+from torch import nn
+from torch.nn import functional as F
+from tqdm import tqdm
 
-from easy_tpp.models.thinning import EventSampler
 from easy_tpp.configs import ModelConfig
-from easy_tpp.evaluation.metrics_helper import MetricsHelper, EvaluationMode
-from easy_tpp.utils import logger, format_multivariate_simulations, save_json
+from easy_tpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
+from easy_tpp.models.thinning import EventSampler
+from easy_tpp.utils import format_multivariate_simulations, logger, save_json
+from .model_registry import RegistryMeta
 
 
-class BaseModel(pl.LightningModule, ABC):
+class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
+    """Base model class for all TPP models."""
 
-    def __init__(self, model_config: ModelConfig, **kwargs):
-        """Initialize the BaseModel
+
+    def __init__(
+            self,
+            model_config: ModelConfig,
+            *,
+            num_event_types: int,
+            ):
+
+        """Initialize the Model
 
         Args:
             model_config (EasyTPP.ModelConfig): model spec of configs
         """
-        super(BaseModel, self).__init__()
+        super(Model, self).__init__()
+
+
 
         # Save hyperparameters for later use
         self.save_hyperparameters()
 
         # Load model configuration
         pretrain_model_path = model_config.pretrain_model_path
-        base_config = model_config.base_config
-        model_specs = model_config.specs
+        self.scheduler_config = model_config.scheduler_config
 
         # Load training configuration
         self.compute_simulation = model_config.compute_simulation
-        self.lr = base_config.lr
-        self.lr_scheduler = base_config.lr_scheduler
-        self.max_epochs = base_config.max_epochs
-        self.dropout = base_config.dropout
 
         # Load data and model specifications
-        self.num_event_types = (
-            model_config.num_event_types
-        )  # not include [PAD], [BOS], [EOS]
-        self.num_event_types_pad = model_config.num_event_types_pad
-        self.pad_token_id = model_config.pad_token_id
-        self.hidden_size = model_specs.hidden_size
+        self.num_event_types = num_event_types
+        self.pad_token_id = num_event_types
 
-        self.loss_integral_num_sample_per_step = (
-            model_specs.loss_integral_num_sample_per_step
-        )
+        self.loss_integral_num_sample_per_step = model_config.thinning_config.loss_integral_num_sample_per_step
 
         self.eps = torch.finfo(torch.float32).eps
 
-        # Initialize type embedding
-        self.layer_type_emb = nn.Embedding(
-            num_embeddings=self.num_event_types_pad,  # have padding
-            embedding_dim=self.hidden_size,
-            padding_idx=self.pad_token_id,
-            device=self.device,
-        )
 
         # Model prediction configuration
-        self.gen_config = model_config.thinning
-        self.use_mc_samples = model_config.use_mc_samples
+        self.gen_config = model_config.thinning_config
+        self.use_mc_samples = self.gen_config.use_mc_samples
         self._device = model_config.device
         self.num_step_gen = self.gen_config.num_steps
         self.dtime_max = self.gen_config.dtime_max
@@ -85,7 +78,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         self.sim_events_counter = 0
         self.simulations = []
-        
+
         # Cache for event samplers to avoid reconstruction
         self._event_sampler_cache = {}
 
@@ -104,6 +97,52 @@ class BaseModel(pl.LightningModule, ABC):
             logger.info(
                 f"Successfully loaded pretrained model from: {pretrain_model_path}"
             )
+    
+    
+    # Implement for the models based on intensity (not implemented in intensity free)
+    def compute_intensities_at_sample_times(
+        self,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
+        """Compute the intensity at sampled times, not only event times.
+
+        Args:
+            time_seqs (tensor): [batch_size, seq_len], times seqs.
+            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
+            type_seqs (tensor): [batch_size, seq_len], event type seqs.
+            sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
+
+        Returns:
+            tensor: [batch_size, num_times, num_mc_sample, num_event_types],
+                    intensity at each timestamp for each event type."""
+        pass
+
+    
+    @abstractmethod
+    def loglike_loss(
+        self,
+        batch: tuple[
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+            torch.Tensor,
+        ],
+    ) -> tuple[torch.Tensor, int]:
+        """Compute the log-likelihood loss for a batch of data.
+
+        Args:
+            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+
+        Returns:
+            loss, number of events.
+        """
+        pass
+
 
     # Set up the event sampler if generation config is provided
     def event_sampler(self, num_sample=None):
@@ -116,7 +155,7 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Use num_sample as cache key
         cache_key = num_sample
-        
+
         # Check if we have a cached sampler for this num_sample
         if cache_key in self._event_sampler_cache:
             cached_sampler = self._event_sampler_cache[cache_key]
@@ -136,10 +175,10 @@ class BaseModel(pl.LightningModule, ABC):
             dtime_max=gen_config.dtime_max,
             device=self._device,
         )
-        
+
         # Cache the new sampler
         self._event_sampler_cache[cache_key] = event_sampler
-        
+
         return event_sampler
 
     @property
@@ -165,21 +204,6 @@ class BaseModel(pl.LightningModule, ABC):
             model._event_sampler_cache.clear()
 
         return model
-
-    @staticmethod
-    def generate_model_from_config(model_config: ModelConfig, **kwargs) -> "BaseModel":
-        """Generate the model in derived class based on model config.
-
-        Args:
-            model_config (EasyTPP.ModelConfig): config of model specs.
-        """
-        model_id = model_config.model_id
-
-        for subclass in BaseModel.__subclasses__():
-            if subclass.__name__ == model_id:
-                return subclass(model_config, **kwargs)
-
-        raise RuntimeError("No model named " + model_id)
 
     @staticmethod
     def get_logits_at_last_step(logits, batch_non_pad_mask, sample_len=None):
@@ -281,48 +305,6 @@ class BaseModel(pl.LightningModule, ABC):
         num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
         return event_ll, non_event_ll, num_events
 
-    @abstractmethod
-    def loglike_loss(
-        self,
-        batch: tuple[
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-        ],
-    ) -> tuple[torch.Tensor, int]:
-        """Compute the log-likelihood loss for a batch of data.
-
-        Args:
-            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
-
-        Returns:
-            loss, number of events.
-        """
-        pass
-
-    # Implement for the models based on intensity (not implemented in intensity free)
-    def compute_intensities_at_sample_times(
-        self,
-        time_seqs: torch.Tensor,
-        time_delta_seqs: torch.Tensor,
-        type_seqs: torch.Tensor,
-        sample_dtimes: torch.Tensor,
-        **kwargs,
-    ) -> torch.Tensor:
-        """Compute the intensity at sampled times, not only event times.
-
-        Args:
-            time_seqs (tensor): [batch_size, seq_len], times seqs.
-            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
-            type_seqs (tensor): [batch_size, seq_len], event type seqs.
-            sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
-
-        Returns:
-            tensor: [batch_size, num_times, num_mc_sample, num_event_types],
-                    intensity at each timestamp for each event type."""
-        pass
 
     def configure_optimizers(self):
         """Configure the optimizer for the model.
@@ -331,14 +313,19 @@ class BaseModel(pl.LightningModule, ABC):
             optimizer: The optimizer to use for training.
         """
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        # Use Adam optimizer with optional learning rate scheduler
+        lr = self.scheduler_config.lr
+        lr_scheduler = self.scheduler_config.lr_scheduler
+        max_epochs = self.scheduler_config.max_epochs
+
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
 
         # Use cosine decay scheduler instead
-        if hasattr(self, "lr_scheduler") and self.lr_scheduler:
+        if hasattr(self, "lr_scheduler") and lr_scheduler:
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer,
-                T_max=self.max_epochs,  # Total number of epochs
-                eta_min=self.lr * 0.01,  # Minimum learning rate at the end of schedule
+                T_max=max_epochs,  # Total number of epochs
+                eta_min=lr * 0.01,  # Minimum learning rate at the end of schedule
             )
             return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": None}
 
@@ -772,7 +759,7 @@ class BaseModel(pl.LightningModule, ABC):
             num_step = self.num_step_gen
 
         batch_size = time_seq_label.size(0)
-        
+
         if not forward:
             initial_seq = time_seq_label[:, :-num_step]
             initial_delta = time_delta_seq_label[:, :-num_step]
@@ -790,10 +777,16 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size, total_len, dtype=initial_seq.dtype, device=initial_seq.device
         ).contiguous()
         time_delta_buffer = torch.zeros(
-            batch_size, total_len, dtype=initial_delta.dtype, device=initial_delta.device
+            batch_size,
+            total_len,
+            dtype=initial_delta.dtype,
+            device=initial_delta.device,
         ).contiguous()
         event_buffer = torch.zeros(
-            batch_size, total_len, dtype=initial_event.dtype, device=initial_event.device
+            batch_size,
+            total_len,
+            dtype=initial_event.dtype,
+            device=initial_event.device,
         ).contiguous()
 
         # Copier les séquences initiales dans les buffers
@@ -806,17 +799,15 @@ class BaseModel(pl.LightningModule, ABC):
         # Boucle de prédiction avec indexation directe sur les buffers
         for _ in range(num_step):
             current_len += 1
-            
+
             # Obtenir les vues actuelles des séquences (pas de copie)
             current_time_seq = time_buffer[:, :current_len]
             current_time_delta = time_delta_buffer[:, :current_len]
             current_event_seq = event_buffer[:, :current_len]
-            
+
             # Utiliser predict_one_step pour éviter la duplication de code
             dtimes_pred, types_pred = self.predict_one_step(
-                current_time_seq,
-                current_time_delta, 
-                current_event_seq
+                current_time_seq, current_time_delta, current_event_seq
             )
 
             # Calcul du nouveau temps
@@ -859,7 +850,6 @@ class BaseModel(pl.LightningModule, ABC):
         if batch_size is None:
             batch_size = self.simulation_batch_size
 
-
         # Initialize sequences
         if batch is None:
             batch = [
@@ -887,7 +877,7 @@ class BaseModel(pl.LightningModule, ABC):
             batch_size, max_seq_len, device=self.device, dtype=torch.long
         ).contiguous()
 
-        # Copie initiale 
+        # Copie initiale
         initial_len = time_seq.size(1)
         time_buffer[:, :initial_len].copy_(time_seq)
         time_delta_buffer[:, :initial_len].copy_(time_delta_seq)
@@ -900,12 +890,12 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Utilisation de advanced indexing pour l'optimisation
         for mark in range(num_mark):
-            mark_mask = (event_seq == mark)  # [batch_size, seq_len]
+            mark_mask = event_seq == mark  # [batch_size, seq_len]
             if mark_mask.any():
                 # Opération vectorisée avec masquage efficace
                 masked_times = time_seq.masked_fill(~mark_mask, float("-inf"))
                 max_times, _ = masked_times.max(dim=1)
-                valid_mask = (max_times != float("-inf"))
+                valid_mask = max_times != float("-inf")
                 last_event_time[valid_mask, mark] = max_times[valid_mask]
 
         current_time = start_time
@@ -936,7 +926,10 @@ class BaseModel(pl.LightningModule, ABC):
 
                 try:
                     dtimes_pred, type_pred = self.predict_one_step(
-                        active_time_seq, active_time_delta, active_event_seq, num_sample=1
+                        active_time_seq,
+                        active_time_delta,
+                        active_event_seq,
+                        num_sample=1,
                     )
 
                     # Calcul des nouveaux temps
@@ -944,11 +937,11 @@ class BaseModel(pl.LightningModule, ABC):
 
                     # Mise à jour vectorisée de last_event_time pour les séquences actives
                     active_batch_size = len(active_indices)
-                    
+
                     # Vectorisation complète : utiliser advanced indexing pour mettre à jour last_event_time
                     type_pred_flat = type_pred.squeeze(-1)  # [active_batch_size]
                     last_times_flat = active_time_seq[:, -1]  # [active_batch_size]
-                    
+
                     # Mise à jour vectorisée avec scatter_
                     last_event_time[active_indices, type_pred_flat] = last_times_flat
 
@@ -1081,12 +1074,23 @@ class BaseModel(pl.LightningModule, ABC):
 
         # Calculate intensities on augmented intervals
         # [1, seq_len, precision, num_event_types]
-        intensities = self.compute_intensities_at_sample_times(
-            time_seq[:, 1:],  # [1, seq_len-1]
-            time_delta_seq[:, 1:],  # [1, seq_len-1]
-            type_seq[:, 1:],  # [1, seq_len-1]
-            time_deltas_sample,
-        )
+        # Run the intensity computations in a no-grad context to avoid creating
+        # "inference tensors" that PyTorch disallows being saved for backward.
+        # We then return a cloned/detached tensor so downstream code that may
+        # accidentally run under autograd won't try to save inference-only tensors.
+        with torch.no_grad():
+            intensities = self.compute_intensities_at_sample_times(
+                time_seq[:, 1:],  # [1, seq_len-1]
+                time_delta_seq[:, 1:],  # [1, seq_len-1]
+                type_seq[:, 1:],  # [1, seq_len-1]
+                time_deltas_sample,
+            )
+
+        # Ensure we return a regular Tensor (detach + clone) so it can be
+        # used safely by code paths that expect tensors requiring grad or that
+        # might be captured by autograd later. This avoids the RuntimeError:
+        # "Inference tensors cannot be saved for backward..."
+        intensities = intensities.detach().clone()
 
         time_diffs = time_seq.diff()
 
@@ -1250,7 +1254,9 @@ class BaseModel(pl.LightningModule, ABC):
         """
         # Determine possible event times
         dtime_boundary = time_delta_seq + self.dtime_max
-        accepted_dtimes, weights = self.event_sampler(num_sample=num_sample).draw_next_time_one_step(
+        accepted_dtimes, weights = self.event_sampler(
+            num_sample=num_sample
+        ).draw_next_time_one_step(
             time_seq,
             dtime_boundary,
             event_seq,

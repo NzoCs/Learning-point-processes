@@ -27,7 +27,7 @@ class DataGenerator(CLIRunnerBase):
         
     def generate_data(
         self,
-        output_dir: str,
+        output_dir: Optional[str] = None,
         num_simulations: int = 50,
         generation_method: str = "hawkes",
         splits: Optional[Dict[str, float]] = None,
@@ -65,6 +65,13 @@ class DataGenerator(CLIRunnerBase):
             
         try:
             self.print_info(f"Génération de {num_simulations} simulations - Méthode: {generation_method}")
+            
+            # Créer le répertoire de sortie par défaut si nécessaire
+            if output_dir is None:
+                from datetime import datetime
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_dir = str(self.get_output_path("data_generation", f"generated_{timestamp}"))
+                self.print_info(f"Répertoire de sortie: {output_dir}")
             
             # Valeurs par défaut pour les splits
             if splits is None:

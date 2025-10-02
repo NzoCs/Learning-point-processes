@@ -1,24 +1,17 @@
 import numpy as np
+import torch
 
-from easy_tpp.utils.import_utils import is_tf_available, is_torch_available
+from easy_tpp.utils.import_utils import is_torch_available
+
 
 
 def is_tensor(x):
     """
     Tests if `x` is a `torch.Tensor`, `tf.Tensor`, `jaxlib.xla_extension.DeviceArray` or `np.ndarray`.
     """
-    if is_torch_available():
-        import torch
 
-        if isinstance(x, torch.Tensor):
-            return True
-    if is_tf_available():
-        import tensorflow as tf
-
-        if isinstance(x, tf.Tensor):
-            return True
-
-    return isinstance(x, np.ndarray)
+    if isinstance(x, torch.Tensor):
+        return True
 
 
 def _is_numpy(x):
@@ -74,33 +67,3 @@ def is_torch_dtype(x):
     Tests if `x` is a torch dtype or not. Safe to call even if torch is not installed.
     """
     return False if not is_torch_available() else _is_torch_dtype(x)
-
-
-def _is_tensorflow(x):
-    import tensorflow as tf
-
-    return isinstance(x, tf.Tensor)
-
-
-def is_tf_tensor(x):
-    """
-    Tests if `x` is a tensorflow tensor or not. Safe to call even if tensorflow is not installed.
-    """
-    return False if not is_tf_available() else _is_tensorflow(x)
-
-
-def _is_tf_symbolic_tensor(x):
-    import tensorflow as tf
-
-    # the `is_symbolic_tensor` predicate is only available starting with TF 2.14
-    if hasattr(tf, "is_symbolic_tensor"):
-        return tf.is_symbolic_tensor(x)
-    return type(x) == tf.Tensor
-
-
-def is_tf_symbolic_tensor(x):
-    """
-    Tests if `x` is a tensorflow symbolic tensor or not (ie. not eager). Safe to call even if tensorflow is not
-    installed.
-    """
-    return False if not is_tf_available() else _is_tf_symbolic_tensor(x)

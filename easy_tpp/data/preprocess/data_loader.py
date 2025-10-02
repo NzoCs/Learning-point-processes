@@ -18,10 +18,10 @@ class TPPDataModule(pl.LightningDataModule):
         """
         super().__init__()
         self.data_config = data_config
-        self.num_event_types = data_config.data_specs.num_event_types
+        self.num_event_types = data_config.tokenizer_specs.num_event_types
         self.batch_size = data_config.data_loading_specs.batch_size
         self.shuffle = data_config.data_loading_specs.shuffle
-        self.tokenizer = EventTokenizer(data_config.data_specs)
+        self.tokenizer = EventTokenizer(data_config.tokenizer_specs)
 
         data_loading_specs = data_config.data_loading_specs
         self.padding = data_loading_specs.padding

@@ -139,21 +139,21 @@ class InteractiveSetup(CLIRunnerBase):
         data_config["data_format"] = data_format
         
         # Spécifications des données
-        data_specs = {}
+        tokenizer_specs = {}
         
         num_event_types = IntPrompt.ask(
             "Nombre de types d'événements",
             default=5
         )
-        data_specs["num_event_types"] = num_event_types
+        tokenizer_specs["num_event_types"] = num_event_types
         
         max_seq_len = IntPrompt.ask(
             "Longueur maximale des séquences",
             default=100
         )
-        data_specs["max_seq_len"] = max_seq_len
+        tokenizer_specs["max_seq_len"] = max_seq_len
         
-        data_config["data_specs"] = data_specs
+        data_config["tokenizer_specs"] = tokenizer_specs
         
         # Configuration du chargement
         if not quick_mode:

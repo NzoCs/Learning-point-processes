@@ -12,15 +12,15 @@ import json
 from .cli_base import CLIRunnerBase
 
 try:
-    from easy_tpp.configs import ConfigFactory, ConfigType
-    from easy_tpp.runners import RunnerManager
-    import psutil
-    import torch
+    from easy_tpp.configs import DataConfigBuilder
+    from easy_tpp.evaluation.benchmarks.benchmark_manager import (
+        BenchmarkManager,
+        BenchmarksEnum as Benchmarks,
+    )
 except ImportError as e:
-    ConfigFactory = None
-    RunnerManager = None
-    psutil = None
-    torch = None
+    DataConfigBuilder = None
+    BenchmarkManager = None
+    Benchmarks = None
     IMPORT_ERROR = str(e)
 
 class BenchmarkRunner(CLIRunnerBase):
@@ -34,77 +34,100 @@ class BenchmarkRunner(CLIRunnerBase):
         
     def run_benchmark(
         self,
-        configs: List[str],
-        models: Optional[List[str]] = None,
-        datasets: Optional[List[str]] = None,
-        output_dir: str = "./benchmarks",
-        iterations: int = 3,
-        include_memory: bool = True,
-        include_gpu: bool = True
+        config_path: str = "yaml_configs/configs.yaml",
+        data_config: str = "data_configs.test",
+        data_loading_config: str = "data_loading_configs.quick_test",
+        benchmarks: Optional[List[str]] = None,
+        output_dir: Optional[str] = None,
+        run_all: bool = False,
+        **benchmark_params
     ) -> bool:
         """
-        Lance un benchmark de performance sur plusieurs configurations.
+        Lance des benchmarks TPP en utilisant le BenchmarkManager.
         
         Args:
-            configs: Liste des fichiers de configuration à tester
-            models: Liste des modèles à tester (optionnel)
-            datasets: Liste des datasets à tester (optionnel)
-            output_dir: Répertoire de sortie des résultats
-            iterations: Nombre d'itérations par test
-            include_memory: Inclure les mesures de mémoire
-            include_gpu: Inclure les mesures GPU
+            config_path: Chemin vers le fichier YAML de configuration
+            data_config: Configuration des données (ex: 'data_configs.test')
+            data_loading_config: Configuration du chargement des données
+            benchmarks: Liste des noms de benchmarks à exécuter
+            output_dir: Répertoire de sortie
+            run_all: Exécuter tous les benchmarks disponibles
+            **benchmark_params: Paramètres supplémentaires pour les benchmarks
             
         Returns:
-            True si le benchmark s'est déroulé avec succès
+            True si les benchmarks se sont déroulés avec succès
         """
         # Vérifier les dépendances
-        required_modules = ["easy_tpp.config_factory", "easy_tpp.runners"]
+        required_modules = ["easy_tpp.configs", "easy_tpp.evaluation.benchmarks"]
         if not self.check_dependencies(required_modules):
             return False
             
         try:
-            self.print_info(f"Lancement du benchmark - {len(configs)} configs, {iterations} itérations")
+            self.print_info("Configuration du benchmark...")
             
-            output_dir = Path(output_dir)
-            output_dir.mkdir(parents=True, exist_ok=True)
+            # Créer le répertoire de sortie si nécessaire
+            if output_dir is None:
+                output_dir = str(self.get_output_path("benchmarks", f"benchmark_{int(time.time())}"))
+            else:
+                Path(output_dir).mkdir(parents=True, exist_ok=True)
             
-            # Résultats globaux
-            benchmark_results = {
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "system_info": self._collect_system_info(),
-                "benchmark_config": {
-                    "iterations": iterations,
-                    "include_memory": include_memory,
-                    "include_gpu": include_gpu
-                },
-                "results": []
-            }
+            # Construire la configuration des données
+            builder = DataConfigBuilder()
+            builder.load_from_yaml(
+                yaml_path=config_path,
+                data_config_path=data_config,
+                data_loading_config_path=data_loading_config
+            )
+            data_config = builder.build()
             
-            # Benchmark pour chaque configuration
-            for config_path in configs:
-                self.print_info(f"Test de configuration: {config_path}")
+            self.print_info(f"Configuration chargée: {data_config}")
+            
+            # Créer le BenchmarkManager
+            benchmark_manager = BenchmarkManager(data_config)
+            
+            # Déterminer quels benchmarks exécuter
+            if run_all:
+                self.print_info("Exécution de tous les benchmarks disponibles...")
+                results = benchmark_manager.run_all(**benchmark_params)
                 
-                config_results = self._benchmark_config(
-                    config_path, iterations, include_memory, include_gpu
-                )
-                benchmark_results["results"].append(config_results)
+            elif benchmarks:
+                self.print_info(f"Exécution des benchmarks: {benchmarks}")
                 
-                # Affichage intermédiaire
-                self._display_config_results(config_results)
+                # Convertir les noms en enum si nécessaire
+                benchmark_enums = []
+                for bench_name in benchmarks:
+                    try:
+                        # Essayer de trouver l'enum correspondant
+                        benchmark_enum = next(
+                            b for b in Benchmarks if b.benchmark_name.lower() == bench_name.lower()
+                        )
+                        benchmark_enums.append(benchmark_enum)
+                    except StopIteration:
+                        self.print_error(f"Benchmark non trouvé: {bench_name}")
+                        continue
+                
+                if benchmark_enums:
+                    results = benchmark_manager.run_multiple(benchmark_enums, **benchmark_params)
+                else:
+                    self.print_error("Aucun benchmark valide spécifié")
+                    return False
+                    
+            else:
+                # Par défaut, exécuter quelques benchmarks essentiels
+                self.print_info("Exécution des benchmarks par défaut...")
+                default_benchmarks = [
+                    Benchmarks.MEAN_INTER_TIME,
+                    Benchmarks.MARK_DISTRIBUTION,
+                    Benchmarks.INTERTIME_DISTRIBUTION
+                ]
+                results = benchmark_manager.run_multiple(default_benchmarks, **benchmark_params)
             
-            # Sauvegarde des résultats
-            results_file = output_dir / f"benchmark_{int(time.time())}.json"
-            with open(results_file, 'w') as f:
-                json.dump(benchmark_results, f, indent=2, default=str)
+            # Afficher les résultats
+            self._display_benchmark_results(results, output_dir)
             
-            # Génération du rapport
-            report_file = output_dir / "benchmark_report.html"
-            self._generate_html_report(benchmark_results, report_file)
+            self.print_success(f"Benchmarks terminés - {len(results)} benchmarks exécutés")
+            self.print_info(f"Résultats sauvegardés dans: {output_dir}")
             
-            # Résumé final
-            self._display_final_summary(benchmark_results)
-            
-            self.print_success(f"Benchmark terminé - Résultats: {results_file}")
             return True
             
         except Exception as e:
@@ -112,237 +135,112 @@ class BenchmarkRunner(CLIRunnerBase):
             self.logger.exception("Détails de l'erreur:")
             return False
     
-    def _benchmark_config(
-        self,
-        config_path: str,
-        iterations: int,
-        include_memory: bool,
-        include_gpu: bool
-    ) -> Dict[str, Any]:
-        """Benchmark d'une configuration spécifique."""
-        config_path = Path(config_path)
+    def _display_benchmark_results(self, results: Dict[str, Any], output_dir: str):
+        """Affiche et sauvegarde les résultats des benchmarks."""
         
-        results = {
-            "config_name": config_path.stem,
-            "config_path": str(config_path),
-            "iterations": iterations,
-            "timings": [],
-            "memory_usage": [],
-            "gpu_usage": [],
-            "errors": []
-        }
-        
-        for i in range(iterations):
-            self.print_info(f"  Itération {i+1}/{iterations}")
+        # Affichage dans la console
+        if self.console:
+            from rich.table import Table
             
-            try:
-                # Mesures avant exécution
-                start_memory = self._get_memory_usage() if include_memory else 0
-                start_gpu = self._get_gpu_usage() if include_gpu and torch and torch.cuda.is_available() else {}
-                
-                # Chronométrage de l'exécution
-                start_time = time.time()
-                
-                # Charger et exécuter la configuration
-                config = ConfigFactory.from_yaml(str(config_path), ConfigType.RUNNER)
-                runner = RunnerManager(config)
-                
-                # Exécution (mode test rapide pour benchmark)
-                runner.run(phase="train", max_epochs=5)  # Réduire pour benchmark
-                
-                end_time = time.time()
-                
-                # Mesures après exécution
-                end_memory = self._get_memory_usage() if include_memory else 0
-                end_gpu = self._get_gpu_usage() if include_gpu and torch and torch.cuda.is_available() else {}
-                
-                # Stocker les résultats
-                execution_time = end_time - start_time
-                results["timings"].append(execution_time)
-                
-                if include_memory:
-                    memory_delta = end_memory - start_memory
-                    results["memory_usage"].append(memory_delta)
-                
-                if include_gpu:
-                    results["gpu_usage"].append({
-                        "start": start_gpu,
-                        "end": end_gpu
-                    })
-                
-                self.print_success(f"    Temps: {execution_time:.2f}s")
-                
-            except Exception as e:
-                error_msg = str(e)
-                results["errors"].append(error_msg)
-                self.print_error(f"    Erreur: {error_msg}")
-        
-        # Calculer les statistiques
-        if results["timings"]:
-            results["stats"] = {
-                "mean_time": sum(results["timings"]) / len(results["timings"]),
-                "min_time": min(results["timings"]),
-                "max_time": max(results["timings"]),
-                "success_rate": (iterations - len(results["errors"])) / iterations
-            }
-        
-        return results
-    
-    def _collect_system_info(self) -> Dict[str, Any]:
-        """Collecte les informations système pour le benchmark."""
-        info = {
-            "python_version": __import__("sys").version,
-            "platform": __import__("platform").platform()
-        }
-        
-        # Informations PyTorch
-        if torch:
-            info["pytorch_version"] = torch.__version__
-            info["cuda_available"] = torch.cuda.is_available()
-            if torch.cuda.is_available():
-                info["cuda_version"] = torch.version.cuda
-                info["gpu_count"] = torch.cuda.device_count()
-        
-        # Informations système
-        if psutil:
-            info["cpu_count"] = psutil.cpu_count()
-            info["memory_total"] = psutil.virtual_memory().total
-        
-        return info
-    
-    def _get_memory_usage(self) -> float:
-        """Retourne l'utilisation mémoire actuelle en MB."""
-        if psutil:
-            return psutil.Process().memory_info().rss / 1024 / 1024
-        return 0.0
-    
-    def _get_gpu_usage(self) -> Dict[str, Any]:
-        """Retourne l'utilisation GPU actuelle."""
-        if not torch or not torch.cuda.is_available():
-            return {}
-        
-        try:
-            gpu_info = {}
-            for i in range(torch.cuda.device_count()):
-                gpu_info[f"gpu_{i}"] = {
-                    "memory_allocated": torch.cuda.memory_allocated(i) / 1024 / 1024,
-                    "memory_reserved": torch.cuda.memory_reserved(i) / 1024 / 1024
+            table = Table(title="Résultats des Benchmarks TPP")
+            table.add_column("Benchmark", style="cyan")
+            table.add_column("Statut", style="green")
+            table.add_column("Description", style="yellow")
+            
+            for benchmark_name, result in results.items():
+                status = "✓ Terminé" if result else "✗ Échec"
+                # Get benchmark description
+                descriptions = {
+                    'mean_inter_time': 'Always predicts the mean of inter-event times',
+                    'lag1_mark_benchmark': 'Predicts the last mark (previous event type)',
+                    'intertime_distribution_sampling': 'Samples from empirical inter-time distribution',
+                    'mark_distribution_sampling': 'Samples from empirical mark distribution'
                 }
-            return gpu_info
-        except:
-            return {}
+                description = descriptions.get(benchmark_name, 'TPP Benchmark')
+                
+                table.add_row(benchmark_name, status, description)
+            
+            self.console.print(table)
+        else:
+            print("\n=== Résultats des Benchmarks ===")
+            for benchmark_name, result in results.items():
+                status = "✓ Terminé" if result else "✗ Échec"
+                print(f"{status} {benchmark_name}")
+        
+        # Sauvegarde des résultats
+        self._save_benchmark_results(results, output_dir)
     
-    def _display_config_results(self, results: Dict[str, Any]):
-        """Affiche les résultats d'une configuration."""
-        if not self.console:
-            print(f"  Résultats pour {results['config_name']}:")
-            if "stats" in results:
-                print(f"    Temps moyen: {results['stats']['mean_time']:.2f}s")
-                print(f"    Taux de réussite: {results['stats']['success_rate']:.1%}")
-            return
-        
-        from rich.table import Table
-        
-        table = Table(title=f"Résultats: {results['config_name']}")
-        table.add_column("Métrique", style="cyan")
-        table.add_column("Valeur", style="magenta")
-        
-        if "stats" in results:
-            stats = results["stats"]
-            table.add_row("Temps moyen", f"{stats['mean_time']:.2f}s")
-            table.add_row("Temps min", f"{stats['min_time']:.2f}s")
-            table.add_row("Temps max", f"{stats['max_time']:.2f}s")
-            table.add_row("Taux de réussite", f"{stats['success_rate']:.1%}")
-        
-        if results["errors"]:
-            table.add_row("Erreurs", f"{len(results['errors'])}")
-        
-        self.console.print(table)
+    def _save_benchmark_results(self, results: Dict[str, Any], output_dir: str):
+        """Sauvegarde les résultats des benchmarks."""
+        try:
+            output_path = Path(output_dir)
+            
+            # Sauvegarder en JSON
+            results_data = {
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "benchmarks_executed": len(results),
+                "successful_benchmarks": sum(1 for r in results.values() if r),
+                "failed_benchmarks": sum(1 for r in results.values() if not r),
+                "results": results
+            }
+            
+            json_file = output_path / "benchmark_results.json"
+            with open(json_file, 'w') as f:
+                json.dump(results_data, f, indent=2, default=str)
+            
+            self.print_success(f"Résultats JSON sauvegardés: {json_file}")
+            
+            # Générer un rapport texte simple
+            report_file = output_path / "benchmark_report.txt"
+            with open(report_file, 'w') as f:
+                f.write(f"Rapport de Benchmark TPP\n")
+                f.write(f"========================\n\n")
+                f.write(f"Date: {results_data['timestamp']}\n")
+                f.write(f"Benchmarks exécutés: {results_data['benchmarks_executed']}\n")
+                f.write(f"Succès: {results_data['successful_benchmarks']}\n")
+                f.write(f"Échecs: {results_data['failed_benchmarks']}\n\n")
+                
+                f.write("Détails des résultats:\n")
+                f.write("-" * 30 + "\n")
+                for benchmark_name, result in results.items():
+                    status = "SUCCÈS" if result else "ÉCHEC"
+                    f.write(f"{benchmark_name}: {status}\n")
+            
+            self.print_success(f"Rapport texte sauvegardé: {report_file}")
+            
+        except Exception as e:
+            self.print_error(f"Erreur lors de la sauvegarde: {e}")
     
-    def _display_final_summary(self, benchmark_results: Dict[str, Any]):
-        """Affiche le résumé final du benchmark."""
-        if not self.console:
-            print("\n=== Résumé du Benchmark ===")
-            for result in benchmark_results["results"]:
-                if "stats" in result:
-                    print(f"{result['config_name']}: {result['stats']['mean_time']:.2f}s")
-            return
+    def list_available_benchmarks(self) -> List[str]:
+        """Retourne la liste des benchmarks disponibles."""
+        if Benchmarks is None:
+            self.print_error("BenchmarksEnum non disponible")
+            return []
         
-        from rich.table import Table
+        benchmarks = [benchmark.benchmark_name for benchmark in Benchmarks]
         
-        table = Table(title="Résumé du Benchmark")
-        table.add_column("Configuration", style="cyan")
-        table.add_column("Temps Moyen", style="magenta")
-        table.add_column("Taux Réussite", style="green")
-        table.add_column("Erreurs", style="red")
+        if self.console:
+            from rich.table import Table
+            
+            table = Table(title="Benchmarks TPP Disponibles")
+            table.add_column("Nom", style="cyan")
+            table.add_column("Description", style="yellow")
+            
+            descriptions = {
+                'mean_inter_time': 'Always predicts the mean of inter-event times',
+                'lag1_mark_benchmark': 'Predicts the last mark (previous event type)',
+                'intertime_distribution_sampling': 'Samples from empirical inter-time distribution',
+                'mark_distribution_sampling': 'Samples from empirical mark distribution'
+            }
+            
+            for benchmark in Benchmarks:
+                description = descriptions.get(benchmark.benchmark_name, 'TPP Benchmark')
+                table.add_row(benchmark.benchmark_name, description)
+            
+            self.console.print(table)
+        else:
+            print("\n=== Benchmarks Disponibles ===")
+            for benchmark in benchmarks:
+                print(f"- {benchmark}")
         
-        for result in benchmark_results["results"]:
-            if "stats" in result:
-                table.add_row(
-                    result["config_name"],
-                    f"{result['stats']['mean_time']:.2f}s",
-                    f"{result['stats']['success_rate']:.1%}",
-                    str(len(result["errors"]))
-                )
-        
-        self.console.print(table)
-    
-    def _generate_html_report(self, results: Dict[str, Any], output_file: Path):
-        """Génère un rapport HTML détaillé."""
-        html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <title>TPP Benchmark Report</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; }}
-        table {{ border-collapse: collapse; width: 100%; margin: 20px 0; }}
-        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-        th {{ background-color: #f2f2f2; }}
-        .summary {{ background-color: #e8f5e8; padding: 15px; border-radius: 5px; }}
-    </style>
-</head>
-<body>
-    <h1>TPP Benchmark Report</h1>
-    <div class="summary">
-        <h2>Informations Générales</h2>
-        <p><strong>Date:</strong> {results['timestamp']}</p>
-        <p><strong>Configurations testées:</strong> {len(results['results'])}</p>
-        <p><strong>Itérations par config:</strong> {results['benchmark_config']['iterations']}</p>
-    </div>
-    
-    <h2>Résultats Détaillés</h2>
-    <table>
-        <tr>
-            <th>Configuration</th>
-            <th>Temps Moyen (s)</th>
-            <th>Temps Min (s)</th>
-            <th>Temps Max (s)</th>
-            <th>Taux Réussite</th>
-            <th>Erreurs</th>
-        </tr>
-"""
-        
-        for result in results["results"]:
-            if "stats" in result:
-                html_content += f"""
-        <tr>
-            <td>{result['config_name']}</td>
-            <td>{result['stats']['mean_time']:.2f}</td>
-            <td>{result['stats']['min_time']:.2f}</td>
-            <td>{result['stats']['max_time']:.2f}</td>
-            <td>{result['stats']['success_rate']:.1%}</td>
-            <td>{len(result['errors'])}</td>
-        </tr>
-"""
-        
-        html_content += """
-    </table>
-</body>
-</html>
-"""
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        
-        self.print_success(f"Rapport HTML généré: {output_file}")
+        return benchmarks

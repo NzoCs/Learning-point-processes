@@ -26,7 +26,8 @@ try:
 except ImportError:
     TYPER_AVAILABLE = False
 
-# Configuration globale pour les chemins de config
+# Configuration globale pour les répertoires
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent  # Répertoire racine du projet
 CONFIG_DIR = "yaml_configs"
 CONFIG_PATHS = {
     "data": "data_configs",
@@ -42,6 +43,19 @@ DEFAULT_CONFIGS = {
     "runner": "default_runner_config.yaml",
     "simulation": "default_simulator_config.yaml",
     "hpo": "default_hpo_config.yaml"
+}
+
+# Configuration globale pour les répertoires de sortie (dans artifacts/)
+ARTIFACTS_DIR = "artifacts"
+OUTPUT_DIRS = {
+    "experiments": "experiments",
+    "models": "models",
+    "checkpoints": "checkpoints", 
+    "results": "results",
+    "benchmarks": "benchmarks",
+    "data_generation": "generated_data",
+    "data_inspection": "data_inspection",
+    "logs": "logs"
 }
 
 class CLIRunnerBase:
@@ -121,7 +135,7 @@ class CLIRunnerBase:
             
     def get_config_path(self, config_type: str, config_name: str = None) -> Path:
         """Retourne le chemin vers un fichier de configuration."""
-        base_dir = Path(CONFIG_DIR)
+        base_dir = ROOT_DIR / CONFIG_DIR
         
         if config_type in CONFIG_PATHS:
             config_dir = base_dir / CONFIG_PATHS[config_type]
@@ -132,3 +146,24 @@ class CLIRunnerBase:
             config_name = DEFAULT_CONFIGS.get(config_type, "config.yaml")
             
         return config_dir / config_name
+    
+    def get_output_path(self, output_type: str, subdir: str = None) -> Path:
+        """Retourne le chemin vers un répertoire de sortie dans artifacts/."""
+        base_dir = ROOT_DIR / ARTIFACTS_DIR
+        
+        if output_type in OUTPUT_DIRS:
+            output_dir = base_dir / OUTPUT_DIRS[output_type]
+        else:
+            output_dir = base_dir / output_type
+            
+        if subdir:
+            output_dir = output_dir / subdir
+            
+        # Créer le répertoire s'il n'existe pas
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        return output_dir
+    
+    def get_root_dir(self) -> Path:
+        """Retourne le répertoire racine du projet."""
+        return ROOT_DIR

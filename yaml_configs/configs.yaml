@@ -7,42 +7,42 @@ data_configs:
   taxi:
     data_format: json
     src_dir: easytpp/taxi
-    data_specs:
+    tokenizer_specs:
       num_event_types: 10
       padding_side: left
   
   taobao:
     data_format: json
     src_dir: easytpp/taobao
-    data_specs:
+    tokenizer_specs:
       num_event_types: 17
       padding_side: left
 
   amazon:
     data_format: json
     src_dir: easytpp/amazon
-    data_specs:
+    tokenizer_specs:
       num_event_types: 16
       padding_side: left
 
   test:
     data_format: json
     src_dir: NzoCs/test_dataset
-    data_specs:
+    tokenizer_specs:
       num_event_types: 2
       padding_side: left
       
   hawkes1:
     data_format: json
     src_dir: NzoCs/hawkes1
-    data_specs:
+    tokenizer_specs:
       num_event_types: 1
       padding_side: left
 
   hawkes2:
     data_format: json
     src_dir: NzoCs/hawkes2
-    data_specs:
+    tokenizer_specs:
       num_event_types: 2
       padding_side: left
 

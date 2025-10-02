@@ -69,12 +69,18 @@ console = Console()
 
 @app.command("run")
 def run_experiment(
-    config: Optional[str] = typer.Option(None, "--config", "-c", help="Fichier de configuration"),
-    dataset_id: Optional[str] = typer.Option(None, "--dataset", "-d", help="ID du dataset"),
-    model_id: Optional[str] = typer.Option(None, "--model", "-m", help="ID du modèle"),
+    config: Optional[str] = typer.Option(None, "--config", "-c", help="Fichier de configuration YAML"),
+    data_config: str = typer.Option("test", "--data-config", help="Configuration des données (test, large, synthetic)"),
+    model_config: str = typer.Option("neural_small", "--model-config", help="Configuration du modèle (neural_small, neural_large)"),
+    training_config: str = typer.Option("quick_test", "--training-config", help="Configuration d'entraînement (quick_test, full_training)"),
+    data_loading_config: str = typer.Option("quick_test", "--data-loading-config", help="Configuration de chargement des données"),
+    simulation_config: Optional[str] = typer.Option("simulation_fast", "--simulation-config", help="Configuration de simulation"),
+    thinning_config: Optional[str] = typer.Option("thinning_fast", "--thinning-config", help="Configuration de thinning"),
+    logger_config: str = typer.Option("tensorboard", "--logger-config", help="Configuration du logger (mlflow, tensorboard) [default: tensorboard]"),
+    model_id: str = typer.Option("NHP", "--model", "-m", help="ID du modèle (NHP, RMTPP, etc.)"),
     phase: str = typer.Option("all", "--phase", "-p", help="Phase d'exécution (train/test/predict/all)"),
     max_epochs: Optional[int] = typer.Option(None, "--epochs", "-e", help="Nombre maximum d'époques"),
-    save_dir: Optional[str] = typer.Option(None, "--save-dir", "-s", help="Répertoire de sauvegarde"),
+    save_dir: Optional[str] = typer.Option(None, "--save-dir", "-s", help="Répertoire de sauvegarde [default: artifacts/experiments]"),
     gpu_id: Optional[int] = typer.Option(None, "--gpu", "-g", help="ID du GPU à utiliser"),
     debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
@@ -82,7 +88,13 @@ def run_experiment(
     runner = ExperimentRunner()
     success = runner.run_experiment(
         config_path=config,
-        dataset_id=dataset_id,
+        data_config=data_config,
+        model_config=model_config,
+        training_config=training_config,
+        data_loading_config=data_loading_config,
+        simulation_config=simulation_config,
+        thinning_config=thinning_config,
+        logger_config=logger_config,
         model_id=model_id,
         phase=phase,
         max_epochs=max_epochs,
@@ -119,7 +131,7 @@ def inspect_data(
 
 @app.command("generate")
 def generate_data(
-    output_dir: str = typer.Argument(..., help="Répertoire de sortie"),
+    output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Répertoire de sortie [default: artifacts/generated_data/TIMESTAMP]"),
     num_sequences: int = typer.Option(1000, "--num-seq", "-n", help="Nombre de séquences"),
     max_seq_len: int = typer.Option(100, "--max-len", "-l", help="Longueur max des séquences"),
     num_event_types: int = typer.Option(5, "--event-types", "-t", help="Nombre de types d'événements"),
@@ -180,22 +192,30 @@ def interactive_setup(
     if not success:
         raise typer.Exit(1)
 
-@app.command("benchmark")
+@app.command("benchmark") 
 def benchmark_performance(
-    configs: List[str] = typer.Argument(..., help="Fichiers de configuration à tester"),
-    output_dir: str = typer.Option("./benchmarks", "--output", "-o", help="Répertoire de sortie"),
-    iterations: int = typer.Option(3, "--iterations", "-i", help="Nombre d'itérations"),
-    memory: bool = typer.Option(True, "--memory/--no-memory", help="Mesurer la mémoire"),
-    gpu: bool = typer.Option(True, "--gpu/--no-gpu", help="Mesurer le GPU")
+    config_path: str = typer.Option("yaml_configs/configs.yaml", "--config", "-c", help="Fichier de configuration YAML"),
+    data_config: str = typer.Option("data_configs.test", "--data-config", help="Configuration des données"),
+    data_loading_config: str = typer.Option("data_loading_configs.quick_test", "--data-loading-config", help="Configuration du chargement des données"),
+    benchmarks: Optional[List[str]] = typer.Option(None, "--benchmarks", "-b", help="Liste des benchmarks à exécuter"),
+    output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Répertoire de sortie"),
+    run_all: bool = typer.Option(False, "--all", help="Exécuter tous les benchmarks"),
+    list_benchmarks: bool = typer.Option(False, "--list", help="Lister les benchmarks disponibles")
 ):
-    """Lance des benchmarks de performance avec BenchmarkRunner."""
+    """Lance des benchmarks TPP avec BenchmarkRunner."""
     runner = BenchmarkRunner()
+    
+    if list_benchmarks:
+        runner.list_available_benchmarks()
+        return
+    
     success = runner.run_benchmark(
-        configs=configs,
+        config_path=config_path,
+        data_config=data_config,
+        data_loading_config=data_loading_config,
+        benchmarks=benchmarks,
         output_dir=output_dir,
-        iterations=iterations,
-        include_memory=memory,
-        include_gpu=gpu
+        run_all=run_all
     )
     
     if not success:

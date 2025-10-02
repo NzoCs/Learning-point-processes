@@ -28,11 +28,7 @@ def main() -> None:
         logger_config_path="logger_configs.mlflow",
     )
 
-    config_dict = config_builder.config_dict
-
-    config_factory = ConfigFactory()
-
-    config = config_factory.create_config(ConfigType.RUNNER, config_dict, model_id=model_id)
+    config = config_builder.build()
 
     # Create runner
     runner = RunnerManager(config=config)

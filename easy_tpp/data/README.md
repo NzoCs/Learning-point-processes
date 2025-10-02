@@ -62,7 +62,7 @@ from easy_tpp.config_factory import DataConfig
 data_config = DataConfig(
     data_dir='./data/synthetic_hawkes',
     data_format='json',
-    data_specs={
+    tokenizer_specs={
         'num_event_types': 2,
         'max_seq_len': 100
     },
@@ -126,7 +126,7 @@ def create_complete_data_pipeline():
     data_config = DataConfig(
         data_dir='./data/hawkes_3d',
         data_format='json',
-        data_specs={
+        tokenizer_specs={
             'num_event_types': 3,
             'max_seq_len': 150,
             'min_seq_len': 5
@@ -237,7 +237,7 @@ config = Config(
     data={
         'data_dir': './data/generated',
         'data_format': 'json',
-        'data_specs': {
+        'tokenizer_specs': {
             'num_event_types': 3,
             'max_seq_len': 200
         },
@@ -381,7 +381,7 @@ def process_real_data(raw_data_path, processed_data_path):
     data_config = DataConfig(
         data_dir=processed_data_path,
         data_format='json',
-        data_specs={'num_event_types': 'auto_detect'},
+        tokenizer_specs={'num_event_types': 'auto_detect'},
         data_loading_specs={'batch_size': 64}
     )
     

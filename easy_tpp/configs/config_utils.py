@@ -224,9 +224,9 @@ class ConfigTransformer:
                 ConfigTransformer.transform_data_loading_specs_config(dls)
             )
 
-        ds = config.get("data_specs", {})
+        ds = config.get("tokenizer_specs", {})
         if isinstance(ds, dict):
-            config["data_specs"] = ConfigTransformer.transform_tokenizer_config(ds)
+            config["tokenizer_specs"] = ConfigTransformer.transform_tokenizer_config(ds)
 
         return config
 

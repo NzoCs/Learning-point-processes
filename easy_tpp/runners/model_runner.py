@@ -66,7 +66,7 @@ class Runner:
         model_factory = ModelFactory()
         self.model = model_factory.create_model_by_name(
             model_name=config.model_id,
-            num_event_types=data_config.data_specs.num_event_types,
+            num_event_types=data_config.tokenizer_specs.num_event_types,
             model_config=model_config
         )
 

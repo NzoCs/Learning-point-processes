@@ -134,7 +134,7 @@ class DataConfig(Config):
         data_format (Optional[str]): Format of the dataset files (e.g., 'csv', 'json').
         dataset_id (Optional[str]): Identifier for the dataset.
         data_loading_specs (Union[DataLoadingSpecsConfig, dict]): Specifications for loading the data.
-        data_specs (Union[TokenizerConfig, dict]): Specifications for tokenization and event types.
+        tokenizer_specs (Union[TokenizerConfig, dict]): Specifications for tokenization and event types.
     """
 
     def __init__(
@@ -145,7 +145,7 @@ class DataConfig(Config):
         dataset_id: str,
         data_format: Optional[str] = None,
         data_loading_specs: Union[DataLoadingSpecsConfig, dict] = None,
-        data_specs: Union[TokenizerConfig, dict] = None,
+        tokenizer_specs: Union[TokenizerConfig, dict] = None,
         **kwargs
     ):
         self.train_dir = train_dir
@@ -158,10 +158,10 @@ class DataConfig(Config):
             self.data_loading_specs = DataLoadingSpecsConfig(**data_loading_specs)
         else:
             self.data_loading_specs = data_loading_specs if data_loading_specs is not None else DataLoadingSpecsConfig()
-        if isinstance(data_specs, dict):
-            self.data_specs = TokenizerConfig(**data_specs)
+        if isinstance(tokenizer_specs, dict):
+            self.tokenizer_specs = TokenizerConfig(**tokenizer_specs)
         else:
-            self.data_specs = data_specs if data_specs is not None else TokenizerConfig()
+            self.tokenizer_specs = tokenizer_specs if tokenizer_specs is not None else TokenizerConfig()
         super().__init__(**kwargs)
 
     def get_yaml_config(self) -> Dict[str, Any]:
@@ -176,10 +176,10 @@ class DataConfig(Config):
                 if hasattr(self.data_loading_specs, "get_yaml_config")
                 else self.data_loading_specs
             ),
-            "data_specs": (
-                self.data_specs.get_yaml_config()
-                if hasattr(self.data_specs, "get_yaml_config")
-                else self.data_specs
+            "tokenizer_specs": (
+                self.tokenizer_specs.get_yaml_config()
+                if hasattr(self.tokenizer_specs, "get_yaml_config")
+                else self.tokenizer_specs
             ),
         }
         return config

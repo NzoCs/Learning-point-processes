@@ -59,7 +59,7 @@ class Benchmark(ABC, BenchmarkInterface):
         self.save_dir = save_dir or "./benchmark_results"
         self.dataset_name = dataset_name
         self.benchmark_mode = benchmark_mode
-        self.pad_token = data_config.data_specs.pad_token_id
+        self.pad_token = data_config.tokenizer_specs.pad_token_id
 
         # Initialize data module with data_config
         self.data_module = TPPDataModule(data_config)

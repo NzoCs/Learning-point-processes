@@ -10,12 +10,9 @@ from pathlib import Path
 from .cli_base import CLIRunnerBase
 
 try:
-    from easy_tpp.configs import ConfigFactory, ConfigType
     from easy_tpp.configs import DataConfigBuilder
     from easy_tpp.data.preprocess import Visualizer
 except ImportError as e:
-    ConfigFactory = None
-    ConfigType = None
     DataConfigBuilder = None
     Visualizer = None
     IMPORT_ERROR = str(e)
@@ -65,8 +62,8 @@ class DataInspector(CLIRunnerBase):
             # Configuration des données via builder
             builder = DataConfigBuilder()
             builder.set_src_dir(data_dir)  # Utilise set_src_dir qui définit train/valid/test
-            builder.set_field("dataset_id", "inspection")
-            builder.set_field("data_format", data_format)
+            builder.set_dataset_id("test")
+            builder.set_data_format(data_format)
             
             # Spécifications de chargement par défaut
             builder.set_data_loading_specs({
@@ -76,7 +73,7 @@ class DataInspector(CLIRunnerBase):
             })
             
             # Spécifications de données par défaut (dépendront des données réelles)
-            builder.set_data_specs({
+            builder.set_tokenizer_specs({
                 "num_event_types": 10,  # Sera mis à jour après lecture des données
                 "padding_side": "left",
                 "truncation_side": "left"
@@ -98,8 +95,13 @@ class DataInspector(CLIRunnerBase):
                 )
             
             # Créer le visualizer (comme dans l'exemple)
-            save_dir = output_dir or f"{data_dir}_inspection"
-            Path(save_dir).mkdir(parents=True, exist_ok=True)
+            if output_dir:
+                save_dir = output_dir
+                Path(save_dir).mkdir(parents=True, exist_ok=True)
+            else:
+                # Utiliser le répertoire par défaut dans artifacts/
+                data_name = Path(data_dir).name
+                save_dir = str(self.get_output_path("data_inspection", data_name))
             
             # Utiliser train si disponible, sinon test
             split_to_use = "train"
@@ -397,8 +399,13 @@ class DataInspector(CLIRunnerBase):
         self.print_info(f"Données chargées depuis {split_name}.json")
         
         # Créer un répertoire de sortie
-        save_dir = output_dir or f"{data_dir}_inspection"
-        Path(save_dir).mkdir(parents=True, exist_ok=True)
+        if output_dir:
+            save_dir = output_dir
+            Path(save_dir).mkdir(parents=True, exist_ok=True)
+        else:
+            # Utiliser le répertoire par défaut dans artifacts/
+            data_name = Path(data_dir).name
+            save_dir = str(self.get_output_path("data_inspection", data_name))
         
         # Analyser les données directement
         results = self._analyze_data_directly(

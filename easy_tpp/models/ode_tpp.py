@@ -2,9 +2,9 @@ import torch
 from torch import nn
 
 from easy_tpp.models.baselayer import DNN
-from easy_tpp.models.basemodel import BaseModel
+from easy_tpp.models.basemodel import Model
 from easy_tpp.utils import rk4_step_method
-
+from easy_tpp.configs import ModelConfig
 
 def flatten_parameters(model):
     p_shapes = []
@@ -147,7 +147,7 @@ class NeuralODE(nn.Module):
         return output_state
 
 
-class ODETPP(BaseModel):
+class ODETPP(Model):
     """Torch implementation of a TPP with Neural ODE state evolution, which is a simplified version of TPP in
     https://arxiv.org/abs/2011.04583, ICLR 2021
 
@@ -156,13 +156,26 @@ class ODETPP(BaseModel):
 
     """
 
-    def __init__(self, model_config):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,
+            num_event_types: int,
+            hidden_size: int = 128,
+            dropout: float = 0.1,
+            ode_num_sample_per_step: int = 10,
+        ):
         """Initialize the model
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(ODETPP, self).__init__(model_config)
+        super(ODETPP, self).__init__(
+            model_config,
+            num_event_types=num_event_types,
+            hidden_size=hidden_size,
+            dropout=dropout,
+        )
 
         self.layer_intensity = nn.Sequential(
             nn.Linear(self.hidden_size, self.num_event_types), nn.Softplus()
@@ -172,7 +185,7 @@ class ODETPP(BaseModel):
             inputs_dim=self.hidden_size, hidden_size=[self.hidden_size]
         )
 
-        self.ode_num_sample_per_step = model_config.specs.ode_num_sample_per_step
+        self.ode_num_sample_per_step = ode_num_sample_per_step
 
         self.solver = rk4_step_method
 

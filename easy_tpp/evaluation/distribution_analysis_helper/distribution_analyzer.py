@@ -2,12 +2,14 @@
 Distribution Analysis Utilities for Temporal Point Processes
 """
 
-from easy_tpp.utils import logger
-from typing import Dict, List, Any, Optional, Tuple
-import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
 from scipy.stats import linregress
+
+from easy_tpp.utils import logger
 
 
 class DistributionAnalyzer:

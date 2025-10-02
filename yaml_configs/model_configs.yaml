@@ -1,0 +1,68 @@
+# ===== CONFIGURATIONS DE MODÈLES =====
+# Configurations des paramètres spécifiques aux modèles (architecture, hyperparamètres, etc.)
+
+# Configuration de base commune
+base_config:
+  lr: 0.001
+  lr_scheduler: True
+
+# Configurations pour modèles neuronaux - Tailles Small
+neural_small:
+  specs:
+    hidden_size: 16
+    time_emb_size: 8
+    num_layers: 1
+    num_heads: 2  # Pour les modèles avec attention
+
+# Configurations pour modèles neuronaux - Tailles Medium  
+neural_medium:
+  specs:
+    hidden_size: 32
+    time_emb_size: 16
+    num_layers: 2
+    num_heads: 4  # Pour les modèles avec attention
+
+# Configurations pour modèles neuronaux - Tailles Large
+neural_large:
+  specs:
+    hidden_size: 64
+    time_emb_size: 32
+    num_layers: 3
+    num_heads: 8  # Pour les modèles avec attention
+
+# Configurations pour modèles neuronaux - Tailles Extra Large
+neural_xlarge:
+  specs:
+    hidden_size: 128
+    time_emb_size: 64
+    num_layers: 4
+    num_heads: 16  # Pour les modèles avec attention
+
+# Configurations spécifiques pour Hawkes - Simple (univarié)
+hawkes_simple:
+  specs:
+    mu: 0.2
+    alpha: 0.8
+    beta: 1.0
+
+# Configurations spécifiques pour Hawkes - Bivarié
+hawkes_bivariate:
+  specs:
+    mu: [0.2, 0.2]
+    alpha: [[0.4, 0], [0, 0.8]]
+    beta: [[1.0, 0], [0, 1.0]]
+
+# Configurations spécifiques pour Hawkes - Multivarié complexe
+hawkes_multivariate:
+  specs:
+    mu: [0.2, 0.2, 0.1]
+    alpha: [[0.4, 0.1, 0], [0.1, 0.8, 0.2], [0, 0.2, 0.6]]
+    beta: [[1.0, 0.5, 0], [0.5, 1.0, 0.8], [0, 0.8, 1.0]]
+
+# Configurations pour FullyNN - Plus d'échantillons dans thinning
+fullyNN_enhanced:
+  specs:
+    hidden_size: 32
+    time_emb_size: 16
+    num_layers: 2
+

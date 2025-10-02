@@ -1,17 +1,15 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, Union, List
-from easy_tpp.configs.base import (
-    BaseConfig,
-    ConfigValidationError,
-    config_factory,
-    config_class,
+from typing import Any, Dict, List, Optional, Union
+
+from easy_tpp.configs.base_config import (
+    Config,
+    ConfigValidationError
 )
 from easy_tpp.utils.log_utils import default_logger
 
 
-@config_class("tokenizer_config")
 @dataclass
-class TokenizerConfig(BaseConfig):
+class TokenizerConfig(Config):
     """Configuration for event tokenizer.
     Args:
         num_event_types (int): Number of event types in the dataset.
@@ -25,8 +23,7 @@ class TokenizerConfig(BaseConfig):
         model_input_names (Optional[Any]): Names of model inputs, if applicable.
     """
 
-    num_event_types: int = 0
-    pad_token_id: Optional[int] = None
+    num_event_types: int 
     padding_side: str = "left"
     truncation_side: str = "left"
     padding_strategy: str = "longest"
@@ -36,10 +33,10 @@ class TokenizerConfig(BaseConfig):
     model_input_names: Optional[Any] = None
 
     def __post_init__(self):
-        if self.pad_token_id is None:
-            self.pad_token_id = self.num_event_types
-        if self.num_event_types_pad is None and self.num_event_types is not None:
-            self.num_event_types_pad = self.num_event_types + 1
+
+        self.pad_token_id = self.num_event_types
+        self.num_event_types_pad = self.num_event_types + 1
+
         if self.padding_side not in ["right", "left"]:
             raise ConfigValidationError(
                 f"Padding side should be 'right' or 'left', got: {self.padding_side}",
@@ -63,23 +60,7 @@ class TokenizerConfig(BaseConfig):
             "max_len": self.max_len,
         }
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "TokenizerConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-        
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "TokenizerConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
-        # 2. Create the instance
-        return cls(**filtered_dict)
-    
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return []
+
 
     def get_required_fields(self):
         return []
@@ -97,9 +78,8 @@ class TokenizerConfig(BaseConfig):
         return default
 
 
-@config_class("data_loading_specs_config")
 @dataclass
-class DataLoadingSpecsConfig(BaseConfig):
+class DataLoadingSpecsConfig(Config):
     """
     Configuration for data loading specifications.
     Args:
@@ -112,7 +92,7 @@ class DataLoadingSpecsConfig(BaseConfig):
         max_len (Optional[int]): Maximum length of sequences after padding/truncation.
     """
 
-    batch_size: int = 32
+    batch_size: int
     num_workers: int = 1
     shuffle: Optional[bool] = None
     padding: Optional[bool] = None
@@ -136,31 +116,15 @@ class DataLoadingSpecsConfig(BaseConfig):
             "max_len": self.max_len,
         }
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "DataLoadingSpecsConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-        
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "DataLoadingSpecsConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
-        # 2. Create the instance
-        return cls(**filtered_dict)
-    
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return []
+
 
     def get_required_fields(self):
         return []
 
 
-@config_class("data_config")
 @dataclass
-class DataConfig(BaseConfig):
+
+class DataConfig(Config):
     """
     Configuration for dataset and data processing.
     Args:
@@ -169,25 +133,36 @@ class DataConfig(BaseConfig):
         test_dir (str): Path to test data directory.
         data_format (Optional[str]): Format of the dataset files (e.g., 'csv', 'json').
         dataset_id (Optional[str]): Identifier for the dataset.
-        data_loading_specs (DataLoadingSpecsConfig): Specifications for loading the data.
-        data_specs (TokenizerConfig): Specifications for tokenization and event types.
+        data_loading_specs (Union[DataLoadingSpecsConfig, dict]): Specifications for loading the data.
+        tokenizer_specs (Union[TokenizerConfig, dict]): Specifications for tokenization and event types.
     """
 
-    train_dir: str
-    valid_dir: str
-    test_dir: str
-    data_format: Optional[str] = None
-    dataset_id: Optional[str] = None
-    data_loading_specs: DataLoadingSpecsConfig = field(
-        default_factory=DataLoadingSpecsConfig
-    )
-    data_specs: TokenizerConfig = field(default_factory=TokenizerConfig)
-
-    def __post_init__(self):
-        if self.data_format is None:
-            # Use train_dir to determine format
-            self.data_format = self.train_dir.split(".")[-1]
-        super().__post_init__()
+    def __init__(
+        self,
+        train_dir: str,
+        valid_dir: str,
+        test_dir: str,
+        dataset_id: str,
+        data_format: Optional[str] = None,
+        data_loading_specs: Union[DataLoadingSpecsConfig, dict] = None,
+        tokenizer_specs: Union[TokenizerConfig, dict] = None,
+        **kwargs
+    ):
+        self.train_dir = train_dir
+        self.valid_dir = valid_dir
+        self.test_dir = test_dir
+        self.data_format = data_format if data_format is not None else train_dir.split(".")[-1]
+        self.dataset_id = dataset_id
+        # Instancie si dict, sinon laisse tel quel
+        if isinstance(data_loading_specs, dict):
+            self.data_loading_specs = DataLoadingSpecsConfig(**data_loading_specs)
+        else:
+            self.data_loading_specs = data_loading_specs if data_loading_specs is not None else DataLoadingSpecsConfig()
+        if isinstance(tokenizer_specs, dict):
+            self.tokenizer_specs = TokenizerConfig(**tokenizer_specs)
+        else:
+            self.tokenizer_specs = tokenizer_specs if tokenizer_specs is not None else TokenizerConfig()
+        super().__init__(**kwargs)
 
     def get_yaml_config(self) -> Dict[str, Any]:
         config = {
@@ -201,44 +176,15 @@ class DataConfig(BaseConfig):
                 if hasattr(self.data_loading_specs, "get_yaml_config")
                 else self.data_loading_specs
             ),
-            "data_specs": (
-                self.data_specs.get_yaml_config()
-                if hasattr(self.data_specs, "get_yaml_config")
-                else self.data_specs
+            "tokenizer_specs": (
+                self.tokenizer_specs.get_yaml_config()
+                if hasattr(self.tokenizer_specs, "get_yaml_config")
+                else self.tokenizer_specs
             ),
         }
-
         return config
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "DataConfig":
-        from easy_tpp.configs.config_utils import ConfigValidator
-        
-        # 1. Validate the dictionary
-        ConfigValidator.validate_required_fields(
-            config_dict, cls._get_required_fields_list(), "DataConfig"
-        )
-        filtered_dict = ConfigValidator.filter_invalid_fields(config_dict, cls)
-        
-        # 2. Create sub-configuration instances if needed
-        if "data_loading_specs" in filtered_dict and isinstance(filtered_dict["data_loading_specs"], dict):
-            filtered_dict["data_loading_specs"] = DataLoadingSpecsConfig.from_dict(
-                filtered_dict["data_loading_specs"]
-            )
-            
-        if "data_specs" in filtered_dict and isinstance(filtered_dict["data_specs"], dict):
-            filtered_dict["data_specs"] = TokenizerConfig.from_dict(filtered_dict["data_specs"])
-        
-        # 3. Create the instance
-        return cls(**filtered_dict)
-    
-    @classmethod
-    def _get_required_fields_list(cls) -> List[str]:
-        """Get required fields as a list for validation."""
-        return ["train_dir", "valid_dir", "test_dir"]
-
     def get_data_dir(self, split: str) -> str:
-        """Get directory path for a specific split or raise error if split is invalid."""
         if split in ["train", "dev", "valid", "test"]:
             split = split.lower()
             if split == "train":
@@ -247,8 +193,9 @@ class DataConfig(BaseConfig):
                 return self.valid_dir
             elif split == "test":
                 return self.test_dir
-
-        raise ValueError(f"Unknown split: {split}. Valid splits are: train, valid, test.")
+        raise ValueError(
+            f"Unknown split: {split}. Valid splits are: train, valid, test."
+        )
 
     def get_required_fields(self):
         return []

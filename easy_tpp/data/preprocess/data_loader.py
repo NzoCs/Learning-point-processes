@@ -1,11 +1,11 @@
-from torch.utils.data import DataLoader
 import pytorch_lightning as pl
+from torch.utils.data import DataLoader
 
-from easy_tpp.data.preprocess.dataset import TPPDataset
-from easy_tpp.data.preprocess.event_tokenizer import EventTokenizer
-from easy_tpp.utils import load_pickle, py_assert, logger
 from easy_tpp.configs.data_config import DataConfig
 from easy_tpp.data.preprocess.data_collator import TPPDataCollator
+from easy_tpp.data.preprocess.dataset import TPPDataset
+from easy_tpp.data.preprocess.event_tokenizer import EventTokenizer
+from easy_tpp.utils import load_pickle, logger, py_assert
 
 
 # PyTorch Lightning DataModule for TPP
@@ -18,10 +18,10 @@ class TPPDataModule(pl.LightningDataModule):
         """
         super().__init__()
         self.data_config = data_config
-        self.num_event_types = data_config.data_specs.num_event_types
+        self.num_event_types = data_config.tokenizer_specs.num_event_types
         self.batch_size = data_config.data_loading_specs.batch_size
         self.shuffle = data_config.data_loading_specs.shuffle
-        self.tokenizer = EventTokenizer(data_config.data_specs)
+        self.tokenizer = EventTokenizer(data_config.tokenizer_specs)
 
         data_loading_specs = data_config.data_loading_specs
         self.padding = data_loading_specs.padding
@@ -138,7 +138,7 @@ class TPPDataModule(pl.LightningDataModule):
         if stage not in valid_stages:
             raise ValueError(f"Invalid stage: {stage}. Must be one of {valid_stages}.")
         logger.info(f"Setting up data for stage: {stage}")
-        
+
         # Set up datasets for training and validation
         if stage == "fit" or stage == "train":
             train_data_dir = self.data_config.get_data_dir("train")

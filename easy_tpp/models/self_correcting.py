@@ -1,21 +1,32 @@
-import torch
-from torch import nn
-import torch.nn.functional as F  # Added import
+from typing import Union
 import math
 
-from easy_tpp.models.basemodel import BaseModel
+import torch
+import torch.nn.functional as F  # Added import
+from torch import nn
+
 from easy_tpp.configs import ModelConfig
+from easy_tpp.models.basemodel import Model
 
 
-class SelfCorrecting(BaseModel):
+class SelfCorrecting(Model):
     """
     PyTorch implementation of the Self-Correcting Point Process model.
     Intensity for type i: lambda_i(t) = exp(mu_i + alpha_i * (t - N_i(t)))
     where N_i(t) is the number of events of type i occurred strictly before time t.
-    Inherits from BaseModel.
+    Inherits from Model.
     """
 
-    def __init__(self, model_config: ModelConfig, **kwargs):
+    def __init__(
+            self, 
+            model_config: ModelConfig,
+            *,
+            mu: Union[list, torch.Tensor],
+            alpha: Union[list, torch.Tensor],
+            num_event_types: int, 
+            **kwargs
+            ):
+
         """
         Initialize the Self-Correcting model.
 
@@ -25,16 +36,15 @@ class SelfCorrecting(BaseModel):
                 - 'mu' (list or tensor): Base log-intensity parameter for each type.
                 - 'alpha' (list or tensor): Correction factor for each type (often negative).
         """
-        super().__init__(model_config, **kwargs)
+        super(SelfCorrecting, self).__init__(
+            model_config, num_event_types=num_event_types
+        )
 
-        if "mu" not in model_config.specs or "alpha" not in model_config.specs:
-            raise ValueError(
-                "SelfCorrecting model requires 'mu' and 'alpha' in model_config.specs"
-            )
+        self.num_event_types = num_event_types
 
         # Convert parameters to tensors and move to the correct device
-        mu = torch.tensor(model_config.specs["mu"], dtype=torch.float32)
-        alpha = torch.tensor(model_config.specs["alpha"], dtype=torch.float32)
+        mu = torch.tensor(mu, dtype=torch.float32)
+        alpha = torch.tensor(alpha, dtype=torch.float32)
 
         if (
             mu.shape[0] != self.num_event_types
@@ -189,7 +199,7 @@ class SelfCorrecting(BaseModel):
     ):
         """
         Computes intensities at sampled times relative to each event in the sequence.
-        Required by BaseModel for prediction and loss calculation.
+        Required by Model for prediction and loss calculation.
         Calculates lambda(t_k + delta_t) using history up to event k.
 
         Args:

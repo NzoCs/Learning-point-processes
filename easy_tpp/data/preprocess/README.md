@@ -38,7 +38,7 @@ from easy_tpp.config_factory import DataConfig
 data_config = DataConfig(
     data_dir='./data/synthetic',
     data_format='json',
-    data_specs={
+    tokenizer_specs={
         'num_event_types': 3,
         'max_seq_len': 50
     },
@@ -136,7 +136,7 @@ Handles tokenization and encoding of event sequences.
 ```python
 from easy_tpp.data.preprocess import EventTokenizer
 
-tokenizer = EventTokenizer(data_specs)
+tokenizer = EventTokenizer(tokenizer_specs)
 
 # Tokenize a single sequence
 encoded = tokenizer(
@@ -210,7 +210,7 @@ data_config = DataConfig(
     data_format='json',  # 'json' or 'pkl'
     
     # Data specifications
-    data_specs={
+    tokenizer_specs={
         'num_event_types': 5,
         'max_seq_len': 100,
         'min_seq_len': 5,
@@ -332,7 +332,7 @@ visualizer.plot_comparison_statistics()
 ### Data Specifications
 
 ```python
-data_specs = {
+tokenizer_specs = {
     'num_event_types': 10,       # Number of event types
     'max_seq_len': 200,          # Maximum sequence length
     'min_seq_len': 3,            # Minimum sequence length
@@ -371,7 +371,7 @@ def create_data_pipeline():
     config = DataConfig(
         data_dir='./data/hawkes_multivariate/',
         data_format='json',
-        data_specs={
+        tokenizer_specs={
             'num_event_types': 3,
             'max_seq_len': 100
         },

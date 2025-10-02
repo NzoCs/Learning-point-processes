@@ -34,7 +34,7 @@ runner.run()
 data_config:
   data_dir: "./data/synthetic"
   data_format: "json"
-  data_specs:
+  tokenizer_specs:
     num_event_types: 5
     max_seq_len: 100
   data_loading_specs:

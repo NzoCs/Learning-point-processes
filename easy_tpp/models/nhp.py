@@ -1,8 +1,10 @@
 import torch
 from torch import nn
 
-from easy_tpp.models.basemodel import BaseModel
 from easy_tpp.models.baselayer import ScaledSoftplus
+from easy_tpp.models.basemodel import Model
+from easy_tpp.configs import ModelConfig
+from easy_tpp.models.neural_model import NeuralModel
 
 
 class ContTimeLSTMCell(nn.Module):
@@ -84,21 +86,35 @@ class ContTimeLSTMCell(nn.Module):
         return c_t, h_t
 
 
-class NHP(BaseModel):
+class NHP(NeuralModel):
     """Torch implementation of The Neural Hawkes Process: A Neurally Self-Modulating Multivariate Point Process,
     NeurIPS 2017, https://arxiv.org/abs/1612.09328.
     """
 
-    def __init__(self, model_config, **kwargs):
+    def __init__(
+            self, 
+            model_config : ModelConfig, 
+            *,
+            num_event_types: int,
+            hidden_size: int = 128,
+            dropout: float = 0.1,
+            beta: float = 1.0,
+            bias: bool = True,
+            ) -> None:
         """Initialize the NHP model.
 
         Args:
             model_config (EasyTPP.ModelConfig): config of model specs.
         """
-        super(NHP, self).__init__(model_config, **kwargs)
+        super(NHP, self).__init__(
+            model_config,
+            num_event_types=num_event_types,
+            hidden_size=hidden_size,
+            dropout=dropout,
+            )
         self.model_config = model_config  # Store for test compatibility
-        self.beta = kwargs.get("beta", 1.0)
-        self.bias = kwargs.get("bias", True)
+        self.beta = beta
+        self.bias = bias
         self.rnn_cell = ContTimeLSTMCell(self.hidden_size)
 
         self.layer_intensity = nn.Sequential(  # eq. 4a,

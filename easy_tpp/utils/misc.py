@@ -1,10 +1,11 @@
 import copy
+import json
 import os
 import pickle
 
 import numpy as np
 import yaml
-import json
+
 from easy_tpp.utils.const import RunnerPhase
 
 

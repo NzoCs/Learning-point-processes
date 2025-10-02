@@ -1,21 +1,22 @@
-from easy_tpp.models import BaseModel
-from easy_tpp.data.preprocess import TPPDataModule
+import os
+from typing import Optional
+
+import pytorch_lightning as pl
+import torch
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.strategies import DDPStrategy
+
 from easy_tpp.configs import RunnerConfig
-from easy_tpp.utils import logger
+from easy_tpp.configs.logger_config import LoggerFactory
+from easy_tpp.data.preprocess import TPPDataModule
 from easy_tpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,
 )
-from easy_tpp.configs.logger_config import LoggerConfig, LoggerFactory
-
-import torch
-from typing import Optional
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
-from pytorch_lightning.strategies import DDPStrategy
-import os
+from easy_tpp.models.model_factory import ModelFactory
+from easy_tpp.utils import logger
 
 
-class Trainer:
+class Runner:
 
     def __init__(
         self,
@@ -57,29 +58,37 @@ class Trainer:
         # Initialize your configs
         data_config = config.data_config
         model_config = config.model_config
-        trainer_config = config.trainer_config
+        training_config = config.training_config
 
         # Initialize your model
-        self.max_epochs = trainer_config.max_epochs
 
-        self.model = BaseModel.generate_model_from_config(model_config=model_config)
+        # Utiliser la ModelFactory pour créer le modèle
+        model_factory = ModelFactory()
+        self.model = model_factory.create_model_by_name(
+            model_name=config.model_id,
+            num_event_types=data_config.tokenizer_specs.num_event_types,
+            model_config=model_config
+        )
 
-        self.model_id = model_config.model_id
+        self.model_id = config.model_id
 
         # Initialize Dataloaders
         self.datamodule = TPPDataModule(data_config)
 
         # Initialize Train params
-        self.log_freq = trainer_config.log_freq
-        self.checkpoints_freq = trainer_config.checkpoints_freq
-        self.patience = trainer_config.patience
-        self.devices = trainer_config.devices
-        self.logger_config = trainer_config.logger_config
-        self.val_freq = trainer_config.val_freq
-        self.use_precision_16 = trainer_config.use_precision_16
-        self.accumulate_grad_batches = trainer_config.accumulate_grad_batches
-        
-        self.dirpath = trainer_config.save_model_dir
+        self.max_epochs = training_config.max_epochs
+        self.log_freq = training_config.log_freq
+        self.checkpoints_freq = training_config.checkpoints_freq
+        self.patience = training_config.patience
+        self.devices = training_config.devices
+        self.val_freq = training_config.val_freq
+        self.use_precision_16 = training_config.use_precision_16
+        self.accumulate_grad_batches = training_config.accumulate_grad_batches
+
+        # Model saving directory
+        self.dirpath = config.save_model_dir
+        self.logger_config = config.logger_config
+
 
         if checkpoint_path is None:
             # Liste des checkpoints à tester, par ordre de priorité
@@ -135,17 +144,17 @@ class Trainer:
                 logger.critical(f"Logging is disabled for this run. Error: {str(e)}")
         else:
             self.logger = False
-    
+
     def set_logging(self, enable_logging: bool):
         """Change logging configuration without recreating the trainer."""
         if self.enable_logging == enable_logging:
             return  # No change needed
-            
+
         self.enable_logging = enable_logging
         self._configure_logging(enable_logging)
-        
+
         # If we have a cached trainer, update its logger
-        if hasattr(self, '_cached_trainer') and self._cached_trainer is not None:
+        if hasattr(self, "_cached_trainer") and self._cached_trainer is not None:
             self._cached_trainer.logger = self.logger
 
     @property
@@ -174,7 +183,7 @@ class Trainer:
     @property
     def trainer(self) -> pl.Trainer:
         # Cache the trainer to avoid recreating it
-        if hasattr(self, '_cached_trainer') and self._cached_trainer is not None:
+        if hasattr(self, "_cached_trainer") and self._cached_trainer is not None:
             return self._cached_trainer
         # If devices is a number > 0, use GPU(s) if available
         # If devices is "auto", let PyTorch Lightning decide

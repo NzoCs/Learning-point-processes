@@ -21,12 +21,12 @@ Note that the *pretrained_model_dir* can be found in the log of the training pro
         runner_id: std_tpp
         base_dir: './checkpoints/'
         model_id: NHP
-      trainer_config:
+      training_config:
         batch_size: 256
         max_epoch: 1
       model_config:
         hidden_size: 64
-        use_ln: False
+        use_norm: False
         seed: 2019
         gpu: 0
         pretrained_model_dir: ./checkpoints/26507_4380788096_231111-101848/models/saved_model  # must provide this dir

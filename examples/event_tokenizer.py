@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import random
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from easy_tpp.data.preprocess import EventTokenizer
 from easy_tpp.configs import TokenizerConfig
+from easy_tpp.data.preprocess import EventTokenizer
 
 
 def make_raw_data() -> List[List[Dict[str, Any]]]:

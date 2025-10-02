@@ -2,11 +2,13 @@
 Data Extractors for Temporal Point Process Analysis
 """
 
-from easy_tpp.utils import logger
-from easy_tpp.data.preprocess.dataset import TPPDataset
 from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 import torch
+
+from easy_tpp.data.preprocess.dataset import TPPDataset
+from easy_tpp.utils import logger
 
 
 class TPPDatasetExtractor:

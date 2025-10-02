@@ -6,17 +6,11 @@ data:
     train_dir: ./data/taxi/train.pkl
     valid_dir: ./data/taxi/dev.pkl
     test_dir: ./data/taxi/test.pkl
-    data_specs:
+    tokenizer_specs:
       num_event_types: 10
       pad_token_id: 10
       padding_side: right
       truncation_side: right
-
-hpo:
-  storage_uri: sqlite://hpo_test.db
-  is_continuous: False
-  framework_id: optuna # the framework of hpo
-  n_trials: 10
 
 
 NHP_train:
@@ -27,7 +21,7 @@ NHP_train:
     runner_id: std_tpp
     model_id: NHP # model name
     base_dir: './checkpoints/'
-  trainer_config:
+  training_config:
     batch_size: 256
     max_epoch: 200
     shuffle: False

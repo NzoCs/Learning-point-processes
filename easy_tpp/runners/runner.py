@@ -1,17 +1,17 @@
-from easy_tpp.configs import RunnerConfig
-from easy_tpp.runners.model_runner import Trainer
-from easy_tpp.utils import logger
-from typing import Optional, Union, List
 import copy
 import traceback
+from typing import List, Optional, Union
+
+from easy_tpp.configs import RunnerConfig
+from easy_tpp.runners.model_runner import Runner
+from easy_tpp.utils import logger
 
 
-class Runner:
+class RunnerManager:
     """
     Runner class that manages the training, validation, testing, and prediction phases
     of a temporal point process model with intelligent logging management.
     """
-
 
     def __init__(
         self,
@@ -20,24 +20,24 @@ class Runner:
         output_dir: Optional[str] = None,
         **kwargs,
     ):
+        
         self.config = config
         self.checkpoint_path = checkpoint_path
         self.output_dir = output_dir
         self.kwargs = kwargs
-        self.original_logger_config = config.trainer_config.logger_config
+        self.original_logger_config = config.logger_config
         self.is_setup = False
-        self.trainer = None
+        self.runner = None
         self.enable_logging = True
         logger.critical(
-            f"Runner initialized for model: {config.model_config.model_id} on dataset: {config.data_config.dataset_id}"
+            f"Runner initialized for model: {self.config.model_id} on dataset: {self.config.data_config.dataset_id}"
         )
 
-
-    def setup_trainer(self, enable_logging: bool = True):
+    def setup_runner(self, enable_logging: bool = True):
         if not self.is_setup:
-            # Create trainer for the first time
+            # Create runner for the first time
             config_copy = copy.deepcopy(self.config)
-            self.trainer = Trainer(
+            self.runner = Runner(
                 config=config_copy,
                 enable_logging=enable_logging,
                 checkpoint_path=self.checkpoint_path,
@@ -48,28 +48,25 @@ class Runner:
             self.enable_logging = enable_logging
         elif self.enable_logging != enable_logging:
             # Just change the logging configuration
-            self.trainer.set_logging(enable_logging)
+            self.runner.set_logging(enable_logging)
             self.enable_logging = enable_logging
-
 
     def train(self) -> None:
         logger.info("=== TRAINING PHASE ===")
-        self.setup_trainer(enable_logging=True)
-        self.trainer.train()
+        self.setup_runner(enable_logging=True)
+        self.runner.train()
         return None
-
 
     def test(self) -> Optional[dict]:
         logger.critical("=== TESTING PHASE ===")
-        self.setup_trainer(enable_logging=False)
-        self.trainer.test()
+        self.setup_runner(enable_logging=False)
+        self.runner.test()
         return None
-
 
     def predict(self) -> Optional[str]:
         logger.critical("=== PREDICTION PHASE ===")
-        self.setup_trainer(enable_logging=False)
-        self.trainer.predict()
+        self.setup_runner(enable_logging=False)
+        self.runner.predict()
         return None
 
     def run(self, phase: Union[str, List[str]] = "all") -> dict:

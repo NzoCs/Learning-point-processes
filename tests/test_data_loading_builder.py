@@ -3,7 +3,7 @@
 Test du DataLoadingSpecsBuilder et des nouvelles méthodes du DataConfigBuilder
 """
 
-from easy_tpp.configs import DataConfigBuilder
+from new_ltpp.configs import DataConfigBuilder
 
 def test_data_loading_specs_builder():
     """Test des nouvelles fonctionnalités du DataConfigBuilder."""

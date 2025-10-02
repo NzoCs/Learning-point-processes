@@ -5,8 +5,8 @@ Cet exemple montre comment utiliser la factory pour simplifier
 le lancement des benchmarks par rapport au code précédent.
 """
 
-from easy_tpp.configs import DataConfig, DataConfigBuilder, config_factory
-from easy_tpp.evaluation.benchmarks.benchmark_manager import (
+from new_ltpp.configs import DataConfig, DataConfigBuilder, config_factory
+from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
     BenchmarksEnum as Benchmarks,
 )

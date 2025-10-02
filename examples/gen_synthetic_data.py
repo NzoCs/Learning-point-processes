@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from easy_tpp.data.generation import HawkesSimulator, SelfCorrecting
+from new_ltpp.data.generation import HawkesSimulator, SelfCorrecting
 
 
 def generate_hawkes_data() -> None:

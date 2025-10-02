@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "easy_tpp"
+name = "new_ltpp"
 version = "0.1.0"
 description = "An easy and flexible tool for neural temporal point process"
 readme = "README.md"
@@ -104,7 +104,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["easy_tpp"]
+include = ["new_ltpp"]
 exclude = ["tests*", "*.tests*", "*.tests"]
 
 [tool.setuptools.package-data]
@@ -133,7 +133,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["easy_tpp"]
+known_first_party = ["new_ltpp"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"

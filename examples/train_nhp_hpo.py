@@ -1,7 +1,7 @@
 import argparse
 
-from easy_tpp.configs import Config
-from easy_tpp.hpo import HyperTuner
+from new_ltpp.configs import Config
+from new_ltpp.hpo import HyperTuner
 
 
 def main():

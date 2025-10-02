@@ -1,8 +1,8 @@
 import random
 from typing import Any, Dict, List
 
-from easy_tpp.configs import DataConfigBuilder
-from easy_tpp.data.preprocess import TPPDataModule
+from new_ltpp.configs import DataConfigBuilder
+from new_ltpp.data.preprocess import TPPDataModule
 
 
 def make_raw_data() -> List[List[Dict[str, Any]]]:

@@ -2,9 +2,9 @@ from pathlib import Path
 
 CONFIGS_DIR = Path(__file__).parent.parent / "yaml_configs" / "configs.yaml"
 
-from easy_tpp.runners import RunnerManager
-from easy_tpp.configs import ConfigType, ConfigFactory
-from easy_tpp.configs.config_builder import RunnerConfigBuilder
+from new_ltpp.runners import RunnerManager
+from new_ltpp.configs import ConfigType, ConfigFactory
+from new_ltpp.configs.config_builder import RunnerConfigBuilder
 
 
 

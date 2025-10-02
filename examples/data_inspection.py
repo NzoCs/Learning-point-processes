@@ -1,6 +1,6 @@
-from easy_tpp.configs import DataConfigBuilder
-from easy_tpp.data.preprocess import TPPDataModule
-from easy_tpp.data.preprocess.visualizer import Visualizer
+from new_ltpp.configs import DataConfigBuilder
+from new_ltpp.data.preprocess import TPPDataModule
+from new_ltpp.data.preprocess.visualizer import Visualizer
 
 
 def inspect_dataset() -> None:

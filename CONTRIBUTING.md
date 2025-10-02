@@ -78,6 +78,7 @@ Nous utilisons les **Conventional Commits** :
 ```
 
 ### Types disponibles
+
 - **feat**: Nouvelle fonctionnalité
 - **fix**: Correction de bug  
 - **docs**: Documentation
@@ -98,12 +99,14 @@ refactor(factory): simplifier création des modèles avec builder pattern
 ## ✅ Standards de code
 
 ### Style Python
+
 - Suivre **PEP 8**
 - Utiliser **Black** pour le formatage
 - **Isort** pour l'organisation des imports
 - **Flake8** pour le linting
 
 ### Commandes de vérification
+
 ```bash
 # Formatage automatique
 make format
@@ -119,6 +122,7 @@ make coverage
 ```
 
 ### Docstrings
+
 Utiliser le format **Google Style** :
 
 ```python

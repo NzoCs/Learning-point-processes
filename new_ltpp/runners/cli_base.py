@@ -93,6 +93,31 @@ class CLIRunnerBase:
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         return logger
+    
+    def _build_config_paths(self, **config_kwargs) -> dict:
+        """
+        Construit les chemins de configuration en suivant le pattern standard.
+        
+        Pattern: {config_type}_configs.{config_name}
+        
+        Args:
+            **config_kwargs: Dictionnaire des configurations {type: name}
+            
+        Returns:
+            Dictionnaire des chemins de configuration formatés
+        """
+        
+        config_paths = {}
+        
+        for config_type, config_name in config_kwargs.items():
+            if config_name is not None:  # Skip None values
+                if config_type in CONFIG_MAP:
+                    prefix = CONFIG_MAP[config_type]
+                    config_paths[f"{config_type}_config_path"] = f"{prefix}.{config_name}"
+                else:
+                    self.print_error(f"Type de configuration non reconnu: {config_type}")
+        
+        return config_paths
         
     def check_dependencies(self, required_modules: List[str]) -> bool:
         """Vérifie que les modules requis sont disponibles."""

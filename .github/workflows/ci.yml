@@ -16,13 +16,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.12
+          python-version: 3.11
 
       - name: Install dependencies
         run: |
-          pip install poetry
-          poetry install
+          pip install uv
+          uv sync
 
       - name: Run tests
         run: |
-          poetry run pytest
+          uv run tests

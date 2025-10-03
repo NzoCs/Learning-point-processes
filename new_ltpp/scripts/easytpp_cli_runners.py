@@ -198,21 +198,42 @@ def interactive_setup(
 
 @app.command("benchmark") 
 def benchmark_performance(
-    config_path: str = typer.Option("yaml_configs/configs.yaml", "--config", "-c", help="Fichier de configuration YAML"),
-    data_config: str = typer.Option("data_configs.test", "--data-config", help="Configuration des données"),
-    data_loading_config: str = typer.Option("data_loading_configs.quick_test", "--data-loading-config", help="Configuration du chargement des données"),
+    config_path: Optional[str] = typer.Option(None, "--config", "-c", help="Fichier de configuration YAML"),
+    data_config: Optional[List[str]] = typer.Option(None, "--data-config", help="Configuration(s) des données (ex: test, large). Peut être répété pour plusieurs configs"),
+    data_loading_config: str = typer.Option("quick_test", "--data-loading-config", help="Configuration du chargement des données"),
     benchmarks: Optional[List[str]] = typer.Option(None, "--benchmarks", "-b", help="Liste des benchmarks à exécuter"),
     output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Répertoire de sortie"),
     run_all: bool = typer.Option(False, "--all", help="Exécuter tous les benchmarks"),
+    run_all_configs: bool = typer.Option(False, "--all-configs", help="Exécuter sur toutes les configurations"),
     list_benchmarks: bool = typer.Option(False, "--list", help="Lister les benchmarks disponibles"),
     debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
-    """Lance des benchmarks TPP avec BenchmarkRunner."""
+    """
+    Lance des benchmarks TPP avec BenchmarkRunner.
+    
+    Exemples:
+        # Benchmark simple
+        benchmark --data-config test --all
+        
+        # Plusieurs configurations
+        benchmark --data-config test --data-config large --all
+        
+        # Tous benchmarks sur toutes configs
+        benchmark --data-config test --data-config large --all --all-configs
+    """
     runner = BenchmarkRunner(debug=debug)
     
     if list_benchmarks:
         runner.list_available_benchmarks()
         return
+    
+    # Si aucune config spécifiée, utiliser 'test' par défaut
+    if data_config is None:
+        data_config = ["test"]
+    
+    # Si une seule config et pas de liste, convertir en string
+    if len(data_config) == 1:
+        data_config = data_config[0]
     
     success = runner.run_benchmark(
         config_path=config_path,
@@ -220,7 +241,8 @@ def benchmark_performance(
         data_loading_config=data_loading_config,
         benchmarks=benchmarks,
         output_dir=output_dir,
-        run_all=run_all
+        run_all=run_all,
+        run_all_configs=run_all_configs
     )
     
     if not success:

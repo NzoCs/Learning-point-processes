@@ -139,6 +139,7 @@ class DataConfig(Config):
 
     def __init__(
         self,
+        num_event_types: int,
         train_dir: str,
         valid_dir: str,
         test_dir: str,
@@ -159,9 +160,9 @@ class DataConfig(Config):
         else:
             self.data_loading_specs = data_loading_specs if data_loading_specs is not None else DataLoadingSpecsConfig()
         if isinstance(tokenizer_specs, dict):
-            self.tokenizer_specs = TokenizerConfig(**tokenizer_specs)
+            self.tokenizer_specs = TokenizerConfig(**tokenizer_specs, num_event_types=num_event_types)
         else:
-            self.tokenizer_specs = tokenizer_specs if tokenizer_specs is not None else TokenizerConfig()
+            self.tokenizer_specs = tokenizer_specs if tokenizer_specs is not None else TokenizerConfig(num_event_types=num_event_types)
         super().__init__(**kwargs)
 
     def get_yaml_config(self) -> Dict[str, Any]:

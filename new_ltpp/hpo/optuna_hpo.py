@@ -23,7 +23,7 @@ class OptunaTuner(HyperTuner):
         """Initialize the Optuna Tuner class.
 
         Args:
-            config (EasyTPP.Config): config class.
+            config (new_ltpp.Config): config class.
             trial_end_callbacks (list): list of trial callbacks.
         """
         super(OptunaTuner, self).__init__(config, trial_end_callbacks)
@@ -51,7 +51,7 @@ class OptunaTuner(HyperTuner):
         """Get all best runner configs. Obtain from storage.
 
         Returns:
-            Dict[str, EasyTPP.RunnerConfig]: Dict of all best runner configs.
+            Dict[str, new_ltpp.RunnerConfig]: Dict of all best runner configs.
         """
         runner_configs = {}
         for study_summary in optuna.get_all_study_summaries(self.storage):
@@ -69,7 +69,7 @@ class OptunaTuner(HyperTuner):
             exp_id (str): experiment id.
 
         Returns:
-            EasyTPP.RunnerConfig: best runner config.
+            new_ltpp.RunnerConfig: best runner config.
         """
         for study_summary in optuna.get_all_study_summaries(self.storage):
             if exp_id == study_summary.study_name:
@@ -109,10 +109,10 @@ class OptunaTuner(HyperTuner):
         """Run the optimization process.
 
         Args:
-            base_runner_config (EasyTPP.RunnerConfig): runner config.
-            train_loader (EasyTPP.DataLoader): train data loader.
-            valid_loader (EasyTPP.DataLoader): valid data loader
-            test_loader (EasyTPP.DataLoader, optional): test data loader. Defaults to None.
+            base_runner_config (new_ltpp.RunnerConfig): runner config.
+            train_loader (new_ltpp.DataLoader): train data loader.
+            valid_loader (new_ltpp.DataLoader): valid data loader
+            test_loader (new_ltpp.DataLoader, optional): test data loader. Defaults to None.
             exp_id (str, optional): experiment id. Defaults to None.
 
         Raises:
@@ -209,7 +209,7 @@ class OptunaTuner(HyperTuner):
         """Get the optimization objective function.
 
         Args:
-            base_runner_config (EasyTPP.Config): runner config.
+            base_runner_config (new_ltpp.Config): runner config.
 
         Raises:
             e: RuntimeError
@@ -335,7 +335,7 @@ class OptunaTuner(HyperTuner):
             trial (optuna.trial.FrozenTrial): an object of optuna :class:`~optuna.trial` that stores trial information.
 
         Returns:
-            EasyTPP.Config: RunnerConfig object.
+            new_ltpp.Config: RunnerConfig object.
         """
         runner_config_dict = trial.user_attrs["runner_config"]
         return RunnerConfig.parse_from_yaml_config(

@@ -4,7 +4,7 @@ Implémentations des modèles de processus ponctuels temporels.
 
 ## Contenu
 
-Ce dossier contient les implémentations des différents modèles TPP disponibles dans EasyTPP.
+Ce dossier contient les implémentations des différents modèles TPP disponibles dans new_ltpp.
 
 ### Modèles de base
 

@@ -14,7 +14,7 @@ from .cli_base import CLIRunnerBase
 class SystemInfo(CLIRunnerBase):
     """
     Runner pour afficher les informations système et environnement.
-    Diagnostique l'installation et les dépendances EasyTPP.
+    Diagnostique l'installation et les dépendances new_ltpp.
     """
     
     def __init__(self, debug: bool = False):
@@ -55,17 +55,17 @@ class SystemInfo(CLIRunnerBase):
             hardware_info = {}
             if include_hardware:
                 hardware_info = self._collect_hardware_info()
-            
-            # Informations EasyTPP
-            easytpp_info = self._collect_easytpp_info()
-            
+
+            # Informations New_LTPP
+            new_ltp_info = self._collect_new_ltpp_info()
+
             # Affichage
             all_info = {
                 "system": system_info,
                 "python": python_info,
                 "dependencies": deps_info,
                 "hardware": hardware_info,
-                "easytpp": easytpp_info
+                "new_ltp": new_ltpp_info
             }
             
             self._display_info_tables(all_info)
@@ -155,15 +155,15 @@ class SystemInfo(CLIRunnerBase):
             
         return hardware_info
     
-    def _collect_easytpp_info(self) -> Dict[str, Any]:
-        """Collecte les informations spécifiques à EasyTPP."""
-        easytpp_info = {}
+    def _collect_new_ltpp_info(self) -> Dict[str, Any]:
+        """Collecte les informations spécifiques à new_ltpp."""
+        new_ltpp_info = {}
         
         try:
-            # Vérifier l'installation EasyTPP
+            # Vérifier l'installation New_LTPP
             import new_ltpp
-            easytpp_info["EasyTPP Version"] = getattr(new_ltpp, '__version__', 'Unknown')
-            easytpp_info["Installation Path"] = str(Path(new_ltpp.__file__).parent)
+            new_ltpp_info["new_ltpp Version"] = getattr(new_ltpp, '__version__', 'Unknown')
+            new_ltpp_info["Installation Path"] = str(Path(new_ltpp.__file__).parent)
             
             # Vérifier les modules principaux
             modules_to_check = [
@@ -177,14 +177,14 @@ class SystemInfo(CLIRunnerBase):
             for module_name in modules_to_check:
                 try:
                     __import__(module_name)
-                    easytpp_info[f"Module {module_name}"] = "✓ Available"
+                    new_ltpp_info[f"Module {module_name}"] = "✓ Available"
                 except ImportError:
-                    easytpp_info[f"Module {module_name}"] = "✗ Missing"
+                    new_ltpp_info[f"Module {module_name}"] = "✗ Missing"
                     
         except ImportError:
-            easytpp_info["EasyTPP"] = "Not installed"
+            new_ltpp_info["new_ltpp"] = "Not installed"
             
-        return easytpp_info
+        return new_ltpp_info
     
     def _display_info_tables(self, all_info: Dict[str, Dict[str, Any]]):
         """Affiche les informations sous forme de tableaux."""

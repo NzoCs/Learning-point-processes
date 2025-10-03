@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "EasyTPP"
+project = "new_ltpp"
 copyright = "2022, Machine Intelligence, Alipay"
 author = "Machine Intelligence, Alipay"
 release = "0.0.2"

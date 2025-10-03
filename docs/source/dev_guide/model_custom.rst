@@ -3,14 +3,14 @@ Customize a Model
 ==================
 
 
-Here we introduce how to customize a TPP model with the support of ``EasyTPP``.
+Here we introduce how to customize a TPP model with the support of ``new_ltpp``.
 
 
 
 Create a new TPP Model Class
 =============================
 
-Assume we are building a PyTorch model. We need to initialize the model by inheriting class `EasyTPP.model.torch_model.TorchBaseModel <../ref/models.html>`_.
+Assume we are building a PyTorch model. We need to initialize the model by inheriting class `new_ltpp.model.torch_model.TorchBaseModel <../ref/models.html>`_.
 
 .. code-block:: python
 

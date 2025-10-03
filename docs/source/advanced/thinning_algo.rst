@@ -2,7 +2,7 @@
 Thinning Algorithm for Sampling Event Sequence
 ==============================================
 
-In ``EasyTPP`` we use ``Thinning algorithm`` depicted in Algorithm 2
+In ``new_ltpp`` we use ``Thinning algorithm`` depicted in Algorithm 2
 in `The Neural Hawkes Process: A Neurally Self-Modulating Multivariate Point Process <https://arxiv.org/abs/1612.09328>`_
 for event sampling.
 

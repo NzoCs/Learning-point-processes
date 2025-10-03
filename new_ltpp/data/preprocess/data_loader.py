@@ -102,7 +102,7 @@ class TPPDataModule(pl.LightningDataModule):
             data = load_dataset(
                 "json", data_files={split_mapped: source_dir}, split=split_mapped
             )
-        elif source_dir.startswith("easytpp"):
+        elif source_dir.startswith("new_ltpp"):
             data = load_dataset(source_dir, split=split_mapped)
         elif source_dir.startswith("NzoCs"):
             data = load_dataset(source_dir, split=split_mapped)

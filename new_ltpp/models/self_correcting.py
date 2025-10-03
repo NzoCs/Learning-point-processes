@@ -31,7 +31,7 @@ class SelfCorrecting(Model):
         Initialize the Self-Correcting model.
 
         Args:
-            model_config (EasyTPP.ModelConfig): Configuration object containing model specs.
+            model_config (new_ltpp.ModelConfig): Configuration object containing model specs.
                 Expected specs:
                 - 'mu' (list or tensor): Base log-intensity parameter for each type.
                 - 'alpha' (list or tensor): Correction factor for each type (often negative).

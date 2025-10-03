@@ -3,7 +3,7 @@ Quick Start
 ====================
 
 
-We use the [Taxi]_ dataset as an example to show how to use ``EasyTPP`` to train a model. More details and results are provided in `Training Pipeline <../user_guide/run_train_pipeline.html>`_.
+We use the [Taxi]_ dataset as an example to show how to use ``new_ltpp`` to train a model. More details and results are provided in `Training Pipeline <../user_guide/run_train_pipeline.html>`_.
 
 
 Download Dataset
@@ -11,7 +11,7 @@ Download Dataset
 
 
 
-The Taxi dataset we used is preprocessed by `HYPRO <https://github.com/iLampard/hypro_tpp>`_ . You can either download the dataset (in pickle) from Google Drive `here <https://drive.google.com/drive/folders/1vNX2gFuGfhoh-vngoebaQlj2-ZIZMiBo>`_ or the dataset (in json) from `HuggingFace <https://huggingface.co/easytpp>`_.
+The Taxi dataset we used is preprocessed by `HYPRO <https://github.com/iLampard/hypro_tpp>`_ . You can either download the dataset (in pickle) from Google Drive `here <https://drive.google.com/drive/folders/1vNX2gFuGfhoh-vngoebaQlj2-ZIZMiBo>`_ or the dataset (in json) from `HuggingFace <https://huggingface.co/new_ltpp>`_.
 
 
 Note that if the data sources are pickle files, we need to write the data config (in `Example Config <https://github.com/ant-research/EasyTemporalPointProcess/blob/main/examples/configs/experiment_config.yaml>`_) in the following way
@@ -32,9 +32,9 @@ If we choose to directly load from HuggingFace, we can put it this way:
     data:
       taxi:
         data_format: json
-        train_dir: easytpp/taxi
-        valid_dir: easytpp/taxi
-        test_dir: easytpp/taxi
+        train_dir: new_ltpp/taxi
+        valid_dir: new_ltpp/taxi
+        test_dir: new_ltpp/taxi
 
 
 Meanwhile, it is also feasible to put the local directory of json files downloaded from HuggingFace in the config:

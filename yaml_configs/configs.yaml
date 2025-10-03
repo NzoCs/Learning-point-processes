@@ -1,4 +1,4 @@
-# YAML configurations for EasyTPP
+# YAML configurations for New_LTPP project
 # This file contains configurations for data, models, simulations, and training (trainer)
 
 
@@ -6,45 +6,43 @@
 data_configs:
   taxi:
     data_format: json
-    src_dir: easytpp/taxi
-    tokenizer_specs:
-      num_event_types: 10
-      padding_side: left
+    src_dir: new_ltpp/taxi
+    num_event_types: 10
   
   taobao:
     data_format: json
-    src_dir: easytpp/taobao
-    tokenizer_specs:
-      num_event_types: 17
-      padding_side: left
+    src_dir: new_ltpp/taobao
+    num_event_types: 17
 
   amazon:
     data_format: json
-    src_dir: easytpp/amazon
-    tokenizer_specs:
-      num_event_types: 16
-      padding_side: left
+    src_dir: new_ltpp/amazon
+    num_event_types: 16
 
   test:
     data_format: json
     src_dir: NzoCs/test_dataset
-    tokenizer_specs:
-      num_event_types: 2
-      padding_side: left
+    num_event_types: 2
       
   hawkes1:
     data_format: json
     src_dir: NzoCs/hawkes1
-    tokenizer_specs:
-      num_event_types: 1
-      padding_side: left
+    num_event_types: 1
 
   hawkes2:
     data_format: json
     src_dir: NzoCs/hawkes2
-    tokenizer_specs:
-      num_event_types: 2
-      padding_side: left
+    num_event_types: 2
+  
+  H2expi:
+    data_format: json
+    src_dir: NzoCs/H2expi
+    num_event_types: 2
+  
+  H2expc:
+    data_format: json
+    src_dir: NzoCs/H2expc
+    num_event_types: 2
 
 # ==== LOGGER CONFIGS =====
 logger_configs:
@@ -68,7 +66,7 @@ logger_configs:
     save_dir: logs/wandb_logs
     config:
       entity: your_wandb_entity
-      project: easytpp_project
+      project: new_ltpp_project
       name: wandb_logs
       notes: "Experiment run"
       tags: [new_ltpp, experiment]

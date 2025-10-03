@@ -1,6 +1,6 @@
 .. _api-wrapper:
 
-EasyTPP Tf and Torch Wrapper Modules
+new_ltpp Tf and Torch Wrapper Modules
 ====================================
 
 

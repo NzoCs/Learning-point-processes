@@ -29,7 +29,7 @@ class AttNHP(NeuralModel):
         """Initialize the model
 
         Args:
-            model_config (EasyTPP.ModelConfig): config of model specs.
+            model_config (new_ltpp.ModelConfig): config of model specs.
         """
         super(AttNHP, self).__init__(
             model_config, 

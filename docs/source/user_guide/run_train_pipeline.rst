@@ -2,7 +2,7 @@
 Training a Model & Configuration Explanation
 ============================================
 
-This tutorial shows how one can use ``EasyTPP`` to train the implemented models.
+This tutorial shows how one can use ``new_ltpp`` to train the implemented models.
 
 In principle, firstly we need to initialize a config yaml file, containing all the input configuration to guide the training and eval process. The overall structure of a config file is shown as below:
 
@@ -30,7 +30,7 @@ Step 1: Setup the config file containing data and model configs
 
 To be specific, one needs to define the following entries in the config file:
 
-- **pipeline_config_id**: registered name of EasyTPP.Config objects, such as `runner_config` or `hpo_runner_config`. By reading this, the corresponding configuration class will be loaded for constructing the pipeline.
+- **pipeline_config_id**: registered name of new_ltpp.Config objects, such as `runner_config` or `hpo_runner_config`. By reading this, the corresponding configuration class will be loaded for constructing the pipeline.
 
 .. code-block:: yaml
 

@@ -1,32 +1,32 @@
 # Utils
 
-Fonctions utilitaires et helpers pour EasyTPP.
+Utility functions and helpers for new_ltpp.
 
-## Contenu
+## Contents
 
-Ce dossier contient des utilitaires communs :
+This folder contains common utilities:
 
-### Configuration et imports
-- **yaml_config_utils.py** : Utilitaires pour les fichiers YAML
-- **import_utils.py** : Gestion des imports dynamiques
-- **const.py** : Constantes du projet
+### Configuration and imports
+- **yaml_config_utils.py** : Utilities for YAML files
+- **import_utils.py** : Dynamic import handling
+- **const.py** : Project constants
 
-### Modèles et frameworks
-- **model_utils.py** : Utilitaires pour les modèles
-- **torch_utils.py** : Helpers pour PyTorch
-- **tf_utils.py** : Helpers pour TensorFlow
+### Models and frameworks
+- **model_utils.py** : Utilities for models
+- **torch_utils.py** : Helpers for PyTorch
+- **tf_utils.py** : Helpers for TensorFlow
 
-### Système et logging
-- **device_utils.py** : Gestion des dispositifs (CPU/GPU)
-- **log_utils.py** : Configuration du logging
-- **multiprocess_utils.py** : Utilitaires multiprocessus
+### System and logging
+- **device_utils.py** : Device management (CPU/GPU)
+- **log_utils.py** : Logging configuration
+- **multiprocess_utils.py** : Multiprocess utilities
 
-### Algorithmes spécialisés
-- **ode_utils.py** : Utilitaires pour les équations différentielles
-- **metrics.py** : Calculs de métriques
-- **registrable.py** : Système d'enregistrement de classes
+### Specialized algorithms
+- **ode_utils.py** : Utilities for differential equations
+- **metrics.py** : Metric calculations
+- **registrable.py** : Class registration system
 
-### Utilitaires génériques
-- **generic.py** : Fonctions utilitaires génériques
-- **gen_utils.py** : Générateurs et helpers divers
-- **misc.py** : Fonctions diverses
+### Generic utilities
+- **generic.py** : Generic utility functions
+- **gen_utils.py** : Generators and miscellaneous helpers
+- **misc.py** : Miscellaneous functions

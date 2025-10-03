@@ -12,7 +12,7 @@ class HyperTuner(Registrable):
         """Initialize the tuner
 
         Args:
-            config (EasyTPP.Config): config class
+            config (new_ltpp.Config): config class
             trial_end_callbacks (List[callable]): List of callback functions to be executed after each trial.
         """
         self.config = config
@@ -44,11 +44,11 @@ class HyperTuner(Registrable):
         """Load yaml config file from disk.
 
         Args:
-            config (EasyTPP.Config): config class
+            config (new_ltpp.Config): config class
             trial_end_callbacks (List[callable]): List of callback functions to be executed after each trial.
 
         Returns:
-            EasyTPP.Config: Config object corresponding to cls.
+            new_ltpp.Config: Config object corresponding to cls.
         """
         runner_cls = HyperTuner.by_name(config.hpo_config.framework_id)
         return runner_cls(config, trial_end_callbacks)

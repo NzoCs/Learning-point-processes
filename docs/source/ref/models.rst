@@ -1,6 +1,6 @@
 .. _api-model:
 
-EasyTPP Models
+new_ltpp Models
 ====================
 
 

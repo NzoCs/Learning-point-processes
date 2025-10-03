@@ -1,6 +1,6 @@
 # Data Management for Temporal Point Processes
 
-This directory contains the complete data pipeline for temporal point process modeling in the EasyTPP framework. It provides comprehensive tools for both generating synthetic data and preprocessing real-world datasets.
+This directory contains the complete data pipeline for temporal point process modeling in the new_ltpp framework. It provides comprehensive tools for both generating synthetic data and preprocessing real-world datasets.
 
 ## Overview
 

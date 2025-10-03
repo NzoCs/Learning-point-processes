@@ -5,7 +5,7 @@ import typing
 from new_ltpp.utils.const import LogConst
 
 # -------- log setting ---------
-DEFAULT_LOGGER = "easytpp.logger"
+DEFAULT_LOGGER = "new_ltpp.logger"
 
 
 class CustomFormatter(logging.Formatter):

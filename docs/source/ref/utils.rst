@@ -1,6 +1,6 @@
 .. _api-util:
 
-EasyTPP Utilities Modules
+new_ltpp Utilities Modules
 ==========================
 
 

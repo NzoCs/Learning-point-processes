@@ -34,7 +34,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         """Initialize the Model
 
         Args:
-            model_config (EasyTPP.ModelConfig): model spec of configs
+            model_config (new_ltpp.ModelConfig): model spec of configs
         """
         super(Model, self).__init__()
 

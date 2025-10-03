@@ -1,6 +1,6 @@
 # Configuration Factory System
 
-This module provides a centralized, type-safe configuration factory for EasyTPP that replaces repetitive `from_dict` methods with a unified approach.
+This module provides a centralized, type-safe configuration factory for new_ltpp that replaces repetitive `from_dict` methods with a unified approach.
 
 ## 🏭 Configuration Factory
 

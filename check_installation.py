@@ -2,7 +2,7 @@ from typing import Optional
 
 #!/usr/bin/env python3
 """
-Quick installation verification script for EasyTPP.
+Quick installation verification script for New_LTPP.
 
 This script checks if the installation was successful and all core dependencies are available.
 Run this after installation to verify everything is working correctly.
@@ -39,8 +39,8 @@ def check_package(package_name: str, import_name: Optional[str] = None) -> bool:
 
 
 def check_installation() -> Tuple[int, int, int, int]:
-    """Check the installation status of EasyTPP and its dependencies."""
-    print("🔍 Checking EasyTPP Installation\n")
+    """Check the installation status of new_ltpp and its dependencies."""
+    print("🔍 Checking new_ltpp Installation\n")
 
     # Check Python version
     python_ok = check_python_version()
@@ -67,8 +67,8 @@ def check_installation() -> Tuple[int, int, int, int]:
     print(f"\nCore dependencies: {core_success}/{len(core_deps)} installed")
     
     # Test specific new_ltpp modules
-    print("\n🧪 Testing EasyTPP Modules:")
-    easytpp_modules = [
+    print("\n🧪 Testing new_ltpp Modules:")
+    new_ltpp_modules = [
         ("config_factory", "new_ltpp.config_factory"),
         ("models", "new_ltpp.models"),
         ("data", "new_ltpp.data"),
@@ -78,12 +78,12 @@ def check_installation() -> Tuple[int, int, int, int]:
         ("hpo", "new_ltpp.hpo"),
     ]
     
-    easytpp_success = 0
-    for module_name, import_name in easytpp_modules:
+    new_ltpp_success = 0
+    for module_name, import_name in new_ltpp_modules:
         if check_package(f"  {module_name}", import_name):
-            easytpp_success += 1
+            new_ltpp_success += 1
     
-    print(f"\nEasyTPP modules: {easytpp_success}/{len(easytpp_modules)} importable")
+    print(f"\nnew_ltpp modules: {new_ltpp_success}/{len(new_ltpp_modules)} importable")
 
     # Optional dependencies
     print("\n🔧 Checking Optional Dependencies:")
@@ -145,14 +145,14 @@ def check_installation() -> Tuple[int, int, int, int]:
 
     # Summary
     print("\n" + "=" * 50)
-    if python_ok and core_success == len(core_deps) and easytpp_success >= 6:  # Allow hpo to fail
-        print("🎉 Installation successful! EasyTPP is ready to use.")
+    if python_ok and core_success == len(core_deps) and new_ltpp_success >= 6:  # Allow hpo to fail
+        print("🎉 Installation successful! new_ltpp is ready to use.")
         print("\nNext steps:")
         print("1. Check out the examples/ directory")
         print("2. Read the documentation")
         print("3. Try running: make demo")
         print("4. Or start with: make quick-start")
-        if easytpp_success < len(easytpp_modules):
+        if new_ltpp_success < len(new_ltpp_modules):
             print("\n⚠️  Note: Some optional modules (like HPO) may need additional dependencies.")
     else:
         print("⚠️  Installation incomplete.")
@@ -173,14 +173,14 @@ def check_installation() -> Tuple[int, int, int, int]:
         print('   uv sync --group docs     # Documentation')
         print('   uv sync --all-groups     # All groups')
 
-    return core_success, len(core_deps), easytpp_success, len(easytpp_modules)
+    return core_success, len(core_deps), new_ltpp_success, len(new_ltpp_modules)
 
 
 if __name__ == "__main__":
     try:
-        core_success, core_total, easytpp_success, easytpp_total = check_installation()
+        core_success, core_total, new_ltpp_success, new_ltpp_total = check_installation()
         # Consider installation successful if core deps are OK and most new_ltpp modules work
-        success = (core_success == core_total) and (easytpp_success >= easytpp_total - 1)
+        success = (core_success == core_total) and (new_ltpp_success >= new_ltpp_total - 1)
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
         print("\n\n❌ Installation check interrupted.")

@@ -27,7 +27,7 @@ class ANHN(NeuralModel):
         """Initialize the model
 
         Args:
-            model_config (EasyTPP.ModelConfig): config of model specs.
+            model_config (ModelConfig): config of model specs.
         """
         super(ANHN, self).__init__(
             model_config, 

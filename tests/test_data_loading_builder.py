@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
-Test du DataLoadingSpecsBuilder et des nouvelles méthodes du DataConfigBuilder
+Test DataLoadingSpecsBuilder and the new methods of DataConfigBuilder
 """
 
 from new_ltpp.configs import DataConfigBuilder
 
 def test_data_loading_specs_builder():
-    """Test des nouvelles fonctionnalités du DataConfigBuilder."""
-    print("🧪 Test du DataLoadingSpecsBuilder et DataConfigBuilder amélioré")
+    """Test the new features of DataConfigBuilder."""
+    print("🧪 Test of DataLoadingSpecsBuilder and enhanced DataConfigBuilder")
     
-    # Test 1: Configuration manuelle avec les nouvelles méthodes
-    print("\n=== Test 1: Méthodes de commodité ===")
+    # Test 1: Manual configuration using new convenience methods
+    print("\n=== Test 1: Convenience methods ===")
     builder = DataConfigBuilder()
     
-    # Configuration de base
+    # Base configuration
     builder.set_dataset_id("test_dataset")
     builder.set_data_format("json")
     builder.set_src_dir("data/test")
     
-    # Utiliser les nouvelles méthodes de commodité
+    # Use the new convenience methods
     builder.set_batch_size(64)
     builder.set_num_workers(4)
     builder.set_shuffle(True)
@@ -38,14 +38,14 @@ def test_data_loading_specs_builder():
     print(f"   Max length: {config_dict.get('tokenizer_specs', {}).get('max_len')}")
     print(f"   Padding: {config_dict.get('tokenizer_specs', {}).get('padding_side')}")
     
-    # Test 2: Configuration avec dictionnaires (méthode traditionnelle)
-    print("\n=== Test 2: Méthodes traditionnelles ===")
+    # Test 2: Configuration with dictionaries (traditional method)
+    print("\n=== Test 2: Traditional methods ===")
     builder2 = DataConfigBuilder()
     
     builder2.set_dataset_id("traditional_test")
     builder2.set_src_dir("data/traditional")
     
-    # Méthode traditionnelle avec dictionnaires
+    # Traditional method with dictionaries
     builder2.set_data_loading_specs({
         "batch_size": 32,
         "num_workers": 2,
@@ -63,27 +63,27 @@ def test_data_loading_specs_builder():
     
     config_dict2 = builder2.get_config_dict()
     
-    print("📋 Configuration traditionnelle:")
+    print("📋 Traditional configuration:")
     print(f"   Dataset ID: {config_dict2.get('dataset_id')}")
     print(f"   Loading specs: {config_dict2.get('data_loading_specs')}")
     print(f"   Data specs: {config_dict2.get('tokenizer_specs')}")
     
-    # Test 3: Combinaison des deux approches
-    print("\n=== Test 3: Approche hybride ===")
+    # Test 3: Combination of both approaches
+    print("\n=== Test 3: Hybrid approach ===")
     builder3 = DataConfigBuilder()
     
     builder3.set_dataset_id("hybrid_test")
     builder3.set_src_dir("data/hybrid")
     
-    # Commencer avec dictionnaire
+    # Start with a dictionary
     builder3.set_data_loading_specs({
         "batch_size": 16,
         "pin_memory": True
     })
     
-    # Puis utiliser les méthodes de commodité pour modifier/ajouter
-    builder3.set_num_workers(8)  # Ajoute/modifie num_workers
-    builder3.set_shuffle(True)   # Ajoute shuffle
+    # Then use convenience methods to modify/add
+    builder3.set_num_workers(8)  # Add/modify num_workers
+    builder3.set_shuffle(True)   # Add shuffle
     
     builder3.set_num_event_types(15)
     builder3.set_max_len(512)
@@ -95,7 +95,7 @@ def test_data_loading_specs_builder():
     print(f"   Loading specs: {config_dict3.get('data_loading_specs')}")
     print(f"   Data specs: {config_dict3.get('tokenizer_specs')}")
     
-    print("\n✅ Tests terminés avec succès!")
+    print("\n✅ Tests completed successfully!")
     
     return True
 

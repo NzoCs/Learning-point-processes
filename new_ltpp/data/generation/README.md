@@ -1,6 +1,6 @@
 # Data Generation for Temporal Point Processes
 
-This document provides a comprehensive guide for generating synthetic data using the EasyTPP framework's data generation capabilities.
+This document provides a comprehensive guide for generating synthetic data using the new_ltpp framework's data generation capabilities.
 
 ## Overview
 

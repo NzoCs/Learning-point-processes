@@ -3,7 +3,7 @@ Installation
 ==================
 
 
-``EasyTPP`` provides an open-source library for `Neural TPP`, with a fully automated pipeline for model training and prediction.
+``new_ltpp`` provides an open-source library for `Neural TPP`, with a fully automated pipeline for model training and prediction.
 
 
 Requirements
@@ -21,8 +21,8 @@ First, we need a python environment whose version is at least greater than 3.7.0
 
 .. code-block:: bash
 
-    conda create -n easytpp python=3.8
-    conda activate easytpp
+    conda create -n new_ltpp python=3.8
+    conda activate new_ltpp
 
 Then, install Pytorch and keep the version at least greater than 1.8.0.
 

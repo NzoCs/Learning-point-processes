@@ -1,6 +1,6 @@
 # Data Preprocessing for Temporal Point Processes
 
-This directory contains the data preprocessing pipeline for temporal point process datasets in the EasyTPP framework.
+This directory contains the data preprocessing pipeline for temporal point process datasets in the new_ltpp framework.
 
 ## Overview
 

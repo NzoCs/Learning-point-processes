@@ -1,5 +1,5 @@
 =========================================
-Performance validation of EasyTPP models
+Performance validation of new_ltpp models
 =========================================
 
 We run the experiments on various dataset to validate the implementations: each model is trained with a max number of epochs and 

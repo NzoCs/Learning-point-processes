@@ -1,5 +1,5 @@
 """
-EasyTPP - A library for Temporal Point Process modeling
+new_ltpp - A library for Temporal Point Process modeling
 =======================================================
 
 This package provides tools and implementations for working with temporal point processes.

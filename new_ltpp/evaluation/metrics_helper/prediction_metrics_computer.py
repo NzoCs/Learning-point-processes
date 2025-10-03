@@ -31,7 +31,7 @@ class TimeDataExtractor(TimeExtractorInterface):
             pred: Either a tuple/list of predictions (pred[0] = time predictions)
                   or just the time predictions tensor directly
         """
-        # Extraction according to EasyTPP format
+        # Extraction according to new_ltpp format
         if len(batch) >= 6:
             (
                 true_time_seqs,
@@ -86,7 +86,7 @@ class TypeDataExtractor(TypeExtractorInterface):
             pred: Either a tuple/list of predictions (pred[1] = type predictions)
                   or just the type predictions tensor directly
         """
-        # Extraction according to EasyTPP format
+        # Extraction according to new_ltpp format
         if len(batch) >= 6:
             (
                 true_time_seqs,

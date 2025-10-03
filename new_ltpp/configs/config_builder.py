@@ -461,10 +461,8 @@ class DataConfigBuilder(ConfigBuilder):
     
     # Méthodes de commodité pour les spécifications de données courantes
     def set_num_event_types(self, num_types: int):
-        """Définit le nombre de types d'événements dans tokenizer_specs."""
-        if "tokenizer_specs" not in self.config_dict:
-            self.config_dict["tokenizer_specs"] = {}
-        self.config_dict["tokenizer_specs"]["num_event_types"] = num_types
+        """Définit le nombre de types d'événements."""
+        self.config_dict["num_event_types"] = num_types
         return self.get_missing_fields()
     
     def set_max_len(self, max_len: int):

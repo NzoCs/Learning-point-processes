@@ -27,7 +27,7 @@
 </a>
 </div>
 
-**New-LTPP** is a modern, advanced framework for [Temporal Point Process](https://mathworld.wolfram.com/TemporalPointProcess.html) (TPP) research and development. Originally inspired by [EasyTPP](https://github.com/ant-research/EasyTemporalPointProcess), this project has evolved into a comprehensive toolkit with significant enhancements in performance, usability, and research capabilities.
+**New-LTPP** is a modern, advanced framework for [Temporal Point Process](https://mathworld.wolfram.com/TemporalPointProcess.html) (TPP) research and development. Originally inspired by [new_ltpp](https://github.com/ant-research/EasyTemporalPointProcess), this project has evolved into a comprehensive toolkit with significant enhancements in performance, usability, and research capabilities.
 
 ## 🚀 Key Innovations
 
@@ -140,13 +140,13 @@ The project includes a comprehensive CLI interface located in the `scripts/` dir
 cd scripts
 
 # Run the main CLI (uv automatically uses the project environment)
-uv run python easytpp_cli.py --help
+uv run python new_ltpp_cli.py --help
 
 # Quick installation verification
-uv run python easytpp_cli.py info
+uv run python new_ltpp_cli.py info
 
 # Interactive mode for guided setup
-uv run python easytpp_cli.py interactive
+uv run python new_ltpp_cli.py interactive
 ```
 
 ### Development Tools
@@ -193,8 +193,8 @@ uv run python check_installation.py
 
 # Test the CLI interface
 cd scripts
-uv run python easytpp_cli.py --version
-uv run python easytpp_cli.py info
+uv run python new_ltpp_cli.py --version
+uv run python new_ltpp_cli.py info
 ```
 
 
@@ -251,12 +251,12 @@ Per users' request, we processed two non-anthropogenic datasets
 
 Explore the following tutorials that can be opened directly in Google Colab:
 
-- [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ant-research/EasyTemporalPointProcess/blob/main/notebooks/easytpp_1_dataset.ipynb) Tutorial 1: Dataset in EasyTPP.
-- [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ant-research/EasyTemporalPointProcess/blob/main/notebooks/easytpp_2_tfb_wb.ipynb) Tutorial 2: Tensorboard in EasyTPP.
+- [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ant-research/EasyTemporalPointProcess/blob/main/notebooks/new_ltpp_1_dataset.ipynb) Tutorial 1: Dataset in new_ltpp.
+- [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ant-research/EasyTemporalPointProcess/blob/main/notebooks/new_ltpp_2_tfb_wb.ipynb) Tutorial 2: Tensorboard in new_ltpp.
 
 ### End-to-end Example
 
-We provide an end-to-end example for users to run a standard TPP model with `EasyTPP`.
+We provide an end-to-end example for users to run a standard TPP model with `new_ltpp`.
 
 
 ### Step 1. Installation
@@ -311,14 +311,14 @@ The project includes a comprehensive CLI located in the `scripts/` directory:
 cd scripts
 
 # Test CLI installation (uv automatically uses project environment)
-uv run python easytpp_cli.py --version
-uv run python easytpp_cli.py --help
+uv run python new_ltpp_cli.py --version
+uv run python new_ltpp_cli.py --help
 
 # Run interactive setup
-uv run python easytpp_cli.py interactive
+uv run python new_ltpp_cli.py interactive
 
 # Display system information
-uv run python easytpp_cli.py info
+uv run python new_ltpp_cli.py info
 ```
 
 #### Development Setup
@@ -436,22 +436,22 @@ This project includes a comprehensive CLI interface located in the `scripts/` di
 cd scripts
 
 # Show all available commands  
-uv run python easytpp_cli.py --help
+uv run python new_ltpp_cli.py --help
 
 # Show system information
-uv run python easytpp_cli.py info
+uv run python new_ltpp_cli.py info
 
 # List available configurations
-uv run python easytpp_cli.py list-configs --dir ../configs
+uv run python new_ltpp_cli.py list-configs --dir ../configs
 
 # Run interactive mode (recommended for beginners)
-uv run python easytpp_cli.py interactive
+uv run python new_ltpp_cli.py interactive
 
 # Validate a configuration
-uv run python easytpp_cli.py validate --config ../configs/runner_config.yaml --experiment THP --dataset H2expc
+uv run python new_ltpp_cli.py validate --config ../configs/runner_config.yaml --experiment THP --dataset H2expc
 
 # Run an experiment
-uv run python easytpp_cli.py run --config ../configs/runner_config.yaml --experiment THP --dataset H2expc --phase test
+uv run python new_ltpp_cli.py run --config ../configs/runner_config.yaml --experiment THP --dataset H2expc --phase test
 ```
 
 #### Advanced CLI Features
@@ -460,16 +460,16 @@ The CLI supports comprehensive TPP workflows:
 
 ```bash
 # Generate synthetic data
-uv run python easytpp_cli.py data-gen --type hawkes --num-sims 100 --output ./data/synthetic
+uv run python new_ltpp_cli.py data-gen --type hawkes --num-sims 100 --output ./data/synthetic
 
 # Inspect and visualize data  
-uv run python easytpp_cli.py data-inspect --experiment H2expi --output ./visualizations
+uv run python new_ltpp_cli.py data-inspect --experiment H2expi --output ./visualizations
 
 # Run benchmarks for comparison
-uv run python easytpp_cli.py benchmark --type mean --dataset test --output ./benchmark_results
+uv run python new_ltpp_cli.py benchmark --type mean --dataset test --output ./benchmark_results
 
 # Train a model with custom parameters
-uv run python easytpp_cli.py run \
+uv run python new_ltpp_cli.py run \
   --config ../configs/training_config.yaml \
   --experiment THP \
   --dataset taxi \
@@ -482,14 +482,14 @@ uv run python easytpp_cli.py run \
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `info` | Display system information | `uv run python easytpp_cli.py info` |
-| `list-configs` | List configuration files | `uv run python easytpp_cli.py list-configs --dir ../configs` |
-| `interactive` | Launch interactive mode | `uv run python easytpp_cli.py interactive` |
-| `validate` | Validate configuration | `uv run python easytpp_cli.py validate --config config.yaml --experiment THP` |
-| `run` | Run experiment | `uv run python easytpp_cli.py run --config config.yaml --experiment THP --phase test` |
-| `data-gen` | Generate synthetic data | `uv run python easytpp_cli.py data-gen --type hawkes --num-sims 100` |
-| `data-inspect` | Visualize and analyze data | `uv run python easytpp_cli.py data-inspect --experiment H2expi` |
-| `benchmark` | Run performance benchmarks | `uv run python easytpp_cli.py benchmark --type mean --dataset test` |
+| `info` | Display system information | `uv run python new_ltpp_cli.py info` |
+| `list-configs` | List configuration files | `uv run python new_ltpp_cli.py list-configs --dir ../configs` |
+| `interactive` | Launch interactive mode | `uv run python new_ltpp_cli.py interactive` |
+| `validate` | Validate configuration | `uv run python new_ltpp_cli.py validate --config config.yaml --experiment THP` |
+| `run` | Run experiment | `uv run python new_ltpp_cli.py run --config config.yaml --experiment THP --phase test` |
+| `data-gen` | Generate synthetic data | `uv run python new_ltpp_cli.py data-gen --type hawkes --num-sims 100` |
+| `data-inspect` | Visualize and analyze data | `uv run python new_ltpp_cli.py data-inspect --experiment H2expi` |
+| `benchmark` | Run performance benchmarks | `uv run python new_ltpp_cli.py benchmark --type mean --dataset test` |
 
 #### Interactive Mode
 
@@ -497,7 +497,7 @@ For beginners, the interactive mode provides guided setup:
 
 ```bash
 cd scripts
-uv run python easytpp_cli.py interactive
+uv run python new_ltpp_cli.py interactive
 ```
 
 This will guide you through:
@@ -578,7 +578,7 @@ New-LTPP/
 │   └── hpo_config.yaml             # HPO configuration template
 │
 ├── 🚀 Command Line Interface (scripts/)
-│   ├── easytpp_cli.py              # Main CLI application
+│   ├── new_ltpp_cli.py              # Main CLI application
 │   ├── CLI_README.md               # Detailed CLI documentation
 │   ├── run_all_pipeline.sh         # Batch execution script
 │   └── train_ruche_cpu.sh          # HPC execution script
@@ -594,7 +594,7 @@ New-LTPP/
 │   └── event_tokenizer.py          # Event tokenization utilities
 │
 ├── 📓 Interactive Tutorials (notebooks/)
-│   └── EasyTPP_Getting_Started.ipynb  # Comprehensive tutorial notebook
+│   └── new_ltpp_Getting_Started.ipynb  # Comprehensive tutorial notebook
 │
 ├── 🧪 Test Suite (tests/)
 │   ├── unit/                       # Unit tests
@@ -690,7 +690,7 @@ For detailed CLI documentation, see [`scripts/CLI_README.md`](scripts/CLI_README
 ## Documentation <a href='#top'>[Back to Top]</a>
 <span id='doc'/>
 
-The classes and methods of `EasyTPP` have been well documented so that users can generate the documentation by:
+The classes and methods of `new_ltpp` have been well documented so that users can generate the documentation by:
 
 ```shell
 cd doc
@@ -718,7 +718,7 @@ python run_retweet.py
 
 ## License <a href='#top'>[Back to Top]</a>
 
-This project is licensed under the [Apache License (Version 2.0)](https://github.com/alibaba/EasyNLP/blob/master/LICENSE). This toolkit also contains some code modified from other repos under other open-source licenses. See the [NOTICE](https://github.com/ant-research/EasyTPP/blob/master/NOTICE) file for more information.
+This project is licensed under the [Apache License (Version 2.0)](https://github.com/alibaba/EasyNLP/blob/master/LICENSE). This toolkit also contains some code modified from other repos under other open-source licenses. See the [NOTICE](https://github.com/ant-research/new_ltpp/blob/master/NOTICE) file for more information.
 
 
 ## Todo List
@@ -856,13 +856,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 <span id='citation'/>
 
-### Original EasyTPP Citation
+### Original new_ltpp Citation
 
-This project is greatly inspired by the original EasyTPP framework. If you use this work, please cite the original paper:
+This project is greatly inspired by the original new_ltpp framework. If you use this work, please cite the original paper:
 
 ```bibtex
-@inproceedings{xue2024easytpp,
-      title={EasyTPP: Towards Open Benchmarking Temporal Point Processes}, 
+@inproceedings{xue2024new_ltpp,
+      title={new_ltpp: Towards Open Benchmarking Temporal Point Processes}, 
       author={Siqiao Xue and Xiaoming Shi and Zhixuan Chu and Yan Wang and Hongyan Hao and Fan Zhou and Caigao Jiang and Chen Pan and James Y. Zhang and Qingsong Wen and Jun Zhou and Hongyuan Mei},
       booktitle = {International Conference on Learning Representations (ICLR)},
       year = {2024},
@@ -888,15 +888,15 @@ If you find New-LTPP useful for your research, please consider citing this repos
 
 <span id='acknowledgment'/>
 
-### Original EasyTPP Team
+### Original new_ltpp Team
 
-This project builds upon the excellent foundation provided by the [EasyTPP](https://github.com/ant-research/EasyTemporalPointProcess) team from Machine Intelligence Group, Alipay and DAMO Academy, Alibaba. We are grateful for their pioneering work in making TPP research more accessible.
+This project builds upon the excellent foundation provided by the [new_ltpp](https://github.com/ant-research/EasyTemporalPointProcess) team from Machine Intelligence Group, Alipay and DAMO Academy, Alibaba. We are grateful for their pioneering work in making TPP research more accessible.
 
 ### Key Inspirations
 
 The following repositories and frameworks have influenced this work:
 
-- **[EasyTPP](https://github.com/ant-research/EasyTemporalPointProcess)**: Original foundation and inspiration
+- **[new_ltpp](https://github.com/ant-research/EasyTemporalPointProcess)**: Original foundation and inspiration
 - **[PyTorch Lightning](https://lightning.ai/)**: High-performance training framework
 - **[Neural Hawkes Process](https://github.com/hongyuanmei/neurawkes)**: Fundamental TPP implementations
 - **[Attentive Neural Hawkes Process](https://github.com/yangalan123/anhp-andtt)**: Attention mechanisms in TPP

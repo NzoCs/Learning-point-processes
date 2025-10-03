@@ -25,7 +25,7 @@ class RMTPP(NeuralModel):
         """Initialize the model
 
         Args:
-            model_config (EasyTPP.ModelConfig): config of model specs.
+            model_config (new_ltpp.ModelConfig): config of model specs.
         """
         super(RMTPP, self).__init__(
             model_config, num_event_types=num_event_types, hidden_size=hidden_size, dropout=dropout

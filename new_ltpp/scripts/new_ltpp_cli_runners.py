@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-EasyTPP CLI v4.0 - Processus Runners Architecture
+EasyTPP CLI v4.0 - Runners Process Architecture
 
-Interface en ligne de commande pour EasyTPP utilisant des runners modulaires
-pour chaque processus (expérience, inspection, génération, etc.).
+Command line interface for EasyTPP using modular runners
+for each process (experiment, inspection, generation, etc.).
 
 Usage:
     python easytpp_cli_runners.py --help
@@ -27,7 +27,7 @@ except ImportError:
     Console = None
     rprint = print
 
-# Import des runners
+# Import runners
 try:
     from new_ltpp.runners import (
         ExperimentRunner,
@@ -43,15 +43,15 @@ except ImportError as e:
     IMPORT_ERROR = str(e)
 
 def check_requirements():
-    """Vérifie que les dépendances sont disponibles."""
+    """Check that required dependencies are available."""
     if not TYPER_AVAILABLE:
-        print("❌ Erreur: typer n'est pas installé")
-        print("Installation: pip install typer[all] rich")
+        print("❌ Error: typer is not installed")
+        print("Install: pip install typer[all] rich")
         return False
         
     if not RUNNERS_AVAILABLE:
-        print(f"❌ Erreur: Runners non disponibles - {IMPORT_ERROR}")
-        print("Vérifiez l'installation d'EasyTPP")
+        print(f"❌ Error: Runners not available - {IMPORT_ERROR}")
+        print("Check EasyTPP installation")
         return False
         
     return True
@@ -62,29 +62,29 @@ if not check_requirements():
 
 app = typer.Typer(
     name="easytpp",
-    help="EasyTPP CLI v4.0 - Temporal Point Processes avec architecture runners",
+    help="EasyTPP CLI v4.0 - Temporal Point Processes with runners architecture",
     no_args_is_help=True
 )
 console = Console()
 
 @app.command("run")
 def run_experiment(
-    config: Optional[str] = typer.Option(None, "--config", "-c", help="Fichier de configuration YAML"),
-    data_config: str = typer.Option("test", "--data-config", help="Configuration des données (test, large, synthetic)"),
-    model_config: str = typer.Option("neural_small", "--model-config", help="Configuration du modèle (neural_small, neural_large)"),
-    training_config: str = typer.Option("quick_test", "--training-config", help="Configuration d'entraînement (quick_test, full_training)"),
-    data_loading_config: str = typer.Option("quick_test", "--data-loading-config", help="Configuration de chargement des données"),
+    config: Optional[str] = typer.Option(None, "--config", "-c", help="YAML configuration file"),
+    data_config: str = typer.Option("test", "--data-config", help="Data configuration (test, large, synthetic)"),
+    model_config: str = typer.Option("neural_small", "--model-config", help="Model configuration (neural_small, neural_large)"),
+    training_config: str = typer.Option("quick_test", "--training-config", help="Training configuration (quick_test, full_training)"),
+    data_loading_config: str = typer.Option("quick_test", "--data-loading-config", help="Data loading configuration"),
     simulation_config: Optional[str] = typer.Option("simulation_fast", "--simulation-config", help="Configuration de simulation"),
     thinning_config: Optional[str] = typer.Option("thinning_fast", "--thinning-config", help="Configuration de thinning"),
     logger_config: str = typer.Option("tensorboard", "--logger-config", help="Configuration du logger (mlflow, tensorboard) [default: tensorboard]"),
     model_id: str = typer.Option("NHP", "--model", "-m", help="ID du modèle (NHP, RMTPP, etc.)"),
     phase: str = typer.Option("all", "--phase", "-p", help="Phase d'exécution (train/test/predict/all)"),
-    max_epochs: Optional[int] = typer.Option(None, "--epochs", "-e", help="Nombre maximum d'époques"),
-    save_dir: Optional[str] = typer.Option(None, "--save-dir", "-s", help="Répertoire de sauvegarde [default: artifacts/experiments]"),
-    gpu_id: Optional[int] = typer.Option(None, "--gpu", "-g", help="ID du GPU à utiliser"),
-    debug: bool = typer.Option(False, "--debug", help="Mode debug")
+    max_epochs: Optional[int] = typer.Option(None, "--epochs", "-e", help="Maximum number of epochs"),
+    save_dir: Optional[str] = typer.Option(None, "--save-dir", "-s", help="Save directory [default: artifacts/experiments]"),
+    gpu_id: Optional[int] = typer.Option(None, "--gpu", "-g", help="GPU id to use"),
+    debug: bool = typer.Option(False, "--debug", help="Debug mode")
 ):
-    """Lance une expérience TPP avec ExperimentRunner."""
+    """Run a TPP experiment with ExperimentRunner."""
     runner = ExperimentRunner(debug=debug)
     success = runner.run_experiment(
         config_path=config,
@@ -108,15 +108,15 @@ def run_experiment(
 
 @app.command("inspect")
 def inspect_data(
-    data_dir: str = typer.Argument(..., help="Répertoire contenant les données"),
-    data_format: str = typer.Option("json", "--format", "-f", help="Format des données"),
-    output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Répertoire de sortie"),
-    save_graphs: bool = typer.Option(True, "--save/--no-save", help="Sauvegarder les graphiques"),
-    show_graphs: bool = typer.Option(False, "--show/--no-show", help="Afficher les graphiques"),
-    max_sequences: Optional[int] = typer.Option(None, "--max-seq", help="Nombre max de séquences"),
-    debug: bool = typer.Option(False, "--debug", help="Mode debug")
+    data_dir: str = typer.Argument(..., help="Directory containing the data"),
+    data_format: str = typer.Option("json", "--format", "-f", help="Data format"),
+    output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Output directory"),
+    save_graphs: bool = typer.Option(True, "--save/--no-save", help="Save graphs"),
+    show_graphs: bool = typer.Option(False, "--show/--no-show", help="Show graphs"),
+    max_sequences: Optional[int] = typer.Option(None, "--max-seq", help="Maximum number of sequences"),
+    debug: bool = typer.Option(False, "--debug", help="Debug mode")
 ):
-    """Inspecte et visualise des données TPP avec DataInspector."""
+    """Inspect and visualize TPP data with DataInspector."""
     runner = DataInspector(debug=debug)
     success = runner.inspect_data(
         data_dir=data_dir,
@@ -132,16 +132,16 @@ def inspect_data(
 
 @app.command("generate")
 def generate_data(
-    output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Répertoire de sortie [default: artifacts/generated_data/TIMESTAMP]"),
-    num_sequences: int = typer.Option(1000, "--num-seq", "-n", help="Nombre de séquences"),
-    max_seq_len: int = typer.Option(100, "--max-len", "-l", help="Longueur max des séquences"),
-    num_event_types: int = typer.Option(5, "--event-types", "-t", help="Nombre de types d'événements"),
-    method: str = typer.Option("nhp", "--method", "-m", help="Méthode de génération"),
-    config: Optional[str] = typer.Option(None, "--config", "-c", help="Fichier de configuration"),
-    seed: Optional[int] = typer.Option(None, "--seed", help="Graine pour reproductibilité"),
-    debug: bool = typer.Option(False, "--debug", help="Mode debug")
+    output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Output directory [default: artifacts/generated_data/TIMESTAMP]"),
+    num_sequences: int = typer.Option(1000, "--num-seq", "-n", help="Number of sequences"),
+    max_seq_len: int = typer.Option(100, "--max-len", "-l", help="Maximum sequence length"),
+    num_event_types: int = typer.Option(5, "--event-types", "-t", help="Number of event types"),
+    method: str = typer.Option("nhp", "--method", "-m", help="Generation method"),
+    config: Optional[str] = typer.Option(None, "--config", "-c", help="Configuration file"),
+    seed: Optional[int] = typer.Option(None, "--seed", help="Seed for reproducibility"),
+    debug: bool = typer.Option(False, "--debug", help="Debug mode")
 ):
-    """Génère des données synthétiques TPP avec DataGenerator."""
+    """Generate synthetic TPP data with DataGenerator."""
     runner = DataGenerator(debug=debug)
     success = runner.generate_data(
         output_dir=output_dir,
@@ -156,16 +156,16 @@ def generate_data(
     if not success:
         raise typer.Exit(1)
 
-# ConfigValidator supprimé - utiliser la validation intégrée dans les configs
+# ConfigValidator removed - use built-in validation in configs
 
 @app.command("info")
 def system_info(
-    include_deps: bool = typer.Option(True, "--deps/--no-deps", help="Inclure les dépendances"),
-    include_hardware: bool = typer.Option(True, "--hw/--no-hw", help="Inclure le matériel"),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="Fichier de sortie"),
-    debug: bool = typer.Option(False, "--debug", help="Mode debug")
+    include_deps: bool = typer.Option(True, "--deps/--no-deps", help="Include dependencies"),
+    include_hardware: bool = typer.Option(True, "--hw/--no-hw", help="Include hardware info"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file"),
+    debug: bool = typer.Option(False, "--debug", help="Debug mode")
 ):
-    """Affiche les informations système avec SystemInfo."""
+    """Display system information with SystemInfo."""
     runner = SystemInfo(debug=debug)
     success = runner.display_system_info(
         include_deps=include_deps,
@@ -176,16 +176,16 @@ def system_info(
     if not success:
         raise typer.Exit(1)
 
-# ConfigManager supprimé - utiliser les outils de configuration intégrés
+# ConfigManager removed - use built-in configuration tools
 
 @app.command("setup")
 def interactive_setup(
-    setup_type: str = typer.Option("experiment", "--type", "-t", help="Type de setup"),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="Fichier de sortie"),
-    quick: bool = typer.Option(False, "--quick", "-q", help="Mode rapide"),
-    debug: bool = typer.Option(False, "--debug", help="Mode debug")
+    setup_type: str = typer.Option("experiment", "--type", "-t", help="Setup type"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file"),
+    quick: bool = typer.Option(False, "--quick", "-q", help="Quick mode"),
+    debug: bool = typer.Option(False, "--debug", help="Debug mode")
 ):
-    """Configuration interactive avec InteractiveSetup."""
+    """Interactive configuration with InteractiveSetup."""
     runner = InteractiveSetup(debug=debug)
     success = runner.run_interactive_setup(
         setup_type=setup_type,
@@ -209,16 +209,16 @@ def benchmark_performance(
     debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
     """
-    Lance des benchmarks TPP avec BenchmarkRunner.
+    Run TPP benchmarks with BenchmarkRunner.
     
-    Exemples:
-        # Benchmark simple
+    Examples:
+        # Simple benchmark
         benchmark --data-config test --all
         
-        # Plusieurs configurations
+        # Multiple configurations
         benchmark --data-config test --data-config large --all
         
-        # Tous benchmarks sur toutes configs
+        # All benchmarks on all configs
         benchmark --data-config test --data-config large --all --all-configs
     """
     runner = BenchmarkRunner(debug=debug)
@@ -227,11 +227,11 @@ def benchmark_performance(
         runner.list_available_benchmarks()
         return
     
-    # Si aucune config spécifiée, utiliser 'test' par défaut
+    # If no config specified, use 'test' by default
     if data_config is None:
         data_config = ["test"]
     
-    # Si une seule config et pas de liste, convertir en string
+    # If a single config and not a list, convert to string
     if len(data_config) == 1:
         data_config = data_config[0]
     
@@ -250,18 +250,18 @@ def benchmark_performance(
 
 @app.command("version")
 def show_version():
-    """Affiche la version du CLI."""
+    """Show CLI version."""
     console.print("[bold blue]EasyTPP CLI v4.0[/bold blue]")
-    console.print("Architecture: Processus Runners")
-    console.print("Runners disponibles:")
+    console.print("Architecture: Runners Process")
+    console.print("Available runners:")
     
     runners = [
-        "ExperimentRunner - Exécution d'expériences TPP",
-        "DataInspector - Inspection et visualisation de données", 
-        "DataGenerator - Génération de données synthétiques",
-        "SystemInfo - Informations système",
-        "InteractiveSetup - Configuration guidée",
-        "BenchmarkRunner - Tests de performance"
+        "ExperimentRunner - Run TPP experiments",
+        "DataInspector - Inspect and visualize data", 
+        "DataGenerator - Generate synthetic data",
+        "SystemInfo - System information",
+        "InteractiveSetup - Guided setup",
+        "BenchmarkRunner - Performance benchmarks"
     ]
     
     for runner in runners:
@@ -270,22 +270,22 @@ def show_version():
 def main():
     """Point d'entrée principal."""
     if len(sys.argv) == 1:
-        console.print("[bold blue]🚀 EasyTPP CLI v4.0 - Architecture Runners[/bold blue]")
+        console.print("[bold blue]🚀 EasyTPP CLI v4.0 - Runners Architecture[/bold blue]")
         console.print()
-        console.print("Commandes disponibles:")
+        console.print("Available commands:")
         
         commands = [
-            ("run", "Lancer une expérience TPP"),
-            ("inspect", "Inspecter et visualiser des données"),
-            ("generate", "Générer des données synthétiques"),
-            ("info", "Informations système"),
-            ("setup", "Configuration interactive"),
-            ("benchmark", "Tests de performance"),
-            ("version", "Afficher la version")
+            ("run", "Run a TPP experiment"),
+            ("inspect", "Inspect and visualize data"),
+            ("generate", "Generate synthetic data"),
+            ("info", "System information"),
+            ("setup", "Interactive configuration"),
+            ("benchmark", "Performance benchmarks"),
+            ("version", "Show version")
         ]
         
         table = Table()
-        table.add_column("Commande", style="cyan")
+        table.add_column("Command", style="cyan")
         table.add_column("Description", style="white")
         
         for cmd, desc in commands:
@@ -293,7 +293,7 @@ def main():
         
         console.print(table)
         console.print()
-        console.print("Utilisez [bold]--help[/bold] avec chaque commande pour plus de détails")
+        console.print("Use [bold]--help[/bold] with each command for more details")
         return
     
     app()

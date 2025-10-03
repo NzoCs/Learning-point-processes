@@ -3,7 +3,7 @@ Launching the Tensorboard
 ===================================
 
 
-Here we present how to launch the tensorboard within the  ``EasyTPP`` framework.
+Here we present how to launch the tensorboard within the  ``new_ltpp`` framework.
 
 Step 1: Activate the usage of tensorboard in Config file
 ========================================================

@@ -1,7 +1,7 @@
 
-# EasyTPP - Quick Setup Guide
+# new_ltpp - Quick Setup Guide
 
-This guide helps you quickly set up the EasyTPP project using `uv` - the fast Python package manager.
+This guide helps you quickly set up the new_ltpp project using `uv` - the fast Python package manager.
 
 ## Prerequisites
 

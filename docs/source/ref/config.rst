@@ -1,6 +1,6 @@
 .. _api-config:
 
-EasyTPP Config Modules
+new_ltpp Config Modules
 ============================
 
 

@@ -1,8 +1,8 @@
 """
-Exemple d'utilisation de la BenchmarkFactory avec l'enum
+Example usage of the BenchmarkFactory with the enum
 
-Cet exemple montre comment utiliser la factory pour simplifier
-le lancement des benchmarks par rapport au code précédent.
+This example shows how to use the factory to simplify
+running benchmarks compared to the previous code.
 """
 
 from new_ltpp.configs import DataConfig, DataConfigBuilder, config_factory
@@ -13,11 +13,11 @@ from new_ltpp.evaluation.benchmarks.benchmark_manager import (
 
 
 def example_simple_benchmark():
-    """Exemple simple avec un seul benchmark."""
-    # Utilisation de DataConfigBuilder pour construire la config
+    """Simple example with a single benchmark."""
+    # Use DataConfigBuilder to construct the config
     builder = DataConfigBuilder()
     builder.load_from_yaml(
-        yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
+    yaml_path="../yaml_configs/configs.yaml",  # adapt according to your YAML file
         data_config_path="data_configs.test",
         data_loading_config_path="data_loading_configs.quick_test",
     )
@@ -25,11 +25,11 @@ def example_simple_benchmark():
 
     factory = BenchmarkManager(data_config)
     results = factory.run_single(Benchmarks.MEAN_INTER_TIME)
-    print(f"Résultats: {results}")
+    print(f"Results: {results}")
 
 
 def example_multiple_benchmarks():
-    """Exemple avec plusieurs benchmarks."""
+    """Example with multiple benchmarks."""
     builder = DataConfigBuilder()
     builder.load_from_yaml(
         yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
@@ -50,11 +50,11 @@ def example_multiple_benchmarks():
     results = factory.run_multiple(selected_benchmarks)
 
     for benchmark_name, result in results.items():
-        print(f"Résultats pour {benchmark_name}: terminé")
+        print(f"Results for {benchmark_name}: finished")
 
 
 def example_all_benchmarks():
-    """Exemple pour lancer tous les benchmarks."""
+    """Example to run all benchmarks."""
     builder = DataConfigBuilder()
     builder.load_from_yaml(
         yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
@@ -65,11 +65,11 @@ def example_all_benchmarks():
 
     factory = BenchmarkManager(data_config)
     results = factory.run_all()
-    print(f"Tous les benchmarks terminés: {len(results)} benchmarks")
+    print(f"All benchmarks completed: {len(results)} benchmarks")
 
 
 def example_by_names():
-    """Exemple pour lancer des benchmarks par leurs noms."""
+    """Example to run benchmarks by their names."""
     builder = DataConfigBuilder()
     builder.load_from_yaml(
         yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
@@ -83,11 +83,11 @@ def example_by_names():
     benchmark_names = ["mean_inter_time", "mark_distribution_sampling"]
     results = factory.run_by_names(benchmark_names)
 
-    print(f"Benchmarks lancés: {list(results.keys())}")
+    print(f"Benchmarks launched: {list(results.keys())}")
 
 
 def example_with_parameters():
-    """Exemple avec des paramètres personnalisés."""
+    """Example with custom parameters."""
     builder = DataConfigBuilder()
     builder.load_from_yaml(
         yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
@@ -103,28 +103,28 @@ def example_with_parameters():
         num_bins=100,  # Paramètre personnalisé pour ce benchmark
     )
 
-    print("Benchmark avec paramètres personnalisés terminé")
+    print("Benchmark with custom parameters finished")
 
 
 def main():
-    """Fonction principale pour tester tous les exemples."""
-    print("=== Exemple simple ===")
+    """Main function to run all examples."""
+    print("=== Simple example ===")
     example_simple_benchmark()
 
-    print("\n=== Exemple multiple ===")
+    print("\n=== Multiple example ===")
     example_multiple_benchmarks()
 
-    print("\n=== Exemple tous benchmarks ===")
+    print("\n=== All benchmarks example ===")
     example_all_benchmarks()
 
-    print("\n=== Exemple par noms ===")
+    print("\n=== By names example ===")
     example_by_names()
 
-    print("\n=== Exemple avec paramètres ===")
+    print("\n=== With parameters example ===")
     example_with_parameters()
 
-    print("\n=== Liste des benchmarks disponibles ===")
-    print("Benchmarks disponibles:")
+    print("\n=== Available benchmarks list ===")
+    print("Available benchmarks:")
     for benchmark in Benchmarks:
         print(f"- {benchmark.benchmark_name}")
 

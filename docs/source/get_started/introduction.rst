@@ -3,17 +3,17 @@ Introduction
 ==================
 
 
-``EasyTPP`` provides an open-source library for `Neural TPP`, with a fully automated pipeline for model training and prediction.
+``new_ltpp`` provides an open-source library for `Neural TPP`, with a fully automated pipeline for model training and prediction.
 
 
 Framework
 =========
 
 
-``EasyTPP`` supports both Tensorflow and PyTorch: each model has two equivalent versions implemented in Tensorflow 1.13 and Pytorch 1.8 respectively. The data processing and model training / prediction pipeline are compatible with both Tensorflow and Pytorch as well.
+``new_ltpp`` supports both Tensorflow and PyTorch: each model has two equivalent versions implemented in Tensorflow 1.13 and Pytorch 1.8 respectively. The data processing and model training / prediction pipeline are compatible with both Tensorflow and Pytorch as well.
 
 
-At the module level, ``EasyTPP`` is a package that consists of the following components, which are designed as loose-coupled modules that provide flexibility for users to develop customized functionalities.
+At the module level, ``new_ltpp`` is a package that consists of the following components, which are designed as loose-coupled modules that provide flexibility for users to develop customized functionalities.
 
 
 
@@ -34,7 +34,7 @@ Name                      Description
 Install
 =========
 
-``EasyTPP`` can be installed either by pip or the source. By default it is built based on PyTorch. If one wants to run with the Tensorflow backend, one needs to install Tensorflow additionally.
+``new_ltpp`` can be installed either by pip or the source. By default it is built based on PyTorch. If one wants to run with the Tensorflow backend, one needs to install Tensorflow additionally.
 
 Please see `Installation <./install.html>`_ for details of requirement and installation.
 

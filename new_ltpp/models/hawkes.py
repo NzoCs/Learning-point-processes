@@ -22,7 +22,7 @@ class Hawkes(Model):
         Initialize the Hawkes model.
 
         Args:
-            model_config (EasyTPP.ModelConfig): Configuration object containing model specs.
+            model_config (new_ltpp.ModelConfig): Configuration object containing model specs.
                 Expected specs: 'mu' (list), 'alpha' (list of lists), 'beta' (list of lists).
         """
 

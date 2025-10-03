@@ -1,6 +1,6 @@
 .. _api-preprocess:
 
-EasyTPP Preprocess Modules
+new_ltpp Preprocess Modules
 ==========================
 
 

@@ -1,15 +1,15 @@
 """
-Registry simple pour les benchmarks
+Simple registry for benchmarks
 
-Enum des benchmarks disponibles pour faciliter l'utilisation.
+Enum of available benchmarks to make usage easier.
 
-Utilisation:
+Usage:
     from new_ltpp.evaluation.benchmarks.registry import Benchmarks
 
-    # Lister tous les benchmarks
+    # List all benchmarks
     print(list(Benchmarks))
 
-    # Obtenir une classe de benchmark
+    # Get a benchmark class
     benchmark_class = Benchmarks.MEAN_INTER_TIME.get_class()
 """
 
@@ -33,7 +33,7 @@ from new_ltpp.configs import DataConfig
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent / "artifacts"
 
 class BenchmarksEnum(Enum):
-    """Enum des benchmarks disponibles."""
+    """Enum of available benchmarks."""
 
     MEAN_INTER_TIME = ("mean_inter_time", MeanInterTimeBenchmark)
     LAG1_MARK = ("lag1_mark_benchmark", LastMarkBenchmark)
@@ -48,31 +48,31 @@ class BenchmarksEnum(Enum):
         self.benchmark_class = benchmark_class
 
     def get_class(self) -> Type[Benchmark]:
-        """Obtenir la classe du benchmark."""
+        """Return the benchmark class."""
         return self.benchmark_class
 
     def get_name(self) -> str:
-        """Obtenir le nom du benchmark."""
+        """Return the benchmark name."""
         return self.benchmark_name
 
     @classmethod
     def get_benchmark_by_name(cls, name: str) -> BenchmarkInterface:
-        """Obtenir un benchmark par son nom."""
+        """Get a benchmark by its name."""
         for benchmark in cls:
             if benchmark.benchmark_name == name:
                 return benchmark
         raise ValueError(
-            f"Benchmark '{name}' introuvable. Disponibles: {[b.benchmark_name for b in cls]}"
+            f"Benchmark '{name}' not found. Available: {[b.benchmark_name for b in cls]}"
         )
 
     @classmethod
     def list_names(cls) -> list[str]:
-        """Lister tous les noms des benchmarks."""
+        """List all benchmark names."""
         return [benchmark.benchmark_name for benchmark in cls]
 
 
 class BenchmarkManager:
-    """Factory simple pour lancer les benchmarks en utilisant l'enum."""
+    """Simple factory to run benchmarks using the enum."""
 
     def __init__(
         self,
@@ -80,16 +80,16 @@ class BenchmarkManager:
         save_dir: Optional[Union[Path, str]] = None,
     ):
         """
-        Initialiser la factory.
+        Initialize the factory.
 
         Args:
-            data_config: Configuration des données ou liste de configurations
-            save_dir: Répertoire pour sauvegarder les résultats
+            data_config: Data configuration or list of configurations
+            save_dir: Directory to save results
         """
-        # Support d'une seule config ou d'une liste de configs
+        # Support a single config or a list of configs
         if isinstance(data_config, list):
             self.data_configs = data_config
-            self.data_config = data_config[0]  # Config par défaut
+            self.data_config = data_config[0]  # Default config
             self.dataset_name = data_config[0].dataset_id
         else:
             self.data_configs = [data_config]
@@ -101,17 +101,17 @@ class BenchmarkManager:
 
     def run_single(self, benchmark: BenchmarksEnum, data_config: Optional[DataConfig] = None, **kwargs):
         """
-        Lancer un seul benchmark sur une configuration.
-        
+        Run a single benchmark on a configuration.
+
         Args:
-            benchmark: Benchmark à lancer
-            data_config: Configuration spécifique (utilise self.data_config si None)
-            **kwargs: Arguments supplémentaires pour le benchmark
+            benchmark: Benchmark to run
+            data_config: Specific configuration (uses self.data_config if None)
+            **kwargs: Additional arguments for the benchmark
         """
         config = data_config or self.data_config
         dataset_name = config.dataset_id
-        
-        print(f"Lancement du benchmark: {benchmark.benchmark_name} sur {dataset_name}")
+
+        print(f"Running benchmark: {benchmark.benchmark_name} on {dataset_name}")
 
         benchmark_class = benchmark.get_class()
         instance = benchmark_class(
@@ -122,23 +122,23 @@ class BenchmarkManager:
         )
 
         results = instance.evaluate()
-        print(f"Benchmark {benchmark.benchmark_name} terminé pour {dataset_name}")
+        print(f"Benchmark {benchmark.benchmark_name} finished for {dataset_name}")
         return results
 
     def run_multiple(self, benchmarks: list[BenchmarksEnum], **kwargs):
-        """Lancer plusieurs benchmarks."""
+        """Run multiple benchmarks."""
         results = {}
         for benchmark in benchmarks:
             results[benchmark.benchmark_name] = self.run_single(benchmark, **kwargs)
         return results
 
     def run_all(self, **kwargs):
-        """Lancer tous les benchmarks disponibles."""
+        """Run all available benchmarks."""
         all_benchmarks = list(BenchmarksEnum)
         return self.run_multiple(all_benchmarks, **kwargs)
 
     def run_by_names(self, benchmark_names: list[str], **kwargs):
-        """Lancer des benchmarks par leurs noms."""
+        """Run benchmarks by their names."""
         benchmarks = []
         for name in benchmark_names:
             benchmark = BenchmarksEnum.get_benchmark_by_name(name)
@@ -147,14 +147,14 @@ class BenchmarkManager:
     
     def run_single_on_all_configs(self, benchmark: BenchmarksEnum, **kwargs):
         """
-        Lancer un seul benchmark sur toutes les configurations.
-        
+        Run a single benchmark on all configurations.
+
         Args:
-            benchmark: Benchmark à lancer
-            **kwargs: Arguments supplémentaires pour le benchmark
-            
+            benchmark: Benchmark to run
+            **kwargs: Additional arguments for the benchmark
+
         Returns:
-            Dict[str, Any]: Résultats par dataset_id
+            Dict[str, Any]: Results keyed by dataset_id
         """
         results = {}
         for config in self.data_configs:
@@ -167,14 +167,14 @@ class BenchmarkManager:
     
     def run_multiple_on_all_configs(self, benchmarks: list[BenchmarksEnum], **kwargs):
         """
-        Lancer plusieurs benchmarks sur toutes les configurations.
-        
+        Run multiple benchmarks on all configurations.
+
         Args:
-            benchmarks: Liste de benchmarks à lancer
-            **kwargs: Arguments supplémentaires pour les benchmarks
-            
+            benchmarks: List of benchmarks to run
+            **kwargs: Additional arguments for the benchmarks
+
         Returns:
-            Dict[str, Dict[str, Any]]: Résultats par dataset_id puis par benchmark
+            Dict[str, Dict[str, Any]]: Results by dataset_id then by benchmark
         """
         results = {}
         for config in self.data_configs:
@@ -191,21 +191,21 @@ class BenchmarkManager:
     
     def run_all_on_all_configs(self, **kwargs):
         """
-        Lancer tous les benchmarks sur toutes les configurations.
-        
+        Run all benchmarks on all configurations.
+
         Args:
-            **kwargs: Arguments supplémentaires pour les benchmarks
-            
+            **kwargs: Additional arguments for the benchmarks
+
         Returns:
-            Dict[str, Dict[str, Any]]: Résultats par dataset_id puis par benchmark
+            Dict[str, Dict[str, Any]]: Results by dataset_id then by benchmark
         """
         all_benchmarks = list(BenchmarksEnum)
         return self.run_multiple_on_all_configs(all_benchmarks, **kwargs)
     
     def get_config_count(self) -> int:
-        """Retourne le nombre de configurations."""
+        """Return the number of configurations."""
         return len(self.data_configs)
     
     def list_datasets(self) -> list[str]:
-        """Liste tous les dataset_ids disponibles."""
+        """List all available dataset_ids."""
         return [config.dataset_id for config in self.data_configs]

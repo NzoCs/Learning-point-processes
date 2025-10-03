@@ -2,9 +2,9 @@
 
 taxi:
   data_format: json
-  train_dir: easytpp/taxi
-  valid_dir: easytpp/taxi
-  test_dir: easytpp/taxi
+  train_dir: new_ltpp/taxi
+  valid_dir: new_ltpp/taxi
+  test_dir: new_ltpp/taxi
   tokenizer_specs:
     num_event_types: 10
     pad_token_id: 10
@@ -12,9 +12,9 @@ taxi:
  
 taobao:
   data_format: json
-  train_dir: easytpp/taobao
-  valid_dir: easytpp/taobao
-  test_dir: easytpp/taobao
+  train_dir: new_ltpp/taobao
+  valid_dir: new_ltpp/taobao
+  test_dir: new_ltpp/taobao
   tokenizer_specs:
     num_event_types: 17
     pad_token_id: 17
@@ -22,9 +22,9 @@ taobao:
 
 amazon:
   data_format: json
-  train_dir: easytpp/amazon
-  valid_dir: easytpp/amazon
-  test_dir: easytpp/amazon
+  train_dir: new_ltpp/amazon
+  valid_dir: new_ltpp/amazon
+  test_dir: new_ltpp/amazon
   tokenizer_specs:
     num_event_types: 16
     pad_token_id: 16

@@ -104,7 +104,7 @@ class NHP(NeuralModel):
         """Initialize the NHP model.
 
         Args:
-            model_config (EasyTPP.ModelConfig): config of model specs.
+            model_config (new_ltpp.ModelConfig): config of model specs.
         """
         super(NHP, self).__init__(
             model_config,

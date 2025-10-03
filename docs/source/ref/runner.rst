@@ -1,6 +1,6 @@
 .. _api-modelrunner:
 
-EasyTPP Model Runner Modules
+new_ltpp Model Runner Modules
 ============================
 
 

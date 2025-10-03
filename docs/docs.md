@@ -1,6 +1,6 @@
-# Documentation for EasyTPP
+# Documentation for New_LTPP
 
-This contains the full documentation of EasyTPP, which is hosted at github and can be updated manually (for releases)
+This contains the full documentation of new_ltpp, which is hosted at github and can be updated manually (for releases)
 by pushing to the gh-pages branch.
 
 To generate the documentation locally, type

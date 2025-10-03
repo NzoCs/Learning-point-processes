@@ -5,7 +5,7 @@ Expected Dataset Format and Data Processing
 Required format
 ===================================
 
-In EasyTPP we use the data in Gatech format, i.e., each dataset is a dict containing the following keys as
+In new_ltpp we use the data in Gatech format, i.e., each dataset is a dict containing the following keys as
 
 .. code-block:: bash
 
@@ -110,7 +110,7 @@ The runnable examples of constructing and iterating the dataset object can be fo
 Preprocessed Datasets
 ===================================
 
-We have preprocessed some widely-used open source datasets in Gatech format, which can be found at `Google Drive <https://drive.google.com/drive/folders/0BwqmV0EcoUc8UklIR1BKV25YR1U?resourcekey=0-OrlU87jyc1m-dVMmY5aC4w>`_. We use them for validating and benchmarking EasyTPP models.
+We have preprocessed some widely-used open source datasets in Gatech format, which can be found at `Google Drive <https://drive.google.com/drive/folders/0BwqmV0EcoUc8UklIR1BKV25YR1U?resourcekey=0-OrlU87jyc1m-dVMmY5aC4w>`_. We use them for validating and benchmarking new_ltpp models.
 
 - Retweet (`Zhou, 2013 <http://proceedings.mlr.press/v28/zhou13.pdf>`_). This dataset contains time-stamped user retweet event sequences.  The events are categorized into 3 types: retweets by “small,” “medium” and “large” users. Small users have fewer than 120 followers, medium users have fewer than 1363, and the rest are large users. We work on a subset of 5200 most active users with an average sequence length of 70.
 - Taxi (`Whong, 2014 <https://chriswhong.com/open-data/foil_nyc_taxi>`_). This dataset tracks the time-stamped taxi pick-up and drop-off events across the five boroughs of the New York City; each (borough, pick-up or drop-off) combination defines an event type, so there are 10 event types in total. We work on a randomly sampled subset of 2000 drivers and each driver has a sequence. We randomly sampled disjoint train, dev and test sets with 1400, 200 and 400 sequences.

@@ -5,6 +5,7 @@ This document provides a comprehensive guide for generating synthetic data using
 ## Overview
 
 The data generation module provides tools for simulating various temporal point process models, including:
+
 - **Hawkes Processes**: Self-exciting processes where past events increase the probability of future events
 - **Self-Correcting Processes**: Processes where past events decrease the probability of future events
 - **Multivariate Extensions**: Support for multiple event types and cross-dimensional influences
@@ -68,11 +69,13 @@ generate_and_save_json(
 Simulates multivariate Hawkes processes with exponential decay kernels.
 
 **Mathematical Model:**
-```
+
+``` 
 λᵢ(t) = μᵢ + Σⱼ Σₖ αᵢⱼ exp(-βᵢⱼ(t - tₖʲ))
 ```
 
 **Parameters:**
+
 - `mu`: Base intensities for each dimension (List[float])
 - `alpha`: Excitation matrix (List[List[float]]) - how events in dimension j affect dimension i
 - `beta`: Decay rates matrix (List[List[float]]) - decay speed of excitation effects
@@ -80,6 +83,7 @@ Simulates multivariate Hawkes processes with exponential decay kernels.
 - `start_time`, `end_time`: Simulation time window (float)
 
 **Example:**
+
 ```python
 from new_ltpp.data_generation import HawkesSimulator
 
@@ -103,17 +107,20 @@ print(f"Events in dimension 1: {events[1]}")
 Simulates self-correcting processes where past events reduce future intensity.
 
 **Mathematical Model:**
+
 ```
 λᵢ(t) = μᵢ exp(xᵢ(t))
 xᵢ(t) = μᵢ(t - t_last) - αᵢNᵢ(t)
 ```
 
 **Parameters:**
+
 - `mu`: Base rate parameter (float or List[float])
 - `alpha`: Self-inhibition parameter (float or List[float])
 - `dim_process`: Number of dimensions (int)
 
 **Example:**
+
 ```python
 from new_ltpp.data_generation import SelfCorrecting
 
@@ -217,7 +224,8 @@ intensities, time_points, events = simulator.intensity_graph(
 ## Output Format
 
 ### Directory Structure
-```
+
+``` bash
 output_dir/
 ├── train.json          # Training data
 ├── test.json           # Test data  
@@ -226,6 +234,7 @@ output_dir/
 ```
 
 ### Data Format (JSON)
+
 Each JSON file contains a list of sequences:
 
 ```json
@@ -243,6 +252,7 @@ Each JSON file contains a list of sequences:
 ```
 
 ### Metadata Format
+
 ```json
 {
   "simulation_info": {
@@ -367,20 +377,24 @@ intensities, time_points, events = simulator.intensity_graph(
 ## Tips and Best Practices
 
 ### 1. Parameter Selection
+
 - Start with small `alpha` values (< 0.5) to avoid explosive behavior
 - Use `beta` values > 1 for realistic decay
 - Balance `mu` values based on desired event rates
 
 ### 2. Simulation Length
+
 - Use longer simulation windows for more stable statistics
 - Consider computational cost vs. data quality trade-offs
 
 ### 3. Data Quality
+
 - Check generated sequences for reasonable event rates
 - Verify that intensity patterns match expectations
 - Use visualization tools to inspect generated data
 
 ### 4. Reproducibility
+
 - Always set random seeds for reproducible results
 - Save metadata with generation parameters
 - Version control your generation scripts

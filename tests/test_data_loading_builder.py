@@ -29,7 +29,7 @@ def test_data_loading_specs_builder():
     
     config_dict = builder.get_config_dict()
     
-    print("📋 Configuration générée:")
+    print("📋 Generated configuration:")
     print(f"   Dataset ID: {config_dict.get('dataset_id')}")
     print(f"   Batch size: {config_dict.get('data_loading_specs', {}).get('batch_size')}")
     print(f"   Num workers: {config_dict.get('data_loading_specs', {}).get('num_workers')}")
@@ -90,7 +90,7 @@ def test_data_loading_specs_builder():
     
     config_dict3 = builder3.get_config_dict()
     
-    print("📋 Configuration hybride:")
+    print("📋 Hybrid configuration:")
     print(f"   Dataset ID: {config_dict3.get('dataset_id')}")
     print(f"   Loading specs: {config_dict3.get('data_loading_specs')}")
     print(f"   Data specs: {config_dict3.get('tokenizer_specs')}")

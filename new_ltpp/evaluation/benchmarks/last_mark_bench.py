@@ -21,17 +21,16 @@ class LastMarkBenchmark(Benchmark):
     """
 
     def __init__(
-        self, data_config: DataConfig, dataset_name: str, save_dir: str = None
+        self, data_config: DataConfig, save_dir: str = None
     ):
         """
         Initialize the last mark benchmark.
         Args:
             data_config: Data configuration object
-            dataset_name: Name of the dataset
             save_dir: Directory to save results
         """
         super().__init__(
-            data_config, dataset_name, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY
+            data_config, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY
         )
 
     def _create_type_predictions(self, batch: Tuple) -> torch.Tensor:

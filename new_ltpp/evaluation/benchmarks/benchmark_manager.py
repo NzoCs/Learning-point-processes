@@ -115,8 +115,7 @@ class BenchmarkManager:
 
         benchmark_class = benchmark.get_class()
         instance = benchmark_class(
-            data_config=config,
-            dataset_name=dataset_name,
+            data_config=config,            
             save_dir=self.save_dir,
             **kwargs,
         )

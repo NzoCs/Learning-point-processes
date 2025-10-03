@@ -153,18 +153,18 @@ class ExperimentRunner(CLIRunnerBase):
             
             # Appliquer les overrides de paramètres CLI en utilisant les méthodes du builder
             if max_epochs:
-                config_builder.override_max_epochs(max_epochs)
+                config_builder.set_max_epochs(max_epochs)
                 self.print_info(f"Override: max_epochs = {max_epochs}")
                 
             # Ne passer save_dir que s'il est explicitement fourni par l'utilisateur
             if save_dir:
-                config_builder.set_field("save_dir", save_dir)
+                config_builder.set_save_dir(save_dir)
                 self.print_info(f"Override: save_dir = {save_dir}")
             # Sinon, laisser les sous-couches générer leur propre save_dir par défaut
             # qui sera plus intelligent (model_id/dataset_id/etc.)
                 
             if gpu_id is not None:
-                config_builder.override_devices(gpu_id)
+                config_builder.set_devices(gpu_id)
                 self.print_info(f"Override: devices = {gpu_id}")
             
             # Créer la configuration finale avec la factory

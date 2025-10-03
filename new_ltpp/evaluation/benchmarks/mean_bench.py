@@ -23,19 +23,18 @@ class MeanInterTimeBenchmark(Benchmark):
     """
 
     def __init__(
-        self, data_config: DataConfig, dataset_name: str, save_dir: str = None
+        self, data_config: DataConfig, save_dir: str = None
     ):
         """
         Initialize the mean inter-time benchmark.
 
         Args:
             data_config: Data configuration object
-            dataset_name: Name of the dataset
             save_dir: Directory to save results
         """
         # This benchmark focuses on time prediction, so default to TIME_ONLY
         super().__init__(
-            data_config, dataset_name, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
+            data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
         )
         self.mean_inter_time = None
 

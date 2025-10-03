@@ -2,7 +2,7 @@
 # This file contains configurations for data, models, simulations, and training (trainer)
 
 
-# ===== CONFIGURATIONS DE DONNÉES =====
+# ===== DATA CONFIGURATIONS =====
 data_configs:
   taxi:
     data_format: json
@@ -97,57 +97,57 @@ logger_configs:
       project: your_neptune_project
       run_name: run_1
 
-# ===== CONFIGURATIONS DE MODÈLES =====
+# ===== MODEL CONFIGURATIONS =====
 model_configs:
-# Configurations des paramètres spécifiques aux modèles (architecture, hyperparamètres, etc.)
+# Configurations for model-specific parameters (architecture, hyperparameters, etc.)
 
-  # Configurations pour modèles neuronaux - Tailles Small
+  # Configurations for neural models - Size Small
   neural_small:
     specs:
       hidden_size: 16
       time_emb_size: 8
       num_layers: 1
-      num_heads: 2  # Pour les modèles avec attention
+      num_heads: 2  # For attention-based models
 
-  # Configurations pour modèles neuronaux - Tailles Medium  
+  # Configurations for neural models - Size Medium
   neural_medium:
     specs:
       hidden_size: 32
       time_emb_size: 16
       num_layers: 2
-      num_heads: 4  # Pour les modèles avec attention
+      num_heads: 4  # For attention-based models
 
-  # Configurations pour modèles neuronaux - Tailles Large
+  # Configurations for neural models - Size Large
   neural_large:
     specs:
       hidden_size: 64
       time_emb_size: 32
       num_layers: 3
-      num_heads: 8  # Pour les modèles avec attention
+      num_heads: 8  # For attention-based models
 
-  # Configurations pour modèles neuronaux - Tailles Extra Large
+  # Configurations for neural models - Size Extra Large
   neural_xlarge:
     specs:
       hidden_size: 128
       time_emb_size: 64
       num_layers: 4
-      num_heads: 16  # Pour les modèles avec attention
+      num_heads: 16  # For attention-based models
 
-  # Configurations spécifiques pour Hawkes - Simple (univarié)
+  # Specific configurations for Hawkes - Simple (univariate)
   hawkes_simple:
     specs:
       mu: 0.2
       alpha: 0.8
       beta: 1.0
 
-  # Configurations spécifiques pour Hawkes - Bivarié
+  # Specific configurations for Hawkes - Bivariate
   hawkes_bivariate:
     specs:
       mu: [0.2, 0.2]
       alpha: [[0.4, 0], [0, 0.8]]
       beta: [[1.0, 0], [0, 1.0]]
 
-  # Configurations spécifiques pour Hawkes - Multivarié complexe
+  # Specific configurations for Hawkes - Complex multivariate
   hawkes_multivariate:
     specs:
       mu: [0.2, 0.2, 0.1]
@@ -155,45 +155,45 @@ model_configs:
       beta: [[1.0, 0.5, 0], [0.5, 1.0, 0.8], [0, 0.8, 1.0]]
 
 
-# ===== CONFIGURATIONS DE THINNING =====
+# ===== THINNING CONFIGURATIONS =====
 thinning_configs:
 
-  # Configuration de thinning rapide (pour tests)
+  # Fast thinning configuration (for tests)
   thinning_fast:
     num_exp: 50
     over_sample_rate: 1.2
     dtime_max: 3
     num_sample: 15
 
-  # Configuration de thinning standard  
+  # Standard thinning configuration
   thinning_standard:
     num_exp: 100
     over_sample_rate: 1.5
     dtime_max: 5
     num_sample: 30
 
-  # Configuration de thinning haute qualité
+  # High-quality thinning configuration
   thinning_high_quality:
     num_exp: 150
     over_sample_rate: 1.8
     dtime_max: 8
     num_sample: 50
 
-  # Configuration de thinning pour gros datasets
+  # Thinning configuration for large datasets
   thinning_large_dataset:
     num_exp: 200
     over_sample_rate: 2.0
     dtime_max: 10
     num_sample: 60
 
-  # Configuration de thinning pour FullyNN (plus d'échantillons)
+  # Thinning configuration for FullyNN (more samples)
   thinning_fullyNN:
     num_exp: 200
     over_sample_rate: 1.5
     dtime_max: 5
     num_sample: 60
 
-  # Configuration de thinning minimale (debug/CPU)
+  # Minimal thinning configuration (debug/CPU)
   thinning_minimal:
     num_exp: 20
     over_sample_rate: 1.1
@@ -201,60 +201,60 @@ thinning_configs:
     num_sample: 10
 
 
-# ===== CONFIGURATIONS DE SIMULATION =====
+# ===== SIMULATION CONFIGURATIONS =====
 simulation_configs:
 
-  # Configuration de simulation rapide (tests)
+  # Fast simulation configuration (tests)
   simulation_fast:
     start_time: 20
     end_time: 50
     max_sim_events: 5000
     batch_size: 16
 
-  # Configuration de simulation développement
+  # Development simulation configuration
   simulation_dev:
     start_time: 50
     end_time: 120
     max_sim_events: 15000
     batch_size: 32
 
-  # Configuration de simulation standard
+  # Standard simulation configuration
   simulation_standard:
     start_time: 100
     end_time: 200
     max_sim_events: 50000
     batch_size: 64
 
-  # Configuration de simulation étendue
+  # Extended simulation configuration
   simulation_extended:
     start_time: 100
     end_time: 300
     max_sim_events: 100000
     batch_size: 128
 
-  # Configuration de simulation pour gros datasets
+  # Simulation configuration for large datasets
   simulation_large:
     start_time: 100
     end_time: 400
     max_sim_events: 150000
     batch_size: 256
 
-  # Configuration de simulation pour validation croisée
+  # Simulation configuration for cross-validation
   simulation_cv:
     start_time: 80
     end_time: 160
     max_sim_events: 30000
     batch_size: 64
 
-  # Configuration de simulation pour expérimentations
+  # Simulation configuration for experiments
   simulation_experiment:
     start_time: 50
     end_time: 120
     max_sim_events: 15000
     batch_size: 32
 
-# ===== CONFIGURATIONS DE CHARGEMENT DE DONNÉES =====
-# Ces configurations contiennent uniquement les paramètres de DataLoader
+# ===== DATA LOADING CONFIGURATIONS =====
+# These configurations contain only DataLoader parameters
 
 data_loading_configs:
 
@@ -322,119 +322,119 @@ data_loading_configs:
     batch_size: 1024
     num_workers: 12
 
-# ===== CONFIGURATIONS D'ENTRAÎNEMENT (TRAINER) =====
-# Ces configurations contiennent uniquement les paramètres d'entraînement
-# Les données, modèles et simulations sont configurés séparément
+# ===== TRAINING CONFIGURATIONS (TRAINER) =====
+# These configurations contain only training parameters
+# Data, model and simulation configurations are defined separately
 
 training_configs:
-  # Configuration pour tests rapides
+  # Quick test configuration
   quick_test:
-      max_epochs: 5
-      val_freq: 1
-      accumulate_grad_batches: 1
-      patience: 3
+    max_epochs: 5
+    val_freq: 1
+    accumulate_grad_batches: 1
+    patience: 3
 
-  # Configuration pour développement
+  # Development configuration
   dev:
-      max_epochs: 50
-      val_freq: 5
-      accumulate_grad_batches: 1
-      patience: 10
+    max_epochs: 50
+    val_freq: 5
+    accumulate_grad_batches: 1
+    patience: 10
 
-  # Configuration pour entraînement standard
+  # Standard training configuration
   standard:
-      max_epochs: 500
-      val_freq: 10
-      accumulate_grad_batches: 1
-      patience: 20
+    max_epochs: 500
+    val_freq: 10
+    accumulate_grad_batches: 1
+    patience: 20
 
-  # Configuration standard avec batch plus petit (mémoire limitée)
+  # Standard configuration with smaller batch (limited memory)
   standard_small_batch:
-      max_epochs: 500
-      val_freq: 10
-      accumulate_grad_batches: 2  # Compense le petit batch
-      patience: 20
+    max_epochs: 500
+    val_freq: 10
+    accumulate_grad_batches: 2  # Compensate for the small batch
+    patience: 20
 
-  # Configuration standard avec très petit batch (mémoire très limitée)
+  # Standard configuration with very small batch (very limited memory)
   standard_tiny_batch:
-      max_epochs: 500
-      val_freq: 10
-      accumulate_grad_batches: 4  # Compense le très petit batch
-      patience: 20
+    max_epochs: 500
+    val_freq: 10
+    accumulate_grad_batches: 4  # Compensate for the very small batch
+    patience: 20
 
-  # Configuration pour entraînement long
+  # Long training configuration
   production:
       max_epochs: 1000
       val_freq: 10
       accumulate_grad_batches: 1
       patience: 50
 
-  # Configuration production avec batch moyen (mémoire limitée)
+  # Production configuration with medium batch (limited memory)
   production_medium_batch:
-      max_epochs: 1000
-      val_freq: 10
-      accumulate_grad_batches: 2  # Compense le batch plus petit
-      patience: 50
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 2  # Compensate for the smaller batch
+    patience: 50
 
-  # Configuration production avec petit batch (mémoire très limitée)
+  # Production configuration with small batch (very limited memory)
   production_small_batch:
-      max_epochs: 1000
-      val_freq: 10
-      accumulate_grad_batches: 4  # Compense le petit batch
-      patience: 50
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 4  # Compensate for the small batch
+    patience: 50
 
-  # Configuration production avec très petit batch (GPU faible)
+  # Production configuration with very small batch (low-GPU)
   production_tiny_batch:
-      max_epochs: 1000
-      val_freq: 10
-      accumulate_grad_batches: 8  # Compense le très petit batch
-      patience: 50
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 8  # Compensate for the very small batch
+    patience: 50
 
-  # Configuration production avec micro batch (CPU ou GPU très faible)
+  # Production configuration with micro batch (very weak CPU or GPU)
   production_micro_batch:
-      max_epochs: 1000
-      val_freq: 10
-      accumulate_grad_batches: 16  # Compense le micro batch
-      patience: 50
+    max_epochs: 1000
+    val_freq: 10
+    accumulate_grad_batches: 16  # Compensate for the micro batch
+    patience: 50
 
-  # Configuration pour gros datasets (batch plus large)
+  # Configuration for large datasets (larger batch)
   large_dataset:
-      max_epochs: 200
-      val_freq: 5
-      accumulate_grad_batches: 2
-      patience: 30
+    max_epochs: 200
+    val_freq: 5
+    accumulate_grad_batches: 2
+    patience: 30
 
-  # Configuration pour debugging (très petit)
+  # Debug configuration (very small)
   debug:
-      max_epochs: 3
-      val_freq: 1
-      accumulate_grad_batches: 1
-      patience: 2
+    max_epochs: 3
+    val_freq: 1
+    accumulate_grad_batches: 1
+    patience: 2
 
-  # Configuration pour expérimentation rapide
+  # Quick experiment configuration
   experiment:
     max_epochs: 10
     val_freq: 2
     accumulate_grad_batches: 1
     patience: 5
 
-  # Configuration pour validation croisée
+  # Cross-validation configuration
   cross_validation:
-      max_epochs: 100
-      val_freq: 5
-      accumulate_grad_batches: 1
-      patience: 15
+    max_epochs: 100
+    val_freq: 5
+    accumulate_grad_batches: 1
+    patience: 15
 
-  # Configuration pour hyperparameter tuning
+  # Hyperparameter tuning configuration
   hpo:
-      max_epochs: 20
-      val_freq: 2
-      accumulate_grad_batches: 1
-      patience: 8
+    max_epochs: 20
+    val_freq: 2
+    accumulate_grad_batches: 1
+    patience: 8
 
-  # Configuration pour entraînement intensif (GPU puissant)
+  # Intensive training configuration (powerful GPU)
   intensive:
-      max_epochs: 2000
-      val_freq: 20
-      accumulate_grad_batches: 4
-      patience: 100
+    max_epochs: 2000
+    val_freq: 20
+    accumulate_grad_batches: 4
+    patience: 100

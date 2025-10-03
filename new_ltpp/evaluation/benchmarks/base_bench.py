@@ -42,7 +42,6 @@ class Benchmark(ABC, BenchmarkInterface):
     def __init__(
         self,
         data_config: DataConfig,
-        dataset_name: str,
         save_dir: str = None,
         benchmark_mode: str = BenchmarkMode.BOTH,
     ):
@@ -51,13 +50,11 @@ class Benchmark(ABC, BenchmarkInterface):
 
         Args:
             data_config: DataConfig object
-            dataset_name: Name of the dataset
             save_dir: Directory to save results
             benchmark_mode: What to evaluate - "time_only", "type_only", or "both"
         """
         self.data_config = data_config
         self.save_dir = save_dir or "./benchmark_results"
-        self.dataset_name = dataset_name
         self.benchmark_mode = benchmark_mode
         self.pad_token = data_config.tokenizer_specs.pad_token_id
 
@@ -326,7 +323,6 @@ class Benchmark(ABC, BenchmarkInterface):
         """
         results = {
             "benchmark_name": self.benchmark_name,
-            "dataset_name": self.dataset_name,
             "num_event_types": self.num_event_types,
             "metrics": aggregated_metrics,
             "num_batches_evaluated": num_batches,
@@ -357,7 +353,7 @@ class Benchmark(ABC, BenchmarkInterface):
             results: Results dictionary to save
         """
         # Create save directory
-        dataset_dir = os.path.join(self.save_dir, self.dataset_name)
+        dataset_dir = os.path.join(self.save_dir, self.data_config.dataset_id)
         os.makedirs(dataset_dir, exist_ok=True)
 
         # Save results

@@ -1,4 +1,4 @@
-# ===== CONFIGURATIONS DE DONNÉES =====
+# ===== DATA CONFIGURATIONS =====
 
 taxi:
   data_format: json

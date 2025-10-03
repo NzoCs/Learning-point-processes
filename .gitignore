@@ -12,8 +12,8 @@ __pycache__/
 
 
 # models
-*.ckpt
-*.pth
+**.ckpt
+**.pth
 artifacts/
 
 #venv
@@ -40,9 +40,10 @@ log
 .vscode
 
 #data
-*.png
-*.jpg
-*.csv
+**.png
+**.jpg
+**.json
+**.csv
 
 # idea files
 .idea

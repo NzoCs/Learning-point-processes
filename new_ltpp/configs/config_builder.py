@@ -5,7 +5,7 @@ import yaml
 
 from .config_factory import config_factory, ConfigType
 from .data_config import DataConfig
-
+from .runner_config import RunnerConfig
 
 class ConfigBuilder(ABC):
     """Interface pour un builder de config spécifique."""
@@ -74,7 +74,6 @@ class RunnerConfigBuilder(ConfigBuilder):
         super().__init__(ConfigType.RUNNER)
         self.model_builder = ModelConfigBuilder()
         self.data_builder = DataConfigBuilder()
-        self.training_builder = TrainingConfigBuilder()
 
     def from_dict(self, data: Dict[str, Any],
                   training_config_path: str,
@@ -87,8 +86,8 @@ class RunnerConfigBuilder(ConfigBuilder):
                   logger_config_path: str = None) -> List[str]:
         
         # Utiliser TrainingConfigBuilder pour charger la config training
-        self.training_builder.from_dict(data, training_config_path)
-        training_cfg = self.training_builder.get_config_dict()
+        training_cfg = self._get_nested_value(data, training_config_path)
+        self.config_dict["training_config"] = training_cfg
 
         self.model_builder.from_dict(
             data,
@@ -122,6 +121,9 @@ class RunnerConfigBuilder(ConfigBuilder):
             self.config_dict["logger_config"] = logger_cfg
 
         return self.get_missing_fields()
+
+    def build(self, model_id: str, **kwargs) -> RunnerConfig:
+        return super().build(model_id=model_id, **kwargs)
     
     def load_from_yaml(self, 
                       yaml_file_path: Union[str, Path], 
@@ -176,26 +178,30 @@ class RunnerConfigBuilder(ConfigBuilder):
         return self.get_missing_fields()
     
     # Méthodes utilitaires pour modifier les paramètres de training
-    def override_max_epochs(self, epochs: int):
+    def set_max_epochs(self, epochs: int):
         """Override le nombre d'époques dans la configuration de training."""
         if "training_config" not in self.config_dict:
             self.config_dict["training_config"] = {}
         self.config_dict["training_config"]["max_epochs"] = epochs
         return self.get_missing_fields()
     
-    def override_devices(self, devices: int):
+    def set_devices(self, devices: int):
         """Override le nombre de devices dans la configuration de training."""
         if "training_config" not in self.config_dict:
             self.config_dict["training_config"] = {}
         self.config_dict["training_config"]["devices"] = devices
         return self.get_missing_fields()
     
-    def override_batch_size(self, batch_size: int):
+    def set_batch_size(self, batch_size: int):
         """Override la taille du batch dans la configuration de training."""
         if "training_config" not in self.config_dict:
             self.config_dict["training_config"] = {}
         self.config_dict["training_config"]["batch_size"] = batch_size
         return self.get_missing_fields()
+    
+    def set_save_dir(self, save_dir: str):
+        """Override le répertoire de sauvegarde dans la configuration de runner."""
+        return self.set_field("save_dir", save_dir)
 
     def get_missing_fields(self) -> List[str]:
         required = ["training_config", "model_config", "data_config"]
@@ -257,101 +263,12 @@ class ModelConfigBuilder(ConfigBuilder):
         return [f for f in required if f not in self.config_dict]
 
 
-class TrainingConfigBuilder(ConfigBuilder):
-    
-    def __init__(self):
-        super().__init__(ConfigType.TRAINING)
-    
-    def from_dict(self, data: Dict[str, Any], training_config_path: str):
-        """Charge la configuration d'entraînement depuis un dictionnaire."""
-        training_cfg = self._get_nested_value(data, training_config_path)
-        self.config_dict = training_cfg
-        return self.get_missing_fields()
-    
-    def load_from_yaml(self, yaml_path: Union[str, Path], training_config_path: str):
-        """Charge la configuration d'entraînement depuis un YAML."""
-        data = self._load_yaml(yaml_path)
-        return self.from_dict(data, training_config_path)
-    
-    def set_max_epochs(self, epochs: int):
-        """Définit le nombre maximum d'époques."""
-        return self.set_field("max_epochs", epochs)
-    
-    def set_batch_size(self, batch_size: int):
-        """Définit la taille du batch."""
-        return self.set_field("batch_size", batch_size)
-    
-    def set_learning_rate(self, lr: float):
-        """Définit le taux d'apprentissage."""
-        return self.set_field("lr", lr)
-    
-    def set_devices(self, devices: int):
-        """Définit le nombre de devices/GPU."""
-        return self.set_field("devices", devices)
-    
-    def set_patience(self, patience: int):
-        """Définit la patience pour l'early stopping."""
-        return self.set_field("patience", patience)
-    
-    def set_dropout(self, dropout: float):
-        """Définit le taux de dropout."""
-        return self.set_field("dropout", dropout)
-    
-    def get_missing_fields(self) -> List[str]:
-        required = ["max_epochs"]
-        return [f for f in required if f not in self.config_dict]
-
-
-class DataLoadingSpecsBuilder(ConfigBuilder):
-    
-    def __init__(self):
-        super().__init__(ConfigType.DATA_LOADING_SPECS)
-    
-    def from_dict(self, data: Dict[str, Any], data_loading_config_path: str):
-        """Charge les spécifications de chargement depuis un dictionnaire."""
-        loading_cfg = self._get_nested_value(data, data_loading_config_path)
-        self.config_dict = loading_cfg
-        return self.get_missing_fields()
-    
-    def load_from_yaml(self, yaml_path: Union[str, Path], data_loading_config_path: str):
-        """Charge les spécifications de chargement depuis un YAML."""
-        data = self._load_yaml(yaml_path)
-        return self.from_dict(data, data_loading_config_path)
-    
-    def set_batch_size(self, batch_size: int):
-        """Définit la taille du batch."""
-        return self.set_field("batch_size", batch_size)
-    
-    def set_num_workers(self, num_workers: int):
-        """Définit le nombre de workers pour le chargement des données."""
-        return self.set_field("num_workers", num_workers)
-    
-    def set_shuffle(self, shuffle: bool):
-        """Définit si les données doivent être mélangées."""
-        return self.set_field("shuffle", shuffle)
-    
-    def set_pin_memory(self, pin_memory: bool):
-        """Définit si la mémoire doit être épinglée (GPU)."""
-        return self.set_field("pin_memory", pin_memory)
-    
-    def set_drop_last(self, drop_last: bool):
-        """Définit si le dernier batch incomplet doit être supprimé."""
-        return self.set_field("drop_last", drop_last)
-    
-    def set_persistent_workers(self, persistent: bool):
-        """Définit si les workers doivent être persistants."""
-        return self.set_field("persistent_workers", persistent)
-    
-    def get_missing_fields(self) -> List[str]:
-        required = ["batch_size"]
-        return [f for f in required if f not in self.config_dict]
 
 
 class DataConfigBuilder(ConfigBuilder):
     
     def __init__(self):
         super().__init__(ConfigType.DATA)
-        self.data_loading_builder = DataLoadingSpecsBuilder()
     
     def from_dict(self, data: Dict[str, Any],
                   data_config_path: str,
@@ -366,8 +283,7 @@ class DataConfigBuilder(ConfigBuilder):
 
         # Utiliser DataLoadingSpecsBuilder si demandé
         if data_loading_config_path:
-            self.data_loading_builder.from_dict(data, data_loading_config_path)
-            dl_cfg = self.data_loading_builder.get_config_dict()
+            dl_cfg = self._get_nested_value(data, data_loading_config_path)
             data_cfg.setdefault("data_loading_specs", dl_cfg)
 
         # Merge tokenizer_specs si demandé

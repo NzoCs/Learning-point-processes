@@ -23,6 +23,7 @@ class Runner:
         config: RunnerConfig,
         enable_logging: bool = True,
         checkpoint_path: Optional[str] = None,
+        output_dir: Optional[str] = None,
         **kwargs,
     ) -> None:
         """_summary__.
@@ -62,7 +63,7 @@ class Runner:
 
         # Initialize your model
 
-        # Utiliser la ModelFactory pour créer le modèle
+    # Use the ModelFactory to create the model
         model_factory = ModelFactory()
         self.model = model_factory.create_model_by_name(
             model_name=config.model_id,
@@ -86,20 +87,20 @@ class Runner:
         self.accumulate_grad_batches = training_config.accumulate_grad_batches
 
         # Model saving directory
-        self.dirpath = config.save_model_dir
+        self.dirpath = output_dir if output_dir is not None else config.save_model_dir
         self.logger_config = config.logger_config
 
 
         if checkpoint_path is None:
-            # Liste des checkpoints à tester, par ordre de priorité
+            # List of checkpoints to try, in order of priority
             possible_checkpoints = [
                 os.path.join(self.dirpath, f"best-v{10-i}.ckpt") for i in range(10)
-            ] + [  # Celui donné en argument
+            ] + [  # the one provided as default
                 os.path.join(self.dirpath, "best.ckpt"),
                 os.path.join(self.dirpath, "last.ckpt"),
             ]
 
-            # Trouve le premier fichier existant dans la liste
+            # Find the first existing file in the list
             self.checkpoint_path_ = None
             for path in possible_checkpoints:
                 if os.path.exists(path):
@@ -310,7 +311,7 @@ class Runner:
         self.datamodule.setup(stage="predict")
         predict_dataloader = (
             self.datamodule.test_dataloader()
-        )  # ou un dataloader spécifique
+        )  # or a specific dataloader
 
         trainer.predict(
             model=self.model,

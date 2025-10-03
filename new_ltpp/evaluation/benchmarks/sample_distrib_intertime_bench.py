@@ -24,7 +24,6 @@ class InterTimeDistributionBenchmark(Benchmark):
     def __init__(
         self,
         data_config: DataConfig,
-        dataset_name: str,
         save_dir: str = None,
         num_bins: int = 50,
     ):
@@ -33,13 +32,12 @@ class InterTimeDistributionBenchmark(Benchmark):
 
         Args:
             data_config: Data configuration object
-            dataset_name: Name of the dataset
-            save_dir: Directory to save results
+*            save_dir: Directory to save results
             num_bins: Number of bins for histogram approximation
         """
         # This benchmark focuses on time prediction, so default to TIME_ONLY
         super().__init__(
-            data_config, dataset_name, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
+            data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
         )
         self.num_bins = num_bins
 

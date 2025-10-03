@@ -17,8 +17,8 @@ class SystemInfo(CLIRunnerBase):
     Diagnostique l'installation et les dépendances EasyTPP.
     """
     
-    def __init__(self):
-        super().__init__("SystemInfo")
+    def __init__(self, debug: bool = False):
+        super().__init__("SystemInfo", debug=debug)
         
     def display_system_info(
         self,
@@ -77,8 +77,9 @@ class SystemInfo(CLIRunnerBase):
             return True
             
         except Exception as e:
-            self.print_error(f"Erreur lors de la collecte d'informations: {e}")
-            self.logger.exception("Détails de l'erreur:")
+            self.print_error_with_traceback(f"Erreur affichage infos système: {e}", e)
+            if self.debug:
+                self.logger.exception("Détails de l'erreur:")
             return False
     
     def _collect_system_info(self) -> Dict[str, Any]:
@@ -166,11 +167,11 @@ class SystemInfo(CLIRunnerBase):
             
             # Vérifier les modules principaux
             modules_to_check = [
-                "easy_tpp.configs",
-                "easy_tpp.runners", 
-                "easy_tpp.models",
-                "easy_tpp.data",
-                "easy_tpp.data.preprocess"
+                "new_ltpp.configs",
+                "new_ltpp.runners", 
+                "new_ltpp.models",
+                "new_ltpp.data",
+                "new_ltpp.data.preprocess"
             ]
             
             for module_name in modules_to_check:

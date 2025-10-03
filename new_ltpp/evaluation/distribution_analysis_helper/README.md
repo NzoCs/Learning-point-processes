@@ -24,13 +24,13 @@ Ce package fournit des outils pour :
 ### Exemple complet
 
 ```python
-from easy_tpp.evaluate.distribution_analysis_helper import (
+from new_ltpp.evaluate.distribution_analysis_helper import (
     NTPPComparator,
     TPPDatasetExtractor,
     SimulationDataExtractor,
     MetricsCalculatorImpl
 )
-from easy_tpp.evaluate.distribution_analysis_helper.plot_generators import (
+from new_ltpp.evaluate.distribution_analysis_helper.plot_generators import (
     InterEventTimePlotGenerator,
     EventTypePlotGenerator,
     SequenceLengthPlotGenerator

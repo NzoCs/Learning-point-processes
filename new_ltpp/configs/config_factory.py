@@ -5,7 +5,7 @@ Cette factory permet de créer facilement des instances de configurations
 en utilisant un enum des configurations disponibles.
 
 Utilisation:
-    from easy_tpp.configs.config_factory import ConfigType, ConfigFactory
+    from new_ltpp.configs.config_factory import ConfigType, ConfigFactory
 
     factory = ConfigFactory()
     config = factory.create_config(ConfigType.MODEL, config_data)

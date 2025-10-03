@@ -5,7 +5,7 @@ Cette factory permet de créer facilement des instances de modèles
 en utilisant le ModelRegistry automatique.
 
 Utilisation:
-    from easy_tpp.models.model_factory import ModelFactory
+    from new_ltpp.models.model_factory import ModelFactory
 
     factory = ModelFactory()
     model = factory.create_model_by_name("NHP", model_config)

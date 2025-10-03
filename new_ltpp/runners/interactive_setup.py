@@ -24,8 +24,8 @@ class InteractiveSetup(CLIRunnerBase):
     Guide l'utilisateur à travers la création de configurations.
     """
     
-    def __init__(self):
-        super().__init__("InteractiveSetup")
+    def __init__(self, debug: bool = False):
+        super().__init__("InteractiveSetup", debug=debug)
         
     def run_interactive_setup(
         self,
@@ -87,8 +87,9 @@ class InteractiveSetup(CLIRunnerBase):
             return True
             
         except Exception as e:
-            self.print_error(f"Erreur lors de la configuration interactive: {e}")
-            self.logger.exception("Détails de l'erreur:")
+            self.print_error_with_traceback(f"Erreur setup interactif: {e}", e)
+            if self.debug:
+                self.logger.exception("Détails de l'erreur:")
             return False
     
     def _setup_experiment_config(self, quick_mode: bool) -> Dict[str, Any]:

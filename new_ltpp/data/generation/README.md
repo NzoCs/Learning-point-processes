@@ -24,7 +24,7 @@ The data generation module provides tools for simulating various temporal point 
 ### Basic Hawkes Process Simulation
 
 ```python
-from easy_tpp.data_generation import HawkesSimulator
+from new_ltpp.data_generation import HawkesSimulator
 
 # Define Hawkes process parameters
 generator = HawkesSimulator(
@@ -47,7 +47,7 @@ generator.generate_and_save(
 ### Simple Data Generation with Utility Functions
 
 ```python
-from easy_tpp.utils.gen_utils import generate_and_save_json
+from new_ltpp.utils.gen_utils import generate_and_save_json
 
 # Generate synthetic data using utility function
 generate_and_save_json(
@@ -81,7 +81,7 @@ Simulates multivariate Hawkes processes with exponential decay kernels.
 
 **Example:**
 ```python
-from easy_tpp.data_generation import HawkesSimulator
+from new_ltpp.data_generation import HawkesSimulator
 
 simulator = HawkesSimulator(
     mu=[0.5, 0.3],                    # Base rates
@@ -115,7 +115,7 @@ xᵢ(t) = μᵢ(t - t_last) - αᵢNᵢ(t)
 
 **Example:**
 ```python
-from easy_tpp.data_generation import SelfCorrecting
+from new_ltpp.data_generation import SelfCorrecting
 
 simulator = SelfCorrecting(
     dim_process=2,
@@ -133,7 +133,7 @@ events = simulator.simulate()
 ### Complete Pipeline Example
 
 ```python
-from easy_tpp.data_generation import HawkesSimulator
+from new_ltpp.data_generation import HawkesSimulator
 
 def generate_hawkes_dataset():
     # Define parameters for a 3-dimensional Hawkes process
@@ -271,7 +271,7 @@ Each JSON file contains a list of sequences:
 Simple utility for quick data generation:
 
 ```python
-from easy_tpp.utils.gen_utils import generate_and_save_json
+from new_ltpp.utils.gen_utils import generate_and_save_json
 
 generate_and_save_json(
     n_nodes=3,           # Number of dimensions
@@ -287,7 +287,7 @@ generate_and_save_json(
 ### Direct Data Generation
 
 ```python
-from easy_tpp.utils.gen_utils import generate_synthetic_data
+from new_ltpp.utils.gen_utils import generate_synthetic_data
 
 # Generate raw event data
 events = generate_synthetic_data(
@@ -307,7 +307,7 @@ events = generate_synthetic_data(
 ### Custom Simulation Loop
 
 ```python
-from easy_tpp.data_generation import HawkesSimulator
+from new_ltpp.data_generation import HawkesSimulator
 
 simulator = HawkesSimulator(
     mu=[0.3, 0.2],

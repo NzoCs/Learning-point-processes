@@ -40,8 +40,8 @@ Ce dossier contient les implémentations des différents modèles TPP disponible
 ### Création d'un modèle
 
 ```python
-from easy_tpp.models import NHP, THP, RMTPP
-from easy_tpp.config_factory import ModelConfig
+from new_ltpp.models import NHP, THP, RMTPP
+from new_ltpp.config_factory import ModelConfig
 
 # Configuration du modèle - Instance de ModelConfig (pas un dictionnaire)
 model_config = ModelConfig(
@@ -202,7 +202,7 @@ class Model(nn.Module):
 ### Configuration typique pour NHP
 
 ```python
-from easy_tpp.config_factory import ModelConfig
+from new_ltpp.config_factory import ModelConfig
 
 nhp_config = ModelConfig(
     model_id='NHP',
@@ -218,7 +218,7 @@ nhp_config = ModelConfig(
 ### Configuration typique pour THP
 
 ```python
-from easy_tpp.config_factory import ModelConfig
+from new_ltpp.config_factory import ModelConfig
 
 thp_config = ModelConfig(
     model_id='THP',
@@ -236,7 +236,7 @@ thp_config = ModelConfig(
 ### Hyperparamètres recommandés
 
 ```python
-from easy_tpp.config_factory import ModelConfig
+from new_ltpp.config_factory import ModelConfig
 
 # Configuration conservative (bon point de départ)
 conservative_config = ModelConfig(

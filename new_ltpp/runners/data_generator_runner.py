@@ -22,8 +22,8 @@ class DataGenerator(CLIRunnerBase):
     Utilise SynGenConfigBuilder pour la configuration.
     """
     
-    def __init__(self):
-        super().__init__("DataGenerator")
+    def __init__(self, debug: bool = False):
+        super().__init__("DataGenerator", debug=debug)
         
     def generate_data(
         self,
@@ -59,7 +59,7 @@ class DataGenerator(CLIRunnerBase):
             True si la génération s'est déroulée avec succès
         """
         # Vérifier les dépendances
-        required_modules = ["easy_tpp.data.generation"]
+        required_modules = ["new_ltpp.data.generation"]
         if not self.check_dependencies(required_modules):
             return False
             
@@ -185,6 +185,7 @@ class DataGenerator(CLIRunnerBase):
             return True
             
         except Exception as e:
-            self.print_error(f"Erreur lors de la génération: {e}")
-            self.logger.exception("Détails de l'erreur:")
+            self.print_error_with_traceback(f"Erreur lors de la génération: {e}", e)
+            if self.debug:
+                self.logger.exception("Détails de l'erreur:")
             return False

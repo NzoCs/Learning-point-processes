@@ -20,7 +20,7 @@ The new `ConfigFactory` centralizes configuration creation logic and provides a 
 ### Basic Usage
 
 ```python
-from easy_tpp.configs import ConfigType, config_factory
+from new_ltpp.configs import ConfigType, config_factory
 
 # Create a tokenizer configuration
 tokenizer_data = {
@@ -35,7 +35,7 @@ config = config_factory.create_config(ConfigType.TOKENIZER, tokenizer_data)
 ### Available Configuration Types
 
 ```python
-from easy_tpp.configs import config_factory
+from new_ltpp.configs import config_factory
 
 # Get all available configuration types
 config_types = config_factory.get_available_config_types()
@@ -57,7 +57,7 @@ model_config = config_factory.create_config("model", {
 ### Loading from YAML
 
 ```python
-from easy_tpp.configs import config_factory
+from new_ltpp.configs import config_factory
 
 config = config_factory.create_from_yaml(ConfigType.MODEL, "path/to/config.yaml")
 ```
@@ -77,7 +77,7 @@ config = config_factory.create_config(ConfigType.TOKENIZER, data, validate=True)
 ### Registering New Configuration Types
 
 ```python
-from easy_tpp.configs import config_factory
+from new_ltpp.configs import config_factory
 
 # Register a custom configuration class
 config_factory.register_config("my_custom_config", MyCustomConfigClass)
@@ -86,7 +86,7 @@ config_factory.register_config("my_custom_config", MyCustomConfigClass)
 ### Direct Factory Usage
 
 ```python
-from easy_tpp.configs import config_factory
+from new_ltpp.configs import config_factory
 
 # Use the factory directly for more control
 factory = config_factory
@@ -109,14 +109,14 @@ config = factory.create_config(ConfigType.MODEL, model_data)
 
 ### Old Pattern (still supported)
 ```python
-from easy_tpp.configs.data_config import TokenizerConfig
+from new_ltpp.configs.data_config import TokenizerConfig
 
 config = TokenizerConfig.from_dict(config_dict)
 ```
 
 ### New Pattern (recommended)
 ```python
-from easy_tpp.configs import ConfigType, config_factory
+from new_ltpp.configs import ConfigType, config_factory
 
 config = config_factory.create_config(ConfigType.TOKENIZER, config_dict)
 ```
@@ -126,8 +126,8 @@ config = config_factory.create_config(ConfigType.TOKENIZER, config_dict)
 The factory provides detailed error messages for common issues:
 
 ```python
-from easy_tpp.configs import config_factory, ConfigType
-from easy_tpp.configs.base_config import ConfigValidationError
+from new_ltpp.configs import config_factory, ConfigType
+from new_ltpp.configs.base_config import ConfigValidationError
 
 try:
     config = config_factory.create_config(ConfigType.TOKENIZER, invalid_data)

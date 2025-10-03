@@ -16,8 +16,8 @@ Ce dossier contient les outils pour orchestrer l'exécution des expériences et 
 Le `Runner` coordonne tous les aspects d'une expérience : données, modèle, entraînement, évaluation.
 
 ```python
-from easy_tpp.runner import Runner
-from easy_tpp.config_factory import config_factory
+from new_ltpp.runner import Runner
+from new_ltpp.config_factory import config_factory
 
 # Charger la configuration
 config = config_factory.from_yaml('experiment_config.yaml')
@@ -80,9 +80,9 @@ runner.run(phase='all')  # train -> validate -> test
 Le `Trainer` encapsule la logique d'entraînement avec PyTorch Lightning.
 
 ```python
-from easy_tpp.runner.trainer import Trainer
-from easy_tpp.models import NHP
-from easy_tpp.data.preprocess import TPPDataModule
+from new_ltpp.runner.trainer import Trainer
+from new_ltpp.models import NHP
+from new_ltpp.data.preprocess import TPPDataModule
 
 # Créer les composants
 model = NHP(hidden_size=128, num_event_types=5)
@@ -150,7 +150,7 @@ test_results = trainer.test(model, datamodule=data_module)
 print(f"Test results: {test_results}")
 
 # Métriques détaillées
-from easy_tpp.evaluation import MetricsHelper
+from new_ltpp.evaluation import MetricsHelper
 
 helper = MetricsHelper(num_event_types=5)
 detailed_metrics = helper.evaluate_model(model, test_loader)
@@ -205,7 +205,7 @@ runner.setup_trainer(callbacks=callbacks)
 
 ```python
 # Intégration avec Optuna
-from easy_tpp.runner import HPORunner
+from new_ltpp.runner import HPORunner
 
 def objective(trial):
     # Suggérer des hyperparamètres
@@ -261,7 +261,7 @@ model = runner.load_model_from_checkpoint('best_model.ckpt')
 
 ```python
 # K-fold cross validation
-from easy_tpp.runner import CrossValidationRunner
+from new_ltpp.runner import CrossValidationRunner
 
 cv_runner = CrossValidationRunner(config, k_folds=5)
 cv_results = cv_runner.run()
@@ -305,8 +305,8 @@ runner = Runner(config, cleanup_config=cleanup_config)
 ### Expérience simple
 
 ```python
-from easy_tpp.runner import Runner
-from easy_tpp.config_factory import config_factory
+from new_ltpp.runner import Runner
+from new_ltpp.config_factory import config_factory
 
 # Configuration minimale
 config = config_factory.from_dict({

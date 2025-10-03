@@ -5,7 +5,7 @@ Ce module fournit un registry qui enregistre automatiquement tous les nouveaux m
 sans avoir besoin de les ajouter manuellement.
 
 Utilisation:
-    from easy_tpp.models.model_registry import ModelRegistry
+    from new_ltpp.models.model_registry import ModelRegistry
 
     # Obtenir tous les modèles enregistrés
     registry = ModelRegistry.get_registry()
@@ -86,7 +86,7 @@ class RegistryMeta(ABCMeta):
             # (éviter d'enregistrer des classes utilitaires)
             is_model_class = any(
                 hasattr(base, '__module__') and 
-                'easy_tpp.models' in getattr(base, '__module__', '')
+                'new_ltpp.models' in getattr(base, '__module__', '')
                 for base in bases
             )
             

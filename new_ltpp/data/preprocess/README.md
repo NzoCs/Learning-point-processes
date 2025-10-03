@@ -31,8 +31,8 @@ The preprocessing module provides comprehensive tools for loading, tokenizing, c
 ### Basic Data Loading
 
 ```python
-from easy_tpp.data.preprocess import TPPDataModule
-from easy_tpp.config_factory import DataConfig
+from new_ltpp.data.preprocess import TPPDataModule
+from new_ltpp.config_factory import DataConfig
 
 # Create data configuration
 data_config = DataConfig(
@@ -64,7 +64,7 @@ test_loader = data_module.test_dataloader()
 ### Simple Visualization
 
 ```python
-from easy_tpp.data.preprocess import Visualizer
+from new_ltpp.data.preprocess import Visualizer
 
 # Create visualizer
 visualizer = Visualizer(
@@ -87,7 +87,7 @@ visualizer.plot_sequence_length_distribution()
 The core dataset class that handles temporal point process sequences.
 
 ```python
-from easy_tpp.data.preprocess import TPPDataset
+from new_ltpp.data.preprocess import TPPDataset
 
 # Data should contain time_seqs, time_delta_seqs, and type_seqs
 dataset = TPPDataset(data={
@@ -107,7 +107,7 @@ print(f"Event types: {sample['type_seqs']}")
 Comprehensive data module supporting multiple formats and efficient loading.
 
 ```python
-from easy_tpp.data.preprocess import TPPDataModule
+from new_ltpp.data.preprocess import TPPDataModule
 
 class TPPDataModule(pl.LightningDataModule):
     """
@@ -134,7 +134,7 @@ class TPPDataModule(pl.LightningDataModule):
 Handles tokenization and encoding of event sequences.
 
 ```python
-from easy_tpp.data.preprocess import EventTokenizer
+from new_ltpp.data.preprocess import EventTokenizer
 
 tokenizer = EventTokenizer(tokenizer_specs)
 
@@ -155,7 +155,7 @@ encoded = tokenizer(
 Dynamic padding and batching for variable-length sequences.
 
 ```python
-from easy_tpp.data.preprocess import TPPDataCollator
+from new_ltpp.data.preprocess import TPPDataCollator
 
 data_collator = TPPDataCollator(
     tokenizer=tokenizer,
@@ -265,7 +265,7 @@ The tokenizer returns `BatchEncoding` objects containing:
 Comprehensive visualization tools for data analysis and comparison.
 
 ```python
-from easy_tpp.data.preprocess import Visualizer
+from new_ltpp.data.preprocess import Visualizer
 
 visualizer = Visualizer(
     data_module=data_module,
@@ -363,8 +363,8 @@ data_loading_specs = {
 ### Complete Pipeline Example
 
 ```python
-from easy_tpp.data.preprocess import TPPDataModule, Visualizer
-from easy_tpp.config_factory import DataConfig
+from new_ltpp.data.preprocess import TPPDataModule, Visualizer
+from new_ltpp.config_factory import DataConfig
 
 def create_data_pipeline():
     # Configuration

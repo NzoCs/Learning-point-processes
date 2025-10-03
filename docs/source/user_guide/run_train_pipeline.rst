@@ -137,8 +137,8 @@ The following code is an example, which is a copy from *examples/train_nhp.py*.
 .. code-block:: python
 
     import argparse
-    from easy_tpp.config_factory import Config
-    from easy_tpp.runner import Runner
+    from new_ltpp.config_factory import Config
+    from new_ltpp.runner import Runner
 
 
     def main():

@@ -85,7 +85,7 @@ def run_experiment(
     debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
     """Lance une expérience TPP avec ExperimentRunner."""
-    runner = ExperimentRunner()
+    runner = ExperimentRunner(debug=debug)
     success = runner.run_experiment(
         config_path=config,
         data_config=data_config,
@@ -113,10 +113,11 @@ def inspect_data(
     output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Répertoire de sortie"),
     save_graphs: bool = typer.Option(True, "--save/--no-save", help="Sauvegarder les graphiques"),
     show_graphs: bool = typer.Option(False, "--show/--no-show", help="Afficher les graphiques"),
-    max_sequences: Optional[int] = typer.Option(None, "--max-seq", help="Nombre max de séquences")
+    max_sequences: Optional[int] = typer.Option(None, "--max-seq", help="Nombre max de séquences"),
+    debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
     """Inspecte et visualise des données TPP avec DataInspector."""
-    runner = DataInspector()
+    runner = DataInspector(debug=debug)
     success = runner.inspect_data(
         data_dir=data_dir,
         data_format=data_format,
@@ -137,10 +138,11 @@ def generate_data(
     num_event_types: int = typer.Option(5, "--event-types", "-t", help="Nombre de types d'événements"),
     method: str = typer.Option("nhp", "--method", "-m", help="Méthode de génération"),
     config: Optional[str] = typer.Option(None, "--config", "-c", help="Fichier de configuration"),
-    seed: Optional[int] = typer.Option(None, "--seed", help="Graine pour reproductibilité")
+    seed: Optional[int] = typer.Option(None, "--seed", help="Graine pour reproductibilité"),
+    debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
     """Génère des données synthétiques TPP avec DataGenerator."""
-    runner = DataGenerator()
+    runner = DataGenerator(debug=debug)
     success = runner.generate_data(
         output_dir=output_dir,
         num_sequences=num_sequences,
@@ -160,10 +162,11 @@ def generate_data(
 def system_info(
     include_deps: bool = typer.Option(True, "--deps/--no-deps", help="Inclure les dépendances"),
     include_hardware: bool = typer.Option(True, "--hw/--no-hw", help="Inclure le matériel"),
-    output: Optional[str] = typer.Option(None, "--output", "-o", help="Fichier de sortie")
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Fichier de sortie"),
+    debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
     """Affiche les informations système avec SystemInfo."""
-    runner = SystemInfo()
+    runner = SystemInfo(debug=debug)
     success = runner.display_system_info(
         include_deps=include_deps,
         include_hardware=include_hardware,
@@ -179,10 +182,11 @@ def system_info(
 def interactive_setup(
     setup_type: str = typer.Option("experiment", "--type", "-t", help="Type de setup"),
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Fichier de sortie"),
-    quick: bool = typer.Option(False, "--quick", "-q", help="Mode rapide")
+    quick: bool = typer.Option(False, "--quick", "-q", help="Mode rapide"),
+    debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
     """Configuration interactive avec InteractiveSetup."""
-    runner = InteractiveSetup()
+    runner = InteractiveSetup(debug=debug)
     success = runner.run_interactive_setup(
         setup_type=setup_type,
         output_path=output,
@@ -200,10 +204,11 @@ def benchmark_performance(
     benchmarks: Optional[List[str]] = typer.Option(None, "--benchmarks", "-b", help="Liste des benchmarks à exécuter"),
     output_dir: Optional[str] = typer.Option(None, "--output", "-o", help="Répertoire de sortie"),
     run_all: bool = typer.Option(False, "--all", help="Exécuter tous les benchmarks"),
-    list_benchmarks: bool = typer.Option(False, "--list", help="Lister les benchmarks disponibles")
+    list_benchmarks: bool = typer.Option(False, "--list", help="Lister les benchmarks disponibles"),
+    debug: bool = typer.Option(False, "--debug", help="Mode debug")
 ):
     """Lance des benchmarks TPP avec BenchmarkRunner."""
-    runner = BenchmarkRunner()
+    runner = BenchmarkRunner(debug=debug)
     
     if list_benchmarks:
         runner.list_available_benchmarks()

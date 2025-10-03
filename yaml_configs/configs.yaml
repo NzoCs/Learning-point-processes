@@ -71,7 +71,7 @@ logger_configs:
       project: easytpp_project
       name: wandb_logs
       notes: "Experiment run"
-      tags: [easy_tpp, experiment]
+      tags: [new_ltpp, experiment]
       resume: false
       anonymous: false
 
@@ -79,7 +79,7 @@ logger_configs:
     type: mlflow
     save_dir: logs/mlflow
     config:
-      experiment_name: easy_tpp_experiments
+      experiment_name: new_ltpp_experiments
       tracking_uri: http://localhost:5000
       run_name: run_1
 
@@ -88,7 +88,7 @@ logger_configs:
     save_dir: logs/comet
     config:
       api_key: "YOUR_COMET_API_KEY"
-      project_name: easy_tpp_project
+      project_name: new_ltpp_project
       workspace: your_workspace
 
   neptune: # Not tested yet

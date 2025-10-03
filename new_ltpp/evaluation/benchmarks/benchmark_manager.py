@@ -4,7 +4,7 @@ Registry simple pour les benchmarks
 Enum des benchmarks disponibles pour faciliter l'utilisation.
 
 Utilisation:
-    from easy_tpp.evaluation.benchmarks.registry import Benchmarks
+    from new_ltpp.evaluation.benchmarks.registry import Benchmarks
 
     # Lister tous les benchmarks
     print(list(Benchmarks))

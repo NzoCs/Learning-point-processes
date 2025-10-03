@@ -57,7 +57,7 @@ After padding, we perform the masking for the event sequences and generate three
 2. `attention_mask`: it indicates the masks used in the attention calculation (one event can only attend to its past events).
 3. `type_mask`: it uses one-hot vector to represent the event type. The padded event is a zero vector.
 
-Finally, each batch contains six elements: time_seqs, time_delta_seqs, event_seq, batch_non_pad_mask, attention_mask, type_mask. The implementation of padding mechanism can be found at `event_tokenizer <https://github.com/ant-research/EasyTemporalPointProcess/blob/main/easy_tpp/preprocess/event_tokenizer.py>`_.
+Finally, each batch contains six elements: time_seqs, time_delta_seqs, event_seq, batch_non_pad_mask, attention_mask, type_mask. The implementation of padding mechanism can be found at `event_tokenizer <https://github.com/ant-research/EasyTemporalPointProcess/blob/main/new_ltpp/preprocess/event_tokenizer.py>`_.
 
 
 

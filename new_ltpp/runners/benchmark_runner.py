@@ -29,12 +29,12 @@ class BenchmarkRunner(CLIRunnerBase):
     Mesure les temps d'exécution, utilisation mémoire, et performance des modèles.
     """
     
-    def __init__(self):
-        super().__init__("BenchmarkRunner")
+    def __init__(self, debug: bool = False):
+        super().__init__("BenchmarkRunner", debug=debug)
         
     def run_benchmark(
         self,
-        config_path: str = "yaml_configs/configs.yaml",
+        config_path: str ,
         data_config: str = "data_configs.test",
         data_loading_config: str = "data_loading_configs.quick_test",
         benchmarks: Optional[List[str]] = None,
@@ -58,7 +58,7 @@ class BenchmarkRunner(CLIRunnerBase):
             True si les benchmarks se sont déroulés avec succès
         """
         # Vérifier les dépendances
-        required_modules = ["easy_tpp.configs", "easy_tpp.evaluation.benchmarks"]
+        required_modules = ["new_ltpp.configs", "new_ltpp.evaluation.benchmarks"]
         if not self.check_dependencies(required_modules):
             return False
             
@@ -67,7 +67,7 @@ class BenchmarkRunner(CLIRunnerBase):
             
             # Créer le répertoire de sortie si nécessaire
             if output_dir is None:
-                output_dir = str(self.get_output_path("benchmarks", f"benchmark_{int(time.time())}"))
+                output_dir = str(self.get_output_path("benchmarks"))
             else:
                 Path(output_dir).mkdir(parents=True, exist_ok=True)
             
@@ -131,8 +131,9 @@ class BenchmarkRunner(CLIRunnerBase):
             return True
             
         except Exception as e:
-            self.print_error(f"Erreur lors du benchmark: {e}")
-            self.logger.exception("Détails de l'erreur:")
+            self.print_error_with_traceback(f"Erreur lors du benchmark: {e}", e)
+            if self.debug:
+                self.logger.exception("Détails de l'erreur:")
             return False
     
     def _display_benchmark_results(self, results: Dict[str, Any], output_dir: str):
@@ -209,7 +210,7 @@ class BenchmarkRunner(CLIRunnerBase):
             self.print_success(f"Rapport texte sauvegardé: {report_file}")
             
         except Exception as e:
-            self.print_error(f"Erreur lors de la sauvegarde: {e}")
+            self.print_error_with_traceback(f"Erreur lors de la sauvegarde: {e}", e)
     
     def list_available_benchmarks(self) -> List[str]:
         """Retourne la liste des benchmarks disponibles."""

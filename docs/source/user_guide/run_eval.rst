@@ -58,8 +58,8 @@ The following code is an example, which is a copy from `examples/train_nhp.py <h
 
     import argparse
 
-    from easy_tpp.config_factory import RunnerConfig
-    from easy_tpp.runner import Runner
+    from new_ltpp.config_factory import RunnerConfig
+    from new_ltpp.runner import Runner
 
 
     def main():

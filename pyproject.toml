@@ -38,6 +38,7 @@ dependencies = [
     "optuna>=4.5.0",
     "pytest>=8.4.2",
     "ipykernel>=6.30.1",
+    "typer>=0.19.2",
 ]
 
 [dependency-groups]
@@ -144,7 +145,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.coverage.run]
-source = ["easy_tpp"]
+source = ["new_ltpp"]
 omit = [
     "*/tests/*",
     "*/test_*",

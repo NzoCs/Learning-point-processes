@@ -10,7 +10,7 @@ EasyTPP Models
 model.tf_model module
 ------------------------------
 
-.. automodule:: easy_tpp.model.tf_model
+.. automodule:: new_ltpp.model.tf_model
 .. autosummary::
     :toctree: ../generated/
 
@@ -32,7 +32,7 @@ model.tf_model module
 model.torch_model module
 ------------------------------
 
-.. automodule:: easy_tpp.model.torch_model
+.. automodule:: new_ltpp.model.torch_model
 .. autosummary::
     :toctree: ../generated/
 

@@ -59,18 +59,18 @@ jobs:
           
       - name: Run mypy (Type Checking)
         run: |
-          poetry run mypy easy_tpp --ignore-missing-imports --no-strict-optional
+          poetry run mypy new_ltpp --ignore-missing-imports --no-strict-optional
         continue-on-error: true  # Type checking can be strict for research code
         
       - name: Run bandit (Security Check)
         run: |
-          poetry run bandit -r easy_tpp -f json -o bandit-report.json || true
-          poetry run bandit -r easy_tpp
+          poetry run bandit -r new_ltpp -f json -o bandit-report.json || true
+          poetry run bandit -r new_ltpp
         continue-on-error: true
         
       - name: Run pylint (Code Analysis)
         run: |
-          poetry run pylint easy_tpp --output-format=text --reports=no --score=no
+          poetry run pylint new_ltpp --output-format=text --reports=no --score=no
         continue-on-error: true
         
       - name: Upload bandit results
@@ -132,7 +132,7 @@ jobs:
           
       - name: Check docstring style
         run: |
-          poetry run pydocstyle easy_tpp --convention=numpy
+          poetry run pydocstyle new_ltpp --convention=numpy
         continue-on-error: true
         
       - name: Check documentation syntax

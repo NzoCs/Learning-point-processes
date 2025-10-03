@@ -165,7 +165,7 @@ different models and/or datasets), selecting a subset of metrics, formatting
 numbers, and writing a `.tex` table file.
 
 Usage (from project root):
-    python -m easy_tpp.evaluation.benchmarks.bench_renderer \
+    python -m new_ltpp.evaluation.benchmarks.bench_renderer \
         --input results/modelA_results.json results/modelB_results.json \
         --metrics time_rmse_mean type_accuracy_mean macro_f1score_mean \
         --out-file artifacts/tables/bench_table.tex

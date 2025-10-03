@@ -97,30 +97,30 @@ test: ## Run tests
 
 test-cov: ## Run tests with coverage
 	@echo "Tests with coverage..."
-	@python -m pytest --cov=easy_tpp --cov-report=html
+	@python -m pytest --cov=new_ltpp --cov-report=html
 
 format: ## Format code with Black
 	@echo "Formatting code..."
-	@python -m black easy_tpp/ tests/ examples/ scripts/
+	@python -m black new_ltpp/ tests/ examples/ scripts/
 	@echo "Code formatted!"
 
 format-check: ## Check formatting without modifying
 	@echo "Checking formatting..."
-	@python -m black --check easy_tpp/ tests/ examples/ scripts/
+	@python -m black --check new_ltpp/ tests/ examples/ scripts/
 
 isort: ## Organize imports
 	@echo "Organizing imports..."
-	@python -m isort easy_tpp/ tests/ examples/ scripts/
+	@python -m isort new_ltpp/ tests/ examples/ scripts/
 	@echo "Imports organized!"
 
 lint: ## Check code with flake8
 	@echo "Checking code with flake8..."
-	@python -m flake8 easy_tpp/ tests/ examples/ scripts/
+	@python -m flake8 new_ltpp/ tests/ examples/ scripts/
 	@echo "Linting completed!"
 
 type-check: ## Check types with mypy
 	@echo "Checking types..."
-	@python -m mypy easy_tpp
+	@python -m mypy new_ltpp
 
 clean: ## Clean temporary files
 	@echo "Cleaning..."
@@ -160,8 +160,8 @@ quality: ## Run all quality checks
 
 fix-style: ## Auto-fix style issues (format + isort)
 	@echo "Auto-fixing style issues..."
-	@python -m black easy_tpp/ tests/ examples/ scripts/
-	@python -m isort easy_tpp/ tests/ examples/ scripts/
+	@python -m black new_ltpp/ tests/ examples/ scripts/
+	@python -m isort new_ltpp/ tests/ examples/ scripts/
 	@echo "Style issues fixed!"
 
 pre-commit: ## Run pre-commit hooks on all files
@@ -240,10 +240,10 @@ demo: ## Quick demonstration with framework introduction
 	@echo "=================================================="
 	@echo "STEP 5: Core Components Test"
 	@echo "=================================================="
-	@$(PYTHON) -c "import easy_tpp; print('+ EasyTPP successfully imported')"
-	@$(PYTHON) -c "from easy_tpp.config_factory import RunnerConfig; print('+ Configuration factory available')"
-	@$(PYTHON) -c "from easy_tpp.runner import Runner; print('+ Runner available')"
-	@$(PYTHON) -c "from easy_tpp.models.basemodel import Model; print('+ Base models available')"
+	@$(PYTHON) -c "import new_ltpp; print('+ EasyTPP successfully imported')"
+	@$(PYTHON) -c "from new_ltpp.config_factory import RunnerConfig; print('+ Configuration factory available')"
+	@$(PYTHON) -c "from new_ltpp.runner import Runner; print('+ Runner available')"
+	@$(PYTHON) -c "from new_ltpp.models.basemodel import Model; print('+ Base models available')"
 	@echo ""
 	@echo "=================================================="
 	@echo "STEP 6: LIVE DEMO - Running THP Model Test"

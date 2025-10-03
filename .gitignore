@@ -1,7 +1,7 @@
 # python build
 build
 dist
-easy_tpp.egg-info
+*.egg-info
 
 # python temp
 *.pyc

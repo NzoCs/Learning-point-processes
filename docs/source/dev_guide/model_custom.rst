@@ -14,7 +14,7 @@ Assume we are building a PyTorch model. We need to initialize the model by inher
 
 .. code-block:: python
 
-    from easy_tpp.model.torch_model.torch_basemodel import TorchBaseModel
+    from new_ltpp.model.torch_model.torch_basemodel import TorchBaseModel
 
     # Custom Torch TPP implementations need to
     # inherit from the TorchBaseModel interface
@@ -43,7 +43,7 @@ If we are building a Tensorflow model, we start with the following code
 
 .. code-block:: python
 
-    from easy_tpp.model.torch_model.tf_basemodel import TfBaseModel
+    from new_ltpp.model.torch_model.tf_basemodel import TfBaseModel
 
     # Custom Tf TPP implementations need to
     # inherit from the TorchBaseModel interface

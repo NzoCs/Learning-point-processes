@@ -964,150 +964,6 @@ wheels = [
 ]
 
 [[package]]
-name = "easy-tpp"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "datasets" },
-    { name = "fastdtw" },
-    { name = "hydra-core" },
-    { name = "ipykernel" },
-    { name = "lightning" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "omegaconf" },
-    { name = "optuna" },
-    { name = "pandas" },
-    { name = "polars" },
-    { name = "pytest" },
-    { name = "scipy" },
-    { name = "seaborn" },
-    { name = "tensorboard" },
-    { name = "torch" },
-    { name = "torchmetrics" },
-    { name = "tqdm" },
-    { name = "wandb" },
-]
-
-[package.dev-dependencies]
-cli = [
-    { name = "alive-progress" },
-    { name = "click" },
-    { name = "colorama" },
-    { name = "inquirer" },
-    { name = "prompt-toolkit" },
-    { name = "psutil" },
-    { name = "py-cpuinfo" },
-    { name = "pyyaml" },
-    { name = "questionary" },
-    { name = "rich" },
-    { name = "tabulate" },
-    { name = "textual" },
-    { name = "typer" },
-]
-dev = [
-    { name = "bandit" },
-    { name = "black" },
-    { name = "flake8" },
-    { name = "flake8-bugbear" },
-    { name = "flake8-docstrings" },
-    { name = "isort" },
-    { name = "mypy" },
-    { name = "pre-commit" },
-    { name = "pymarkdownlnt" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "torchtyping" },
-]
-docs = [
-    { name = "myst-parser" },
-    { name = "nbsphinx" },
-    { name = "nbsphinx-link" },
-    { name = "recommonmark" },
-    { name = "sphinx" },
-    { name = "sphinx-autobuild" },
-    { name = "sphinx-fontawesome" },
-    { name = "sphinx-markdown-tables" },
-    { name = "sphinx-rtd-theme" },
-]
-logging = [
-    { name = "comet-ml" },
-    { name = "mlflow" },
-    { name = "neptune-client" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "datasets", specifier = ">=4.1.1" },
-    { name = "fastdtw", specifier = ">=0.3.4" },
-    { name = "hydra-core", specifier = ">=1.3.0" },
-    { name = "ipykernel", specifier = ">=6.30.1" },
-    { name = "lightning", specifier = ">=2.0.0" },
-    { name = "matplotlib", specifier = ">=3.7.0" },
-    { name = "numpy", specifier = ">=2.3.3" },
-    { name = "omegaconf", specifier = ">=2.3.0" },
-    { name = "optuna", specifier = ">=4.5.0" },
-    { name = "pandas", specifier = ">=2.0.0" },
-    { name = "polars", specifier = ">=1.33.1" },
-    { name = "pytest", specifier = ">=8.4.2" },
-    { name = "scipy", specifier = ">=1.16.2" },
-    { name = "seaborn", specifier = ">=0.12.0" },
-    { name = "tensorboard", specifier = ">=2.15.0" },
-    { name = "torch", specifier = ">=2.0.0" },
-    { name = "torchmetrics", specifier = ">=1.0.0" },
-    { name = "tqdm", specifier = ">=4.65.0" },
-    { name = "wandb", specifier = ">=0.22.0" },
-]
-
-[package.metadata.requires-dev]
-cli = [
-    { name = "alive-progress", specifier = ">=3.3.0" },
-    { name = "click", specifier = ">=8.3.0" },
-    { name = "colorama", specifier = ">=0.4.6" },
-    { name = "inquirer", specifier = ">=3.4.1" },
-    { name = "prompt-toolkit", specifier = ">=3.0.52" },
-    { name = "psutil", specifier = ">=7.1.0" },
-    { name = "py-cpuinfo", specifier = ">=9.0.0" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "questionary", specifier = ">=2.1.1" },
-    { name = "rich", specifier = ">=14.1.0" },
-    { name = "tabulate", specifier = ">=0.9.0" },
-    { name = "textual", specifier = ">=6.1.0" },
-    { name = "typer", specifier = ">=0.19.1" },
-    { name = "typer", specifier = ">=0.19.2" },
-]
-dev = [
-    { name = "bandit", specifier = ">=1.7.0" },
-    { name = "black", specifier = ">=25.9.0" },
-    { name = "flake8", specifier = ">=7.0.0" },
-    { name = "flake8-bugbear", specifier = ">=24.0.0" },
-    { name = "flake8-docstrings", specifier = ">=1.7.0" },
-    { name = "isort", specifier = ">=6.0.1" },
-    { name = "mypy", specifier = ">=1.18.2" },
-    { name = "pre-commit", specifier = ">=4.3.0" },
-    { name = "pymarkdownlnt", specifier = ">=0.9.32" },
-    { name = "pytest", specifier = ">=8.0.0" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "torchtyping", specifier = ">=0.1.5" },
-]
-docs = [
-    { name = "myst-parser", specifier = ">=4.0.1" },
-    { name = "nbsphinx", specifier = ">=0.9.7" },
-    { name = "nbsphinx-link", specifier = ">=1.3.0" },
-    { name = "recommonmark", specifier = ">=0.7.1" },
-    { name = "sphinx", specifier = ">=4.0,<8.2" },
-    { name = "sphinx-autobuild", specifier = ">=2025.8.25" },
-    { name = "sphinx-fontawesome", specifier = ">=0.0.6" },
-    { name = "sphinx-markdown-tables", specifier = ">=0.0.17" },
-    { name = "sphinx-rtd-theme", specifier = ">=3.0.2" },
-]
-logging = [
-    { name = "comet-ml", specifier = ">=3.53.0" },
-    { name = "mlflow", specifier = ">=3.4.0" },
-    { name = "neptune-client", specifier = ">=1.14.0" },
-]
-
-[[package]]
 name = "editor"
 version = "1.6.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2789,6 +2645,152 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/6c/4f/ccdb8ad3a38e583f214547fd2f7ff1fc160c43a75af88e6aec213404b96a/networkx-3.5.tar.gz", hash = "sha256:d4c6f9cf81f52d69230866796b82afbccdec3db7ae4fbd1b65ea750feed50037", size = 2471065, upload-time = "2025-05-29T11:35:07.804Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/8d/776adee7bbf76365fdd7f2552710282c79a4ead5d2a46408c9043a2b70ba/networkx-3.5-py3-none-any.whl", hash = "sha256:0030d386a9a06dee3565298b4a734b68589749a544acbb6c412dc9e2489ec6ec", size = 2034406, upload-time = "2025-05-29T11:35:04.961Z" },
+]
+
+[[package]]
+name = "new-ltpp"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "datasets" },
+    { name = "fastdtw" },
+    { name = "hydra-core" },
+    { name = "ipykernel" },
+    { name = "lightning" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "omegaconf" },
+    { name = "optuna" },
+    { name = "pandas" },
+    { name = "polars" },
+    { name = "pytest" },
+    { name = "scipy" },
+    { name = "seaborn" },
+    { name = "tensorboard" },
+    { name = "torch" },
+    { name = "torchmetrics" },
+    { name = "tqdm" },
+    { name = "typer" },
+    { name = "wandb" },
+]
+
+[package.dev-dependencies]
+cli = [
+    { name = "alive-progress" },
+    { name = "click" },
+    { name = "colorama" },
+    { name = "inquirer" },
+    { name = "prompt-toolkit" },
+    { name = "psutil" },
+    { name = "py-cpuinfo" },
+    { name = "pyyaml" },
+    { name = "questionary" },
+    { name = "rich" },
+    { name = "tabulate" },
+    { name = "textual" },
+    { name = "typer" },
+]
+dev = [
+    { name = "bandit" },
+    { name = "black" },
+    { name = "flake8" },
+    { name = "flake8-bugbear" },
+    { name = "flake8-docstrings" },
+    { name = "isort" },
+    { name = "mypy" },
+    { name = "pre-commit" },
+    { name = "pymarkdownlnt" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "torchtyping" },
+]
+docs = [
+    { name = "myst-parser" },
+    { name = "nbsphinx" },
+    { name = "nbsphinx-link" },
+    { name = "recommonmark" },
+    { name = "sphinx" },
+    { name = "sphinx-autobuild" },
+    { name = "sphinx-fontawesome" },
+    { name = "sphinx-markdown-tables" },
+    { name = "sphinx-rtd-theme" },
+]
+logging = [
+    { name = "comet-ml" },
+    { name = "mlflow" },
+    { name = "neptune-client" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "datasets", specifier = ">=4.1.1" },
+    { name = "fastdtw", specifier = ">=0.3.4" },
+    { name = "hydra-core", specifier = ">=1.3.0" },
+    { name = "ipykernel", specifier = ">=6.30.1" },
+    { name = "lightning", specifier = ">=2.0.0" },
+    { name = "matplotlib", specifier = ">=3.7.0" },
+    { name = "numpy", specifier = ">=2.3.3" },
+    { name = "omegaconf", specifier = ">=2.3.0" },
+    { name = "optuna", specifier = ">=4.5.0" },
+    { name = "pandas", specifier = ">=2.0.0" },
+    { name = "polars", specifier = ">=1.33.1" },
+    { name = "pytest", specifier = ">=8.4.2" },
+    { name = "scipy", specifier = ">=1.16.2" },
+    { name = "seaborn", specifier = ">=0.12.0" },
+    { name = "tensorboard", specifier = ">=2.15.0" },
+    { name = "torch", specifier = ">=2.0.0" },
+    { name = "torchmetrics", specifier = ">=1.0.0" },
+    { name = "tqdm", specifier = ">=4.65.0" },
+    { name = "typer", specifier = ">=0.19.2" },
+    { name = "wandb", specifier = ">=0.22.0" },
+]
+
+[package.metadata.requires-dev]
+cli = [
+    { name = "alive-progress", specifier = ">=3.3.0" },
+    { name = "click", specifier = ">=8.3.0" },
+    { name = "colorama", specifier = ">=0.4.6" },
+    { name = "inquirer", specifier = ">=3.4.1" },
+    { name = "prompt-toolkit", specifier = ">=3.0.52" },
+    { name = "psutil", specifier = ">=7.1.0" },
+    { name = "py-cpuinfo", specifier = ">=9.0.0" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "questionary", specifier = ">=2.1.1" },
+    { name = "rich", specifier = ">=14.1.0" },
+    { name = "tabulate", specifier = ">=0.9.0" },
+    { name = "textual", specifier = ">=6.1.0" },
+    { name = "typer", specifier = ">=0.19.1" },
+    { name = "typer", specifier = ">=0.19.2" },
+]
+dev = [
+    { name = "bandit", specifier = ">=1.7.0" },
+    { name = "black", specifier = ">=25.9.0" },
+    { name = "flake8", specifier = ">=7.0.0" },
+    { name = "flake8-bugbear", specifier = ">=24.0.0" },
+    { name = "flake8-docstrings", specifier = ">=1.7.0" },
+    { name = "isort", specifier = ">=6.0.1" },
+    { name = "mypy", specifier = ">=1.18.2" },
+    { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "pymarkdownlnt", specifier = ">=0.9.32" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "torchtyping", specifier = ">=0.1.5" },
+]
+docs = [
+    { name = "myst-parser", specifier = ">=4.0.1" },
+    { name = "nbsphinx", specifier = ">=0.9.7" },
+    { name = "nbsphinx-link", specifier = ">=1.3.0" },
+    { name = "recommonmark", specifier = ">=0.7.1" },
+    { name = "sphinx", specifier = ">=4.0,<8.2" },
+    { name = "sphinx-autobuild", specifier = ">=2025.8.25" },
+    { name = "sphinx-fontawesome", specifier = ">=0.0.6" },
+    { name = "sphinx-markdown-tables", specifier = ">=0.0.17" },
+    { name = "sphinx-rtd-theme", specifier = ">=3.0.2" },
+]
+logging = [
+    { name = "comet-ml", specifier = ">=3.53.0" },
+    { name = "mlflow", specifier = ">=3.4.0" },
+    { name = "neptune-client", specifier = ">=1.14.0" },
 ]
 
 [[package]]

@@ -8,7 +8,7 @@ Inspiré de run_all_phase.py pour charger toute la configuration depuis YAML.
 from typing import Optional, List
 from pathlib import Path
 
-from .cli_base import CLIRunnerBase, CONFIG_DIR
+from .cli_base import CLIRunnerBase, CONFIG_MAP
 
 try:
     from new_ltpp.configs import ConfigFactory, ConfigType
@@ -28,8 +28,8 @@ class ExperimentRunner(CLIRunnerBase):
     Permet de spécifier individuellement chaque type de configuration.
     """
     
-    def __init__(self):
-        super().__init__("ExperimentRunner")
+    def __init__(self, debug: bool = False):
+        super().__init__("ExperimentRunner", debug=debug)
     
     def _build_config_paths(self, **config_kwargs) -> dict:
         """
@@ -43,23 +43,13 @@ class ExperimentRunner(CLIRunnerBase):
         Returns:
             Dictionnaire des chemins de configuration formatés
         """
-        # Mapping des types de configuration vers leurs préfixes
-        config_type_mapping = {
-            'data': 'data_configs',
-            'model': 'model_configs', 
-            'training': 'training_configs',
-            'data_loading': 'data_loading_configs',
-            'simulation': 'simulation_configs',
-            'thinning': 'thinning_configs',
-            'logger': 'logger_configs'
-        }
         
         config_paths = {}
         
         for config_type, config_name in config_kwargs.items():
             if config_name is not None:  # Skip None values
-                if config_type in config_type_mapping:
-                    prefix = config_type_mapping[config_type]
+                if config_type in CONFIG_MAP:
+                    prefix = CONFIG_MAP[config_type]
                     config_paths[f"{config_type}_config_path"] = f"{prefix}.{config_name}"
                 else:
                     self.print_error(f"Type de configuration non reconnu: {config_type}")
@@ -105,8 +95,11 @@ class ExperimentRunner(CLIRunnerBase):
         Returns:
             True si l'expérience s'est déroulée avec succès
         """
+        # Activer le mode debug si demandé
+        self.set_debug(debug)
+        
         # Vérifier les dépendances
-        required_modules = ["easy_tpp.configs", "easy_tpp.runners"]
+        required_modules = ["new_ltpp.configs", "new_ltpp.runners"]
         if not self.check_dependencies(required_modules):
             return False
             
@@ -115,7 +108,7 @@ class ExperimentRunner(CLIRunnerBase):
             
             # Configuration par défaut si aucun fichier spécifié
             if config_path is None:
-                config_path = self.get_config_path("runner", "configs.yaml")
+                config_path = self.get_config_path()
                 self.print_info(f"Utilisation de la configuration par défaut: {config_path}")
             
             # Validation du fichier de configuration
@@ -152,7 +145,7 @@ class ExperimentRunner(CLIRunnerBase):
                 self.print_info("Configuration YAML chargée avec succès")
                 
             except Exception as e:
-                self.print_error(f"Erreur lors du chargement de la configuration: {e}")
+                self.print_error_with_traceback(f"Erreur lors du chargement de la configuration: {e}", e)
                 return False
             
             # Récupérer le dictionnaire de configuration
@@ -232,7 +225,7 @@ class ExperimentRunner(CLIRunnerBase):
             return True
             
         except Exception as e:
-            self.print_error(f"Erreur lors de l'exécution: {e}")
-            if debug:
+            self.print_error_with_traceback(f"Erreur lors de l'exécution: {e}", e)
+            if self.debug:
                 self.logger.exception("Détails de l'erreur:")
             return False

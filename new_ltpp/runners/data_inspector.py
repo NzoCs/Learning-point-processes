@@ -23,8 +23,8 @@ class DataInspector(CLIRunnerBase):
     Utilise DataConfigBuilder et le nouveau Visualizer API.
     """
     
-    def __init__(self):
-        super().__init__("DataInspector")
+    def __init__(self, debug: bool = False):
+        super().__init__("DataInspector", debug=debug)
         
     def inspect_data(
         self,
@@ -52,7 +52,7 @@ class DataInspector(CLIRunnerBase):
             True si l'inspection s'est déroulée avec succès
         """
         # Vérifier les dépendances
-        required_modules = ["easy_tpp.configs", "easy_tpp.data.preprocess"]
+        required_modules = ["new_ltpp.configs", "new_ltpp.data.preprocess"]
         if not self.check_dependencies(required_modules):
             return False
             
@@ -88,7 +88,7 @@ class DataInspector(CLIRunnerBase):
             try:
                 datamodule.setup(stage="test")
             except Exception as e:
-                self.print_error(f"Erreur setup data module: {e}")
+                self.print_error_with_traceback(f"Erreur setup data module: {e}", e)
                 # Fallback vers analyse directe
                 return self._fallback_direct_analysis(
                     data_dir, output_dir, save_graphs, show_graphs, max_sequences
@@ -133,7 +133,7 @@ class DataInspector(CLIRunnerBase):
                 self.print_success("✓ Toutes les visualisations générées")
                 
             except Exception as e:
-                self.print_error(f"Erreur avec Visualizer: {e}")
+                self.print_error_with_traceback(f"Erreur avec Visualizer: {e}", e)
                 # Fallback vers analyse directe
                 return self._fallback_direct_analysis(
                     data_dir, output_dir, save_graphs, show_graphs, max_sequences
@@ -174,7 +174,7 @@ class DataInspector(CLIRunnerBase):
             return True
             
         except Exception as e:
-            self.print_error(f"Erreur lors de l'inspection: {e}")
+            self.print_error_with_traceback(f"Erreur lors de l'inspection: {e}", e)
             self.logger.exception("Détails de l'erreur:")
             return False
     
@@ -314,7 +314,7 @@ class DataInspector(CLIRunnerBase):
             return results
             
         except Exception as e:
-            self.print_error(f"Erreur dans l'analyse directe: {e}")
+            self.print_error_with_traceback(f"Erreur dans l'analyse directe: {e}", e)
             return {}
     
     def _generate_summary_report(self, save_dir, seq_lengths, all_event_types, all_time_deltas, event_counts):
@@ -367,7 +367,7 @@ class DataInspector(CLIRunnerBase):
                 self.console.print(table)
                 
         except Exception as e:
-            self.print_error(f"Erreur génération rapport: {e}")
+            self.print_error_with_traceback(f"Erreur génération rapport: {e}", e)
     
     def _fallback_direct_analysis(self, data_dir, output_dir, save_graphs, show_graphs, max_sequences):
         """

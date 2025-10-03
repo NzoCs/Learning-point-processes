@@ -16,7 +16,7 @@ Ce module fournit des stratégies de prédiction simples qui servent de référe
 ### Exemple de base
 
 ```python
-from easy_tpp.evaluate.benchmarks import LastMarkBenchmark
+from new_ltpp.evaluate.benchmarks import LastMarkBenchmark
 
 # Configuration des données
 data_config = DataConfig.from_dict(config_dict["data_config"])
@@ -31,7 +31,7 @@ print(f"Type Accuracy: {results['metrics']['type_accuracy_mean']:.4f}")
 ### Exécuter plusieurs benchmarks
 
 ```python
-from easy_tpp.evaluate.benchmarks import (
+from new_ltpp.evaluate.benchmarks import (
     LastMarkBenchmark, MeanInterTimeBenchmark, 
     MarkDistributionBenchmark, InterTimeDistributionBenchmark
 )
@@ -52,13 +52,13 @@ for benchmark in benchmarks:
 
 ```bash
 # Benchmark LastMark
-python -m easy_tpp.evaluate.benchmarks.last_mark_bench \
+python -m new_ltpp.evaluate.benchmarks.last_mark_bench \
     --config_path config.yaml \
     --dataset_name my_dataset \
     --save_dir ./results
 
 # Benchmark MeanInterTime
-python -m easy_tpp.evaluate.benchmarks.mean_bench \
+python -m new_ltpp.evaluate.benchmarks.mean_bench \
     --config_path config.yaml \
     --dataset_name my_dataset \
     --save_dir ./results

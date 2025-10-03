@@ -117,7 +117,7 @@ uv sync --group dev
 uv run black .          # Format code
 uv run isort .          # Organize imports
 uv run flake8           # Check code quality
-uv run mypy easy_tpp    # Static type checking
+uv run mypy new_ltpp    # Static type checking
 uv run pytest          # Run tests with coverage
 ```
 
@@ -164,7 +164,7 @@ uv sync --group dev
 uv run black .          # Format your code
 uv run isort .          # Sort imports
 uv run flake8           # Check code style
-uv run mypy easy_tpp    # Check types
+uv run mypy new_ltpp    # Check types
 uv run pytest          # Run tests
 
 # Add new dependencies as you work
@@ -180,7 +180,7 @@ EasyTemporalPointProcess/
 ├── uv.lock                 # Lockfile for reproducible builds
 ├── check_installation.py   # Verification script
 ├── README.md              # Main documentation
-├── easy_tpp/              # Main source code
+├── new_ltpp/              # Main source code
 ├── examples/              # Usage examples
 ├── tests/                 # Unit tests
 └── docs/                  # Documentation

@@ -32,7 +32,7 @@ data/
 ### Generate Synthetic Data
 
 ```python
-from easy_tpp.data.generation import HawkesSimulator
+from new_ltpp.data.generation import HawkesSimulator
 
 # Create Hawkes process simulator
 simulator = HawkesSimulator(
@@ -55,8 +55,8 @@ simulator.generate_and_save(
 ### Load and Preprocess Data
 
 ```python
-from easy_tpp.data.preprocess import TPPDataModule
-from easy_tpp.config_factory import DataConfig
+from new_ltpp.data.preprocess import TPPDataModule
+from new_ltpp.config_factory import DataConfig
 
 # Configure data loading
 data_config = DataConfig(
@@ -88,9 +88,9 @@ test_loader = data_module.test_dataloader()
 ### End-to-End Workflow
 
 ```python
-from easy_tpp.data.generation import HawkesSimulator
-from easy_tpp.data.preprocess import TPPDataModule, Visualizer
-from easy_tpp.config_factory import DataConfig
+from new_ltpp.data.generation import HawkesSimulator
+from new_ltpp.data.preprocess import TPPDataModule, Visualizer
+from new_ltpp.config_factory import DataConfig
 
 def create_complete_data_pipeline():
     """Complete example: generate data, preprocess, and visualize."""
@@ -217,7 +217,7 @@ simulator, data_module, visualizer = create_complete_data_pipeline()
 ### Unified Configuration
 
 ```python
-from easy_tpp.config_factory import Config
+from new_ltpp.config_factory import Config
 
 # Complete configuration for both generation and preprocessing
 config = Config(
@@ -319,7 +319,7 @@ data_config = DataConfig(
 def convert_json_to_pkl(json_dir, pkl_dir):
     """Convert JSON data to PKL for faster loading."""
     
-    from easy_tpp.utils import save_pickle, load_json
+    from new_ltpp.utils import save_pickle, load_json
     import os
     
     os.makedirs(pkl_dir, exist_ok=True)

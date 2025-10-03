@@ -49,7 +49,7 @@ def check_installation() -> Tuple[int, int, int, int]:
     # Core dependencies
     print("📦 Checking Core Dependencies:")
     core_deps = [
-        ("easy_tpp", "easy_tpp"),
+        ("new_ltpp", "new_ltpp"),
         ("numpy", "numpy"),
         ("pandas", "pandas"),
         ("torch", "torch"),
@@ -66,16 +66,16 @@ def check_installation() -> Tuple[int, int, int, int]:
 
     print(f"\nCore dependencies: {core_success}/{len(core_deps)} installed")
     
-    # Test specific easy_tpp modules
+    # Test specific new_ltpp modules
     print("\n🧪 Testing EasyTPP Modules:")
     easytpp_modules = [
-        ("config_factory", "easy_tpp.config_factory"),
-        ("models", "easy_tpp.models"),
-        ("data", "easy_tpp.data"),
-        ("runner", "easy_tpp.runner"),
-        ("evaluation", "easy_tpp.evaluation"),
-        ("utils", "easy_tpp.utils"),
-        ("hpo", "easy_tpp.hpo"),
+        ("config_factory", "new_ltpp.config_factory"),
+        ("models", "new_ltpp.models"),
+        ("data", "new_ltpp.data"),
+        ("runner", "new_ltpp.runner"),
+        ("evaluation", "new_ltpp.evaluation"),
+        ("utils", "new_ltpp.utils"),
+        ("hpo", "new_ltpp.hpo"),
     ]
     
     easytpp_success = 0
@@ -179,7 +179,7 @@ def check_installation() -> Tuple[int, int, int, int]:
 if __name__ == "__main__":
     try:
         core_success, core_total, easytpp_success, easytpp_total = check_installation()
-        # Consider installation successful if core deps are OK and most easy_tpp modules work
+        # Consider installation successful if core deps are OK and most new_ltpp modules work
         success = (core_success == core_total) and (easytpp_success >= easytpp_total - 1)
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:

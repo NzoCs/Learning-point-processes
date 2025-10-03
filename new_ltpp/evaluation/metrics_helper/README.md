@@ -17,7 +17,7 @@ Ce package fournit un système modulaire pour calculer les métriques d'évaluat
 ### Utilisation de base
 
 ```python
-from easy_tpp.evaluate.metrics_helper import MetricsHelper, EvaluationMode
+from new_ltpp.evaluate.metrics_helper import MetricsHelper, EvaluationMode
 
 # Initialiser pour les métriques de prédiction
 helper = MetricsHelper(
@@ -38,7 +38,7 @@ type_metrics = helper.compute_all_type_metrics(batch, pred)
 ### Calcul sélectif de métriques
 
 ```python
-from easy_tpp.evaluate.metrics_helper import MetricsHelper, PredictionMetrics
+from new_ltpp.evaluate.metrics_helper import MetricsHelper, PredictionMetrics
 
 # Initialiser avec seulement les métriques sélectionnées
 helper = MetricsHelper(

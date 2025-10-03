@@ -28,25 +28,24 @@ except ImportError:
 
 # Configuration globale pour les répertoires
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent  # Répertoire racine du projet
+
 CONFIG_DIR = "yaml_configs"
-CONFIG_PATHS = {
+
+CONFIG_MAP = {
     "data": "data_configs",
     "model": "model_configs", 
     "runner": "runner_configs",
-    "simulation": "simulator_configs",
-    "hpo": "hpo_configs"
-}
-
-DEFAULT_CONFIGS = {
-    "data": "default_data_config.yaml",
-    "model": "default_model_config.yaml", 
-    "runner": "default_runner_config.yaml",
-    "simulation": "default_simulator_config.yaml",
-    "hpo": "default_hpo_config.yaml"
+    "simulation": "simulation_configs",
+    "hpo": "hpo_configs",
+    "training": "training_configs",
+    "data_loading": "data_loading_configs",
+    "thinning": "thinning_configs",
+    "logger": "logger_configs"
 }
 
 # Configuration globale pour les répertoires de sortie (dans artifacts/)
 ARTIFACTS_DIR = "artifacts"
+
 OUTPUT_DIRS = {
     "experiments": "experiments",
     "models": "models",
@@ -64,8 +63,9 @@ class CLIRunnerBase:
     Fournit logging, console Rich, et vérification des dépendances.
     """
     
-    def __init__(self, name: str = "CLIRunner"):
+    def __init__(self, name: str = "CLIRunner", debug: bool = False):
         self.name = name
+        self.debug = debug
         self.console = Console() if RICH_AVAILABLE else None
         self.logger = self._setup_logging()
         
@@ -133,20 +133,32 @@ class CLIRunnerBase:
         else:
             print(f"ℹ {message}")
             
-    def get_config_path(self, config_type: str, config_name: str = None) -> Path:
+    def print_error_with_traceback(self, message: str, exception: Exception = None):
+        """Affiche un message d'erreur avec traceback complet si debug activé."""
+        self.print_error(message)
+        
+        if self.debug and exception:
+            import traceback
+            if self.console:
+                self.console.print("[yellow]📋 Traceback complet:[/yellow]")
+                self.console.print(f"[red]{traceback.format_exc()}[/red]")
+            else:
+                print("📋 Traceback complet:")
+                print(traceback.format_exc())
+                
+    def set_debug(self, debug: bool):
+        """Active ou désactive le mode debug."""
+        self.debug = debug
+
+    def get_config_path(self, config_name: str = None) -> Path:
         """Retourne le chemin vers un fichier de configuration."""
         base_dir = ROOT_DIR / CONFIG_DIR
-        
-        if config_type in CONFIG_PATHS:
-            config_dir = base_dir / CONFIG_PATHS[config_type]
-        else:
-            config_dir = base_dir
-            
-        if config_name is None:
-            config_name = DEFAULT_CONFIGS.get(config_type, "config.yaml")
-            
-        return config_dir / config_name
-    
+
+        if config_name:
+            return base_dir / f"{config_name}.yaml"
+
+        return base_dir / "configs.yaml"
+
     def get_output_path(self, output_type: str, subdir: str = None) -> Path:
         """Retourne le chemin vers un répertoire de sortie dans artifacts/."""
         base_dir = ROOT_DIR / ARTIFACTS_DIR

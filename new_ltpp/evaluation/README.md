@@ -15,7 +15,7 @@ Ce dossier contient trois composants principaux :
 ### Évaluation basique
 
 ```python
-from easy_tpp.evaluation import MetricsHelper, EvaluationMode
+from new_ltpp.evaluation import MetricsHelper, EvaluationMode
 
 # Calculer les métriques pour les prédictions du modèle
 helper = MetricsHelper(num_event_types=5, mode=EvaluationMode.PREDICTION)
@@ -28,7 +28,7 @@ print(f"Type Accuracy: {metrics['type_accuracy']:.4f}")
 ### Exécuter des benchmarks
 
 ```python
-from easy_tpp.evaluation.benchmarks import LastMarkBenchmark
+from new_ltpp.evaluation.benchmarks import LastMarkBenchmark
 
 # Comparer contre une ligne de base
 benchmark = LastMarkBenchmark(data_config, "experiment_1")
@@ -38,7 +38,7 @@ results = benchmark.evaluate()
 ### Analyse de distribution
 
 ```python
-from easy_tpp.evaluation.distribution_analysis_helper import NTPPComparator
+from new_ltpp.evaluation.distribution_analysis_helper import NTPPComparator
 
 # Analyser les distributions de données
 comparator = NTPPComparator(

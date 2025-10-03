@@ -205,16 +205,16 @@ New-LTPP implements state-of-the-art TPP models with modern PyTorch implementati
 
 | No  | Publication |     Model     | Paper                                                                                                                                    | Implementation                                                                                                   |
 |:---:|:-----------:|:-------------:|:-----------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------|
-|  1  |   KDD'16    |     RMTPP     | [Recurrent Marked Temporal Point Processes: Embedding Event History to Vector](https://www.kdd.org/kdd2016/papers/files/rpp1081-duA.pdf) | [Model](easy_tpp/models/rmtpp.py)                   |
-|  2  | NeurIPS'17  |      NHP      | [The Neural Hawkes Process: A Neurally Self-Modulating Multivariate Point Process](https://arxiv.org/abs/1612.09328)                     | [Model](easy_tpp/models/nhp.py)                       |
-|  3  | NeurIPS'19  |    FullyNN    | [Fully Neural Network based Model for General Temporal Point Processes](https://arxiv.org/abs/1905.09690)                                | [Model](easy_tpp/models/fullynn.py)                |
-|  4  |   ICML'20   |     SAHP      | [Self-Attentive Hawkes process](https://arxiv.org/abs/1907.07561)                                                                        | [Model](easy_tpp/models/sahp.py)                     |
-|  5  |   ICML'20   |      THP      | [Transformer Hawkes process](https://arxiv.org/abs/2002.09291)                                                                           | [Model](easy_tpp/models/thp.py)                       |
-|  6  |   ICLR'20   | IntensityFree | [Intensity-Free Learning of Temporal Point Processes](https://arxiv.org/abs/1909.12127)                                                  | [Model](easy_tpp/models/intensity_free.py) |
-|  7  |   ICLR'21   |    ODETPP     | [Neural Spatio-Temporal Point Processes (simplified)](https://arxiv.org/abs/2011.04583)                                                  | [Model](easy_tpp/models/ode_tpp.py)               |
-|  8  |   ICLR'22   |    AttNHP     | [Transformer Embeddings of Irregularly Spaced Events and Their Participants](https://arxiv.org/abs/2201.00044)                           | [Model](easy_tpp/models/attnhp.py)                 |
-|  9  |   Custom    |    Hawkes     | Classical Hawkes Process implementation                                                                                                     | [Model](easy_tpp/models/hawkes.py)                |
-| 10  |   Custom    | SelfCorrect   | Self-Correcting Point Process                                                                                                               | [Model](easy_tpp/models/self_correcting.py)       |
+|  1  |   KDD'16    |     RMTPP     | [Recurrent Marked Temporal Point Processes: Embedding Event History to Vector](https://www.kdd.org/kdd2016/papers/files/rpp1081-duA.pdf) | [Model](new_ltpp/models/rmtpp.py)                   |
+|  2  | NeurIPS'17  |      NHP      | [The Neural Hawkes Process: A Neurally Self-Modulating Multivariate Point Process](https://arxiv.org/abs/1612.09328)                     | [Model](new_ltpp/models/nhp.py)                       |
+|  3  | NeurIPS'19  |    FullyNN    | [Fully Neural Network based Model for General Temporal Point Processes](https://arxiv.org/abs/1905.09690)                                | [Model](new_ltpp/models/fullynn.py)                |
+|  4  |   ICML'20   |     SAHP      | [Self-Attentive Hawkes process](https://arxiv.org/abs/1907.07561)                                                                        | [Model](new_ltpp/models/sahp.py)                     |
+|  5  |   ICML'20   |      THP      | [Transformer Hawkes process](https://arxiv.org/abs/2002.09291)                                                                           | [Model](new_ltpp/models/thp.py)                       |
+|  6  |   ICLR'20   | IntensityFree | [Intensity-Free Learning of Temporal Point Processes](https://arxiv.org/abs/1909.12127)                                                  | [Model](new_ltpp/models/intensity_free.py) |
+|  7  |   ICLR'21   |    ODETPP     | [Neural Spatio-Temporal Point Processes (simplified)](https://arxiv.org/abs/2011.04583)                                                  | [Model](new_ltpp/models/ode_tpp.py)               |
+|  8  |   ICLR'22   |    AttNHP     | [Transformer Embeddings of Irregularly Spaced Events and Their Participants](https://arxiv.org/abs/2201.00044)                           | [Model](new_ltpp/models/attnhp.py)                 |
+|  9  |   Custom    |    Hawkes     | Classical Hawkes Process implementation                                                                                                     | [Model](new_ltpp/models/hawkes.py)                |
+| 10  |   Custom    | SelfCorrect   | Self-Correcting Point Process                                                                                                               | [Model](new_ltpp/models/self_correcting.py)       |
 
 ### 🆕 Enhanced Loss Functions
 
@@ -367,9 +367,9 @@ Then we start the training by running the script:
 
 ```python
 from pathlib import Path
-from easy_tpp.config_factory import RunnerConfig
-from easy_tpp.runners import Runner
-from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
+from new_ltpp.config_factory import RunnerConfig
+from new_ltpp.runners import Runner
+from new_ltpp.utils.yaml_config_utils import parse_runner_yaml_config
 
 
 def main():
@@ -393,9 +393,9 @@ You can also run a complete pipeline (train -> test -> predict) using the exampl
 
 ```python
 from pathlib import Path
-from easy_tpp.config_factory import RunnerConfig
-from easy_tpp.runners import Runner
-from easy_tpp.utils.yaml_config_utils import parse_runner_yaml_config
+from new_ltpp.config_factory import RunnerConfig
+from new_ltpp.runners import Runner
+from new_ltpp.utils.yaml_config_utils import parse_runner_yaml_config
 
 
 def main():
@@ -534,7 +534,7 @@ New-LTPP/
 │   ├── check_installation.py         # Installation verification script
 │   └── Makefile                      # Build automation
 │
-├── 🧠 Core Library (easy_tpp/)
+├── 🧠 Core Library (new_ltpp/)
 │   ├── config_factory/               # Configuration management system
 │   │   ├── __init__.py
 │   │   ├── data_config.py           # Data loading configurations
@@ -677,7 +677,7 @@ configs/
 
 ### Key Directories
 
-- **`easy_tpp/`**: Core library with model implementations and utilities
+- **`new_ltpp/`**: Core library with model implementations and utilities
 - **`scripts/`**: Command-line interface and automation tools  
 - **`configs/`**: Configuration templates and examples
 - **`examples/`**: Practical examples and tutorials for different use cases

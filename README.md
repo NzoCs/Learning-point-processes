@@ -86,116 +86,30 @@ This framework goes beyond traditional TPP implementations by introducing:
 ## Project Setup
 <span id='project-setup'/>
 
-This project uses modern Python packaging with `pyproject.toml` and `uv` for fast, reliable dependency management. The CLI interface is located in the `scripts/` directory.
+For installation and environment setup, see the dedicated Setup Guide: `SETUP.md`.
 
-### Prerequisites
+### Makefile workflow (recommended)
 
-- **uv** (replaces pip and venv) - [Install from here](https://docs.astral.sh/uv/getting-started/installation/)
-- Python 3.8 or higher (uv can install this automatically)
-- Git
-
-### Quick Setup
+Use the provided Makefile to manage common tasks:
 
 ```bash
-# Clone this repository
-git clone https://github.com/NzoCs/Learning-point-processes.git
-cd Learning-point-processes
+# Show all available commands
+make help
 
-# Setup project with uv (creates virtual environment and installs dependencies)
-uv sync
+# Sync dependencies and install everything
+make install-all
 
-# Install with all optional dependencies
-uv sync --all-extras
+# Run tests and quality checks
+make test
+make quality
+
+# Run quick examples
+make run-nhp     # NHP on test dataset
+make run-thp     # THP on test dataset
+make benchmark-all
 ```
 
-### Installation Options
-
-Choose the dependency groups that fit your needs:
-
-```bash
-# Basic installation (core dependencies only)
-uv sync
-
-# Include development tools (testing, linting, formatting)
-uv sync --group dev
-
-# Include CLI tools (command-line interface)
-uv sync --group cli
-
-# Include documentation tools
-uv sync --group docs
-
-# Install all optional dependencies
-uv sync --all-extras
-```
-
-Note: With `uv sync`, the project is automatically installed in editable mode, so changes to the source code are immediately reflected.
-
-### CLI Interface
-
-The project includes a comprehensive CLI interface located in the `scripts/` directory. After installation, you can access the CLI:
-
-```bash
-# Navigate to the scripts directory
-cd scripts
-
-# Run the main CLI (uv automatically uses the project environment)
-uv run python new_ltpp_cli.py --help
-
-# Quick installation verification
-uv run python new_ltpp_cli.py info
-
-# Interactive mode for guided setup
-uv run python new_ltpp_cli.py interactive
-```
-
-### Development Tools
-
-The project includes pre-configured development tools via `pyproject.toml`:
-
-- **Code formatting**: `black` for consistent code style
-- **Import sorting**: `isort` for organized imports
-- **Linting**: `flake8` for code quality checks
-- **Type checking**: `mypy` for static type analysis
-- **Testing**: `pytest` with coverage reporting
-- **Pre-commit hooks**: `pre-commit` for automated checks
-
-To set up pre-commit hooks:
-
-```bash
-# Install pre-commit hooks (after installing dev dependencies)
-pre-commit install
-```
-
-### Configuration
-
-All project configuration is centralized in `pyproject.toml`:
-
-- Build system configuration
-- Dependencies and optional dependency groups
-- Tool configurations (black, isort, pytest, mypy, etc.)
-- Project metadata and URLs
-
-### Dependency Groups Explained
-
-- **`cli`**: Rich terminal interfaces, command-line tools, progress bars
-- **`docs`**: Sphinx documentation system, themes, and extensions
-- **`dev`**: Development workflow tools (testing, linting, formatting)
-- **`all`**: Installs all optional dependencies for complete functionality
-
-### Verification
-
-After installation, verify everything is working:
-
-```bash
-# Run the installation check script
-uv run python check_installation.py
-
-# Test the CLI interface
-cd scripts
-uv run python new_ltpp_cli.py --version
-uv run python new_ltpp_cli.py info
-```
+Key targets: `help`, `install-all`, `uv-sync`, `test`, `run-nhp`, `run-thp`, `benchmark`, `docs`.
 
 
 ## Model List
@@ -246,184 +160,66 @@ Per users' request, we processed two non-anthropogenic datasets
 ## Quick Start <a href='#top'>[Back to Top]</a>
 <span id='quick-start'/>
 
+See `SETUP.md` for installation. Below are concise ways to run and use the framework.
 
-### Colab Tutorials
-
-Explore the following tutorials that can be opened directly in Google Colab:
-
-- [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ant-research/EasyTemporalPointProcess/blob/main/notebooks/new_ltpp_1_dataset.ipynb) Tutorial 1: Dataset in new_ltpp.
-- [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ant-research/EasyTemporalPointProcess/blob/main/notebooks/new_ltpp_2_tfb_wb.ipynb) Tutorial 2: Tensorboard in new_ltpp.
-
-### End-to-end Example
-
-We provide an end-to-end example for users to run a standard TPP model with `new_ltpp`.
-
-
-### Step 1. Installation
-
-This project uses modern Python packaging with `pyproject.toml` and `uv` for fast dependency management.
-
-#### Prerequisites
-
-- **uv** (replaces pip and venv) - [Install from here](https://docs.astral.sh/uv/getting-started/installation/)
-- Python 3.8 or higher (uv can install this automatically)
-
-#### Quick Installation
+### Run with Makefile (recommended)
 
 ```bash
-# Clone the repository
-git clone https://github.com/NzoCs/Learning-point-processes.git
-cd Learning-point-processes
+# Quick runs
+make run-nhp      # Train NHP on the test dataset (quick settings)
+make run-thp      # Train THP on the test dataset
 
-# Setup with uv (automatically creates virtual environment and installs dependencies)
-uv sync --all-extras
+# Full pipeline
+make full-pipeline   # train -> test -> predict
+
+# Benchmarks and inspection
+make benchmark-all
+make inspect DIR=./data/test
 ```
 
-#### Installation Options
-
-Choose the dependency groups that fit your needs:
-
-```bash
-# Core dependencies only
-uv sync
-
-# CLI tools (for command-line interface)
-uv sync --group cli
-
-# Development tools (testing, linting, formatting)
-uv sync --group dev
-
-# Documentation tools
-uv sync --group docs
-
-# All optional dependencies
-uv sync --all-extras
-```
-
-Note: With `uv sync`, the project is automatically installed in editable mode.
-
-#### CLI Interface Setup
-
-The project includes a comprehensive CLI located in the `scripts/` directory:
-
-```bash
-# Navigate to scripts directory
-cd scripts
-
-# Test CLI installation (uv automatically uses project environment)
-uv run python new_ltpp_cli.py --version
-uv run python new_ltpp_cli.py --help
-
-# Run interactive setup
-uv run python new_ltpp_cli.py interactive
-
-# Display system information
-uv run python new_ltpp_cli.py info
-```
-
-#### Development Setup
-
-For development work, install additional tools:
-
-```bash
-# Install development dependencies
-uv sync --group dev
-
-# Set up pre-commit hooks (optional)
-uv run pre-commit install
-
-# Verify installation
-uv run python check_installation.py
-```
-
-### Step 2. Prepare datasets 
-
-We need to put the datasets in a local directory before running a model and the datasets should follow a certain format. See [OnlineDoc - Datasets](https://ant-research.github.io/EasyTemporalPointProcess/user_guide/dataset.html) for more details.
-
-Suppose we use the [taxi dataset](https://chriswhong.com/open-data/foil_nyc_taxi/) in the example.
-
-### Step 3. Train the model
-
-
-Before start training, we need to set up the config file for the pipeline. We provide a preset config file in [Example Config](https://github.com/ant-research/EasyTemporalPointProcess/blob/main/examples/configs/experiment_config.yaml). The details of the configuration can be found in [OnlineDoc - Training Pipeline](https://ant-research.github.io/EasyTemporalPointProcess/user_guide/run_train_pipeline.html).
-
-After the setup of data and config, the directory structure is as follows:
-
-```bash
-
-    data
-     |______taxi
-             |____ train.pkl
-             |____ dev.pkl
-             |____ test.pkl
-
-    configs
-     |______experiment_config.yaml
-
-```
-
-
-Then we start the training by running the script:
+### Python API example (programmatic, no YAML)
 
 ```python
-from pathlib import Path
-from new_ltpp.config_factory import RunnerConfig
-from new_ltpp.runners import Runner
-from new_ltpp.utils.yaml_config_utils import parse_runner_yaml_config
+from new_ltpp.configs.config_builder import RunnerConfigBuilder
+from new_ltpp.runners import RunnerManager
 
+# Build runner config fully in code
+b = RunnerConfigBuilder()
 
-def main():
-    # Load configuration
-    config_path = "configs/runner_config.yaml"
-    config_dict = parse_runner_yaml_config(config_path, "NHP", "train")
-    config = RunnerConfig.from_dict(config_dict)
-    
-    # Create and run the model
-    runner = Runner(config=config)
-    runner.run(phase="train")
+# Data
+b.data_builder.set_num_event_types(2)
+b.data_builder.set_dataset_id("test")
+b.data_builder.set_src_dir("NzoCs/test_dataset")
+b.data_builder.set_batch_size(64)
+b.data_builder.set_num_workers(2)
+b.data_builder.set_shuffle(True)
+b.data_builder.set_max_len(128)
+b.set_data_config(b.data_builder.build())
 
+# Model
+b.model_builder.set_specs({"hidden_size": 32, "mlp_dims": [32, 32]})
+b.model_builder.set_scheduler_config(max_epochs=10, lr_scheduler=True, lr=1e-3)
+b.set_model_config(b.model_builder.build())
 
-if __name__ == '__main__':
-    main()
+# Training (convenience setters)
+b.set_max_epochs(10)
+b.set_batch_size(64)
+b.set_devices(1)
+
+runner_config = b.build(model_id="NHP")
+runner = RunnerManager(config=runner_config, output_dir="./artifacts/results")
+runner.run(phase="train")
 ```
 
-### Alternative: Complete Pipeline Example
+More end-to-end scripts are available in the `examples/` folder, e.g.:
 
-You can also run a complete pipeline (train -> test -> predict) using the example from `examples/run_all_phase.py`:
-
-```python
-from pathlib import Path
-from new_ltpp.config_factory import RunnerConfig
-from new_ltpp.runners import Runner
-from new_ltpp.utils.yaml_config_utils import parse_runner_yaml_config
-
-
-def main():
-    # Load configuration
-    config_path = "configs/test_runner_config.yaml"
-    config_dict = parse_runner_yaml_config(config_path, "NHP", "test")
-    config = RunnerConfig.from_dict(config_dict)
-    
-    # Create runner
-    runner = Runner(config=config)
-    
-    # Run complete pipeline: train -> test -> predict
-    
-    # 1. Training
-    runner.run(phase="train")
-    
-    # 2. Testing
-    runner.run(phase="test")
-    
-    # 3. Prediction and distribution comparison
-    runner.run(phase="predict")
-
-
-if __name__ == "__main__":
-    main()
-```
-
-A more detailed example can be found at [OnlineDoc - QuickStart](https://ant-research.github.io/EasyTemporalPointProcess/get_started/quick_start.html).
+- `examples/run_all_phase.py`: complete pipeline (train/test/predict)
+- `examples/benchmark_manger_example.py`: run reference benchmarks
+- `examples/gen_synthetic_data.py`: synthetic data generation
+- `examples/data_inspection.py`: dataset inspection and analysis
+- `examples/train_nhp_hpo.py`: HPO training example for NHP
+- `examples/event_tokenizer.py`: event tokenization utilities
+- `examples/data_loader.py`: data loading utilities
 
 ### Modern CLI Interface
 
@@ -519,6 +315,20 @@ Common parameters for CLI commands:
 - `--output, -o`: Output directory for results
 - `--seed`: Random seed for reproducibility
 - `--verbose, -v`: Enable verbose logging
+
+## Create Custom Models
+
+You can add your own TPP model by subclassing `new_ltpp.models.basemodel.Model` and implementing the required abstract methods:
+
+- `loglike_loss(batch) -> (loss, num_events)`
+- `compute_intensities_at_sample_times(time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs)`
+
+Optional hooks you may leverage:
+
+- `predict_one_step(...)` and `predict_one_step_at_every_event(...)`
+- `configure_optimizers()` if you need a custom optimizer/scheduler
+
+Register your model in the model registry (see existing models under `new_ltpp/models/`) and ensure it accepts a `ModelConfig` in the constructor. Check the examples in `examples/` for guidance on wiring your model into the runner.
 
 ## 📁 Codebase Structure
 

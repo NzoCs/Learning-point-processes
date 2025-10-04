@@ -160,8 +160,8 @@ quality: ## Run all quality checks
 
 fix-style: ## Auto-fix style issues (format + isort)
 	@echo "Auto-fixing style issues..."
-	@python -m black new_ltpp/ tests/ examples/ scripts/
-	@python -m isort new_ltpp/ tests/ examples/ scripts/
+	@python -m black new_ltpp/ tests/ examples/
+	@python -m isort new_ltpp/ tests/ examples/
 	@echo "Style issues fixed!"
 
 pre-commit: ## Run pre-commit hooks on all files

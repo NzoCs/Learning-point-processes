@@ -6,8 +6,8 @@ from torch.distributions import MixtureSameFamily as TorchMixtureSameFamily
 from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
-from new_ltpp.models.basemodel import Model
 from new_ltpp.configs import ModelConfig
+from new_ltpp.models.basemodel import Model
 
 
 def clamp_preserve_gradients(x, min_val, max_val):
@@ -123,14 +123,14 @@ class IntensityFree(Model):
     """
 
     def __init__(
-            self, 
-            model_config: ModelConfig,
-            *,
-            num_event_types: int,
-            num_mix_components: int = 32,
-            mean_log_inter_time: float = 0.0,
-            std_log_inter_time: float = 1.0,
-            ):
+        self,
+        model_config: ModelConfig,
+        *,
+        num_event_types: int,
+        num_mix_components: int = 32,
+        mean_log_inter_time: float = 0.0,
+        std_log_inter_time: float = 1.0,
+    ):
         """Initialize the model
 
         Args:

@@ -14,9 +14,10 @@ Utilisation:
 from typing import Type
 
 from new_ltpp.configs import ModelConfig, ModelSpecsConfig
+from new_ltpp.utils import logger
+
 from .basemodel import Model
 from .model_registry import ModelRegistry
-from new_ltpp.utils import logger
 
 
 class ModelFactory:
@@ -43,17 +44,21 @@ class ModelFactory:
 
         # Récupérer la classe du modèle via le registry
         model_class = ModelRegistry.get_model(model_name)
-        
+
         if model_class is None:
             available = ModelRegistry.list_models()
             if not available:
-                logger.warning("Aucun modèle n'est enregistré. Assurez-vous d'importer les modèles avant d'utiliser la factory.")
+                logger.warning(
+                    "Aucun modèle n'est enregistré. Assurez-vous d'importer les modèles avant d'utiliser la factory."
+                )
             raise ValueError(
                 f"Modèle '{model_name}' introuvable. Modèles disponibles: {available}"
             )
 
         try:
-            instance = model_class(model_config=model_config, num_event_types=num_event_types, **kwargs)
+            instance = model_class(
+                model_config=model_config, num_event_types=num_event_types, **kwargs
+            )
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
             return instance
 
@@ -79,7 +84,7 @@ class ModelFactory:
         logger.info(f"Création du modèle: {model_name}")
 
         try:
-            model_specs = model_config.specs if hasattr(model_config, 'specs') else {}
+            model_specs = model_config.specs if hasattr(model_config, "specs") else {}
             instance = model_class(model_config, **model_specs, **kwargs)
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
             return instance

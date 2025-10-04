@@ -20,7 +20,7 @@ class RunnerManager:
         output_dir: Optional[str] = None,
         **kwargs,
     ):
-        
+
         self.config = config
         self.checkpoint_path = checkpoint_path
         self.output_dir = output_dir

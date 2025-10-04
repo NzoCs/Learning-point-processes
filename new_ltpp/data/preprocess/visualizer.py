@@ -831,7 +831,9 @@ class Visualizer:
         try:
             self.delta_times_distribution(save_graph=save_graph, show_graph=show_graph)
             self.event_type_distribution(save_graph=save_graph, show_graph=show_graph)
-            self.sequence_length_distribution(save_graph=save_graph, show_graph=show_graph)
+            self.sequence_length_distribution(
+                save_graph=save_graph, show_graph=show_graph
+            )
             print("All plots generated successfully!")
         except Exception as e:
             print(f"Error occurred during plot generation: {e}")

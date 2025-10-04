@@ -28,17 +28,15 @@ class InterTimeDistributionBenchmark(Benchmark):
         num_bins: int = 50,
     ):
         """
-        Initialize the inter-time distribution benchmark.
+                Initialize the inter-time distribution benchmark.
 
-        Args:
-            data_config: Data configuration object
-*            save_dir: Directory to save results
-            num_bins: Number of bins for histogram approximation
+                Args:
+                    data_config: Data configuration object
+        *            save_dir: Directory to save results
+                    num_bins: Number of bins for histogram approximation
         """
         # This benchmark focuses on time prediction, so default to TIME_ONLY
-        super().__init__(
-            data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
-        )
+        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY)
         self.num_bins = num_bins
 
         # Distribution parameters

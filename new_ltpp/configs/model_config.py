@@ -11,11 +11,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from .base_config import (
-    Config,
-    ConfigValidationError
-    )
 from new_ltpp.utils import logger
+
+from .base_config import Config, ConfigValidationError
 
 
 def get_available_gpu() -> int:
@@ -33,36 +31,31 @@ def get_available_gpu() -> int:
 
 @dataclass
 class SchedulerConfig(Config):
-    """ Configuration for the learning rate scheduler and training hyperparameters.
+    """Configuration for the learning rate scheduler and training hyperparameters.
     Args:
         lr (float): Learning rate.
         lr_scheduler (bool): Whether to use a learning rate scheduler.
         max_epochs (int): Maximum number of training epochs.
     """
 
-    def __init__(
-        self,
-        max_epochs: int,
-        lr_scheduler: bool,
-        lr: float,
-        **kwargs
-    ):
+    def __init__(self, max_epochs: int, lr_scheduler: bool, lr: float, **kwargs):
         self.lr = lr or 1e-3
         self.lr_scheduler = lr_scheduler or True
         self.max_epochs = max_epochs
         super().__init__(**kwargs)
-    
+
     def get_yaml_config(self):
-        
+
         return {
             "lr": self.lr,
             "lr_scheduler": self.lr_scheduler,
             "max_epochs": self.max_epochs,
         }
-    
+
     def get_required_fields(self) -> List[str]:
         return ["max_epochs"]
-    
+
+
 @dataclass
 class ThinningConfig(Config):
     """Configuration for thinning process in temporal point processes."""
@@ -110,7 +103,6 @@ class ThinningConfig(Config):
 
         if self.dtime_max <= 0:
             raise ConfigValidationError("dtime_max must be positive", "dtime_max")
-
 
 
 @dataclass
@@ -163,7 +155,6 @@ class SimulationConfig(Config):
 ModelSpecsConfig = dict
 
 
-
 @dataclass
 class ModelConfig(Config):
     """
@@ -197,7 +188,7 @@ class ModelConfig(Config):
         simulation_config: Union[dict, SimulationConfig] = None,
         specs: ModelSpecsConfig = None,
         scheduler_config: Optional[Union[dict, SchedulerConfig]] = None,
-        **kwargs
+        **kwargs,
     ):
         self.device = device
         self.gpu = gpu if gpu is not None else get_available_gpu()
@@ -207,11 +198,23 @@ class ModelConfig(Config):
 
         # Instancie les sous-configs à partir des dicts
         self.specs = specs or {}
-        self.thinning_config = thinning_config if isinstance(thinning_config, ThinningConfig) else ThinningConfig(**(thinning_config or {}))
-        self.simulation_config = simulation_config if isinstance(simulation_config, SimulationConfig) else SimulationConfig(**(simulation_config or {}))
+        self.thinning_config = (
+            thinning_config
+            if isinstance(thinning_config, ThinningConfig)
+            else ThinningConfig(**(thinning_config or {}))
+        )
+        self.simulation_config = (
+            simulation_config
+            if isinstance(simulation_config, SimulationConfig)
+            else SimulationConfig(**(simulation_config or {}))
+        )
 
         if scheduler_config is not None:
-            self.scheduler_config = scheduler_config if isinstance(scheduler_config, SchedulerConfig) else SchedulerConfig(**(scheduler_config))
+            self.scheduler_config = (
+                scheduler_config
+                if isinstance(scheduler_config, SchedulerConfig)
+                else SchedulerConfig(**(scheduler_config))
+            )
         else:
             self.scheduler_config = None
 

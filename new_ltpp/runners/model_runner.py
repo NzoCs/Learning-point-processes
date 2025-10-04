@@ -63,12 +63,12 @@ class Runner:
 
         # Initialize your model
 
-    # Use the ModelFactory to create the model
+        # Use the ModelFactory to create the model
         model_factory = ModelFactory()
         self.model = model_factory.create_model_by_name(
             model_name=config.model_id,
             num_event_types=data_config.tokenizer_specs.num_event_types,
-            model_config=model_config
+            model_config=model_config,
         )
 
         self.model_id = config.model_id
@@ -89,7 +89,6 @@ class Runner:
         # Model saving directory
         self.dirpath = output_dir if output_dir is not None else config.save_model_dir
         self.logger_config = config.logger_config
-
 
         if checkpoint_path is None:
             # List of checkpoints to try, in order of priority

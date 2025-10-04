@@ -17,9 +17,9 @@ import yaml
 
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_loader import TPPDataModule
+from new_ltpp.evaluation.benchmarks.bench_interfaces import BenchmarkInterface
 from new_ltpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
 from new_ltpp.utils import logger
-from new_ltpp.evaluation.benchmarks.bench_interfaces import BenchmarkInterface
 
 
 class BenchmarkMode(Enum):

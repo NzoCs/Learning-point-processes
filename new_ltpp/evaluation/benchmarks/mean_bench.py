@@ -22,9 +22,7 @@ class MeanInterTimeBenchmark(Benchmark):
     Benchmark that predicts the mean inter-time for all events.
     """
 
-    def __init__(
-        self, data_config: DataConfig, save_dir: str = None
-    ):
+    def __init__(self, data_config: DataConfig, save_dir: str = None):
         """
         Initialize the mean inter-time benchmark.
 
@@ -33,9 +31,7 @@ class MeanInterTimeBenchmark(Benchmark):
             save_dir: Directory to save results
         """
         # This benchmark focuses on time prediction, so default to TIME_ONLY
-        super().__init__(
-            data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY
-        )
+        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY)
         self.mean_inter_time = None
 
     @property

@@ -2,10 +2,9 @@ from pathlib import Path
 
 CONFIGS_DIR = Path(__file__).parent.parent / "yaml_configs" / "configs.yaml"
 
-from new_ltpp.runners import RunnerManager
-from new_ltpp.configs import ConfigType, ConfigFactory
+from new_ltpp.configs import ConfigFactory, ConfigType
 from new_ltpp.configs.config_builder import RunnerConfigBuilder
-
+from new_ltpp.runners import RunnerManager
 
 
 def main() -> None:

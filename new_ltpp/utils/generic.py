@@ -4,7 +4,6 @@ import torch
 from new_ltpp.utils.import_utils import is_torch_available
 
 
-
 def is_tensor(x):
     """
     Tests if `x` is a `torch.Tensor`, `tf.Tensor`, `jaxlib.xla_extension.DeviceArray` or `np.ndarray`.

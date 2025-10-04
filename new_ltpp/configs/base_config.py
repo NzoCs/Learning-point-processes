@@ -12,14 +12,16 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union
+
 from typing_extensions import Self
 
-from new_ltpp.utils import logger
 from new_ltpp.configs.config_interface import (
     ConfigInterface,
-    ConfigSerializationError, 
-    ConfigValidationError
+    ConfigSerializationError,
+    ConfigValidationError,
 )
+from new_ltpp.utils import logger
+
 
 @dataclass
 class Config(ABC):
@@ -36,7 +38,6 @@ class Config(ABC):
 
     def __str__(self):
         """String representation of the configuration."""
-        
 
     @abstractmethod
     def get_required_fields(self) -> List[str]:
@@ -57,7 +58,7 @@ class Config(ABC):
         """
         # Import ici pour éviter les imports circulaires
         from new_ltpp.configs.config_utils import ConfigValidator
-        
+
         validator = ConfigValidator()
         validator.add_rule(
             lambda cfg: validator.validate_required_fields(
@@ -116,7 +117,7 @@ class Config(ABC):
             raise ConfigSerializationError(
                 f"Failed to save configuration to {file_path}: {str(e)}"
             )
-        
+
     def __str__(self) -> str:
         """String representation of the configuration."""
         return f"{self.__class__.__name__}({self.get_yaml_config()})"

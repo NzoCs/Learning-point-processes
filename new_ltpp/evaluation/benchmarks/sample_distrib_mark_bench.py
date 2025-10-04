@@ -21,9 +21,7 @@ class MarkDistributionBenchmark(Benchmark):
     Benchmark that samples event marks from the empirical distribution of training data.
     """
 
-    def __init__(
-        self, data_config: DataConfig, save_dir: str = None
-    ):
+    def __init__(self, data_config: DataConfig, save_dir: str = None):
         """
         Initialize the mark distribution benchmark.
 
@@ -32,9 +30,7 @@ class MarkDistributionBenchmark(Benchmark):
             save_dir: Directory to save results
         """
         # This benchmark focuses on type prediction, so default to TYPE_ONLY
-        super().__init__(
-            data_config, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY
-        )
+        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY)
 
         # Distribution parameters
         self.mark_probabilities = None

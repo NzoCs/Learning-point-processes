@@ -1,5 +1,5 @@
-from typing import Union
 import math
+from typing import Union
 
 import torch
 import torch.nn.functional as F  # Added import
@@ -18,15 +18,14 @@ class SelfCorrecting(Model):
     """
 
     def __init__(
-            self, 
-            model_config: ModelConfig,
-            *,
-            mu: Union[list, torch.Tensor],
-            alpha: Union[list, torch.Tensor],
-            num_event_types: int, 
-            **kwargs
-            ):
-
+        self,
+        model_config: ModelConfig,
+        *,
+        mu: Union[list, torch.Tensor],
+        alpha: Union[list, torch.Tensor],
+        num_event_types: int,
+        **kwargs,
+    ):
         """
         Initialize the Self-Correcting model.
 

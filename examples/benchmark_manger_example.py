@@ -8,6 +8,8 @@ running benchmarks compared to the previous code.
 from new_ltpp.configs import DataConfigBuilder
 from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
+)
+from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarksEnum as Benchmarks,
 )
 
@@ -92,7 +94,7 @@ def example_with_parameters():
     builder.load_from_yaml(
         yaml_path="../yaml_configs/configs.yaml",  # à adapter selon votre fichier YAML
         data_config_path="data_configs.test",
-        data_loading_config_path="data_loading_configs.quick_test"
+        data_loading_config_path="data_loading_configs.quick_test",
     )
     data_config = builder.build()
 
@@ -100,7 +102,7 @@ def example_with_parameters():
 
     results = factory.run_single(
         Benchmarks.INTERTIME_DISTRIBUTION,
-    num_bins=100,  # Custom parameter for this benchmark
+        num_bins=100,  # Custom parameter for this benchmark
     )
 
     print("Benchmark with custom parameters finished")

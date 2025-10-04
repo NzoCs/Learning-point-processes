@@ -4,8 +4,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from new_ltpp.models.basemodel import Model
 from new_ltpp.configs import ModelConfig
+from new_ltpp.models.basemodel import Model
 from new_ltpp.models.neural_model import NeuralModel
 
 
@@ -15,20 +15,23 @@ class RMTPP(NeuralModel):
     """
 
     def __init__(
-            self, 
-            model_config : ModelConfig,
-            *,
-            num_event_types: int,
-            hidden_size: int = 128,
-            dropout: float = 0.1,
-            ) -> None:
+        self,
+        model_config: ModelConfig,
+        *,
+        num_event_types: int,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
+    ) -> None:
         """Initialize the model
 
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
         super(RMTPP, self).__init__(
-            model_config, num_event_types=num_event_types, hidden_size=hidden_size, dropout=dropout
+            model_config,
+            num_event_types=num_event_types,
+            hidden_size=hidden_size,
+            dropout=dropout,
         )
         # self.hidden_size is now set in Model's __init__ via model_config.hidden_size
 

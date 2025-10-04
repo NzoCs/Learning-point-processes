@@ -17,28 +17,25 @@ from new_ltpp.configs import ModelConfig
 from new_ltpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
 from new_ltpp.models.thinning import EventSampler
 from new_ltpp.utils import format_multivariate_simulations, logger, save_json
+
 from .model_registry import RegistryMeta
 
 
 class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
     """Base model class for all TPP models."""
 
-
     def __init__(
-            self,
-            model_config: ModelConfig,
-            *,
-            num_event_types: int,
-            ):
-
+        self,
+        model_config: ModelConfig,
+        *,
+        num_event_types: int,
+    ):
         """Initialize the Model
 
         Args:
             model_config (new_ltpp.ModelConfig): model spec of configs
         """
         super(Model, self).__init__()
-
-
 
         # Save hyperparameters for later use
         self.save_hyperparameters()
@@ -54,10 +51,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         self.num_event_types = num_event_types
         self.pad_token_id = num_event_types
 
-        self.loss_integral_num_sample_per_step = model_config.thinning_config.loss_integral_num_sample_per_step
+        self.loss_integral_num_sample_per_step = (
+            model_config.thinning_config.loss_integral_num_sample_per_step
+        )
 
         self.eps = torch.finfo(torch.float32).eps
-
 
         # Model prediction configuration
         self.gen_config = model_config.thinning_config
@@ -97,8 +95,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             logger.info(
                 f"Successfully loaded pretrained model from: {pretrain_model_path}"
             )
-    
-    
+
     # Implement for the models based on intensity (not implemented in intensity free)
     def compute_intensities_at_sample_times(
         self,
@@ -121,7 +118,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                     intensity at each timestamp for each event type."""
         pass
 
-    
     @abstractmethod
     def loglike_loss(
         self,
@@ -142,7 +138,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             loss, number of events.
         """
         pass
-
 
     # Set up the event sampler if generation config is provided
     def event_sampler(self, num_sample=None):
@@ -304,7 +299,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
         return event_ll, non_event_ll, num_events
-
 
     def configure_optimizers(self):
         """Configure the optimizer for the model.

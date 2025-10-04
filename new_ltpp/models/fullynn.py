@@ -13,13 +13,13 @@ class CumulHazardFunctionNetwork(nn.Module):
     """
 
     def __init__(
-            self, 
-            *,
-            hidden_size: int = 32,
-            num_event_types: int,
-            num_mlp_layers: int = 3,
-            proper_marked_intensities: bool = True,
-            ):
+        self,
+        *,
+        hidden_size: int = 32,
+        num_event_types: int,
+        num_mlp_layers: int = 3,
+        proper_marked_intensities: bool = True,
+    ):
 
         super(CumulHazardFunctionNetwork, self).__init__()
 
@@ -120,14 +120,13 @@ class FullyNN(Model):
     """
 
     def __init__(
-            self, 
-            model_config: ModelConfig,
-            *,
-            num_event_types: int,
-            num_layers: int = 2,
-            rnn_type: str = "LSTM",
-
-        ):
+        self,
+        model_config: ModelConfig,
+        *,
+        num_event_types: int,
+        num_layers: int = 2,
+        rnn_type: str = "LSTM",
+    ):
         """Initialize the model
 
         Args:

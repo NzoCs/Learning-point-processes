@@ -12,29 +12,28 @@ class ANHN(NeuralModel):
     """
 
     def __init__(
-            self, 
-            model_config: ModelConfig,
-            *,
-            hidden_size: int = 128,
-            dropout: float = 0.1,
-            num_event_types: int,
-            num_layers: int = 2,
-            num_heads: int = 2,
-            use_norm: bool = True,
-            time_emb_size: int = 32,
-            ):
-        
+        self,
+        model_config: ModelConfig,
+        *,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
+        num_event_types: int,
+        num_layers: int = 2,
+        num_heads: int = 2,
+        use_norm: bool = True,
+        time_emb_size: int = 32,
+    ):
         """Initialize the model
 
         Args:
             model_config (ModelConfig): config of model specs.
         """
         super(ANHN, self).__init__(
-            model_config, 
+            model_config,
             num_event_types=num_event_types,
             hidden_size=hidden_size,
             dropout=dropout,
-            )
+        )
 
         self.d_time = time_emb_size
         self.use_norm = use_norm
@@ -59,7 +58,10 @@ class ANHN(NeuralModel):
         )
 
         self.layer_att = MultiHeadAttention(
-            self.n_head, self.hidden_size, self.hidden_size, model_config.specs.get("dropout", 0.0),
+            self.n_head,
+            self.hidden_size,
+            self.hidden_size,
+            model_config.specs.get("dropout", 0.0),
         )
 
         self.layer_intensity = nn.Sequential(

@@ -20,18 +20,14 @@ class LastMarkBenchmark(Benchmark):
     Benchmark that predicts the previous event mark as the next mark (lag-1).
     """
 
-    def __init__(
-        self, data_config: DataConfig, save_dir: str = None
-    ):
+    def __init__(self, data_config: DataConfig, save_dir: str = None):
         """
         Initialize the last mark benchmark.
         Args:
             data_config: Data configuration object
             save_dir: Directory to save results
         """
-        super().__init__(
-            data_config, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY
-        )
+        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY)
 
     def _create_type_predictions(self, batch: Tuple) -> torch.Tensor:
         """

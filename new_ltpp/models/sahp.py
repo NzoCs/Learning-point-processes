@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from new_ltpp.configs.model_config import ModelConfig
+
 from .baselayer import (
     EncoderLayer,
     MultiHeadAttention,
@@ -19,24 +20,28 @@ class SAHP(NeuralModel):
 
     """
 
-    def __init__(self, 
-                 model_config : ModelConfig,
-                 *,
-                 num_event_types: int,
-                 hidden_size: int = 128,
-                dropout: float = 0.1,
-                 use_norm: bool = True,
-                 time_emb_size: int = 32,
-                 num_layers: int = 2,
-                num_heads: int = 4,
-                 ):
+    def __init__(
+        self,
+        model_config: ModelConfig,
+        *,
+        num_event_types: int,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
+        use_norm: bool = True,
+        time_emb_size: int = 32,
+        num_layers: int = 2,
+        num_heads: int = 4,
+    ):
         """Initialize the model
 
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
         super(SAHP, self).__init__(
-            model_config, num_event_types=num_event_types, hidden_size=hidden_size, dropout=dropout
+            model_config,
+            num_event_types=num_event_types,
+            hidden_size=hidden_size,
+            dropout=dropout,
         )
         self.d_model = self.hidden_size
         self.d_time = time_emb_size

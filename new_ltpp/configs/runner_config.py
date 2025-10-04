@@ -5,14 +5,10 @@ from typing import Any, Dict, List, Optional, Union
 
 import torch
 
-from new_ltpp.configs.base_config import (
-    Config,
-    ConfigValidationError
-)
+from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.configs.logger_config import LoggerConfig
 from new_ltpp.configs.model_config import ModelConfig
-
 
 
 @dataclass
@@ -35,8 +31,8 @@ class TrainingConfig(Config):
 
     max_epochs: int
     batch_size: int = 32
-    lr : float = 1e-3
-    lr_scheduler : bool = True
+    lr: float = 1e-3
+    lr_scheduler: bool = True
     dropout: float = 0.0
     val_freq: int = 10
     patience: int = 20
@@ -78,7 +74,7 @@ class TrainingConfig(Config):
             "checkpoints_freq": self.checkpoints_freq,
             "devices": self.devices,
             "accumulate_grad_batches": self.accumulate_grad_batches,
-            "use_precision_16": self.use_precision_16
+            "use_precision_16": self.use_precision_16,
         }
 
         return config
@@ -99,7 +95,6 @@ class RunnerConfig(Config):
 
     ROOT_DIR = Path(__file__).resolve().parent.parent.parent / "artifacts"
 
-
     training_config: TrainingConfig
     model_config: ModelConfig
     data_config: DataConfig
@@ -108,29 +103,41 @@ class RunnerConfig(Config):
     save_dir: Optional[str] = None
 
     def __init__(
-            self, 
-            model_id: str, 
-            training_config: Union[TrainingConfig, dict], 
-            model_config: Union[ModelConfig, dict], 
-            data_config: Union[DataConfig, dict],
-            logger_config: Optional[Union[LoggerConfig, dict]] = None,
-            save_dir: Optional[str] = None,
-            **kwargs
-            ):
+        self,
+        model_id: str,
+        training_config: Union[TrainingConfig, dict],
+        model_config: Union[ModelConfig, dict],
+        data_config: Union[DataConfig, dict],
+        logger_config: Optional[Union[LoggerConfig, dict]] = None,
+        save_dir: Optional[str] = None,
+        **kwargs,
+    ):
 
         # assign simple attributes first so they are available during setup
 
         # Instancie les configs intermédiaires à partir des dicts
-        self.training_config = training_config if isinstance(training_config, TrainingConfig) else TrainingConfig(**training_config)
-        self.model_config = model_config if isinstance(model_config, ModelConfig) else ModelConfig(**model_config)
-        self.data_config = data_config if isinstance(data_config, DataConfig) else DataConfig(**data_config)
+        self.training_config = (
+            training_config
+            if isinstance(training_config, TrainingConfig)
+            else TrainingConfig(**training_config)
+        )
+        self.model_config = (
+            model_config
+            if isinstance(model_config, ModelConfig)
+            else ModelConfig(**model_config)
+        )
+        self.data_config = (
+            data_config
+            if isinstance(data_config, DataConfig)
+            else DataConfig(**data_config)
+        )
 
         # dataset id from data config
         self.dataset_id = self.data_config.dataset_id
         self.model_id = model_id
 
         # Directory setup
-        ckpt =  "checkpoints"
+        ckpt = "checkpoints"
         dirpath = self.ROOT_DIR / (
             save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/"
         )
@@ -146,7 +153,9 @@ class RunnerConfig(Config):
         # Force the logger's save_dir to the runner's dirpath for consistency across artifacts
         if logger_config is None:
             # Create default logger config if none provided
-            self.logger_config = LoggerConfig(save_dir=self.save_dir, type="tensorboard")
+            self.logger_config = LoggerConfig(
+                save_dir=self.save_dir, type="tensorboard"
+            )
         else:
             # If a dict was passed, make a copy and override save_dir
             if isinstance(logger_config, dict):
@@ -162,7 +171,9 @@ class RunnerConfig(Config):
                     config=getattr(logger_config, "config", {}),
                 )
             else:
-                raise TypeError("logger_config must be None, a dict or a LoggerConfig instance")
+                raise TypeError(
+                    "logger_config must be None, a dict or a LoggerConfig instance"
+                )
 
         super().__init__(**kwargs)
 

@@ -1,9 +1,9 @@
 import torch
 from torch import nn
 
+from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import ScaledSoftplus
 from new_ltpp.models.basemodel import Model
-from new_ltpp.configs import ModelConfig
 from new_ltpp.models.neural_model import NeuralModel
 
 
@@ -92,15 +92,15 @@ class NHP(NeuralModel):
     """
 
     def __init__(
-            self, 
-            model_config : ModelConfig, 
-            *,
-            num_event_types: int,
-            hidden_size: int = 128,
-            dropout: float = 0.1,
-            beta: float = 1.0,
-            bias: bool = True,
-            ) -> None:
+        self,
+        model_config: ModelConfig,
+        *,
+        num_event_types: int,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
+        beta: float = 1.0,
+        bias: bool = True,
+    ) -> None:
         """Initialize the NHP model.
 
         Args:
@@ -111,7 +111,7 @@ class NHP(NeuralModel):
             num_event_types=num_event_types,
             hidden_size=hidden_size,
             dropout=dropout,
-            )
+        )
         self.model_config = model_config  # Store for test compatibility
         self.beta = beta
         self.bias = bias

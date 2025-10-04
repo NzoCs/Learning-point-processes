@@ -20,13 +20,19 @@ class BenchmarkInterface(Protocol):
     def _prepare_benchmark(self) -> None:  # pragma: no cover - typing only
         ...
 
-    def _create_predictions(self, batch: Tuple) -> Tuple[torch.Tensor, torch.Tensor]:  # pragma: no cover - typing only
+    def _create_predictions(
+        self, batch: Tuple
+    ) -> Tuple[torch.Tensor, torch.Tensor]:  # pragma: no cover - typing only
         ...
 
-    def _create_time_predictions(self, batch: Tuple) -> torch.Tensor:  # pragma: no cover - typing only
+    def _create_time_predictions(
+        self, batch: Tuple
+    ) -> torch.Tensor:  # pragma: no cover - typing only
         ...
 
-    def _create_type_predictions(self, batch: Tuple) -> torch.Tensor:  # pragma: no cover - typing only
+    def _create_type_predictions(
+        self, batch: Tuple
+    ) -> torch.Tensor:  # pragma: no cover - typing only
         ...
 
     def evaluate(self) -> Dict[str, Any]:  # pragma: no cover - typing only

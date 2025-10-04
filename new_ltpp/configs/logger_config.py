@@ -2,8 +2,8 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Type, Union
 from pathlib import Path
+from typing import Any, Dict, List, Type, Union
 
 from pytorch_lightning.loggers import CometLogger  # for example, for Comet.ml
 from pytorch_lightning.loggers import (
@@ -14,11 +14,9 @@ from pytorch_lightning.loggers import (
     WandbLogger,
 )
 
-from new_ltpp.configs.base_config import (
-    Config,
-    ConfigValidationError
-)
+from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils import logger
+
 
 class LoggerType(Enum):
     CSV = "csv"
@@ -211,7 +209,6 @@ class LoggerConfig(Config):
         config (Dict[str, Any]): Additional configuration parameters for the logger.
     """
 
-
     save_dir: str
     type: LoggerType = LoggerType.TENSORBOARD
     config: Dict[str, Any] = field(default_factory=dict)
@@ -219,14 +216,11 @@ class LoggerConfig(Config):
     def __post_init__(self):
         # Convert string type to LoggerType if needed
 
-
         if isinstance(self.type, str):
             try:
                 self.type = LoggerType(self.type)
             except ValueError:
-                raise ConfigValidationError(
-                    f"Unknown logger type: {self.type}"
-                )
+                raise ConfigValidationError(f"Unknown logger type: {self.type}")
 
         # Get the adapter for this logger type
         self.adapter = LOGGER_ADAPTERS.get(self.type)

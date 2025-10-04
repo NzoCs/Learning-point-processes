@@ -17,6 +17,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Type, Union
 
+from new_ltpp.configs import DataConfig
+
 from .base_bench import Benchmark
 from .bench_interfaces import BenchmarkInterface
 from .last_mark_bench import LastMarkBenchmark
@@ -28,9 +30,8 @@ from .sample_distrib_mark_bench import (
     MarkDistributionBenchmark,
 )
 
-from new_ltpp.configs import DataConfig
-
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent / "artifacts"
+
 
 class BenchmarksEnum(Enum):
     """Enum of available benchmarks."""
@@ -95,11 +96,16 @@ class BenchmarkManager:
             self.data_configs = [data_config]
             self.data_config = data_config
             self.dataset_name = data_config.dataset_id
-        
+
         self.save_dir = save_dir or ROOT_DIR / "benchmarks"
         Path(self.save_dir).mkdir(parents=True, exist_ok=True)
 
-    def run_single(self, benchmark: BenchmarksEnum, data_config: Optional[DataConfig] = None, **kwargs):
+    def run_single(
+        self,
+        benchmark: BenchmarksEnum,
+        data_config: Optional[DataConfig] = None,
+        **kwargs,
+    ):
         """
         Run a single benchmark on a configuration.
 
@@ -115,7 +121,7 @@ class BenchmarkManager:
 
         benchmark_class = benchmark.get_class()
         instance = benchmark_class(
-            data_config=config,            
+            data_config=config,
             save_dir=self.save_dir,
             **kwargs,
         )
@@ -143,7 +149,7 @@ class BenchmarkManager:
             benchmark = BenchmarksEnum.get_benchmark_by_name(name)
             benchmarks.append(benchmark)
         return self.run_multiple(benchmarks, **kwargs)
-    
+
     def run_single_on_all_configs(self, benchmark: BenchmarksEnum, **kwargs):
         """
         Run a single benchmark on all configurations.
@@ -161,9 +167,11 @@ class BenchmarkManager:
             print(f"\n{'='*60}")
             print(f"Configuration: {dataset_id}")
             print(f"{'='*60}")
-            results[dataset_id] = self.run_single(benchmark, data_config=config, **kwargs)
+            results[dataset_id] = self.run_single(
+                benchmark, data_config=config, **kwargs
+            )
         return results
-    
+
     def run_multiple_on_all_configs(self, benchmarks: list[BenchmarksEnum], **kwargs):
         """
         Run multiple benchmarks on all configurations.
@@ -187,7 +195,7 @@ class BenchmarkManager:
                     benchmark, data_config=config, **kwargs
                 )
         return results
-    
+
     def run_all_on_all_configs(self, **kwargs):
         """
         Run all benchmarks on all configurations.
@@ -200,11 +208,11 @@ class BenchmarkManager:
         """
         all_benchmarks = list(BenchmarksEnum)
         return self.run_multiple_on_all_configs(all_benchmarks, **kwargs)
-    
+
     def get_config_count(self) -> int:
         """Return the number of configurations."""
         return len(self.data_configs)
-    
+
     def list_datasets(self) -> list[str]:
         """List all available dataset_ids."""
         return [config.dataset_id for config in self.data_configs]

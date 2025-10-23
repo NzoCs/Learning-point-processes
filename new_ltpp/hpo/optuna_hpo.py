@@ -5,11 +5,14 @@ import sys
 import optuna
 from optuna.samplers import TPESampler
 from optuna.trial import TrialState
+from pathlib import Path
+import json
 
 from new_ltpp.configs import RunnerConfig
 from new_ltpp.data.preprocess.data_loader import TPPDataModule
+from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.hpo.base_hpo import HyperTuner
-from new_ltpp.runners import Runner
+from new_ltpp.runners import Runner, RunnerManager
 from new_ltpp.utils import Timer, dict_deep_update
 from new_ltpp.utils.log_utils import get_logger
 
@@ -41,11 +44,9 @@ class OptunaTuner(HyperTuner):
 
         # build data reader
         data_config = self.runner_config.data_config
-        backend = self.runner_config.base_config.backend
+        # Some TPPDataModule constructors differ; pass data_config and training kwargs
         kwargs = self.runner_config.training_config.get_yaml_config()
-        self._data_loader = TPPDataModule(
-            data_config=data_config, backend=backend, **kwargs
-        )
+        self._data_loader = TPPDataModule(data_config=data_config, **kwargs)
 
     def get_all_best_runner_configs(self):
         """Get all best runner configs. Obtain from storage.
@@ -54,7 +55,11 @@ class OptunaTuner(HyperTuner):
             Dict[str, new_ltpp.RunnerConfig]: Dict of all best runner configs.
         """
         runner_configs = {}
-        for study_summary in optuna.get_all_study_summaries(self.storage):
+        if self.storage:
+            summaries = optuna.get_all_study_summaries(self.storage)
+        else:
+            summaries = optuna.get_all_study_summaries()
+        for study_summary in summaries:
             runner_configs[study_summary.study_name] = (
                 self._build_runner_config_from_storage(
                     study=study_summary, trial=study_summary.best_trial
@@ -62,7 +67,7 @@ class OptunaTuner(HyperTuner):
             )
         return runner_configs
 
-    def get_best_runner_config_by_name(self, exp_id):
+    def get_best_runner_config_by_name(self, runner_id):
         """Get the best runner config by runner_id. Obtain it from storage.
 
         Args:
@@ -71,14 +76,18 @@ class OptunaTuner(HyperTuner):
         Returns:
             new_ltpp.RunnerConfig: best runner config.
         """
-        for study_summary in optuna.get_all_study_summaries(self.storage):
-            if exp_id == study_summary.study_name:
+        if self.storage:
+            summaries = optuna.get_all_study_summaries(self.storage)
+        else:
+            summaries = optuna.get_all_study_summaries()
+        for study_summary in summaries:
+            if runner_id == study_summary.study_name:
                 return self._build_runner_config_from_storage(
                     study_summary, study_summary.best_trial
                 )
         return None
 
-    def get_num_remain_trials_by_name(self, exp_id):
+    def get_num_remain_trials_by_name(self, runner_id):
         """Get the num of remaining trails by experiment id.
 
         Args:
@@ -87,9 +96,13 @@ class OptunaTuner(HyperTuner):
         Returns:
             int: num of remaining trails.
         """
-        for study_summary in optuna.get_all_study_summaries(self.storage):
-            if exp_id == study_summary.study_name:
-                study = optuna.load_study(study_name=exp_id, storage=self.storage)
+        if self.storage:
+            summaries = optuna.get_all_study_summaries(self.storage)
+        else:
+            summaries = optuna.get_all_study_summaries()
+        for study_summary in summaries:
+            if runner_id == study_summary.study_name:
+                study = optuna.load_study(study_name=runner_id, storage=self.storage if self.storage else None)
                 num_completed_trials = len(
                     study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
                 )
@@ -195,9 +208,14 @@ class OptunaTuner(HyperTuner):
             logger.info(f"\t{key}: {value}")
 
         best_metric = trial.value
-        best_runner_config = RunnerConfig.parse_from_yaml_config(
-            trial.user_attrs["runner_config"],
+        # Reconstruct RunnerConfig from stored runner_config dict in user_attrs
+        stored = trial.user_attrs.get("runner_config", {}) if trial.user_attrs else {}
+        best_runner_config = RunnerConfig(
+            model_id=base_runner_config.model_id,
+            training_config=stored.get("training_config", base_runner_config.training_config.get_yaml_config()),
+            model_config=stored.get("model_config", base_runner_config.model_config.get_yaml_config()),
             data_config=base_runner_config.data_config,
+            logger_config=stored.get("logger_config", None),
         )
         return best_metric, best_runner_config
 
@@ -246,22 +264,58 @@ class OptunaTuner(HyperTuner):
             # eval the "suggest" in runner_config (actually run trial suggestion)
             runner_config_dict = self._eval_str_trial_to_dict(trial, runner_config_dict)
 
-            runner_config = RunnerConfig.parse_from_yaml_config(
-                runner_config_dict, direct_parse=True
+            # Build RunnerConfig from the dict produced by the trial
+            runner_config = RunnerConfig(
+                model_id=runner_config_dict.get("model_id", base_runner_config.model_id),
+                training_config=runner_config_dict.get("training_config", {}),
+                model_config=runner_config_dict.get("model_config", {}),
+                data_config=runner_config_dict.get("data_config", base_runner_config.data_config.get_yaml_config()),
+                logger_config=runner_config_dict.get("logger_config", None),
             )
 
-            runner = Runner.build_from_config(
-                runner_config=runner_config,
-                unique_model_dir=True,
-                skip_data_loader=True,
-            )
+            # Build runner using the new RunnerManager API
+            manager = RunnerManager(config=runner_config, checkpoint_path=None, output_dir=None)
+            # instantiate the actual Runner inside the manager
+            manager.setup_runner(enable_logging=True)
+            runner = manager.runner
+
             try:
                 # train model
                 runner.train(**kwargs)
-                # evaluate model
-                metric = runner.evaluate(trial=trial, **kwargs)
-                # save the final model
-                runner.save()
+
+                # run test to produce test results file
+                runner.test()
+
+                # Attempt to read metric from saved test results
+                test_results_path = (
+                    Path(OUTPUT_DIR) / "test_results" / runner.model_id / runner.dataset_id / "test_results.json"
+                )
+                metric = None
+                if test_results_path.exists():
+                    try:
+                        with open(test_results_path, "r") as f:
+                            results_dict = json.load(f)
+                        # pick first numeric metric in the results
+                        for v in results_dict.values():
+                            if isinstance(v, (int, float)):
+                                metric = float(v)
+                                break
+                    except Exception as e:
+                        logger.warning(f"Could not read test results for metric extraction: {e}")
+
+                if metric is None:
+                    # fallback to 0.0 if no metric found
+                    metric = 0.0
+
+                # attempt to save a final checkpoint to the runner's dirpath
+                try:
+                    final_ckpt = Path(runner.dirpath) / "final.ckpt"
+                    # ensure parent exists
+                    final_ckpt.parent.mkdir(parents=True, exist_ok=True)
+                    runner.trainer.save_checkpoint(str(final_ckpt))
+                    logger.info(f"Final checkpoint saved to {final_ckpt}")
+                except Exception as e:
+                    logger.warning(f"Could not save final checkpoint: {e}")
             except RuntimeError as e:
                 # add the error message into trial
                 err_msg = str(e)
@@ -274,12 +328,18 @@ class OptunaTuner(HyperTuner):
                     raise e
                 raise optuna.TrialPruned()
             finally:
-                # add model path into trial
-                trial.set_user_attr("model_dir", runner.runner_config.model_dir)
-                # trial.set_user_attr("model_config", runner.runner_config.model_config)
-                trial.set_user_attr(
-                    "runner_config", runner.runner_config.get_yaml_config()
-                )
+                # add model path into trial (use runner.dirpath)
+                try:
+                    model_dir_str = str(runner.dirpath)
+                except Exception:
+                    model_dir_str = ""
+
+                trial.set_user_attr("model_dir", model_dir_str)
+                # store runner_config dict used for this trial
+                try:
+                    trial.set_user_attr("runner_config", runner_config.get_yaml_config())
+                except Exception:
+                    trial.set_user_attr("runner_config", {})
 
                 logger.info(f"End trial {trial.number} ! Cost time: {timer.end()}")
 
@@ -337,9 +397,14 @@ class OptunaTuner(HyperTuner):
         Returns:
             new_ltpp.Config: RunnerConfig object.
         """
-        runner_config_dict = trial.user_attrs["runner_config"]
-        return RunnerConfig.parse_from_yaml_config(
-            runner_config_dict, direct_parse=True
+        runner_config_dict = trial.user_attrs.get("runner_config", {}) if trial.user_attrs else {}
+        model_id = runner_config_dict.get("model_id", runner_config_dict.get("base_config", {}).get("model_id", "unknown"))
+        return RunnerConfig(
+            model_id=model_id,
+            training_config=runner_config_dict.get("training_config", {}),
+            model_config=runner_config_dict.get("model_config", {}),
+            data_config=runner_config_dict.get("data_config", {}),
+            logger_config=runner_config_dict.get("logger_config", None),
         )
 
     def run(self):

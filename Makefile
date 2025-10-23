@@ -6,7 +6,8 @@
 # Variables
 PYTHON = python
 UV = uv
-CLI_RUNNERS = new_ltpp/scripts/new_ltpp_cli_runners.py
+CLI_RUNNERS = new_ltpp/scripts/cli.py
+CLI = new-ltpp
 
 help: ## Display this help
 	@echo "new_ltpp - Available commands:"
@@ -288,7 +289,7 @@ demo: ## Quick demonstration with framework introduction
 
 run: ## [RUN] Run TPP experiment (usage: make run DATA=test MODEL=neural_small EPOCHS=10)
 	@echo ">> Lancement d'une experience TPP..."
-	@$(PYTHON) $(CLI_RUNNERS) run \
+	@$(CLI) run \
 		$(if $(CONFIG),--config $(CONFIG),) \
 		$(if $(DATA),--data-config $(DATA),--data-config test) \
 		$(if $(MODEL),--model-config $(MODEL),--model-config neural_small) \
@@ -331,7 +332,7 @@ run-thp: ## [THP] Run THP model on test dataset
 
 benchmark: ## [BENCH] Run benchmarks (usage: make benchmark DATA=test)
 	@echo ">> Lancement des benchmarks TPP..."
-	@$(PYTHON) $(CLI_RUNNERS) benchmark \
+	@$(CLI) benchmark \
 		$(if $(CONFIG),--config $(CONFIG),) \
 		$(if $(DATA),--data-config $(DATA),--data-config test) \
 		$(if $(DATA_LOADING),--data-loading-config $(DATA_LOADING),--data-loading-config quick_test) \
@@ -345,14 +346,14 @@ benchmark-all: ## [BENCH-ALL] Run all benchmarks on one config
 	@make benchmark ALL=1
 
 benchmark-list: ## [BENCH-LIST] List available benchmarks
-	@$(PYTHON) $(CLI_RUNNERS) benchmark --list
+	@$(CLI) benchmark --list
 
 benchmark-mean: ## [BENCH-MEAN] Run mean inter-time benchmark
 	@make benchmark BENCHMARKS=mean_inter_time
 
 benchmark-multi: ## [BENCH-MULTI] Run benchmarks on multiple configs
 	@echo ">> Benchmarks multi-configurations..."
-	@$(PYTHON) $(CLI_RUNNERS) benchmark \
+	@$(CLI) benchmark \
 		--data-config test --data-config large \
 		--all --all-configs
 
@@ -360,7 +361,7 @@ benchmark-multi: ## [BENCH-MULTI] Run benchmarks on multiple configs
 
 inspect: ## [INSPECT] Inspect TPP data (usage: make inspect DIR=./data/test)
 	@echo ">> Inspection des donnees TPP..."
-	@$(PYTHON) $(CLI_RUNNERS) inspect $(DIR) \
+	@$(CLI) inspect $(DIR) \
 		$(if $(FORMAT),--format $(FORMAT),--format json) \
 		$(if $(OUTPUT),--output $(OUTPUT),) \
 		$(if $(NOSAVE),--no-save,--save) \
@@ -372,7 +373,7 @@ inspect: ## [INSPECT] Inspect TPP data (usage: make inspect DIR=./data/test)
 
 generate: ## [GEN] Generate synthetic TPP data (usage: make generate NUM=1000)
 	@echo ">> Generation de donnees synthetiques..."
-	@$(PYTHON) $(CLI_RUNNERS) generate \
+	@$(CLI) generate \
 		$(if $(OUTPUT),--output $(OUTPUT),) \
 		$(if $(NUM),--num-seq $(NUM),--num-seq 1000) \
 		$(if $(MAX_LEN),--max-len $(MAX_LEN),--max-len 100) \
@@ -392,7 +393,7 @@ generate-large: ## [GEN-L] Generate large synthetic dataset (10000 sequences)
 
 info: ## [INFO] Display system and environment information
 	@echo ">> Informations systeme..."
-	@$(PYTHON) $(CLI_RUNNERS) info \
+	@$(CLI) info \
 		$(if $(NODEPS),--no-deps,--deps) \
 		$(if $(NOHW),--no-hw,--hw) \
 		$(if $(OUTPUT),--output $(OUTPUT),)
@@ -401,7 +402,7 @@ info: ## [INFO] Display system and environment information
 
 setup: ## [SETUP] Interactive setup wizard
 	@echo ">> Configuration interactive..."
-	@$(PYTHON) $(CLI_RUNNERS) setup \
+	@$(CLI) setup \
 		$(if $(TYPE),--type $(TYPE),--type experiment) \
 		$(if $(OUTPUT),--output $(OUTPUT),) \
 		$(if $(QUICK),--quick,)
@@ -412,11 +413,11 @@ setup-quick: ## [SETUP-Q] Quick setup mode
 # ---------- VERSION ----------
 
 version: ## [VERSION] Display CLI version
-	@$(PYTHON) $(CLI_RUNNERS) version
+	@$(CLI) version
 
 cli-help: ## [HELP] Display new_ltpp CLI help
 	@echo ">> Aide du CLI new_ltpp..."
-	@$(PYTHON) $(CLI_RUNNERS) --help
+	@$(CLI) --help
 
 # ---------- COMBINED WORKFLOWS ----------
 

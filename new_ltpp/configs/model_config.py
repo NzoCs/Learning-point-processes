@@ -179,15 +179,15 @@ class ModelConfig(Config):
 
     def __init__(
         self,
+        simulation_config: Union[dict, SimulationConfig],
+        scheduler_config: Union[dict, SchedulerConfig],
+        specs: ModelSpecsConfig,
+        thinning_config: Optional[Union[dict, ThinningConfig]] = None,
         device: str = "auto",
-        gpu: int = None,
+        gpu: Optional[int] = None,
         is_training: bool = False,
         compute_simulation: bool = False,
         pretrain_model_path: Optional[str] = None,
-        thinning_config: Union[dict, ThinningConfig] = None,
-        simulation_config: Union[dict, SimulationConfig] = None,
-        specs: ModelSpecsConfig = None,
-        scheduler_config: Optional[Union[dict, SchedulerConfig]] = None,
         **kwargs,
     ):
         self.device = device
@@ -206,7 +206,7 @@ class ModelConfig(Config):
         self.simulation_config = (
             simulation_config
             if isinstance(simulation_config, SimulationConfig)
-            else SimulationConfig(**(simulation_config or {}))
+            else SimulationConfig(**(simulation_config))
         )
 
         if scheduler_config is not None:

@@ -1,10 +1,10 @@
 """
-Factory simple pour les configurations TPP
+Simple factory for TPP configurations
 
-Cette factory permet de créer facilement des instances de configurations
-en utilisant un enum des configurations disponibles.
+This factory makes it easy to instantiate configuration objects using
+an enum of the available configuration types.
 
-Utilisation:
+Usage:
     from new_ltpp.configs.config_factory import ConfigType, ConfigFactory
 
     factory = ConfigFactory()
@@ -12,7 +12,7 @@ Utilisation:
 """
 
 from enum import Enum
-from typing import Type
+from typing import Any, Type
 
 from new_ltpp.utils import logger
 
@@ -30,7 +30,7 @@ from .runner_config import RunnerConfig, TrainingConfig
 
 
 class ConfigType(Enum):
-    """Registre de tous les types de configurations disponibles sous forme (name, ConfigClass)."""
+    """Registry of all available configuration types as (name, ConfigClass)."""
 
     # Data configurations
     TOKENIZER = ("tokenizer_config", TokenizerConfig)
@@ -57,20 +57,20 @@ class ConfigType(Enum):
 
     @property
     def config_name(self) -> str:
-        """Obtenir le nom de la configuration."""
+        """Return the configuration name."""
         return self.value[0]
 
-    def get_class(self) -> Type[Config]:
-        """Obtenir la classe de configuration associée à ce type."""
+    def get_class(self) -> Any:
+        """Return the Config class associated with this type."""
         return self.value[1]
 
     def get_class_name(self) -> str:
-        """Obtenir le nom de la classe de configuration."""
+        """Return the name of the configuration class."""
         return self.get_class().__name__
 
 
 class ConfigFactory:
-    """Factory simple pour créer des instances de configurations."""
+    """Simple factory to create configuration instances."""
 
     def __init__(self):
         pass
@@ -79,20 +79,20 @@ class ConfigFactory:
         self, config_type: ConfigType, config_data: dict, **kwargs
     ) -> Config:
         """
-        Créer une instance de configuration.
+        Create a configuration instance.
 
         Args:
-            config_type: Le type de configuration à créer (enum)
-            config_data: Données de configuration (dict)
-            **kwargs: Arguments additionnels pour le constructeur
+            config_type: The configuration type to create (enum)
+            config_data: Configuration data (dict)
+            **kwargs: Additional arguments for the constructor
 
         Returns:
-            Instance de la configuration
+            The configuration instance
         """
         config_class = config_type.get_class()
         config_name = config_type.get_class_name()
 
-        logger.info(f"Création de la configuration: {config_name}")
+        logger.info(f"Creating configuration: {config_name}")
 
         try:
             # Create the instance directly
@@ -105,9 +105,7 @@ class ConfigFactory:
             return instance
 
         except Exception as e:
-            logger.error(
-                f"Erreur lors de la création de la configuration {config_name}: {e}"
-            )
+            logger.error(f"Error creating configuration {config_name}: {e}")
             raise ConfigValidationError(
                 f"Failed to create {config_name} configuration: {str(e)}"
             ) from e
@@ -116,15 +114,15 @@ class ConfigFactory:
         self, config_name: str, config_data: dict, **kwargs
     ) -> Config:
         """
-        Créer une instance de configuration par nom.
+        Create a configuration instance by name.
 
         Args:
-            config_name: Nom de la configuration (config_name ou class_name)
-            config_data: Données de configuration
-            **kwargs: Arguments additionnels
+            config_name: Configuration name (config_name or class_name)
+            config_data: Configuration data
+            **kwargs: Additional arguments
 
         Returns:
-            Instance de la configuration
+            The created configuration instance
         """
         # Trouver la configuration dans l'enum par nom de config ou nom de classe
         config_enum = None
@@ -140,23 +138,23 @@ class ConfigFactory:
             available_config_names = [c.config_name for c in ConfigType]
             available_class_names = [c.get_class_name() for c in ConfigType]
             raise ValueError(
-                f"Configuration '{config_name}' introuvable.\n"
-                f"Noms de config disponibles: {available_config_names}\n"
-                f"Noms de classes disponibles: {available_class_names}"
+                f"Configuration '{config_name}' not found.\n"
+                f"Available config names: {available_config_names}\n"
+                f"Available class names: {available_class_names}"
             )
 
         return self.create_config(config_enum, config_data, **kwargs)
 
     def list_available_configs(self) -> dict[str, str]:
-        """Lister toutes les configurations disponibles avec leurs noms de config et noms de classes."""
+        """List all available configurations with their config names and class names."""
         return {config.config_name: config.get_class_name() for config in ConfigType}
 
     def get_config_class(self, config_type: ConfigType) -> Type[Config]:
-        """Obtenir la classe d'une configuration."""
+        """Get the class for a configuration type."""
         return config_type.get_class()
 
     def config_exists(self, config_name: str) -> bool:
-        """Vérifier si une configuration existe (par nom de config ou nom de classe)."""
+        """Check if a configuration exists (by config name or class name)."""
         return any(
             config.config_name == config_name or config.get_class_name() == config_name
             for config in ConfigType
@@ -166,20 +164,20 @@ class ConfigFactory:
         self, config_type: ConfigType, yaml_path: str, **kwargs
     ) -> Config:
         """
-        Créer une configuration à partir d'un fichier YAML.
+        Create a configuration from a YAML file.
 
         Args:
-            config_type: Le type de configuration à créer
-            yaml_path: Chemin vers le fichier YAML
-            **kwargs: Arguments additionnels
+            config_type: The configuration type to create
+            yaml_path: Path to the YAML file
+            **kwargs: Additional arguments
 
         Returns:
-            Instance de la configuration
+            The created configuration instance
         """
         from omegaconf import OmegaConf
 
         try:
-            config_dict = OmegaConf.load(yaml_path)
+            config_dict = dict(OmegaConf.load(yaml_path))
             return self.create_config(config_type, config_dict, **kwargs)
         except Exception as e:
             raise ConfigValidationError(
@@ -187,5 +185,5 @@ class ConfigFactory:
             ) from e
 
 
-# Instance globale de la factory
+# Global factory instance
 config_factory = ConfigFactory()

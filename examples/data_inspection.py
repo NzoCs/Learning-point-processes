@@ -12,7 +12,7 @@ def inspect_dataset() -> None:
     builder.set_dataset_id("test")
     builder.set_src_dir("NzoCs/test_dataset")
     builder.set_data_loading_specs({"batch_size": 32})
-    builder.set_data_specs({"num_event_types": 2})
+    builder.set_tokenizer_specs({"num_event_types": 2})
     data_config = builder.build()
 
     # Create data module
@@ -96,7 +96,7 @@ def inspect_dataset_manual_methods() -> None:
         {"batch_size": 64, "num_workers": 4, "shuffle": True}
     )
 
-    builder.set_data_specs(
+    builder.set_tokenizer_specs(
         {
             "num_event_types": 5,
             "padding_side": "left",

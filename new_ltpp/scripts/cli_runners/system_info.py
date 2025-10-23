@@ -58,7 +58,7 @@ class SystemInfo(CLIRunnerBase):
                 hardware_info = self._collect_hardware_info()
 
             # Informations New_LTPP
-            new_ltp_info = self._collect_new_ltpp_info()
+            new_ltpp_info = self._collect_new_ltpp_info()
 
             # Affichage
             all_info = {
@@ -147,7 +147,6 @@ class SystemInfo(CLIRunnerBase):
 
             hardware_info["CUDA Available"] = torch.cuda.is_available()
             if torch.cuda.is_available():
-                hardware_info["CUDA Version"] = torch.version.cuda
                 hardware_info["GPU Count"] = torch.cuda.device_count()
                 hardware_info["GPU Names"] = [
                     torch.cuda.get_device_name(i)

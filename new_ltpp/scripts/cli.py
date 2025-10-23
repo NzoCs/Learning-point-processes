@@ -13,60 +13,28 @@ Usage:
 
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
-try:
-    import typer
-    from rich import print as rprint
-    from rich.console import Console
-    from rich.table import Table
-
-    TYPER_AVAILABLE = True
-except ImportError:
-    TYPER_AVAILABLE = False
-    typer = None
-    Console = None
-    rprint = print
+import typer
+from rich import print as rprint
+from rich.console import Console
+from rich.table import Table
 
 # Import runners
-try:
-    from new_ltpp.runners import (
-        BenchmarkRunner,
-        DataGenerator,
-        DataInspector,
-        ExperimentRunner,
-        InteractiveSetup,
-        SystemInfo,
-    )
+from .cli_runners import (
+    BenchmarkRunner,
+    DataGenerator,
+    DataInspector,
+    ExperimentRunner,
+    InteractiveSetup,
+    SystemInfo,
+)
 
-    RUNNERS_AVAILABLE = True
-except ImportError as e:
-    RUNNERS_AVAILABLE = False
-    IMPORT_ERROR = str(e)
-
-
-def check_requirements():
-    """Check that required dependencies are available."""
-    if not TYPER_AVAILABLE:
-        print("❌ Error: typer is not installed")
-        print("Install: pip install typer[all] rich")
-        return False
-
-    if not RUNNERS_AVAILABLE:
-        print(f"❌ Error: Runners not available - {IMPORT_ERROR}")
-        print("Check EasyTPP installation")
-        return False
-
-    return True
-
-
-# Configuration de l'application - après la vérification
-if not check_requirements():
-    sys.exit(1)
+from new_ltpp.globals import CONFIGS_FILE, OUTPUT_DIR
 
 app = typer.Typer(
-    name="easytpp",
-    help="EasyTPP CLI v4.0 - Temporal Point Processes with runners architecture",
+    name="new-ltpp",
+    help="New-LTPP CLI v4.0 - Temporal Point Processes with runners architecture",
     no_args_is_help=True,
 )
 console = Console()
@@ -74,30 +42,30 @@ console = Console()
 
 @app.command("run")
 def run_experiment(
-    config: Optional[str] = typer.Option(
-        None, "--config", "-c", help="YAML configuration file"
+    config: str = typer.Option(
+        str(CONFIGS_FILE), "--config", "-c", help="YAML configuration file [default: yaml_configs/configs.yaml]"
     ),
     data_config: str = typer.Option(
-        "test", "--data-config", help="Data configuration (test, large, synthetic)"
+        "test", "--data-config", help="Data configuration (test, large, synthetic) [default: test]"
     ),
     model_config: str = typer.Option(
         "neural_small",
         "--model-config",
-        help="Model configuration (neural_small, neural_large)",
+        help="Model configuration (neural_small, neural_large) [default: neural_small]"
     ),
     training_config: str = typer.Option(
         "quick_test",
         "--training-config",
-        help="Training configuration (quick_test, full_training)",
+        help="Training configuration (quick_test, full_training) [default: quick_test]",
     ),
     data_loading_config: str = typer.Option(
-        "quick_test", "--data-loading-config", help="Data loading configuration"
+        "quick_test", "--data-loading-config", help="Data loading configuration [default: quick_test]"
     ),
-    simulation_config: Optional[str] = typer.Option(
-        "simulation_fast", "--simulation-config", help="Configuration de simulation"
+    simulation_config: str = typer.Option(
+        "simulation_fast", "--simulation-config", help="Configuration de simulation [default: simulation_fast]"
     ),
-    thinning_config: Optional[str] = typer.Option(
-        "thinning_fast", "--thinning-config", help="Configuration de thinning"
+    thinning_config: str = typer.Option(
+        "thinning_fast", "--thinning-config", help="Configuration de thinning [default: thinning_fast]"
     ),
     logger_config: str = typer.Option(
         "tensorboard",
@@ -105,18 +73,17 @@ def run_experiment(
         help="Configuration du logger (mlflow, tensorboard) [default: tensorboard]",
     ),
     model_id: str = typer.Option(
-        "NHP", "--model", "-m", help="ID du modèle (NHP, RMTPP, etc.)"
+        "NHP", "--model", "-m", help="ID du modèle (NHP, RMTPP, etc.) [default: NHP]"
     ),
     phase: str = typer.Option(
         "all", "--phase", "-p", help="Phase d'exécution (train/test/predict/all)"
     ),
-    max_epochs: Optional[int] = typer.Option(
-        None, "--epochs", "-e", help="Maximum number of epochs"
+    max_epochs: int = typer.Option(
+        100, "--epochs", "-e", help="Maximum number of epochs [default: 100]",
     ),
-    save_dir: Optional[str] = typer.Option(
-        None, "--save-dir", "-s", help="Save directory [default: artifacts/experiments]"
+    save_dir: str = typer.Option(
+        str(OUTPUT_DIR), "--save-dir", "-s", help="Save directory [default: artifacts]"
     ),
-    gpu_id: Optional[int] = typer.Option(None, "--gpu", "-g", help="GPU id to use"),
     debug: bool = typer.Option(False, "--debug", help="Debug mode"),
 ):
     """Run a TPP experiment with ExperimentRunner."""
@@ -134,7 +101,6 @@ def run_experiment(
         phase=phase,
         max_epochs=max_epochs,
         save_dir=save_dir,
-        gpu_id=gpu_id,
         debug=debug,
     )
 
@@ -257,8 +223,8 @@ def interactive_setup(
 
 @app.command("benchmark")
 def benchmark_performance(
-    config_path: Optional[str] = typer.Option(
-        None, "--config", "-c", help="Fichier de configuration YAML"
+    config_path: str = typer.Option(
+        ..., "--config", "-c", help="Fichier de configuration YAML"
     ),
     data_config: Optional[List[str]] = typer.Option(
         None,
@@ -307,10 +273,6 @@ def benchmark_performance(
     # If no config specified, use 'test' by default
     if data_config is None:
         data_config = ["test"]
-
-    # If a single config and not a list, convert to string
-    if len(data_config) == 1:
-        data_config = data_config[0]
 
     success = runner.run_benchmark(
         config_path=config_path,

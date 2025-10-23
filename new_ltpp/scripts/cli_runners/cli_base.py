@@ -5,33 +5,28 @@ Classe de base pour tous les runners CLI avec fonctionnalités communes.
 """
 
 import logging
-import os
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-try:
-    from rich.console import Console
-    from rich.logging import RichHandler
-    from rich.progress import Progress
-    from rich.table import Table
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.progress import Progress
+from rich.table import Table
 
-    RICH_AVAILABLE = True
-except ImportError:
-    RICH_AVAILABLE = False
-    Console = None
 
-try:
-    import typer
+from new_ltpp.globals import ROOT_DIR, OUTPUT_DIR, CONFIGS_FILE 
 
-    TYPER_AVAILABLE = True
-except ImportError:
-    TYPER_AVAILABLE = False
-
-# Configuration globale pour les répertoires
-ROOT_DIR = Path(__file__).resolve().parent.parent.parent  # Répertoire racine du projet
-
-CONFIG_DIR = "yaml_configs"
+# Configuration globale pour les répertoires de sortie (dans artifacts/)
+OUTPUT_DIRS = {
+    "experiments": "experiments",
+    "models": "models",
+    "checkpoints": "checkpoints",
+    "results": "results",
+    "benchmarks": "benchmarks",
+    "data_generation": "generated_data",
+    "data_inspection": "data_inspection",
+    "logs": "logs",
+}
 
 CONFIG_MAP = {
     "data": "data_configs",
@@ -45,20 +40,6 @@ CONFIG_MAP = {
     "logger": "logger_configs",
 }
 
-# Configuration globale pour les répertoires de sortie (dans artifacts/)
-ARTIFACTS_DIR = "artifacts"
-
-OUTPUT_DIRS = {
-    "experiments": "experiments",
-    "models": "models",
-    "checkpoints": "checkpoints",
-    "results": "results",
-    "benchmarks": "benchmarks",
-    "data_generation": "generated_data",
-    "data_inspection": "data_inspection",
-    "logs": "logs",
-}
-
 
 class CLIRunnerBase:
     """
@@ -69,7 +50,7 @@ class CLIRunnerBase:
     def __init__(self, name: str = "CLIRunner", debug: bool = False):
         self.name = name
         self.debug = debug
-        self.console = Console() if RICH_AVAILABLE else None
+        self.console = Console() 
         self.logger = self._setup_logging()
 
     def _setup_logging(self) -> logging.Logger:
@@ -80,15 +61,10 @@ class CLIRunnerBase:
         # Éviter les doublons de handlers
         if logger.handlers:
             return logger
+    
+        handler = RichHandler(console=self.console, rich_tracebacks=True)
+        formatter = logging.Formatter("%(message)s", datefmt="[%X]")
 
-        if RICH_AVAILABLE:
-            handler = RichHandler(console=self.console, rich_tracebacks=True)
-            formatter = logging.Formatter("%(message)s", datefmt="[%X]")
-        else:
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
 
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -162,7 +138,7 @@ class CLIRunnerBase:
         else:
             print(f"ℹ {message}")
 
-    def print_error_with_traceback(self, message: str, exception: Exception = None):
+    def print_error_with_traceback(self, message: str, exception: Optional[Exception] = None):
         """Affiche un message d'erreur avec traceback complet si debug activé."""
         self.print_error(message)
 
@@ -180,18 +156,18 @@ class CLIRunnerBase:
         """Active ou désactive le mode debug."""
         self.debug = debug
 
-    def get_config_path(self, config_name: str = None) -> Path:
+    def get_config_path(self, config_name: Optional[str] = None) -> Path:
         """Retourne le chemin vers un fichier de configuration."""
-        base_dir = ROOT_DIR / CONFIG_DIR
+        base_dir = ROOT_DIR / "yaml_configs"
 
         if config_name:
             return base_dir / f"{config_name}.yaml"
 
-        return base_dir / "configs.yaml"
+        return CONFIGS_FILE
 
-    def get_output_path(self, output_type: str, subdir: str = None) -> Path:
+    def get_output_path(self, output_type: str, subdir: Optional[str] = None) -> Path:
         """Retourne le chemin vers un répertoire de sortie dans artifacts/."""
-        base_dir = ROOT_DIR / ARTIFACTS_DIR
+        base_dir = OUTPUT_DIR
 
         if output_type in OUTPUT_DIRS:
             output_dir = base_dir / OUTPUT_DIRS[output_type]

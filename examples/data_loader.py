@@ -7,12 +7,12 @@ from new_ltpp.data.preprocess import TPPDataModule
 
 def make_raw_data() -> List[List[Dict[str, Any]]]:
     data = [
-        [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 0}],
-        [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 1}],
-        [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 1}],
+        [{"time_since_last_event": 0.0, "time_since_start": 0.0, "type_event": 0}],
+        [{"time_since_last_event": 0.0, "time_since_start": 0.0, "type_event": 1}],
+        [{"time_since_last_event": 0.0, "time_since_start": 0.0, "type_event": 1}],
     ]
     for i, j in enumerate([2, 5, 3]):
-        start_time = 0
+        start_time = 0.0
         for k in range(j):
             delta_t = random.random()
             start_time += delta_t
@@ -39,7 +39,7 @@ def main_with_raw_data() -> None:
     builder.set_dataset_id("raw_example")
     builder.set_data_format("dict")
 
-    builder.set_data_specs(
+    builder.set_tokenizer_specs(
         {
             "num_event_types": 11,
             "pad_token_id": 11,
@@ -76,7 +76,7 @@ def main() -> None:
     builder.set_data_format("dict")
 
     # Use specific methods for data specifications
-    builder.set_data_specs(
+    builder.set_tokenizer_specs(
         {
             "num_event_types": 11,
             "pad_token_id": 11,

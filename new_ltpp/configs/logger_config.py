@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Dict, List, Type, Union
 
@@ -18,7 +18,7 @@ from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils import logger
 
 
-class LoggerType(Enum):
+class LoggerType(StrEnum):
     CSV = "csv"
     WandB = "wandb"
     MLFLOW = "mlflow"
@@ -223,8 +223,8 @@ class LoggerConfig(Config):
                 raise ConfigValidationError(f"Unknown logger type: {self.type}")
 
         # Get the adapter for this logger type
-        self.adapter = LOGGER_ADAPTERS.get(self.type)
-        if not self.adapter:
+        adapter = LOGGER_ADAPTERS.get(self.type)
+        if not adapter:
             raise ConfigValidationError(
                 f"No adapter available for logger type: {self.type}",
                 "logger_type",
@@ -235,7 +235,7 @@ class LoggerConfig(Config):
         self.config["save_dir"] = self.save_dir
 
         # Validate the configuration with the adapter
-        self.config = self.adapter.validate_config(self.config)
+        self.config = adapter.validate_config(self.config)
 
         super().__post_init__()
 
@@ -253,14 +253,15 @@ class LoggerConfig(Config):
         Returns:
             Logger instance
         """
-        if self.adapter is None:
+        adapter = LOGGER_ADAPTERS.get(self.type)
+        if not adapter:
             raise ConfigValidationError(
                 f"No adapter available for logger type: {self.type}",
                 "logger_type",
             )
 
         config = self.config.copy()
-        return self.adapter.configure(config)
+        return adapter.configure(config)
 
     @classmethod
     def list_required_params(cls, type: Union[LoggerType, str]) -> List[str]:

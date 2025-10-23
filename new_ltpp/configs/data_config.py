@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils.log_utils import default_logger
@@ -136,37 +136,34 @@ class DataConfig(Config):
         valid_dir: str,
         test_dir: str,
         dataset_id: str,
+        data_loading_specs: Union[DataLoadingSpecsConfig, dict],
+        tokenizer_specs: Optional[Union[TokenizerConfig, dict]] = None,
         data_format: Optional[str] = None,
-        data_loading_specs: Union[DataLoadingSpecsConfig, dict] = None,
-        tokenizer_specs: Union[TokenizerConfig, dict] = None,
         **kwargs,
     ):
         self.train_dir = train_dir
         self.valid_dir = valid_dir
         self.test_dir = test_dir
+        self.num_event_types = num_event_types
         self.data_format = (
             data_format if data_format is not None else train_dir.split(".")[-1]
         )
+
         self.dataset_id = dataset_id
         # Instancie si dict, sinon laisse tel quel
         if isinstance(data_loading_specs, dict):
-            self.data_loading_specs = DataLoadingSpecsConfig(**data_loading_specs)
-        else:
-            self.data_loading_specs = (
-                data_loading_specs
-                if data_loading_specs is not None
-                else DataLoadingSpecsConfig()
+            self.data_loading_specs = DataLoadingSpecsConfig(
+                batch_size=data_loading_specs.pop("batch_size"), **data_loading_specs
             )
+        else:
+            self.data_loading_specs = data_loading_specs
         if isinstance(tokenizer_specs, dict):
             self.tokenizer_specs = TokenizerConfig(
-                **tokenizer_specs, num_event_types=num_event_types
+                num_event_types=num_event_types, **tokenizer_specs
             )
         else:
-            self.tokenizer_specs = (
-                tokenizer_specs
-                if tokenizer_specs is not None
-                else TokenizerConfig(num_event_types=num_event_types)
-            )
+            self.tokenizer_specs = TokenizerConfig(num_event_types=num_event_types)
+
         super().__init__(**kwargs)
 
     def get_yaml_config(self) -> Dict[str, Any]:

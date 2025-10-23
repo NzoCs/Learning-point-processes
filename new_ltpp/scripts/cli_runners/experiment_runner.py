@@ -6,21 +6,12 @@ Inspiré de run_all_phase.py pour charger toute la configuration depuis YAML.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional, Union
 
 from .cli_base import CONFIG_MAP, CLIRunnerBase
 
-try:
-    from new_ltpp.configs import ConfigFactory, ConfigType
-    from new_ltpp.configs.config_builder import RunnerConfigBuilder
-    from new_ltpp.runners import RunnerManager
-except ImportError as e:
-    ConfigFactory = None
-    ConfigType = None
-    RunnerConfigBuilder = None
-    RunnerManager = None
-    IMPORT_ERROR = str(e)
-
+from new_ltpp.configs.config_builders import RunnerConfigBuilder
+from new_ltpp.runners.runner import RunnerManager
 
 class ExperimentRunner(CLIRunnerBase):
     """
@@ -63,19 +54,18 @@ class ExperimentRunner(CLIRunnerBase):
 
     def run_experiment(
         self,
-        config_path: Optional[str] = None,
-        data_config: str = "test",
-        model_config: str = "neural_small",
-        training_config: str = "quick_test",
-        data_loading_config: str = "quick_test",
-        simulation_config: Optional[str] = "simulation_fast",
-        thinning_config: Optional[str] = "thinning_fast",
-        logger_config: Optional[str] = "tensorboard",
-        model_id: str = "NHP",
-        phase: str = "all",
-        max_epochs: Optional[int] = None,
-        save_dir: Optional[str] = None,
-        gpu_id: Optional[int] = None,
+        max_epochs: int,
+        config_path: Union[str, Path],
+        data_config: str,
+        model_config: str,
+        training_config: str,
+        data_loading_config: str,
+        simulation_config: str,
+        thinning_config: str,
+        logger_config: str,
+        model_id: str,
+        phase: str,
+        save_dir: Union[str, Path],
         debug: bool = False,
     ) -> bool:
         """
@@ -103,6 +93,12 @@ class ExperimentRunner(CLIRunnerBase):
         # Activer le mode debug si demandé
         self.set_debug(debug)
 
+        if isinstance(save_dir, str):
+            save_dir = Path(save_dir)
+            save_dir.mkdir(parents=True, exist_ok=True)
+        if isinstance(config_path, str):
+            config_path = Path(config_path)
+
         # Vérifier les dépendances
         required_modules = ["new_ltpp.configs", "new_ltpp.runners"]
         if not self.check_dependencies(required_modules):
@@ -113,7 +109,7 @@ class ExperimentRunner(CLIRunnerBase):
 
             # Configuration par défaut si aucun fichier spécifié
             if config_path is None:
-                config_path = self.get_config_path()
+                config_path = str(self.get_config_path())
                 self.print_info(
                     f"Utilisation de la configuration par défaut: {config_path}"
                 )
@@ -173,10 +169,6 @@ class ExperimentRunner(CLIRunnerBase):
                 self.print_info(f"Override: save_dir = {save_dir}")
             # Sinon, laisser les sous-couches générer leur propre save_dir par défaut
             # qui sera plus intelligent (model_id/dataset_id/etc.)
-
-            if gpu_id is not None:
-                config_builder.set_devices(gpu_id)
-                self.print_info(f"Override: devices = {gpu_id}")
 
             # Créer la configuration finale avec la factory
             config = config_builder.build(model_id=model_id)

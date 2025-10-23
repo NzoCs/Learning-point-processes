@@ -36,9 +36,6 @@ class Config(ABC):
         """Post-initialization hook for validation."""
         self.validate()
 
-    def __str__(self):
-        """String representation of the configuration."""
-
     @abstractmethod
     def get_required_fields(self) -> List[str]:
         """Return list of required field names."""

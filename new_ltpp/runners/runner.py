@@ -27,7 +27,6 @@ class RunnerManager:
         self.kwargs = kwargs
         self.original_logger_config = config.logger_config
         self.is_setup = False
-        self.runner = None
         self.enable_logging = True
         logger.critical(
             f"Runner initialized for model: {self.config.model_id} on dataset: {self.config.data_config.dataset_id}"
@@ -37,7 +36,7 @@ class RunnerManager:
         if not self.is_setup:
             # Create runner for the first time
             config_copy = copy.deepcopy(self.config)
-            self.runner = Runner(
+            self.runner: Runner = Runner(
                 config=config_copy,
                 enable_logging=enable_logging,
                 checkpoint_path=self.checkpoint_path,

@@ -9,14 +9,9 @@ from typing import List, Optional
 
 from .cli_base import CLIRunnerBase
 
-try:
-    from new_ltpp.configs import DataConfigBuilder
-    from new_ltpp.data.preprocess import Visualizer
-except ImportError as e:
-    DataConfigBuilder = None
-    Visualizer = None
-    IMPORT_ERROR = str(e)
 
+from new_ltpp.configs import DataConfigBuilder
+from new_ltpp.data.preprocess import Visualizer
 
 class DataInspector(CLIRunnerBase):
     """

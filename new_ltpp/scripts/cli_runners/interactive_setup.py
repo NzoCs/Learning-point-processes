@@ -5,20 +5,15 @@ Runner pour la configuration guidée d'expériences TPP.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 
 from .cli_base import CLIRunnerBase
 
-try:
-    import typer
-    from rich.prompt import Confirm, FloatPrompt, IntPrompt, Prompt
-    from rich.table import Table
-
-    INTERACTIVE_AVAILABLE = True
-except ImportError:
-    INTERACTIVE_AVAILABLE = False
+import typer
+from rich.prompt import Confirm, FloatPrompt, IntPrompt, Prompt
+from rich.table import Table
 
 
 class InteractiveSetup(CLIRunnerBase):
@@ -33,7 +28,7 @@ class InteractiveSetup(CLIRunnerBase):
     def run_interactive_setup(
         self,
         setup_type: str = "experiment",
-        output_path: Optional[str] = None,
+        output_path: Optional[Union[str, Path]] = None,
         quick_mode: bool = False,
     ) -> bool:
         """
@@ -47,54 +42,48 @@ class InteractiveSetup(CLIRunnerBase):
         Returns:
             True si la configuration a été créée avec succès
         """
-        if not INTERACTIVE_AVAILABLE:
-            self.print_error("Modules interactifs non disponibles (typer, rich)")
+
+    
+        self.print_info(f"Configuration interactive - Type: {setup_type}")
+
+        if setup_type == "experiment":
+            config = self._setup_experiment_config(quick_mode)
+        elif setup_type == "data":
+            config = self._setup_data_config(quick_mode)
+        elif setup_type == "model":
+            config = self._setup_model_config(quick_mode)
+        else:
+            self.print_error(f"Type de setup non supporté: {setup_type}")
             return False
 
-        try:
-            self.print_info(f"Configuration interactive - Type: {setup_type}")
+        # Afficher la configuration finale
+        self._display_final_config(config)
 
-            if setup_type == "experiment":
-                config = self._setup_experiment_config(quick_mode)
-            elif setup_type == "data":
-                config = self._setup_data_config(quick_mode)
-            elif setup_type == "model":
-                config = self._setup_model_config(quick_mode)
+        # Confirmer et sauvegarder
+        if Confirm.ask("Sauvegarder cette configuration?"):
+            if output_path is None:
+                output_path_str = Prompt.ask(
+                    "Chemin de sauvegarde", default=f"{setup_type}_config.yaml"
+                )
+                output_path_obj = Path(output_path_str)
             else:
-                self.print_error(f"Type de setup non supporté: {setup_type}")
-                return False
+                output_path_obj = Path(output_path)
 
-            # Afficher la configuration finale
-            self._display_final_config(config)
+            output_path_obj.parent.mkdir(parents=True, exist_ok=True)
 
-            # Confirmer et sauvegarder
-            if Confirm.ask("Sauvegarder cette configuration?"):
-                if output_path is None:
-                    output_path = Prompt.ask(
-                        "Chemin de sauvegarde", default=f"{setup_type}_config.yaml"
-                    )
+            with open(output_path_obj, "w", encoding="utf-8") as f:
+                yaml.dump(config, f, default_flow_style=False, indent=2)
 
-                output_path = Path(output_path)
-                output_path.parent.mkdir(parents=True, exist_ok=True)
+            self.print_success(f"Configuration sauvegardée: {output_path_obj}")
 
-                with open(output_path, "w", encoding="utf-8") as f:
-                    yaml.dump(config, f, default_flow_style=False, indent=2)
+            # Proposer de lancer directement l'expérience
+            if setup_type == "experiment" and Confirm.ask(
+                "Lancer l'expérience maintenant?"
+            ):
+                return self._launch_experiment(output_path_obj)
 
-                self.print_success(f"Configuration sauvegardée: {output_path}")
+        return True
 
-                # Proposer de lancer directement l'expérience
-                if setup_type == "experiment" and Confirm.ask(
-                    "Lancer l'expérience maintenant?"
-                ):
-                    return self._launch_experiment(output_path)
-
-            return True
-
-        except Exception as e:
-            self.print_error_with_traceback(f"Erreur setup interactif: {e}", e)
-            if self.debug:
-                self.logger.exception("Détails de l'erreur:")
-            return False
 
     def _setup_experiment_config(self, quick_mode: bool) -> Dict[str, Any]:
         """Configuration interactive d'une expérience complète."""

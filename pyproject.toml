@@ -36,9 +36,9 @@ dependencies = [
     "datasets>=4.1.1",
     "polars>=1.33.1",
     "optuna>=4.5.0",
-    "pytest>=8.4.2",
     "ipykernel>=6.30.1",
     "typer>=0.19.2",
+    "pytest>=8.4.2",
 ]
 
 [dependency-groups]
@@ -99,6 +99,9 @@ Homepage = "https://github.com/ant-research/EasyTemporalPointProcess/"
 Repository = "https://github.com/ant-research/EasyTemporalPointProcess/"
 Documentation = "https://github.com/ant-research/EasyTemporalPointProcess/"
 "Bug Tracker" = "https://github.com/ant-research/EasyTemporalPointProcess/issues"
+
+[project.scripts]
+new-ltpp = "new_ltpp.scripts.cli:main"
 
 [tool.setuptools]
 include-package-data = true

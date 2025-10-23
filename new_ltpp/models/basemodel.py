@@ -3,7 +3,8 @@
 import os
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import pytorch_lightning as pl
 import torch
@@ -594,7 +595,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         return self.simulations
 
-    def format_and_save_simulations(self, save_dir: str) -> list[dict]:
+    def format_and_save_simulations(self, save_dir: Union[str, Path]) -> list[dict]:
         """
         Formats the raw simulation results into a list of dictionaries, one per sequence.
 
@@ -618,13 +619,16 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             simulations=self.simulations, dim_process=self.num_event_types
         )
 
-        save_data_path = os.path.join(save_dir, "simulations.json")
-        os.makedirs(save_dir, exist_ok=True)
+        if isinstance(save_dir, str):
+            save_dir = Path(save_dir)
+
+        save_data_path = save_dir / "simulations.json"
+        save_dir.mkdir(parents=True, exist_ok=True)
         save_json(formatted_data, save_data_path)
 
         return formatted_data
 
-    def save_metadata(self, save_dir: str, formatted_data: list[dict]) -> None:
+    def save_metadata(self, save_dir: Union[str, Path], formatted_data: list[dict]) -> None:
         """
         Saves metadata about the simulation run, including configuration details
         and total event counts.
@@ -654,7 +658,10 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             }
         }
 
-        meta_filepath = os.path.join(save_dir, "metadata.json")
+        if isinstance(save_dir, str):
+            save_dir = Path(save_dir)
+
+        meta_filepath = save_dir / "metadata.json"
         save_json(metadata, meta_filepath)
         logger.info(f"Metadata saved to {meta_filepath}")
 
@@ -822,12 +829,12 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
     def simulate(
         self,
-        batch: tuple[
+        batch: Optional[tuple[
             torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
-        ] = None,
-        start_time: float = None,
-        end_time: float = None,
-        batch_size: int = None,
+        ]] = None,
+        start_time: Optional[float] = None,
+        end_time: Optional[float] = None,
+        batch_size: Optional[int] = None,
         max_events: int = 1000,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
@@ -846,11 +853,13 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Initialize sequences
         if batch is None:
-            batch = [
+            batch = (
                 torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
                 torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
                 torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
-            ] + [None, None]
+                torch.zeros(1, 2, device=self.device, dtype=torch.float32),
+                torch.zeros(1, 2, device=self.device, dtype=torch.float32),
+            )
         else:
             batch_size = batch[0].size(0)
 

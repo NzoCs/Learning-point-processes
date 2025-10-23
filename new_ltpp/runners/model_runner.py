@@ -1,10 +1,12 @@
 import os
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union, List
 
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.strategies import DDPStrategy
+import re
 
 from new_ltpp.configs import RunnerConfig
 from new_ltpp.configs.logger_config import LoggerFactory
@@ -12,8 +14,66 @@ from new_ltpp.data.preprocess import TPPDataModule
 from new_ltpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,
 )
+from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.model_factory import ModelFactory
 from new_ltpp.utils import logger
+
+
+class CheckpointManager:
+    """
+    Manager for PyTorch Lightning checkpoints following the pattern:
+      best.ckpt, best-v1.ckpt, best-v2.ckpt, ...
+    """
+
+    BEST_PATTERN = re.compile(r"best(?:-v(\d+))?\.ckpt$")
+
+    def __init__(self, dirpath: str):
+        self.dirpath = Path(dirpath)
+        self.dirpath.mkdir(parents=True, exist_ok=True)
+
+    def list(self) -> List[str]:
+        """List all checkpoint filenames in the directory."""
+        return sorted(f.name for f in self.dirpath.glob("*.ckpt"))
+
+    def _extract_version(self, filename: str) -> int:
+        """
+        Extract version number from filename.
+        'best.ckpt' → 0
+        'best-v3.ckpt' → 3
+        """
+        match = self.BEST_PATTERN.search(filename)
+        if not match:
+            return -1  # not a 'best' checkpoint
+        return int(match.group(1) or 0)
+
+    def latest_best(self) -> Optional[str]:
+        """
+        Return the path of the latest 'best-vX.ckpt' file,
+        or best.ckpt if no versioned ones exist.
+        """
+        checkpoints = list(self.dirpath.glob("best*.ckpt"))
+        if not checkpoints:
+            logger.info(f"No 'best' checkpoints found in {self.dirpath}")
+            return None
+
+        # sort by version number
+        checkpoints.sort(
+            key=lambda ckpt: self._extract_version(ckpt.name),
+            reverse=True
+        )
+
+        latest = checkpoints[0]
+        logger.info(f"✅ Using latest best checkpoint: {latest.name}")
+        return str(latest)
+
+    def get(self, name: str) -> Optional[str]:
+        """Get a specific checkpoint by filename (with or without .ckpt)."""
+        path = self.dirpath / (name if name.endswith(".ckpt") else f"{name}.ckpt")
+        if path.exists():
+            logger.info(f"✅ Using checkpoint: {path.name}")
+            return str(path)
+        logger.warning(f"⚠️ Checkpoint not found: {path}")
+        return None
 
 
 class Runner:
@@ -22,10 +82,8 @@ class Runner:
         self,
         config: RunnerConfig,
         enable_logging: bool = True,
-        checkpoint_path: Optional[str] = None,
-        output_dir: Optional[str] = None,
         **kwargs,
-    ) -> None:
+    ):
         """_summary__.
         Args:
             config (RunnerConfig): Configuration object containing all the necessary parameters for training.
@@ -86,38 +144,10 @@ class Runner:
         self.use_precision_16 = training_config.use_precision_16
         self.accumulate_grad_batches = training_config.accumulate_grad_batches
 
-        # Model saving directory
-        self.dirpath = output_dir if output_dir is not None else config.save_model_dir
+        self.dirpath = config.save_model_dir
         self.logger_config = config.logger_config
 
-        if checkpoint_path is None:
-            # List of checkpoints to try, in order of priority
-            possible_checkpoints = [
-                os.path.join(self.dirpath, f"best-v{10-i}.ckpt") for i in range(10)
-            ] + [  # the one provided as default
-                os.path.join(self.dirpath, "best.ckpt"),
-                os.path.join(self.dirpath, "last.ckpt"),
-            ]
-
-            # Find the first existing file in the list
-            self.checkpoint_path_ = None
-            for path in possible_checkpoints:
-                if os.path.exists(path):
-                    self.checkpoint_path_ = path
-                    logger.info(f"Checkpoint found: loading from {path}")
-                    break
-
-        elif isinstance(checkpoint_path, str):
-            checkpoint_path = checkpoint_path + ".ckpt"
-            # Store checkpoint path for resuming training
-            self.checkpoint_path_ = os.path.join(self.dirpath, checkpoint_path)
-        else:
-            raise ValueError("Checkpoint path must be a string or None.")
-
-        if self.checkpoint_path_ and os.path.exists(self.checkpoint_path_):
-            logger.info(f"Loading model from checkpoint: {self.checkpoint_path}.")
-        else:
-            logger.info("No valid checkpoint found. Starting from scratch.")
+        self.checkpoint_path = CheckpointManager(str(self.dirpath)).latest_best()
 
         self.dataset_id = data_config.dataset_id
         self.enable_logging = enable_logging
@@ -125,14 +155,6 @@ class Runner:
 
         self._configure_logging(enable_logging)
 
-    @property
-    def checkpoint_path(self):
-        """Return the checkpoint path for resuming training."""
-        if isinstance(self.checkpoint_path_, str) and os.path.exists(
-            self.checkpoint_path_
-        ):
-            return self.checkpoint_path_
-        return None
 
     def _configure_logging(self, enable_logging: bool = True):
         """Configure logging for the trainer."""
@@ -140,10 +162,10 @@ class Runner:
             try:
                 self.logger = LoggerFactory.create_logger(self.logger_config)
             except Exception as e:
-                self.logger = False
+                self.logger = None
                 logger.critical(f"Logging is disabled for this run. Error: {str(e)}")
         else:
-            self.logger = False
+            self.logger = None
 
     def set_logging(self, enable_logging: bool):
         """Change logging configuration without recreating the trainer."""
@@ -207,7 +229,7 @@ class Runner:
             precision = "32-true"
 
         # Check if distributed training is requested
-        if self.devices > 1:
+        if self.devices is not None and self.devices > 1:
             # Use DDPStrategy with find_unused_parameters=True
             strategy = DDPStrategy(find_unused_parameters=True)
             trainer = pl.Trainer(
@@ -291,7 +313,9 @@ class Runner:
         if results and len(results) > 0:
             import json
 
-            results_file = os.path.join(self.dirpath, "test_results.json")
+            test_results_dir = OUTPUT_DIR / self.model_id / self.dataset_id / "test_results"
+            test_results_dir.mkdir(parents=True, exist_ok=True)
+            results_file = test_results_dir / "test_results.json"
 
             with open(results_file, "w") as f:
                 json.dump(results[0], f, indent=4)
@@ -319,15 +343,15 @@ class Runner:
         )
 
         # Ensure the directory exists
-        output_dir = os.path.dirname(self.dirpath)
-        data_save_dir = os.path.join(output_dir, "distributions_comparisons")
+        data_save_dir = OUTPUT_DIR / self.model_id / self.dataset_id / "distributions_comparisons"
+        data_save_dir.mkdir(parents=True, exist_ok=True)
         self.model.format_and_save_simulations(save_dir=data_save_dir)
 
         comparator = NTPPComparatorFactory.create_comparator(
             label_data=self.datamodule.test_dataset,
             simulation=self.model.simulations,
             num_event_types=self.datamodule.num_event_types,
-            output_dir=data_save_dir,
+            output_dir=str(data_save_dir),
         )
 
         logger.info(
@@ -337,4 +361,4 @@ class Runner:
         logger.info(f"Simulations saved to {data_save_dir}")
 
         logger.info("Generating intensity graph...")
-        self.model.intensity_graph(save_dir=data_save_dir)
+        self.model.intensity_graph(save_dir=str(data_save_dir))

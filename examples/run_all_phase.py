@@ -3,7 +3,7 @@ from pathlib import Path
 CONFIGS_DIR = Path(__file__).parent.parent / "yaml_configs" / "configs.yaml"
 
 from new_ltpp.configs import ConfigFactory, ConfigType
-from new_ltpp.configs.config_builder import RunnerConfigBuilder
+from new_ltpp.configs.config_builders import RunnerConfigBuilder
 from new_ltpp.runners import RunnerManager
 
 
@@ -27,7 +27,7 @@ def main() -> None:
         logger_config_path="logger_configs.mlflow",
     )
 
-    config = config_builder.build()
+    config = config_builder.build(model_id=model_id)
 
     # Create runner
     runner = RunnerManager(config=config)

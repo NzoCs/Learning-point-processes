@@ -4,7 +4,7 @@ from new_ltpp.configs.base_config import (
     ConfigSerializationError,
     ConfigValidationError,
 )
-from new_ltpp.configs.config_builder import (
+from new_ltpp.configs.config_builders import (
     DataConfigBuilder,
     ModelConfigBuilder,
     RunnerConfigBuilder,

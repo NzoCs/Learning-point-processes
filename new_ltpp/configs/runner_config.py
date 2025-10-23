@@ -7,8 +7,9 @@ import torch
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.configs.data_config import DataConfig
-from new_ltpp.configs.logger_config import LoggerConfig
+from new_ltpp.configs.logger_config import LoggerConfig, LoggerType
 from new_ltpp.configs.model_config import ModelConfig
+from new_ltpp.globals import OUTPUT_DIR
 
 
 @dataclass
@@ -93,14 +94,6 @@ class RunnerConfig(Config):
         data_config (dict): Dictionnaire de configuration pour les données.
     """
 
-    ROOT_DIR = Path(__file__).resolve().parent.parent.parent / "artifacts"
-
-    training_config: TrainingConfig
-    model_config: ModelConfig
-    data_config: DataConfig
-    model_id: str
-    logger_config: Optional[LoggerConfig] = None
-    save_dir: Optional[str] = None
 
     def __init__(
         self,
@@ -137,37 +130,40 @@ class RunnerConfig(Config):
         self.model_id = model_id
 
         # Directory setup
+        # Model checkpoints directory
         ckpt = "checkpoints"
-        dirpath = self.ROOT_DIR / (
+        self.checkpoint_dir = OUTPUT_DIR / (
             save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/"
         )
-        self.save_model_dir = dirpath / "saved_model"
+        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Saved model directory (separate from checkpoints)
+        self.save_model_dir = OUTPUT_DIR /  self.model_id / self.dataset_id / "saved_model"
         self.save_model_dir.mkdir(parents=True, exist_ok=True)
-
-        # Logger config - only if logging is activated
-        # Ensure save_dir is recorded on the RunnerConfig
-        # store as string (matches dataclass annotation)
-        self.save_dir = str(dirpath)
+        
+        # Logger save directory (separate from checkpoints)
+        self.save_dir = str(OUTPUT_DIR / self.model_id / self.dataset_id / "logs")
 
         # Process the incoming `logger_config` parameter (could be None, dict or LoggerConfig)
         # Force the logger's save_dir to the runner's dirpath for consistency across artifacts
         if logger_config is None:
             # Create default logger config if none provided
             self.logger_config = LoggerConfig(
-                save_dir=self.save_dir, type="tensorboard"
+                save_dir=self.save_dir, type=LoggerType.TENSORBOARD
             )
         else:
-            # If a dict was passed, make a copy and override save_dir
+            # If a dict was passed, extract config and type
             if isinstance(logger_config, dict):
-                cfg = dict(logger_config)
-                # Always override save_dir for consistency
-                cfg["save_dir"] = self.save_dir
-                self.logger_config = LoggerConfig(**cfg)
+                config_dict = logger_config.get("config", logger_config)
+                type_ = logger_config.get("type", LoggerType.TENSORBOARD)
+                self.logger_config = LoggerConfig(
+                    save_dir=self.save_dir, type=type_, config=config_dict
+                )
             elif isinstance(logger_config, LoggerConfig):
                 # Always ensure logger_config uses the runner save_dir; recreate to be safe
                 self.logger_config = LoggerConfig(
                     save_dir=self.save_dir,
-                    type=getattr(logger_config, "type", "tensorboard"),
+                    type=getattr(logger_config, "type", LoggerType.TENSORBOARD),
                     config=getattr(logger_config, "config", {}),
                 )
             else:

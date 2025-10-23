@@ -177,38 +177,57 @@ make benchmark-all
 make inspect DIR=./data/test
 ```
 
-### Python API example (programmatic, no YAML)
+### Python API example (YAML-based)
 
 ```python
+from pathlib import Path
+
+CONFIGS_DIR = Path(__file__).parent.parent / "yaml_configs" / "configs.yaml"
+
+from new_ltpp.configs import ConfigFactory, ConfigType
 from new_ltpp.configs.config_builder import RunnerConfigBuilder
 from new_ltpp.runners import RunnerManager
 
-# Build runner config fully in code
-b = RunnerConfigBuilder()
 
-# Data
-b.data_builder.set_num_event_types(2)
-b.data_builder.set_dataset_id("test")
-b.data_builder.set_src_dir("NzoCs/test_dataset")
-b.data_builder.set_batch_size(64)
-b.data_builder.set_num_workers(2)
-b.data_builder.set_shuffle(True)
-b.data_builder.set_max_len(128)
-b.set_data_config(b.data_builder.build())
+def main() -> None:
+  # Load configuration
+  config_path = CONFIGS_DIR
+  model_id = "NHP"
 
-# Model
-b.model_builder.set_specs({"hidden_size": 32, "mlp_dims": [32, 32]})
-b.model_builder.set_scheduler_config(max_epochs=10, lr_scheduler=True, lr=1e-3)
-b.set_model_config(b.model_builder.build())
+  # Build runner configuration from YAML
+  config_builder = RunnerConfigBuilder()
 
-# Training (convenience setters)
-b.set_max_epochs(10)
-b.set_batch_size(64)
-b.set_devices(1)
+  # You can modify the paths below to point to different configurations as needed
+  config_builder.load_from_yaml(
+    yaml_file_path=config_path,
+    data_config_path="data_configs.test",
+    training_config_path="training_configs.quick_test",
+    model_config_path="model_configs.neural_small",
+    thinning_config_path="thinning_configs.thinning_fast",
+    simulation_config_path="simulation_configs.simulation_fast",
+    data_loading_config_path="data_loading_configs.quick_test",
+    logger_config_path="logger_configs.mlflow",
+  )
 
-runner_config = b.build(model_id="NHP")
-runner = RunnerManager(config=runner_config, output_dir="./artifacts/results")
-runner.run(phase="train")
+  config = config_builder.build()
+
+  # Create runner
+  runner = RunnerManager(config=config)
+
+  # Run complete pipeline: train -> test -> predict
+
+  # 1. Training
+  runner.run(phase="train")
+
+  # 2. Testing
+  runner.run(phase="test")
+
+  # 3. Prediction and distribution comparison
+  runner.run(phase="predict")
+
+
+if __name__ == "__main__":
+  main()
 ```
 
 More end-to-end scripts are available in the `examples/` folder, e.g.:
@@ -706,7 +725,7 @@ This project builds upon the excellent foundation provided by the [new_ltpp](htt
 
 The following repositories and frameworks have influenced this work:
 
-- **[new_ltpp](https://github.com/ant-research/EasyTemporalPointProcess)**: Original foundation and inspiration
+- **[easytpp](https://github.com/ant-research/EasyTemporalPointProcess)**: Original foundation and inspiration
 - **[PyTorch Lightning](https://lightning.ai/)**: High-performance training framework
 - **[Neural Hawkes Process](https://github.com/hongyuanmei/neurawkes)**: Fundamental TPP implementations
 - **[Attentive Neural Hawkes Process](https://github.com/yangalan123/anhp-andtt)**: Attention mechanisms in TPP

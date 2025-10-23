@@ -8,12 +8,12 @@ from new_ltpp.data.preprocess import EventTokenizer
 
 def make_raw_data() -> List[List[Dict[str, Any]]]:
     data = [
-        [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 0}],
-        [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 1}],
-        [{"time_since_last_event": 0, "time_since_start": 0, "type_event": 1}],
+        [{"time_since_last_event": 0.0, "time_since_start": 0.0, "type_event": 0}],
+        [{"time_since_last_event": 0.0, "time_since_start": 0.0, "type_event": 1}],
+        [{"time_since_last_event": 0.0, "time_since_start": 0.0, "type_event": 1}],
     ]
     for i, j in enumerate([2, 5, 3]):
-        start_time = 0
+        start_time = 0.0
         for k in range(j):
             delta_t = random.random()
             start_time += delta_t
@@ -41,7 +41,7 @@ def main() -> None:
     }
 
     # Use modern API
-    config = TokenizerConfig(num_event_types=11, pad_token_id=11)
+    config = TokenizerConfig(num_event_types=11)
 
     tokenizer = EventTokenizer(config)
 

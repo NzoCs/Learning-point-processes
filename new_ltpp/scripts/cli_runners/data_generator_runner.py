@@ -9,13 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from .cli_base import CLIRunnerBase
 
-try:
-    from new_ltpp.data.generation import HawkesSimulator, SelfCorrecting
-except ImportError as e:
-    HawkesSimulator = None
-    SelfCorrecting = None
-    IMPORT_ERROR = str(e)
-
+from new_ltpp.data.generation import HawkesSimulator, SelfCorrecting
 
 class DataGenerator(CLIRunnerBase):
     """

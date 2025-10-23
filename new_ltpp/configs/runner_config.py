@@ -144,6 +144,9 @@ class RunnerConfig(Config):
         # Logger save directory (separate from checkpoints)
         self.save_dir = str(OUTPUT_DIR / self.model_id / self.dataset_id / "logs")
 
+        # Model directory alias for compatibility
+        self.model_dir = str(self.save_model_dir)
+
         # Process the incoming `logger_config` parameter (could be None, dict or LoggerConfig)
         # Force the logger's save_dir to the runner's dirpath for consistency across artifacts
         if logger_config is None:

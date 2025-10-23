@@ -152,6 +152,7 @@ class Runner:
         self.dataset_id = data_config.dataset_id
         self.enable_logging = enable_logging
         self._cached_trainer = None  # Cache for the trainer
+        self.config = config  # Store config for access in save method
 
         self._configure_logging(enable_logging)
 

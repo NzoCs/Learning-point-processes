@@ -4,7 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import pytorch_lightning as pl
 import torch
@@ -30,6 +30,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         model_config: ModelConfig,
         *,
         num_event_types: int,
+        dtime_max: float,
     ):
         """Initialize the Model
 
@@ -40,6 +41,8 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Save hyperparameters for later use
         self.save_hyperparameters()
+
+        self.dtime_max = dtime_max
 
         # Load model configuration
         pretrain_model_path = model_config.pretrain_model_path
@@ -141,7 +144,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         pass
 
     # Set up the event sampler if generation config is provided
-    def event_sampler(self, num_sample=None):
+    def event_sampler(self, num_sample=None, mode: Literal['train', 'simulation'] = 'train') -> EventSampler:
         """Get the event sampler for generating events with caching."""
 
         gen_config = self.gen_config
@@ -168,8 +171,9 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             num_exp=gen_config.num_exp,
             over_sample_rate=gen_config.over_sample_rate,
             num_samples_boundary=gen_config.num_samples_boundary,
-            dtime_max=gen_config.dtime_max,
+            dtime_max=self.dtime_max,
             device=self._device,
+            mode=mode
         )
 
         # Cache the new sampler
@@ -933,6 +937,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                         active_time_delta,
                         active_event_seq,
                         num_sample=1,
+                        mode="simulation"
                     )
 
                     # Calcul des nouveaux temps
@@ -1240,6 +1245,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,
         event_seq: torch.Tensor,
+        mode: Literal["train", "simulation"] = "train",
         num_sample: Optional[int] = None,
     ) -> torch.Tensor:
         """
@@ -1258,7 +1264,8 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         # Determine possible event times
         dtime_boundary = time_delta_seq + self.dtime_max
         accepted_dtimes, weights = self.event_sampler(
-            num_sample=num_sample
+            num_sample=num_sample,
+            mode=mode
         ).draw_next_time_one_step(
             time_seq,
             dtime_boundary,

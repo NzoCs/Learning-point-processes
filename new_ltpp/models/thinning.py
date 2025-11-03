@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from typing import Literal
 
 
 class EventSampler(nn.Module):
@@ -12,12 +13,13 @@ class EventSampler(nn.Module):
 
     def __init__(
         self,
-        num_sample,
-        num_exp,
-        over_sample_rate,
-        num_samples_boundary,
-        dtime_max,
-        device,
+        num_sample: int,
+        num_exp: int,
+        over_sample_rate: float,
+        num_samples_boundary: int,
+        dtime_max: float,
+        device: str,
+        mode: Literal['train', 'simulation'] = 'train',
     ):
         """Initialize the event sampler.
 
@@ -37,6 +39,7 @@ class EventSampler(nn.Module):
         self.num_samples_boundary = num_samples_boundary
         self.dtime_max = dtime_max
         self.device = device
+        self.mode = mode
 
     def compute_intensity_upper_bound(
         self, time_seq, time_delta_seq, event_seq, intensity_fn, compute_last_step_only
@@ -55,10 +58,19 @@ class EventSampler(nn.Module):
         """
         batch_size, seq_len = time_seq.size()
 
-        # [1, 1, num_samples_boundary]
-        time_for_bound_sampled = torch.linspace(
-            start=0.0, end=1.0, steps=self.num_samples_boundary, device=self.device
-        )[None, None, :]
+        if self.mode == 'train':
+            # [1, 1, num_samples_boundary]
+            time_for_bound_sampled = torch.linspace(
+                start=0.0, end=1.0, steps=self.num_samples_boundary, device=self.device
+            )[None, None, :]
+
+        elif self.mode == 'simulation':
+            # borne globale pour le thinning, pas borne locale
+            time_for_bound_sampled = torch.linspace(
+                start=0.0, end=self.dtime_max, steps=self.num_samples_boundary, device=self.device
+            )[None, None, :]
+        else:
+            raise ValueError(f"Unknown mode {self.mode} for EventSampler")
 
         # [batch_size, seq_len, num_samples_boundary]
         dtime_for_bound_sampled = time_delta_seq[:, :, None] * time_for_bound_sampled

@@ -82,6 +82,7 @@ class Runner:
         self,
         config: RunnerConfig,
         enable_logging: bool = True,
+        quantile: float = 0.995,
         **kwargs,
     ):
         """_summary__.
@@ -119,20 +120,22 @@ class Runner:
         model_config = config.model_config
         training_config = config.training_config
 
-        # Initialize your model
+        # Initialize your datamodule
+        self.datamodule = TPPDataModule(data_config)
+        dtime_max = self.datamodule.estimate_dtime_max(quantile=quantile)
 
+        # Initialize your model
         # Use the ModelFactory to create the model
         model_factory = ModelFactory()
         self.model = model_factory.create_model_by_name(
             model_name=config.model_id,
             num_event_types=data_config.tokenizer_specs.num_event_types,
             model_config=model_config,
+            dtime_max=dtime_max,
         )
 
         self.model_id = config.model_id
 
-        # Initialize Dataloaders
-        self.datamodule = TPPDataModule(data_config)
 
         # Initialize Train params
         self.max_epochs = training_config.max_epochs

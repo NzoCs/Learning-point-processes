@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
+import numpy as np
 
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_collator import TPPDataCollator
@@ -35,6 +36,54 @@ class TPPDataModule(pl.LightningDataModule):
         self.val_data = None
         self.test_data = None
         self.predict_data = None
+
+    def estimate_dtime_max(self, split: str = "train", quantile: float = 0.995):
+        """
+        Estimate the maximum time delta (dtime_max) from the dataset.
+        This is useful for thinning-based simulation where we need an upper bound.
+
+        Args:
+            split (str): Dataset split to use ("train", "val", "test").
+            quantile (float): Quantile to use for robustness (default=0.995).
+
+        Returns:
+            float: Estimated dtime_max.
+        """
+        # Charger le split si pas encore fait
+        if split == "train" and self.train_data is None:
+            train_data_dir = self.data_config.get_data_dir("train")
+            self.train_data = self.build_input(
+                train_data_dir, self.data_config.data_format, "train"
+            )
+        elif split == "val" and self.val_data is None:
+            val_data_dir = self.data_config.get_data_dir("dev")
+            self.val_data = self.build_input(
+                val_data_dir, self.data_config.data_format, "dev"
+            )
+        elif split == "test" and self.test_data is None:
+            test_data_dir = self.data_config.get_data_dir("test")
+            self.test_data = self.build_input(
+                test_data_dir, self.data_config.data_format, "test"
+            )
+
+        # Sélectionner le bon dataset
+        data = getattr(self, f"{split}_data")
+        time_deltas = [dt for seq in data["time_delta_seqs"] for dt in seq if dt > 0]
+
+        if len(time_deltas) == 0:
+            raise ValueError("No time deltas found for estimating dtime_max.")
+
+        # Calcul robuste : quantile au lieu du max pour éviter un outlier extrême
+        dtime_max_estimate = float(np.quantile(time_deltas, quantile))
+        self.dtime_max_estimate = dtime_max_estimate
+
+        logger.info(
+            f"Estimated dtime_max from {split} data: "
+            f"{dtime_max_estimate:.4f} (quantile={quantile})"
+        )
+
+        return dtime_max_estimate
+
 
     def build_input(
         self, source_dir: str, data_format: str = "json", split: str = "train"

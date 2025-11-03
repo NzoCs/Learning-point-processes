@@ -18,7 +18,7 @@ class InterEventTimePlotGenerator(BasePlotGenerator):
     """Generates inter-event time distribution plots (OCP)."""
 
     def generate_plot(
-        self, data: Dict[str, Any], output_path: str, qq_plot: bool = False
+        self, data: Dict[str, Any], output_path: str
     ) -> None:
         label_data = data["label_time_deltas"]
         simulation_data = data["simulated_time_deltas"]
@@ -50,18 +50,6 @@ class InterEventTimePlotGenerator(BasePlotGenerator):
             title="Inter-Event Time Distribution Comparison",
             xlabel="Time Since Last Event",
         )
-
-        # Generate QQ plot
-        qq_path = output_path.replace(".png", "_qq.png")
-
-        if qq_plot:
-            DistributionAnalyzer.create_qq_plot(
-                label_data,
-                simulation_data,
-                "QQ Plot: Inter-Event Times (Ground Truth vs Simulation)",
-                qq_path,
-                log_scale=True,
-            )
 
 
 class EventTypePlotGenerator(BasePlotGenerator):
@@ -122,7 +110,7 @@ class EventTypePlotGenerator(BasePlotGenerator):
         plt.xlabel("Event Type", fontsize=12)
         plt.ylabel("Probability", fontsize=12)
         plt.grid(axis="y", alpha=0.3)
-        plt.xticks(x, all_event_types)
+        plt.xticks(x, [str(t) for t in all_event_types])
         plt.legend(title="Data Source", frameon=True, fancybox=True, shadow=True)
 
         # Add statistics
@@ -172,7 +160,7 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
     """Generates sequence length distribution plots (OCP)."""
 
     def generate_plot(
-        self, data: Dict[str, Any], output_path: str, qq_plot: bool = False
+        self, data: Dict[str, Any], output_path: str
     ) -> None:
         label_lengths = np.asarray(data["label_sequence_lengths"])
         simulated_lengths = np.asarray(data["simulated_sequence_lengths"])
@@ -260,18 +248,6 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
         logger.info(
             f"Sequence length distribution comparison plot saved to {output_path}"
         )
-
-        # Add QQ plot
-        qq_path = output_path.replace(".png", "_qq.png")
-
-        if qq_plot:
-            DistributionAnalyzer.create_qq_plot(
-                label_lengths,
-                simulated_lengths,
-                "QQ Plot: Sequence Lengths (Ground Truth vs Simulation)",
-                qq_path,
-                log_scale=False,
-            )
 
 
 class CrossCorrelationPlotGenerator(BasePlotGenerator):

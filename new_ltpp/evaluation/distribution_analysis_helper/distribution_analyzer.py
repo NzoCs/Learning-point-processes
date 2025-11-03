@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from scipy.stats import linregress
 
 from new_ltpp.utils import logger
 
@@ -23,25 +22,21 @@ class DistributionAnalyzer:
         xlabel: str = "Value",
         figsize: Tuple[int, int] = (10, 6),
         n_bins: int = 50,
-        regression_threshold_ratio: float = 0.01,
         alpha: float = 0.4,
     ) -> None:
         """
-        Create density comparison plots between multiple datasets with regression analysis.
+        Create density comparison plots between multiple datasets.
 
         Args:
             datasets: List of dataset dictionaries containing:
                 - data: numpy array of values
                 - label: string label for legend
                 - color: color for histogram
-                - line_color: color for regression line
-                - prefix: prefix for regression label
             output_path: Full path where to save the plot
             title: Plot title
             xlabel: X-axis label
             figsize: Figure size as (width, height)
             n_bins: Number of bins for histogram
-            regression_threshold_ratio: Minimum density ratio for regression analysis
             alpha: Transparency level for histograms
 
         Raises:
@@ -51,12 +46,13 @@ class DistributionAnalyzer:
             raise ValueError("Datasets list cannot be empty")
 
         # Validate dataset format
-        required_keys = {"data", "label", "color", "line_color", "prefix"}
+        required_keys = {"data", "label", "color"}
         for i, dataset in enumerate(datasets):
             missing_keys = required_keys - set(dataset.keys())
             if missing_keys:
                 raise ValueError(f"Dataset {i} missing required keys: {missing_keys}")
 
+        fig = None
         try:
             # Setup plotting environment
             sns.set_theme(style="whitegrid")
@@ -71,7 +67,6 @@ class DistributionAnalyzer:
                 return
 
             bins = np.histogram_bin_edges(all_data, bins=n_bins)
-            bin_centers = 0.5 * (bins[:-1] + bins[1:])
 
             # Process each dataset
             for dataset in datasets:
@@ -90,14 +85,6 @@ class DistributionAnalyzer:
                     label=dataset["label"],
                     ax=ax,
                     color=dataset["color"],
-                )
-
-                # Calculate density for regression analysis
-                density, _ = np.histogram(dataset["data"], bins=bins, density=True)
-
-                # Add regression line analysis
-                DistributionAnalyzer._add_regression_analysis(
-                    bin_centers, density, dataset, ax, regression_threshold_ratio
                 )
 
                 # Add statistical summary
@@ -122,70 +109,9 @@ class DistributionAnalyzer:
 
         except Exception as e:
             logger.error(f"Failed to create density comparison plot: {str(e)}")
-            if "fig" in locals():
+            if fig is not None:
                 plt.close(fig)
             raise
-
-    @staticmethod
-    def _add_regression_analysis(
-        bin_centers: np.ndarray,
-        density: np.ndarray,
-        dataset: Dict[str, Any],
-        ax,
-        threshold_ratio: float,
-    ) -> Optional[float]:
-        """
-        Add regression line analysis to the density plot.
-
-        Args:
-            bin_centers: Center points of histogram bins
-            density: Density values for each bin
-            dataset: Dataset information dictionary
-            ax: Matplotlib axes object
-            threshold_ratio: Minimum density threshold for regression
-
-        Returns:
-            Regression slope if successful, None otherwise
-        """
-        try:
-            # Apply dynamic threshold based on maximum density
-            threshold = np.max(density) * threshold_ratio
-            valid_mask = density > threshold
-
-            x_filtered = bin_centers[valid_mask]
-            y_filtered = density[valid_mask]
-
-            if len(x_filtered) <= 1:
-                logger.warning(
-                    f"Insufficient data points for regression analysis in {dataset['label']}"
-                )
-                return None
-
-            # Perform linear regression on log-transformed density
-            slope, intercept, r_value, _, _ = linregress(
-                x_filtered, np.log10(y_filtered)
-            )
-
-            # Generate and plot regression line
-            x_line = np.linspace(x_filtered.min(), x_filtered.max(), 100)
-            y_line = 10 ** (slope * x_line + intercept)
-
-            ax.plot(
-                x_line,
-                y_line,
-                "--",
-                color=dataset["line_color"],
-                linewidth=2,
-                label=f"{dataset['prefix']} slope: {slope:.4f} (R²={r_value**2:.3f})",
-            )
-
-            return slope
-
-        except Exception as e:
-            logger.warning(
-                f"Regression analysis failed for {dataset['label']}: {str(e)}"
-            )
-            return None
 
     @staticmethod
     def _add_statistical_summary(

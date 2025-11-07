@@ -21,6 +21,7 @@ class SelfCorrecting(Model):
         self,
         model_config: ModelConfig,
         *,
+        
         mu: Union[list, torch.Tensor],
         alpha: Union[list, torch.Tensor],
         num_event_types: int,

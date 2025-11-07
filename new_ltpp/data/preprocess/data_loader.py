@@ -68,7 +68,7 @@ class TPPDataModule(pl.LightningDataModule):
 
         # Sélectionner le bon dataset
         data = getattr(self, f"{split}_data")
-        time_deltas = [dt for seq in data["time_delta_seqs"] for dt in seq if dt > 0]
+        time_deltas = [dt for seq in data["time_delta_seqs"] for dt in seq]
 
         if len(time_deltas) == 0:
             raise ValueError("No time deltas found for estimating dtime_max.")

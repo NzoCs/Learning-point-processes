@@ -127,6 +127,7 @@ class IntensityFree(Model):
         model_config: ModelConfig,
         *,
         num_event_types: int,
+        dtime_max: float,
         num_mix_components: int = 32,
         mean_log_inter_time: float = 0.0,
         std_log_inter_time: float = 1.0,
@@ -137,7 +138,7 @@ class IntensityFree(Model):
             model_config (new_ltpp.ModelConfig): config of model specs.
 
         """
-        super(IntensityFree, self).__init__(model_config, num_event_types)
+        super(IntensityFree, self).__init__(model_config, num_event_types=num_event_types, dtime_max=dtime_max)
 
         self.num_mix_components = num_mix_components
         self.mean_log_inter_time = mean_log_inter_time

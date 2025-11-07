@@ -32,6 +32,7 @@ class Visualizer:
             comparison_data_module: Optional data module for comparison dataset
             comparison_split: Optional split for comparison dataset
         """
+        
         self.data_module = data_module
         self.num_event_types = data_module.num_event_types
         self.save_dir = save_dir
@@ -282,21 +283,6 @@ class Visualizer:
 
         plt.yscale("log")
 
-        # Calculate and add regression lines if enough data points
-        if len(filtered_hist) > 1:
-            X = filtered_bin_centers.reshape(-1, 1)
-            y = np.log10(filtered_hist)
-            reg = np.polyfit(X.flatten(), y, 1)
-            slope, intercept = reg
-
-            x_line = np.linspace(
-                min(filtered_bin_centers), max(filtered_bin_centers), 100
-            )
-            y_line = 10 ** (slope * x_line + intercept)
-
-            plt.plot(
-                x_line, y_line, "--", color="blue", label=f"Main slope: {slope:.4f}"
-            )
 
         if self.is_comparison_mode and len(filtered_comp_hist) > 1:
             comp_X = filtered_comp_bin_centers.reshape(-1, 1)

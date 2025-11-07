@@ -25,6 +25,7 @@ class SAHP(NeuralModel):
         model_config: ModelConfig,
         *,
         num_event_types: int,
+        dtime_max: float,
         hidden_size: int = 128,
         dropout: float = 0.1,
         use_norm: bool = True,
@@ -39,6 +40,7 @@ class SAHP(NeuralModel):
         """
         super(SAHP, self).__init__(
             model_config,
+            dtime_max=dtime_max,
             num_event_types=num_event_types,
             hidden_size=hidden_size,
             dropout=dropout,

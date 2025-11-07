@@ -96,6 +96,7 @@ class NHP(NeuralModel):
         model_config: ModelConfig,
         *,
         num_event_types: int,
+        dtime_max: float,
         hidden_size: int = 128,
         dropout: float = 0.1,
         beta: float = 1.0,
@@ -110,6 +111,7 @@ class NHP(NeuralModel):
             model_config,
             num_event_types=num_event_types,
             hidden_size=hidden_size,
+            dtime_max=dtime_max,
             dropout=dropout,
         )
         self.model_config = model_config  # Store for test compatibility

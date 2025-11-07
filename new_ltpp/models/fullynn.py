@@ -124,7 +124,9 @@ class FullyNN(Model):
         model_config: ModelConfig,
         *,
         num_event_types: int,
+        dtime_max: float,
         num_layers: int = 2,
+        hidden_size: int = 64,
         rnn_type: str = "LSTM",
     ):
         """Initialize the model
@@ -132,8 +134,8 @@ class FullyNN(Model):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(FullyNN, self).__init__(model_config, num_event_types)
-
+        super(FullyNN, self).__init__(model_config, num_event_types=num_event_types, dtime_max=dtime_max)
+        self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
         self.n_layers = num_layers
@@ -144,10 +146,10 @@ class FullyNN(Model):
                     hidden_size=self.hidden_size,
                     num_layers=self.n_layers,
                     batch_first=True,
-                    dropout=self.specs["dropout"],
+                    # dropout=self.specs["dropout"],
                 )
 
-        self.layer_intensity = CumulHazardFunctionNetwork(model_config)
+        self.layer_intensity = CumulHazardFunctionNetwork()
 
     def forward(self, time_seqs, time_delta_seqs, type_seqs):
         """Call the model

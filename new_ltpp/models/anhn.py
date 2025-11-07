@@ -16,6 +16,7 @@ class ANHN(NeuralModel):
         model_config: ModelConfig,
         *,
         hidden_size: int = 128,
+        dtime_max: float,
         dropout: float = 0.1,
         num_event_types: int,
         num_layers: int = 2,
@@ -30,6 +31,7 @@ class ANHN(NeuralModel):
         """
         super(ANHN, self).__init__(
             model_config,
+            dtime_max=dtime_max,
             num_event_types=num_event_types,
             hidden_size=hidden_size,
             dropout=dropout,

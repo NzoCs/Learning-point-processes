@@ -47,40 +47,10 @@ This framework goes beyond traditional TPP implementations by introducing:
 <span id='news'/>
 
 - **[2025-07]** 🔥 **Major Framework Overhaul**: Complete rewrite with PyTorch Lightning integration
-- **[2025-07]** 📊 **Advanced Loss Functions**: Added MMD, Sinkhorn, and Wasserstein distance implementations  
 - **[2025-07]** 🎯 **Enhanced Evaluation**: Comprehensive validation metrics including distributional analysis
 - **[2025-07]** 🛠️ **Modern CLI**: Professional command-line interface with interactive modes
 - **[2025-07]** ⚡ **Performance Boost**: Significant training speed improvements through Lightning optimization
 - **[2025-07]** 🔬 **Simulation Capabilities**: Built-in model simulation and temporal pattern analysis
-
-
-## Features
-<span id='features'/>
-
-### 🔥 Core Enhancements
-
-- **Lightning-Powered Performance**: Built on PyTorch Lightning for optimized training, automatic mixed precision, and distributed computing support
-- **Advanced Loss Functions**: Implementation of cutting-edge losses for better model training:
-  - **MMD (Maximum Mean Discrepancy)**: For distribution matching and domain adaptation
-  - **Sinkhorn Loss**: Optimal transport-based loss for sequence alignment
-  - **Wasserstein Distance**: Earth mover's distance for robust evaluation
-- **Comprehensive Evaluation**: Beyond traditional metrics with distributional analysis and temporal pattern validation
-- **Modern Architecture**: Clean, modular codebase with enhanced maintainability and extensibility
-
-### ⚡ Performance & Usability
-
-- **Faster Training**: Significant speed improvements through Lightning optimizations
-- **Better Resource Management**: Automatic GPU utilization and memory optimization
-- **Enhanced CLI**: Professional command-line interface with interactive modes
-- **Real-time Monitoring**: Integrated logging and visualization capabilities
-- **Flexible Configuration**: YAML-based configuration system with validation
-
-### 🔬 Research Capabilities
-
-- **Model Simulation**: Built-in simulation tools for temporal pattern generation
-- **Distribution Analysis**: Comprehensive analysis of generated temporal sequences
-- **Robust Evaluation**: Advanced metrics encouraging more thorough model assessment
-- **Extensible Framework**: Easy integration of new models, losses, and evaluation metrics
 
 
 ## Project Setup
@@ -130,32 +100,37 @@ New-LTPP implements state-of-the-art TPP models with modern PyTorch implementati
 |  9  |   Custom    |    Hawkes     | Classical Hawkes Process implementation                                                                                                     | [Model](new_ltpp/models/hawkes.py)                |
 | 10  |   Custom    | SelfCorrect   | Self-Correcting Point Process                                                                                                               | [Model](new_ltpp/models/self_correcting.py)       |
 
-### 🆕 Enhanced Loss Functions
-
-- **MMD Loss**: Maximum Mean Discrepancy for distribution matching
-- **Sinkhorn Loss**: Optimal transport-based sequence alignment
-- **Wasserstein Loss**: Earth mover's distance for robust training
-- **Custom Validation Metrics**: Advanced evaluation beyond traditional TPP metrics
-
 
 
 ## Dataset <a href='#top'>[Back to Top]</a>
 <span id='dataset'/>
 
-We preprocessed one synthetic and five real world datasets from widely-cited works that contain diverse characteristics in terms of their application domains and temporal statistics:
-- Synthetic: a univariate Hawkes process simulated by [Tick](https://github.com/X-DataInitiative/tick) library.
-- Retweet ([Zhou, 2013](http://proceedings.mlr.press/v28/zhou13.pdf)): timestamped user retweet events.
-- Taxi ([Whong, 2014](https://chriswhong.com/open-data/foil_nyc_taxi/)): timestamped taxi pick-up events.
-- StackOverflow ([Leskovec, 2014](https://snap.stanford.edu/data/)): timestamped user badge reward events in StackOverflow.
-- Taobao ([Xue et al, 2022](https://arxiv.org/abs/2210.01753)): timestamped user online shopping behavior events in Taobao platform.
-- Amazon ([Xue et al, 2022](https://arxiv.org/abs/2210.01753)): timestamped user online shopping behavior events in Amazon platform.
+### Available Datasets
 
-Per users' request, we processed two non-anthropogenic datasets 
-- [Earthquake](https://drive.google.com/drive/folders/1ubeIz_CCNjHyuu6-XXD0T-gdOLm12rf4): timestamped earthquake events over the Conterminous U.S from 1996 to 2023, processed from [USGS](https://www.usgs.gov/programs/earthquake-hazards/science/earthquake-data).
-- [Volcano eruption](https://drive.google.com/drive/folders/1KSWbNi8LUwC-dxz1T5sOnd9zwAot95Tp?usp=drive_link): timestamped volcano eruption events over the world in recent hundreds of years, processed from [The Smithsonian Institution](https://volcano.si.edu/).
+This framework supports datasets from two main sources:
+
+#### 1. EasyTPP Real-World Datasets
+
+Preprocessed datasets from [EasyTPP](https://huggingface.co/easytpp) available on Hugging Face, including:
+
+- **Retweet** ([Zhou, 2013](http://proceedings.mlr.press/v28/zhou13.pdf)): Timestamped user retweet events
+- **Taxi** ([Whong, 2014](https://chriswhong.com/open-data/foil_nyc_taxi/)): Timestamped taxi pick-up events
+- **StackOverflow** ([Leskovec, 2014](https://snap.stanford.edu/data/)): Timestamped user badge reward events
+- **Taobao** ([Xue et al, 2022](https://arxiv.org/abs/2210.01753)): Timestamped user online shopping behavior events
+- **Amazon** ([Xue et al, 2022](https://arxiv.org/abs/2210.01753)): Timestamped user online shopping behavior events
+
+#### 2. Synthetic Datasets
+
+Custom synthetic datasets generated for TPP research, available on [Hugging Face](https://huggingface.co/NzoCs):
+
+- **Hawkes Process Simulations**: Various parameter configurations
+- **Self-Correcting Process**: Different excitation/inhibition patterns
+- **Neural Hawkes Process**: Simulated event sequences
+- **Custom TPP Models**: Additional synthetic variations
+
+All datasets are preprocessed to the standard format used by TPP researchers and are publicly accessible through Hugging Face.
 
 
-  All datasets are preprocess to the `Gatech` format dataset widely used for TPP researchers, and saved at [Google Drive](https://drive.google.com/drive/u/0/folders/1f8k82-NL6KFKuNMsUwozmbzDSFycYvz7) with a public access.
 
 ## Quick Start <a href='#top'>[Back to Top]</a>
 <span id='quick-start'/>
@@ -511,11 +486,11 @@ configs/
 - **`configs/`**: Configuration templates and examples
 - **`examples/`**: Practical examples and tutorials for different use cases
 - **`tests/`**: Comprehensive test suite
-- **`docs/`**: Documentation source files
+<!-- - **`docs/`**: Documentation source files -->
 
 For detailed CLI documentation, see [`scripts/CLI_README.md`](scripts/CLI_README.md).
 
-
+<!-- 
 ## Documentation <a href='#top'>[Back to Top]</a>
 <span id='doc'/>
 
@@ -542,195 +517,4 @@ To run the script, one should download the Taxi data following the above instruc
 ```shell
 cd examples
 python run_retweet.py
-```
-
-
-## License <a href='#top'>[Back to Top]</a>
-
-This project is licensed under the [Apache License (Version 2.0)](https://github.com/alibaba/EasyNLP/blob/master/LICENSE). This toolkit also contains some code modified from other repos under other open-source licenses. See the [NOTICE](https://github.com/ant-research/new_ltpp/blob/master/NOTICE) file for more information.
-
-
-## Todo List
-
-<span id='todo'/>
-
-### 🔥 Upcoming Features
-
-#### Advanced Loss Functions & Metrics
-
-- [ ] **Optimal Transport Losses**:
-  - [ ] Gromov-Wasserstein distance implementation
-  - [ ] Fused optimal transport for multivariate sequences
-- [ ] **Information-Theoretic Metrics**:
-  - [ ] Mutual information-based evaluation
-  - [ ] KL divergence variants for temporal distributions
-- [ ] **Geometric Deep Learning**:
-  - [ ] Graph neural network integration for event dependencies
-  - [ ] Manifold learning for temporal embeddings
-
-#### Enhanced Model Capabilities
-
-- [ ] **Multi-scale Temporal Modeling**:
-  - [ ] Hierarchical attention mechanisms
-  - [ ] Wavelet-based temporal decomposition
-- [ ] **Causal Discovery**:
-  - [ ] Granger causality integration
-  - [ ] Causal inference for event relationships
-- [ ] **Meta-Learning**:
-  - [ ] Few-shot adaptation for new event types
-  - [ ] Transfer learning across domains
-
-#### Advanced Evaluation & Analysis
-
-- [ ] **Distributional Testing**:
-  - [ ] Kolmogorov-Smirnov tests for generated sequences
-  - [ ] Anderson-Darling goodness-of-fit tests
-- [ ] **Temporal Pattern Mining**:
-  - [ ] Automatic pattern discovery in generated sequences
-  - [ ] Burst detection and analysis
-- [ ] **Uncertainty Quantification**:
-  - [ ] Conformal prediction intervals
-  - [ ] Bayesian neural network integration
-
-#### Performance & Scalability
-
-- [ ] **Distributed Training**:
-  - [ ] Multi-GPU scaling improvements
-  - [ ] Distributed data parallel optimization
-- [ ] **Model Compression**:
-  - [ ] Knowledge distillation for TPP models
-  - [ ] Pruning and quantization techniques
-- [ ] **Streaming Inference**:
-  - [ ] Real-time prediction capabilities
-  - [ ] Online learning adaptation
-
-### 🛠️ Technical Improvements
-
-- [ ] **Enhanced CLI**:
-  - [ ] Configuration templates for common use cases
-  - [ ] Automated hyperparameter suggestions
-- [ ] **Documentation**:
-  - [ ] Comprehensive tutorials for advanced features
-  - [ ] Best practices guide for evaluation metrics
-- [ ] **Testing & Quality**:
-  - [ ] Comprehensive unit test coverage
-  - [ ] Integration tests for all loss functions
-  - [ ] Performance benchmarking suite
-
-### 📊 Research Extensions
-
-- [ ] **New Datasets**:
-  - [ ] Financial market events integration
-  - [ ] Social media temporal patterns
-  - [ ] IoT sensor event sequences
-- [ ] **Benchmark Studies**:
-  - [ ] Comprehensive comparison with traditional metrics
-  - [ ] Robustness analysis under distribution shift
-  - [ ] Computational efficiency comparisons
-
-### 🔬 Experimental Features
-
-- [ ] **Generative Modeling**:
-  - [ ] VAE integration for temporal point processes
-  - [ ] GAN-based sequence generation
-- [ ] **Reinforcement Learning**:
-  - [ ] RL-based sequence optimization
-  - [ ] Multi-agent temporal modeling
-
-## 🤝 Contributing
-
-<span id='contributing'/>
-
-We welcome contributions from the community! This project follows modern development practices and coding standards.
-
-### Quick Start for Contributors
-
-1. **Read the [Contributing Guide](CONTRIBUTING.md)** - Complete guide for contributors
-2. **Check [Open Issues](https://github.com/NzoCs/Learning-point-processes/issues)** - Find something to work on
-3. **Follow our [Git Workflow](.github/README.md)** - Standardized development process
-
-### Development Setup
-
-```bash
-# Clone and setup
-git clone https://github.com/NzoCs/Learning-point-processes.git
-cd Learning-point-processes
-uv sync
-
-# Install pre-commit hooks
-pre-commit install
-
-# Run tests
-make test
-```
-
-### Contribution Types
-
-- 🐛 **Bug Fixes**: Help us maintain reliability
-- ✨ **New Features**: Extend the framework capabilities  
-- 📚 **Documentation**: Improve clarity and examples
-- ⚡ **Performance**: Optimize existing implementations
-- 🧪 **Testing**: Improve test coverage and quality
-
-### Standards
-
-- **Code Style**: Black, isort, flake8
-- **Commits**: [Conventional Commits](https://conventionalcommits.org/)
-- **Testing**: Minimum 90% coverage for new code
-- **Documentation**: Google-style docstrings
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-## Citation
-
-<span id='citation'/>
-
-### Original new_ltpp Citation
-
-This project is greatly inspired by the original new_ltpp framework. If you use this work, please cite the original paper:
-
-```bibtex
-@inproceedings{xue2024new_ltpp,
-      title={new_ltpp: Towards Open Benchmarking Temporal Point Processes}, 
-      author={Siqiao Xue and Xiaoming Shi and Zhixuan Chu and Yan Wang and Hongyan Hao and Fan Zhou and Caigao Jiang and Chen Pan and James Y. Zhang and Qingsong Wen and Jun Zhou and Hongyuan Mei},
-      booktitle = {International Conference on Learning Representations (ICLR)},
-      year = {2024},
-      url ={https://arxiv.org/abs/2307.08097}
-}
-```
-
-### This Project
-
-If you find New-LTPP useful for your research, please consider citing this repository:
-
-```bibtex
-@software{new_ltpp2025,
-      title={New-LTPP: Advanced Temporal Point Process Framework},
-      author={Enzo Cao},
-      year={2025},
-      url={https://github.com/NzoCs/Learning-point-processes},
-      note={Advanced TPP framework with Lightning integration and enhanced evaluation metrics}
-}
-```
-
-## Acknowledgment
-
-<span id='acknowledgment'/>
-
-### Original new_ltpp Team
-
-This project builds upon the excellent foundation provided by the [new_ltpp](https://github.com/ant-research/EasyTemporalPointProcess) team from Machine Intelligence Group, Alipay and DAMO Academy, Alibaba. We are grateful for their pioneering work in making TPP research more accessible.
-
-### Key Inspirations
-
-The following repositories and frameworks have influenced this work:
-
-- **[easytpp](https://github.com/ant-research/EasyTemporalPointProcess)**: Original foundation and inspiration
-- **[PyTorch Lightning](https://lightning.ai/)**: High-performance training framework
-- **[Neural Hawkes Process](https://github.com/hongyuanmei/neurawkes)**: Fundamental TPP implementations
-- **[Attentive Neural Hawkes Process](https://github.com/yangalan123/anhp-andtt)**: Attention mechanisms in TPP
-
-### Advanced Metrics & Losses
-
-Special thanks to the research community for developing the advanced evaluation metrics and loss functions implemented in this framework, including contributions from optimal transport, distributional analysis, and robust machine learning communities.
-
+``` -->

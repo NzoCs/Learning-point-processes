@@ -17,6 +17,7 @@ class NeuralModel(Model, ABC):
         model_config,
         *,
         num_event_types: int,
+        dtime_max: float,
         dropout: float = 0.1,
         hidden_size: int = 128,
         **kwargs,
@@ -31,6 +32,7 @@ class NeuralModel(Model, ABC):
         super(NeuralModel, self).__init__(
             model_config,
             num_event_types=num_event_types,
+            dtime_max=dtime_max
         )
 
         self.num_event_types = num_event_types

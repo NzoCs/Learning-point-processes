@@ -15,11 +15,13 @@ Usage:
 
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Type, Union
+from typing import Dict, Optional, Type, Union, Any
 
 from new_ltpp.configs import DataConfig
+from new_ltpp.globals import OUTPUT_DIR
 
-from .base_bench import Benchmark
+
+from .base_bench import BaseBenchmark
 from .bench_interfaces import BenchmarkInterface
 from .last_mark_bench import LastMarkBenchmark
 from .mean_bench import MeanInterTimeBenchmark
@@ -29,9 +31,6 @@ from .sample_distrib_intertime_bench import (
 from .sample_distrib_mark_bench import (
     MarkDistributionBenchmark,
 )
-
-ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent / "artifacts"
-
 
 class BenchmarksEnum(Enum):
     """Enum of available benchmarks."""
@@ -44,11 +43,11 @@ class BenchmarksEnum(Enum):
     )
     MARK_DISTRIBUTION = ("mark_distribution_sampling", MarkDistributionBenchmark)
 
-    def __init__(self, benchmark_name: str, benchmark_class: Type[Benchmark]):
+    def __init__(self, benchmark_name: str, benchmark_class: Type[BaseBenchmark]):
         self.benchmark_name = benchmark_name
         self.benchmark_class = benchmark_class
 
-    def get_class(self) -> Type[Benchmark]:
+    def get_class(self) -> Type[BaseBenchmark]:
         """Return the benchmark class."""
         return self.benchmark_class
 
@@ -57,162 +56,153 @@ class BenchmarksEnum(Enum):
         return self.benchmark_name
 
     @classmethod
-    def get_benchmark_by_name(cls, name: str) -> BenchmarkInterface:
+    def get_benchmark_by_name(cls, name: str) -> Type:
         """Get a benchmark by its name."""
         for benchmark in cls:
-            if benchmark.benchmark_name == name:
-                return benchmark
+            if benchmark.get_name() == name:
+                return benchmark.get_class()
         raise ValueError(
-            f"Benchmark '{name}' not found. Available: {[b.benchmark_name for b in cls]}"
+            f"Benchmark '{name}' not found. Available: {[b.get_name() for b in cls]}"
         )
 
     @classmethod
     def list_names(cls) -> list[str]:
         """List all benchmark names."""
-        return [benchmark.benchmark_name for benchmark in cls]
+        return [benchmark.get_name() for benchmark in cls]
 
 
 class BenchmarkManager:
-    """Simple factory to run benchmarks using the enum."""
+    """Manager to run benchmarks on data configurations."""
 
-    def __init__(
+    def __init__(self, save_dir: Union[Path, str] = OUTPUT_DIR / "benchmarks"):
+        """
+        Initialize the manager.
+
+        Args:
+            save_dir: Directory to save results (default: OUTPUT_DIR/benchmarks)
+        """
+        self.save_dir = Path(save_dir)
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+
+    def run(
         self,
-        data_config: Union[DataConfig, list[DataConfig]],
+        benchmarks: Union[BenchmarksEnum, list[BenchmarksEnum]],
+        data_configs: Union[DataConfig, list[DataConfig]],
         save_dir: Optional[Union[Path, str]] = None,
-    ):
-        """
-        Initialize the factory.
-
-        Args:
-            data_config: Data configuration or list of configurations
-            save_dir: Directory to save results
-        """
-        # Support a single config or a list of configs
-        if isinstance(data_config, list):
-            self.data_configs = data_config
-            self.data_config = data_config[0]  # Default config
-            self.dataset_name = data_config[0].dataset_id
-        else:
-            self.data_configs = [data_config]
-            self.data_config = data_config
-            self.dataset_name = data_config.dataset_id
-
-        self.save_dir = save_dir or ROOT_DIR / "benchmarks"
-        Path(self.save_dir).mkdir(parents=True, exist_ok=True)
-
-    def run_single(
-        self,
-        benchmark: BenchmarksEnum,
-        data_config: Optional[DataConfig] = None,
         **kwargs,
-    ):
+    ) -> Dict[str, Any]:
         """
-        Run a single benchmark on a configuration.
+        Run benchmarks on data configurations.
 
         Args:
-            benchmark: Benchmark to run
-            data_config: Specific configuration (uses self.data_config if None)
-            **kwargs: Additional arguments for the benchmark
+            benchmarks: Benchmark(s) to run
+            data_configs: Data configuration(s) to use
+            save_dir: Override the default save directory (optional)
+            **kwargs: Additional arguments for the benchmarks
+
+        Returns:
+            Dict with results. Structure depends on input:
+            - Single config, single benchmark: {benchmark_name: result}
+            - Single config, multiple benchmarks: {benchmark_name: result, ...}
+            - Multiple configs, any benchmarks: {dataset_id: {benchmark_name: result, ...}, ...}
         """
-        config = data_config or self.data_config
-        dataset_name = config.dataset_id
+        # Normalize inputs to lists
+        if isinstance(benchmarks, BenchmarksEnum):
+            benchmarks = [benchmarks]
+        if not isinstance(data_configs, list):
+            data_configs = [data_configs]
 
-        print(f"Running benchmark: {benchmark.benchmark_name} on {dataset_name}")
+        # Determine save directory
+        output_dir = Path(save_dir) if save_dir else self.save_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-        benchmark_class = benchmark.get_class()
-        instance = benchmark_class(
-            data_config=config,
-            save_dir=self.save_dir,
-            **kwargs,
-        )
+        # Multiple configs: return nested dict {dataset_id: {benchmark_name: result}}
+        if len(data_configs) > 1:
+            results = {}
+            for config in data_configs:
+                dataset_id = config.dataset_id
+                dataset_results = {}
 
-        results = instance.evaluate()
-        print(f"Benchmark {benchmark.benchmark_name} finished for {dataset_name}")
-        return results
+                for bm in benchmarks:
+                    benchmark_class = bm.get_class()
+                    instance = benchmark_class(
+                        data_config=config,
+                        save_dir=output_dir / dataset_id,
+                        **kwargs,
+                    )
+                    dataset_results[bm.benchmark_name] = instance.evaluate()
+                    print(f"Benchmark {bm.benchmark_name} finished for {dataset_id}")
 
-    def run_multiple(self, benchmarks: list[BenchmarksEnum], **kwargs):
-        """Run multiple benchmarks."""
+                results[dataset_id] = dataset_results
+
+            return results
+
+        # Single config: return flat dict {benchmark_name: result}
+        config = data_configs[0]
+        dataset_id = config.dataset_id
         results = {}
-        for benchmark in benchmarks:
-            results[benchmark.benchmark_name] = self.run_single(benchmark, **kwargs)
+
+        for bm in benchmarks:
+            benchmark_class = bm.get_class()
+            instance = benchmark_class(
+                data_config=config,
+                save_dir=output_dir,
+                **kwargs,
+            )
+            results[bm.benchmark_name] = instance.evaluate()
+            print(f"Benchmark {bm.benchmark_name} finished for {dataset_id}")
+
         return results
 
-    def run_all(self, **kwargs):
-        """Run all available benchmarks."""
-        all_benchmarks = list(BenchmarksEnum)
-        return self.run_multiple(all_benchmarks, **kwargs)
+    def run_all_benchmarks(
+        self,
+        data_configs: Union[DataConfig, list[DataConfig]],
+        save_dir: Optional[Union[Path, str]] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """
+        Run all available benchmarks on data configurations.
 
-    def run_by_names(self, benchmark_names: list[str], **kwargs):
-        """Run benchmarks by their names."""
+        Args:
+            data_configs: Data configuration(s) to use
+            save_dir: Override the default save directory (optional)
+            **kwargs: Additional arguments for the benchmarks
+
+        Returns:
+            Dict with results (see run() for structure details)
+        """
+        all_benchmarks = list(BenchmarksEnum)
+        return self.run(all_benchmarks, data_configs, save_dir, **kwargs)
+
+    def run_by_names(
+        self,
+        benchmark_names: list[str],
+        data_configs: Union[DataConfig, list[DataConfig]],
+        save_dir: Optional[Union[Path, str]] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """
+        Run benchmarks by their names on data configurations.
+
+        Args:
+            benchmark_names: List of benchmark names to run
+            data_configs: Data configuration(s) to use
+            save_dir: Override the default save directory (optional)
+            **kwargs: Additional arguments for the benchmarks
+
+        Returns:
+            Dict with results (see run() for structure details)
+        """
         benchmarks = []
         for name in benchmark_names:
-            benchmark = BenchmarksEnum.get_benchmark_by_name(name)
-            benchmarks.append(benchmark)
-        return self.run_multiple(benchmarks, **kwargs)
-
-    def run_single_on_all_configs(self, benchmark: BenchmarksEnum, **kwargs):
-        """
-        Run a single benchmark on all configurations.
-
-        Args:
-            benchmark: Benchmark to run
-            **kwargs: Additional arguments for the benchmark
-
-        Returns:
-            Dict[str, Any]: Results keyed by dataset_id
-        """
-        results = {}
-        for config in self.data_configs:
-            dataset_id = config.dataset_id
-            print(f"\n{'='*60}")
-            print(f"Configuration: {dataset_id}")
-            print(f"{'='*60}")
-            results[dataset_id] = self.run_single(
-                benchmark, data_config=config, **kwargs
-            )
-        return results
-
-    def run_multiple_on_all_configs(self, benchmarks: list[BenchmarksEnum], **kwargs):
-        """
-        Run multiple benchmarks on all configurations.
-
-        Args:
-            benchmarks: List of benchmarks to run
-            **kwargs: Additional arguments for the benchmarks
-
-        Returns:
-            Dict[str, Dict[str, Any]]: Results by dataset_id then by benchmark
-        """
-        results = {}
-        for config in self.data_configs:
-            dataset_id = config.dataset_id
-            print(f"\n{'='*60}")
-            print(f"Configuration: {dataset_id}")
-            print(f"{'='*60}")
-            results[dataset_id] = {}
-            for benchmark in benchmarks:
-                results[dataset_id][benchmark.benchmark_name] = self.run_single(
-                    benchmark, data_config=config, **kwargs
+            try:
+                benchmark_enum = next(
+                    b for b in BenchmarksEnum if b.get_name() == name
                 )
-        return results
+                benchmarks.append(benchmark_enum)
+            except StopIteration:
+                raise ValueError(
+                    f"Benchmark '{name}' not found. Available: {BenchmarksEnum.list_names()}"
+                )
 
-    def run_all_on_all_configs(self, **kwargs):
-        """
-        Run all benchmarks on all configurations.
-
-        Args:
-            **kwargs: Additional arguments for the benchmarks
-
-        Returns:
-            Dict[str, Dict[str, Any]]: Results by dataset_id then by benchmark
-        """
-        all_benchmarks = list(BenchmarksEnum)
-        return self.run_multiple_on_all_configs(all_benchmarks, **kwargs)
-
-    def get_config_count(self) -> int:
-        """Return the number of configurations."""
-        return len(self.data_configs)
-
-    def list_datasets(self) -> list[str]:
-        """List all available dataset_ids."""
-        return [config.dataset_id for config in self.data_configs]
+        return self.run(benchmarks, data_configs, save_dir, **kwargs)

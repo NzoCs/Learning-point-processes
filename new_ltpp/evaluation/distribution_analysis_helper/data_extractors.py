@@ -8,6 +8,7 @@ import numpy as np
 import torch
 
 from new_ltpp.data.preprocess.dataset import TPPDataset
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.utils import logger
 
 
@@ -181,7 +182,7 @@ class LabelDataExtractor:
             return False
 
     def _extract_batch_tensors(
-        self, batch
+        self, batch: Batch
     ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]:
         """
         Extract relevant tensors from batch with flexible format handling.
@@ -192,25 +193,8 @@ class LabelDataExtractor:
         Returns:
             Tuple of (time_delta_seqs, type_seqs, attention_mask)
         """
-        try:
-            if isinstance(batch, dict):
-                return (
-                    batch.get("time_delta_seqs"),
-                    batch.get("type_seqs"),
-                    batch.get("attention_mask"),
-                )
-            elif hasattr(batch, "values"):
-                batch_values = list(batch.values())
-                if len(batch_values) >= 3:
-                    return batch_values[1], batch_values[2], batch_values[3]
-            elif isinstance(batch, (list, tuple)) and len(batch) >= 3:
-                return batch[1], batch[2], batch[3] if len(batch) > 3 else None
 
-            return None, None, None
-
-        except Exception as e:
-            logger.warning(f"Failed to extract tensors from batch: {str(e)}")
-            return None, None, None
+        return batch.time_delta_seqs, batch.type_seqs, batch.seq_non_pad_mask
 
     def _process_sequence(
         self,

@@ -5,7 +5,9 @@ This module contains simple benchmark implementations that provide baseline
 performance comparisons for temporal point process models.
 """
 
-from .base_bench import Benchmark, BenchmarkMode
+from .base_bench import BaseBenchmark
+from .time_bench import TimeBenchmark
+from .type_bench import TypeBenchmark
 from .benchmark_manager import BenchmarkManager, BenchmarksEnum
 from .last_mark_bench import LastMarkBenchmark
 from .mean_bench import MeanInterTimeBenchmark
@@ -17,11 +19,11 @@ from .sample_distrib_mark_bench import (
 )
 
 __all__ = [
-    "Benchmark",
+    "BaseBenchmark",
+    "TimeBenchmark",
+    "TypeBenchmark",
     "BenchmarkManager",
     "BenchmarksEnum",
-    "BenchmarkMode",
-    "run_benchmark",
     "MeanInterTimeBenchmark",
     "InterTimeDistributionBenchmark",
     "MarkDistributionBenchmark",

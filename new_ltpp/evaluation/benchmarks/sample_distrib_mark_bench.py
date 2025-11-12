@@ -5,23 +5,25 @@ This benchmark creates bins to approximate the distribution of event marks (type
 from the training dataset, then predicts marks by sampling from this distribution.
 """
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Union
+from pathlib import Path
 
 import torch
-import yaml
 
 from new_ltpp.configs.data_config import DataConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.utils import logger
+from new_ltpp.globals import OUTPUT_DIR
 
-from .base_bench import Benchmark, BenchmarkMode
+from .type_bench import TypeBenchmark
 
 
-class MarkDistributionBenchmark(Benchmark):
+class MarkDistributionBenchmark(TypeBenchmark):
     """
     Benchmark that samples event marks from the empirical distribution of training data.
     """
 
-    def __init__(self, data_config: DataConfig, save_dir: str = None):
+    def __init__(self, data_config: DataConfig, save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks"):
         """
         Initialize the mark distribution benchmark.
 
@@ -29,8 +31,7 @@ class MarkDistributionBenchmark(Benchmark):
             data_config: Data configuration object
             save_dir: Directory to save results
         """
-        # This benchmark focuses on type prediction, so default to TYPE_ONLY
-        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY)
+        super().__init__(data_config, save_dir)
 
         # Distribution parameters
         self.mark_probabilities = None
@@ -53,9 +54,8 @@ class MarkDistributionBenchmark(Benchmark):
 
         for batch in test_loader:
             # Extract event types from batch
-            # batch structure: dict with keys: 'time_seqs', 'time_delta_seqs', 'type_seqs', 'batch_non_pad_mask', ...
-            type_seqs = batch["type_seqs"]  # Event types/marks
-            batch_non_pad_mask = batch.get("batch_non_pad_mask", None)
+            type_seqs = batch.type_seqs  # Event types/marks
+            batch_non_pad_mask = batch.seq_non_pad_mask
 
             if batch_non_pad_mask is not None:
                 # Only consider non-padded values
@@ -112,7 +112,7 @@ class MarkDistributionBenchmark(Benchmark):
 
         return sampled_tensor
 
-    def _create_type_predictions(self, batch: Tuple) -> torch.Tensor:
+    def _create_type_predictions(self, batch: Batch) -> torch.Tensor:
         """
         Create type predictions by sampling from the mark distribution.
 
@@ -122,7 +122,7 @@ class MarkDistributionBenchmark(Benchmark):
         Returns:
             Tensor of predicted types
         """
-        type_seqs = batch["type_seqs"]
+        type_seqs = batch.type_seqs
         batch_size, seq_len = type_seqs.shape
 
         # Sample marks from distribution

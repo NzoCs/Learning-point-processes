@@ -48,6 +48,47 @@ class MetricsComputerInterface(ABC):
         """
         pass
 
+class TimeMetricsComputerInterface(ABC):
+    """Interface for time-related metrics computation."""
+
+    @abstractmethod
+    def compute_time_metrics(self, batch: Any, pred: Any) -> Dict[str, float]:
+        """
+        Compute time-related metrics from batch data and predictions.
+
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+
+        Returns:
+            Dictionary of computed time-related metrics
+        """
+        pass
+
+    def compute_metrics(self, batch: Any, pred: Any) -> Dict[str, float]:
+        """Compute all metrics (time-related in this case)."""
+        return self.compute_time_metrics(batch, pred)
+    
+class TypeMetricsComputerInterface(ABC):
+    """Interface for type-related metrics computation."""
+
+    @abstractmethod
+    def compute_type_metrics(self, batch: Any, pred: Any) -> Dict[str, float]:
+        """
+        Compute type-related metrics from batch data and predictions.
+
+        Args:
+            batch: Input batch data
+            pred: Model predictions
+
+        Returns:
+            Dictionary of computed type-related metrics
+        """
+        pass
+
+    def compute_metrics(self, batch: Any, pred: Any) -> Dict[str, float]:
+        """Compute all metrics (type-related in this case)."""
+        return self.compute_type_metrics(batch, pred)
 
 class DataExtractorInterface(ABC):
     """Interface for data extraction operations."""

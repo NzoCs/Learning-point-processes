@@ -174,17 +174,20 @@ class FullyNN(Model):
 
         return hidden_states
 
-    def loglike_loss(self, batch):
+    def loglike_loss(self, batch: Batch):
         """Compute the loglike loss.
 
         Args:
-            batch (tuple, list): batch input.
+            batch: batch input.
 
         Returns:
             list: loglike loss, num events.
         """
         # [batch_size, seq_len]
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, _ = batch
+        time_seqs = batch.time_seqs
+        time_delta_seqs = batch.time_delta_seqs
+        type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
         # [batch_size, seq_len, hidden_size]
         hidden_states = self.forward(

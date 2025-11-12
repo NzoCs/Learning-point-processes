@@ -18,8 +18,8 @@ class NeuralModel(Model, ABC):
         *,
         num_event_types: int,
         dtime_max: float,
-        dropout: float = 0.1,
-        hidden_size: int = 128,
+        dropout: float,
+        hidden_size: int,
         **kwargs,
     ):
         """

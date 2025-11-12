@@ -3,19 +3,19 @@ Shared types and enums for the metrics helper package.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 import torch
 
 
-class EvaluationMode(Enum):
+class EvaluationMode(StrEnum):
     """Evaluation modes for metrics computation."""
 
     SIMULATION = "simulation"
     PREDICTION = "prediction"
 
 
-class PredictionMetrics(Enum):
+class PredictionMetrics(StrEnum):
     """Available prediction metrics."""
 
     TIME_RMSE = "time_rmse"
@@ -28,7 +28,7 @@ class PredictionMetrics(Enum):
     CONFUSION_MATRIX = "confusion_matrix"
 
 
-class SimulationMetrics(Enum):
+class SimulationMetrics(StrEnum):
     """Available simulation metrics."""
 
     WASSERSTEIN_1D = "wasserstein_1d"

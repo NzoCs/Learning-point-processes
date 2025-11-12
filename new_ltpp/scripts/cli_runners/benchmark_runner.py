@@ -60,16 +60,50 @@ class BenchmarkRunner(CLIRunnerBase):
         required_modules = ["new_ltpp.configs", "new_ltpp.evaluation.benchmarks"]
         if not self.check_dependencies(required_modules):
             return False
+        
+        # Support de plusieurs configurations
+        data_configs_list = (
+            data_config if isinstance(data_config, list) else [data_config]
+        )
+
+        
+        # Configuration par défaut si aucun fichier spécifié
+        if config_path is None:
+            config_path = str(self.get_config_path())
+            self.print_info(
+                f"Utilisation de la configuration par défaut: {config_path}"
+            )
+
+        
+        # Construire toutes les configurations
+        all_data_configs = []
+        for data_cfg in data_configs_list:
+            # Construire les chemins de configuration avec la méthode utilitaire
+            config_paths = self._build_config_paths(
+                data=data_cfg, data_loading=data_loading_config
+            )
+
+            self.print_info(
+                f"Configuration des données: {config_paths.get('data_config_path')}"
+            )
+
+            builder = DataConfigBuilder()
+            builder.load_from_yaml(yaml_path=config_path, **config_paths)
+            built_config = builder.build()
+            all_data_configs.append(built_config)
+
+            self.print_info(f"Configuration chargée: {built_config.dataset_id}")
+
+        # Créer le BenchmarkManager
+        benchmark_manager = BenchmarkManager()
+        if len(all_data_configs) > 1:
+            self.print_info(
+                f"Exécution avec {len(all_data_configs)} configurations"
+            )
+
 
         try:
             self.print_info("Configuration du benchmark...")
-
-            # Configuration par défaut si aucun fichier spécifié
-            if config_path is None:
-                config_path = str(self.get_config_path())
-                self.print_info(
-                    f"Utilisation de la configuration par défaut: {config_path}"
-                )
 
             # Créer le répertoire de sortie si nécessaire
             if output_dir is None:
@@ -84,55 +118,21 @@ class BenchmarkRunner(CLIRunnerBase):
             else:
                 Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-            # Support de plusieurs configurations
-            data_configs_list = (
-                data_config if isinstance(data_config, list) else [data_config]
-            )
-
-            # Construire toutes les configurations
-            all_data_configs = []
-            for data_cfg in data_configs_list:
-                # Construire les chemins de configuration avec la méthode utilitaire
-                config_paths = self._build_config_paths(
-                    data=data_cfg, data_loading=data_loading_config
-                )
-
-                self.print_info(
-                    f"Configuration des données: {config_paths.get('data_config_path')}"
-                )
-
-                builder = DataConfigBuilder()
-                builder.load_from_yaml(yaml_path=config_path, **config_paths)
-                built_config = builder.build()
-                all_data_configs.append(built_config)
-
-                self.print_info(f"Configuration chargée: {built_config.dataset_id}")
-
-            # Créer le BenchmarkManager avec une ou plusieurs configs
-            if len(all_data_configs) == 1:
-                benchmark_manager = BenchmarkManager(all_data_configs[0])
-            else:
-                benchmark_manager = BenchmarkManager(all_data_configs)
-                self.print_info(
-                    f"BenchmarkManager créé avec {len(all_data_configs)} configurations"
-                )
 
             # Déterminer quels benchmarks exécuter
-            if run_all and run_all_configs and benchmark_manager.get_config_count() > 1:
+            if run_all and run_all_configs and len(all_data_configs) > 1:
                 self.print_info(
-                    f"Exécution de tous les benchmarks sur {benchmark_manager.get_config_count()} configurations..."
+                    f"Exécution de tous les benchmarks sur {len(all_data_configs)} configurations..."
                 )
+                dataset_ids = [cfg.dataset_id for cfg in all_data_configs]
                 self.print_info(
-                    f"Datasets: {', '.join(benchmark_manager.list_datasets())}"
+                    f"Datasets: {', '.join(dataset_ids)}"
                 )
-                results = benchmark_manager.run_all_on_all_configs(**benchmark_params)
+                results = benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
 
             elif run_all:
                 self.print_info("Exécution de tous les benchmarks disponibles...")
-                if benchmark_manager.get_config_count() > 1:
-                    results = benchmark_manager.run_all(**benchmark_params)
-                else:
-                    results = benchmark_manager.run_all(**benchmark_params)
+                results = benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
 
             elif benchmarks:
                 self.print_info(f"Exécution des benchmarks: {benchmarks}")
@@ -153,17 +153,13 @@ class BenchmarkRunner(CLIRunnerBase):
                         continue
 
                 if benchmark_enums:
-                    if run_all_configs and benchmark_manager.get_config_count() > 1:
+                    if run_all_configs and len(all_data_configs) > 1:
                         self.print_info(
-                            f"Exécution sur {benchmark_manager.get_config_count()} configurations..."
+                            f"Exécution sur {len(all_data_configs)} configurations..."
                         )
-                        results = benchmark_manager.run_multiple_on_all_configs(
-                            benchmark_enums, **benchmark_params
-                        )
-                    else:
-                        results = benchmark_manager.run_multiple(
-                            benchmark_enums, **benchmark_params
-                        )
+                    results = benchmark_manager.run(
+                        benchmark_enums, all_data_configs, **benchmark_params
+                    )
                 else:
                     self.print_error("Aucun benchmark valide spécifié")
                     return False
@@ -177,14 +173,13 @@ class BenchmarkRunner(CLIRunnerBase):
                     Benchmarks.INTERTIME_DISTRIBUTION,
                 ]
 
-                if run_all_configs and benchmark_manager.get_config_count() > 1:
-                    results = benchmark_manager.run_multiple_on_all_configs(
-                        default_benchmarks, **benchmark_params
+                if run_all_configs and len(all_data_configs) > 1:
+                    self.print_info(
+                        f"Exécution sur {len(all_data_configs)} configurations..."
                     )
-                else:
-                    results = benchmark_manager.run_multiple(
-                        default_benchmarks, **benchmark_params
-                    )
+                results = benchmark_manager.run(
+                    default_benchmarks, all_data_configs, **benchmark_params
+                )
 
             # Afficher les résultats
             self._display_benchmark_results(results, output_dir)

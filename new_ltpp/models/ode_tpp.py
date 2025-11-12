@@ -5,6 +5,7 @@ from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import DNN
 from new_ltpp.models.basemodel import Model
 from new_ltpp.utils import rk4_step_method
+from new_ltpp.data.preprocess.types import Batch
 
 
 def flatten_parameters(model):
@@ -230,16 +231,19 @@ class ODETPP(Model):
 
         return left_limits, right_limits
 
-    def loglike_loss(self, batch):
+    def loglike_loss(self, batch: Batch):
         """Compute the loglike loss.
 
         Args:
-            batch (list): batch input.
+            batch: batch input.
 
         Returns:
             list: loglike loss, num events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, _ = batch
+        time_seqs = batch.time_seqs
+        time_delta_seqs = batch.time_delta_seqs
+        type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
         # compute hidden states at event time
         # left limits of [t_1, ..., t_N]

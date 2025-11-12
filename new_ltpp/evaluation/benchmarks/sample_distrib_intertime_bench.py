@@ -5,18 +5,20 @@ This benchmark creates bins to approximate the distribution of inter-times from 
 training dataset, then predicts inter-times by sampling from these bins.
 """
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Union
+from pathlib import Path
 
 import torch
-import yaml
 
 from new_ltpp.configs.data_config import DataConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.utils import logger
+from new_ltpp.globals import OUTPUT_DIR
 
-from .base_bench import Benchmark, BenchmarkMode
+from .time_bench import TimeBenchmark
 
 
-class InterTimeDistributionBenchmark(Benchmark):
+class InterTimeDistributionBenchmark(TimeBenchmark):
     """
     Benchmark that samples inter-times from the empirical distribution of training data.
     """
@@ -24,7 +26,7 @@ class InterTimeDistributionBenchmark(Benchmark):
     def __init__(
         self,
         data_config: DataConfig,
-        save_dir: str = None,
+        save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks",
         num_bins: int = 50,
     ):
         """
@@ -35,8 +37,7 @@ class InterTimeDistributionBenchmark(Benchmark):
         *            save_dir: Directory to save results
                     num_bins: Number of bins for histogram approximation
         """
-        # This benchmark focuses on time prediction, so default to TIME_ONLY
-        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY)
+        super().__init__(data_config, save_dir)
         self.num_bins = num_bins
 
         # Distribution parameters
@@ -48,16 +49,15 @@ class InterTimeDistributionBenchmark(Benchmark):
         """
         Build the empirical distribution of inter-times from training data.
         """
-        train_loader = self.data_module.test_dataloader()
+        test_loader = self.data_module.test_dataloader()
         all_inter_times = []
 
-        logger.info("Collecting inter-times from training data...")
+        logger.info("Collecting inter-times from test data...")
 
-        for batch in train_loader:
-            # Extract inter-times from batch
-            # batch structure: dict with keys: 'time_seqs', 'time_delta_seqs', 'type_seqs', 'batch_non_pad_mask', ...
-            time_delta_seqs = batch["time_delta_seqs"]  # Inter-times
-            batch_non_pad_mask = batch.get("batch_non_pad_mask", None)
+        for batch in test_loader:
+            # Extract inter-event times from batch
+            time_delta_seqs = batch.time_delta_seqs  # Inter-times
+            batch_non_pad_mask = batch.seq_non_pad_mask
 
             if batch_non_pad_mask is not None:
                 # Only consider non-padded values
@@ -135,7 +135,7 @@ class InterTimeDistributionBenchmark(Benchmark):
 
         return sampled_tensor
 
-    def _create_time_predictions(self, batch: Tuple) -> torch.Tensor:
+    def _create_time_predictions(self, batch: Batch) -> torch.Tensor:
         """
         Create time predictions by sampling from the inter-time distribution.
 
@@ -143,9 +143,9 @@ class InterTimeDistributionBenchmark(Benchmark):
             batch: Input batch
 
         Returns:
-            Tensor of predicted inter-times
+            Tensor of predicted inter-event times
         """
-        time_delta_seqs = batch["time_delta_seqs"]
+        time_delta_seqs = batch.time_delta_seqs
         batch_size, seq_len = time_delta_seqs.shape
 
         # Sample inter-times from distribution

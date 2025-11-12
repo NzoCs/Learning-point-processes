@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from new_ltpp.configs.model_config import ModelConfig
+from new_ltpp.data.preprocess.types import Batch
 
 from .baselayer import (
     EncoderLayer,
@@ -117,21 +118,21 @@ class THP(NeuralModel):
 
         return enc_output
 
-    def loglike_loss(self, batch):
+    def loglike_loss(self, batch: Batch):
         """Compute the loglike loss.
 
         Args:
-            batch (tuple, list): batch input.
+            batch: batch input.
 
         Returns:
             tuple: loglike loss, num events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = (
-            batch
-        )
-
-        # 1. compute event-loglik
-        # [batch_size, seq_len, hidden_size]
+        time_seqs = batch.time_seqs
+        time_delta_seqs = batch.time_delta_seqs
+        type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
+        attention_mask = batch.attention_mask
+        
         enc_out = self.forward(
             time_seqs[:, :-1], type_seqs[:, :-1], attention_mask[:, :-1, :-1]
         )

@@ -1,5 +1,0 @@
-hpo:
-  storage_uri: sqlite://hpo_test.db
-  is_continuous: False
-  framework_id: optuna # the framework of hpo
-  n_trials: 10

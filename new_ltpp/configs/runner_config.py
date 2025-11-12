@@ -133,16 +133,16 @@ class RunnerConfig(Config):
         # Model checkpoints directory
         ckpt = "checkpoints"
         self.checkpoint_dir = OUTPUT_DIR / (
-            save_dir or f"{ckpt}/{self.model_id}/{self.dataset_id}/"
+            save_dir or f"{ckpt}/{self.dataset_id}/{self.model_id}/"
         )
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         
         # Saved model directory (separate from checkpoints)
-        self.save_model_dir = OUTPUT_DIR /  self.model_id / self.dataset_id / "saved_model"
+        self.save_model_dir = OUTPUT_DIR /  self.dataset_id / self.model_id / "saved_model"
         self.save_model_dir.mkdir(parents=True, exist_ok=True)
         
         # Logger save directory (separate from checkpoints)
-        self.save_dir = str(OUTPUT_DIR / self.model_id / self.dataset_id / "logs")
+        self.save_dir = str(OUTPUT_DIR /  self.dataset_id / self.model_id / "logs")
 
         # Model directory alias for compatibility
         self.model_dir = str(self.save_model_dir)

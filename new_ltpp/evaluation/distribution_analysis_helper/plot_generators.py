@@ -109,46 +109,8 @@ class EventTypePlotGenerator(BasePlotGenerator):
         plt.title("Comparison of Event Type Distributions", fontsize=14)
         plt.xlabel("Event Type", fontsize=12)
         plt.ylabel("Probability", fontsize=12)
-        plt.grid(axis="y", alpha=0.3)
         plt.xticks(x, [str(t) for t in all_event_types])
-        plt.legend(title="Data Source", frameon=True, fancybox=True, shadow=True)
-
-        # Add statistics
-        label_top3_indices = np.argsort(label_probs)[-3:][::-1]
-        pred_top3_indices = np.argsort(pred_probs)[-3:][::-1]
-
-        label_stats = "Ground Truth Top Types:\n" + "\n".join(
-            [
-                f"Type {all_event_types[i]}: {label_probs[i]:.3f}"
-                for i in label_top3_indices
-            ]
-        )
-        pred_stats = "Simulation Top Types:\n" + "\n".join(
-            [
-                f"Type {all_event_types[i]}: {pred_probs[i]:.3f}"
-                for i in pred_top3_indices
-            ]
-        )
-
-        plt.annotate(
-            label_stats,
-            xy=(0.05, 0.95),
-            xycoords="axes fraction",
-            va="top",
-            ha="left",
-            bbox=dict(boxstyle="round", fc="white", alpha=0.7),
-            fontsize=10,
-        )
-
-        plt.annotate(
-            pred_stats,
-            xy=(0.95, 0.95),
-            xycoords="axes fraction",
-            va="top",
-            ha="right",
-            bbox=dict(boxstyle="round", fc="white", alpha=0.7),
-            fontsize=10,
-        )
+        plt.legend()
 
         plt.tight_layout()
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -193,54 +155,10 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
             alpha=0.6,
         )
 
-        # Calculate statistics
-        label_mean = np.mean(label_lengths)
-        label_median = np.median(label_lengths)
-        label_std = np.std(label_lengths)
-
-        pred_mean = np.mean(simulated_lengths)
-        pred_median = np.median(simulated_lengths)
-        pred_std = np.std(simulated_lengths)
-
-        label_stats = (
-            f"Ground Truth Stats:\n"
-            f"Mean: {label_mean:.2f}\n"
-            f"Median: {label_median:.2f}\n"
-            f"Std Dev: {label_std:.2f}"
-        )
-
-        pred_stats = (
-            f"Simulation Stats:\n"
-            f"Mean: {pred_mean:.2f}\n"
-            f"Median: {pred_median:.2f}\n"
-            f"Std Dev: {pred_std:.2f}"
-        )
-
-        plt.annotate(
-            label_stats,
-            xy=(0.05, 0.95),
-            xycoords="axes fraction",
-            va="top",
-            ha="left",
-            bbox=dict(boxstyle="round", fc="white", alpha=0.7),
-            fontsize=10,
-        )
-
-        plt.annotate(
-            pred_stats,
-            xy=(0.95, 0.95),
-            xycoords="axes fraction",
-            va="top",
-            ha="right",
-            bbox=dict(boxstyle="round", fc="white", alpha=0.7),
-            fontsize=10,
-        )
-
         plt.title("Comparison of Sequence Length Distributions", fontsize=14)
         plt.xlabel("Sequence Length", fontsize=12)
         plt.ylabel("Density", fontsize=12)
-        plt.grid(axis="y", alpha=0.3)
-        plt.legend(title="Data Source", frameon=True, fancybox=True, shadow=True)
+        plt.legend()
         plt.tight_layout()
 
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -298,22 +216,7 @@ class CrossCorrelationPlotGenerator(BasePlotGenerator):
         plt.title("Cross-Correlation of Counting Process Increments", fontsize=14)
         plt.xlabel("Time lag (x - t)", fontsize=12)
         plt.ylabel(r"$E[\Delta N(t,h) \cdot \Delta N(x,r)]$", fontsize=12)
-        plt.grid(True, alpha=0.3)
-        plt.legend(title="Data Source", frameon=True, fancybox=True, shadow=True)
-
-        annotation_text = (
-            f"Window sizes: h = r = {2} time units\n"
-            f"Shows temporal dependencies in event occurrence"
-        )
-        plt.annotate(
-            annotation_text,
-            xy=(0.02, 0.02),
-            xycoords="axes fraction",
-            va="bottom",
-            ha="left",
-            bbox=dict(boxstyle="round", fc="white", alpha=0.7),
-            fontsize=9,
-        )
+        plt.legend()
 
         plt.tight_layout()
         plt.savefig(output_path, dpi=300, bbox_inches="tight")

@@ -12,11 +12,10 @@ Usage:
 """
 
 import sys
-from pathlib import Path
-from typing import List, Optional, Union
+
+from typing import List, Optional
 
 import typer
-from rich import print as rprint
 from rich.console import Console
 from rich.table import Table
 
@@ -46,37 +45,37 @@ def run_experiment(
         str(CONFIGS_FILE), "--config", "-c", help="YAML configuration file [default: yaml_configs/configs.yaml]"
     ),
     data_config: str = typer.Option(
-        "test", "--data-config", help="Data configuration (test, large, synthetic) [default: test]"
+        "test", "--data-config", help="Data configuration (taxi, taobao, amazon, test, hawkes1, hawkes2, H2expi, H2expc) [default: test]"
     ),
     model_config: str = typer.Option(
-        "neural_small",
+        "quick_test",
         "--model-config",
-        help="Model configuration (neural_small, neural_large) [default: neural_small]"
+        help="Model configuration (quick_test, debug, h16_e8_l1_h2, h32_e16_l2_h4, h64_e32_l3_h8, h128_e64_l4_h16, hawkes1, hawkes2, hawkes_multivariate) [default: quick_test]"
     ),
     training_config: str = typer.Option(
         "quick_test",
         "--training-config",
-        help="Training configuration (quick_test, full_training) [default: quick_test]",
+        help="Training configuration (quick_test, debug, e500_b1, e500_b4, e1000_b2, e1000_b4) [default: quick_test]",
     ),
     data_loading_config: str = typer.Option(
-        "quick_test", "--data-loading-config", help="Data loading configuration [default: quick_test]"
+        "quick_test", "--data-loading-config", help="Data loading configuration (debug, quick_test, b32_w1, b64_w2, b128_w4, b64_w4, b32_w2, b16_w1, b128_w6, b512_w8) [default: quick_test]"
     ),
     simulation_config: str = typer.Option(
-        "simulation_fast", "--simulation-config", help="Configuration de simulation [default: simulation_fast]"
+        "quick_test", "--simulation-config", help="Simulation configuration (quick_test, debug, s20_e50_5000_b16, s50_e120_15000_b32, s100_e200_50000_b64, s100_e300_100000_b128, s100_e400_150000_b256, s80_e160_30000_b64, s50_e120_15000_b32) [default: quick_test]"
     ),
     thinning_config: str = typer.Option(
-        "thinning_fast", "--thinning-config", help="Configuration de thinning [default: thinning_fast]"
+        "quick_test", "--thinning-config", help="Thinning configuration (quick_test, debug, e50_s15, e100_s30, e150_s50, e200_s60, e20_s10) [default: quick_test]"
     ),
     logger_config: str = typer.Option(
         "tensorboard",
         "--logger-config",
-        help="Configuration du logger (mlflow, tensorboard) [default: tensorboard]",
+        help="Logger configuration (tensorboard, csv, wandb) [default: tensorboard]",
     ),
     model_id: str = typer.Option(
-        "NHP", "--model", "-m", help="ID du modèle (NHP, RMTPP, etc.) [default: NHP]"
+        "NHP", "--model", "-m", help="Model ID (NHP, RMTPP, etc.) [default: NHP]"
     ),
     phase: str = typer.Option(
-        "all", "--phase", "-p", help="Phase d'exécution (train/test/predict/all)"
+        "all", "--phase", "-p", help="Execution phase (train/test/predict/all)"
     ),
     max_epochs: int = typer.Option(
         100, "--epochs", "-e", help="Maximum number of epochs [default: 100]",

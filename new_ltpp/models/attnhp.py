@@ -233,18 +233,20 @@ class AttNHP(NeuralModel):
 
         return cur_layer_
 
-    def loglike_loss(self, batch):
-        """Compute the loglike loss.
+    def loglike_loss(self, batch: Batch):
+        """Compute the log-likelihood loss.
 
         Args:
-            batch (list): batch input.
+            batch: batch input.
 
         Returns:
-            list: loglike loss, num events.
+            tuple: loglikelihood loss and num of events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = (
-            batch
-        )
+        time_seqs = batch.time_seqs
+        time_delta_seqs = batch.time_delta_seqs
+        type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
+        attention_mask = batch.attention_mask
         # 1. compute event-loglik
         # the prediction of last event has no label, so we proceed to the last but one
         # att mask => diag is False, not mask.

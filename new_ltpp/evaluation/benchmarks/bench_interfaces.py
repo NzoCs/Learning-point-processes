@@ -4,6 +4,8 @@ from typing import Any, Dict, Iterable, Protocol, Tuple
 
 import torch
 
+from new_ltpp.data.preprocess.types import Batch
+
 
 class BenchmarkInterface(Protocol):
     """Typing protocol describing the minimal benchmark contract.
@@ -21,17 +23,17 @@ class BenchmarkInterface(Protocol):
         ...
 
     def _create_predictions(
-        self, batch: Tuple
+        self, batch: Batch
     ) -> Tuple[torch.Tensor, torch.Tensor]:  # pragma: no cover - typing only
         ...
 
     def _create_time_predictions(
-        self, batch: Tuple
+        self, batch: Batch
     ) -> torch.Tensor:  # pragma: no cover - typing only
         ...
 
     def _create_type_predictions(
-        self, batch: Tuple
+        self, batch: Batch
     ) -> torch.Tensor:  # pragma: no cover - typing only
         ...
 

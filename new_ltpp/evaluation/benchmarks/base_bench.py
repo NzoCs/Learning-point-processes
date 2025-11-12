@@ -6,33 +6,24 @@ It defines the common interface and shared functionality that all benchmarks sho
 """
 
 import json
-import os
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from pathlib import Path
+from typing import Any, Dict, List, Union
 
 import numpy as np
 import torch
-import yaml
 
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_loader import TPPDataModule
 from new_ltpp.evaluation.benchmarks.bench_interfaces import BenchmarkInterface
 from new_ltpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
+from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.utils import logger
 
 
-class BenchmarkMode(Enum):
-    """Defines what type of predictions and metrics to compute."""
-
-    TIME_ONLY = "time_only"
-    TYPE_ONLY = "type_only"
-    BOTH = "both"
-
-
-class Benchmark(ABC, BenchmarkInterface):
+class BaseBenchmark(ABC, BenchmarkInterface):
     """
-    Abstract base class for TPP benchmarks.
+    Abstract base class for all TPP benchmarks.
 
     This class provides the common structure and functionality that all benchmarks
     should inherit from. It handles data loading, metrics computation, result
@@ -42,8 +33,7 @@ class Benchmark(ABC, BenchmarkInterface):
     def __init__(
         self,
         data_config: DataConfig,
-        save_dir: str = None,
-        benchmark_mode: str = BenchmarkMode.BOTH,
+        save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks",
     ):
         """
         Initialize the base benchmark.
@@ -51,11 +41,9 @@ class Benchmark(ABC, BenchmarkInterface):
         Args:
             data_config: DataConfig object
             save_dir: Directory to save results
-            benchmark_mode: What to evaluate - "time_only", "type_only", or "both"
         """
         self.data_config = data_config
-        self.save_dir = save_dir or "./benchmark_results"
-        self.benchmark_mode = benchmark_mode
+        self.save_dir = Path(save_dir)
         self.pad_token = data_config.tokenizer_specs.pad_token_id
 
         # Initialize data module with data_config
@@ -90,112 +78,77 @@ class Benchmark(ABC, BenchmarkInterface):
         """
         pass
 
-    def _create_predictions(self, batch: Tuple) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Create predictions for a given batch using the benchmark strategy.
-
-        Args:
-            batch: Input batch from the data loader
-
-        Returns:
-            Tuple of (predicted_inter_times, predicted_types)
-        """
-        pass
-
-    def _create_time_predictions(self, batch: Tuple) -> torch.Tensor:
-        """
-        Create time predictions for a given batch using the benchmark strategy.
-
-        Args:
-            batch: Input batch from the data loader
-
-        Returns:
-            Tensor of predicted inter-times
-        """
-        # Default implementation uses the legacy method
-        pred_times, _ = self._create_predictions(batch)
-        return pred_times
-
-    def _create_type_predictions(self, batch: Tuple) -> torch.Tensor:
-        """
-        Create type predictions for a given batch using the benchmark strategy.
-
-        Args:
-            batch: Input batch from the data loader
-
-        Returns:
-            Tensor of predicted types
-        """
-        # Default implementation uses the legacy method
-        _, pred_types = self._create_predictions(batch)
-        return pred_types
-
+    @abstractmethod
     def evaluate(self) -> Dict[str, Any]:
         """
         Run the benchmark evaluation.
 
-        This method orchestrates the entire benchmark process:
-        1. Prepare the benchmark (compute statistics, etc.)
-        2. Evaluate on test data
-        3. Aggregate metrics
-        4. Save results
+        This method orchestrates the entire benchmark process and must be
+        implemented by subclasses to define the evaluation logic.
 
         Returns:
             Dictionary containing evaluation results
         """
-        logger.info(f"Starting {self.benchmark_name} benchmark evaluation...")
+        pass
 
-        # Prepare benchmark-specific parameters
-        self._prepare_benchmark()
-        # Evaluate on test data
-        test_loader = self.data_module.test_dataloader()
-        all_metrics = []
+    def _get_custom_results_info(self) -> Dict[str, Any]:
+        """
+        Get custom information to add to results.
+        Subclasses can override this to add benchmark-specific information.
 
-        for batch_idx, batch in enumerate(test_loader):
-            # Convert batch to values for compatibility
-            batch_values = batch.values()
+        Returns:
+            Dictionary with custom information
+        """
+        return {}
 
-            # Compute metrics based on benchmark mode
-            if self.benchmark_mode == BenchmarkMode.TIME_ONLY:
-                # Only compute time metrics
-                time_predictions = self._create_time_predictions(batch)
-                metrics = self.metrics_helper.compute_all_time_metrics(
-                    batch_values, time_predictions
-                )
+    def _save_results(self, results: Dict[str, Any]) -> None:
+        """
+        Save benchmark results to JSON file.
 
-            elif self.benchmark_mode == BenchmarkMode.TYPE_ONLY:
-                # Only compute type metrics
-                type_predictions = self._create_type_predictions(batch)
-                metrics = self.metrics_helper.compute_all_type_metrics(
-                    batch_values, type_predictions
-                )
-
-            else:  # BenchmarkMode.BOTH
-                # Compute all metrics (legacy behavior)
-                pred_inter_times, pred_types = self._create_predictions(batch)
-                predictions = (pred_inter_times, pred_types)
-                metrics = self.metrics_helper.compute_all_metrics(
-                    batch_values, predictions
-                )
-
-            all_metrics.append(metrics)
-
-            if (batch_idx + 1) % 100 == 0:
-                logger.info(f"Processed {batch_idx + 1} batches")
-
-        # Aggregate metrics across all batches
-        aggregated_metrics = self._aggregate_metrics(all_metrics)
-
-        # Prepare results
-        results = self._prepare_results(aggregated_metrics, len(all_metrics))
+        Args:
+            results: Results dictionary to save
+        """
+        # Create save directory
+        dataset_dir = self.save_dir / self.data_config.dataset_id
+        dataset_dir.mkdir(parents=True, exist_ok=True)
 
         # Save results
-        self._save_results(results)
+        results_file = dataset_dir / f"{self.benchmark_name}_results.json"
+        results_file.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
-        # Log summary
-        self._log_summary(results)
+        logger.info(f"Results saved to: {results_file}")
 
-        return results
+    def _log_summary(self, results: Dict[str, Any]) -> None:
+        """
+        Log a summary of the benchmark results.
+
+        Args:
+            results: Results dictionary
+        """
+        logger.info(f"{self.benchmark_name} benchmark completed successfully!")
+
+        metrics = results.get("metrics", {})
+
+        # Log time-based metrics if available
+        if "time_rmse_mean" in metrics:
+            logger.info(f"Time RMSE: {metrics['time_rmse_mean']:.6f}")
+        if "time_mae_mean" in metrics:
+            logger.info(f"Time MAE: {metrics['time_mae_mean']:.6f}")
+
+        # Log type-based metrics if available
+        if "type_accuracy_mean" in metrics:
+            logger.info(f"Type Accuracy: {metrics['type_accuracy_mean']:.6f}")
+        if "macro_f1score_mean" in metrics:
+            logger.info(f"Macro F1 Score: {metrics['macro_f1score_mean']:.6f}")
+
+    def get_available_metrics(self) -> List[str]:
+        """
+        Get the list of available metrics for this benchmark.
+
+        Returns:
+            List of metric names
+        """
+        return self.metrics_helper.get_available_metrics()
 
     def _aggregate_metrics(
         self, all_metrics: List[Dict[str, float]]
@@ -334,63 +287,3 @@ class Benchmark(ABC, BenchmarkInterface):
             results.update(custom_info)
 
         return results
-
-    def _get_custom_results_info(self) -> Dict[str, Any]:
-        """
-        Get custom information to add to results.
-        Subclasses can override this to add benchmark-specific information.
-
-        Returns:
-            Dictionary with custom information
-        """
-        return {}
-
-    def _save_results(self, results: Dict[str, Any]) -> None:
-        """
-        Save benchmark results to JSON file.
-
-        Args:
-            results: Results dictionary to save
-        """
-        # Create save directory
-        dataset_dir = os.path.join(self.save_dir, self.data_config.dataset_id)
-        os.makedirs(dataset_dir, exist_ok=True)
-
-        # Save results
-        results_file = os.path.join(dataset_dir, f"{self.benchmark_name}_results.json")
-        with open(results_file, "w") as f:
-            json.dump(results, f, indent=2)
-
-        logger.info(f"Results saved to: {results_file}")
-
-    def _log_summary(self, results: Dict[str, Any]) -> None:
-        """
-        Log a summary of the benchmark results.
-
-        Args:
-            results: Results dictionary
-        """
-        logger.info(f"{self.benchmark_name} benchmark completed successfully!")
-
-        metrics = results.get("metrics", {})
-
-        # Log time-based metrics if available
-        if "time_rmse_mean" in metrics:
-            logger.info(f"Time RMSE: {metrics['time_rmse_mean']:.6f}")
-        if "time_mae_mean" in metrics:
-            logger.info(f"Time MAE: {metrics['time_mae_mean']:.6f}")
-
-        # Log type-based metrics if available
-        if "type_accuracy_mean" in metrics:
-            logger.info(f"Type Accuracy: {metrics['type_accuracy_mean']:.6f}")
-        if "macro_f1score_mean" in metrics:
-            logger.info(f"Macro F1 Score: {metrics['macro_f1score_mean']:.6f}")
-
-    def get_available_metrics(self) -> List[str]:
-        """
-        Get the list of available metrics for this benchmark.
-
-        Returns:
-            List of metric names
-        """
-        return self.metrics_helper.get_available_metrics()

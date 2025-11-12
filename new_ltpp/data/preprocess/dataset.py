@@ -1,11 +1,12 @@
 import math
-from typing import Dict
+from typing import Dict, List
+from dataclasses import dataclass
 
 import numpy as np
 from torch.utils.data import Dataset
 
-from new_ltpp.data.preprocess.data_collator import TPPDataCollator
-from new_ltpp.utils import is_tf_available, py_assert
+from new_ltpp.utils import py_assert
+from .types import TPPSequence
 
 
 class TPPDataset(Dataset):
@@ -33,22 +34,20 @@ class TPPDataset(Dataset):
 
         return len(self.time_seqs)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> TPPSequence:
         """
 
         Args:
             idx: iteration index
 
         Returns:
-            dict: a dict of time_seqs, time_delta_seqs and type_seqs element
+            TPPSequence: A temporal point process sequence element
 
         """
-        return dict(
-            {
-                "time_seqs": self.time_seqs[idx],
-                "time_delta_seqs": self.time_delta_seqs[idx],
-                "type_seqs": self.type_seqs[idx],
-            }
+        return TPPSequence(
+            time_seqs=self.time_seqs[idx],
+            time_delta_seqs=self.time_delta_seqs[idx],
+            type_seqs=self.type_seqs[idx],
         )
 
     def get_dt_stats(self):

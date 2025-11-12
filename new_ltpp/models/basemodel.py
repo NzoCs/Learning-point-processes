@@ -15,6 +15,7 @@ from torch.nn import functional as F
 from tqdm import tqdm
 
 from new_ltpp.configs import ModelConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
 from new_ltpp.models.thinning import EventSampler
 from new_ltpp.utils import format_multivariate_simulations, logger, save_json
@@ -125,18 +126,12 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
     @abstractmethod
     def loglike_loss(
         self,
-        batch: tuple[
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-            torch.Tensor,
-        ],
+        batch: Batch,
     ) -> tuple[torch.Tensor, int]:
         """Compute the log-likelihood loss for a batch of data.
 
         Args:
-            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+            batch: Batch containing time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask, attention_mask
 
         Returns:
             loss, number of events.
@@ -321,6 +316,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Use cosine decay scheduler instead
         if hasattr(self, "lr_scheduler") and lr_scheduler:
+            
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer,
                 T_max=max_epochs,  # Total number of epochs
@@ -330,21 +326,16 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         return optimizer
 
-    def training_step(self, batch, batch_idx) -> STEP_OUTPUT:
+    def training_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
         """Training step for Lightning.
 
         Args:
-            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+            batch: Batch object containing sequences and masks
             batch_idx: Index of the batch
 
         Returns:
             STEP_OUTPUT: The output of the training step
         """
-
-        # Convert dict to tuple for models that expect tuple format
-        if not isinstance(batch, tuple):
-            batch = tuple(batch.values())
-
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
         self.log(
@@ -358,21 +349,24 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         return avg_loss
 
-    def validation_step(self, batch, batch_idx) -> STEP_OUTPUT:
+    def validation_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
         """Validation step for Lightning.
 
         Args:
-            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+            batch: Batch object containing sequences and masks
             batch_idx: Index of the batch
 
         Returns:
             STEP_OUTPUT: The output of the validation step
         """
-        # Fix: always convert dict.values() to tuple
-        if not isinstance(batch, tuple):
-            batch = tuple(batch.values())
-
-        label_batch = [seq[:, 1:] for seq in batch]
+        # Create label batch by removing first element from sequences
+        label_batch = (
+            batch.time_seqs[:, 1:],
+            batch.time_delta_seqs[:, 1:],
+            batch.type_seqs[:, 1:],
+            batch.seq_non_pad_mask[:, 1:],
+            batch.attention_mask[:, 1:] if batch.attention_mask.numel() > 0 else batch.attention_mask,
+        )
 
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
@@ -406,34 +400,23 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         return avg_loss
 
-    def test_step(self, batch, batch_idx) -> STEP_OUTPUT:
+    def test_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
         """Test step for Lightning.
 
         Args:
-            batch: Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+            batch: Batch object containing sequences and masks
             batch_idx: Index of the batch
 
         Returns:
             STEP_OUTPUT: The output of the test step
         """
-        # Fix: always convert dict.values() to tuple
-        if not isinstance(batch, tuple):
-            batch = tuple(batch.values())
-
-        # Create label batch by removing first element from each sequence
-        (
-            time_seq,
-            time_delta_seq,
-            event_seq,
-            batch_non_pad_mask,
-            batch_attention_mask,
-        ) = batch
+        # Create label batch by removing first element from sequences
         label_batch = (
-            time_seq[:, 1:],
-            time_delta_seq[:, 1:],
-            event_seq[:, 1:],
-            batch_non_pad_mask[:, 1:],
-            batch_attention_mask[:, 1:] if batch_attention_mask is not None else None,
+            batch.time_seqs[:, 1:],
+            batch.time_delta_seqs[:, 1:],
+            batch.type_seqs[:, 1:],
+            batch.seq_non_pad_mask[:, 1:],
+            batch.attention_mask[:, 1:] if batch.attention_mask.numel() > 0 else batch.attention_mask,
         )
 
         loss, num_events = self.loglike_loss(batch)
@@ -529,11 +512,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         return avg_loss
 
-    def predict_step(self, batch, batch_idx, **kwargs) -> STEP_OUTPUT:
+    def predict_step(self, batch: Batch, batch_idx, **kwargs) -> STEP_OUTPUT:
         """Prediction step for Lightning.
 
         Args:
-            batch: Contient time_seq, time_delta_seq, type_seq, batch_non_pad_mask, batch_attention_mask
+            batch: Batch object containing sequences and masks
             batch_idx: Index du batch (non utilisé ici, mais requis par Lightning)
         Returns:
             STEP_OUTPUT: Liste de dictionnaires de simulations produites
@@ -546,10 +529,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                 f"max is {self.max_simul_events}."
             )
             return self.simulations
-
-        # 2) On s'assure que batch est un tuple (Lightning peut lui passer un dict)
-        if not isinstance(batch, tuple):
-            batch = tuple(batch.values())
 
         # 4) Appel à la simulation « vectorisée » (retourne tout sur le device GPU/CPU interne)
         simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = (
@@ -671,19 +650,19 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
     def predict_one_step_at_every_event(
         self,
-        batch: tuple[
-            torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
-        ],
+        batch: Batch,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """One-step prediction for every event in the sequence.
 
         Args:
-            batch: The batch of data
+            batch: Batch object containing sequences and masks
 
         Returns:
             tuple: tensors of dtime and type prediction, [batch_size, seq_len].
         """
-        time_seq, time_delta_seq, event_seq, batch_non_pad_mask, _ = batch
+        time_seq = batch.time_seqs
+        time_delta_seq = batch.time_delta_seqs
+        event_seq = batch.type_seqs
 
         # remove the last event, as the prediction based on the last event has no label
         # note: the first dts is 0
@@ -741,16 +720,14 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
     def predict_multi_step_since_last_event(
         self,
-        batch: tuple[
-            torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
-        ],
+        batch: Batch,
         forward=False,
         num_step: int = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Multi-step prediction since last event in the sequence.
 
         Args:
-            batch : Contains time_seq, time_delta_seq, event_seq, batch_non_pad_mask, batch_attention_mask
+            batch: Batch object containing sequences and masks
             num_step : the number of steps to take
             forward : wheter to predict after the last event or to go back and predict events that occured
 
@@ -758,7 +735,9 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             tuple: tensors of dtime and type prediction, [batch_size, num_step].
         """
 
-        time_seq_label, time_delta_seq_label, event_seq_label, _, _ = batch
+        time_seq_label = batch.time_seqs
+        time_delta_seq_label = batch.time_delta_seqs
+        event_seq_label = batch.type_seqs
 
         if num_step is None:
             num_step = self.num_step_gen
@@ -833,13 +812,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
     def simulate(
         self,
-        batch: Optional[tuple[
-            torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
-        ]] = None,
+        batch: Optional[Batch] = None,
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         batch_size: Optional[int] = None,
-        max_events: int = 1000,
+        max_events: int,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Version encore plus optimisée avec approche vectorisée avancée.
@@ -857,17 +834,19 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Initialize sequences
         if batch is None:
-            batch = (
-                torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
-                torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
-                torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
-                torch.zeros(1, 2, device=self.device, dtype=torch.float32),
-                torch.zeros(1, 2, device=self.device, dtype=torch.float32),
+            batch = Batch(
+                time_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
+                time_delta_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
+                type_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
+                seq_non_pad_mask=torch.ones(batch_size, 2, device=self.device, dtype=torch.bool),
+                attention_mask=torch.empty(0, device=self.device),
             )
         else:
-            batch_size = batch[0].size(0)
+            batch_size = batch.time_seqs.size(0)
 
-        time_seq, time_delta_seq, event_seq, _, _ = batch
+        time_seq = batch.time_seqs
+        time_delta_seq = batch.time_delta_seqs
+        event_seq = batch.type_seqs
         num_mark = self.num_event_types
 
         # Pré-allocation avec mémoire contigüe

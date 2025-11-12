@@ -5,24 +5,26 @@ This benchmark always predicts the mean inter-time from the training dataset.
 It computes RMSE and other time-based metrics using the metrics helper.
 """
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Union
+from pathlib import Path
 
 import numpy as np
 import torch
-import yaml
 
 from new_ltpp.configs.data_config import DataConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.utils import logger
+from new_ltpp.globals import OUTPUT_DIR
 
-from .base_bench import Benchmark, BenchmarkMode
+from .time_bench import TimeBenchmark
 
 
-class MeanInterTimeBenchmark(Benchmark):
+class MeanInterTimeBenchmark(TimeBenchmark):
     """
     Benchmark that predicts the mean inter-time for all events.
     """
 
-    def __init__(self, data_config: DataConfig, save_dir: str = None):
+    def __init__(self, data_config: DataConfig, save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks"):
         """
         Initialize the mean inter-time benchmark.
 
@@ -30,8 +32,7 @@ class MeanInterTimeBenchmark(Benchmark):
             data_config: Data configuration object
             save_dir: Directory to save results
         """
-        # This benchmark focuses on time prediction, so default to TIME_ONLY
-        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TIME_ONLY)
+        super().__init__(data_config, save_dir)
         self.mean_inter_time = None
 
     @property
@@ -43,17 +44,16 @@ class MeanInterTimeBenchmark(Benchmark):
         """
         Compute the mean inter-time from the training dataset.
         """
-        train_loader = self.data_module.test_dataloader()
+        test_loader = self.data_module.test_dataloader()
 
-        logger.info("Computing mean inter-time from training data...")
+        logger.info("Computing mean inter-time from test data...")
         cumsum_inter_times = 0.0
         event_count = 0
 
-        for batch in train_loader:
-            # Extract inter-times from batch
-            # batch structure: dict with keys: 'time_seqs', 'time_delta_seqs', 'type_seqs', 'batch_non_pad_mask', ...
-            time_delta_seqs = batch["time_delta_seqs"]  # Inter-times
-            batch_non_pad_mask = batch.get("batch_non_pad_mask", None)
+        for batch in test_loader:
+            # Extract inter-event times from batch
+            time_delta_seqs = batch.time_delta_seqs  # Inter-times
+            batch_non_pad_mask = batch.seq_non_pad_mask
 
             if batch_non_pad_mask is not None:
                 # Only consider non-padded values
@@ -70,7 +70,7 @@ class MeanInterTimeBenchmark(Benchmark):
         )
         logger.info(f"Computed mean inter-time: {self.mean_inter_time:.6f}")
 
-    def _create_time_predictions(self, batch: Tuple) -> torch.Tensor:
+    def _create_time_predictions(self, batch: Batch) -> torch.Tensor:
         """
         Create time predictions using the mean inter-time.
 
@@ -78,9 +78,9 @@ class MeanInterTimeBenchmark(Benchmark):
             batch: Input batch
 
         Returns:
-            Tensor of predicted inter-times
+            Tensor of predicted inter-event times
         """
-        time_delta_seqs = batch["time_delta_seqs"]
+        time_delta_seqs = batch.time_delta_seqs
 
         # Create predictions with mean inter-time
         pred_inter_times = torch.full_like(time_delta_seqs, self.mean_inter_time)

@@ -1,76 +1,136 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Literal, Optional, Union, cast
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
+from new_ltpp.data.preprocess.types import PaddingStrategy, TruncationStrategy
 from new_ltpp.utils.log_utils import default_logger
 
 
 @dataclass
 class TokenizerConfig(Config):
-    """Configuration for event tokenizer.
+    """Configuration for event tokenizer with strategy-based processing.
+    
+    This config enforces a clean separation: either use padding OR truncation, never both.
+    Sequences are processed dynamically without fixed max_length.
+    The strategy is determined from padding_strategy and truncation_strategy parameters,
+    with defaults applied automatically.
+    
     Args:
-        num_event_types (int): Number of event types in the dataset.
-        pad_token_id (Optional[int]): ID of the padding token. Defaults to num_event_types.
-        padding_side (str): Side for padding ('left' or 'right'). Defaults to 'left'.
-        truncation_side (str): Side for truncation ('left' or 'right'). Defaults to 'left'.
-        padding_strategy (str): Strategy for padding ('longest', 'max_length', etc.). Defaults to 'longest'.
-        max_len (Optional[int]): Maximum length of sequences after padding/truncation.
-        truncation_strategy (Optional[str]): Strategy for truncation.
-        num_event_types_pad (Optional[int]): Number of event types including padding.
-        model_input_names (Optional[Any]): Names of model inputs, if applicable.
+        num_event_types: Number of event types in the dataset
+        padding_strategy: Padding strategy to use. Defaults to LONGEST (dynamic padding).
+                         Options: 'longest', 'do_not_pad'
+        truncation_strategy: Truncation strategy to use. Defaults to None (no truncation).
+                            Options: 'longest_first', 'do_not_truncate', None
+        padding_side: Side for padding ('left' or 'right'). Defaults to 'left'.
+        truncation_side: Side for truncation ('left' or 'right'). Defaults to 'left'.
+        pad_token_id: ID of the padding token (auto-set to num_event_types)
+        num_event_types_pad: Number of event types including padding (auto-set)
+        model_input_names: Names of model inputs, if applicable
+        
+    The final `strategy` attribute is created automatically:
+        - If truncation_strategy is provided and not DO_NOT_TRUNCATE, use it
+        - Otherwise, use padding_strategy
+        - Cannot specify both padding and truncation simultaneously
+    
+    Example:
+        # Dynamic padding (default)
+        config = TokenizerConfig(num_event_types=10)
+        # -> strategy = PaddingStrategy.LONGEST
+        
+        # Explicit padding
+        config = TokenizerConfig(
+            num_event_types=10,
+            padding_strategy='longest',
+            padding_side='right'
+        )
+        
+        # Truncation (no padding)
+        config = TokenizerConfig(
+            num_event_types=10,
+            truncation_strategy='longest_first',
+            truncation_side='left'
+        )
     """
 
     num_event_types: int
-    padding_side: str = "left"
-    truncation_side: str = "left"
-    padding_strategy: str = "longest"
-    max_len: Optional[int] = None
-    truncation_strategy: Optional[str] = None
+    padding_strategy: Optional[Literal["longest", "do_not_pad"]] = "longest"
+    truncation_strategy: Optional[Literal["longest_first", "do_not_truncate"]] = None
+    padding_side: Literal["left", "right"] = "left"
+    truncation_side: Literal["left", "right"] = "left"
+    pad_token_id: Optional[int] = None
     num_event_types_pad: Optional[int] = None
-    model_input_names: Optional[Any] = None
+    model_input_names: Optional[List[str]] = None
+    
+    # This will be set in __post_init__
+    strategy: Union[PaddingStrategy, TruncationStrategy] = field(default=PaddingStrategy.LONGEST, init=False)
 
     def __post_init__(self):
+        """Validate and normalize configuration."""
+        
+        # Auto-set pad_token_id and num_event_types_pad
+        if self.pad_token_id is None:
+            self.pad_token_id = self.num_event_types
+        if self.num_event_types_pad is None:
+            self.num_event_types_pad = self.num_event_types + 1
 
-        self.pad_token_id = self.num_event_types
-        self.num_event_types_pad = self.num_event_types + 1
-
-        if self.padding_side not in ["right", "left"]:
+        # Determine the final strategy: truncation takes precedence if specified
+        has_truncation = (
+            self.truncation_strategy is not None 
+            and self.truncation_strategy != "do_not_truncate"
+        )
+        has_padding = (
+            self.padding_strategy is not None 
+            and self.padding_strategy != "do_not_pad"
+        )
+        
+        # Validate: cannot have both active strategies
+        if has_truncation and has_padding:
             raise ConfigValidationError(
-                f"Padding side should be 'right' or 'left', got: {self.padding_side}",
-                "padding_side",
+                "Cannot specify both an active padding strategy and an active truncation strategy. "
+                "Use either padding OR truncation, not both.",
+                "strategy"
             )
-        if self.truncation_side not in ["right", "left"]:
-            raise ConfigValidationError(
-                f"Truncation side should be 'right' or 'left', got: {self.truncation_side}",
-                "truncation_side",
-            )
+        
+        # Convert to enum and set the final strategy
+        if has_truncation:
+            self.strategy = TruncationStrategy(self.truncation_strategy)
+        elif has_padding:
+            self.strategy = PaddingStrategy(self.padding_strategy)
+        else:
+            # Default to dynamic padding if nothing specified
+            self.strategy = PaddingStrategy.LONGEST
+        
         super().__post_init__()
 
     def get_yaml_config(self) -> Dict[str, Any]:
-        return {
+        """Export configuration to YAML-compatible dict."""
+        config_dict = {
             "num_event_types": self.num_event_types,
-            "pad_token_id": self.pad_token_id,
             "padding_side": self.padding_side,
             "truncation_side": self.truncation_side,
-            "padding_strategy": self.padding_strategy,
-            "truncation_strategy": self.truncation_strategy,
-            "max_len": self.max_len,
+            "pad_token_id": self.pad_token_id,
         }
+        
+        # Add strategy info (these are already strings/literals)
+        if self.padding_strategy is not None:
+            config_dict["padding_strategy"] = self.padding_strategy
+        if self.truncation_strategy is not None:
+            config_dict["truncation_strategy"] = self.truncation_strategy
+            
+        return config_dict
 
     def get_required_fields(self):
-        return []
-
-    def pop(self, key: str, default=None):
-        """
-        Pop method to make TokenizerConfig compatible with EventTokenizer.
-        Returns the attribute value and removes it from the object, or returns default if not found.
-        """
-        if hasattr(self, key):
-            value = getattr(self, key)
-            # For special keys that the tokenizer expects to pop, return the value but don't actually remove
-            # the attribute since this is a dataclass configuration object
-            return value
-        return default
+        return ["num_event_types"]
+    
+    @property
+    def is_padding_strategy(self) -> bool:
+        """Check if this config uses a padding strategy."""
+        return isinstance(self.strategy, PaddingStrategy)
+    
+    @property
+    def is_truncation_strategy(self) -> bool:
+        """Check if this config uses a truncation strategy."""
+        return isinstance(self.strategy, TruncationStrategy)
 
 
 @dataclass
@@ -89,26 +149,12 @@ class DataLoadingSpecsConfig(Config):
 
     batch_size: int
     num_workers: int = 1
-    shuffle: Optional[bool] = None
-    padding: Optional[bool] = None
-    truncation: Optional[bool] = None
-    tensor_type: str = "pt"
-    max_len: Optional[int] = None
 
-    @property
-    def max_length(self) -> Optional[int]:
-        """Compatibility property for max_length (maps to max_len)."""
-        return self.max_len
 
     def get_yaml_config(self) -> Dict[str, Any]:
         return {
             "batch_size": self.batch_size,
-            "tensor_type": self.tensor_type,
             "num_workers": self.num_workers,
-            "shuffle": self.shuffle,
-            "padding": self.padding,
-            "truncation": self.truncation,
-            "max_len": self.max_len,
         }
 
     def get_required_fields(self):
@@ -137,17 +183,15 @@ class DataConfig(Config):
         test_dir: str,
         dataset_id: str,
         data_loading_specs: Union[DataLoadingSpecsConfig, dict],
+        data_format: Literal["json", "pkl", "hf"],
         tokenizer_specs: Optional[Union[TokenizerConfig, dict]] = None,
-        data_format: Optional[str] = None,
         **kwargs,
     ):
         self.train_dir = train_dir
         self.valid_dir = valid_dir
         self.test_dir = test_dir
         self.num_event_types = num_event_types
-        self.data_format = (
-            data_format if data_format is not None else train_dir.split(".")[-1]
-        )
+        self.data_format = data_format
 
         self.dataset_id = dataset_id
         # Instancie si dict, sinon laisse tel quel
@@ -161,8 +205,13 @@ class DataConfig(Config):
             self.tokenizer_specs = TokenizerConfig(
                 num_event_types=num_event_types, **tokenizer_specs
             )
+        elif tokenizer_specs is None:
+            # Default to LONGEST padding strategy (will be set in __post_init__)
+            self.tokenizer_specs = TokenizerConfig(
+                num_event_types=num_event_types
+            )
         else:
-            self.tokenizer_specs = TokenizerConfig(num_event_types=num_event_types)
+            self.tokenizer_specs = tokenizer_specs
 
         super().__init__(**kwargs)
 

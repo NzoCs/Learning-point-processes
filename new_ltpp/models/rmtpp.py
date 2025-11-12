@@ -5,6 +5,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from new_ltpp.configs import ModelConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.models.basemodel import Model
 from new_ltpp.models.neural_model import NeuralModel
 
@@ -74,7 +75,7 @@ class RMTPP(NeuralModel):
 
         return intensity_BNGM
 
-    def forward(self, batch):
+    def forward(self, batch: Batch):
         """
         Suppose we have inputs with original sequence length N+1
         ts: [t0, t1, ..., t_N]
@@ -86,24 +87,12 @@ class RMTPP(NeuralModel):
             right limits of *hidden states* [t_0, ..., t_{N-1}, t_N] of shape: (batch_size, seq_len, hidden_dim)
             We need the right limit of t_N to sample continuation.
         """
-
-        if isinstance(batch, dict):
-            t_BN = batch["time_seqs"]
-            # Use time_seqs as time_delta_seqs if not explicitly provided, common in some test setups
-            dt_BN = batch.get("time_delta_seqs")
-            marks_BN = batch["type_seqs"]
-            # Other elements like attention_mask, batch_non_pad_mask, type_mask can be accessed if needed
-        elif isinstance(batch, (tuple, list)) and len(batch) >= 3:
-            t_BN, dt_BN, marks_BN = batch[0], batch[1], batch[2]
-            # Assuming the first three elements are time_seqs, time_delta_seqs, type_seqs
-            # This might need adjustment if the tuple structure is different
-        else:
-            raise ValueError(
-                f"Unexpected batch type or structure in RMTPP forward: {type(batch)}, len: {len(batch) if hasattr(batch, '__len__') else 'N/A'}"
-            )
+        ts_BN = batch.time_seqs
+        dt_BN = batch.time_delta_seqs
+        marks_BN = batch.type_seqs
 
         mark_emb_BNH = self.layer_type_emb(marks_BN)
-        time_emb_BNH = self.layer_temporal_emb(t_BN[..., None])
+        time_emb_BNH = self.layer_temporal_emb(ts_BN[..., None])
         rnn_input = mark_emb_BNH + time_emb_BNH
         right_hiddens_BNH, _ = self.layer_rnn(rnn_input)
         left_intensity_B_Nm1_G_M = self.evolve_and_get_intentsity(
@@ -112,45 +101,22 @@ class RMTPP(NeuralModel):
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
 
-    def loglike_loss(self, batch):
+    def loglike_loss(self, batch: Batch):
         """Compute the log-likelihood loss.
 
         Args:
-            batch (list): batch input.
+            batch: batch input.
 
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        if isinstance(batch, dict):
-            ts_BN = batch["time_seqs"]
-            dts_BN = batch.get("time_delta_seqs", ts_BN)
-            marks_BN = batch["type_seqs"]
-            batch_non_pad_mask = batch["batch_non_pad_mask"]
-            # type_mask = batch.get('type_mask') # Optional
-        elif isinstance(batch, (tuple, list)) and len(batch) >= 4:
-            ts_BN, dts_BN, marks_BN, batch_non_pad_mask = (
-                batch[0],
-                batch[1],
-                batch[2],
-                batch[3],
-            )
-            if dts_BN is None:  # Handle cases where dt_BN might be None
-                dts_BN = ts_BN
-            # type_mask = batch[4] if len(batch) > 4 else None # Optional
-        else:
-            raise ValueError(
-                f"Unexpected batch type or structure in RMTPP loglike_loss: {type(batch)}"
-            )
+        ts_BN = batch.time_seqs
+        dts_BN = batch.time_delta_seqs
+        marks_BN = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
-        # Pass a tuple to self.forward, as it expects
-        forward_batch = (
-            ts_BN,
-            dts_BN,
-            marks_BN,
-            batch_non_pad_mask,
-            None,
-        )  # Pass None for the 5th element if not used by forward
-        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward(forward_batch)
+        # Call forward with batch directly
+        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward(batch)
         right_hiddens_B_Nm1_H = right_hiddens_BNH[
             ..., :-1, :
         ]  # discard right limit at t_N for logL
@@ -190,8 +156,15 @@ class RMTPP(NeuralModel):
 
         compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
-        _input = time_seqs, time_delta_seqs, type_seqs, None, None
-        _, right_hiddens_BNH = self.forward(_input)
+        batch = Batch(
+            time_seqs=time_seqs,
+            time_delta_seqs=time_delta_seqs,
+            type_seqs=type_seqs,
+            seq_non_pad_mask=torch.empty(0, dtype=torch.bool),
+            attention_mask=torch.empty(0, device=self.device),
+        )
+
+        _, right_hiddens_BNH = self.forward(batch)
 
         if compute_last_step_only:
             sampled_intensities = self.evolve_and_get_intentsity(

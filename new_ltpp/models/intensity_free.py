@@ -7,6 +7,7 @@ from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
 from new_ltpp.configs import ModelConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.models.basemodel import Model
 
 
@@ -181,16 +182,19 @@ class IntensityFree(Model):
 
         return context
 
-    def loglike_loss(self, batch):
-        """Compute the loglike loss.
+    def loglike_loss(self, batch: Batch):
+        """Compute the loglikelihood loss.
 
         Args:
-            batch (list): batch input.
+            batch: batch input.
 
         Returns:
-            tuple: loglikelihood loss and num of events.
+            tuple: loglikelihood loss and number of events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, _ = batch
+        time_seqs = batch.time_seqs
+        time_delta_seqs = batch.time_delta_seqs
+        type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
         # [batch_size, seq_len, hidden_size]
         context = self.forward(time_delta_seqs[:, :-1], type_seqs[:, :-1])

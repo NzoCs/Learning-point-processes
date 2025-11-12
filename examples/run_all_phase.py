@@ -20,9 +20,9 @@ def main() -> None:
         yaml_file_path=config_path,
         data_config_path="data_configs.test",
         training_config_path="training_configs.quick_test",
-        model_config_path="model_configs.neural_small",
-        thinning_config_path="thinning_configs.thinning_fast",
-        simulation_config_path="simulation_configs.simulation_fast",
+        model_config_path="model_configs.quick_test",
+        thinning_config_path="thinning_configs.quick_test",
+        simulation_config_path="simulation_configs.quick_test",
         data_loading_config_path="data_loading_configs.quick_test",
         logger_config_path="logger_configs.mlflow",
     )

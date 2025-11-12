@@ -5,6 +5,7 @@ from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import ScaledSoftplus
 from new_ltpp.models.basemodel import Model
 from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.data.preprocess.types import Batch
 
 
 class ContTimeLSTMCell(nn.Module):
@@ -202,16 +203,19 @@ class NHP(NeuralModel):
         )
         return h_ts
 
-    def loglike_loss(self, batch):
+    def loglike_loss(self, batch: Batch):
         """Compute the log-likelihood loss.
 
         Args:
-            batch (list): batch input.
+            batch: batch input.
 
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        ts_BN, dts_BN, marks_BN, batch_non_pad_mask, _ = batch
+        ts_BN = batch.time_seqs
+        dts_BN = batch.time_delta_seqs
+        marks_BN = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
         # 1. compute hidden states at event time
         # left limits of [t_1, ..., t_N]

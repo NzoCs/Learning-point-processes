@@ -2,6 +2,7 @@ import torch
 from torch import nn
 
 from new_ltpp.configs import ModelConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.models.baselayer import MultiHeadAttention
 from new_ltpp.models.neural_model import NeuralModel
 
@@ -139,18 +140,20 @@ class ANHN(NeuralModel):
             (base_dtime, target_cumsum_dtime),
         )
 
-    def loglike_loss(self, batch):
-        """Compute the loglike loss.
+    def loglike_loss(self, batch: Batch):
+        """Compute the loglikelihood loss.
 
         Args:
-            batch (list): batch input.
+            batch: batch input.
 
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        time_seqs, time_delta_seqs, type_seqs, batch_non_pad_mask, attention_mask = (
-            batch
-        )
+        time_seqs = batch.time_seqs
+        time_delta_seqs = batch.time_delta_seqs
+        type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
+        attention_mask = batch.attention_mask
 
         (
             imply_lambdas,

@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
+from typing import Literal, Optional
 import numpy as np
 
 from new_ltpp.configs.data_config import DataConfig
@@ -21,14 +22,10 @@ class TPPDataModule(pl.LightningDataModule):
         self.data_config = data_config
         self.num_event_types = data_config.tokenizer_specs.num_event_types
         self.batch_size = data_config.data_loading_specs.batch_size
-        self.shuffle = data_config.data_loading_specs.shuffle
         self.tokenizer = EventTokenizer(data_config.tokenizer_specs)
+        self.tokenizer_specs = data_config.tokenizer_specs
 
         data_loading_specs = data_config.data_loading_specs
-        self.padding = data_loading_specs.padding
-        self.truncation = data_loading_specs.truncation
-        self.tensor_type = data_loading_specs.tensor_type
-        self.max_length = data_loading_specs.max_length
         self.num_workers = data_loading_specs.num_workers
 
         # Initialize data containers
@@ -86,7 +83,7 @@ class TPPDataModule(pl.LightningDataModule):
 
 
     def build_input(
-        self, source_dir: str, data_format: str = "json", split: str = "train"
+        self, source_dir: str, data_format: Literal["json", "pkl", "hf"] = "json", split: str = "train"
     ) -> dict:
         """Helper function to load and process dataset based on file format.
 
@@ -100,13 +97,42 @@ class TPPDataModule(pl.LightningDataModule):
         """
         if data_format == "pkl":
             return self._build_input_from_pkl(source_dir, split)
-        else:
+        elif data_format == "json":
             try:
-                data_format == "json"
                 return self._build_input_from_json(source_dir, split)
             except ValueError as e:
                 logger.error(f"Error loading data from {source_dir}: {e}")
                 raise e
+        elif data_format == "hf":
+            return self._build_input_from_hf(source_dir, split)
+        else:
+            raise ValueError(f"Unsupported data format: {data_format}")
+    
+    def _build_input_from_hf(self, source_dir: str, split: str) -> dict:
+        """Load and process data from a Hugging Face dataset.
+
+        Args:
+            source_dir (str): Hugging Face dataset name.
+            split (str): Dataset split, e.g., 'train', 'dev', 'test'.
+        Returns:
+            dict: Dictionary with processed event sequences.
+        """
+        from datasets import load_dataset
+
+        split_mapped = "validation" if split == "dev" else split
+        data = load_dataset(source_dir, split=split_mapped)
+
+        py_assert(
+            data["dim_process"][0] == self.num_event_types,
+            ValueError,
+            "Inconsistent dim_process in different splits.",
+        )
+
+        return {
+            "time_seqs": data["time_since_start"],
+            "type_seqs": data["type_event"],
+            "time_delta_seqs": data["time_since_last_event"],
+        }
 
     def _build_input_from_pkl(self, source_dir: str, split: str) -> dict:
         """Load and process data from a pickle file.
@@ -147,16 +173,7 @@ class TPPDataModule(pl.LightningDataModule):
         from datasets import load_dataset
 
         split_mapped = "validation" if split == "dev" else split
-        if source_dir.endswith(".json"):
-            data = load_dataset(
-                "json", data_files={split_mapped: source_dir}, split=split_mapped
-            )
-        elif source_dir.startswith("new_ltpp"):
-            data = load_dataset(source_dir, split=split_mapped)
-        elif source_dir.startswith("NzoCs"):
-            data = load_dataset(source_dir, split=split_mapped)
-        else:
-            raise ValueError("Unsupported source directory format for JSON.")
+        data = load_dataset("json", data_files={split: source_dir}, split=split_mapped)
 
         py_assert(
             data["dim_process"][0] == self.num_event_types,
@@ -224,10 +241,6 @@ class TPPDataModule(pl.LightningDataModule):
         """
         collate_fn = TPPDataCollator(
             tokenizer=self.tokenizer,
-            padding=self.padding,
-            max_length=self.max_length,
-            truncation=self.truncation,
-            return_tensors=self.tensor_type,
         )
 
         return DataLoader(
@@ -245,20 +258,15 @@ class TPPDataModule(pl.LightningDataModule):
         Returns:
             DataLoader: PyTorch DataLoader for validation data
         """
-
-        collatefn = TPPDataCollator(
+        collate_fn = TPPDataCollator(
             tokenizer=self.tokenizer,
-            padding=self.padding,
-            max_length=self.max_length,
-            truncation=self.truncation,
-            return_tensors=self.tensor_type,
         )
 
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            collate_fn=collatefn,
+            collate_fn=collate_fn,
             num_workers=self.num_workers,
             persistent_workers=True,
         )
@@ -269,19 +277,15 @@ class TPPDataModule(pl.LightningDataModule):
         Returns:
             DataLoader: PyTorch DataLoader for test data
         """
-        collatefn = TPPDataCollator(
+        collate_fn = TPPDataCollator(
             tokenizer=self.tokenizer,
-            padding=self.padding,
-            max_length=self.max_length,
-            truncation=self.truncation,
-            return_tensors=self.tensor_type,
         )
 
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            collate_fn=collatefn,
+            collate_fn=collate_fn,
             num_workers=self.num_workers,
             persistent_workers=True,
         )
@@ -292,19 +296,14 @@ class TPPDataModule(pl.LightningDataModule):
         Returns:
             DataLoader: PyTorch DataLoader for prediction data
         """
-        collatefn = TPPDataCollator(
+        collate_fn = TPPDataCollator(
             tokenizer=self.tokenizer,
-            padding=self.padding,
-            max_length=self.max_length,
-            truncation=self.truncation,
-            return_tensors=self.tensor_type,
         )
-
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            collate_fn=collatefn,
+            collate_fn=collate_fn,
             num_workers=self.num_workers,
         )
 

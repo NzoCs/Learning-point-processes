@@ -5,42 +5,62 @@
 # ===== DATA CONFIGURATIONS =====
 data_configs:
   taxi:
-    data_format: json
-    src_dir: new_ltpp/taxi
+    data_format: hf
+    src_dir: easytpp/taxi
     num_event_types: 10
   
   taobao:
-    data_format: json
-    src_dir: new_ltpp/taobao
+    data_format: hf
+    src_dir: easytpp/taobao
     num_event_types: 17
 
   amazon:
-    data_format: json
-    src_dir: new_ltpp/amazon
+    data_format: hf
+    src_dir: easytpp/amazon
     num_event_types: 16
 
+  retweet:
+    data_format: hf
+    src_dir: easytpp/retweet
+    num_event_types: 3
+  
+  volcano:
+    data_format: hf
+    src_dir: easytpp/volcano
+    num_event_types: 1
+  
+  earthquake:
+    data_format: hf
+    src_dir: easytpp/earthquake
+    num_event_types: 7
+  
+  stackoverflow:
+    data_format: hf
+    src_dir: easytpp/stackoverflow
+    num_event_types: 22
+
   test:
-    data_format: json
+    data_format: hf
     src_dir: NzoCs/test_dataset
     num_event_types: 2
       
   hawkes1:
-    data_format: json
+    data_format: hf
     src_dir: NzoCs/hawkes1
     num_event_types: 1
 
   hawkes2:
-    data_format: json
+    data_format: hf
     src_dir: NzoCs/hawkes2
     num_event_types: 2
   
   H2expi:
-    data_format: json
+    data_format: hf
     src_dir: NzoCs/H2expi
     num_event_types: 2
   
   H2expc:
-    data_format: json
+    data_format: hf
     src_dir: NzoCs/H2expc
     num_event_types: 2
 

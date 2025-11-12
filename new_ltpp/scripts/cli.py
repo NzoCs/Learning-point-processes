@@ -223,7 +223,7 @@ def interactive_setup(
 @app.command("benchmark")
 def benchmark_performance(
     config_path: str = typer.Option(
-        ..., "--config", "-c", help="Fichier de configuration YAML"
+        CONFIGS_FILE, "--config", "-c", help="Fichier de configuration YAML"
     ),
     data_config: Optional[List[str]] = typer.Option(
         None,

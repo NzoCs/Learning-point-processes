@@ -10,26 +10,18 @@ import torch
 import yaml
 
 from new_ltpp.configs.data_config import DataConfig
+from new_ltpp.data.preprocess.types import Batch
 from new_ltpp.utils import logger
 
-from .base_bench import Benchmark, BenchmarkMode
+from .type_bench import TypeBenchmark
 
 
-class LastMarkBenchmark(Benchmark):
+class LastMarkBenchmark(TypeBenchmark):
     """
     Benchmark that predicts the previous event mark as the next mark (lag-1).
     """
 
-    def __init__(self, data_config: DataConfig, save_dir: str = None):
-        """
-        Initialize the last mark benchmark.
-        Args:
-            data_config: Data configuration object
-            save_dir: Directory to save results
-        """
-        super().__init__(data_config, save_dir, benchmark_mode=BenchmarkMode.TYPE_ONLY)
-
-    def _create_type_predictions(self, batch: Tuple) -> torch.Tensor:
+    def _create_type_predictions(self, batch: Batch) -> torch.Tensor:
         """
         Create type predictions using the lag-1 mark strategy.
 
@@ -39,7 +31,7 @@ class LastMarkBenchmark(Benchmark):
         Returns:
             Tensor of predicted types
         """
-        type_seqs = batch["type_seqs"]
+        type_seqs = batch.type_seqs
         batch_size, seq_len = type_seqs.shape
 
         # Create predictions for marks using lag-1 strategy

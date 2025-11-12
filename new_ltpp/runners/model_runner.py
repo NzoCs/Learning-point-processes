@@ -317,7 +317,7 @@ class Runner:
         if results and len(results) > 0:
             import json
 
-            test_results_dir = OUTPUT_DIR / self.model_id / self.dataset_id / "test_results"
+            test_results_dir = OUTPUT_DIR /  self.dataset_id / self.model_id / "test_results"
             test_results_dir.mkdir(parents=True, exist_ok=True)
             results_file = test_results_dir / "test_results.json"
 
@@ -347,7 +347,7 @@ class Runner:
         )
 
         # Ensure the directory exists
-        data_save_dir = OUTPUT_DIR / self.model_id / self.dataset_id / "distributions_comparisons"
+        data_save_dir = OUTPUT_DIR /  self.dataset_id / self.model_id / "distributions_comparisons"
         data_save_dir.mkdir(parents=True, exist_ok=True)
         self.model.format_and_save_simulations(save_dir=data_save_dir)
 

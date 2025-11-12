@@ -87,18 +87,12 @@ class DistributionAnalyzer:
                     color=dataset["color"],
                 )
 
-                # Add statistical summary
-                DistributionAnalyzer._add_statistical_summary(
-                    dataset, ax, len(datasets)
-                )
-
             # Configure plot appearance
             ax.set_yscale("log")
             ax.set_xlabel(xlabel, fontsize=12)
             ax.set_ylabel("Density (log scale)", fontsize=12)
             ax.set_title(title, fontsize=14)
-            ax.legend(loc="center right")
-            ax.grid(True, alpha=0.3)
+            ax.legend()
 
             # Save plot with high quality
             fig.tight_layout()
@@ -260,21 +254,6 @@ class DistributionAnalyzer:
             plt.title(title, fontsize=14)
             plt.xlabel("Reference Quantiles", fontsize=12)
             plt.ylabel("Comparison Quantiles", fontsize=12)
-
-            # Add interpretive annotation
-            annotation_text = (
-                "Points along diagonal indicate similar distributions.\n"
-                "Systematic deviations suggest distributional differences."
-            )
-            plt.annotate(
-                annotation_text,
-                xy=(0.05, 0.05),
-                xycoords="axes fraction",
-                va="bottom",
-                ha="left",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8),
-                fontsize=10,
-            )
 
             plt.tight_layout()
             plt.savefig(save_path, dpi=300, bbox_inches="tight")

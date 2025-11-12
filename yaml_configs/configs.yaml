@@ -46,6 +46,7 @@ data_configs:
 
 # ==== LOGGER CONFIGS =====
 logger_configs:
+
   tensorboard:
     type: tensorboard
     save_dir: logs/tensorboard_logs
@@ -73,36 +74,50 @@ logger_configs:
       resume: false
       anonymous: false
 
-  mlflow: # Not working yet
-    type: mlflow
-    save_dir: logs/mlflow
-    config:
-      experiment_name: new_ltpp_experiments
-      tracking_uri: http://localhost:5000
-      run_name: run_1
+  # mlflow: # Not working yet
+  #   type: mlflow
+  #   save_dir: logs/mlflow
+  #   config:
+  #     experiment_name: new_ltpp_experiments
+  #     tracking_uri: http://localhost:5000
+  #     run_name: run_1
 
-  comet: # Not tested yet
-    type: comet
-    save_dir: logs/comet
-    config:
-      api_key: "YOUR_COMET_API_KEY"
-      project_name: new_ltpp_project
-      workspace: your_workspace
+  # comet: # Not tested yet
+  #   type: comet
+  #   save_dir: logs/comet
+  #   config:
+  #     api_key: "YOUR_COMET_API_KEY"
+  #     project_name: new_ltpp_project
+  #     workspace: your_workspace
 
-  neptune: # Not tested yet
-    type: neptune
-    save_dir: logs/neptune
-    config:
-      api_token: "YOUR_NEPTUNE_API_TOKEN"
-      project: your_neptune_project
-      run_name: run_1
+  # neptune: # Not tested yet
+  #   type: neptune
+  #   save_dir: logs/neptune
+  #   config:
+  #     api_token: "YOUR_NEPTUNE_API_TOKEN"
+  #     project: your_neptune_project
+  #     run_name: run_1
 
 # ===== MODEL CONFIGURATIONS =====
 model_configs:
 # Configurations for model-specific parameters (architecture, hyperparameters, etc.)
 
+  quick_test:
+    specs:
+      hidden_size: 8
+      time_emb_size: 4
+      num_layers: 1
+      num_heads: 1  # For attention-based models
+  
+  debug:
+    specs:
+      hidden_size: 8
+      time_emb_size: 4
+      num_layers: 1
+      num_heads: 1  # For attention-based models
+
   # Configurations for neural models - Size Small
-  neural_small:
+  h16_e8_l1_h2:
     specs:
       hidden_size: 16
       time_emb_size: 8
@@ -110,7 +125,7 @@ model_configs:
       num_heads: 2  # For attention-based models
 
   # Configurations for neural models - Size Medium
-  neural_medium:
+  h32_e16_l2_h4:
     specs:
       hidden_size: 32
       time_emb_size: 16
@@ -118,7 +133,7 @@ model_configs:
       num_heads: 4  # For attention-based models
 
   # Configurations for neural models - Size Large
-  neural_large:
+  h64_e32_l3_h8:
     specs:
       hidden_size: 64
       time_emb_size: 32
@@ -126,7 +141,7 @@ model_configs:
       num_heads: 8  # For attention-based models
 
   # Configurations for neural models - Size Extra Large
-  neural_xlarge:
+  h128_e64_l4_h16:
     specs:
       hidden_size: 128
       time_emb_size: 64
@@ -134,14 +149,14 @@ model_configs:
       num_heads: 16  # For attention-based models
 
   # Specific configurations for Hawkes - Simple (univariate)
-  hawkes_simple:
+  hawkes1:
     specs:
       mu: 0.2
       alpha: 0.8
       beta: 1.0
 
   # Specific configurations for Hawkes - Bivariate
-  hawkes_bivariate:
+  hawkes2:
     specs:
       mu: [0.2, 0.2]
       alpha: [[0.4, 0], [0, 0.8]]
@@ -158,96 +173,106 @@ model_configs:
 # ===== THINNING CONFIGURATIONS =====
 thinning_configs:
 
+  quick_test:
+    num_exp: 10
+    over_sample_rate: 1.1
+    num_sample: 5
+  
+  debug:
+    num_exp: 10
+    over_sample_rate: 1.1
+    num_sample: 5
+
   # Fast thinning configuration (for tests)
-  thinning_fast:
+  e50_s15:
     num_exp: 50
     over_sample_rate: 1.2
-    dtime_max: 3
     num_sample: 15
 
   # Standard thinning configuration
-  thinning_standard:
+  e100_s30:
     num_exp: 100
     over_sample_rate: 1.5
-    dtime_max: 5
     num_sample: 30
 
   # High-quality thinning configuration
-  thinning_high_quality:
+  e150_s50:
     num_exp: 150
     over_sample_rate: 1.8
-    dtime_max: 8
     num_sample: 50
 
   # Thinning configuration for large datasets
-  thinning_large_dataset:
+  e200_s60:
     num_exp: 200
     over_sample_rate: 2.0
-    dtime_max: 10
-    num_sample: 60
-
-  # Thinning configuration for FullyNN (more samples)
-  thinning_fullyNN:
-    num_exp: 200
-    over_sample_rate: 1.5
-    dtime_max: 5
     num_sample: 60
 
   # Minimal thinning configuration (debug/CPU)
-  thinning_minimal:
+  e20_s10:
     num_exp: 20
     over_sample_rate: 1.1
-    dtime_max: 2
     num_sample: 10
 
 
 # ===== SIMULATION CONFIGURATIONS =====
 simulation_configs:
 
+  quick_test:
+    start_time: 0
+    end_time: 10
+    max_sim_events: 1000
+    batch_size: 4
+  
+  debug:
+    start_time: 0
+    end_time: 20
+    max_sim_events: 2000
+    batch_size: 8
+
   # Fast simulation configuration (tests)
-  simulation_fast:
+  s20_e50_5000_b16:
     start_time: 20
     end_time: 50
     max_sim_events: 5000
     batch_size: 16
 
   # Development simulation configuration
-  simulation_dev:
+  s50_e120_15000_b32:
     start_time: 50
     end_time: 120
     max_sim_events: 15000
     batch_size: 32
 
   # Standard simulation configuration
-  simulation_standard:
+  s100_e200_50000_b64:
     start_time: 100
     end_time: 200
     max_sim_events: 50000
     batch_size: 64
 
   # Extended simulation configuration
-  simulation_extended:
+  s100_e300_100000_b128:
     start_time: 100
     end_time: 300
     max_sim_events: 100000
     batch_size: 128
 
   # Simulation configuration for large datasets
-  simulation_large:
+  s100_e400_150000_b256:
     start_time: 100
     end_time: 400
     max_sim_events: 150000
     batch_size: 256
 
   # Simulation configuration for cross-validation
-  simulation_cv:
+  s80_e160_30000_b64:
     start_time: 80
     end_time: 160
     max_sim_events: 30000
     batch_size: 64
 
   # Simulation configuration for experiments
-  simulation_experiment:
+  s50_e120_15000_b32:
     start_time: 50
     end_time: 120
     max_sim_events: 15000
@@ -257,70 +282,47 @@ simulation_configs:
 # These configurations contain only DataLoader parameters
 
 data_loading_configs:
+  
+  debug:
+    batch_size: 1
+    num_workers: 1
 
   quick_test:
-    batch_size: 32
-    num_workers: 1
-
-  dev:
-    batch_size: 64
-    num_workers: 2
-
-  standard:
-    batch_size: 128
-    num_workers: 4
-
-  standard_small_batch:
-    batch_size: 64
-    num_workers: 4
-
-  standard_tiny_batch:
-    batch_size: 32
-    num_workers: 2
-
-  production:
-    batch_size: 256
-    num_workers: 8
-
-  production_medium_batch:
-    batch_size: 128
-    num_workers: 6
-
-  production_small_batch:
-    batch_size: 64
-    num_workers: 4
-
-  production_tiny_batch:
-    batch_size: 32
-    num_workers: 2
-
-  production_micro_batch:
-    batch_size: 16
-    num_workers: 1
-
-  large_dataset:
-    batch_size: 512
-    num_workers: 8
-
-  debug:
     batch_size: 8
     num_workers: 1
 
-  experiment:
-    batch_size: 16
+  b32_w1:
+    batch_size: 32
     num_workers: 1
 
-  cross_validation:
+  b64_w2:
+    batch_size: 64
+    num_workers: 2
+
+  b128_w4:
+    batch_size: 128
+    num_workers: 4
+
+  b64_w4:
     batch_size: 64
     num_workers: 4
 
-  hpo:
+  b32_w2:
     batch_size: 32
     num_workers: 2
 
-  intensive:
-    batch_size: 1024
-    num_workers: 12
+  b16_w1:
+    batch_size: 256
+    num_workers: 8
+
+  b128_w6:
+    batch_size: 128
+    num_workers: 6
+
+  b512_w8:
+    batch_size: 512
+    num_workers: 8
+
 
 # ===== TRAINING CONFIGURATIONS (TRAINER) =====
 # These configurations contain only training parameters
@@ -334,107 +336,37 @@ training_configs:
     accumulate_grad_batches: 1
     patience: 3
 
-  # Development configuration
-  dev:
-    max_epochs: 50
-    val_freq: 5
+  # Debug configuration
+  debug:
+    max_epochs: 5
+    val_freq: 1
     accumulate_grad_batches: 1
-    patience: 10
+    patience: 3
 
   # Standard training configuration
-  standard:
+  e500_b1:
     max_epochs: 500
     val_freq: 10
     accumulate_grad_batches: 1
-    patience: 20
-
-  # Standard configuration with smaller batch (limited memory)
-  standard_small_batch:
-    max_epochs: 500
-    val_freq: 10
-    accumulate_grad_batches: 2  # Compensate for the small batch
     patience: 20
 
   # Standard configuration with very small batch (very limited memory)
-  standard_tiny_batch:
+  e500_b4:
     max_epochs: 500
     val_freq: 10
     accumulate_grad_batches: 4  # Compensate for the very small batch
     patience: 20
 
-  # Long training configuration
-  production:
-      max_epochs: 1000
-      val_freq: 10
-      accumulate_grad_batches: 1
-      patience: 50
-
   # Production configuration with medium batch (limited memory)
-  production_medium_batch:
+  e1000_b2:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 2  # Compensate for the smaller batch
     patience: 50
 
   # Production configuration with small batch (very limited memory)
-  production_small_batch:
+  e1000_b4:
     max_epochs: 1000
     val_freq: 10
     accumulate_grad_batches: 4  # Compensate for the small batch
     patience: 50
-
-  # Production configuration with very small batch (low-GPU)
-  production_tiny_batch:
-    max_epochs: 1000
-    val_freq: 10
-    accumulate_grad_batches: 8  # Compensate for the very small batch
-    patience: 50
-
-  # Production configuration with micro batch (very weak CPU or GPU)
-  production_micro_batch:
-    max_epochs: 1000
-    val_freq: 10
-    accumulate_grad_batches: 16  # Compensate for the micro batch
-    patience: 50
-
-  # Configuration for large datasets (larger batch)
-  large_dataset:
-    max_epochs: 200
-    val_freq: 5
-    accumulate_grad_batches: 2
-    patience: 30
-
-  # Debug configuration (very small)
-  debug:
-    max_epochs: 3
-    val_freq: 1
-    accumulate_grad_batches: 1
-    patience: 2
-
-  # Quick experiment configuration
-  experiment:
-    max_epochs: 10
-    val_freq: 2
-    accumulate_grad_batches: 1
-    patience: 5
-
-  # Cross-validation configuration
-  cross_validation:
-    max_epochs: 100
-    val_freq: 5
-    accumulate_grad_batches: 1
-    patience: 15
-
-  # Hyperparameter tuning configuration
-  hpo:
-    max_epochs: 20
-    val_freq: 2
-    accumulate_grad_batches: 1
-    patience: 8
-
-  # Intensive training configuration (powerful GPU)
-  intensive:
-    max_epochs: 2000
-    val_freq: 20
-    accumulate_grad_batches: 4
-    patience: 100

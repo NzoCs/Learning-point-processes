@@ -14,20 +14,15 @@ from new_ltpp.evaluation.metrics_helper import (
     SimulationMetrics,
     SimulationMetricsComputer,
 )
-from new_ltpp.evaluation.metrics_helper.main_metrics_helper import MetricsHelper
 
 __all__ = [
-    "DistribComparator",
-    "EvaluationMode",
-    "MetricsHelper",  # Legacy
-    "NewDistribComparator",
-    "NTPPComparator",
     "DistributionAnalyzer",
-    # New modular exports
-    "MetricsComputerInterface",
-    "PredictionMetricsComputer",
-    "SimulationMetricsComputer",
+    "NTPPComparator",
+    "EvaluationMode",
     "MaskedValues",
+    "MetricsComputerInterface",
     "PredictionMetrics",
+    "PredictionMetricsComputer",
     "SimulationMetrics",
+    "SimulationMetricsComputer",
 ]

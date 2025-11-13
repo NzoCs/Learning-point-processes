@@ -48,7 +48,8 @@ import numpy as np
 import torch
 
 from new_ltpp.configs import TokenizerConfig
-from new_ltpp.data.preprocess.types import Batch, PaddingStrategy, TruncationStrategy, TPPSequence
+from new_ltpp.shared_types import Batch, TPPSequence
+from new_ltpp.utils.const import PaddingStrategy, TruncationStrategy
 
 
 class EventTokenizer:
@@ -322,7 +323,6 @@ class EventTokenizer:
 
         # Check if all sequences have the same length
         sequence_lengths = np.array([len(seq.time_seqs) for seq in sequences])
-        max_length = np.max(sequence_lengths) if max_length is None else max_length
         is_uniform_length = np.all(sequence_lengths == max_length)
         
         # Route to appropriate padding strategy
@@ -333,9 +333,15 @@ class EventTokenizer:
             if max_length is None:
                 raise ValueError("max_length must be specified for MAX_LENGTH padding strategy")
             return self._pad_to_max_length(sequences, max_length, return_attention_mask)
+        
+        else :
+            max_length = max(len(seq.time_seqs) for seq in sequences)
+            return self._pad_to_max_length(
+                sequences,
+                max_length=max_length,
+                return_attention_mask=return_attention_mask
+            )
 
-        # Fallback to do not pad
-        return self._pad_do_not_pad(sequences, return_attention_mask)
 
     @staticmethod
     def make_pad_sequence(
@@ -404,7 +410,7 @@ class EventTokenizer:
             pad_seq = torch.stack(pad_seq)
         return pad_seq
 
-    def make_attn_mask_for_pad_sequence(self, pad_seqs, pad_token_id):
+    def make_attn_mask_for_pad_sequence(self, pad_seqs: torch.Tensor, pad_token_id: int):
         """Make the attention masks for the sequence.
 
         Args:
@@ -459,7 +465,7 @@ class EventTokenizer:
 
         return attention_mask
 
-    def make_type_mask_for_pad_sequence(self, pad_seqs):
+    def make_type_mask_for_pad_sequence(self, pad_seqs: torch.Tensor):
         """Make the type mask.
 
         Args:

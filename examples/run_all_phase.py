@@ -1,15 +1,13 @@
 from pathlib import Path
 
-CONFIGS_DIR = Path(__file__).parent.parent / "yaml_configs" / "configs.yaml"
-
-from new_ltpp.configs import ConfigFactory, ConfigType
+from new_ltpp.globals import CONFIGS_FILE
 from new_ltpp.configs.config_builders import RunnerConfigBuilder
 from new_ltpp.runners import RunnerManager
 
 
 def main() -> None:
     # Load configuration
-    config_path = CONFIGS_DIR
+    config_path = CONFIGS_FILE
     model_id = "NHP"
 
     # Build runner configuration from YAML
@@ -24,7 +22,7 @@ def main() -> None:
         thinning_config_path="thinning_configs.quick_test",
         simulation_config_path="simulation_configs.quick_test",
         data_loading_config_path="data_loading_configs.quick_test",
-        logger_config_path="logger_configs.mlflow",
+        logger_config_path="logger_configs.csv",
     )
 
     config = config_builder.build(model_id=model_id)
@@ -35,7 +33,7 @@ def main() -> None:
     # Run complete pipeline: train -> test -> predict
 
     # 1. Training
-    # runner.run(phase="train")
+    runner.run(phase="train")
 
     # 2. Testing
     runner.run(phase="test")

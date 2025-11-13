@@ -1,71 +1,10 @@
-"""Types shared across the project.
-
-This module defines data structures used throughout the project:
-- `Batch`: Container for batched event sequences
-- `PaddingStrategy`: Enum for padding strategies
-- `TruncationStrategy`: Enum for truncation strategies
-
-Batch Format:
--------------
-Typical shapes produced by `EventTokenizer` (numpy arrays):
-- `time_seqs`: float32, shape (batch_size, seq_len)
-- `time_delta_seqs`: float32, shape (batch_size, seq_len)
-- `type_seqs`: int64, shape (batch_size, seq_len)
-- `seq_non_pad_mask`: bool, shape (batch_size, seq_len)
-- `attention_mask`: bool, shape (batch_size, seq_len, seq_len) or an empty list when unused
-- `type_mask` (optional): int32, shape (batch_size, seq_len, num_event_types)
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Dict, Optional, Union, List
+from typing import Dict, List, Union, Optional, Any
 
 import torch
 
-
-# ============================================================================
-# STRATEGY ENUMS
-# ============================================================================
-
-class ExplicitEnum(str, Enum):
-    """Enum with more explicit error message for missing values."""
-
-    def __str__(self):
-        return str(self.value)
-
-    @classmethod
-    def _missing_(cls, value):
-        raise ValueError(
-            f"{value} is not a valid {cls.__name__}, please select one of {list(cls._value2member_map_.keys())}"
-        )
-
-
-class PaddingStrategy(ExplicitEnum):
-    """Padding strategies for event sequences.
-    
-    Values:
-        LONGEST: Pad to the longest sequence in the batch
-        MAX_LENGTH: Pad to a specified maximum length
-        DO_NOT_PAD: Do not apply padding
-    """
-
-    LONGEST = "longest"
-    MAX_LENGTH = "max_length"
-    DO_NOT_PAD = "do_not_pad"
-
-
-class TruncationStrategy(ExplicitEnum):
-    """Truncation strategies for event sequences.
-    
-    Values:
-        LONGEST_FIRST: Truncate the longest sequences first
-        DO_NOT_TRUNCATE: Do not apply truncation
-    """
-
-    LONGEST_FIRST = "longest_first"
-    DO_NOT_TRUNCATE = "do_not_truncate"
 
 
 @dataclass
@@ -81,7 +20,7 @@ class TPPSequence:
     time_delta_seqs: List[float]
     type_seqs: List[int]
 
-    def to_dict(self) -> Dict[str, List]:
+    def to_dict(self) -> Dict[str, Union[List[float], List[int]]]:
         """Convert to dictionary format for compatibility with existing code."""
         return {
             "time_seqs": self.time_seqs,
@@ -163,5 +102,24 @@ class Batch:
 
 		return self
 
-__all__ = ["Batch", "PaddingStrategy", "TruncationStrategy"]
+@dataclass
+class OneStepPrediction:
+    """Container for one-step-ahead predictions.
 
+    Args:
+        dtime_predict: Predicted time deltas for the next event
+        type_predict: Predicted event types for the next event
+    """
+    dtime_predict: torch.Tensor
+    type_predict: torch.Tensor
+
+@dataclass
+class SimulationResult:
+    """Container for simulated sequences.
+
+    Args:
+        time_seqs: Simulated event times
+        type_seqs: Simulated event types
+    """
+    time_seqs: torch.Tensor
+    type_seqs: torch.Tensor

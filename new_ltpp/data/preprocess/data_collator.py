@@ -2,9 +2,9 @@ from dataclasses import dataclass
 from typing import Optional, Union, List
 
 from new_ltpp.data.preprocess.event_tokenizer import EventTokenizer
-from new_ltpp.data.preprocess.types import PaddingStrategy, TruncationStrategy
-from new_ltpp.data.preprocess.dataset import TPPSequence
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.utils.const import PaddingStrategy, TruncationStrategy
+from new_ltpp.shared_types import TPPSequence
+from new_ltpp.shared_types import Batch
 
 @dataclass
 class TPPDataCollator:

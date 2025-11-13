@@ -16,7 +16,7 @@ import torch
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_loader import TPPDataModule
 from new_ltpp.evaluation.benchmarks.bench_interfaces import BenchmarkInterface
-from new_ltpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
+from new_ltpp.evaluation.metrics_helper import MetricsHelper
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.utils import logger
 
@@ -33,7 +33,7 @@ class BaseBenchmark(ABC, BenchmarkInterface):
     def __init__(
         self,
         data_config: DataConfig,
-        save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks",
+        base_dir: Union[str, Path] = OUTPUT_DIR,
     ):
         """
         Initialize the base benchmark.
@@ -43,7 +43,7 @@ class BaseBenchmark(ABC, BenchmarkInterface):
             save_dir: Directory to save results
         """
         self.data_config = data_config
-        self.save_dir = Path(save_dir)
+        self.base_dir = Path(base_dir)
         self.pad_token = data_config.tokenizer_specs.pad_token_id
 
         # Initialize data module with data_config
@@ -53,7 +53,6 @@ class BaseBenchmark(ABC, BenchmarkInterface):
         # Initialize metrics helper
         self.metrics_helper = MetricsHelper(
             num_event_types=self.data_module.num_event_types,
-            mode=EvaluationMode.PREDICTION,
         )
 
         self.num_event_types = self.data_module.num_event_types
@@ -109,7 +108,7 @@ class BaseBenchmark(ABC, BenchmarkInterface):
             results: Results dictionary to save
         """
         # Create save directory
-        dataset_dir = self.save_dir / self.data_config.dataset_id
+        dataset_dir = self.base_dir / self.data_config.dataset_id / "benchmarks"
         dataset_dir.mkdir(parents=True, exist_ok=True)
 
         # Save results

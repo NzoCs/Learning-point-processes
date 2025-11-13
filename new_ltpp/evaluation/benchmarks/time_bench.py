@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 import torch
 
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 
 from .base_bench import BaseBenchmark

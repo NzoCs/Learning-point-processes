@@ -5,6 +5,7 @@ from torch.nn import functional as F
 
 from new_ltpp.configs import ModelConfig
 from new_ltpp.models.basemodel import Model
+from new_ltpp.shared_types import Batch
 
 
 class CumulHazardFunctionNetwork(nn.Module):

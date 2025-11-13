@@ -11,7 +11,7 @@ from pathlib import Path
 import torch
 
 from new_ltpp.configs.data_config import DataConfig
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 from new_ltpp.globals import OUTPUT_DIR
 
@@ -26,7 +26,7 @@ class InterTimeDistributionBenchmark(TimeBenchmark):
     def __init__(
         self,
         data_config: DataConfig,
-        save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks",
+        save_dir: Union[str, Path],
         num_bins: int = 50,
     ):
         """
@@ -115,6 +115,9 @@ class InterTimeDistributionBenchmark(TimeBenchmark):
         total_samples = size[0] * size[1]
 
         # Sample bin indices according to probabilities using PyTorch
+        if self.bin_probabilities is None or self.bin_centers is None or self.bins is None:
+            raise ValueError("Bins have not been computed. Call _build_intertime_distribution first.")
+        
         bin_indices = torch.multinomial(
             self.bin_probabilities, num_samples=total_samples, replacement=True
         )

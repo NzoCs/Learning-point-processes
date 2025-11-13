@@ -5,7 +5,7 @@ from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import ScaledSoftplus
 from new_ltpp.models.basemodel import Model
 from new_ltpp.models.neural_model import NeuralModel
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 
 
 class ContTimeLSTMCell(nn.Module):

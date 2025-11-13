@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 import torch
 
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 
 from .base_bench import BaseBenchmark
@@ -53,7 +53,7 @@ class TypeBenchmark(BaseBenchmark):
 
         for batch_idx, batch in enumerate(test_loader):
             # Convert batch to values for compatibility
-            batch_values = batch.values()
+            
 
             # Only compute type metrics
             type_predictions = self._create_type_predictions(batch)

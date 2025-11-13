@@ -74,15 +74,15 @@ class BenchmarksEnum(Enum):
 class BenchmarkManager:
     """Manager to run benchmarks on data configurations."""
 
-    def __init__(self, save_dir: Union[Path, str] = OUTPUT_DIR / "benchmarks"):
+    def __init__(self, base_dir: Union[Path, str] = OUTPUT_DIR):
         """
         Initialize the manager.
 
         Args:
             save_dir: Directory to save results (default: OUTPUT_DIR/benchmarks)
         """
-        self.save_dir = Path(save_dir)
-        self.save_dir.mkdir(parents=True, exist_ok=True)
+        self.base_dir = Path(base_dir)
+        self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def run(
         self,
@@ -113,7 +113,7 @@ class BenchmarkManager:
             data_configs = [data_configs]
 
         # Determine save directory
-        output_dir = Path(save_dir) if save_dir else self.save_dir
+        output_dir = Path(save_dir) if save_dir else self.base_dir
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Multiple configs: return nested dict {dataset_id: {benchmark_name: result}}
@@ -127,7 +127,7 @@ class BenchmarkManager:
                     benchmark_class = bm.get_class()
                     instance = benchmark_class(
                         data_config=config,
-                        save_dir=output_dir / dataset_id,
+                        base_dir=output_dir,
                         **kwargs,
                     )
                     dataset_results[bm.benchmark_name] = instance.evaluate()
@@ -146,7 +146,7 @@ class BenchmarkManager:
             benchmark_class = bm.get_class()
             instance = benchmark_class(
                 data_config=config,
-                save_dir=output_dir,
+                base_dir=output_dir,
                 **kwargs,
             )
             results[bm.benchmark_name] = instance.evaluate()

@@ -4,13 +4,12 @@ import os
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
 from matplotlib import pyplot as plt
 from pytorch_lightning.utilities.types import STEP_OUTPUT
-from torch import nn
 from torch.nn import functional as F
 from tqdm import tqdm
 
@@ -71,6 +70,17 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         simulation_config = model_config.simulation_config
 
+        self.num_sample = self.gen_config.num_sample
+
+        self.event_sampler = EventSampler(
+            num_exp=self.gen_config.num_exp,
+            over_sample_rate=self.gen_config.over_sample_rate,
+            num_samples_boundary=self.gen_config.num_samples_boundary,
+            dtime_max=self.dtime_max,
+            device=self._device,
+            mode='train'
+        )
+
         # Simulation from the model configuration
         if simulation_config is not None:
             self.seed = simulation_config.seed
@@ -80,7 +90,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             self.max_simul_events = simulation_config.max_sim_events
 
         self.sim_events_counter = 0
-        self.simulations = []
+        self._simulations = []
 
         # Cache for event samplers to avoid reconstruction
         self._event_sampler_cache = {}
@@ -100,6 +110,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             logger.info(
                 f"Successfully loaded pretrained model from: {pretrain_model_path}"
             )
+
+    @property
+    def simulations(self) -> List[SimulationResult]:
+        """Get the list of generated simulations."""
+        return self._simulations
 
     # Implement for the models based on intensity (not implemented in intensity free)
     def compute_intensities_at_sample_times(
@@ -137,44 +152,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             loss, number of events.
         """
         pass
-
-    # Set up the event sampler if generation config is provided
-    def event_sampler(self, num_sample=None, mode: Literal['train', 'simulation'] = 'train') -> EventSampler:
-        """Get the event sampler for generating events with caching."""
-
-        gen_config = self.gen_config
-
-        if num_sample is None:
-            num_sample = gen_config.num_sample
-
-        # Use num_sample as cache key
-        cache_key = num_sample
-
-        # Check if we have a cached sampler for this num_sample
-        if cache_key in self._event_sampler_cache:
-            cached_sampler = self._event_sampler_cache[cache_key]
-            # Verify that the cached sampler's device matches current device
-            if cached_sampler.device == self._device:
-                return cached_sampler
-            else:
-                # Device mismatch, remove from cache
-                del self._event_sampler_cache[cache_key]
-
-        # Create new event sampler
-        event_sampler = EventSampler(
-            num_sample=num_sample,
-            num_exp=gen_config.num_exp,
-            over_sample_rate=gen_config.over_sample_rate,
-            num_samples_boundary=gen_config.num_samples_boundary,
-            dtime_max=self.dtime_max,
-            device=self._device,
-            mode=mode
-        )
-
-        # Cache the new sampler
-        self._event_sampler_cache[cache_key] = event_sampler
-
-        return event_sampler
 
     @property
     def device(self):
@@ -248,7 +225,12 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         return sampled_dtimes
 
     def compute_loglikelihood(
-        self, time_delta_seq, lambda_at_event, lambdas_loss_samples, seq_mask, type_seq
+        self, 
+        time_delta_seq: torch.Tensor, 
+        lambda_at_event: torch.Tensor, 
+        lambdas_loss_samples: torch.Tensor, 
+        seq_mask: torch.Tensor, 
+        type_seq: torch.Tensor
     ):
         """Compute the loglikelihood of the event sequence based on Equation (8) of NHP paper.
 
@@ -360,15 +342,14 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             STEP_OUTPUT: The output of the validation step
         """
         # Create label batch by removing first element from sequences
-        batch_dict = batch.to_mapping()
-        label_batch = Batch.from_mapping({
-            "time_seqs": batch_dict["time_seqs"][:, 1:],
-            "time_delta_seqs": batch_dict["time_delta_seqs"][:, 1:],
-            "type_seqs": batch_dict["type_seqs"][:, 1:],
-            "seq_non_pad_mask": batch_dict["seq_non_pad_mask"][:, 1:],
-            "attention_mask": batch_dict["attention_mask"][:, 1:] if batch_dict["attention_mask"].numel() > 0 else batch_dict["attention_mask"],
-            "type_mask": batch_dict["type_mask"][:, 1:] if batch_dict["type_mask"] is not None else None,
-        })
+        label_batch = Batch(
+            time_seqs=batch.time_seqs[:, 1:],
+            time_delta_seqs=batch.time_delta_seqs[:, 1:],
+            type_seqs=batch.type_seqs[:, 1:],
+            seq_non_pad_mask=batch.seq_non_pad_mask[:, 1:],
+            attention_mask=batch.attention_mask[:, 1:] if isinstance(batch.attention_mask, torch.Tensor) and batch.attention_mask.numel() > 0 else [],
+            type_mask=batch.type_mask[:, 1:] if batch.type_mask is not None else None,
+        )
 
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
@@ -413,12 +394,13 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             STEP_OUTPUT: The output of the test step
         """
         # Create label batch by removing first element from sequences
-        label_batch = (
-            batch.time_seqs[:, 1:],
-            batch.time_delta_seqs[:, 1:],
-            batch.type_seqs[:, 1:],
-            batch.seq_non_pad_mask[:, 1:],
-            batch.attention_mask[:, 1:] if batch.attention_mask.numel() > 0 else batch.attention_mask,
+        label_batch = Batch(
+            time_seqs=batch.time_seqs[:, 1:],
+            time_delta_seqs=batch.time_delta_seqs[:, 1:],
+            type_seqs=batch.type_seqs[:, 1:],
+            seq_non_pad_mask=batch.seq_non_pad_mask[:, 1:],
+            attention_mask=batch.attention_mask[:, 1:] if isinstance(batch.attention_mask, torch.Tensor) and batch.attention_mask.numel() > 0 else [],
+            type_mask=batch.type_mask[:, 1:] if batch.type_mask is not None else None,
         )
 
         loss, num_events = self.loglike_loss(batch)
@@ -432,8 +414,9 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             num_event_types=self.num_event_types
         )
         one_step_metrics = one_step_metrics_compute.compute_prediction_metrics(
-            batch=batch, pred=pred
+            batch=label_batch, pred=pred
         )
+
         for key in one_step_metrics:
             if key == "confusion_matrix":
                 # Skip confusion matrix as it's a 2D tensor that can't be logged directly
@@ -451,14 +434,27 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                 return avg_loss
 
             # Compute simulation metrics
-            simulation = self.simulate(batch=batch)
+            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(batch=batch)
+            
+            # Convert simulation tuple to SimulationResult object
+            sim = SimulationResult.from_simulation_tensors(
+                simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask
+            )
+            
+            # Increment global event counter
+            n_events_generated = (sim.type_seqs != 0).sum().item()
+            self.sim_events_counter += n_events_generated
+
+            # Append to simulations list
+            self._simulations.append(sim)
+
 
             simulation_metrics_compute = MetricsHelper(
                 num_event_types=self.num_event_types
             )
 
             simulation_metrics = simulation_metrics_compute.compute_simulation_metrics(
-                batch=batch, pred=simulation
+                batch=batch, sim=sim
             )  # Log simulation metrics
             for key in simulation_metrics:
                 if key == "confusion_matrix":
@@ -471,38 +467,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                     prog_bar=False,
                     sync_dist=True,
                 )
-
-            simul_time_seq = simulation.time_seqs
-            simul_event_seq = simulation.type_seqs
-
-            # Convert tensors to CPU in batch to avoid doing it in the loop
-            simul_time_seq_cpu = simul_time_seq.detach().cpu()
-            simul_event_seq_cpu = simul_event_seq.detach().cpu()
-
-            batch_size = simul_time_seq_cpu.size(0)
-
-            # Increment global event counter - count non-zero elements
-            n_events_generated = (simul_event_seq_cpu != 0).sum().item()
-            self.sim_events_counter += n_events_generated
-
-            # Build list of new dictionaries to add to self.simulations
-            nouveaux = []
-            for i in range(batch_size):
-                ts_i = simul_time_seq_cpu[i]
-                # Calculate time deltas from time sequence
-                dts_i = torch.cat([ts_i[:1], ts_i[1:] - ts_i[:-1]])
-                evs_i = simul_event_seq_cpu[i]
-                
-                nouveaux.append(
-                    {
-                        "time_seq": ts_i,
-                        "time_delta_seq": dts_i,
-                        "event_seq": evs_i,
-                    }
-                )
-
-            # Extend existing list (avoids calling append each time)
-            self.simulations.extend(nouveaux)
 
         return avg_loss
 
@@ -522,50 +486,24 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                 f"Simulation limit reached: {self.sim_events_counter} events generated, "
                 f"max is {self.max_simul_events}."
             )
-            return self.simulations
+            return 
 
-        # 4) Appel à la simulation « vectorisée » (retourne tout sur le device GPU/CPU interne)
-        simulation = self.simulate(batch=batch)
-        simul_time_seq = simulation.time_seqs
-        simul_event_seq = simulation.type_seqs
+        # 4) Appel à la simulation « vectorisée » (retourne un tuple)
+        simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(batch=batch)
 
-        # Convert tensors to CPU in batch to avoid doing it in the loop
-        simul_time_seq_cpu = simul_time_seq.detach().cpu()
-        simul_event_seq_cpu = simul_event_seq.detach().cpu()
-
-        batch_size = simul_time_seq_cpu.size(0)
-
-        # 5) On incrémente le compteur global d'événements simulés
-        n_events_generated = (simul_event_seq_cpu != 0).sum().item()
+        # Convert simulation tuple to SimulationResult object
+        nouveau = SimulationResult.from_simulation_tensors(
+            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask
+        )
+        
+        # Increment global event counter
+        n_events_generated = (nouveau.type_seqs != 0).sum().item()
         self.sim_events_counter += n_events_generated
 
-        # 6) On construit la liste des nouveaux dictionnaires à ajouter à self.simulations.
-        #    Pour chaque i dans [0..batch_size-1], si simul_mask_cpu[i] comporte
-        #    au moins un True, on extrait en une fois « time_seq[i][mask_i] », etc.
-        nouveaux = []
-        for i in range(batch_size):
-            mask_i = simul_mask_cpu[i]
-            if not mask_i.any():
-                continue
+        # Append to simulations list
+        self._simulations.append(nouveau)
 
-            # On indexe directement les vecteurs CPU avec le booléen mask_i
-            ts_i = simul_time_seq_cpu[i][mask_i]
-            dts_i = simul_time_delta_seq_cpu[i][mask_i]
-            evs_i = simul_event_seq_cpu[i][mask_i]
-
-            # On ajoute un dict clair, sans refaire clone/detach (déjà sur CPU et detaché)
-            nouveaux.append(
-                {
-                    "time_seq": ts_i,
-                    "time_delta_seq": dts_i,
-                    "event_seq": evs_i,
-                }
-            )
-
-        # On étend la liste existante (évite d’appeler append à chaque fois)
-        self.simulations.extend(nouveaux)
-
-        return self.simulations
+        return
 
     def format_and_save_simulations(self, save_dir: Union[str, Path]) -> list[dict]:
         """
@@ -586,9 +524,20 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         if self.simulations == []:
             logger.warning("No simulations to format.")
-            return None
+            return []
+        
+        # Convert SimulationResult objects to dict format for formatting
+        simulations_as_dicts = [
+            {
+                "time_seq": sim.time_seqs,
+                "time_delta_seq": sim.dtime_seqs,
+                "event_seq": sim.type_seqs,
+            }
+            for sim in self.simulations
+        ]
+        
         formatted_data = format_multivariate_simulations(
-            simulations=self.simulations, dim_process=self.num_event_types
+            simulations=simulations_as_dicts, dim_process=self.num_event_types
         )
 
         if isinstance(save_dir, str):
@@ -662,18 +611,13 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             event_seq[:, :-1],
         )
 
-        # [batch_size, seq_len]
-        dtime_boundary = torch.max(
-            time_delta_seq * self.dtime_max, time_delta_seq + self.dtime_max
-        )
-
         # [batch_size, seq_len, num_sample]
-        accepted_dtimes, weights = self.event_sampler().draw_next_time_one_step(
+        accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
             time_seq,
             time_delta_seq,
             event_seq,
-            dtime_boundary,
             self.compute_intensities_at_sample_times,
+            self.num_sample,
             compute_last_step_only=False,
         )  # make it explicit
 
@@ -711,7 +655,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         self,
         batch: Batch,
         forward=False,
-        num_step: int = None,
+        num_step: Optional[int] = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Multi-step prediction since last event in the sequence.
 
@@ -806,7 +750,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         end_time: Optional[float] = None,
         batch_size: Optional[int] = None,
         max_events: Optional[int] = None,
-    ) -> SimulationResult:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Version encore plus optimisée avec approche vectorisée avancée.
 
@@ -876,6 +820,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                 last_event_time[valid_mask, mark] = max_times[valid_mask]
 
         current_time = start_time
+        current_len = initial_len
 
         # Simulation avec moins d'allocations mémoire
         with torch.no_grad():  # Pas besoin de gradients pour la simulation
@@ -906,7 +851,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                         active_time_seq,
                         active_time_delta,
                         active_event_seq,
-                        num_sample=1,
                         mode="simulation"
                     )
 
@@ -970,7 +914,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             final_time_seq >= start_time, final_time_seq <= end_time
         )
 
-        return SimulationResult(time_seqs=final_time_seq, type_seqs=final_event_seq)
+        return final_time_seq, final_time_delta, final_event_seq, simul_mask
 
     def intensity_graph(
         self,
@@ -1013,22 +957,20 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         # Simulate data
 
-        if self.simulations is None:
-
-            simulation = self.simulate(
+        if self.simulations == []:
+            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(
                 start_time=start_time, end_time=end_time, batch_size=1
             )
-            # Extract the first (and only) sequence from batch dimension
-            time_seq = simulation.time_seqs[0]  # [seq_len]
-            type_seq = simulation.type_seqs[0]  # [seq_len]
-            # Calculate time deltas from time sequence
-            time_delta_seq = torch.cat([time_seq[:1], time_seq[1:] - time_seq[:-1]])  # [seq_len]
+            # Extract first sequence from batch
+            time_seq = simul_time_seq[0]
+            time_delta_seq = simul_dtime_seq[0]
+            type_seq = simul_event_seq[0]
         else:
 
             # Use the first simulation in the batch
-            time_seq = self.simulations[0]["time_seq"]
-            time_delta_seq = self.simulations[0]["time_delta_seq"]
-            type_seq = self.simulations[0]["event_seq"]
+            time_seq = self.simulations[0].time_seqs[0,...]
+            time_delta_seq = self.simulations[0].dtime_seqs[0,...]
+            type_seq = self.simulations[0].type_seqs[0,...]
             # Note: simulations are already filtered, so no additional mask needed
 
         # Add batch dimension back for processing
@@ -1217,8 +1159,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         time_delta_seq: torch.Tensor,
         event_seq: torch.Tensor,
         mode: Literal["train", "simulation"] = "train",
-        num_sample: Optional[int] = None,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Utility method to predict the next time delta using the event sampler.
 
@@ -1232,17 +1173,15 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             torch.Tensor: Predicted time deltas [batch_size, 1] if compute_last_step_only=True else [batch_size, seq_len]
             torch.Tensor: Predicted event types [batch_size, 1] if compute_last_step_only=True else [batch_size, seq_len]
         """
-        # Determine possible event times
-        dtime_boundary = time_delta_seq + self.dtime_max
-        accepted_dtimes, weights = self.event_sampler(
-            num_sample=num_sample,
-            mode=mode
-        ).draw_next_time_one_step(
+
+        num_sample = (self.num_sample if mode == "train" else 1)
+
+        accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
             time_seq,
-            dtime_boundary,
+            time_delta_seq,
             event_seq,
-            dtime_boundary,
             self.compute_intensities_at_sample_times,
+            num_sample=num_sample,
             compute_last_step_only=True,
         )
 

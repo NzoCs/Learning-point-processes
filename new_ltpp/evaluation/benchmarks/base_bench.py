@@ -15,13 +15,12 @@ import torch
 
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_loader import TPPDataModule
-from new_ltpp.evaluation.benchmarks.bench_interfaces import BenchmarkInterface
 from new_ltpp.evaluation.metrics_helper import MetricsHelper
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.utils import logger
 
 
-class BaseBenchmark(ABC, BenchmarkInterface):
+class BaseBenchmark(ABC):
     """
     Abstract base class for all TPP benchmarks.
 
@@ -140,6 +139,7 @@ class BaseBenchmark(ABC, BenchmarkInterface):
         if "macro_f1score_mean" in metrics:
             logger.info(f"Macro F1 Score: {metrics['macro_f1score_mean']:.6f}")
 
+
     def get_available_metrics(self) -> List[str]:
         """
         Get the list of available metrics for this benchmark.
@@ -148,6 +148,8 @@ class BaseBenchmark(ABC, BenchmarkInterface):
             List of metric names
         """
         return self.metrics_helper.get_available_metrics()
+
+    # Completement reecrire cette fonction
 
     def _aggregate_metrics(
         self, all_metrics: List[Dict[str, float]]

@@ -1,28 +1,15 @@
-# Import from our new modular distribution analysis helper package
+# Import from batch-based distribution analysis helper package
 from new_ltpp.evaluation.distribution_analysis_helper import (
+    BatchStatisticsCollector,
     DistributionAnalyzer,
-    NTPPComparator,
 )
 
-# Import from the new modular metrics helper package
-from new_ltpp.evaluation.metrics_helper import (
-    EvaluationMode,
-    MaskedValues,
-    MetricsComputerInterface,
-    PredictionMetrics,
-    PredictionMetricsComputer,
-    SimulationMetrics,
-    SimulationMetricsComputer,
-)
+# Export the metrics helper subpackage (import lazily by consumers)
+from .metrics_helper import MetricsHelper  # consumers can access metrics via this submodule
+
 
 __all__ = [
+    "BatchStatisticsCollector",
     "DistributionAnalyzer",
-    "NTPPComparator",
-    "EvaluationMode",
-    "MaskedValues",
-    "MetricsComputerInterface",
-    "PredictionMetrics",
-    "PredictionMetricsComputer",
-    "SimulationMetrics",
-    "SimulationMetricsComputer",
+    "MetricsHelper",
 ]

@@ -234,7 +234,9 @@ class Runner:
         # Check if distributed training is requested
         if self.devices is not None and self.devices > 1:
             # Use DDPStrategy with find_unused_parameters=True
+            
             strategy = DDPStrategy(find_unused_parameters=True)
+
             trainer = pl.Trainer(
                 max_epochs=self.max_epochs,
                 devices=self.devices,
@@ -348,20 +350,7 @@ class Runner:
         # Ensure the directory exists
         data_save_dir = self.config.base_dir / "distributions_comparisons"
         data_save_dir.mkdir(parents=True, exist_ok=True)
-        self.model.format_and_save_simulations(save_dir=data_save_dir)
-
-        comparator = NTPPComparatorFactory.create_comparator(
-            label_data=self.datamodule.test_dataset,
-            simulation=self.model.simulations,
-            num_event_types=self.datamodule.num_event_types,
-            output_dir=str(data_save_dir),
-        )
-
-        logger.info(
-            "Running comprehensive evaluation of temporal point process distributions..."
-        )
-        comparator.run_comprehensive_evaluation()
-        logger.info(f"Simulations saved to {data_save_dir}")
+        # self.model.format_and_save_simulations(save_dir=data_save_dir)
 
         logger.info("Generating intensity graph...")
         self.model.intensity_graph(save_dir=str(data_save_dir))

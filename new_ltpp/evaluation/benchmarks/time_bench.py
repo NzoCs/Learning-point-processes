@@ -23,7 +23,7 @@ class TimeBenchmark(BaseBenchmark):
     """
 
     @abstractmethod
-    def _create_time_predictions(self, batch: Batch) -> torch.Tensor:
+    def _create_dtime_predictions(self, batch: Batch) -> torch.Tensor:
         """
         Create time predictions for a given batch using the benchmark strategy.
 
@@ -34,6 +34,7 @@ class TimeBenchmark(BaseBenchmark):
             Tensor of predicted inter-times
         """
         pass
+
 
     def evaluate(self) -> Dict[str, Any]:
         """
@@ -52,14 +53,10 @@ class TimeBenchmark(BaseBenchmark):
         all_metrics = []
 
         for batch_idx, batch in enumerate(test_loader):
-            # Convert batch to values for compatibility
-            batch_values = batch.values()
-
             # Only compute time metrics
-            time_predictions = self._create_time_predictions(batch)
-            metrics = self.metrics_helper.compute_all_time_metrics(
-                batch_values, time_predictions
-            )
+            dtime_predictions = self._create_dtime_predictions(batch)
+            
+            metrics = self.metrics_helper.compute_prediction_time_metrics(batch, dtime_predictions)
 
             all_metrics.append(metrics)
 

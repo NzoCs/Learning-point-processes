@@ -23,15 +23,15 @@ class MarkDistributionBenchmark(TypeBenchmark):
     Benchmark that samples event marks from the empirical distribution of training data.
     """
 
-    def __init__(self, data_config: DataConfig, save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks"):
+    def __init__(self, data_config: DataConfig, base_dir: Union[str, Path]):
         """
         Initialize the mark distribution benchmark.
 
         Args:
             data_config: Data configuration object
-            save_dir: Directory to save results
+            base_dir: Directory to save results
         """
-        super().__init__(data_config, save_dir)
+        super().__init__(data_config, base_dir)
 
         # Distribution parameters
         self.mark_probabilities = None
@@ -103,6 +103,9 @@ class MarkDistributionBenchmark(TypeBenchmark):
         """
         total_samples = size[0] * size[1]
         # Sample event types according to probabilities
+        if self.mark_probabilities is None:
+            raise ValueError("Mark probabilities have not been initialized. Call _prepare_benchmark first.")
+        
         sampled_marks = torch.multinomial(
             self.mark_probabilities, num_samples=total_samples, replacement=True
         )

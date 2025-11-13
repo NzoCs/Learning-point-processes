@@ -239,7 +239,7 @@ simulation_configs:
 
   quick_test:
     start_time: 0
-    end_time: 10
+    end_time: 120
     max_sim_events: 1000
     batch_size: 4
   

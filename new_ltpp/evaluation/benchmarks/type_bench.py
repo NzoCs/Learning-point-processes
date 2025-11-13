@@ -52,13 +52,10 @@ class TypeBenchmark(BaseBenchmark):
         all_metrics = []
 
         for batch_idx, batch in enumerate(test_loader):
-            # Convert batch to values for compatibility
-            
-
             # Only compute type metrics
             type_predictions = self._create_type_predictions(batch)
-            metrics = self.metrics_helper.compute_all_type_metrics(
-                batch_values, type_predictions
+            metrics = self.metrics_helper.compute_prediction_type_metrics(
+                batch, type_predictions
             )
 
             all_metrics.append(metrics)

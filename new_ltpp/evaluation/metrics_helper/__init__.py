@@ -6,39 +6,25 @@ A modular metrics computation system following SOLID principles.
 
 
 from .metrics_helper import MetricsHelper
-from .metrics_interfaces import (
-    DataExtractorInterface,
-    MetricsComputerInterface,
-    SimulationTimeExtractorInterface,
-    SimulationTypeExtractorInterface,
-    TimeExtractorInterface,
-    TypeExtractorInterface,
-)
-from .prediction_metrics_computer import PredictionMetricsComputer
-from .shared_types import (
-    EvaluationMode,
+from .predictions_metrics.computer import PredictionMetricsComputer
+from .predictions_metrics.pred_types import (
     MaskedValues,
     PredictionMetrics,
+    TimeValues,
+    TypeValues,
+)
+from .simulation_metrics.simul_types import (
     SimulationMetrics,
     SimulationTimeValues,
     SimulationTypeValues,
     SimulationValues,
-    TimeValues,
-    TypeValues,
 )
-from .simulation_metrics_computer import SimulationMetricsComputer
+from .simulation_metrics.computer import SimulationMetricsComputer
 
 __all__ = [
-    "MetricsComputerInterface",
-    "DataExtractorInterface",
-    "TimeExtractorInterface",
-    "TypeExtractorInterface",
-    "SimulationTimeExtractorInterface",
-    "SimulationTypeExtractorInterface",
     "MetricsHelper",
     "PredictionMetricsComputer",
     "SimulationMetricsComputer",
-    "EvaluationMode",
     "MaskedValues",
     "TimeValues",
     "TypeValues",

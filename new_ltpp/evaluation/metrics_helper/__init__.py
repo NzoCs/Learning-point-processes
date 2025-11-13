@@ -4,7 +4,8 @@ Metrics Helper Package
 A modular metrics computation system following SOLID principles.
 """
 
-from .main_metrics_helper import MetricsHelper
+
+from .metrics_helper import MetricsHelper
 from .metrics_interfaces import (
     DataExtractorInterface,
     MetricsComputerInterface,

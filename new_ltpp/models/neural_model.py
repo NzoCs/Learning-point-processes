@@ -1,8 +1,6 @@
 from abc import ABC
 
-import torch
 import torch.nn as nn
-
 from .basemodel import Model
 
 

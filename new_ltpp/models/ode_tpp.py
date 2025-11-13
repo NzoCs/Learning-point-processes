@@ -5,7 +5,7 @@ from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import DNN
 from new_ltpp.models.basemodel import Model
 from new_ltpp.utils import rk4_step_method
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 
 
 def flatten_parameters(model):

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from new_ltpp.data.preprocess.dataset import TPPDataset
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 
 

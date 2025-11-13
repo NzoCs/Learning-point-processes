@@ -2,12 +2,13 @@
 Prediction metrics computation class.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Literal
 
 import torch
 import torch.nn.functional as F
 import torchmetrics
 
+from new_ltpp.shared_types import Batch, OneStepPrediction
 from new_ltpp.utils import logger
 
 from .metrics_interfaces import (
@@ -22,45 +23,20 @@ from .shared_types import MaskedValues, PredictionMetrics, TimeValues, TypeValue
 class TimeDataExtractor(TimeExtractorInterface):
     """Extracts time-related data from batch and predictions."""
 
-    def extract_time_values(self, batch: Any, pred: Any) -> TimeValues:
+    def extract_time_values(self, batch: Batch, pred: OneStepPrediction) -> TimeValues:
         """
         Extract masked time values for prediction metrics computation.
 
         Args:
-            batch: Input batch data
-            pred: Either a tuple/list of predictions (pred[0] = time predictions)
-                  or just the time predictions tensor directly
+            batch: Batch object containing ground truth sequences
+            pred: OneStepPrediction with dtime_predict
         """
-        # Extraction according to new_ltpp format
-        if len(batch) >= 6:
-            (
-                true_time_seqs,
-                true_time_delta_seqs,
-                true_type_seqs,
-                batch_non_pad_mask,
-                attention_mask,
-                _,
-            ) = batch
-        elif len(batch) >= 5:
-            (
-                true_time_seqs,
-                true_time_delta_seqs,
-                true_type_seqs,
-                batch_non_pad_mask,
-                attention_mask,
-            ) = batch
-        else:
-            raise ValueError(
-                "Batch values must contain at least 5 elements for prediction mode."
-            )
+        # Extract from Batch dataclass
+        true_time_delta_seqs = batch.time_delta_seqs
+        true_type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
-        # Handle both cases: pred as tuple/list or pred as direct time tensor
-        if isinstance(pred, (tuple, list)) and len(pred) > 0:
-            # pred is a tuple/list, extract time predictions from index 0
-            pred_time_delta_seqs = pred[0]
-        else:
-            # pred is directly the time predictions tensor
-            pred_time_delta_seqs = pred
+        pred_time_delta_seqs = pred.dtime_predict
 
         mask = (
             batch_non_pad_mask
@@ -77,45 +53,21 @@ class TimeDataExtractor(TimeExtractorInterface):
 class TypeDataExtractor(TypeExtractorInterface):
     """Extracts type-related data from batch and predictions."""
 
-    def extract_type_values(self, batch: Any, pred: Any) -> TypeValues:
+    def extract_type_values(self, batch: Batch, pred: OneStepPrediction) -> TypeValues:
         """
         Extract masked type values for prediction metrics computation.
 
         Args:
-            batch: Input batch data
-            pred: Either a tuple/list of predictions (pred[1] = type predictions)
-                  or just the type predictions tensor directly
+            batch: Batch object containing ground truth sequences
+            pred: OneStepPrediction with type_predict
         """
-        # Extraction according to new_ltpp format
-        if len(batch) >= 6:
-            (
-                true_time_seqs,
-                true_time_delta_seqs,
-                true_type_seqs,
-                batch_non_pad_mask,
-                attention_mask,
-                _,
-            ) = batch
-        elif len(batch) >= 5:
-            (
-                true_time_seqs,
-                true_time_delta_seqs,
-                true_type_seqs,
-                batch_non_pad_mask,
-                attention_mask,
-            ) = batch
-        else:
-            raise ValueError(
-                "Batch values must contain at least 5 elements for prediction mode."
-            )
+        # Extract from Batch dataclass
+        true_time_seqs = batch.time_seqs
+        true_time_delta_seqs = batch.time_delta_seqs
+        true_type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
-        # Handle both cases: pred as tuple/list or pred as direct type tensor
-        if isinstance(pred, (tuple, list)) and len(pred) > 1:
-            # pred is a tuple/list, extract type predictions from index 1
-            pred_type_seqs = pred[1]
-        else:
-            # pred is directly the type predictions tensor
-            pred_type_seqs = pred
+        pred_type_seqs = pred.type_predict
 
         mask = (
             batch_non_pad_mask
@@ -137,28 +89,8 @@ class PredictionDataExtractor(DataExtractorInterface):
         self.time_extractor = TimeDataExtractor()
         self.type_extractor = TypeDataExtractor()
 
-    def extract_values(self, batch: Any, pred: Any) -> MaskedValues:
+    def extract_values(self, batch: Batch, pred: OneStepPrediction) -> MaskedValues:
         """Extract masked values for prediction metrics computation."""
-        # Add debug logging to understand the data structure
-        logger.debug(
-            f"DEBUG: Batch type: {type(batch)}, length: {len(batch) if hasattr(batch, '__len__') else 'N/A'}"
-        )
-        logger.debug(
-            f"DEBUG: Pred type: {type(pred)}, length: {len(pred) if hasattr(pred, '__len__') else 'N/A'}"
-        )
-
-        # Check if batch elements are strings (which would cause the error)
-        for i, item in enumerate(batch):
-            logger.debug(f"DEBUG: Batch[{i}] type: {type(item)}")
-            if isinstance(item, str):
-                logger.error(f"DEBUG: Found string in batch at index {i}: {item}")
-
-        # Check pred elements too
-        for i, item in enumerate(pred):
-            logger.debug(f"DEBUG: Pred[{i}] type: {type(item)}")
-            if isinstance(item, str):
-                logger.error(f"DEBUG: Found string in pred at index {i}: {item}")
-
         # Extract using specialized extractors
         time_values = self.time_extractor.extract_time_values(batch, pred)
         type_values = self.type_extractor.extract_type_values(batch, pred)
@@ -183,9 +115,6 @@ class PredictionMetricsComputer(MetricsComputerInterface):
     def __init__(
         self,
         num_event_types: int,
-        data_extractor: DataExtractorInterface = None,
-        time_extractor: TimeExtractorInterface = None,
-        type_extractor: TypeExtractorInterface = None,
         selected_metrics: Optional[List[Union[str, PredictionMetrics]]] = None,
     ):
         """
@@ -200,11 +129,11 @@ class PredictionMetricsComputer(MetricsComputerInterface):
                              Can be strings or PredictionMetrics enum values.
         """
         self.num_event_types = num_event_types
-        self._data_extractor = data_extractor or PredictionDataExtractor(
+        self._data_extractor = PredictionDataExtractor(
             num_event_types
         )
-        self._time_extractor = time_extractor or TimeDataExtractor()
-        self._type_extractor = type_extractor or TypeDataExtractor()
+        self._time_extractor = TimeDataExtractor()
+        self._type_extractor = TypeDataExtractor()
 
         # Process selected metrics
         if selected_metrics is None:
@@ -233,13 +162,13 @@ class PredictionMetricsComputer(MetricsComputerInterface):
 
             self.selected_metrics = selected_set
 
-    def compute_metrics(self, batch: Any, pred: Any) -> Dict[str, Any]:
+    def compute_metrics(self, batch: Batch, pred: OneStepPrediction) -> Dict[str, Any]:
         """
         Compute selected prediction metrics.
 
         Args:
-            batch: Input batch data
-            pred: Model predictions
+            batch: Batch object containing ground truth sequences
+            pred: OneStepPrediction with dtime_predict and type_predict
 
         Returns:
             Dictionary of computed metrics (only selected ones)
@@ -279,13 +208,13 @@ class PredictionMetricsComputer(MetricsComputerInterface):
             logger.error(f"Error computing prediction metrics: {e}")
             return self._get_nan_metrics()
 
-    def compute_all_time_metrics(self, batch: Any, pred: Any) -> Dict[str, Any]:
+    def compute_all_time_metrics(self, batch: Batch, pred: OneStepPrediction) -> Dict[str, Any]:
         """
         Compute all time-related metrics using the time extractor.
 
         Args:
-            batch: Input batch data
-            pred: Model predictions
+            batch: Batch object containing ground truth sequences
+            pred: OneStepPrediction with dtime_predict
 
         Returns:
             Dictionary of computed time metrics
@@ -306,13 +235,13 @@ class PredictionMetricsComputer(MetricsComputerInterface):
             logger.error(f"Error computing time metrics: {e}")
             return {"time_rmse": float("nan"), "time_mae": float("nan")}
 
-    def compute_all_type_metrics(self, batch: Any, pred: Any) -> Dict[str, Any]:
+    def compute_all_type_metrics(self, batch: Batch, pred: OneStepPrediction) -> Dict[str, Any]:
         """
         Compute all type-related metrics using the type extractor.
 
         Args:
-            batch: Input batch data
-            pred: Model predictions
+            batch: Batch object containing ground truth sequences
+            pred: OneStepPrediction with type_predict
 
         Returns:
             Dictionary of computed type metrics
@@ -423,7 +352,7 @@ class PredictionMetricsComputer(MetricsComputerInterface):
         return accuracy_metric.compute().item() * 100
 
     def _calculate_f1_score(
-        self, masked: MaskedValues, average: str = "macro"
+        self, masked: MaskedValues, average: Literal["macro", "micro"] = "macro"
     ) -> float:
         """Calculate F1 score."""
         if self.num_event_types <= 1 or masked.true_types.numel() == 0:
@@ -491,48 +420,68 @@ class PredictionMetricsComputer(MetricsComputerInterface):
         self, type_values: TypeValues
     ) -> float:
         """Calculate type classification accuracy from TypeValues."""
+
         if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
             return float("nan")
+        
         device = type_values.true_types.device
+
         accuracy_metric = torchmetrics.Accuracy(
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
+
         accuracy_metric.update(type_values.pred_types, type_values.true_types)
+
         return accuracy_metric.compute().item() * 100
 
     def _calculate_f1_score_from_type_values(
-        self, type_values: TypeValues, average: str = "macro"
+        self, type_values: TypeValues, average: Literal["macro", "micro"] = "macro"
     ) -> float:
+        
         """Calculate F1 score from TypeValues."""
+        
         if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
             return float("nan")
+        
         device = type_values.true_types.device
+
         f1_metric = torchmetrics.F1Score(
             task="multiclass", num_classes=self.num_event_types, average=average
         ).to(device)
+
         f1_metric.update(type_values.pred_types, type_values.true_types)
+
         return f1_metric.compute().item() * 100
 
     def _calculate_recall_from_type_values(self, type_values: TypeValues) -> float:
         """Calculate recall from TypeValues."""
+
         if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
             return float("nan")
+        
         device = type_values.true_types.device
+
         recall_metric = torchmetrics.Recall(
             task="multiclass", num_classes=self.num_event_types, average="macro"
         ).to(device)
+
         recall_metric.update(type_values.pred_types, type_values.true_types)
+
         return recall_metric.compute().item() * 100
 
     def _calculate_precision_from_type_values(self, type_values: TypeValues) -> float:
         """Calculate precision from TypeValues."""
+
         if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
             return float("nan")
+        
         device = type_values.true_types.device
         precision_metric = torchmetrics.Precision(
             task="multiclass", num_classes=self.num_event_types, average="macro"
         ).to(device)
+
         precision_metric.update(type_values.pred_types, type_values.true_types)
+
         return precision_metric.compute().item() * 100
 
     def _calculate_cross_entropy_from_type_values(

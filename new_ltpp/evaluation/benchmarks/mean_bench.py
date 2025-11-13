@@ -12,7 +12,7 @@ import numpy as np
 import torch
 
 from new_ltpp.configs.data_config import DataConfig
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 from new_ltpp.globals import OUTPUT_DIR
 
@@ -24,7 +24,7 @@ class MeanInterTimeBenchmark(TimeBenchmark):
     Benchmark that predicts the mean inter-time for all events.
     """
 
-    def __init__(self, data_config: DataConfig, save_dir: Union[str, Path] = OUTPUT_DIR / "benchmarks"):
+    def __init__(self, data_config: DataConfig, save_dir: Union[str, Path]):
         """
         Initialize the mean inter-time benchmark.
 
@@ -83,6 +83,9 @@ class MeanInterTimeBenchmark(TimeBenchmark):
         time_delta_seqs = batch.time_delta_seqs
 
         # Create predictions with mean inter-time
+        if self.mean_inter_time is None:
+            raise ValueError("Mean inter-time has not been computed. Call _prepare_benchmark first.")
+        
         pred_inter_times = torch.full_like(time_delta_seqs, self.mean_inter_time)
 
         return pred_inter_times

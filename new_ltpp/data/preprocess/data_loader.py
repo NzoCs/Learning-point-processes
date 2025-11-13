@@ -1,17 +1,41 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-from typing import Literal, Optional
+from typing import Iterator, Literal, Optional
 import numpy as np
 
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_collator import TPPDataCollator
 from new_ltpp.data.preprocess.dataset import TPPDataset
 from new_ltpp.data.preprocess.event_tokenizer import EventTokenizer
+from new_ltpp.shared_types import Batch
 from new_ltpp.utils import load_pickle, logger, py_assert
+
+class TypedDataLoader:
+    """Typed DataLoader for Temporal Point Process event sequences.
+
+    This class wraps a PyTorch DataLoader to provide typed access to TPP event
+    sequences, ensuring that batches are returned in the expected format.
+
+    Args:
+        data_loader (DataLoader): The underlying PyTorch DataLoader.
+    """
+
+    def __init__(self, data_loader: DataLoader[Batch]):
+        self.data_loader = data_loader
+
+    def __iter__(self) -> Iterator[Batch]:
+        """Return an iterator over the DataLoader."""
+        for batch in self.data_loader:
+            yield batch
+
+    def __len__(self) -> int:
+        """Return the number of batches in the DataLoader."""
+        return len(self.data_loader)
 
 
 # PyTorch Lightning DataModule for TPP
 class TPPDataModule(pl.LightningDataModule):
+    
     def __init__(self, data_config: DataConfig):
         """Initialize the PyTorch Lightning DataModule.
 
@@ -50,17 +74,17 @@ class TPPDataModule(pl.LightningDataModule):
         if split == "train" and self.train_data is None:
             train_data_dir = self.data_config.get_data_dir("train")
             self.train_data = self.build_input(
-                train_data_dir, self.data_config.data_format, "train"
+                source_dir=train_data_dir, data_format=self.data_config.data_format, split="train"
             )
         elif split == "val" and self.val_data is None:
             val_data_dir = self.data_config.get_data_dir("dev")
             self.val_data = self.build_input(
-                val_data_dir, self.data_config.data_format, "dev"
+                source_dir=val_data_dir, data_format=self.data_config.data_format, split="dev"
             )
         elif split == "test" and self.test_data is None:
             test_data_dir = self.data_config.get_data_dir("test")
             self.test_data = self.build_input(
-                test_data_dir, self.data_config.data_format, "test"
+                source_dir=test_data_dir, data_format=self.data_config.data_format, split="test"
             )
 
         # Sélectionner le bon dataset
@@ -243,14 +267,16 @@ class TPPDataModule(pl.LightningDataModule):
             tokenizer=self.tokenizer,
         )
 
-        return DataLoader(
+        train_data_loader = TypedDataLoader(DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            shuffle=False,
+            shuffle=True,
             collate_fn=collate_fn,
             num_workers=self.num_workers,
             persistent_workers=True,
-        )
+        ))
+
+        return train_data_loader
 
     def val_dataloader(self):
         """Return the validation data loader.
@@ -262,14 +288,16 @@ class TPPDataModule(pl.LightningDataModule):
             tokenizer=self.tokenizer,
         )
 
-        return DataLoader(
+        val_data_loader = TypedDataLoader(DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             collate_fn=collate_fn,
             num_workers=self.num_workers,
             persistent_workers=True,
-        )
+        ))
+
+        return val_data_loader
 
     def test_dataloader(self):
         """Return the test data loader.
@@ -281,31 +309,16 @@ class TPPDataModule(pl.LightningDataModule):
             tokenizer=self.tokenizer,
         )
 
-        return DataLoader(
+        test_data_loader = TypedDataLoader(DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             collate_fn=collate_fn,
             num_workers=self.num_workers,
             persistent_workers=True,
-        )
+        ))
 
-    def predict_dataloader(self):
-        """Return the prediction data loader.
-
-        Returns:
-            DataLoader: PyTorch DataLoader for prediction data
-        """
-        collate_fn = TPPDataCollator(
-            tokenizer=self.tokenizer,
-        )
-        return DataLoader(
-            self.test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            collate_fn=collate_fn,
-            num_workers=self.num_workers,
-        )
+        return test_data_loader
 
     # Convenience methods that match the TPPDataLoader API
     def train_loader(self, **kwargs):

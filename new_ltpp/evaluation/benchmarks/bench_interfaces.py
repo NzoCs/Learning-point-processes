@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, Protocol, Tuple
 
 import torch
 
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 
 
 class BenchmarkInterface(Protocol):

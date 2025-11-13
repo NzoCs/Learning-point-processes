@@ -129,23 +129,19 @@ class RunnerConfig(Config):
         self.dataset_id = self.data_config.dataset_id
         self.model_id = model_id
 
+        # Base directory for all outputs
+        self.base_dir = OUTPUT_DIR / self.dataset_id / self.model_id
+
         # Directory setup
-        # Model checkpoints directory
-        ckpt = "checkpoints"
-        self.checkpoint_dir = OUTPUT_DIR / (
-            save_dir or f"{ckpt}/{self.dataset_id}/{self.model_id}/"
-        )
-        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Saved model directory (separate from checkpoints)
-        self.save_model_dir = OUTPUT_DIR /  self.dataset_id / self.model_id / "saved_model"
-        self.save_model_dir.mkdir(parents=True, exist_ok=True)
+        # Checkpoints directory
+        self.checkpoints_dir = self.base_dir / "checkpoints"
+        self.checkpoints_dir.mkdir(parents=True, exist_ok=True)
         
         # Logger save directory (separate from checkpoints)
-        self.save_dir = str(OUTPUT_DIR /  self.dataset_id / self.model_id / "logs")
+        self.save_dir = str(self.base_dir / "logs")
 
         # Model directory alias for compatibility
-        self.model_dir = str(self.save_model_dir)
+        self.model_dir = str(self.checkpoints_dir)
 
         # Process the incoming `logger_config` parameter (could be None, dict or LoggerConfig)
         # Force the logger's save_dir to the runner's dirpath for consistency across artifacts

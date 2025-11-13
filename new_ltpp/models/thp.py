@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from new_ltpp.configs.model_config import ModelConfig
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 
 from .baselayer import (
     EncoderLayer,

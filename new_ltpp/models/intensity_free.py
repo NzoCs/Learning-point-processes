@@ -7,7 +7,7 @@ from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
 from new_ltpp.configs import ModelConfig
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 from new_ltpp.models.basemodel import Model
 
 

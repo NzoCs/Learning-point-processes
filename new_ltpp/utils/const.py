@@ -27,17 +27,6 @@ class PaddingStrategy(ExplicitEnum):
     DO_NOT_PAD = "do_not_pad"
 
 
-class TensorType(ExplicitEnum):
-    """
-    Possible values for the `return_tensors` argument in [`EventTokenizerBase.__call__`]. Useful for
-    tab-completion in an IDE.
-    """
-
-    PYTORCH = "pt"
-    TENSORFLOW = "tf"
-    NUMPY = "np"
-
-
 class RunnerPhase(ExplicitEnum):
     """Model runner phase enum."""
 
@@ -83,13 +72,3 @@ class TruncationStrategy(ExplicitEnum):
 
     LONGEST_FIRST = "longest_first"
     DO_NOT_TRUNCATE = "do_not_truncate"
-
-
-class Backend(ExplicitEnum):
-    """
-    Possible values for the `truncation` argument in [`EventTokenizer.__call__`]. Useful for tab-completion in
-    an IDE.
-    """
-
-    Torch = "torch"
-    TF = "tensorflow"

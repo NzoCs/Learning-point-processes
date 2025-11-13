@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from scipy.stats import wasserstein_distance
 
+from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .metrics_interfaces import (
@@ -31,29 +32,28 @@ class SimulationTimeDataExtractor(SimulationTimeExtractorInterface):
         self.num_event_types = num_event_types
 
     def extract_simulation_time_values(
-        self, batch: Any, pred: Any
+        self, batch: Batch, pred: SimulationResult
     ) -> SimulationTimeValues:
         """
         Extract simulation time values for metrics computation.
 
         Args:
-            batch: Input batch data
-            pred: Simulation predictions
+            batch: Batch object with ground truth data
+            pred: SimulationResult with simulated sequences
         """
-        if len(batch) >= 4:
-            true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask = (
-                batch[:4]
-            )
-        else:
-            true_time_seqs, true_time_delta_seqs, true_type_seqs = batch[:3]
-            batch_non_pad_mask = (true_type_seqs != self.num_event_types).float()
+        true_time_seqs = batch.time_seqs
+        true_time_delta_seqs = batch.time_delta_seqs
+        true_type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
-        sim_time_seqs, sim_time_delta_seqs, sim_type_seqs = pred[:3]
-        sim_mask = (
-            pred[3]
-            if len(pred) >= 4
-            else torch.ones_like(sim_type_seqs, dtype=torch.bool)
-        )
+        sim_time_seqs = pred.time_seqs
+        sim_type_seqs = pred.type_seqs
+        sim_mask = torch.ones_like(sim_type_seqs, dtype=torch.bool)
+        # Calculate time deltas from time seqs
+        sim_time_delta_seqs = torch.cat([
+            sim_time_seqs[:, :1],
+            sim_time_seqs[:, 1:] - sim_time_seqs[:, :-1]
+        ], dim=1)
 
         return SimulationTimeValues(
             true_time_seqs=true_time_seqs,
@@ -71,29 +71,22 @@ class SimulationTypeDataExtractor(SimulationTypeExtractorInterface):
         self.num_event_types = num_event_types
 
     def extract_simulation_type_values(
-        self, batch: Any, pred: Any
+        self, batch: Batch, pred: SimulationResult
     ) -> SimulationTypeValues:
         """
         Extract simulation type values for metrics computation.
 
         Args:
-            batch: Input batch data
-            pred: Simulation predictions
+            batch: Batch object with ground truth data
+            pred: SimulationResult with simulated sequences
         """
-        if len(batch) >= 4:
-            true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask = (
-                batch[:4]
-            )
-        else:
-            true_time_seqs, true_time_delta_seqs, true_type_seqs = batch[:3]
-            batch_non_pad_mask = (true_type_seqs != self.num_event_types).float()
+        true_time_seqs = batch.time_seqs
+        true_time_delta_seqs = batch.time_delta_seqs
+        true_type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
-        sim_time_seqs, sim_time_delta_seqs, sim_type_seqs = pred[:3]
-        sim_mask = (
-            pred[3]
-            if len(pred) >= 4
-            else torch.ones_like(sim_type_seqs, dtype=torch.bool)
-        )
+        sim_type_seqs = pred.type_seqs
+        sim_mask = torch.ones_like(sim_type_seqs, dtype=torch.bool)
 
         return SimulationTypeValues(
             true_type_seqs=true_type_seqs,
@@ -110,22 +103,21 @@ class SimulationDataExtractor(DataExtractorInterface):
         self.time_extractor = SimulationTimeDataExtractor(num_event_types)
         self.type_extractor = SimulationTypeDataExtractor(num_event_types)
 
-    def extract_values(self, batch: Any, pred: Any) -> Tuple[torch.Tensor, ...]:
+    def extract_values(self, batch: Batch, pred: SimulationResult) -> Tuple[torch.Tensor, ...]:
         """Extract simulation values for metrics computation."""
-        if len(batch) >= 4:
-            true_time_seqs, true_time_delta_seqs, true_type_seqs, batch_non_pad_mask = (
-                batch[:4]
-            )
-        else:
-            true_time_seqs, true_time_delta_seqs, true_type_seqs = batch[:3]
-            batch_non_pad_mask = (true_type_seqs != self.num_event_types).float()
+        true_time_seqs = batch.time_seqs
+        true_time_delta_seqs = batch.time_delta_seqs
+        true_type_seqs = batch.type_seqs
+        batch_non_pad_mask = batch.seq_non_pad_mask
 
-        sim_time_seqs, sim_time_delta_seqs, sim_type_seqs = pred[:3]
-        sim_mask = (
-            pred[3]
-            if len(pred) >= 4
-            else torch.ones_like(sim_type_seqs, dtype=torch.bool)
-        )
+        sim_time_seqs = pred.time_seqs
+        sim_type_seqs = pred.type_seqs
+        sim_mask = torch.ones_like(sim_type_seqs, dtype=torch.bool)
+        # Calculate time deltas from time seqs
+        sim_time_delta_seqs = torch.cat([
+            sim_time_seqs[:, :1],
+            sim_time_seqs[:, 1:] - sim_time_seqs[:, :-1]
+        ], dim=1)
 
         return (
             true_time_seqs,
@@ -149,9 +141,6 @@ class SimulationMetricsComputer(MetricsComputerInterface):
     def __init__(
         self,
         num_event_types: int,
-        data_extractor: DataExtractorInterface = None,
-        time_extractor: SimulationTimeExtractorInterface = None,
-        type_extractor: SimulationTypeExtractorInterface = None,
         selected_metrics: Optional[List[Union[str, SimulationMetrics]]] = None,
     ):
         """
@@ -166,15 +155,9 @@ class SimulationMetricsComputer(MetricsComputerInterface):
                              Can be strings or SimulationMetrics enum values.
         """
         self.num_event_types = num_event_types
-        self._data_extractor = data_extractor or SimulationDataExtractor(
-            num_event_types
-        )
-        self._time_extractor = time_extractor or SimulationTimeDataExtractor(
-            num_event_types
-        )
-        self._type_extractor = type_extractor or SimulationTypeDataExtractor(
-            num_event_types
-        )
+        self._data_extractor = SimulationDataExtractor(num_event_types)
+        self._time_extractor = SimulationTimeDataExtractor(num_event_types)
+        self._type_extractor = SimulationTypeDataExtractor(num_event_types)
 
         # Process selected metrics
         if selected_metrics is None:
@@ -203,13 +186,13 @@ class SimulationMetricsComputer(MetricsComputerInterface):
 
             self.selected_metrics = selected_set
 
-    def compute_metrics(self, batch: Any, pred: Any) -> Dict[str, float]:
+    def compute_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, float]:
         """
         Compute selected simulation metrics.
 
         Args:
-            batch: Input batch data
-            pred: Model predictions
+            batch: Batch object with ground truth data
+            pred: SimulationResult with simulated sequences
 
         Returns:
             Dictionary of computed metrics (only selected ones)
@@ -252,13 +235,13 @@ class SimulationMetricsComputer(MetricsComputerInterface):
             logger.error(f"Error computing simulation metrics: {e}")
             return self._get_nan_metrics()
 
-    def compute_all_time_metrics(self, batch: Any, pred: Any) -> Dict[str, Any]:
+    def compute_all_time_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, Any]:
         """
         Compute all time-related simulation metrics using the time extractor.
 
         Args:
-            batch: Input batch data
-            pred: Model predictions
+            batch: Batch object with ground truth data
+            pred: SimulationResult with simulated sequences
 
         Returns:
             Dictionary of computed time metrics
@@ -291,13 +274,13 @@ class SimulationMetricsComputer(MetricsComputerInterface):
                 "mmd_wasserstein": float("nan"),
             }
 
-    def compute_all_type_metrics(self, batch: Any, pred: Any) -> Dict[str, Any]:
+    def compute_all_type_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, Any]:
         """
         Compute all type-related simulation metrics using the type extractor.
 
         Args:
-            batch: Input batch data
-            pred: Model predictions
+            batch: Batch object with ground truth data
+            pred: SimulationResult with simulated sequences
 
         Returns:
             Dictionary of computed type metrics (currently empty for simulation)

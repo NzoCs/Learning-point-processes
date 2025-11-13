@@ -10,7 +10,7 @@ import torch
 import yaml
 
 from new_ltpp.configs.data_config import DataConfig
-from new_ltpp.data.preprocess.types import Batch
+from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 
 from .type_bench import TypeBenchmark

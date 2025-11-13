@@ -14,7 +14,6 @@ from new_ltpp.data.preprocess import TPPDataModule
 from new_ltpp.evaluation.distribution_analysis_helper import (
     NTPPComparatorFactory,
 )
-from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.model_factory import ModelFactory
 from new_ltpp.utils import logger
 
@@ -147,7 +146,7 @@ class Runner:
         self.use_precision_16 = training_config.use_precision_16
         self.accumulate_grad_batches = training_config.accumulate_grad_batches
 
-        self.dirpath = config.save_model_dir
+        self.dirpath = config.checkpoints_dir
         self.logger_config = config.logger_config
 
         self.checkpoint_path = CheckpointManager(str(self.dirpath)).latest_best()
@@ -317,7 +316,7 @@ class Runner:
         if results and len(results) > 0:
             import json
 
-            test_results_dir = OUTPUT_DIR /  self.dataset_id / self.model_id / "test_results"
+            test_results_dir = self.config.base_dir / "test_results"
             test_results_dir.mkdir(parents=True, exist_ok=True)
             results_file = test_results_dir / "test_results.json"
 
@@ -347,7 +346,7 @@ class Runner:
         )
 
         # Ensure the directory exists
-        data_save_dir = OUTPUT_DIR /  self.dataset_id / self.model_id / "distributions_comparisons"
+        data_save_dir = self.config.base_dir / "distributions_comparisons"
         data_save_dir.mkdir(parents=True, exist_ok=True)
         self.model.format_and_save_simulations(save_dir=data_save_dir)
 

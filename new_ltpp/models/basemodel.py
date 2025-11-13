@@ -15,8 +15,8 @@ from torch.nn import functional as F
 from tqdm import tqdm
 
 from new_ltpp.configs import ModelConfig
-from new_ltpp.data.preprocess.types import Batch
-from new_ltpp.evaluation.metrics_helper import EvaluationMode, MetricsHelper
+from new_ltpp.shared_types import Batch, OneStepPrediction, SimulationResult
+from new_ltpp.evaluation.metrics_helper import MetricsHelper
 from new_ltpp.models.thinning import EventSampler
 from new_ltpp.utils import format_multivariate_simulations, logger, save_json
 
@@ -360,13 +360,15 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             STEP_OUTPUT: The output of the validation step
         """
         # Create label batch by removing first element from sequences
-        label_batch = (
-            batch.time_seqs[:, 1:],
-            batch.time_delta_seqs[:, 1:],
-            batch.type_seqs[:, 1:],
-            batch.seq_non_pad_mask[:, 1:],
-            batch.attention_mask[:, 1:] if batch.attention_mask.numel() > 0 else batch.attention_mask,
-        )
+        batch_dict = batch.to_mapping()
+        label_batch = Batch.from_mapping({
+            "time_seqs": batch_dict["time_seqs"][:, 1:],
+            "time_delta_seqs": batch_dict["time_delta_seqs"][:, 1:],
+            "type_seqs": batch_dict["type_seqs"][:, 1:],
+            "seq_non_pad_mask": batch_dict["seq_non_pad_mask"][:, 1:],
+            "attention_mask": batch_dict["attention_mask"][:, 1:] if batch_dict["attention_mask"].numel() > 0 else batch_dict["attention_mask"],
+            "type_mask": batch_dict["type_mask"][:, 1:] if batch_dict["type_mask"] is not None else None,
+        })
 
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
@@ -384,10 +386,10 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         pred = self.predict_one_step_at_every_event(batch)
 
         one_step_metrics_compute = MetricsHelper(
-            num_event_types=self.num_event_types, mode=EvaluationMode.PREDICTION
+            num_event_types=self.num_event_types
         )
 
-        one_step_metrics = one_step_metrics_compute.compute_all_metrics(
+        one_step_metrics = one_step_metrics_compute.compute_prediction_metrics(
             batch=label_batch, pred=pred
         )
 
@@ -427,10 +429,10 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         pred = self.predict_one_step_at_every_event(batch)
 
         one_step_metrics_compute = MetricsHelper(
-            num_event_types=self.num_event_types, mode=EvaluationMode.PREDICTION
+            num_event_types=self.num_event_types
         )
-        one_step_metrics = one_step_metrics_compute.compute_all_metrics(
-            batch=label_batch, pred=pred
+        one_step_metrics = one_step_metrics_compute.compute_prediction_metrics(
+            batch=batch, pred=pred
         )
         for key in one_step_metrics:
             if key == "confusion_matrix":
@@ -452,11 +454,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             simulation = self.simulate(batch=batch)
 
             simulation_metrics_compute = MetricsHelper(
-                num_event_types=self.num_event_types, mode=EvaluationMode.SIMULATION
+                num_event_types=self.num_event_types
             )
 
-            simulation_metrics = simulation_metrics_compute.compute_all_metrics(
-                batch=label_batch, pred=simulation
+            simulation_metrics = simulation_metrics_compute.compute_simulation_metrics(
+                batch=batch, pred=simulation
             )  # Log simulation metrics
             for key in simulation_metrics:
                 if key == "confusion_matrix":
@@ -470,35 +472,27 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                     sync_dist=True,
                 )
 
-            simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = (
-                simulation
-            )
+            simul_time_seq = simulation.time_seqs
+            simul_event_seq = simulation.type_seqs
 
             # Convert tensors to CPU in batch to avoid doing it in the loop
             simul_time_seq_cpu = simul_time_seq.detach().cpu()
-            simul_time_delta_seq_cpu = simul_time_delta_seq.detach().cpu()
             simul_event_seq_cpu = simul_event_seq.detach().cpu()
-            simul_mask_cpu = simul_mask.detach().cpu()
 
             batch_size = simul_time_seq_cpu.size(0)
 
-            # Increment global event counter
-            n_events_generated = int(simul_mask_cpu.sum().item())
+            # Increment global event counter - count non-zero elements
+            n_events_generated = (simul_event_seq_cpu != 0).sum().item()
             self.sim_events_counter += n_events_generated
 
             # Build list of new dictionaries to add to self.simulations
             nouveaux = []
             for i in range(batch_size):
-                mask_i = simul_mask_cpu[i]
-                if not mask_i.any():
-                    continue
-
-                # Index CPU vectors directly with boolean mask
-                ts_i = simul_time_seq_cpu[i][mask_i]
-                dts_i = simul_time_delta_seq_cpu[i][mask_i]
-                evs_i = simul_event_seq_cpu[i][mask_i]
-
-                # Add clear dict without re-cloning/detaching (already on CPU and detached)
+                ts_i = simul_time_seq_cpu[i]
+                # Calculate time deltas from time sequence
+                dts_i = torch.cat([ts_i[:1], ts_i[1:] - ts_i[:-1]])
+                evs_i = simul_event_seq_cpu[i]
+                
                 nouveaux.append(
                     {
                         "time_seq": ts_i,
@@ -531,23 +525,18 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             return self.simulations
 
         # 4) Appel à la simulation « vectorisée » (retourne tout sur le device GPU/CPU interne)
-        simul_time_seq, simul_time_delta_seq, simul_event_seq, simul_mask = (
-            self.simulate(batch=batch)
-        )
+        simulation = self.simulate(batch=batch)
+        simul_time_seq = simulation.time_seqs
+        simul_event_seq = simulation.type_seqs
 
-        # simul_time_seq, simul_time_delta_seq, simul_event_seq  sont des tenseurs sur self.device,
-        # simul_mask aussi. On convertit l'ensemble en CPU EN UN SEUL BATCH,
-        # pour ne pas le faire dans la boucle ci-dessous.
+        # Convert tensors to CPU in batch to avoid doing it in the loop
         simul_time_seq_cpu = simul_time_seq.detach().cpu()
-        simul_time_delta_seq_cpu = simul_time_delta_seq.detach().cpu()
         simul_event_seq_cpu = simul_event_seq.detach().cpu()
-        simul_mask_cpu = simul_mask.detach().cpu()
 
         batch_size = simul_time_seq_cpu.size(0)
 
         # 5) On incrémente le compteur global d'événements simulés
-        #    simul_mask_cpu.sum() est un scalaire Python
-        n_events_generated = int(simul_mask_cpu.sum().item())
+        n_events_generated = (simul_event_seq_cpu != 0).sum().item()
         self.sim_events_counter += n_events_generated
 
         # 6) On construit la liste des nouveaux dictionnaires à ajouter à self.simulations.
@@ -651,14 +640,14 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
     def predict_one_step_at_every_event(
         self,
         batch: Batch,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> OneStepPrediction:
         """One-step prediction for every event in the sequence.
 
         Args:
             batch: Batch object containing sequences and masks
 
         Returns:
-            tuple: tensors of dtime and type prediction, [batch_size, seq_len].
+            OneStepPrediction: Predicted time deltas and event types, [batch_size, seq_len].
         """
         time_seq = batch.time_seqs
         time_delta_seq = batch.time_delta_seqs
@@ -716,7 +705,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             accepted_dtimes * weights, dim=-1
         )  # compute the expected next event time
 
-        return dtimes_pred, types_pred
+        return OneStepPrediction(dtime_predict=dtimes_pred, type_predict=types_pred)
 
     def predict_multi_step_since_last_event(
         self,
@@ -816,8 +805,8 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         batch_size: Optional[int] = None,
-        max_events: int,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        max_events: Optional[int] = None,
+    ) -> SimulationResult:
         """
         Version encore plus optimisée avec approche vectorisée avancée.
 
@@ -831,6 +820,8 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             end_time = self.simulation_end_time
         if batch_size is None:
             batch_size = self.simulation_batch_size
+        if max_events is None:
+            max_events = self.max_simul_events
 
         # Initialize sequences
         if batch is None:
@@ -979,7 +970,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             final_time_seq >= start_time, final_time_seq <= end_time
         )
 
-        return final_time_seq, final_time_delta, final_event_seq, simul_mask
+        return SimulationResult(time_seqs=final_time_seq, type_seqs=final_event_seq)
 
     def intensity_graph(
         self,
@@ -1024,13 +1015,14 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         if self.simulations is None:
 
-            time_seq, time_delta_seq, type_seq, simul_mask = self.simulate(
+            simulation = self.simulate(
                 start_time=start_time, end_time=end_time, batch_size=1
             )
             # Extract the first (and only) sequence from batch dimension
-            time_seq = time_seq[0][simul_mask[0]]  # [seq_len]
-            time_delta_seq = time_delta_seq[0][simul_mask[0]]  # [seq_len]
-            type_seq = type_seq[0][simul_mask[0]]  # [seq_len]
+            time_seq = simulation.time_seqs[0]  # [seq_len]
+            type_seq = simulation.type_seqs[0]  # [seq_len]
+            # Calculate time deltas from time sequence
+            time_delta_seq = torch.cat([time_seq[:1], time_seq[1:] - time_seq[:-1]])  # [seq_len]
         else:
 
             # Use the first simulation in the batch

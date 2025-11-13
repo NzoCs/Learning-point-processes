@@ -66,7 +66,7 @@ def example_all_benchmarks():
     data_config = builder.build()
 
     manager = BenchmarkManager()
-    results = manager.run_all(data_config)
+    results = manager.run_all_benchmarks(data_config)
     print(f"All benchmarks completed: {len(results)} benchmarks")
 
 
@@ -130,7 +130,7 @@ def example_multiple_configs():
     manager = BenchmarkManager()
 
     # Run on multiple configs returns nested dict: {dataset_id: {benchmark_name: result}}
-    results = manager.run_all([config1, config2])
+    results = manager.run_all_benchmarks([config1, config2])
     
     print(f"Benchmarks completed on {len(results)} datasets:")
     for dataset_id in results.keys():

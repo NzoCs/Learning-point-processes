@@ -24,15 +24,15 @@ class MeanInterTimeBenchmark(TimeBenchmark):
     Benchmark that predicts the mean inter-time for all events.
     """
 
-    def __init__(self, data_config: DataConfig, save_dir: Union[str, Path]):
+    def __init__(self, data_config: DataConfig, base_dir: Union[str, Path]):
         """
         Initialize the mean inter-time benchmark.
 
         Args:
             data_config: Data configuration object
-            save_dir: Directory to save results
+            base_dir: Directory to save results
         """
-        super().__init__(data_config, save_dir)
+        super().__init__(data_config, base_dir)
         self.mean_inter_time = None
 
     @property
@@ -70,7 +70,7 @@ class MeanInterTimeBenchmark(TimeBenchmark):
         )
         logger.info(f"Computed mean inter-time: {self.mean_inter_time:.6f}")
 
-    def _create_time_predictions(self, batch: Batch) -> torch.Tensor:
+    def _create_dtime_predictions(self, batch: Batch) -> torch.Tensor:
         """
         Create time predictions using the mean inter-time.
 

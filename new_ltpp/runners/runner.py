@@ -92,6 +92,8 @@ class RunnerManager:
                 phases = ["train", "test", "predict"]
             else:
                 phases = [phase]
+        else:
+            phases = phase
 
         logger.info(f"Runner executing phases: {phases}")
 

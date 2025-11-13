@@ -50,11 +50,25 @@ class Batch:
 	time_delta_seqs: torch.Tensor
 	type_seqs: torch.Tensor
 	seq_non_pad_mask: torch.Tensor
-	attention_mask: torch.Tensor  # Can be an empty list
+	attention_mask: Optional[Union[torch.Tensor, list]] = None  # Can be an empty list or None
 
 	# Optional additional masks/features
 	type_mask: Optional[torch.Tensor] = None
 
+	def __post_init__(self):
+		"""Validate and normalize batch after initialization."""
+		# Handle empty or None attention_mask
+		if self.attention_mask is None or (isinstance(self.attention_mask, (list, tuple)) and len(self.attention_mask) == 0):
+			self.attention_mask = torch.empty(0, device=self.time_seqs.device)
+		
+		# Ensure all required tensors have the same batch size
+		batch_size = self.time_seqs.shape[0]
+		assert self.time_delta_seqs.shape[0] == batch_size, "time_delta_seqs batch size mismatch"
+		assert self.type_seqs.shape[0] == batch_size, "type_seqs batch size mismatch"
+		assert self.seq_non_pad_mask.shape[0] == batch_size, "seq_non_pad_mask batch size mismatch"
+		
+		if isinstance(self.attention_mask, torch.Tensor) and self.attention_mask.numel() > 0:
+			assert self.attention_mask.shape[0] == batch_size, "attention_mask batch size mismatch"
 
 	@classmethod
 	def from_mapping(cls, mapping: Dict[str, torch.Tensor]) -> "Batch":
@@ -115,11 +129,45 @@ class OneStepPrediction:
 
 @dataclass
 class SimulationResult:
-    """Container for simulated sequences.
+    """Container for simulated sequences with time deltas.
 
     Args:
         time_seqs: Simulated event times
         type_seqs: Simulated event types
+        mask: Mask indicating valid events in the sequences
     """
     time_seqs: torch.Tensor
+    dtime_seqs: torch.Tensor
     type_seqs: torch.Tensor
+    
+    def __post_init__(self):
+        """Validate simulation result after initialization."""
+        # Ensure all tensors have the same shape
+        assert self.time_seqs.shape == self.type_seqs.shape, "time_seqs and type_seqs must have the same shape"
+        assert self.time_seqs.shape == self.dtime_seqs.shape, "dtime_seqs and time_seqs must have the same shape"
+    
+    @classmethod
+    def from_simulation_tensors(
+        cls,
+        time_seqs: torch.Tensor,
+        dtime_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        mask: torch.Tensor
+    ) -> SimulationResult:
+        """Convert batched simulation tensors to a SimulationResult with masked tensors.
+        
+        Args:
+            time_seqs: Tensor of shape (batch_size, seq_len) with event times
+            dtime_seqs: Tensor of shape (batch_size, seq_len) with time deltas
+            type_seqs: Tensor of shape (batch_size, seq_len) with event types
+            mask: Tensor of shape (batch_size, seq_len) indicating valid events
+            
+        Returns:
+            SimulationResult with masked tensors moved to CPU
+        """
+        # Apply mask directly and move to CPU
+        return cls(
+            time_seqs=(time_seqs * mask).detach().cpu(),
+            dtime_seqs=(dtime_seqs * mask).detach().cpu(),
+            type_seqs=(type_seqs * mask).detach().cpu()
+        )

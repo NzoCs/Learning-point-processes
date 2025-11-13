@@ -22,7 +22,6 @@ from new_ltpp.globals import OUTPUT_DIR
 
 
 from .base_bench import BaseBenchmark
-from .bench_interfaces import BenchmarkInterface
 from .last_mark_bench import LastMarkBenchmark
 from .mean_bench import MeanInterTimeBenchmark
 from .sample_distrib_intertime_bench import (

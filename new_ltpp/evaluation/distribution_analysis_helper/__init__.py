@@ -1,48 +1,63 @@
 """
 Distribution Analysis Helper Package
 
-This package provides modular components for temporal point process distribution analysis,
-following SOLID principles. Each module has a single responsibility and clear interfaces.
+This package provides batch-based statistical collection for temporal point process
+evaluation during prediction phase.
 
-Modules:
-- interfaces: Protocol definitions for data extractors, plot generators, and metrics calculators
-- data_extractors: Classes for extracting data from different sources (DataLoader, simulations)
+New Architecture:
+- base_accumulator: Abstract base class for all accumulators
+- time_accumulator: Inter-event time statistics accumulator
+- event_type_accumulator: Event type distribution accumulator
+- sequence_length_accumulator: Sequence length statistics accumulator
+- moment_accumulator: Statistical moments (mean, variance, skewness, kurtosis) accumulator
+- batch_statistics_collector: Main orchestrator for batch-by-batch statistics collection
 - distribution_analyzer: Statistical analysis and visualization utilities
-- base_plot_generator: Abstract base class for plot generators
-- plot_generators: Specific plot generator implementations
-- metrics_calculator: Implementation for calculating summary metrics
-- comparator: Main orchestrator class and factory
+- plot_generators: Plot generation implementations
+- metrics_calculator: Summary metrics computation
+
+Usage:
+    # Initialize collector before prediction
+    collector = BatchStatisticsCollector(
+        num_event_types=10,
+        output_dir="./output",
+        max_samples=100000
+    )
+    
+    # In predict_step (for each batch)
+    collector.update_batch(batch, simulation)
+    
+    # After prediction loop
+    results = collector.finalize_and_save()
 
 Author: Research Team
-Date: 2024
+Date: 2025
 """
 
+from .base_accumulator import BaseAccumulator
 from .base_plot_generator import BasePlotGenerator
-from .comparator import (
-    NTPPComparator,
-    NTPPComparatorFactory,
-)
-from .data_extractors import LabelDataExtractor, SimulationDataExtractor
+from .batch_statistics_collector import BatchStatisticsCollector
 from .distribution_analyzer import DistributionAnalyzer
-
-# Import all components for easy access
-from .distribution_interfaces import DataExtractor, MetricsCalculator, PlotGenerator
+from .event_type_accumulator import EventTypeAccumulator
 from .metrics_calculator import MetricsCalculatorImpl
+from .moment_accumulator import MomentAccumulator
 from .plot_generators import (
     CrossCorrelationPlotGenerator,
     EventTypePlotGenerator,
     InterEventTimePlotGenerator,
     SequenceLengthPlotGenerator,
 )
+from .sequence_length_accumulator import SequenceLengthAccumulator
+from .time_accumulator import InterEventTimeAccumulator
 
 __all__ = [
-    # Interfaces
-    "DataExtractor",
-    "PlotGenerator",
-    "MetricsCalculator",
-    # Data Extractors
-    "LabelDataExtractor",
-    "SimulationDataExtractor",
+    # Main Class (primary interface)
+    "BatchStatisticsCollector",
+    # Accumulators (base and specific)
+    "BaseAccumulator",
+    "InterEventTimeAccumulator",
+    "EventTypeAccumulator",
+    "SequenceLengthAccumulator",
+    "MomentAccumulator",
     # Analysis Tools
     "DistributionAnalyzer",
     # Plot Generators
@@ -53,7 +68,4 @@ __all__ = [
     "CrossCorrelationPlotGenerator",
     # Metrics
     "MetricsCalculatorImpl",
-    # Main Classes
-    "NTPPComparator",
-    "NTPPComparatorFactory",
 ]

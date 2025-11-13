@@ -4,11 +4,14 @@ Main MetricsHelper class that orchestrates metrics computation.
 
 from typing import Dict, List, Optional, Union
 
+import torch
+
 from new_ltpp.shared_types import Batch, OneStepPrediction, SimulationResult
 
-from .prediction_metrics_computer import PredictionMetricsComputer
-from .shared_types import PredictionMetrics, SimulationMetrics
-from .simulation_metrics_computer import SimulationMetricsComputer
+from .predictions_metrics.computer import PredictionMetricsComputer
+from .predictions_metrics.pred_types import PredictionMetrics
+from .simulation_metrics.simul_types import SimulationMetrics
+from .simulation_metrics.computer import SimulationMetricsComputer
 
 
 class MetricsHelper:
@@ -64,10 +67,40 @@ class MetricsHelper:
             # Use default computer
             return self._prediction_computer.compute_metrics(batch, pred)
 
+    def compute_prediction_time_metrics(
+        self, batch: Batch, pred_time_tensor: torch.Tensor
+    ) -> Dict[str, float]:
+        """
+        Compute only time-related prediction metrics.
+
+        Args:
+            batch: Batch object containing ground truth sequences
+            pred_time_tensor: Tensor of predicted time deltas
+
+        Returns:
+            Dictionary of computed time metrics (time_rmse, time_mae)
+        """
+        return self._prediction_computer.compute_all_time_metrics(batch, pred_time_tensor)
+
+    def compute_prediction_type_metrics(
+        self, batch: Batch, pred_type_tensor: torch.Tensor
+    ) -> Dict[str, float]:
+        """
+        Compute only type-related prediction metrics.
+
+        Args:
+            batch: Batch object containing ground truth sequences
+            pred_type_tensor: Tensor of predicted event types
+
+        Returns:
+            Dictionary of computed type metrics (type_accuracy, f1_score, recall, precision, etc.)
+        """
+        return self._prediction_computer.compute_all_type_metrics(batch, pred_type_tensor)
+
     def compute_simulation_metrics(
         self,
         batch: Batch,
-        pred: SimulationResult,
+        sim: SimulationResult,
         metrics: Optional[List[Union[str, SimulationMetrics]]] = None,
     ) -> Dict[str, float]:
         """
@@ -75,7 +108,7 @@ class MetricsHelper:
 
         Args:
             batch: Batch object containing ground truth sequences
-            pred: SimulationResult with time_seqs and type_seqs
+            pred: Simulation with time_seqs and type_seqs
             metrics: List of metrics to compute. If None, compute all available metrics.
                      Can be strings or SimulationMetrics enum values.
 
@@ -87,10 +120,40 @@ class MetricsHelper:
             metrics_computer = SimulationMetricsComputer(
                 self.num_event_types, selected_metrics=metrics
             )
-            return metrics_computer.compute_metrics(batch, pred)
+            return metrics_computer.compute_metrics(batch, sim)
         else:
             # Use default computer
-            return self._simulation_computer.compute_metrics(batch, pred)
+            return self._simulation_computer.compute_metrics(batch, sim)
+
+    def compute_simulation_time_metrics(
+        self, batch: Batch, sim: SimulationResult
+    ) -> Dict[str, float]:
+        """
+        Compute only time-related simulation metrics.
+
+        Args:
+            batch: Batch object containing ground truth sequences
+            pred: Simulation with time_seqs
+
+        Returns:
+            Dictionary of computed time distribution metrics
+        """
+        return self._simulation_computer.compute_all_time_metrics(batch, sim)
+
+    def compute_simulation_type_metrics(
+        self, batch: Batch, sim: SimulationResult
+    ) -> Dict[str, float]:
+        """
+        Compute only type-related simulation metrics.
+
+        Args:
+            batch: Batch object containing ground truth sequences
+            pred: Simulation with type_seqs
+
+        Returns:
+            Dictionary of computed type distribution metrics
+        """
+        return self._simulation_computer.compute_all_type_metrics(batch, sim)
 
     def compute_all_metrics(
         self,
@@ -106,7 +169,7 @@ class MetricsHelper:
         Args:
             batch: Batch object containing ground truth sequences
             prediction_pred: OneStepPrediction with prediction outputs
-            simulation_pred: SimulationResult with simulation outputs
+            simulation_pred: Simulation with simulation outputs
             prediction_metrics: List of prediction metrics to compute. If None, compute all.
             simulation_metrics: List of simulation metrics to compute. If None, compute all.
 

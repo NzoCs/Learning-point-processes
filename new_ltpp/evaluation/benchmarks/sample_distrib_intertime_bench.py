@@ -26,7 +26,7 @@ class InterTimeDistributionBenchmark(TimeBenchmark):
     def __init__(
         self,
         data_config: DataConfig,
-        save_dir: Union[str, Path],
+        base_dir: Union[str, Path],
         num_bins: int = 50,
     ):
         """
@@ -37,7 +37,7 @@ class InterTimeDistributionBenchmark(TimeBenchmark):
         *            save_dir: Directory to save results
                     num_bins: Number of bins for histogram approximation
         """
-        super().__init__(data_config, save_dir)
+        super().__init__(data_config, base_dir)
         self.num_bins = num_bins
 
         # Distribution parameters
@@ -138,7 +138,7 @@ class InterTimeDistributionBenchmark(TimeBenchmark):
 
         return sampled_tensor
 
-    def _create_time_predictions(self, batch: Batch) -> torch.Tensor:
+    def _create_dtime_predictions(self, batch: Batch) -> torch.Tensor:
         """
         Create time predictions by sampling from the inter-time distribution.
 

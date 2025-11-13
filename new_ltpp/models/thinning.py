@@ -13,7 +13,6 @@ class EventSampler(nn.Module):
 
     def __init__(
         self,
-        num_sample: int,
         num_exp: int,
         over_sample_rate: float,
         num_samples_boundary: int,
@@ -33,7 +32,6 @@ class EventSampler(nn.Module):
             device (torch.device): torch device index to select.
         """
         super(EventSampler, self).__init__()
-        self.num_sample = num_sample
         self.num_exp = num_exp
         self.over_sample_rate = over_sample_rate
         self.num_samples_boundary = num_samples_boundary
@@ -198,8 +196,8 @@ class EventSampler(nn.Module):
         time_seq,
         time_delta_seq,
         event_seq,
-        dtime_boundary,
         intensity_fn,
+        num_sample,
         compute_last_step_only=False,
     ):
         """Compute next event time based on Thinning algorithm.
@@ -246,11 +244,11 @@ class EventSampler(nn.Module):
         # add one dim of num_sample: re-use the intensity for samples for prediction
         # [batch_size, seq_len, num_sample, num_exp]
         total_intensities = torch.tile(
-            total_intensities[:, :, None, :], [1, 1, self.num_sample, 1]
+            total_intensities[:, :, None, :], [1, 1, num_sample, 1]
         )
 
         # [batch_size, seq_len, num_sample, num_exp]
-        exp_numbers = torch.tile(exp_numbers[:, :, None, :], [1, 1, self.num_sample, 1])
+        exp_numbers = torch.tile(exp_numbers[:, :, None, :], [1, 1, num_sample, 1])
 
         # 4. draw uniform distribution
         # [batch_size, seq_len, num_sample, num_exp]

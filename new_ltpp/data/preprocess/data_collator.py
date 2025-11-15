@@ -55,7 +55,6 @@ class TPPDataCollator:
         """
         batch = self.tokenizer.pad(
             inputs=features,
-            return_attention_mask=True,
         )
 
         return batch

@@ -88,14 +88,11 @@ class WandBLoggerAdapter(BaseLoggerAdapter):
         """
         save_dir = config["save_dir"]
         os.makedirs(save_dir, exist_ok=True)
-        try:
-            import wandb
+        import wandb
 
-            wandb.finish()
-            wandb.init(dir=save_dir)
-            return WandbLogger(**config)
-        except Exception:
-            return WandbLogger(**config)
+        wandb.finish()
+        wandb.init(dir=save_dir)
+        return WandbLogger(**config)
 
 
 class MLflowLoggerAdapter(BaseLoggerAdapter):

@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.shared_types import Batch
+from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 
 from .baselayer import (
     EncoderLayer,
@@ -27,8 +28,8 @@ class SAHP(NeuralModel):
         *,
         num_event_types: int,
         dtime_max: float,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
+        hidden_size: int,
+        dropout: float,
         use_norm: bool = True,
         time_emb_size: int = 32,
         num_layers: int = 2,
@@ -161,11 +162,7 @@ class SAHP(NeuralModel):
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = batch.attention_mask
-
-        if attention_mask is None:
-            raise ValueError("Attention mask is required for SAHP model. Do not pass False in return_attention_mask for the collator.")
-
+        attention_mask = build_attention_mask_from_seq_mask(batch.seq_non_pad_mask)
         enc_out = self.forward(
             time_seqs[:, :-1],
             time_delta_seqs[:, :-1],

@@ -1,3 +1,4 @@
+from typing import Tuple
 import torch
 from torch import nn
 
@@ -136,7 +137,7 @@ class NHP(NeuralModel):
             o_t,
         )  # Okay to initialize delta to be zero because c==c_bar at the beginning
 
-    def forward(self, batch):
+    def forward(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Suppose we have inputs with original sequence length N+1
         ts: [t0, t1, ..., t_N]
@@ -151,7 +152,7 @@ class NHP(NeuralModel):
         > rnn_cell.recurrence(event_emb_t, h_tm1, c_tm1, c_bar_tm1) -> c_t, c_bar_t, gate_delta, gate_o
         > rnn_cell.decay(c_t, c_bar_t, delta_t, o_t, dt) -> c_d_t, h_d_t
         """
-        t_BN, dt_BN, marks_BN, _, _ = batch
+        dt_BN, marks_BN = batch
         B, N = dt_BN.shape
         left_hs = []
         right_states = []
@@ -212,7 +213,6 @@ class NHP(NeuralModel):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        ts_BN = batch.time_seqs
         dts_BN = batch.time_delta_seqs
         marks_BN = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
@@ -221,7 +221,7 @@ class NHP(NeuralModel):
         # left limits of [t_1, ..., t_N]
         # right limits of [t_0, ..., t_{N-1}, t_N]
         left_hiddens, right_hiddens = self.forward(
-            (ts_BN, dts_BN, marks_BN, None, None)
+            (dts_BN, marks_BN)
         )
         right_hiddens = right_hiddens[
             ..., :-1, :
@@ -273,10 +273,8 @@ class NHP(NeuralModel):
 
         compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
-        _input = time_seqs, time_delta_seqs, type_seqs, None, None
-
         # We will need the right limit at the last given event to decay from and get the left limits for sampling
-        _, right_hiddens = self.forward(_input)
+        _, right_hiddens = self.forward((time_delta_seqs, type_seqs))
 
         c_i, c_bar_i, delta_i, o_i = torch.chunk(right_hiddens, 4, dim=-1)
 

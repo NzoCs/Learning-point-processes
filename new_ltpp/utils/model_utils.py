@@ -47,58 +47,6 @@ def flexible_state_dict_loading(
                     "model_shape": list(param.shape),
                     "checkpoint_shape": list(state_dict[key].shape),
                 }
-
-                # For certain layers, we can try to adapt the weight sizes
-                if (
-                    "emb" in key
-                    and key.endswith(".weight")
-                    and len(param.shape) == len(state_dict[key].shape)
-                ):
-                    # For embeddings, we can take the min size or resize
-                    min_size = min(param.shape[0], state_dict[key].shape[0])
-                    dim = min(param.shape[1], state_dict[key].shape[1])
-
-                    # Copy what we can
-                    compatible_state_dict[key] = state_dict[key][:min_size, :dim]
-                    keys_loaded.append(key + " (partial)")
-                    logger.warning(
-                        f"Partially loaded {key} with shape adaptation from {state_dict[key].shape} to {compatible_state_dict[key].shape}"
-                    )
-
-                elif (
-                    "linear" in key
-                    or "weight" in key
-                    and len(param.shape) == len(state_dict[key].shape)
-                ):
-                    # For linear layers, try to adapt if dimensions allow
-                    try:
-                        # For 2D weights (linear layers)
-                        if len(param.shape) == 2:
-                            out_dim, in_dim = param.shape
-                            saved_out_dim, saved_in_dim = state_dict[key].shape
-
-                            # Try to take what we can
-                            min_out_dim = min(out_dim, saved_out_dim)
-                            min_in_dim = min(in_dim, saved_in_dim)
-
-                            compatible_state_dict[key] = state_dict[key][
-                                :min_out_dim, :min_in_dim
-                            ]
-                            keys_loaded.append(key + " (partial)")
-                            logger.warning(
-                                f"Partially loaded {key} with shape adaptation from {state_dict[key].shape} to {compatible_state_dict[key].shape}"
-                            )
-
-                        # For 1D weights (biases, etc.)
-                        elif len(param.shape) == 1:
-                            min_dim = min(param.shape[0], state_dict[key].shape[0])
-                            compatible_state_dict[key] = state_dict[key][:min_dim]
-                            keys_loaded.append(key + " (partial)")
-                            logger.warning(
-                                f"Partially loaded {key} with shape adaptation from {state_dict[key].shape} to {compatible_state_dict[key].shape}"
-                            )
-                    except Exception as e:
-                        logger.warning(f"Failed to adapt weights for {key}: {e}")
         else:
             missing_keys.append(key)
 

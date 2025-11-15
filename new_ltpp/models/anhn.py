@@ -3,6 +3,7 @@ from torch import nn
 
 from new_ltpp.configs import ModelConfig
 from new_ltpp.shared_types import Batch
+from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 from new_ltpp.models.baselayer import MultiHeadAttention
 from new_ltpp.models.neural_model import NeuralModel
 
@@ -16,9 +17,9 @@ class ANHN(NeuralModel):
         self,
         model_config: ModelConfig,
         *,
-        hidden_size: int = 128,
+        hidden_size: int,
         dtime_max: float,
-        dropout: float = 0.1,
+        dropout: float,
         num_event_types: int,
         num_layers: int = 2,
         num_heads: int = 2,
@@ -153,7 +154,7 @@ class ANHN(NeuralModel):
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = batch.attention_mask
+        attention_mask = build_attention_mask_from_seq_mask(batch.seq_non_pad_mask)
 
         (
             imply_lambdas,

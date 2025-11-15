@@ -6,12 +6,12 @@ from typing import Dict, List, Optional, Union
 
 import torch
 
-from new_ltpp.shared_types import Batch, OneStepPrediction, SimulationResult
+from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 
-from .predictions_metrics.computer import PredictionMetricsComputer
-from .predictions_metrics.pred_types import PredictionMetrics
-from .simulation_metrics.simul_types import SimulationMetrics
-from .simulation_metrics.computer import SimulationMetricsComputer
+from .predictions_metrics.pred_helper import PredMetricsHelper
+from .predictions_metrics.pred_types import PredMetrics
+from .simulation_metrics.sim_types import SimMetrics
+from .simulation_metrics.sim_helper import SimMetricsHelper
 
 
 class MetricsHelper:
@@ -36,30 +36,30 @@ class MetricsHelper:
         self.save_dir = save_dir
 
         # Initialize computers with default settings
-        self._prediction_computer = PredictionMetricsComputer(num_event_types)
-        self._simulation_computer = SimulationMetricsComputer(num_event_types)
+        self._prediction_computer = PredMetricsHelper(num_event_types)
+        self._simulation_computer = SimMetricsHelper(num_event_types)
 
     def compute_prediction_metrics(
         self,
         batch: Batch,
-        pred: OneStepPrediction,
-        metrics: Optional[List[Union[str, PredictionMetrics]]] = None,
+        pred: OneStepPred,
+        metrics: Optional[List[Union[str, PredMetrics]]] = None,
     ) -> Dict[str, float]:
         """
         Compute prediction metrics (time and type prediction evaluation).
 
         Args:
             batch: Batch object containing ground truth sequences
-            pred: OneStepPrediction with dtime_predict and type_predict
+            pred: OneStepPred with dtime_predict and type_predict
             metrics: List of metrics to compute. If None, compute all available metrics.
-                     Can be strings or PredictionMetrics enum values.
+                     Can be strings or PredMetrics enum values.
 
         Returns:
             Dictionary of computed prediction metrics
         """
         if metrics is not None:
             # Create a computer with specific metrics
-            metrics_computer = PredictionMetricsComputer(
+            metrics_computer = PredMetricsHelper(
                 self.num_event_types, selected_metrics=metrics
             )
             return metrics_computer.compute_metrics(batch, pred)
@@ -101,7 +101,7 @@ class MetricsHelper:
         self,
         batch: Batch,
         sim: SimulationResult,
-        metrics: Optional[List[Union[str, SimulationMetrics]]] = None,
+        metrics: Optional[List[Union[str, SimMetrics]]] = None,
     ) -> Dict[str, float]:
         """
         Compute simulation metrics (distribution comparison between real and simulated data).
@@ -110,14 +110,14 @@ class MetricsHelper:
             batch: Batch object containing ground truth sequences
             pred: Simulation with time_seqs and type_seqs
             metrics: List of metrics to compute. If None, compute all available metrics.
-                     Can be strings or SimulationMetrics enum values.
+                     Can be strings or SimMetrics enum values.
 
         Returns:
             Dictionary of computed simulation metrics
         """
         if metrics is not None:
             # Create a computer with specific metrics
-            metrics_computer = SimulationMetricsComputer(
+            metrics_computer = SimMetricsHelper(
                 self.num_event_types, selected_metrics=metrics
             )
             return metrics_computer.compute_metrics(batch, sim)
@@ -158,17 +158,17 @@ class MetricsHelper:
     def compute_all_metrics(
         self,
         batch: Batch,
-        prediction_pred: OneStepPrediction,
+        prediction_pred: OneStepPred,
         simulation_pred: SimulationResult,
-        prediction_metrics: Optional[List[Union[str, PredictionMetrics]]] = None,
-        simulation_metrics: Optional[List[Union[str, SimulationMetrics]]] = None,
+        prediction_metrics: Optional[List[Union[str, PredMetrics]]] = None,
+        simulation_metrics: Optional[List[Union[str, SimMetrics]]] = None,
     ) -> Dict[str, Dict[str, float]]:
         """
         Compute both prediction and simulation metrics.
 
         Args:
             batch: Batch object containing ground truth sequences
-            prediction_pred: OneStepPrediction with prediction outputs
+            prediction_pred: OneStepPred with prediction outputs
             simulation_pred: Simulation with simulation outputs
             prediction_metrics: List of prediction metrics to compute. If None, compute all.
             simulation_metrics: List of simulation metrics to compute. If None, compute all.

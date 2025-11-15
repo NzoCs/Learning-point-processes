@@ -3,16 +3,16 @@ Simulation metrics subpackage.
 
 Exports the extractor and computer classes for convenience.
 """
-from .extractor import (
+from .sim_extractor import (
     SimulationDataExtractor,
-    SimulationTimeDataExtractor,
-    SimulationTypeDataExtractor,
+    SimTimeDataExtractor,
+    SimTypeDataExtractor,
 )
-from .computer import SimulationMetricsComputer
+from .sim_helper import SimMetricsHelper
 
 __all__ = [
     "SimulationDataExtractor",
-    "SimulationTimeDataExtractor",
-    "SimulationTypeDataExtractor",
-    "SimulationMetricsComputer",
+    "SimTimeDataExtractor",
+    "SimTypeDataExtractor",
+    "SimMetricsHelper",
 ]

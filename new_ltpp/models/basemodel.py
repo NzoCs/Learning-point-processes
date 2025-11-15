@@ -14,9 +14,11 @@ from torch.nn import functional as F
 from tqdm import tqdm
 
 from new_ltpp.configs import ModelConfig
-from new_ltpp.shared_types import Batch, OneStepPrediction, SimulationResult
+from new_ltpp.evaluation.accumulators.types import FinalResult
+from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 from new_ltpp.evaluation.metrics_helper import MetricsHelper
-from new_ltpp.models.thinning import EventSampler
+from new_ltpp.evaluation import BatchStatisticsCollector
+from new_ltpp.models.event_sampler import EventSampler
 from new_ltpp.utils import format_multivariate_simulations, logger, save_json
 
 from .model_registry import RegistryMeta
@@ -42,7 +44,8 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         # Save hyperparameters for later use
         self.save_hyperparameters()
 
-        self.dtime_max = dtime_max
+        # dtime_max will be set dynamically based on data
+        self.dtime_max = None
 
         # Load model configuration
         pretrain_model_path = model_config.pretrain_model_path
@@ -66,28 +69,34 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         self.use_mc_samples = self.gen_config.use_mc_samples
         self._device = model_config.device
         self.num_step_gen = self.gen_config.num_steps
-        self.dtime_max = self.gen_config.dtime_max
 
         simulation_config = model_config.simulation_config
 
         self.num_sample = self.gen_config.num_sample
+        self.dtime_max = dtime_max
 
-        self.event_sampler = EventSampler(
-            num_exp=self.gen_config.num_exp,
-            over_sample_rate=self.gen_config.over_sample_rate,
-            num_samples_boundary=self.gen_config.num_samples_boundary,
-            dtime_max=self.dtime_max,
-            device=self._device,
-            mode='train'
-        )
+        # event_sampler will be initialized after dtime_max is set
+        self.event_sampler = None
 
         # Simulation from the model configuration
+        self.compute_simulation = False
+        self._statistics_collector = None
+        
         if simulation_config is not None:
             self.seed = simulation_config.seed
             self.simulation_batch_size = simulation_config.batch_size
-            self.simulation_start_time = simulation_config.start_time
-            self.simulation_end_time = simulation_config.end_time
+            self.simulation_time_window = simulation_config.time_window
             self.max_simul_events = simulation_config.max_sim_events
+            self.compute_simulation = True
+            
+            # Simulation times will be set dynamically based on data
+            self.simulation_start_time = None
+            self.simulation_end_time = None
+            
+            # Initialize batch statistics collector for distribution analysis
+            # Output dir will be set later when we know the base directory
+            self._statistics_collector = None
+            self._collector_output_dir = None
 
         self.sim_events_counter = 0
         self._simulations = []
@@ -116,7 +125,41 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         """Get the list of generated simulations."""
         return self._simulations
 
+
+    def init_statistics_collector(self, output_dir: str) -> BatchStatisticsCollector:
+        """Initialize the batch statistics collector for distribution analysis.
+        
+        Args:
+            output_dir: Directory where results will be saved
+        """
+        self._statistics_collector = BatchStatisticsCollector(
+            num_event_types=self.num_event_types,
+            output_dir=output_dir,
+            max_samples=self.max_simul_events,
+        )
+        logger.info(f"BatchStatisticsCollector initialized with output_dir={output_dir}")
+        
+        return self._statistics_collector
+
+    def finalize_statistics(self) -> FinalResult:
+        """Finalize statistics collection and generate plots/metrics.
+        
+        Returns:
+            Dictionary containing statistics, metrics, and batch count
+        """
+
+        if self._statistics_collector is None:
+            raise NotImplementedError("No statistics collector to finalize. Initialize it first with 'init_statistics_collector'.")
+        
+        logger.info("Finalizing batch statistics collection...")
+        results = self._statistics_collector.finalize_and_save()
+        logger.info(f"Statistics finalized: {results.get('batch_count', 0)} batches processed")
+        return results
+    
+
+
     # Implement for the models based on intensity (not implemented in intensity free)
+    @abstractmethod
     def compute_intensities_at_sample_times(
         self,
         time_seqs: torch.Tensor,
@@ -138,6 +181,8 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                     intensity at each timestamp for each event type."""
         pass
 
+
+
     @abstractmethod
     def loglike_loss(
         self,
@@ -146,13 +191,42 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         """Compute the log-likelihood loss for a batch of data.
 
         Args:
-            batch: Batch containing time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask, attention_mask
+            batch: Batch containing time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask
 
         Returns:
             loss, number of events.
         """
         pass
 
+    def set_dtime_max(self, dtime_max: float) -> None:
+        """Set dtime_max dynamically based on data.
+        
+        Args:
+            dtime_max: Maximum time delta from the dataset
+        """
+        self.dtime_max = dtime_max
+        
+        # Initialize event sampler now that we have dtime_max
+        self.event_sampler = EventSampler(
+            num_exp=self.gen_config.num_exp,
+            over_sample_rate=self.gen_config.over_sample_rate,
+            num_samples_boundary=self.gen_config.num_samples_boundary,
+            dtime_max=self.dtime_max,
+            device=self._device,
+        )
+    
+    def set_simulation_times(self, end_time_max: float) -> None:
+        """Set simulation start and end times dynamically based on data.
+        
+        Args:
+            end_time_max: Maximum end time from the dataset
+        """
+        if not self.compute_simulation:
+            raise ValueError("Simulation is not enabled for this model")
+        
+        self.simulation_start_time = end_time_max
+        self.simulation_end_time = end_time_max + self.simulation_time_window
+    
     @property
     def device(self):
         """Get the current device."""
@@ -341,19 +415,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         Returns:
             STEP_OUTPUT: The output of the validation step
         """
-        # Create label batch by removing first element from sequences
-        label_batch = Batch(
-            time_seqs=batch.time_seqs[:, 1:],
-            time_delta_seqs=batch.time_delta_seqs[:, 1:],
-            type_seqs=batch.type_seqs[:, 1:],
-            seq_non_pad_mask=batch.seq_non_pad_mask[:, 1:],
-            attention_mask=batch.attention_mask[:, 1:] if isinstance(batch.attention_mask, torch.Tensor) and batch.attention_mask.numel() > 0 else [],
-            type_mask=batch.type_mask[:, 1:] if batch.type_mask is not None else None,
-        )
-
+        # Compute loss on the original batch first
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
 
+        # Log validation loss
         self.log(
             "val_loss",
             avg_loss.item(),
@@ -362,16 +428,23 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             on_epoch=True,
             on_step=False,
         )
-
-        # Compute some validation metrics
+        
+        # Compute some validation metrics 
         pred = self.predict_one_step_at_every_event(batch)
+
+        # Mutate the batch in-place so subsequent operations use sequences starting at the second event
+        batch.time_seqs = batch.time_seqs[:, 1:]
+        batch.time_delta_seqs = batch.time_delta_seqs[:, 1:]
+        batch.type_seqs = batch.type_seqs[:, 1:]
+        batch.seq_non_pad_mask = batch.seq_non_pad_mask[:, 1:]
+
 
         one_step_metrics_compute = MetricsHelper(
             num_event_types=self.num_event_types
         )
 
         one_step_metrics = one_step_metrics_compute.compute_prediction_metrics(
-            batch=label_batch, pred=pred
+            batch=batch, pred=pred
         )
 
         for key in one_step_metrics:
@@ -393,28 +466,27 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         Returns:
             STEP_OUTPUT: The output of the test step
         """
-        # Create label batch by removing first element from sequences
-        label_batch = Batch(
-            time_seqs=batch.time_seqs[:, 1:],
-            time_delta_seqs=batch.time_delta_seqs[:, 1:],
-            type_seqs=batch.type_seqs[:, 1:],
-            seq_non_pad_mask=batch.seq_non_pad_mask[:, 1:],
-            attention_mask=batch.attention_mask[:, 1:] if isinstance(batch.attention_mask, torch.Tensor) and batch.attention_mask.numel() > 0 else [],
-            type_mask=batch.type_mask[:, 1:] if batch.type_mask is not None else None,
-        )
-
+        # Compute loss on the original batch first
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
         self.log("test_loss", avg_loss.item(), prog_bar=True, sync_dist=True)
 
-        # Compute some prediction metrics
+        
+        # Compute some prediction metrics using the shifted batch
         pred = self.predict_one_step_at_every_event(batch)
+
+        # Mutate the batch in-place so subsequent operations use sequences starting at the second event
+        batch.time_seqs = batch.time_seqs[:, 1:]
+        batch.time_delta_seqs = batch.time_delta_seqs[:, 1:]
+        batch.type_seqs = batch.type_seqs[:, 1:]
+        batch.seq_non_pad_mask = batch.seq_non_pad_mask[:, 1:]
+
 
         one_step_metrics_compute = MetricsHelper(
             num_event_types=self.num_event_types
         )
         one_step_metrics = one_step_metrics_compute.compute_prediction_metrics(
-            batch=label_batch, pred=pred
+            batch=batch, pred=pred
         )
 
         for key in one_step_metrics:
@@ -448,6 +520,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             # Append to simulations list
             self._simulations.append(sim)
 
+            # Update batch statistics collector if initialized
+            if self._statistics_collector is None:
+                raise NotImplementedError("No statistics collector initialized. Call 'init_statistics_collector' before testing.")
+            
+            self._statistics_collector.update_batch(batch, sim)
 
             simulation_metrics_compute = MetricsHelper(
                 num_event_types=self.num_event_types
@@ -492,115 +569,38 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(batch=batch)
 
         # Convert simulation tuple to SimulationResult object
-        nouveau = SimulationResult.from_simulation_tensors(
+        sim = SimulationResult.from_simulation_tensors(
             simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask
         )
         
         # Increment global event counter
-        n_events_generated = (nouveau.type_seqs != 0).sum().item()
+        n_events_generated = (sim.type_seqs != 0).sum().item()
         self.sim_events_counter += n_events_generated
 
+        if self._statistics_collector is None:
+            raise NotImplementedError("No statistics collector initialized. Call 'init_statistics_collector' before prediction.")
+
+        self._statistics_collector.update_batch(batch, sim)
+
         # Append to simulations list
-        self._simulations.append(nouveau)
+        self._simulations.append(sim)
 
         return
 
-    def format_and_save_simulations(self, save_dir: Union[str, Path]) -> list[dict]:
-        """
-        Formats the raw simulation results into a list of dictionaries, one per sequence.
-
-        Each dictionary follows a structure similar to Hugging Face datasets,
-        containing event times, time deltas, event types, etc.
-
-        Args:
-            simulations (List[Dict]): A list where each dict contains tensors
-                                      ('time_seq', 'time_delta_seq', 'event_seq')
-                                      for a single simulated sequence.
-            dim_process (Optional[int]): The number of event types (dimensionality) in the process.
-
-        Returns:
-            List[Dict]: A list of dictionaries, each representing a formatted sequence.
-        """
-
-        if self.simulations == []:
-            logger.warning("No simulations to format.")
-            return []
-        
-        # Convert SimulationResult objects to dict format for formatting
-        simulations_as_dicts = [
-            {
-                "time_seq": sim.time_seqs,
-                "time_delta_seq": sim.dtime_seqs,
-                "event_seq": sim.type_seqs,
-            }
-            for sim in self.simulations
-        ]
-        
-        formatted_data = format_multivariate_simulations(
-            simulations=simulations_as_dicts, dim_process=self.num_event_types
-        )
-
-        if isinstance(save_dir, str):
-            save_dir = Path(save_dir)
-
-        save_data_path = save_dir / "simulations.json"
-        save_dir.mkdir(parents=True, exist_ok=True)
-        save_json(formatted_data, save_data_path)
-
-        return formatted_data
-
-    def save_metadata(self, save_dir: Union[str, Path], formatted_data: list[dict]) -> None:
-        """
-        Saves metadata about the simulation run, including configuration details
-        and total event counts.
-
-        Args:
-            formatted_data (List[Dict]): The list of all formatted sequences (used for stats).
-        """
-        total_events = sum(item.get("seq_len", 0) for item in formatted_data)
-        avg_seq_len = total_events / len(formatted_data) if formatted_data else 0
-
-        metadata = {
-            "simulation_summary": {
-                "total_sequences_generated": len(formatted_data),
-                "total_events_generated": total_events,
-                "average_sequence_length": round(avg_seq_len, 2),
-                "dimension": (
-                    self.num_event_types
-                    if self.num_event_types is not None
-                    else "Unknown"
-                ),
-                "simulation_time_interval": [
-                    self.simulation_start_time,
-                    self.simulation_end_time,
-                ],
-                "generating_model": self.__class__.__name__,
-                "seed_used": self.seed,
-            }
-        }
-
-        if isinstance(save_dir, str):
-            save_dir = Path(save_dir)
-
-        meta_filepath = save_dir / "metadata.json"
-        save_json(metadata, meta_filepath)
-        logger.info(f"Metadata saved to {meta_filepath}")
-
     def predict_one_step_at_every_event(
         self,
-        batch: Batch,
-    ) -> OneStepPrediction:
+        time_seq: torch.Tensor,
+        time_delta_seq: torch.Tensor,
+        event_seq: torch.Tensor,
+    ) -> OneStepPred:
         """One-step prediction for every event in the sequence.
 
         Args:
             batch: Batch object containing sequences and masks
 
         Returns:
-            OneStepPrediction: Predicted time deltas and event types, [batch_size, seq_len].
+            OneStepPred: Predicted time deltas and event types, [batch_size, seq_len].
         """
-        time_seq = batch.time_seqs
-        time_delta_seq = batch.time_delta_seqs
-        event_seq = batch.type_seqs
 
         # remove the last event, as the prediction based on the last event has no label
         # note: the first dts is 0
@@ -649,7 +649,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             accepted_dtimes * weights, dim=-1
         )  # compute the expected next event time
 
-        return OneStepPrediction(dtime_predict=dtimes_pred, type_predict=types_pred)
+        return OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)
 
     def predict_multi_step_since_last_event(
         self,
@@ -723,7 +723,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
             current_event_seq = event_buffer[:, :current_len]
 
             # Utiliser predict_one_step pour éviter la duplication de code
-            dtimes_pred, types_pred = self.predict_one_step(
+            pred = self.predict_one_step_at_every_event(
                 current_time_seq, current_time_delta, current_event_seq
             )
 
@@ -760,8 +760,16 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         if start_time is None:
             start_time = self.simulation_start_time
+            if start_time is None:
+                raise ValueError(
+                    "start_time must be provided or set via set_simulation_times()"
+                )
         if end_time is None:
             end_time = self.simulation_end_time
+            if end_time is None:
+                raise ValueError(
+                    "end_time must be provided or set via set_simulation_times()"
+                )
         if batch_size is None:
             batch_size = self.simulation_batch_size
         if max_events is None:
@@ -774,7 +782,6 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                 time_delta_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
                 type_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
                 seq_non_pad_mask=torch.ones(batch_size, 2, device=self.device, dtype=torch.bool),
-                attention_mask=torch.empty(0, device=self.device),
             )
         else:
             batch_size = batch.time_seqs.size(0)
@@ -846,62 +853,55 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
                 active_time_delta = time_delta_buffer[active_indices, :current_len]
                 active_event_seq = event_buffer[active_indices, :current_len]
 
-                try:
-                    dtimes_pred, type_pred = self.predict_one_step(
-                        active_time_seq,
-                        active_time_delta,
-                        active_event_seq,
-                        mode="simulation"
-                    )
+                dtimes_pred, type_pred = self.simulate_one_step(
+                    active_time_seq,
+                    active_time_delta,
+                    active_event_seq,
+                    mode="simulation"
+                )
 
-                    # Calcul des nouveaux temps
-                    new_times = active_time_seq[:, -1:] + dtimes_pred
+                # Calcul des nouveaux temps
+                new_times = active_time_seq[:, -1:] + dtimes_pred
 
-                    # Mise à jour vectorisée de last_event_time pour les séquences actives
-                    active_batch_size = len(active_indices)
+                # Mise à jour vectorisée de last_event_time pour les séquences actives
+                active_batch_size = len(active_indices)
 
-                    # Vectorisation complète : utiliser advanced indexing pour mettre à jour last_event_time
-                    type_pred_flat = type_pred.squeeze(-1)  # [active_batch_size]
-                    last_times_flat = active_time_seq[:, -1]  # [active_batch_size]
+                # Vectorisation complète : utiliser advanced indexing pour mettre à jour last_event_time
+                type_pred_flat = type_pred.squeeze(-1)  # [active_batch_size]
+                last_times_flat = active_time_seq[:, -1]  # [active_batch_size]
 
-                    # Mise à jour vectorisée avec scatter_
-                    last_event_time[active_indices, type_pred_flat] = last_times_flat
+                # Mise à jour vectorisée avec scatter_
+                last_event_time[active_indices, type_pred_flat] = last_times_flat
 
-                    # Recalcul des deltas
-                    batch_indices_active = torch.arange(
-                        active_batch_size, device=self.device
-                    )
-                    type_pred_flat = type_pred.squeeze(-1)
-                    last_events_active = last_event_time[active_indices][
-                        batch_indices_active, type_pred_flat
-                    ]
-                    dtimes_corrected = new_times.squeeze(-1) - last_events_active
+                # Recalcul des deltas
+                batch_indices_active = torch.arange(
+                    active_batch_size, device=self.device
+                )
+                type_pred_flat = type_pred.squeeze(-1)
+                last_events_active = last_event_time[active_indices][
+                    batch_indices_active, type_pred_flat
+                ]
+                dtimes_corrected = new_times.squeeze(-1) - last_events_active
 
-                    # Mise à jour des buffers pour les séquences actives
-                    time_buffer[active_indices, current_len] = new_times.squeeze(-1)
-                    time_delta_buffer[active_indices, current_len] = dtimes_corrected
-                    event_buffer[active_indices, current_len] = type_pred.squeeze(-1)
+                # Mise à jour des buffers pour les séquences actives
+                time_buffer[active_indices, current_len] = new_times.squeeze(-1)
+                time_delta_buffer[active_indices, current_len] = dtimes_corrected
+                event_buffer[active_indices, current_len] = type_pred.squeeze(-1)
 
-                    # Mise à jour du temps courant et des séquences actives
-                    current_time = new_times.min().item()
+                # Mise à jour du temps courant et des séquences actives
+                current_time = new_times.min().item()
 
-                    # Désactiver les séquences qui ont dépassé end_time
-                    exceed_time_mask = new_times.squeeze(-1) >= end_time
-                    if exceed_time_mask.any():
-                        exceed_indices = active_indices[exceed_time_mask]
-                        batch_active[exceed_indices] = False
+                # Désactiver les séquences qui ont dépassé end_time
+                exceed_time_mask = new_times.squeeze(-1) >= end_time
+                if exceed_time_mask.any():
+                    exceed_indices = active_indices[exceed_time_mask]
+                    batch_active[exceed_indices] = False
 
-                    step_count += 1
+                step_count += 1
 
-                    if step_count % 50 == 0:
-                        pbar.n = min(current_time, end_time)
-                        pbar.refresh()
-
-                except Exception as e:
-                    logger.error(f"Error in vectorized simulation: {e}")
-                    break
-
-            pbar.close()
+                if step_count % 50 == 0:
+                    pbar.n = min(current_time, end_time)
+                    pbar.refresh()
 
         # Extraction des résultats
         first_pred_idx = initial_len
@@ -1030,8 +1030,11 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         time_seq_flat = time_seq.squeeze(0)  # Remove batch dimension
         type_seq_flat = type_seq.squeeze(0)  # Remove batch dimension
 
+        # Filter out padded/invalid events (assuming type 0 and time 0 are padding)
+        valid_mask = (type_seq_flat != 0) & (time_seq_flat != 0)
+
         for i in range(num_mark):
-            mask = type_seq_flat == i
+            mask = (type_seq_flat == i) & valid_mask
             if mask.any():
                 marked_times[i] = time_seq_flat[mask]
             else:
@@ -1153,7 +1156,7 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
 
         return metadata
 
-    def predict_one_step(
+    def simulate_one_step(
         self,
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,

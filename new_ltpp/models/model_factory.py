@@ -27,7 +27,7 @@ class ModelFactory:
         pass
 
     def create_model_by_name(
-        self, model_name: str, model_config: ModelConfig, num_event_types: int, dtime_max: float, **kwargs
+        self, model_name: str, model_config: ModelConfig, num_event_types: int, **kwargs
     ) -> Model:
         """
         Créer une instance de modèle par nom.
@@ -57,7 +57,7 @@ class ModelFactory:
 
         try:
             instance = model_class(
-                model_config=model_config, num_event_types=num_event_types, dtime_max=dtime_max, **kwargs
+                model_config=model_config, num_event_types=num_event_types, **kwargs
             )
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
             return instance

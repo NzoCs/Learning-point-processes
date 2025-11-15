@@ -1,4 +1,5 @@
 import math
+from typing import Optional, Tuple
 
 import torch
 from torch import nn
@@ -7,6 +8,7 @@ from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
+from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 
 
 class AttNHP(NeuralModel):
@@ -21,8 +23,8 @@ class AttNHP(NeuralModel):
         *,
         num_event_types: int,
         dtime_max: float,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
+        hidden_size: int,
+        dropout: float,
         use_norm: bool = True,
         time_emb_size: int = 32,
         num_layers: int = 2,
@@ -52,28 +54,27 @@ class AttNHP(NeuralModel):
         self.n_layers = num_layers
         self.n_head = num_heads
 
-        self.heads = []
+        # Type annotation for better type checking
+        self.heads: nn.ModuleList = nn.ModuleList()
         for i in range(self.n_head):
-            self.heads.append(
-                nn.ModuleList(
-                    [
-                        EncoderLayer(
+            head_layers = nn.ModuleList(
+                [
+                    EncoderLayer(
+                        self.d_model + self.d_time,
+                        MultiHeadAttention(
+                            1,
                             self.d_model + self.d_time,
-                            MultiHeadAttention(
-                                1,
-                                self.d_model + self.d_time,
-                                self.d_model,
-                                self.dropout,
-                                output_linear=False,
-                            ),
-                            use_residual=False,
-                            dropout=self.dropout,
-                        )
-                        for _ in range(self.n_layers)
-                    ]
-                )
+                            self.d_model,
+                            self.dropout,
+                            output_linear=False,
+                        ),
+                        use_residual=False,
+                        dropout=self.dropout,
+                    )
+                    for _ in range(self.n_layers)
+                ]
             )
-        self.heads = nn.ModuleList(self.heads)
+            self.heads.append(head_layers)
 
         if self.use_norm:
             self.norm = nn.LayerNorm(self.d_model)
@@ -85,11 +86,11 @@ class AttNHP(NeuralModel):
         self.layer_intensity = nn.Sequential(self.inten_linear, self.softplus)
         self.eps = torch.finfo(torch.float32).eps
 
-    def compute_temporal_embedding(self, time):
+    def compute_temporal_embedding(self, time: torch.Tensor) -> torch.Tensor:
         """Compute the temporal embedding.
 
         Args:
-            time (tensor): [batch_size, seq_len].
+            time: [batch_size, seq_len].
 
         Returns:
             tensor: [batch_size, seq_len, emb_size].
@@ -105,16 +106,21 @@ class AttNHP(NeuralModel):
         return pe
 
     def forward_pass(
-        self, init_cur_layer, time_emb, sample_time_emb, event_emb, combined_mask
-    ):
+        self,
+        init_cur_layer: torch.Tensor,
+        time_emb: torch.Tensor,
+        sample_time_emb: torch.Tensor,
+        event_emb: torch.Tensor,
+        combined_mask: torch.Tensor,
+    ) -> torch.Tensor:
         """update the structure sequentially.
 
         Args:
-            init_cur_layer (tensor): [batch_size, seq_len, hidden_size]
-            time_emb (tensor): [batch_size, seq_len, hidden_size]
-            sample_time_emb (tensor): [batch_size, seq_len, hidden_size]
-            event_emb (tensor): [batch_size, seq_len, hidden_size]
-            combined_mask (tensor): [batch_size, seq_len, hidden_size]
+            init_cur_layer: [batch_size, seq_len, hidden_size]
+            time_emb: [batch_size, seq_len, hidden_size]
+            sample_time_emb: [batch_size, seq_len, hidden_size]
+            event_emb: [batch_size, seq_len, hidden_size]
+            combined_mask: [batch_size, seq_len, hidden_size]
 
         Returns:
             tensor: [batch_size, seq_len, hidden_size*2]
@@ -124,6 +130,10 @@ class AttNHP(NeuralModel):
         for head_i in range(self.n_head):
             # [batch_size, seq_len, hidden_size]
             cur_layer_ = init_cur_layer
+            # Get the head's layer list - cast to ModuleList for type checker
+            head_layers = self.heads[head_i]
+            assert isinstance(head_layers, nn.ModuleList)
+            
             for layer_i in range(self.n_layers):
                 # each layer concats the temporal emb
                 # [batch_size, seq_len, hidden_size*2]
@@ -131,7 +141,7 @@ class AttNHP(NeuralModel):
                 # make combined input from event emb + layer emb
                 # [batch_size, seq_len*2, hidden_size*2]
                 _combined_input = torch.cat([event_emb, layer_], dim=1)
-                enc_layer = self.heads[head_i][layer_i]
+                enc_layer = head_layers[layer_i]
                 # compute the output
                 enc_output = enc_layer(_combined_input, combined_mask)
 
@@ -151,12 +161,14 @@ class AttNHP(NeuralModel):
 
         return cur_layer_
 
-    def seq_encoding(self, time_seqs, event_seqs):
+    def seq_encoding(
+        self, time_seqs: torch.Tensor, event_seqs: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Encode the sequence.
 
         Args:
-            time_seqs (tensor): time seqs input, [batch_size, seq_len].
-            event_seqs (_type_): event type seqs input, [batch_size, seq_len].
+            time_seqs: time seqs input, [batch_size, seq_len].
+            event_seqs: event type seqs input, [batch_size, seq_len].
 
         Returns:
             tuple: event embedding, time embedding and type embedding.
@@ -170,11 +182,11 @@ class AttNHP(NeuralModel):
 
         return event_emb, time_emb, type_emb
 
-    def make_layer_mask(self, attention_mask):
+    def make_layer_mask(self, attention_mask: torch.Tensor) -> torch.Tensor:
         """Create a tensor to do masking on layers.
 
         Args:
-            attention_mask (tensor): mask for attention operation, [batch_size, seq_len, seq_len]
+            attention_mask: mask for attention operation, [batch_size, seq_len, seq_len]
 
         Returns:
             tensor: aim to keep the current layer, the same size of attention mask
@@ -188,12 +200,14 @@ class AttNHP(NeuralModel):
         )
         return layer_mask
 
-    def make_combined_att_mask(self, attention_mask, layer_mask):
+    def make_combined_att_mask(
+        self, attention_mask: torch.Tensor, layer_mask: torch.Tensor
+    ) -> torch.Tensor:
         """Combined attention mask and layer mask.
 
         Args:
-            attention_mask (tensor): mask for attention operation, [batch_size, seq_len, seq_len]
-            layer_mask (tensor): mask for other layers, [batch_size, seq_len, seq_len]
+            attention_mask: mask for attention operation, [batch_size, seq_len, seq_len]
+            layer_mask: mask for other layers, [batch_size, seq_len, seq_len]
 
         Returns:
             tensor: [batch_size, seq_len * 2, seq_len * 2]
@@ -208,14 +222,20 @@ class AttNHP(NeuralModel):
         combined_mask = torch.cat([contextual_mask, combined_mask], dim=1)
         return combined_mask
 
-    def forward(self, time_seqs, event_seqs, attention_mask, sample_times=None):
+    def forward(
+        self,
+        time_seqs: torch.Tensor,
+        event_seqs: torch.Tensor,
+        attention_mask: torch.Tensor,
+        sample_times: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         """Call the model.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], sequences of timestamps.
-            event_seqs (tensor): [batch_size, seq_len], sequences of event types.
-            attention_mask (tensor): [batch_size, seq_len, seq_len], masks for event sequences.
-            sample_times (tensor, optional): [batch_size, seq_len, num_samples]. Defaults to None.
+            time_seqs: [batch_size, seq_len], sequences of timestamps.
+            event_seqs: [batch_size, seq_len], sequences of event types.
+            attention_mask: [batch_size, seq_len, seq_len], masks for event sequences.
+            sample_times: [batch_size, seq_len, num_samples]. Defaults to None.
 
         Returns:
             tensor: states at sampling times, [batch_size, seq_len, num_samples].
@@ -234,7 +254,7 @@ class AttNHP(NeuralModel):
 
         return cur_layer_
 
-    def loglike_loss(self, batch: Batch):
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
         """Compute the log-likelihood loss.
 
         Args:
@@ -247,7 +267,7 @@ class AttNHP(NeuralModel):
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = batch.attention_mask
+        attention_mask = build_attention_mask_from_seq_mask(batch.seq_non_pad_mask)
         # 1. compute event-loglik
         # the prediction of last event has no label, so we proceed to the last but one
         # att mask => diag is False, not mask.
@@ -291,16 +311,19 @@ class AttNHP(NeuralModel):
         return loss, num_events
 
     def compute_states_at_sample_times(
-        self, time_seqs, type_seqs, attention_mask, sample_times
-    ):
+        self,
+        time_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        attention_mask: torch.Tensor,
+        sample_times: torch.Tensor,
+    ) -> torch.Tensor:
         """Compute the states at sampling times.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], sequences of timestamps.
-            time_delta_seqs (tensor): [batch_size, seq_len], sequences of delta times.
-            type_seqs (tensor): [batch_size, seq_len], sequences of event types.
-            attention_mask (tensor): [batch_size, seq_len, seq_len], masks for event sequences.
-            sample_dtimes (tensor): delta times in sampling.
+            time_seqs: [batch_size, seq_len], sequences of timestamps.
+            type_seqs: [batch_size, seq_len], sequences of event types.
+            attention_mask: [batch_size, seq_len, seq_len], masks for event sequences.
+            sample_times: delta times in sampling.
 
         Returns:
             tensor: hiddens states at sampling times.
@@ -337,15 +360,20 @@ class AttNHP(NeuralModel):
         return encoder_output
 
     def compute_intensities_at_sample_times(
-        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
-    ):
+        self,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
         """Compute the intensity at sampled times.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], sequences of timestamps.
-            time_delta_seqs (tensor): [batch_size, seq_len], sequences of delta times.
-            type_seqs (tensor): [batch_size, seq_len], sequences of event types.
-            sampled_dtimes (tensor): [batch_size, seq_len, num_sample], sampled time delta sequence.
+            time_seqs: [batch_size, seq_len], sequences of timestamps.
+            time_delta_seqs: [batch_size, seq_len], sequences of delta times.
+            type_seqs: [batch_size, seq_len], sequences of event types.
+            sample_dtimes: [batch_size, seq_len, num_sample], sampled time delta sequence.
 
         Returns:
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].

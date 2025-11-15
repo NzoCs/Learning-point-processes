@@ -1,3 +1,5 @@
+from typing import Optional, Tuple, Union
+
 import torch
 from torch import nn
 from torch.autograd import grad
@@ -16,7 +18,7 @@ class CumulHazardFunctionNetwork(nn.Module):
     def __init__(
         self,
         *,
-        hidden_size: int = 32,
+        hidden_size: int,
         num_event_types: int,
         num_mlp_layers: int = 3,
         proper_marked_intensities: bool = True,
@@ -55,12 +57,15 @@ class CumulHazardFunctionNetwork(nn.Module):
 
         self.init_weights_positive()
 
-    def init_weights_positive(self):
+    def init_weights_positive(self) -> None:
+        """Initialize all weights to be positive."""
         for p in self.parameters():
             p.data = torch.abs(p.data)
             p.data = torch.clamp(p.data, min=self.params_eps)
 
-    def forward(self, hidden_states, time_delta_seqs):
+    def forward(
+        self, hidden_states: torch.Tensor, time_delta_seqs: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         for p in self.parameters():
             p.data = torch.clamp(p.data, min=self.params_eps)
 
@@ -140,6 +145,14 @@ class FullyNN(Model):
         self.rnn_type = rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
         self.n_layers = num_layers
+        
+        # Initialize type embedding layer
+        self.layer_type_emb = nn.Embedding(
+            num_embeddings=num_event_types + 1,  # +1 for pad token
+            embedding_dim=hidden_size,
+            padding_idx=self.pad_token_id,
+        )
+        
         for sub_rnn_class in self.rnn_list:
             if sub_rnn_class.__name__ == self.rnn_type:
                 self.layer_rnn = sub_rnn_class(
@@ -150,15 +163,22 @@ class FullyNN(Model):
                     # dropout=self.specs["dropout"],
                 )
 
-        self.layer_intensity = CumulHazardFunctionNetwork()
+        self.layer_intensity = CumulHazardFunctionNetwork(
+            hidden_size=hidden_size,
+            num_event_types=num_event_types,
+        )
 
-    def forward(self, time_seqs, time_delta_seqs, type_seqs):
+    def forward(
+        self,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+    ) -> torch.Tensor:
         """Call the model
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], timestamp seqs.
-            time_delta_seqs (tensor): [batch_size, seq_len], inter-event time seqs.
-            type_seqs (tensor): [batch_size, seq_len], event type seqs.
+            time_seqs: [batch_size, seq_len], timestamp seqs.
+            time_delta_seqs: [batch_size, seq_len], inter-event time seqs.
+            type_seqs: [batch_size, seq_len], event type seqs.
 
         Returns:
             tensor: hidden states at event times.
@@ -175,29 +195,27 @@ class FullyNN(Model):
 
         return hidden_states
 
-    def loglike_loss(self, batch: Batch):
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
         """Compute the loglike loss.
 
         Args:
             batch: batch input.
 
         Returns:
-            list: loglike loss, num events.
+            tuple: loglike loss, num events.
         """
         # [batch_size, seq_len]
-        time_seqs = batch.time_seqs
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
 
         # [batch_size, seq_len, hidden_size]
         hidden_states = self.forward(
-            time_seqs[:, :-1],
             time_delta_seqs[:, :-1],
             type_seqs[:, :-1],
         )
         # [batch_size, seq_len, num_event_types]
-        integral_lambda, derivative_integral_lambda = self.layer_intensity(
+        integral_lambda, derivative_integral_lambda = self.layer_intensity.forward(
             hidden_states, time_delta_seqs[:, 1:]
         )
 
@@ -226,15 +244,20 @@ class FullyNN(Model):
         return loss, num_events
 
     def compute_intensities_at_sample_times(
-        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
-    ):
+        self,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        **kwargs,
+    ) -> torch.Tensor:
         """Compute hidden states at sampled times.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], times seqs.
-            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
-            type_seqs (tensor): [batch_size, seq_len], event type seqs.
-            sample_dtimes (tensor): [batch_size, seq_len, num_samples], sampled inter-event timestamps.
+            time_seqs: [batch_size, seq_len], times seqs.
+            time_delta_seqs: [batch_size, seq_len], time delta seqs.
+            type_seqs: [batch_size, seq_len], event type seqs.
+            sample_dtimes: [batch_size, seq_len, num_samples], sampled inter-event timestamps.
 
         Returns:
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
@@ -244,7 +267,6 @@ class FullyNN(Model):
 
         # [batch_size, seq_len, hidden_size]
         hidden_states = self.forward(
-            time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
         )

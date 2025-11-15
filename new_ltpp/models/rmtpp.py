@@ -3,11 +3,12 @@ import math
 import torch
 from torch import nn
 from torch.nn import functional as F
+from typing import Tuple
 
 from new_ltpp.configs import ModelConfig
 from new_ltpp.shared_types import Batch
-from new_ltpp.models.basemodel import Model
-from new_ltpp.models.neural_model import NeuralModel
+
+from .neural_model import NeuralModel
 
 
 class RMTPP(NeuralModel):
@@ -21,8 +22,8 @@ class RMTPP(NeuralModel):
         *,
         num_event_types: int,
         dtime_max: float,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
+        hidden_size: int,
+        dropout: float,
     ) -> None:
         """Initialize the model
 
@@ -75,7 +76,7 @@ class RMTPP(NeuralModel):
 
         return intensity_BNGM
 
-    def forward(self, batch: Batch):
+    def forward(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Suppose we have inputs with original sequence length N+1
         ts: [t0, t1, ..., t_N]
@@ -87,9 +88,7 @@ class RMTPP(NeuralModel):
             right limits of *hidden states* [t_0, ..., t_{N-1}, t_N] of shape: (batch_size, seq_len, hidden_dim)
             We need the right limit of t_N to sample continuation.
         """
-        ts_BN = batch.time_seqs
-        dt_BN = batch.time_delta_seqs
-        marks_BN = batch.type_seqs
+        ts_BN, dt_BN, marks_BN = batch
 
         mark_emb_BNH = self.layer_type_emb(marks_BN)
         time_emb_BNH = self.layer_temporal_emb(ts_BN[..., None])
@@ -116,7 +115,7 @@ class RMTPP(NeuralModel):
         batch_non_pad_mask = batch.seq_non_pad_mask
 
         # Call forward with batch directly
-        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward(batch)
+        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward((ts_BN, dts_BN, marks_BN))
         right_hiddens_B_Nm1_H = right_hiddens_BNH[
             ..., :-1, :
         ]  # discard right limit at t_N for logL
@@ -156,15 +155,7 @@ class RMTPP(NeuralModel):
 
         compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
-        batch = Batch(
-            time_seqs=time_seqs,
-            time_delta_seqs=time_delta_seqs,
-            type_seqs=type_seqs,
-            seq_non_pad_mask=torch.empty(0, dtype=torch.bool),
-            attention_mask=torch.empty(0, device=self.device),
-        )
-
-        _, right_hiddens_BNH = self.forward(batch)
+        _, right_hiddens_BNH = self.forward((time_seqs, time_delta_seqs, type_seqs))
 
         if compute_last_step_only:
             sampled_intensities = self.evolve_and_get_intentsity(

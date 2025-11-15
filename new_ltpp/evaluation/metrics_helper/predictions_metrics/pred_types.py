@@ -3,16 +3,6 @@ import torch
 from enum import StrEnum
 
 @dataclass
-class MaskedValues:
-    """Container for masked prediction and ground truth values."""
-
-    true_times: torch.Tensor
-    true_types: torch.Tensor
-    pred_times: torch.Tensor
-    pred_types: torch.Tensor
-
-
-@dataclass
 class TimeValues:
     """Container for time-related values only."""
 
@@ -29,7 +19,7 @@ class TypeValues:
 
 
 
-class PredictionMetrics(StrEnum):
+class PredMetrics(StrEnum):
     """Available prediction metrics."""
 
     TIME_RMSE = "time_rmse"

@@ -238,63 +238,54 @@ thinning_configs:
 simulation_configs:
 
   quick_test:
-    start_time: 0
-    end_time: 120
+    time_window: 120
     max_sim_events: 1000
     batch_size: 4
   
   debug:
-    start_time: 0
-    end_time: 20
+    time_window: 20
     max_sim_events: 2000
     batch_size: 8
 
   # Fast simulation configuration (tests)
-  s20_e50_5000_b16:
-    start_time: 20
-    end_time: 50
+  tw30_5000_b16:
+    time_window: 30
     max_sim_events: 5000
     batch_size: 16
 
   # Development simulation configuration
-  s50_e120_15000_b32:
-    start_time: 50
-    end_time: 120
+  tw70_15000_b32:
+    time_window: 70
     max_sim_events: 15000
     batch_size: 32
 
   # Standard simulation configuration
-  s100_e200_50000_b64:
-    start_time: 100
-    end_time: 200
+  tw100_50000_b64:
+    time_window: 100
     max_sim_events: 50000
     batch_size: 64
 
   # Extended simulation configuration
-  s100_e300_100000_b128:
-    start_time: 100
-    end_time: 300
+  tw200_100000_b128:
+    time_window: 200
     max_sim_events: 100000
     batch_size: 128
 
   # Simulation configuration for large datasets
-  s100_e400_150000_b256:
-    start_time: 100
-    end_time: 400
+  tw300_150000_b256:
+    time_window: 300
     max_sim_events: 150000
     batch_size: 256
 
   # Simulation configuration for cross-validation
-  s80_e160_30000_b64:
-    start_time: 80
-    end_time: 160
+  tw80_30000_b64:
+    time_window: 80
     max_sim_events: 30000
     batch_size: 64
 
   # Simulation configuration for experiments
-  s50_e120_15000_b32:
-    start_time: 50
-    end_time: 120
+  tw70_15000_b32:
+    time_window: 70
     max_sim_events: 15000
     batch_size: 32
 

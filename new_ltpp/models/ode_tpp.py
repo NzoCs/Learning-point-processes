@@ -163,8 +163,9 @@ class ODETPP(Model):
         model_config: ModelConfig,
         *,
         num_event_types: int,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
+        dtime_max: float,
+        hidden_size: int,
+        dropout: float ,
         ode_num_sample_per_step: int = 10,
     ):
         """Initialize the model
@@ -172,9 +173,10 @@ class ODETPP(Model):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(ODETPP, self).__init__(
+        super().__init__(
             model_config,
             num_event_types=num_event_types,
+            dtime_max=dtime_max,
             hidden_size=hidden_size,
             dropout=dropout,
         )

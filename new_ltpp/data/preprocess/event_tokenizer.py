@@ -154,7 +154,6 @@ class EventTokenizer:
     def pad(
         self,
         inputs: List[TPPSequence],
-        return_attention_mask: bool = True,
         max_length: Optional[int] = None,
     ) -> Batch:
         """Process TPPSequence inputs with the configured padding or truncation strategy.
@@ -195,7 +194,6 @@ class EventTokenizer:
         batch_output = self._pad(
             sequences,
             padding_strategy=padding_strategy,
-            return_attention_mask=return_attention_mask,
             max_length=max_length
         )
         
@@ -208,7 +206,6 @@ class EventTokenizer:
     def _pad_do_not_pad(
         self,
         sequences: List[TPPSequence],
-        return_attention_mask: bool = False,
     ) -> Dict[str, torch.Tensor]:
         """Do not pad sequences, just convert to tensors.
         
@@ -235,21 +232,12 @@ class EventTokenizer:
         sequence_mask = batch_output['type_seqs'] != self.pad_token_id
         batch_output['seq_non_pad_mask'] = sequence_mask
         
-        # Add attention mask if requested
-        if return_attention_mask:
-            batch_output['attention_mask'] = self.make_attn_mask_for_pad_sequence(
-                batch_output['type_seqs'], self.pad_token_id
-            )
-        else:
-            batch_output['attention_mask'] = torch.tensor([])
-            
         return batch_output
     
     def _pad_to_max_length(
         self,
         sequences: List[TPPSequence],
         max_length: int,
-        return_attention_mask: bool = True,
     ) -> Dict[str, torch.Tensor]:
         """Pad sequences to a fixed maximum length.
         
@@ -289,14 +277,6 @@ class EventTokenizer:
         sequence_mask = batch_output['type_seqs'] != self.pad_token_id
         batch_output['seq_non_pad_mask'] = sequence_mask
         
-        # Add attention mask if requested
-        if return_attention_mask:
-            batch_output['attention_mask'] = self.make_attn_mask_for_pad_sequence(
-                batch_output['type_seqs'], self.pad_token_id
-            )
-        else:
-            batch_output['attention_mask'] = torch.tensor([])
-            
         return batch_output
     
 
@@ -304,7 +284,6 @@ class EventTokenizer:
         self,
         sequences: List[TPPSequence],
         padding_strategy: PaddingStrategy = PaddingStrategy.DO_NOT_PAD,
-        return_attention_mask: bool = True,
         max_length: Optional[int] = None,
     ) -> Dict[str, torch.Tensor]:
         """Apply padding based on strategy.
@@ -327,19 +306,18 @@ class EventTokenizer:
         
         # Route to appropriate padding strategy
         if padding_strategy == PaddingStrategy.DO_NOT_PAD or is_uniform_length:
-            return self._pad_do_not_pad(sequences, return_attention_mask)
+            return self._pad_do_not_pad(sequences)
         
         elif padding_strategy == PaddingStrategy.MAX_LENGTH:
             if max_length is None:
                 raise ValueError("max_length must be specified for MAX_LENGTH padding strategy")
-            return self._pad_to_max_length(sequences, max_length, return_attention_mask)
+            return self._pad_to_max_length(sequences, max_length)
         
         else :
             max_length = max(len(seq.time_seqs) for seq in sequences)
             return self._pad_to_max_length(
                 sequences,
                 max_length=max_length,
-                return_attention_mask=return_attention_mask
             )
 
 
@@ -410,73 +388,4 @@ class EventTokenizer:
             pad_seq = torch.stack(pad_seq)
         return pad_seq
 
-    def make_attn_mask_for_pad_sequence(self, pad_seqs: torch.Tensor, pad_token_id: int):
-        """Make the attention masks for the sequence.
-
-        Args:
-            pad_seqs (tensor): list of sequences that have been padded with fixed length
-            pad_token_id (int): optional, a value that used to pad the sequences. If None, then the pad index
-            is set to be the event_num_with_pad
-
-        Returns:
-            torch.Tensor: a bool matrix of the same size of input, denoting the masks of the
-            sequence (True: non mask, False: mask)
-
-
-        Example:
-        ```python
-        seqs = [[ 1,  6,  0,  7, 12, 12],
-        [ 1,  0,  5,  1, 10,  9]]
-        make_attn_mask_for_pad_sequence(seqs, pad_index=12)
-        >>>
-            batch_non_pad_mask
-            ([[ True,  True,  True,  True, False, False],
-            [ True,  True,  True,  True,  True,  True]])
-            attention_mask
-            [[[ False  True  True  True  True  True]
-              [False  False  True  True  True  True]
-              [False False  False  True  True  True]
-              [False False False  False  True  True]
-              [False False False False  True  True]
-              [False False False False  True  True]]
-
-             [[False  True  True  True  True  True]
-              [False  False  True  True  True  True]
-              [False False  False  True  True  True]
-              [False False False  False  True  True]
-              [False False False False  False  True]
-              [False False False False False  False]]]
-        ```
-
-
-        """
-
-        seq_num, seq_len = pad_seqs.shape
-
-        # [batch_size, seq_len]
-        seq_pad_mask = pad_seqs == pad_token_id
-
-        # [batch_size, seq_len, seq_len]
-        attention_key_pad_mask = seq_pad_mask.unsqueeze(1).repeat(1, seq_len, 1)
-        subsequent_mask = torch.triu(torch.ones((seq_len, seq_len), dtype=torch.bool), diagonal=1)
-        subsequent_mask = subsequent_mask.unsqueeze(0).repeat(seq_num, 1, 1)
-
-        attention_mask = subsequent_mask | attention_key_pad_mask
-
-        return attention_mask
-
-    def make_type_mask_for_pad_sequence(self, pad_seqs: torch.Tensor):
-        """Make the type mask.
-
-        Args:
-            pad_seqs (tensor): a list of sequence events with equal length (i.e., padded sequence)
-
-        Returns:
-            torch.Tensor: a 3-dim matrix, where the last dim (one-hot vector) indicates the type of event
-
-        """
-        type_mask = torch.zeros([*pad_seqs.shape, self.num_event_types], dtype=torch.int32)
-        for i in range(self.num_event_types):
-            type_mask[:, :, i] = (pad_seqs == i).int()
-
-        return type_mask
+    # The attention and type mask helpers were removed because masks are now built lazily in the models.

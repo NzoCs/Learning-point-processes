@@ -67,7 +67,6 @@ class ThinningConfig(Config):
     num_steps: int = 10
     over_sample_rate: float = 1.5
     num_samples_boundary: int = 5
-    dtime_max: float = 5.0
 
     def get_required_fields(self) -> List[str]:
         """Return list of required field names."""
@@ -81,7 +80,6 @@ class ThinningConfig(Config):
             "num_steps": self.num_steps,
             "over_sample_rate": self.over_sample_rate,
             "num_samples_boundary": self.num_samples_boundary,
-            "dtime_max": self.dtime_max,
             "use_mc_samples": self.use_mc_samples,
             "loss_integral_num_sample_per_step": self.loss_integral_num_sample_per_step,
         }
@@ -100,17 +98,16 @@ class ThinningConfig(Config):
             raise ConfigValidationError(
                 "over_sample_rate must be greater than 1.0", "over_sample_rate"
             )
-
-        if self.dtime_max <= 0:
-            raise ConfigValidationError("dtime_max must be positive", "dtime_max")
-
-
+    
 @dataclass
 class SimulationConfig(Config):
-    """Configuration for event sequence simulation."""
+    """Configuration for event sequence simulation.
+    
+    The start_time for simulation is dynamically computed from the dataset (end_time_max).
+    time_window specifies the additional time duration beyond the last observed event.
+    """
 
-    start_time: float
-    end_time: float
+    time_window: float  # Additional time duration for simulation beyond last event
     batch_size: int
     max_sim_events: int
     seed: int = 42
@@ -122,8 +119,7 @@ class SimulationConfig(Config):
     def get_yaml_config(self) -> Dict[str, Any]:
         """Get configuration as YAML-compatible dictionary."""
         return {
-            "start_time": self.start_time,
-            "end_time": self.end_time,
+            "time_window": self.time_window,
             "batch_size": self.batch_size,
             "max_sim_events": self.max_sim_events,
             "seed": self.seed,
@@ -133,13 +129,8 @@ class SimulationConfig(Config):
         """Validate simulation configuration."""
         super().validate()
 
-        if self.start_time < 0:
-            raise ConfigValidationError("start_time must be non-negative", "start_time")
-
-        if self.end_time <= self.start_time:
-            raise ConfigValidationError(
-                "end_time must be greater than start_time", "end_time"
-            )
+        if self.time_window <= 0:
+            raise ConfigValidationError("time_window must be positive", "time_window")
 
         if self.batch_size <= 0:
             raise ConfigValidationError("batch_size must be positive", "batch_size")

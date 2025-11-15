@@ -1,3 +1,4 @@
+from typing import Literal, Tuple
 import torch
 import torch.distributions as D
 from torch import nn
@@ -7,7 +8,8 @@ from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
 from new_ltpp.configs import ModelConfig
-from new_ltpp.shared_types import Batch
+from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.shared_types import Batch, OneStepPred
 from new_ltpp.models.basemodel import Model
 
 
@@ -116,7 +118,7 @@ class LogNormalMixtureDistribution(TransformedDistribution):
             return self.base_dist.log_cdf(x)
 
 
-class IntensityFree(Model):
+class IntensityFree(NeuralModel):
     """Torch implementation of Intensity-Free Learning of Temporal Point Processes, ICLR 2020.
     https://openreview.net/pdf?id=HygOjhEYDH
 
@@ -139,7 +141,13 @@ class IntensityFree(Model):
             model_config (new_ltpp.ModelConfig): config of model specs.
 
         """
-        super(IntensityFree, self).__init__(model_config, num_event_types=num_event_types, dtime_max=dtime_max)
+        super(IntensityFree, self).__init__(
+            model_config, 
+            num_event_types=num_event_types, 
+            dtime_max=dtime_max,
+            hidden_size=model_config.specs["hidden_size"],
+            dropout=model_config.specs.get("dropout", 0.1),
+            )
 
         self.num_mix_components = num_mix_components
         self.mean_log_inter_time = mean_log_inter_time
@@ -182,7 +190,7 @@ class IntensityFree(Model):
 
         return context
 
-    def loglike_loss(self, batch: Batch):
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
         """Compute the loglikelihood loss.
 
         Args:
@@ -241,17 +249,18 @@ class IntensityFree(Model):
         # [batch_size,]
         loss = -log_p.sum()
 
-        num_events = event_mask.sum().item()
+        num_events = int(event_mask.sum().item())
 
         return loss, num_events
 
-    def predict_one_step(
+    def simulate_one_step(
         self,
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,
         event_seq: torch.Tensor,
+        mode: Literal["simulation", "train"] = "train",
         compute_last_step_only: bool = True,
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Utility method to predict the next time delta and type using intensity-free approach.
 
@@ -303,7 +312,12 @@ class IntensityFree(Model):
 
         return dtimes_pred, types_pred
 
-    def predict_one_step_at_every_event(self, batch):
+    def predict_one_step_at_every_event(
+            self, 
+            time_seq: torch.Tensor, 
+            time_delta_seq: torch.Tensor, 
+            event_seq: torch.Tensor
+            ) -> OneStepPred:
         """One-step prediction for every event in the sequence.
 
         Args:
@@ -314,15 +328,11 @@ class IntensityFree(Model):
         Returns:
             tuple: tensors of dtime and type prediction, [batch_size, seq_len].
         """
-        time_seq, time_delta_seq, event_seq, batch_non_pad_mask, _ = batch
 
-        # remove the last event, as the prediction based on the last event has no label
-        # time_delta_seq should start from 1, because the first one is zero
-        time_seq, time_delta_seq, event_seq = (
-            time_seq[:, :-1],
-            time_delta_seq[:, :-1],
-            event_seq[:, :-1],
-        )
+
+        time_delta_seq = time_delta_seq[:, :-1]
+        event_seq = event_seq[:, :-1]
+        
 
         # [batch_size, seq_len, hidden_size]
         context = self.forward(time_delta_seq, event_seq)
@@ -347,7 +357,7 @@ class IntensityFree(Model):
 
         # [num_samples, batch_size, seq_len]
         accepted_dtimes = inter_time_dist.sample((self.event_sampler.num_sample,))
-        dtimes_pred = accepted_dtimes.mean(dim=0)
+        dtimes_pred = accepted_dtimes.mean(dim=0)   
 
         # [batch_size, seq_len, num_marks]
         mark_logits = torch.log_softmax(

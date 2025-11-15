@@ -11,9 +11,6 @@ import re
 from new_ltpp.configs import RunnerConfig
 from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.data.preprocess import TPPDataModule
-from new_ltpp.evaluation.distribution_analysis_helper import (
-    NTPPComparatorFactory,
-)
 from new_ltpp.models.model_factory import ModelFactory
 from new_ltpp.utils import logger
 
@@ -93,26 +90,18 @@ class Runner:
         # Set matmul precision for Tensor Cores (if available)
         # Recommended for A100 GPUs as per logs
         if torch.cuda.is_available():
-            try:
-                # Try to get device capability safely
-                device_capability = torch.cuda.get_device_capability(0)
-                if device_capability[0] >= 7:
-                    # Check if the major capability is >= 7 (Volta, Ampere, Hopper, etc.)
-                    torch.set_float32_matmul_precision("medium")
-                    logger.info(
-                        f"Set torch.set_float32_matmul_precision('medium') for Tensor Cores. GPU capability: {device_capability}"
-                    )
-                else:
-                    logger.info(
-                        f"GPU capability {device_capability} < 7.0, keeping default matmul precision."
-                    )
-            except RuntimeError as e:
-                logger.warning(
-                    f"Could not access GPU device capability (driver issue?): {e}"
+            # Try to get device capability safely
+            device_capability = torch.cuda.get_device_capability(0)
+            if device_capability[0] >= 7:
+                # Check if the major capability is >= 7 (Volta, Ampere, Hopper, etc.)
+                torch.set_float32_matmul_precision("medium")
+                logger.info(
+                    f"Set torch.set_float32_matmul_precision('medium') for Tensor Cores. GPU capability: {device_capability}"
                 )
-                logger.info("Continuing without Tensor Core optimization.")
-            except Exception as e:
-                logger.warning(f"Could not set matmul precision: {e}")
+            else:
+                logger.info(
+                    f"GPU capability {device_capability} < 7.0, keeping default matmul precision."
+                )
 
         # Initialize your configs
         data_config = config.data_config
@@ -122,6 +111,8 @@ class Runner:
         # Initialize your datamodule
         self.datamodule = TPPDataModule(data_config)
         dtime_max = self.datamodule.estimate_dtime_max(quantile=quantile)
+        min_dtime, max_dtime = self.datamodule.estimate_dtime_range(quantile=quantile)
+        end_time_max = self.datamodule.estimate_end_time_max(quantile=quantile)
 
         # Initialize your model
         # Use the ModelFactory to create the model
@@ -132,6 +123,13 @@ class Runner:
             model_config=model_config,
             dtime_max=dtime_max,
         )
+        
+        # Set dtime_max dynamically based on data
+        self.model.set_dtime_max(dtime_max)
+        
+        # Set simulation times dynamically based on data
+        if self.model.compute_simulation:
+            self.model.set_simulation_times(end_time_max)
 
         self.model_id = config.model_id
 
@@ -162,11 +160,7 @@ class Runner:
     def _configure_logging(self, enable_logging: bool = True):
         """Configure logging for the trainer."""
         if enable_logging:
-            try:
-                self.logger = LoggerFactory.create_logger(self.logger_config)
-            except Exception as e:
-                self.logger = None
-                logger.critical(f"Logging is disabled for this run. Error: {str(e)}")
+            self.logger = LoggerFactory.create_logger(self.logger_config)
         else:
             self.logger = None
 
@@ -327,6 +321,7 @@ class Runner:
 
             logger.info(f"Test results saved to {results_file}")
 
+
     def predict(self) -> None:
         """
         Run predictions (e.g., simulations) using the model and save results.
@@ -341,16 +336,21 @@ class Runner:
             self.datamodule.test_dataloader()
         )  # or a specific dataloader
 
+        # Ensure the directory exists
+        data_save_dir = self.config.base_dir / "distributions_comparisons"
+        data_save_dir.mkdir(parents=True, exist_ok=True)
+
+        # Initialize batch statistics collector before prediction
+        self.model.init_statistics_collector(output_dir=str(data_save_dir))
+
         trainer.predict(
             model=self.model,
             dataloaders=predict_dataloader,
             ckpt_path=self.checkpoint_path,
         )
 
-        # Ensure the directory exists
-        data_save_dir = self.config.base_dir / "distributions_comparisons"
-        data_save_dir.mkdir(parents=True, exist_ok=True)
-        # self.model.format_and_save_simulations(save_dir=data_save_dir)
+        # Finalize statistics and generate plots/metrics
+        self.model.finalize_statistics()
 
         logger.info("Generating intensity graph...")
         self.model.intensity_graph(save_dir=str(data_save_dir))

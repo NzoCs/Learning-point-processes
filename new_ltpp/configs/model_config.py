@@ -62,9 +62,6 @@ class ThinningConfig(Config):
 
     num_sample: int = 10
     num_exp: int = 200
-    use_mc_samples: bool = True
-    loss_integral_num_sample_per_step: int = 10
-    num_steps: int = 10
     over_sample_rate: float = 1.5
     num_samples_boundary: int = 5
 
@@ -77,11 +74,8 @@ class ThinningConfig(Config):
         return {
             "num_sample": self.num_sample,
             "num_exp": self.num_exp,
-            "num_steps": self.num_steps,
             "over_sample_rate": self.over_sample_rate,
             "num_samples_boundary": self.num_samples_boundary,
-            "use_mc_samples": self.use_mc_samples,
-            "loss_integral_num_sample_per_step": self.loss_integral_num_sample_per_step,
         }
 
     def validate(self) -> None:
@@ -109,7 +103,7 @@ class SimulationConfig(Config):
 
     time_window: float  # Additional time duration for simulation beyond last event
     batch_size: int
-    max_sim_events: int
+    initial_buffer_size: int = 1000
     seed: int = 42
 
     def get_required_fields(self) -> List[str]:
@@ -121,7 +115,7 @@ class SimulationConfig(Config):
         return {
             "time_window": self.time_window,
             "batch_size": self.batch_size,
-            "max_sim_events": self.max_sim_events,
+            "initial_buffer_size": self.initial_buffer_size,
             "seed": self.seed,
         }
 
@@ -135,9 +129,9 @@ class SimulationConfig(Config):
         if self.batch_size <= 0:
             raise ConfigValidationError("batch_size must be positive", "batch_size")
 
-        if self.max_sim_events <= 0:
+        if self.initial_buffer_size <= 0:
             raise ConfigValidationError(
-                "max_sim_events must be positive", "max_sim_events"
+                "initial_buffer_size must be positive", "initial_buffer_size"
             )
 
 
@@ -168,6 +162,10 @@ class ModelConfig(Config):
         simulation_config (dict): Dictionnaire de config pour SimulationConfig.
     """
 
+    num_mc_samples: int = field(default=10)
+    num_steps: int = field(default=10)
+    use_mc_samples: bool = field(default=True)
+
     def __init__(
         self,
         simulation_config: Union[dict, SimulationConfig],
@@ -178,14 +176,12 @@ class ModelConfig(Config):
         gpu: Optional[int] = None,
         is_training: bool = False,
         compute_simulation: bool = False,
-        pretrain_model_path: Optional[str] = None,
         **kwargs,
     ):
         self.device = device
         self.gpu = gpu if gpu is not None else get_available_gpu()
         self.is_training = is_training
         self.compute_simulation = compute_simulation
-        self.pretrain_model_path = pretrain_model_path
 
         # Instancie les sous-configs à partir des dicts
         self.specs = specs or {}
@@ -200,14 +196,11 @@ class ModelConfig(Config):
             else SimulationConfig(**(simulation_config))
         )
 
-        if scheduler_config is not None:
-            self.scheduler_config = (
-                scheduler_config
-                if isinstance(scheduler_config, SchedulerConfig)
-                else SchedulerConfig(**(scheduler_config))
-            )
-        else:
-            self.scheduler_config = None
+        self.scheduler_config = (
+            scheduler_config
+            if isinstance(scheduler_config, SchedulerConfig)
+            else SchedulerConfig(**(scheduler_config))
+        )
 
         # Set device if auto
         if self.device == "auto":
@@ -224,7 +217,9 @@ class ModelConfig(Config):
             "gpu": self.gpu,
             "is_training": self.is_training,
             "compute_simulation": self.compute_simulation,
-            "pretrain_model_path": self.pretrain_model_path,
+            "num_mc_samples": self.num_mc_samples,
+            "num_steps": self.num_steps,
+            "use_mc_samples": self.use_mc_samples,
             "thinning": self.thinning_config.get_yaml_config(),
             "simulation_config": self.simulation_config.get_yaml_config(),
         }

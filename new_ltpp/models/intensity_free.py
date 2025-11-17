@@ -127,13 +127,13 @@ class IntensityFree(NeuralModel):
 
     def __init__(
         self,
-        model_config: ModelConfig,
         *,
-        num_event_types: int,
-        dtime_max: float,
         num_mix_components: int = 32,
         mean_log_inter_time: float = 0.0,
         std_log_inter_time: float = 1.0,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
+        **kwargs,
     ):
         """Initialize the model
 
@@ -142,12 +142,8 @@ class IntensityFree(NeuralModel):
 
         """
         super(IntensityFree, self).__init__(
-            model_config, 
-            num_event_types=num_event_types, 
-            dtime_max=dtime_max,
-            hidden_size=model_config.specs["hidden_size"],
-            dropout=model_config.specs.get("dropout", 0.1),
-            )
+            hidden_size=hidden_size, dropout=dropout, **kwargs
+        )
 
         self.num_mix_components = num_mix_components
         self.mean_log_inter_time = mean_log_inter_time
@@ -199,7 +195,7 @@ class IntensityFree(NeuralModel):
         Returns:
             tuple: loglikelihood loss and number of events.
         """
-        time_seqs = batch.time_seqs
+        
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask

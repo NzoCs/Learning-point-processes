@@ -5,8 +5,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Dict, List, Type, Union
 
-from pytorch_lightning.loggers import CometLogger  # for example, for Comet.ml
 from pytorch_lightning.loggers import (
+    CometLogger,
     CSVLogger,
     MLFlowLogger,
     NeptuneLogger,

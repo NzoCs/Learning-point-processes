@@ -15,7 +15,7 @@ class EventSampler(nn.Module):
         over_sample_rate: float,
         num_samples_boundary: int,
         dtime_max: float,
-        device: str,
+        device: torch.device,
     ):
         super().__init__()
         self.num_exp = num_exp

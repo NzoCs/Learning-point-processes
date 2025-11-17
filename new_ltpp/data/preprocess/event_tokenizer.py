@@ -109,15 +109,15 @@ class EventTokenizer:
         for seq in sequences:
             if self.truncation_side == "right":
                 truncated.append(TPPSequence(
-                    time_seqs=seq.time_seqs[:max_length],
-                    time_delta_seqs=seq.time_delta_seqs[:max_length],
-                    type_seqs=seq.type_seqs[:max_length],
+                    time_seqs=seq['time_seqs'][:max_length],
+                    time_delta_seqs=seq['time_delta_seqs'][:max_length],
+                    type_seqs=seq['type_seqs'][:max_length],
                 ))
             else:
                 truncated.append(TPPSequence(
-                    time_seqs=seq.time_seqs[-max_length:],
-                    time_delta_seqs=seq.time_delta_seqs[-max_length:],
-                    type_seqs=seq.type_seqs[-max_length:],
+                    time_seqs=seq['time_seqs'][-max_length:],
+                    time_delta_seqs=seq['time_delta_seqs'][-max_length:],
+                    type_seqs=seq['type_seqs'][-max_length:],
                 ))
         return truncated
     
@@ -218,13 +218,13 @@ class EventTokenizer:
         """
         batch_output = {
             'time_seqs': torch.tensor(
-                [seq.time_seqs for seq in sequences], dtype=torch.float32
+                [seq['time_seqs'] for seq in sequences], dtype=torch.float32
             ),
             'time_delta_seqs': torch.tensor(
-                [seq.time_delta_seqs for seq in sequences], dtype=torch.float32
+                [seq['time_delta_seqs'] for seq in sequences], dtype=torch.float32
             ),
             'type_seqs': torch.tensor(
-                [seq.type_seqs for seq in sequences], dtype=torch.long
+                [seq['type_seqs'] for seq in sequences], dtype=torch.long
             ),
         }
         
@@ -251,21 +251,21 @@ class EventTokenizer:
         """
         batch_output = {
             'time_seqs': self.make_pad_sequence(
-                [seq.time_seqs for seq in sequences],
+                [seq['time_seqs'] for seq in sequences],
                 0.0,
                 padding_side=self.padding_side,
                 max_len=max_length,
                 dtype=torch.float32,
             ),
             'time_delta_seqs': self.make_pad_sequence(
-                [seq.time_delta_seqs for seq in sequences],
+                [seq['time_delta_seqs'] for seq in sequences],
                 0.0,
                 padding_side=self.padding_side,
                 max_len=max_length,
                 dtype=torch.float32,
             ),
             'type_seqs': self.make_pad_sequence(
-                [seq.type_seqs for seq in sequences],
+                [seq['type_seqs'] for seq in sequences],
                 self.pad_token_id,
                 padding_side=self.padding_side,
                 max_len=max_length,
@@ -301,7 +301,7 @@ class EventTokenizer:
         """
 
         # Check if all sequences have the same length
-        sequence_lengths = np.array([len(seq.time_seqs) for seq in sequences])
+        sequence_lengths = np.array([len(seq['time_seqs']) for seq in sequences])
         is_uniform_length = np.all(sequence_lengths == max_length)
         
         # Route to appropriate padding strategy
@@ -314,7 +314,7 @@ class EventTokenizer:
             return self._pad_to_max_length(sequences, max_length)
         
         else :
-            max_length = max(len(seq.time_seqs) for seq in sequences)
+            max_length = max(len(seq['time_seqs']) for seq in sequences)
             return self._pad_to_max_length(
                 sequences,
                 max_length=max_length,

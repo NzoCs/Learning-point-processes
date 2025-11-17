@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 import torch
 
-from new_ltpp.evaluation.accumulators.types import MomentStatistics
+from new_ltpp.evaluation.accumulators.acc_types import MomentStatistics
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
@@ -20,8 +20,8 @@ from .base_accumulator import BaseAccumulator
 class MomentAccumulator(BaseAccumulator):
     """Accumulates statistical moments (mean, variance, skewness, kurtosis) online."""
 
-    def __init__(self, max_samples: Optional[int] = None, min_sim_events: int = 1):
-        super().__init__(max_samples, min_sim_events)
+    def __init__(self, min_sim_events: int = 1):
+        super().__init__(min_sim_events)
         # For online computation of moments
         self._gt_n = 0
         self._gt_mean = 0.0
@@ -43,9 +43,7 @@ class MomentAccumulator(BaseAccumulator):
             batch: Ground truth batch
             simulation: Simulation result (required)
         """
-        if not self.should_continue():
-            return
-
+        
         # Validate simulation has sufficient events
         sim_deltas = simulation.dtime_seqs
         if torch.is_tensor(sim_deltas):
@@ -78,8 +76,6 @@ class MomentAccumulator(BaseAccumulator):
 
         # Update moments for ground truth
         for x in flat_deltas:
-            if not self.should_continue():
-                break
             self._update_moments_gt(x)
             self._sample_count += 1
 
@@ -93,8 +89,6 @@ class MomentAccumulator(BaseAccumulator):
         flat_sim_deltas = flat_sim_deltas[flat_sim_deltas > 0]
 
         for x in flat_sim_deltas:
-            if not self.should_continue():
-                break
             self._update_moments_sim(x)
 
     def _update_moments_gt(self, x: float) -> None:

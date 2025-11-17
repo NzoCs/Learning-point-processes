@@ -14,6 +14,7 @@ Utilisation:
 from typing import Type
 
 from new_ltpp.configs import ModelConfig, ModelSpecsConfig
+from new_ltpp.shared_types import DataStats
 from new_ltpp.utils import logger
 
 from .basemodel import Model
@@ -26,8 +27,9 @@ class ModelFactory:
     def __init__(self):
         pass
 
+    @staticmethod
     def create_model_by_name(
-        self, model_name: str, model_config: ModelConfig, num_event_types: int, **kwargs
+        model_name: str, model_config: ModelConfig, data_stats: DataStats, **kwargs
     ) -> Model:
         """
         Créer une instance de modèle par nom.
@@ -57,7 +59,7 @@ class ModelFactory:
 
         try:
             instance = model_class(
-                model_config=model_config, num_event_types=num_event_types, **kwargs
+                model_config=model_config, data_stats=data_stats, **model_config.specs, **kwargs
             )
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
             return instance
@@ -66,8 +68,10 @@ class ModelFactory:
             logger.error(f"Erreur lors de la création du modèle {model_name}: {e}")
             raise
 
+
+    @staticmethod
     def create_model(
-        self, model_class: Type[Model], model_config: ModelConfig, **kwargs
+        model_class: Type[Model], model_config: ModelConfig, **kwargs
     ) -> Model:
         """
         Créer une instance de modèle directement avec la classe.
@@ -93,11 +97,13 @@ class ModelFactory:
             logger.error(f"Erreur lors de la création du modèle {model_name}: {e}")
             raise
 
-    def list_available_models(self) -> list[str]:
+    @staticmethod
+    def list_available_models() -> list[str]:
         """Lister tous les modèles disponibles."""
         return ModelRegistry.list_models()
 
-    def get_model_class(self, model_name: str) -> Type[Model]:
+    @staticmethod
+    def get_model_class(model_name: str) -> Type[Model]:
         """Obtenir la classe d'un modèle par nom."""
         model_class = ModelRegistry.get_model(model_name)
         if model_class is None:

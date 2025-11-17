@@ -5,10 +5,9 @@ from torch import nn
 from torch.autograd import grad
 from torch.nn import functional as F
 
-from new_ltpp.configs import ModelConfig
-from new_ltpp.models.basemodel import Model
 from new_ltpp.shared_types import Batch
 
+from .neural_model import NeuralModel
 
 class CumulHazardFunctionNetwork(nn.Module):
     """Cumulative Hazard Function Network
@@ -116,7 +115,7 @@ class CumulHazardFunctionNetwork(nn.Module):
         return integral_lambda, derivative_integral_lambda
 
 
-class FullyNN(Model):
+class FullyNN(NeuralModel):
     """Torch implementation of
     Fully Neural Network based Model for General Temporal Point Processes, NeurIPS 2019.
     https://arxiv.org/abs/1905.09690
@@ -127,20 +126,22 @@ class FullyNN(Model):
 
     def __init__(
         self,
-        model_config: ModelConfig,
         *,
-        num_event_types: int,
-        dtime_max: float,
-        num_layers: int = 2,
         hidden_size: int = 64,
+        dropout: float = 0.1,
+        num_layers: int = 2,
         rnn_type: str = "LSTM",
+        **kwargs,
     ):
         """Initialize the model
 
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(FullyNN, self).__init__(model_config, num_event_types=num_event_types, dtime_max=dtime_max)
+        super(FullyNN, self).__init__(
+            hidden_size=hidden_size, dropout=dropout, **kwargs
+            )
+        
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
@@ -148,7 +149,7 @@ class FullyNN(Model):
         
         # Initialize type embedding layer
         self.layer_type_emb = nn.Embedding(
-            num_embeddings=num_event_types + 1,  # +1 for pad token
+            num_embeddings=self.num_event_types + 1,  # +1 for pad token
             embedding_dim=hidden_size,
             padding_idx=self.pad_token_id,
         )
@@ -165,7 +166,7 @@ class FullyNN(Model):
 
         self.layer_intensity = CumulHazardFunctionNetwork(
             hidden_size=hidden_size,
-            num_event_types=num_event_types,
+            num_event_types=self.num_event_types,
         )
 
     def forward(

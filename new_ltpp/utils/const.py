@@ -27,14 +27,6 @@ class PaddingStrategy(ExplicitEnum):
     DO_NOT_PAD = "do_not_pad"
 
 
-class RunnerPhase(ExplicitEnum):
-    """Model runner phase enum."""
-
-    TRAIN = "train"
-    VALIDATE = "validate"
-    PREDICT = "predict"
-
-
 class LossFunction(ExplicitEnum):
     """Loss function for neural TPP model."""
 

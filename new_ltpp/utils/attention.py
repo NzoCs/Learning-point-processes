@@ -2,23 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Tuple
-
 import torch
 
-_MASK_CACHE: Dict[Tuple[int, str, Optional[int]], torch.Tensor] = {}
 
-
-def _get_cached_causal_mask(seq_len: int, device: torch.device) -> torch.Tensor:
-    key = (seq_len, device.type, device.index)
-    mask = _MASK_CACHE.get(key)
-    if mask is None or mask.shape[0] != seq_len:
-        mask = torch.triu(
-            torch.ones((seq_len, seq_len), dtype=torch.bool, device=device),
-            diagonal=1,
-        )
-        _MASK_CACHE[key] = mask
-    return mask
+def _get_causal_mask(seq_len: int, device: torch.device) -> torch.Tensor:
+    return torch.triu(
+        torch.ones((seq_len, seq_len), dtype=torch.bool, device=device),
+        diagonal=1,
+    )
 
 
 def build_attention_mask_from_seq_mask(seq_non_pad_mask: torch.Tensor) -> torch.Tensor:
@@ -29,7 +20,7 @@ def build_attention_mask_from_seq_mask(seq_non_pad_mask: torch.Tensor) -> torch.
     batch_size, seq_len = seq_non_pad_mask.shape
     device = seq_non_pad_mask.device
 
-    causal = _get_cached_causal_mask(seq_len, device)
+    causal = _get_causal_mask(seq_len, device)
     causal = causal.unsqueeze(0).expand(batch_size, -1, -1)
 
     padding = (~seq_non_pad_mask).unsqueeze(1).expand(-1, seq_len, -1)

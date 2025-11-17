@@ -19,14 +19,12 @@ class BaseAccumulator(ABC):
     3. Provide final computed results on demand
     """
 
-    def __init__(self, max_samples: Optional[int] = None, min_sim_events: int = 1):
+    def __init__(self, min_sim_events: int = 1):
         """Initialize the accumulator.
         
         Args:
-            max_samples: Maximum number of samples to accumulate (None for unlimited)
             min_sim_events: Minimum number of simulated events required per batch
         """
-        self.max_samples = max_samples
         self.min_sim_events = int(min_sim_events)
         self._sample_count = 0
         self._is_finalized = False
@@ -60,8 +58,3 @@ class BaseAccumulator(ABC):
         """Return number of samples accumulated."""
         return self._sample_count
 
-    def should_continue(self) -> bool:
-        """Check if accumulator should continue collecting data."""
-        if self.max_samples is None:
-            return True
-        return self._sample_count < self.max_samples

@@ -4,7 +4,6 @@ from typing import Optional, Tuple
 import torch
 from torch import nn
 
-from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
@@ -19,29 +18,21 @@ class AttNHP(NeuralModel):
 
     def __init__(
         self,
-        model_config: ModelConfig,
         *,
-        num_event_types: int,
-        dtime_max: float,
-        hidden_size: int,
-        dropout: float,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
         use_norm: bool = True,
         time_emb_size: int = 32,
         num_layers: int = 2,
         num_heads: int = 2,
+        **kwargs,
     ):
         """Initialize the model
 
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(AttNHP, self).__init__(
-            model_config,
-            dtime_max=dtime_max,
-            num_event_types=num_event_types,
-            hidden_size=hidden_size,
-            dropout=dropout,
-        )
+        super(AttNHP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
 
         self.d_model = self.hidden_size
         self.use_norm = use_norm

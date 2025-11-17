@@ -11,7 +11,7 @@ from typing import Optional, Union
 from .cli_base import CONFIG_MAP, CLIRunnerBase
 
 from new_ltpp.configs.config_builders import RunnerConfigBuilder
-from new_ltpp.runners.runner import RunnerManager
+from new_ltpp.runners.runner_manager import RunnerManager
 
 class ExperimentRunner(CLIRunnerBase):
     """

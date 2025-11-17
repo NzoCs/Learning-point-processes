@@ -103,6 +103,7 @@ class RunnerConfig(Config):
         data_config: Union[DataConfig, dict],
         logger_config: Optional[Union[LoggerConfig, dict]] = None,
         save_dir: Optional[str] = None,
+        enable_logging: bool = True,
         **kwargs,
     ):
 
@@ -169,6 +170,8 @@ class RunnerConfig(Config):
                 raise TypeError(
                     "logger_config must be None, a dict or a LoggerConfig instance"
                 )
+
+        self.enable_logging = enable_logging
 
         super().__init__(**kwargs)
 

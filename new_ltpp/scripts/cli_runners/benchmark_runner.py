@@ -92,7 +92,7 @@ class BenchmarkRunner(CLIRunnerBase):
             self.print_info(f"Configuration chargée: {built_config.dataset_id}")
 
         # Créer le BenchmarkManager
-        benchmark_manager = BenchmarkManager(save_dir=output_dir or self.get_output_path("benchmarks"))
+        benchmark_manager = BenchmarkManager(base_dir=output_dir or self.get_output_path("benchmarks"))
 
         try:
             self.print_info("Configuration du benchmark...")
@@ -144,7 +144,7 @@ class BenchmarkRunner(CLIRunnerBase):
             self.print_success(
                 f"Benchmarks terminés - {num_benchmarks} benchmarks exécutés"
             )
-            self.print_info(f"Résultats sauvegardés dans: {benchmark_manager.save_dir}")
+            self.print_info(f"Résultats sauvegardés dans: {benchmark_manager.base_dir}")
 
             return True
 

@@ -3,6 +3,7 @@
 Contains `SimMetricsHelper` which uses extractors from
 `.extractor` to compute simulation metrics.
 """
+from collections.abc import Callable
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
@@ -11,7 +12,7 @@ from scipy.stats import wasserstein_distance
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
-from .sim_types import SimMetrics
+from .sim_types import SimMetrics, SimTimeValues
 from .sim_extractor import SimulationDataExtractor
 
 
@@ -51,22 +52,11 @@ class SimMetricsHelper:
         time_values, _ = self._data_extractor.extract_values(batch, pred)
 
         metrics: Dict[str, float] = {}
+        metric_mapping = self._build_time_metric_mapping(time_values)
 
-        if SimMetrics.WASSERSTEIN_1D.value in self.selected_metrics:
-            wasserstein_distance_value = self._wasserstein_1d(
-                time_values.true_time_seqs, time_values.sim_time_seqs
-            )
-            metrics["wasserstein_1d"] = float(wasserstein_distance_value.item())
-
-        if SimMetrics.MMD_RBF_PADDED.value in self.selected_metrics:
-            mmd_rbf = self._mmd_rbf(time_values.true_time_seqs, time_values.sim_time_seqs)
-            metrics["mmd_rbf_padded"] = float(mmd_rbf.item())
-
-        if SimMetrics.MMD_WASSERSTEIN.value in self.selected_metrics:
-            mmd_wasserstein = self._mmd_wasserstein(
-                time_values.true_time_seqs, time_values.sim_time_seqs
-            )
-            metrics["mmd_wasserstein"] = float(mmd_wasserstein.item())
+        for metric_name, (func, *args) in metric_mapping.items():
+            if metric_name in self.selected_metrics:
+                metrics[metric_name] = float(func(*args).item())
 
         return metrics
 
@@ -74,25 +64,16 @@ class SimMetricsHelper:
         metrics: Dict[str, Any] = {}
         time_values, _ = self._data_extractor.extract_values(batch, pred)
 
-        wasserstein_distance_value = self._wasserstein_1d(
-            time_values.true_time_seqs, time_values.sim_time_seqs
-        )
-        metrics["wasserstein_1d"] = float(wasserstein_distance_value.item())
-
-        mmd_rbf = self._mmd_rbf(time_values.true_time_seqs, time_values.sim_time_seqs)
-        metrics["mmd_rbf_padded"] = float(mmd_rbf.item())
-
-        mmd_wasserstein = self._mmd_wasserstein(
-            time_values.true_time_seqs, time_values.sim_time_seqs
-        )
-        metrics["mmd_wasserstein"] = float(mmd_wasserstein.item())
+        metric_mapping = self._build_time_metric_mapping(time_values)
+        for metric_name, (func, *args) in metric_mapping.items():
+            metrics[metric_name] = float(func(*args).item())
 
         return metrics
 
     def compute_all_type_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, Any]:
         metrics: Dict[str, Any] = {}
         _, type_values = self._data_extractor.extract_values(batch, pred)
-        type_distance = self._wasserstein_1d(type_values.true_type_seqs, type_values.sim_type_seqs)
+        type_distance = self._wasserstein_1d(type_values["true_type_seqs"], type_values["sim_type_seqs"])
         metrics["type_wasserstein"] = float(type_distance.item())
         return metrics
 
@@ -146,3 +127,23 @@ class SimMetricsHelper:
         k_ts = torch.exp(-torch.tensor(cross_distance**2, device=device) / (2 * sigma**2))
         return 2 - 2 * k_ts
 
+    def _build_time_metric_mapping(
+        self, time_values: SimTimeValues
+    ) -> Dict[str, tuple[Callable[..., torch.Tensor], Any, Any]]:
+        return {
+            SimMetrics.WASSERSTEIN_1D.value: (
+                self._wasserstein_1d,
+                time_values["true_time_seqs"],
+                time_values["sim_time_seqs"],
+            ),
+            SimMetrics.MMD_RBF_PADDED.value: (
+                self._mmd_rbf,
+                time_values["true_time_seqs"],
+                time_values["sim_time_seqs"],
+            ),
+            SimMetrics.MMD_WASSERSTEIN.value: (
+                self._mmd_wasserstein,
+                time_values["true_time_seqs"],
+                time_values["sim_time_seqs"],
+            ),
+        }

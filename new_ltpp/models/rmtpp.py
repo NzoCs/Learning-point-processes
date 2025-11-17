@@ -18,32 +18,27 @@ class RMTPP(NeuralModel):
 
     def __init__(
         self,
-        model_config: ModelConfig,
         *,
-        num_event_types: int,
-        dtime_max: float,
-        hidden_size: int,
-        dropout: float,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
+        num_layers: int = 1,
+        **kwargs,
     ) -> None:
         """Initialize the model
 
         Args:
-            model_config (new_ltpp.ModelConfig): config of model specs.
+            hidden_size: hidden layer size used by the model.
+            dropout: dropout probability.
+            num_layers: number of RNN layers.
         """
-        super(RMTPP, self).__init__(
-            model_config,
-            dtime_max=dtime_max,
-            num_event_types=num_event_types,
-            hidden_size=hidden_size,
-            dropout=dropout,
-        )
+        super(RMTPP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
         # self.hidden_size is now set in Model's __init__ via model_config.hidden_size
 
         self.layer_temporal_emb = nn.Linear(1, self.hidden_size)
         self.layer_rnn = nn.RNN(
             input_size=self.hidden_size,
             hidden_size=self.hidden_size,
-            num_layers=model_config.specs["num_layers"],
+            num_layers=num_layers,
             nonlinearity="relu",
             batch_first=True,
         )

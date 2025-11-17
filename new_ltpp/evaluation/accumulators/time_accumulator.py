@@ -13,16 +13,17 @@ from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .base_accumulator import BaseAccumulator
-from .types import TimeStatistics
+from .acc_types import TimeStatistics
 
 class InterEventTimeAccumulator(BaseAccumulator):
     """Accumulates inter-event time statistics from batches using histogram bins."""
 
-    def __init__(self, max_time: float, max_samples: Optional[int] = None, min_sim_events: int = 1, num_bins: int = 100):
-        super().__init__(max_samples, min_sim_events)
+    def __init__(self, dtime_min: float, dtime_max: float, min_sim_events: int = 1, num_bins: int = 100):
+        super().__init__(min_sim_events)
         self.num_bins = num_bins
-        self.max_time = max_time
-        self.bin_edges = np.linspace(0, max_time, num_bins + 1)
+        self.min_dtime = dtime_min
+        self.max_dtime = dtime_max
+        self.bin_edges = np.linspace(dtime_min, dtime_max, num_bins + 1)
         
         # Histogram counters
         self._gt_hist = np.zeros(num_bins, dtype=np.int64)
@@ -40,71 +41,50 @@ class InterEventTimeAccumulator(BaseAccumulator):
             simulation: Simulation result containing dtime_seqs (required)
         """
 
-        if not self.should_continue():
-            return
+        # Apply mask and flatten values for vectorized histogram computation.
+        # Ground truth: select valid (non-padded) deltas > 0
+        time_deltas = batch.time_delta_seqs
+        mask = batch.seq_non_pad_mask.bool()
+        valid_gt = time_deltas[mask]
+        valid_gt = valid_gt[valid_gt > 0]
 
-        # Validate simulation has sufficient events
-        sim_deltas = simulation.get_masked_dtime_values()
-        sim_event_count = int((sim_deltas != 0).sum().item())
-        
+        # Simulation: use simulation mask if provided, otherwise assume masked values are <= 0
+        sim_deltas = simulation.dtime_seqs
+        # simulation.mask convention: True indicates masked positions (as used elsewhere)
+        if hasattr(simulation, "mask") and simulation.mask is not None:
+            sim_mask = simulation.mask.bool()
+            valid_sim = sim_deltas[~sim_mask]
+        else:
+            valid_sim = sim_deltas.view(-1)
+        valid_sim = valid_sim[valid_sim > 0]
+
+        # Quick validation
+        sim_event_count = int(valid_sim.numel())
         if sim_event_count < self.min_sim_events:
             raise ValueError(
                 f"InterEventTimeAccumulator requires at least {self.min_sim_events} simulated events, got {sim_event_count}"
             )
 
-        # Extract ground truth time deltas
-        time_deltas = batch.time_delta_seqs
-        mask = batch.seq_non_pad_mask
+        # Prepare bin edges as torch tensor on same device
+        device = valid_gt.device if valid_gt.numel() > 0 else valid_sim.device
+        bin_edges_t = torch.tensor(self.bin_edges, device=device, dtype=valid_gt.dtype)
 
-        if torch.is_tensor(time_deltas):
-            time_deltas = time_deltas.cpu()
-        if torch.is_tensor(mask):
-            mask = mask.cpu()
+        # Compute bin indices and counts for ground truth using torch
+        if valid_gt.numel() > 0:
+            gt_bins = torch.bucketize(valid_gt, bin_edges_t) - 1
+            gt_bins = gt_bins.clamp(0, self.num_bins - 1).to(torch.long)
+            gt_counts = torch.bincount(gt_bins, minlength=self.num_bins)
+            self._gt_hist += gt_counts.cpu().numpy()
+            self._gt_total += int(valid_gt.numel())
+            self._sample_count += int(valid_gt.numel())
 
-        # Process each sequence in batch
-        batch_size = time_deltas.shape[0]
-        for i in range(batch_size):
-            if not self.should_continue():
-                break
-
-            valid_mask = mask[i].bool() if mask is not None else torch.ones_like(time_deltas[i], dtype=torch.bool)
-            valid_deltas = time_deltas[i][valid_mask].numpy()
-
-            # Filter out invalid values
-            valid_deltas = valid_deltas[valid_deltas > 0]
-            
-            # Assign to histogram bins
-            bin_indices = np.digitize(valid_deltas, self.bin_edges) - 1
-            bin_indices = np.clip(bin_indices, 0, self.num_bins - 1)
-            
-            for bin_idx in bin_indices:
-                self._gt_hist[bin_idx] += 1
-            
-            self._gt_total += len(valid_deltas)
-            self._sample_count += len(valid_deltas)
-
-        # Process simulation (required)
-        sim_deltas = simulation.dtime_seqs
-        if torch.is_tensor(sim_deltas):
-            sim_deltas = sim_deltas.cpu()
-
-        # Use ground truth mask for simulation (sequences have same structure)
-        for i in range(sim_deltas.shape[0]):
-            if not self.should_continue():
-                break
-
-            # Filter non-zero values (masked values are set to 0)
-            valid_sim_deltas = sim_deltas[i].numpy()
-            valid_sim_deltas = valid_sim_deltas[valid_sim_deltas > 0]
-            
-            # Assign to histogram bins
-            bin_indices = np.digitize(valid_sim_deltas, self.bin_edges) - 1
-            bin_indices = np.clip(bin_indices, 0, self.num_bins - 1)
-            
-            for bin_idx in bin_indices:
-                self._sim_hist[bin_idx] += 1
-            
-            self._sim_total += len(valid_sim_deltas)
+        # Compute bin indices and counts for simulation using torch
+        if valid_sim.numel() > 0:
+            sim_bins = torch.bucketize(valid_sim, bin_edges_t) - 1
+            sim_bins = sim_bins.clamp(0, self.num_bins - 1).to(torch.long)
+            sim_counts = torch.bincount(sim_bins, minlength=self.num_bins)
+            self._sim_hist += sim_counts.cpu().numpy()
+            self._sim_total += int(valid_sim.numel())
 
     def compute(self) -> TimeStatistics:
         """Compute inter-event time statistics.

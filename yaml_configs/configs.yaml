@@ -125,48 +125,30 @@ model_configs:
   quick_test:
     specs:
       hidden_size: 8
-      time_emb_size: 4
-      num_layers: 1
-      num_heads: 1  # For attention-based models
   
   debug:
     specs:
       hidden_size: 8
-      time_emb_size: 4
-      num_layers: 1
-      num_heads: 1  # For attention-based models
 
   # Configurations for neural models - Size Small
   h16_e8_l1_h2:
     specs:
       hidden_size: 16
-      time_emb_size: 8
-      num_layers: 1
-      num_heads: 2  # For attention-based models
 
   # Configurations for neural models - Size Medium
   h32_e16_l2_h4:
     specs:
       hidden_size: 32
-      time_emb_size: 16
-      num_layers: 2
-      num_heads: 4  # For attention-based models
 
   # Configurations for neural models - Size Large
   h64_e32_l3_h8:
     specs:
       hidden_size: 64
-      time_emb_size: 32
-      num_layers: 3
-      num_heads: 8  # For attention-based models
 
   # Configurations for neural models - Size Extra Large
   h128_e64_l4_h16:
     specs:
       hidden_size: 128
-      time_emb_size: 64
-      num_layers: 4
-      num_heads: 16  # For attention-based models
 
   # Specific configurations for Hawkes - Simple (univariate)
   hawkes1:
@@ -239,54 +221,54 @@ simulation_configs:
 
   quick_test:
     time_window: 120
-    max_sim_events: 1000
+    initial_buffer_size: 1000
     batch_size: 4
   
   debug:
     time_window: 20
-    max_sim_events: 2000
+    initial_buffer_size: 2000
     batch_size: 8
 
   # Fast simulation configuration (tests)
   tw30_5000_b16:
     time_window: 30
-    max_sim_events: 5000
+    initial_buffer_size: 5000
     batch_size: 16
 
   # Development simulation configuration
   tw70_15000_b32:
     time_window: 70
-    max_sim_events: 15000
+    initial_buffer_size: 15000
     batch_size: 32
 
   # Standard simulation configuration
   tw100_50000_b64:
     time_window: 100
-    max_sim_events: 50000
+    initial_buffer_size: 50000
     batch_size: 64
 
   # Extended simulation configuration
   tw200_100000_b128:
     time_window: 200
-    max_sim_events: 100000
+    initial_buffer_size: 100000
     batch_size: 128
 
   # Simulation configuration for large datasets
   tw300_150000_b256:
     time_window: 300
-    max_sim_events: 150000
+    initial_buffer_size: 150000
     batch_size: 256
 
   # Simulation configuration for cross-validation
   tw80_30000_b64:
     time_window: 80
-    max_sim_events: 30000
+    initial_buffer_size: 30000
     batch_size: 64
 
   # Simulation configuration for experiments
   tw70_15000_b32:
     time_window: 70
-    max_sim_events: 15000
+    initial_buffer_size: 15000
     batch_size: 32
 
 # ===== DATA LOADING CONFIGURATIONS =====

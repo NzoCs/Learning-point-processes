@@ -18,13 +18,11 @@ class RunnerManager:
         config: RunnerConfig,
         checkpoint_path: Optional[str] = None,
         output_dir: Optional[str] = None,
-        **kwargs,
     ):
 
         self.config = config
         self.checkpoint_path = checkpoint_path
         self.output_dir = output_dir
-        self.kwargs = kwargs
         self.original_logger_config = config.logger_config
         self.is_setup = False
         self.enable_logging = True
@@ -35,14 +33,15 @@ class RunnerManager:
     def setup_runner(self, enable_logging: bool = True):
         if not self.is_setup:
             # Create runner for the first time
-            config_copy = copy.deepcopy(self.config)
-            self.runner: Runner = Runner(
-                config=config_copy,
-                enable_logging=enable_logging,
-                checkpoint_path=self.checkpoint_path,
-                output_dir=self.output_dir,
-                **self.kwargs,
+            logger.info(
+                f"Setting up runner with logging {'enabled' if enable_logging else 'disabled'}."
             )
+
+            self.runner = Runner(
+                config=self.config,
+                enable_logging=enable_logging,
+            )
+
             self.is_setup = True
             self.enable_logging = enable_logging
         elif self.enable_logging != enable_logging:

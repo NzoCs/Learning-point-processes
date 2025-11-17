@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any, Dict, List, Literal, Optional, Union
 import torch
 import torch.nn.functional as F
@@ -83,33 +84,22 @@ class PredMetricsHelper():
         Returns:
             Dictionary of computed metrics (only selected ones)
         """
+        
         metrics = {}
         time_values, type_values = self._data_extractor.extract_values(batch, pred)
 
-        # Compute only selected time-based metrics
-        if PredMetrics.TIME_RMSE.value in self.selected_metrics:
-            metrics["time_rmse"] = self._calculate_time_rmse(time_values)
-        if PredMetrics.TIME_MAE.value in self.selected_metrics:
-            metrics["time_mae"] = self._calculate_time_mae(time_values)
+        time_metric_mapping = self._build_time_metric_mapping(time_values)
+        for metric_name, entry in time_metric_mapping.items():
+            func, args = entry
+            if metric_name in self.selected_metrics:
+                metrics[metric_name] = func(*args)
 
-        # Compute selected type-based metrics only for multi-class scenarios
         if self.num_event_types > 1:
-            if PredMetrics.TYPE_ACCURACY.value in self.selected_metrics:
-                metrics["type_accuracy"] = self._calculate_type_accuracy(type_values)
-            if PredMetrics.MACRO_F1SCORE.value in self.selected_metrics:
-                metrics["macro_f1score"] = self._calculate_f1_score(
-                    type_values, average="macro"
-                )
-            if PredMetrics.RECALL.value in self.selected_metrics:
-                metrics["recall"] = self._calculate_recall(type_values)
-            if PredMetrics.PRECISION.value in self.selected_metrics:
-                metrics["precision"] = self._calculate_precision(type_values)
-            if PredMetrics.CROSS_ENTROPY.value in self.selected_metrics:
-                metrics["cross_entropy"] = self._calculate_cross_entropy(type_values)
-            if PredMetrics.CONFUSION_MATRIX.value in self.selected_metrics:
-                metrics["confusion_matrix"] = self._calculate_confusion_matrix(
-                    type_values
-                )
+            type_metric_mapping = self._build_type_metric_mapping(type_values)
+            for metric_name, entry in type_metric_mapping.items():
+                func, args = entry
+                if metric_name in self.selected_metrics:
+                    metrics[metric_name] = func(*args)
 
         return metrics
 
@@ -124,16 +114,14 @@ class PredMetricsHelper():
         Returns:
             Dictionary of computed time metrics
         """
+
+
         metrics = {}
-        
         time_values = self._time_extractor.extract_time_values(batch, pred_time_tensor)
-
-        # Compute all time metrics
-        metrics["time_rmse"] = self._calculate_time_rmse(
-            time_values
-        )
-        metrics["time_mae"] = self._calculate_time_mae(time_values)
-
+        metric_mapping = self._build_time_metric_mapping(time_values)
+        for metric_name, entry in metric_mapping.items():
+            func, args = entry
+            metrics[metric_name] = func(*args)
         return metrics
 
     def compute_all_type_metrics(self, batch: Batch, pred_type_tensor: torch.Tensor) -> Dict[str, Any]:
@@ -149,29 +137,13 @@ class PredMetricsHelper():
         """
         metrics = {}
 
-        # Only compute type metrics for multi-class scenarios
         if self.num_event_types > 1:
             type_values = self._type_extractor.extract_type_values(batch, pred_type_tensor)
-
-            # Compute all type metrics
-            metrics["type_accuracy"] = (
-                self._calculate_type_accuracy(type_values)
-            )
-            metrics["macro_f1score"] = self._calculate_f1_score(
-                type_values, average="macro"
-            )
-            metrics["recall"] = self._calculate_recall(type_values)
-            metrics["precision"] = self._calculate_precision(
-                type_values
-            )
-            metrics["cross_entropy"] = (
-                self._calculate_cross_entropy(type_values)
-            )
-            metrics["confusion_matrix"] = (
-                self._calculate_confusion_matrix(type_values)
-            )
+            metric_mapping = self._build_type_metric_mapping(type_values)
+            for metric_name, entry in metric_mapping.items():
+                func, args = entry
+                metrics[metric_name] = func(*args)
         else:
-            # Return NaN metrics for single-class scenarios
             metrics = {
                 "type_accuracy": float("nan"),
                 "macro_f1score": float("nan"),
@@ -204,33 +176,33 @@ class PredMetricsHelper():
 
     def _calculate_time_rmse(self, time_values: TimeValues) -> float:
         """Calculate time-based RMSE."""
-        if time_values.true_times.numel() == 0:
+        if time_values["true_times"].numel() == 0:
             return float("nan")
         return torch.sqrt(
-            F.mse_loss(time_values.pred_times, time_values.true_times)
+            F.mse_loss(time_values["pred_times"], time_values["true_times"])
         ).item()
 
     def _calculate_time_mae(self, time_values: TimeValues) -> float:
         """Calculate time-based MAE."""
-        if time_values.true_times.numel() == 0:
+        if time_values["true_times"].numel() == 0:
             return float("nan")
-        return F.l1_loss(time_values.pred_times, time_values.true_times).item()
+        return F.l1_loss(time_values["pred_times"], time_values["true_times"]).item()
 
     def _calculate_type_accuracy(
         self, type_values: TypeValues
     ) -> float:
         """Calculate type classification accuracy."""
 
-        if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
+        if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
         
-        device = type_values.true_types.device
+        device = type_values["true_types"].device
 
         accuracy_metric = torchmetrics.Accuracy(
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
 
-        accuracy_metric.update(type_values.pred_types, type_values.true_types)
+        accuracy_metric.update(type_values["pred_types"], type_values["true_types"])
 
         return accuracy_metric.compute().item() * 100
 
@@ -239,47 +211,47 @@ class PredMetricsHelper():
     ) -> float:
         """Calculate F1 score."""
         
-        if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
+        if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
         
-        device = type_values.true_types.device
+        device = type_values["true_types"].device
 
         f1_metric = torchmetrics.F1Score(
             task="multiclass", num_classes=self.num_event_types, average=average
         ).to(device)
 
-        f1_metric.update(type_values.pred_types, type_values.true_types)
+        f1_metric.update(type_values["pred_types"], type_values["true_types"])
 
         return f1_metric.compute().item() * 100
 
     def _calculate_recall(self, type_values: TypeValues) -> float:
         """Calculate recall."""
 
-        if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
+        if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
         
-        device = type_values.true_types.device
+        device = type_values["true_types"].device
 
         recall_metric = torchmetrics.Recall(
             task="multiclass", num_classes=self.num_event_types, average="macro"
         ).to(device)
 
-        recall_metric.update(type_values.pred_types, type_values.true_types)  # type: ignore
+        recall_metric.update(type_values["pred_types"], type_values["true_types"])  # type: ignore
 
         return recall_metric.compute().item() * 100
 
     def _calculate_precision(self, type_values: TypeValues) -> float:
         """Calculate precision."""
 
-        if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
+        if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
         
-        device = type_values.true_types.device
+        device = type_values["true_types"].device
         precision_metric = torchmetrics.Precision(
             task="multiclass", num_classes=self.num_event_types, average="macro"
         ).to(device)
 
-        precision_metric.update(type_values.pred_types, type_values.true_types)
+        precision_metric.update(type_values["pred_types"], type_values["true_types"])
 
         return precision_metric.compute().item() * 100
 
@@ -287,37 +259,35 @@ class PredMetricsHelper():
         self, type_values: TypeValues
     ) -> float:
         """Calculate cross entropy loss."""
-        if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
+        if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
 
         # Check format of predictions
-        if type_values.pred_types.dim() == 1:
+        if type_values["pred_types"].dim() == 1:
             pred_logits = F.one_hot(
-                type_values.pred_types, num_classes=self.num_event_types
+                type_values["pred_types"], num_classes=self.num_event_types
             ).float()
         else:
-            pred_logits = type_values.pred_types
+            pred_logits = type_values["pred_types"]
 
-        loss = F.cross_entropy(pred_logits, type_values.true_types)
+        loss = F.cross_entropy(pred_logits, type_values["true_types"])
         return loss.item()
 
     def _calculate_confusion_matrix(
         self, type_values: TypeValues
     ) -> torch.Tensor:
         """Calculate confusion matrix using torchmetrics."""
-        if self.num_event_types <= 1 or type_values.true_types.numel() == 0:
+        if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return torch.full(
                 (self.num_event_types, self.num_event_types), float("nan")
             )
 
-        device = type_values.true_types.device
+        device = type_values["true_types"].device
         confusion_matrix_metric = torchmetrics.ConfusionMatrix(
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
-        confusion_matrix_metric.update(type_values.pred_types, type_values.true_types)
+        confusion_matrix_metric.update(type_values["pred_types"], type_values["true_types"])
         return confusion_matrix_metric.compute()
-    
-
     
 
     def _get_nan_metrics(self) -> Dict[str, Any]:
@@ -339,3 +309,41 @@ class PredMetricsHelper():
 
         metrics = {**metrics, **type_nan_metrics}
         return metrics
+
+    def _build_time_metric_mapping(
+        self, time_values: TimeValues
+    ) -> Dict[str, tuple[Callable[..., Any], tuple[Any, ...]]]:
+        return {
+            PredMetrics.TIME_RMSE.value: (self._calculate_time_rmse, (time_values,)),
+            PredMetrics.TIME_MAE.value: (self._calculate_time_mae, (time_values,)),
+        }
+
+    def _build_type_metric_mapping(
+        self, type_values: TypeValues
+    ) -> Dict[str, tuple[Callable[..., Any], tuple[Any, ...]]]:
+        return {
+            PredMetrics.TYPE_ACCURACY.value: (
+                self._calculate_type_accuracy,
+                (type_values,),
+            ),
+            PredMetrics.MACRO_F1SCORE.value: (
+                self._calculate_f1_score,
+                (type_values, "macro"),
+            ),
+            PredMetrics.RECALL.value: (
+                self._calculate_recall,
+                (type_values,),
+            ),
+            PredMetrics.PRECISION.value: (
+                self._calculate_precision,
+                (type_values,),
+            ),
+            PredMetrics.CROSS_ENTROPY.value: (
+                self._calculate_cross_entropy,
+                (type_values,),
+            ),
+            PredMetrics.CONFUSION_MATRIX.value: (
+                self._calculate_confusion_matrix,
+                (type_values,),
+            ),
+        }

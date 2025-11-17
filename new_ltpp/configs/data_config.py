@@ -191,7 +191,7 @@ class DataConfig(Config):
         self.valid_dir = valid_dir
         self.test_dir = test_dir
         self.num_event_types = num_event_types
-        self.data_format = data_format
+        self.data_format: Literal["json", "pkl", "hf"] = data_format
 
         self.dataset_id = dataset_id
         # Instancie si dict, sinon laisse tel quel

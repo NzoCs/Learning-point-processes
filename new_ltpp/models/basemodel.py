@@ -1,362 +1,93 @@
-"""Base model with common functionality using PyTorch Lightning"""
+"""Clean base model using mixins for separation of concerns."""
 
-import os
 from abc import ABC, abstractmethod
-from collections import defaultdict
-from pathlib import Path
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import List, Optional
 
 import pytorch_lightning as pl
 import torch
-from matplotlib import pyplot as plt
-from pytorch_lightning.utilities.types import STEP_OUTPUT
-from torch.nn import functional as F
-from tqdm import tqdm
+import torch.nn.functional as F
+import torch.optim as optim
+
 
 from new_ltpp.configs import ModelConfig
-from new_ltpp.evaluation.accumulators.types import FinalResult
-from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
-from new_ltpp.evaluation.metrics_helper import MetricsHelper
-from new_ltpp.evaluation import BatchStatisticsCollector
 from new_ltpp.models.event_sampler import EventSampler
-from new_ltpp.utils import format_multivariate_simulations, logger, save_json
+from new_ltpp.shared_types import Batch, DataStats
+from new_ltpp.utils import logger
 
 from .model_registry import RegistryMeta
+from .mixins import TrainingMixin, VisualizationMixin
 
 
-class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
-    """Base model class for all TPP models."""
+class Model(TrainingMixin, VisualizationMixin, pl.LightningModule, ABC, metaclass=RegistryMeta):
+    """Base model class for all TPP models using mixins.
+    
+    Mixins provide:
+    - TrainingMixin: training/validation/test/predict steps, prediction methods, simulation
+    - VisualizationMixin: intensity graphs and plotting
+    """
 
-    def __init__(
-        self,
-        model_config: ModelConfig,
-        *,
-        num_event_types: int,
-        dtime_max: float,
-    ):
-        """Initialize the Model
+    def __init__(self, model_config: ModelConfig, data_stats: DataStats):
+        """Initialize the Model.
 
         Args:
-            model_config (new_ltpp.ModelConfig): model spec of configs
+            model_config: Model configuration
+            data_stats: Statistics from the dataset (num_event_types, end_time_max, dtime_max)
         """
-        super(Model, self).__init__()
 
-        # Save hyperparameters for later use
-        self.save_hyperparameters()
-
-        # dtime_max will be set dynamically based on data
-        self.dtime_max = None
-
-        # Load model configuration
-        pretrain_model_path = model_config.pretrain_model_path
-        self.scheduler_config = model_config.scheduler_config
-
-        # Load training configuration
-        self.compute_simulation = model_config.compute_simulation
-
-        # Load data and model specifications
-        self.num_event_types = num_event_types
-        self.pad_token_id = num_event_types
-
-        self.loss_integral_num_sample_per_step = (
-            model_config.thinning_config.loss_integral_num_sample_per_step
-        )
-
-        self.eps = torch.finfo(torch.float32).eps
-
-        # Model prediction configuration
-        self.gen_config = model_config.thinning_config
-        self.use_mc_samples = self.gen_config.use_mc_samples
-        self._device = model_config.device
-        self.num_step_gen = self.gen_config.num_steps
-
+        
+        # Simulation configuration for simulation mixin
         simulation_config = model_config.simulation_config
 
-        self.num_sample = self.gen_config.num_sample
-        self.dtime_max = dtime_max
+        self.seed = simulation_config.seed
+        simulation_batch_size = simulation_config.batch_size
+        simulation_start_time = data_stats["end_time_max"]
+        simulation_end_time = data_stats["end_time_max"] + simulation_config.time_window
+        initial_buffer_size = simulation_config.initial_buffer_size
 
-        # event_sampler will be initialized after dtime_max is set
-        self.event_sampler = None
+        # Prediction configuration for prediction mixin, and event sampler
+        thinning_config = model_config.thinning_config
 
-        # Simulation from the model configuration
-        self.compute_simulation = False
-        self._statistics_collector = None
+        num_sample = thinning_config.num_sample
+        num_samples_boundary = thinning_config.num_samples_boundary
+        over_sample_rate = thinning_config.over_sample_rate
+        num_exp = thinning_config.num_exp
         
-        if simulation_config is not None:
-            self.seed = simulation_config.seed
-            self.simulation_batch_size = simulation_config.batch_size
-            self.simulation_time_window = simulation_config.time_window
-            self.max_simul_events = simulation_config.max_sim_events
-            self.compute_simulation = True
-            
-            # Simulation times will be set dynamically based on data
-            self.simulation_start_time = None
-            self.simulation_end_time = None
-            
-            # Initialize batch statistics collector for distribution analysis
-            # Output dir will be set later when we know the base directory
-            self._statistics_collector = None
-            self._collector_output_dir = None
 
-        self.sim_events_counter = 0
-        self._simulations = []
+        super().__init__(
+            # BaseMixin params
+            num_exp=num_exp,
+            device=model_config.device,
+            dtime_max=data_stats["dtime_max"],
+            num_samples_boundary=num_samples_boundary,
+            over_sample_rate=over_sample_rate,
 
-        # Cache for event samplers to avoid reconstruction
-        self._event_sampler_cache = {}
+            # SimulationMixin params
+            simulation_start_time=simulation_start_time,
+            simulation_end_time=simulation_end_time,
+            num_event_types=data_stats["num_event_types"],
+            initial_buffer_size=initial_buffer_size,
+            simulation_batch_size=simulation_batch_size,
 
-        # Load pretrained model if path is provided
-        if pretrain_model_path is not None:
-            checkpoint = torch.load(
-                pretrain_model_path, map_location=self.device, weights_only=False
-            )
-            # Adjust keys if necessary, e.g., remove prefix if saved with DDP
-            state_dict = checkpoint["state_dict"]
-            # Example key adjustment (if needed):
-            # state_dict = {k.replace("model.", ""): v for k, v in state_dict.items()}
-            self.load_state_dict(
-                state_dict, strict=False
-            )  # Use strict=False if some layers are different
-            logger.info(
-                f"Successfully loaded pretrained model from: {pretrain_model_path}"
-            )
-
-    @property
-    def simulations(self) -> List[SimulationResult]:
-        """Get the list of generated simulations."""
-        return self._simulations
-
-
-    def init_statistics_collector(self, output_dir: str) -> BatchStatisticsCollector:
-        """Initialize the batch statistics collector for distribution analysis.
-        
-        Args:
-            output_dir: Directory where results will be saved
-        """
-        self._statistics_collector = BatchStatisticsCollector(
-            num_event_types=self.num_event_types,
-            output_dir=output_dir,
-            max_samples=self.max_simul_events,
-        )
-        logger.info(f"BatchStatisticsCollector initialized with output_dir={output_dir}")
-        
-        return self._statistics_collector
-
-    def finalize_statistics(self) -> FinalResult:
-        """Finalize statistics collection and generate plots/metrics.
-        
-        Returns:
-            Dictionary containing statistics, metrics, and batch count
-        """
-
-        if self._statistics_collector is None:
-            raise NotImplementedError("No statistics collector to finalize. Initialize it first with 'init_statistics_collector'.")
-        
-        logger.info("Finalizing batch statistics collection...")
-        results = self._statistics_collector.finalize_and_save()
-        logger.info(f"Statistics finalized: {results.get('batch_count', 0)} batches processed")
-        return results
-    
-
-
-    # Implement for the models based on intensity (not implemented in intensity free)
-    @abstractmethod
-    def compute_intensities_at_sample_times(
-        self,
-        time_seqs: torch.Tensor,
-        time_delta_seqs: torch.Tensor,
-        type_seqs: torch.Tensor,
-        sample_dtimes: torch.Tensor,
-        **kwargs,
-    ) -> torch.Tensor:
-        """Compute the intensity at sampled times, not only event times.
-
-        Args:
-            time_seqs (tensor): [batch_size, seq_len], times seqs.
-            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
-            type_seqs (tensor): [batch_size, seq_len], event type seqs.
-            sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
-
-        Returns:
-            tensor: [batch_size, num_times, num_mc_sample, num_event_types],
-                    intensity at each timestamp for each event type."""
-        pass
-
-
-
-    @abstractmethod
-    def loglike_loss(
-        self,
-        batch: Batch,
-    ) -> tuple[torch.Tensor, int]:
-        """Compute the log-likelihood loss for a batch of data.
-
-        Args:
-            batch: Batch containing time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask
-
-        Returns:
-            loss, number of events.
-        """
-        pass
-
-    def set_dtime_max(self, dtime_max: float) -> None:
-        """Set dtime_max dynamically based on data.
-        
-        Args:
-            dtime_max: Maximum time delta from the dataset
-        """
-        self.dtime_max = dtime_max
-        
-        # Initialize event sampler now that we have dtime_max
-        self.event_sampler = EventSampler(
-            num_exp=self.gen_config.num_exp,
-            over_sample_rate=self.gen_config.over_sample_rate,
-            num_samples_boundary=self.gen_config.num_samples_boundary,
-            dtime_max=self.dtime_max,
-            device=self._device,
-        )
-    
-    def set_simulation_times(self, end_time_max: float) -> None:
-        """Set simulation start and end times dynamically based on data.
-        
-        Args:
-            end_time_max: Maximum end time from the dataset
-        """
-        if not self.compute_simulation:
-            raise ValueError("Simulation is not enabled for this model")
-        
-        self.simulation_start_time = end_time_max
-        self.simulation_end_time = end_time_max + self.simulation_time_window
-    
-    @property
-    def device(self):
-        """Get the current device."""
-        return self._device
-
-    def to(self, *args, **kwargs):
-        """Override to() method to update device-dependent components."""
-        device = None
-        if args and isinstance(args[0], (str, torch.device)):
-            device = args[0]
-        elif "device" in kwargs:
-            device = kwargs["device"]
-
-        # Call the parent's to() method first
-        model = super().to(*args, **kwargs)
-
-        # Update our stored device if a new one was specified
-        if device is not None:
-            model._device = device
-            # Clear event sampler cache when device changes
-            model._event_sampler_cache.clear()
-
-        return model
-
-    @staticmethod
-    def get_logits_at_last_step(logits, batch_non_pad_mask, sample_len=None):
-        """Retrieve the hidden states of last non-pad events.
-
-        Args:
-            logits (tensor): [batch_size, seq_len, hidden_dim], a sequence of logits
-            batch_non_pad_mask (tensor): [batch_size, seq_len], a sequence of masks
-            sample_len (tensor): default None, use batch_non_pad_mask to find out the last non-mask position
-
-        ref: https://medium.com/analytics-vidhya/understanding-indexing-with-pytorch-gather-33717a84ebc4
-
-        Returns:
-            tensor: retrieve the logits of EOS event
-        """
-
-        seq_len = batch_non_pad_mask.sum(dim=1)
-        select_index = seq_len - 1 if sample_len is None else seq_len - 1 - sample_len
-        # [batch_size, hidden_dim]
-        select_index = select_index.unsqueeze(1).repeat(1, logits.size(-1))
-        # [batch_size, 1, hidden_dim]
-        select_index = select_index.unsqueeze(1)
-        # [batch_size, hidden_dim]
-        last_logits = torch.gather(logits, dim=1, index=select_index).squeeze(1)
-        return last_logits
-
-    def make_dtime_loss_samples(self, time_delta_seq):
-        """Generate the time point samples for every interval.
-
-        Args:
-            time_delta_seq (tensor): [batch_size, seq_len].
-
-        Returns:
-            tensor: [batch_size, seq_len, n_samples]
-        """
-        # [1, 1, n_samples]
-        dtimes_ratio_sampled = torch.linspace(
-            start=0.0,
-            end=1.0,
-            steps=self.loss_integral_num_sample_per_step,
-            device=self.device,
-        )[None, None, :]
-
-        # [batch_size, max_len, n_samples]
-        sampled_dtimes = time_delta_seq[:, :, None] * dtimes_ratio_sampled
-
-        return sampled_dtimes
-
-    def compute_loglikelihood(
-        self, 
-        time_delta_seq: torch.Tensor, 
-        lambda_at_event: torch.Tensor, 
-        lambdas_loss_samples: torch.Tensor, 
-        seq_mask: torch.Tensor, 
-        type_seq: torch.Tensor
-    ):
-        """Compute the loglikelihood of the event sequence based on Equation (8) of NHP paper.
-
-        Args:
-            time_delta_seq (tensor): [batch_size, seq_len], time_delta_seq from model input.
-            lambda_at_event (tensor): [batch_size, seq_len, num_event_types], unmasked intensity at
-            (right after) the event.
-            lambdas_loss_samples (tensor): [batch_size, seq_len, num_sample, num_event_types],
-            intensity at sampling times.
-            seq_mask (tensor): [batch_size, seq_len], sequence mask vector to mask the padded events.
-            type_seq (tensor): [batch_size, seq_len], sequence of mark ids, with padded events having a mark of self.pad_token_id
-
-        Returns:
-            tuple: event loglike, non-event loglike, intensity at event with padding events masked
-        """
-
-        # First, add an epsilon to every marked intensity for stability
-        lambda_at_event = lambda_at_event + self.eps
-
-        log_marked_event_lambdas = lambda_at_event.log()
-        total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
-
-        # Compute event LL - [batch_size, seq_len]
-        event_ll = -F.nll_loss(
-            log_marked_event_lambdas.permute(
-                0, 2, 1
-            ),  # mark dimension needs to come second, not third to match nll_loss specs
-            target=type_seq,
-            ignore_index=self.pad_token_id,  # Padded events have a pad_token_id as a value
-            reduction="none",  # Does not aggregate, and replaces what would have been the log(marked intensity) with 0.
+            # PredictionMixin params
+            pad_token_id=data_stats["num_event_types"],
+            num_sample=num_sample,
+            num_step_gen=model_config.num_steps,
         )
 
-        # Compute non-event LL [batch_size, seq_len]
-        # interval_integral = length_interval * average of sampled lambda(t)
-        if self.use_mc_samples:
-            non_event_ll = (
-                total_sampled_lambdas.mean(dim=-1) * time_delta_seq * seq_mask
-            )
-        else:  # Use trapezoid rule
-            non_event_ll = (
-                0.5
-                * (
-                    total_sampled_lambdas[..., 1:] + total_sampled_lambdas[..., :-1]
-                ).mean(dim=-1)
-                * time_delta_seq
-                * seq_mask
-            )
+        # Save hyperparameters
+        self.save_hyperparameters()
 
-        num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
-        return event_ll, non_event_ll, num_events
+        # Model configuration
+        self.scheduler_config = model_config.scheduler_config
+        self.eps = torch.finfo(torch.float32).eps
 
-    def configure_optimizers(self):
+        # Loss computation configuration
+        self.num_mc_samples = model_config.num_mc_samples
+        self.use_mc_samples = model_config.use_mc_samples
+        self.num_step_gen = model_config.num_steps
+
+
+    def configure_optimizers(self) :
         """Configure the optimizer for the model.
 
         Returns:
@@ -368,847 +99,54 @@ class Model(pl.LightningModule, ABC, metaclass=RegistryMeta):
         lr_scheduler = self.scheduler_config.lr_scheduler
         max_epochs = self.scheduler_config.max_epochs
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        optimizer = optim.Adam(self.parameters(), lr=lr)
 
         # Use cosine decay scheduler instead
         if hasattr(self, "lr_scheduler") and lr_scheduler:
             
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(
                 optimizer,
                 T_max=max_epochs,  # Total number of epochs
                 eta_min=lr * 0.01,  # Minimum learning rate at the end of schedule
             )
-            return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": None}
+            return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_loss"}
 
         return optimizer
-
-    def training_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
-        """Training step for Lightning.
-
-        Args:
-            batch: Batch object containing sequences and masks
-            batch_idx: Index of the batch
-
-        Returns:
-            STEP_OUTPUT: The output of the training step
-        """
-        loss, num_events = self.loglike_loss(batch)
-        avg_loss = loss / num_events
-        self.log(
-            "train_loss",
-            avg_loss.item(),
-            prog_bar=True,
-            sync_dist=True,
-            on_epoch=True,
-            on_step=False,
-        )
-
-        return avg_loss
-
-    def validation_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
-        """Validation step for Lightning.
+    
+    def make_dtime_loss_samples(
+        self, 
+        time_delta_seq: torch.Tensor
+        ) -> torch.Tensor:
+        """Generate the time point samples for every interval.
 
         Args:
-            batch: Batch object containing sequences and masks
-            batch_idx: Index of the batch
+            time_delta_seq (tensor): [batch_size, seq_len].
 
         Returns:
-            STEP_OUTPUT: The output of the validation step
+            tensor: [batch_size, seq_len, n_samples]
         """
-        # Compute loss on the original batch first
-        loss, num_events = self.loglike_loss(batch)
-        avg_loss = loss / num_events
 
-        # Log validation loss
-        self.log(
-            "val_loss",
-            avg_loss.item(),
-            prog_bar=True,
-            sync_dist=True,
-            on_epoch=True,
-            on_step=False,
-        )
+        seq_len = time_delta_seq.size(1)
         
-        # Compute some validation metrics 
-        pred = self.predict_one_step_at_every_event(batch)
-
-        # Mutate the batch in-place so subsequent operations use sequences starting at the second event
-        batch.time_seqs = batch.time_seqs[:, 1:]
-        batch.time_delta_seqs = batch.time_delta_seqs[:, 1:]
-        batch.type_seqs = batch.type_seqs[:, 1:]
-        batch.seq_non_pad_mask = batch.seq_non_pad_mask[:, 1:]
-
-
-        one_step_metrics_compute = MetricsHelper(
-            num_event_types=self.num_event_types
+        # [1, 1, n_samples] - Monte Carlo sampling on [0,1]
+        dtimes_ratio_sampled = torch.rand(
+            1, seq_len, self.num_mc_samples, device=self.device
         )
 
-        one_step_metrics = one_step_metrics_compute.compute_prediction_metrics(
-            batch=batch, pred=pred
-        )
+        # [batch_size, max_len, n_samples]
+        sampled_dtimes = time_delta_seq[:, :, None] * dtimes_ratio_sampled
 
-        for key in one_step_metrics:
-            if key == "confusion_matrix":
-                # Skip confusion matrix as it's a 2D tensor that can't be logged directly
-                # We could save it separately or log derived metrics like accuracy
-                continue
-            self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
+        return sampled_dtimes
 
-        return avg_loss
-
-    def test_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
-        """Test step for Lightning.
+    
+    @abstractmethod
+    def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, int]:
+        """Compute the log-likelihood loss for a batch of data.
 
         Args:
-            batch: Batch object containing sequences and masks
-            batch_idx: Index of the batch
+            batch: Batch containing time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask
 
         Returns:
-            STEP_OUTPUT: The output of the test step
+            Tuple of (loss, number of events)
         """
-        # Compute loss on the original batch first
-        loss, num_events = self.loglike_loss(batch)
-        avg_loss = loss / num_events
-        self.log("test_loss", avg_loss.item(), prog_bar=True, sync_dist=True)
-
-        
-        # Compute some prediction metrics using the shifted batch
-        pred = self.predict_one_step_at_every_event(batch)
-
-        # Mutate the batch in-place so subsequent operations use sequences starting at the second event
-        batch.time_seqs = batch.time_seqs[:, 1:]
-        batch.time_delta_seqs = batch.time_delta_seqs[:, 1:]
-        batch.type_seqs = batch.type_seqs[:, 1:]
-        batch.seq_non_pad_mask = batch.seq_non_pad_mask[:, 1:]
-
-
-        one_step_metrics_compute = MetricsHelper(
-            num_event_types=self.num_event_types
-        )
-        one_step_metrics = one_step_metrics_compute.compute_prediction_metrics(
-            batch=batch, pred=pred
-        )
-
-        for key in one_step_metrics:
-            if key == "confusion_matrix":
-                # Skip confusion matrix as it's a 2D tensor that can't be logged directly
-                # We could save it separately or log derived metrics like accuracy
-                continue
-            self.log(f"{key}", one_step_metrics[key], prog_bar=False, sync_dist=True)
-
-        if self.compute_simulation:
-
-            if self.sim_events_counter >= self.max_simul_events:
-                logger.warning(
-                    f"Simulation limit reached: {self.sim_events_counter} events generated, "
-                    f"max is {self.max_simul_events}."
-                )
-                return avg_loss
-
-            # Compute simulation metrics
-            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(batch=batch)
-            
-            # Convert simulation tuple to SimulationResult object
-            sim = SimulationResult.from_simulation_tensors(
-                simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask
-            )
-            
-            # Increment global event counter
-            n_events_generated = (sim.type_seqs != 0).sum().item()
-            self.sim_events_counter += n_events_generated
-
-            # Append to simulations list
-            self._simulations.append(sim)
-
-            # Update batch statistics collector if initialized
-            if self._statistics_collector is None:
-                raise NotImplementedError("No statistics collector initialized. Call 'init_statistics_collector' before testing.")
-            
-            self._statistics_collector.update_batch(batch, sim)
-
-            simulation_metrics_compute = MetricsHelper(
-                num_event_types=self.num_event_types
-            )
-
-            simulation_metrics = simulation_metrics_compute.compute_simulation_metrics(
-                batch=batch, sim=sim
-            )  # Log simulation metrics
-            for key in simulation_metrics:
-                if key == "confusion_matrix":
-                    # Skip confusion matrix as it's a 2D tensor that can't be logged directly
-                    # We could save it separately or log derived metrics like accuracy
-                    continue
-                self.log(
-                    f"sim_{key}",
-                    simulation_metrics[key],
-                    prog_bar=False,
-                    sync_dist=True,
-                )
-
-        return avg_loss
-
-    def predict_step(self, batch: Batch, batch_idx, **kwargs) -> STEP_OUTPUT:
-        """Prediction step for Lightning.
-
-        Args:
-            batch: Batch object containing sequences and masks
-            batch_idx: Index du batch (non utilisé ici, mais requis par Lightning)
-        Returns:
-            STEP_OUTPUT: Liste de dictionnaires de simulations produites
-        """
-
-        # 1) Si on a déjà généré assez d'événements, on s'arrête immédiatement
-        if self.sim_events_counter >= self.max_simul_events:
-            logger.warning(
-                f"Simulation limit reached: {self.sim_events_counter} events generated, "
-                f"max is {self.max_simul_events}."
-            )
-            return 
-
-        # 4) Appel à la simulation « vectorisée » (retourne un tuple)
-        simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(batch=batch)
-
-        # Convert simulation tuple to SimulationResult object
-        sim = SimulationResult.from_simulation_tensors(
-            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask
-        )
-        
-        # Increment global event counter
-        n_events_generated = (sim.type_seqs != 0).sum().item()
-        self.sim_events_counter += n_events_generated
-
-        if self._statistics_collector is None:
-            raise NotImplementedError("No statistics collector initialized. Call 'init_statistics_collector' before prediction.")
-
-        self._statistics_collector.update_batch(batch, sim)
-
-        # Append to simulations list
-        self._simulations.append(sim)
-
-        return
-
-    def predict_one_step_at_every_event(
-        self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
-    ) -> OneStepPred:
-        """One-step prediction for every event in the sequence.
-
-        Args:
-            batch: Batch object containing sequences and masks
-
-        Returns:
-            OneStepPred: Predicted time deltas and event types, [batch_size, seq_len].
-        """
-
-        # remove the last event, as the prediction based on the last event has no label
-        # note: the first dts is 0
-        # [batch_size, seq_len]
-        time_seq, time_delta_seq, event_seq = (
-            time_seq[:, :-1],
-            time_delta_seq[:, :-1],
-            event_seq[:, :-1],
-        )
-
-        # [batch_size, seq_len, num_sample]
-        accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
-            time_seq,
-            time_delta_seq,
-            event_seq,
-            self.compute_intensities_at_sample_times,
-            self.num_sample,
-            compute_last_step_only=False,
-        )  # make it explicit
-
-        # We should condition on each accepted time to sample event mark, but not conditioned on the expected event time.
-        # 1. Use all accepted_dtimes to get intensity.
-        # [batch_size, seq_len, num_sample, num_marks]
-        intensities_at_times = self.compute_intensities_at_sample_times(
-            time_seq, time_delta_seq, event_seq, accepted_dtimes
-        )
-
-        # 2. Normalize the intensity over last dim and then compute the weighted sum over the `num_sample` dimension.
-        # Each of the last dimension is a categorical distribution over all marks.
-        # [batch_size, seq_len, num_sample, num_marks]
-        intensities_normalized = intensities_at_times / intensities_at_times.sum(
-            dim=-1, keepdim=True
-        )
-
-        # 3. Compute weighted sum of distributions and then take argmax.
-        # [batch_size, seq_len, num_marks]
-        intensities_weighted = torch.einsum(
-            "...s,...sm->...m", weights, intensities_normalized
-        )
-
-        # [batch_size, seq_len]
-        types_pred = torch.argmax(intensities_weighted, dim=-1)
-
-        # [batch_size, seq_len]
-        dtimes_pred = torch.sum(
-            accepted_dtimes * weights, dim=-1
-        )  # compute the expected next event time
-
-        return OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)
-
-    def predict_multi_step_since_last_event(
-        self,
-        batch: Batch,
-        forward=False,
-        num_step: Optional[int] = None,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Multi-step prediction since last event in the sequence.
-
-        Args:
-            batch: Batch object containing sequences and masks
-            num_step : the number of steps to take
-            forward : wheter to predict after the last event or to go back and predict events that occured
-
-        Returns:
-            tuple: tensors of dtime and type prediction, [batch_size, num_step].
-        """
-
-        time_seq_label = batch.time_seqs
-        time_delta_seq_label = batch.time_delta_seqs
-        event_seq_label = batch.type_seqs
-
-        if num_step is None:
-            num_step = self.num_step_gen
-
-        batch_size = time_seq_label.size(0)
-
-        if not forward:
-            initial_seq = time_seq_label[:, :-num_step]
-            initial_delta = time_delta_seq_label[:, :-num_step]
-            initial_event = event_seq_label[:, :-num_step]
-        else:
-            initial_seq = time_seq_label
-            initial_delta = time_delta_seq_label
-            initial_event = event_seq_label
-
-        initial_len = initial_seq.size(1)
-        total_len = initial_len + num_step
-
-        # Pré-allocation des buffers pour éviter les torch.cat
-        time_buffer = torch.zeros(
-            batch_size, total_len, dtype=initial_seq.dtype, device=initial_seq.device
-        ).contiguous()
-        time_delta_buffer = torch.zeros(
-            batch_size,
-            total_len,
-            dtype=initial_delta.dtype,
-            device=initial_delta.device,
-        ).contiguous()
-        event_buffer = torch.zeros(
-            batch_size,
-            total_len,
-            dtype=initial_event.dtype,
-            device=initial_event.device,
-        ).contiguous()
-
-        # Copier les séquences initiales dans les buffers
-        time_buffer[:, :initial_len].copy_(initial_seq)
-        time_delta_buffer[:, :initial_len].copy_(initial_delta)
-        event_buffer[:, :initial_len].copy_(initial_event)
-
-        current_len = initial_len
-
-        # Boucle de prédiction avec indexation directe sur les buffers
-        for _ in range(num_step):
-            current_len += 1
-
-            # Obtenir les vues actuelles des séquences (pas de copie)
-            current_time_seq = time_buffer[:, :current_len]
-            current_time_delta = time_delta_buffer[:, :current_len]
-            current_event_seq = event_buffer[:, :current_len]
-
-            # Utiliser predict_one_step pour éviter la duplication de code
-            pred = self.predict_one_step_at_every_event(
-                current_time_seq, current_time_delta, current_event_seq
-            )
-
-            # Calcul du nouveau temps
-            time_pred_step = current_time_seq[:, -1:] + dtimes_pred
-
-            # Écriture directe dans les buffers (pas de concatenation)
-            time_buffer[:, current_len] = time_pred_step.squeeze(-1)
-            time_delta_buffer[:, current_len] = dtimes_pred.squeeze(-1)
-            event_buffer[:, current_len] = types_pred.squeeze(-1)
-
-        # Extraction des résultats finaux
-        return (
-            time_delta_buffer[:, -num_step - 1 :],
-            event_buffer[:, -num_step - 1 :],
-            time_delta_seq_label[:, -num_step - 1 :],
-            event_seq_label[:, -num_step - 1 :],
-        )
-
-    def simulate(
-        self,
-        batch: Optional[Batch] = None,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
-        batch_size: Optional[int] = None,
-        max_events: Optional[int] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        Version encore plus optimisée avec approche vectorisée avancée.
-
-        Cette version essaie de traiter plusieurs événements en parallèle
-        pour chaque séquence du batch quand c'est possible.
-        """
-
-        if start_time is None:
-            start_time = self.simulation_start_time
-            if start_time is None:
-                raise ValueError(
-                    "start_time must be provided or set via set_simulation_times()"
-                )
-        if end_time is None:
-            end_time = self.simulation_end_time
-            if end_time is None:
-                raise ValueError(
-                    "end_time must be provided or set via set_simulation_times()"
-                )
-        if batch_size is None:
-            batch_size = self.simulation_batch_size
-        if max_events is None:
-            max_events = self.max_simul_events
-
-        # Initialize sequences
-        if batch is None:
-            batch = Batch(
-                time_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
-                time_delta_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
-                type_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
-                seq_non_pad_mask=torch.ones(batch_size, 2, device=self.device, dtype=torch.bool),
-            )
-        else:
-            batch_size = batch.time_seqs.size(0)
-
-        time_seq = batch.time_seqs
-        time_delta_seq = batch.time_delta_seqs
-        event_seq = batch.type_seqs
-        num_mark = self.num_event_types
-
-        # Pré-allocation avec mémoire contigüe
-        max_seq_len = max_events + time_seq.size(1)
-
-        # Utiliser des tenseurs contigus pour de meilleures performances
-        time_buffer = torch.zeros(
-            batch_size, max_seq_len, device=self.device, dtype=torch.float32
-        ).contiguous()
-        time_delta_buffer = torch.zeros(
-            batch_size, max_seq_len, device=self.device, dtype=torch.float32
-        ).contiguous()
-        event_buffer = torch.zeros(
-            batch_size, max_seq_len, device=self.device, dtype=torch.long
-        ).contiguous()
-
-        # Copie initiale
-        initial_len = time_seq.size(1)
-        time_buffer[:, :initial_len].copy_(time_seq)
-        time_delta_buffer[:, :initial_len].copy_(time_delta_seq)
-        event_buffer[:, :initial_len].copy_(event_seq)
-
-        # Calcul vectorisé optimisé de last_event_time
-        last_event_time = torch.zeros(
-            (batch_size, num_mark), device=self.device, dtype=torch.float32
-        )
-
-        # Utilisation de advanced indexing pour l'optimisation
-        for mark in range(num_mark):
-            mark_mask = event_seq == mark  # [batch_size, seq_len]
-            if mark_mask.any():
-                # Opération vectorisée avec masquage efficace
-                masked_times = time_seq.masked_fill(~mark_mask, float("-inf"))
-                max_times, _ = masked_times.max(dim=1)
-                valid_mask = max_times != float("-inf")
-                last_event_time[valid_mask, mark] = max_times[valid_mask]
-
-        current_time = start_time
-        current_len = initial_len
-
-        # Simulation avec moins d'allocations mémoire
-        with torch.no_grad():  # Pas besoin de gradients pour la simulation
-            pbar = tqdm(total=end_time, desc="Simulation", leave=False)
-
-            step_count = 0
-            batch_active = torch.ones(batch_size, dtype=torch.bool, device=self.device)
-
-            while current_time < end_time and step_count < max_seq_len - 1:
-                if not batch_active.any():
-                    break
-
-                # Extraire seulement les séquences actives
-                active_indices = batch_active.nonzero(as_tuple=True)[0]
-
-                if len(active_indices) == 0:
-                    break
-
-                current_len = initial_len + step_count
-
-                # Prédiction sur les séquences actives seulement
-                active_time_seq = time_buffer[active_indices, :current_len]
-                active_time_delta = time_delta_buffer[active_indices, :current_len]
-                active_event_seq = event_buffer[active_indices, :current_len]
-
-                dtimes_pred, type_pred = self.simulate_one_step(
-                    active_time_seq,
-                    active_time_delta,
-                    active_event_seq,
-                    mode="simulation"
-                )
-
-                # Calcul des nouveaux temps
-                new_times = active_time_seq[:, -1:] + dtimes_pred
-
-                # Mise à jour vectorisée de last_event_time pour les séquences actives
-                active_batch_size = len(active_indices)
-
-                # Vectorisation complète : utiliser advanced indexing pour mettre à jour last_event_time
-                type_pred_flat = type_pred.squeeze(-1)  # [active_batch_size]
-                last_times_flat = active_time_seq[:, -1]  # [active_batch_size]
-
-                # Mise à jour vectorisée avec scatter_
-                last_event_time[active_indices, type_pred_flat] = last_times_flat
-
-                # Recalcul des deltas
-                batch_indices_active = torch.arange(
-                    active_batch_size, device=self.device
-                )
-                type_pred_flat = type_pred.squeeze(-1)
-                last_events_active = last_event_time[active_indices][
-                    batch_indices_active, type_pred_flat
-                ]
-                dtimes_corrected = new_times.squeeze(-1) - last_events_active
-
-                # Mise à jour des buffers pour les séquences actives
-                time_buffer[active_indices, current_len] = new_times.squeeze(-1)
-                time_delta_buffer[active_indices, current_len] = dtimes_corrected
-                event_buffer[active_indices, current_len] = type_pred.squeeze(-1)
-
-                # Mise à jour du temps courant et des séquences actives
-                current_time = new_times.min().item()
-
-                # Désactiver les séquences qui ont dépassé end_time
-                exceed_time_mask = new_times.squeeze(-1) >= end_time
-                if exceed_time_mask.any():
-                    exceed_indices = active_indices[exceed_time_mask]
-                    batch_active[exceed_indices] = False
-
-                step_count += 1
-
-                if step_count % 50 == 0:
-                    pbar.n = min(current_time, end_time)
-                    pbar.refresh()
-
-        # Extraction des résultats
-        first_pred_idx = initial_len
-        final_time_seq = time_buffer[:, first_pred_idx:current_len]
-        final_time_delta = time_delta_buffer[:, first_pred_idx:current_len]
-        final_event_seq = event_buffer[:, first_pred_idx:current_len]
-
-        # Masque final
-        simul_mask = torch.logical_and(
-            final_time_seq >= start_time, final_time_seq <= end_time
-        )
-
-        return final_time_seq, final_time_delta, final_event_seq, simul_mask
-
-    def intensity_graph(
-        self,
-        start_time: float = 100.0,
-        end_time: float = 200.0,
-        precision: int = 100,
-        plot: bool = False,
-        save_plot: bool = True,
-        save_data: bool = True,
-        save_dir: str = "./",
-        **kwargs,
-    ) -> tuple[torch.Tensor, torch.Tensor, dict[int, torch.Tensor]]:
-        """
-        Génère et affiche la courbe d'intensité du modèle pour une séquence donnée.
-
-        Cette fonction calcule les intensités du modèle aux instants échantillonnés et
-        permet de visualiser leur évolution en fonction du temps, séparément pour chaque type d'événement.
-
-        Args:
-            start_time (float): Temps de début de la simulation.
-            end_time (float): Temps de fin de la simulation.
-            precision (int, optionnel): Nombre de points interpolés entre deux événements
-                pour lisser la courbe d'intensité. Par défaut à 100.
-            plot (bool, optionnel): Indique s'il faut afficher le graphique des intensités.
-                Par défaut à False.
-            save_plot (bool, optionnel): Indique s'il faut sauvegarder le graphique.
-                Par défaut à False.
-            save_data (bool, optionnel): Indique s'il faut sauvegarder les données d'intensité.
-                Par défaut à False.
-            save_dir (str): Répertoire de sauvegarde du graphique et des données.
-
-        Returns:
-            tuple:
-                - torch.Tensor: Matrice des intensités calculées pour chaque type d'événement [num_sample_points, num_event_types].
-                - torch.Tensor: Points de temps correspondant aux échantillons d'intensité [num_sample_points].
-                - dict[int, torch.Tensor]: Dictionnaire des instants où chaque type d'événement est observé.
-        """
-
-        num_mark = self.num_event_types
-
-        # Simulate data
-
-        if self.simulations == []:
-            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(
-                start_time=start_time, end_time=end_time, batch_size=1
-            )
-            # Extract first sequence from batch
-            time_seq = simul_time_seq[0]
-            time_delta_seq = simul_dtime_seq[0]
-            type_seq = simul_event_seq[0]
-        else:
-
-            # Use the first simulation in the batch
-            time_seq = self.simulations[0].time_seqs[0,...]
-            time_delta_seq = self.simulations[0].dtime_seqs[0,...]
-            type_seq = self.simulations[0].type_seqs[0,...]
-            # Note: simulations are already filtered, so no additional mask needed
-
-        # Add batch dimension back for processing
-        time_seq = time_seq.unsqueeze(0)  # [1, seq_len]
-        time_delta_seq = time_delta_seq.unsqueeze(0)  # [1, seq_len]
-        type_seq = type_seq.unsqueeze(0)  # [1, seq_len]
-
-        ratios = (
-            torch.linspace(start=0.0, end=1.0, steps=precision, device=self.device)
-            .unsqueeze(0)
-            .unsqueeze(0)
-        )  # [1, 1, precision]
-
-        # Reconstruct actual time points from intervals
-        # For each interval, create time points: start_time + delta * ratio
-        time_starts = time_seq[:, :-1]  # [1, seq_len-1] - exclude last event
-        time_deltas = time_delta_seq[
-            :, 1:
-        ]  # [1, seq_len-1] - exclude first delta (which is 0)
-
-        time_deltas_sample = time_deltas.unsqueeze(-1) * ratios
-
-        # Calculate intensities on augmented intervals
-        # [1, seq_len, precision, num_event_types]
-        # Run the intensity computations in a no-grad context to avoid creating
-        # "inference tensors" that PyTorch disallows being saved for backward.
-        # We then return a cloned/detached tensor so downstream code that may
-        # accidentally run under autograd won't try to save inference-only tensors.
-        with torch.no_grad():
-            intensities = self.compute_intensities_at_sample_times(
-                time_seq[:, 1:],  # [1, seq_len-1]
-                time_delta_seq[:, 1:],  # [1, seq_len-1]
-                type_seq[:, 1:],  # [1, seq_len-1]
-                time_deltas_sample,
-            )
-
-        # Ensure we return a regular Tensor (detach + clone) so it can be
-        # used safely by code paths that expect tensors requiring grad or that
-        # might be captured by autograd later. This avoids the RuntimeError:
-        # "Inference tensors cannot be saved for backward..."
-        intensities = intensities.detach().clone()
-
-        time_diffs = time_seq.diff()
-
-        # Calculate actual time points: [1, seq_len-1, precision]
-        time_points = time_starts.unsqueeze(-1) + time_diffs.unsqueeze(-1) * ratios
-
-        # Flatten time points and intensities for plotting
-        # [total_points] where total_points = (seq_len-1) * precision
-        time_flat = time_points.view(-1)
-
-        # Remove batch dimension and flatten: [total_points, num_event_types]
-        intensities_flat = intensities[0, ...].view(-1, num_mark)
-
-        # Collect marked times for each event type
-        marked_times = defaultdict(list)
-        time_seq_flat = time_seq.squeeze(0)  # Remove batch dimension
-        type_seq_flat = type_seq.squeeze(0)  # Remove batch dimension
-
-        # Filter out padded/invalid events (assuming type 0 and time 0 are padding)
-        valid_mask = (type_seq_flat != 0) & (time_seq_flat != 0)
-
-        for i in range(num_mark):
-            mask = (type_seq_flat == i) & valid_mask
-            if mask.any():
-                marked_times[i] = time_seq_flat[mask]
-            else:
-                marked_times[i] = torch.empty(0, device=self.device)
-
-        # Sauvegarder les données d'intensité si demandé
-        if save_data:
-            os.makedirs(save_dir, exist_ok=True)
-
-            # Sauvegarder les intensités et les points temporels
-            intensity_data = {
-                "time_points": time_flat.cpu().detach().numpy().tolist(),
-                "intensities": intensities_flat.cpu().detach().numpy().tolist(),
-                "marked_times": {
-                    str(dim): times.cpu().detach().numpy().tolist()
-                    for dim, times in marked_times.items()
-                },
-                "metadata": {
-                    "precision": precision,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "num_event_types": num_mark,
-                    "model_type": self.__class__.__name__,
-                },
-            }
-
-            data_file = f"{self.__class__.__name__}_intensity_data.json"
-            data_file = os.path.join(save_dir, data_file)
-
-            save_json(intensity_data, data_file)
-            logger.info(f"Données d'intensité sauvegardées dans {data_file}")
-
-        # Affichage et/ou sauvegarde du graphe si demandé
-        if plot or save_plot:
-            # Create directory if it doesn't exist
-            if save_plot:
-                os.makedirs(save_dir, exist_ok=True)
-
-            # Liste de marqueurs pour distinguer les événements
-            markers = ["o", "D", ",", "x", "+", "^", "v", "<", ">", "s", "p", "*"]
-
-            for i in range(num_mark):
-                # Créer une nouvelle figure pour chaque type d'événement
-                fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-
-                # Tracé de l'intensité en fonction du temps
-                ax.plot(
-                    time_flat.cpu().detach().numpy(),
-                    intensities_flat[:, i].cpu().detach().numpy(),
-                    color=f"C{i}",
-                    linewidth=2,
-                    label=f"Intensity Mark {i}",
-                )
-
-                # Ajout des événements observés sous forme de points
-                if len(marked_times[i]) > 0:
-                    ax.scatter(
-                        marked_times[i].cpu().detach().numpy(),
-                        torch.zeros_like(marked_times[i]).cpu().detach().numpy()
-                        - 0.05 * intensities_flat[:, i].max().item(),
-                        s=30,
-                        color=f"C{i}",
-                        marker=markers[i % len(markers)],
-                        label=f"Events Mark {i}",
-                        alpha=0.8,
-                    )
-
-                ax.set_title(f"Intensité pour la marque {i}")
-                ax.set_xlabel("Temps")
-                ax.set_ylabel("Intensité")
-                ax.legend()
-                ax.grid(True, alpha=0.3)
-
-                plt.tight_layout()
-
-                # Sauvegarder le graphique si demandé
-                if save_plot:
-                    save_file = (
-                        f"{self.__class__.__name__}_intensity_graph_mark_{i}.png"
-                    )
-                    save_file = os.path.join(save_dir, save_file)
-                    plt.savefig(save_file, dpi=150, bbox_inches="tight")
-                    logger.info(
-                        f"Graphique d'intensité pour la marque {i} sauvegardé dans {save_file}"
-                    )
-
-                # Afficher le graphique si demandé
-                if plot:
-                    plt.show()
-                else:
-                    plt.close()
-
-        return intensities_flat, time_flat, marked_times
-
-    def get_model_metadata(self):
-        """
-        Get metadata about the model for simulation purposes.
-
-        Returns:
-            dict: Dictionary containing model metadata
-        """
-        metadata = {
-            "model_type": self.__class__.__name__,
-            "hidden_size": self.hidden_size,
-            "num_event_types": self.num_event_types,
-            "lr": self.lr,
-        }
-
-        # Add additional parameters that are specific to the model
-        if hasattr(self, "hparams"):
-            # Extract hyperparameters but exclude complex objects like modules
-            for key, value in self.hparams.items():
-                if (
-                    isinstance(value, (int, float, str, bool, list, dict))
-                    or value is None
-                ):
-                    if key not in metadata:  # Avoid overriding existing keys
-                        metadata[key] = value
-
-        return metadata
-
-    def simulate_one_step(
-        self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
-        mode: Literal["train", "simulation"] = "train",
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Utility method to predict the next time delta using the event sampler.
-
-        Args:
-            time_seq (torch.Tensor): Time sequence [batch_size, seq_len]
-            time_delta_seq (torch.Tensor): Time delta sequence [batch_size, seq_len]
-            event_seq (torch.Tensor): Event type sequence [batch_size, seq_len]
-            compute_last_step_only (bool): Whether to compute only the last step
-
-        Returns:
-            torch.Tensor: Predicted time deltas [batch_size, 1] if compute_last_step_only=True else [batch_size, seq_len]
-            torch.Tensor: Predicted event types [batch_size, 1] if compute_last_step_only=True else [batch_size, seq_len]
-        """
-
-        num_sample = (self.num_sample if mode == "train" else 1)
-
-        accepted_dtimes, weights = self.event_sampler.draw_next_time_one_step(
-            time_seq,
-            time_delta_seq,
-            event_seq,
-            self.compute_intensities_at_sample_times,
-            num_sample=num_sample,
-            compute_last_step_only=True,
-        )
-
-        # Estimate next time delta
-        dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)  # [batch_size, 1]
-        batch_size, num_mark = time_seq.size(0), self.num_event_types
-
-        # Select next event type based on intensities
-        intensities_at_times = self.compute_intensities_at_sample_times(
-            time_seq,
-            time_delta_seq,
-            event_seq,
-            dtimes_pred[:, :, None],
-            compute_last_step_only=True,
-        ).view(
-            batch_size, num_mark
-        )  # [batch_size, num_event_types]
-
-        total_intensities = intensities_at_times.sum(dim=-1)
-
-        if torch.any(total_intensities == 0):
-            raise ValueError("Total intensities is null, simulation stops.")
-
-        probs = intensities_at_times / total_intensities[:, None]
-        type_pred = torch.multinomial(probs, num_samples=1)
-
-        return dtimes_pred, type_pred
+        pass

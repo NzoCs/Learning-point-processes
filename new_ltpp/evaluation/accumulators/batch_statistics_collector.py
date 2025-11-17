@@ -29,7 +29,7 @@ from .plot_generators import (
 
 from .sequence_length_accumulator import SequenceLengthAccumulator
 from .time_accumulator import InterEventTimeAccumulator
-from .types import (
+from .acc_types import (
     AllStatistics,
     FinalResult,
     MetricsData,
@@ -50,7 +50,6 @@ class BatchStatisticsCollector:
         collector = BatchStatisticsCollector(
             num_event_types=10,
             output_dir="./output",
-            max_samples=100000
         )
         
         # In predict_step (called for each batch)
@@ -64,8 +63,8 @@ class BatchStatisticsCollector:
         self,
         num_event_types: int,
         output_dir: str,
-        max_time: float,
-        max_samples: Optional[int] = None,
+        dtime_max: float,
+        dtime_min: float = 0.0,
         min_sim_events: int = 1,
         enable_plots: bool = True,
         enable_metrics: bool = True,
@@ -75,13 +74,11 @@ class BatchStatisticsCollector:
         Args:
             num_event_types: Number of event types in the dataset
             output_dir: Directory where results will be saved
-            max_samples: Maximum number of samples to collect (None for unlimited)
             enable_plots: Whether to generate plots
             enable_metrics: Whether to compute metrics
         """
         self.num_event_types = num_event_types
         self.output_dir = Path(output_dir)
-        self.max_samples = max_samples
         # Minimum number of simulated events required per batch
         self.min_sim_events = int(min_sim_events)
         self.enable_plots = enable_plots
@@ -92,10 +89,14 @@ class BatchStatisticsCollector:
 
         # Initialize accumulators
         self._accumulators = (
-            InterEventTimeAccumulator(max_time=max_time, max_samples=max_samples, min_sim_events=min_sim_events),
-            EventTypeAccumulator(num_event_types=num_event_types, max_samples=max_samples, min_sim_events=min_sim_events),
-            SequenceLengthAccumulator(max_samples=max_samples, min_sim_events=min_sim_events),
-            MomentAccumulator(max_samples=max_samples, min_sim_events=min_sim_events),
+            InterEventTimeAccumulator(
+                dtime_min=dtime_min,
+                dtime_max=dtime_max, 
+                min_sim_events=min_sim_events
+                ),
+            EventTypeAccumulator(num_event_types=num_event_types, min_sim_events=min_sim_events),
+            SequenceLengthAccumulator(min_sim_events=min_sim_events),
+            MomentAccumulator(min_sim_events=min_sim_events),
         )
 
         # Initialize plot generators (if enabled)
@@ -135,16 +136,10 @@ class BatchStatisticsCollector:
             simulation: Optional simulation results for the batch
             
         Returns:
-            bool: True if collection should continue, False if max_samples reached
         """
+        
         if self._is_finalized:
             logger.warning("Collector already finalized, ignoring update")
-            return False
-
-        # Check if we should continue collecting
-        should_continue = any(acc.should_continue() for acc in self._accumulators)
-        if not should_continue:
-            logger.info(f"Max samples reached across all accumulators after {self._batch_count} batches")
             return False
 
         # Update all accumulators (each validates simulation independently)

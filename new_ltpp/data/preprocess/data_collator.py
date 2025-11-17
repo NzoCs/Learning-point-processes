@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Optional, Union, List
+from typing import List
 
 from new_ltpp.data.preprocess.event_tokenizer import EventTokenizer
-from new_ltpp.utils.const import PaddingStrategy, TruncationStrategy
 from new_ltpp.shared_types import TPPSequence
 from new_ltpp.shared_types import Batch
 

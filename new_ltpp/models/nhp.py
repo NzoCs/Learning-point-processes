@@ -95,14 +95,11 @@ class NHP(NeuralModel):
 
     def __init__(
         self,
-        model_config: ModelConfig,
-        *,
-        num_event_types: int,
-        dtime_max: float,
         hidden_size: int = 128,
         dropout: float = 0.1,
         beta: float = 1.0,
         bias: bool = True,
+        **kwargs,
     ) -> None:
         """Initialize the NHP model.
 
@@ -110,16 +107,12 @@ class NHP(NeuralModel):
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
         super(NHP, self).__init__(
-            model_config,
-            num_event_types=num_event_types,
-            hidden_size=hidden_size,
-            dtime_max=dtime_max,
-            dropout=dropout,
+            hidden_size=hidden_size, dropout=dropout, **kwargs
         )
-        self.model_config = model_config  # Store for test compatibility
+
         self.beta = beta
         self.bias = bias
-        self.rnn_cell = ContTimeLSTMCell(self.hidden_size)
+        self.rnn_cell = ContTimeLSTMCell(hidden_size)
 
         self.layer_intensity = nn.Sequential(  # eq. 4a,
             nn.Linear(self.hidden_size, self.num_event_types, self.bias),

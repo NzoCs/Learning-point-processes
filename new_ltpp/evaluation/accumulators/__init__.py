@@ -20,7 +20,6 @@ Usage:
     collector = BatchStatisticsCollector(
         num_event_types=10,
         output_dir="./output",
-        max_samples=100000
     )
     
     # In predict_step (for each batch)
@@ -47,7 +46,7 @@ from .plot_generators import (
 )
 from .sequence_length_accumulator import SequenceLengthAccumulator
 from .time_accumulator import InterEventTimeAccumulator
-from .types import (
+from .acc_types import (
     AllStatistics,
     EventTypeStatistics,
     FinalResult,

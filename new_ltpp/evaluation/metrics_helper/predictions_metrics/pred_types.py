@@ -1,17 +1,16 @@
-from dataclasses import dataclass
 import torch
 from enum import StrEnum
+from typing import TypedDict
 
-@dataclass
-class TimeValues:
+
+class TimeValues(TypedDict):
     """Container for time-related values only."""
 
     true_times: torch.Tensor
     pred_times: torch.Tensor
 
 
-@dataclass
-class TypeValues:
+class TypeValues(TypedDict):
     """Container for type-related values only."""
 
     true_types: torch.Tensor

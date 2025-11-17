@@ -9,7 +9,7 @@ from typing import Dict
 import numpy as np
 import numpy.typing as npt
 
-from .types import MetricsData
+from .acc_types import MetricsData
 
 
 class MetricsCalculatorImpl:

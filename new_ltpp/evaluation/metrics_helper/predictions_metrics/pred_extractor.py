@@ -30,7 +30,9 @@ class TimeDataExtractor():
         true_times = true_time_delta_seqs[batch_non_pad_mask]
         pred_times = pred_time_tensor[batch_non_pad_mask]
 
-        return TimeValues(true_times, pred_times)
+        return TimeValues(
+            true_times=true_times, pred_times=pred_times
+            )
 
 
 class TypeDataExtractor():
@@ -50,7 +52,9 @@ class TypeDataExtractor():
         true_types = true_type_seqs[batch_non_pad_mask]
         pred_types = pred_type_tensor[batch_non_pad_mask]
 
-        return TypeValues(true_types, pred_types)
+        return TypeValues(
+            true_types=true_types, pred_types=pred_types
+            )
 
 
 class PredictionDataExtractor():
@@ -71,8 +75,9 @@ class PredictionDataExtractor():
         Returns:
             Tuple of (TimeValues, TypeValues)
         """
-        pred_time_tensor = pred.dtime_predict
-        pred_type_tensor = pred.type_predict
+        
+        pred_time_tensor = pred['dtime_predict']
+        pred_type_tensor = pred['type_predict']
 
         time_values = self.time_extractor.extract_time_values(batch, pred_time_tensor)
         type_values = self.type_extractor.extract_type_values(batch, pred_type_tensor)

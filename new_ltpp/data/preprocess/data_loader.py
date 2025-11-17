@@ -7,7 +7,7 @@ from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_collator import TPPDataCollator
 from new_ltpp.data.preprocess.dataset import TPPDataset
 from new_ltpp.data.preprocess.event_tokenizer import EventTokenizer
-from new_ltpp.shared_types import Batch
+from new_ltpp.shared_types import Batch, DataStats
 from new_ltpp.utils import load_pickle, logger, py_assert
 
 
@@ -58,53 +58,7 @@ class TPPDataModule(pl.LightningDataModule):
         self.val_data = None
         self.test_data = None
         self.predict_data = None
-
-
-    def estimate_dtime_max(self, split: str = "train", quantile: float = 0.995, nb_samples: int = 10**5) -> float:
-        """
-        Estimate the maximum time delta (dtime_max) from the dataset.
-        This is useful for thinning-based simulation where we need an upper bound.
-
-        Args:
-            split (str): Dataset split to use ("train", "val", "test").
-            quantile (float): Quantile to use for robustness (default=0.995).
-
-        Returns:
-            float: Estimated dtime_max.
-        """
-        # Ensure data is loaded using setup()
-        stage = "fit" if split == "train" else split
-        data_attr = f"{split}_data"
         
-        if getattr(self, data_attr, None) is None:
-            self.setup(stage)
-
-        # Sélectionner le bon dataset
-        data = getattr(self, f"{split}_data")
-        time_deltas = []
-        dt_count = 0
-        # Collect up to nb_samples time deltas, cap at nb_samples to avoid excessive memory use
-        for seq in data["time_delta_seqs"]:
-            for dt in seq[:nb_samples]:
-                time_deltas.append(dt)
-                dt_count += 1
-            if dt_count >= nb_samples:
-                break
-
-        if len(time_deltas) == 0:
-            raise ValueError("No time deltas found for estimating dtime_max.")
-
-        # Calcul robuste : quantile au lieu du max pour éviter un outlier extrême
-        dtime_max_estimate = float(np.quantile(time_deltas, quantile))
-        self.dtime_max_estimate = dtime_max_estimate
-
-        logger.info(
-            f"Estimated dtime_max from {split} data: "
-            f"{dtime_max_estimate:.4f} (quantile={quantile}, nb_samples={nb_samples})"
-        )
-
-        return dtime_max_estimate
-    
     def estimate_dtime_range(self, split: str = "train", quantile: float = 0.995, nb_samples: int = 10**5):
         """
         Estimate the minimum and maximum time deltas (dtime) from the dataset.
@@ -194,6 +148,28 @@ class TPPDataModule(pl.LightningDataModule):
         )
 
         return end_time_max_estimate
+    
+    def get_data_stats(self) -> DataStats:
+        """Get dataset statistics for model configuration.
+
+        Returns:
+            DataStats: Dataset statistics including number of event types,
+                       maximum sequence length, and maximum time delta.
+        """
+        # Estimate dtime_max from training data
+        dtime_min, dtime_max = self.estimate_dtime_range(split="train", quantile=0.995)
+        end_time_max = self.estimate_end_time_max(split="train", quantile=0.995)
+
+        # Get number of event types and max sequence length from tokenizer specs
+        num_event_types = self.tokenizer_specs.num_event_types
+
+        data_stats = DataStats(
+            num_event_types=num_event_types,
+            end_time_max=end_time_max,
+            dtime_max=dtime_max,
+        )
+
+        return data_stats
 
 
     def build_input(
@@ -324,8 +300,9 @@ class TPPDataModule(pl.LightningDataModule):
             # Only load train data if not already loaded
             if self.train_data is None:
                 train_data_dir = self.data_config.get_data_dir("train")
+                data_format: Literal["pkl", "json", "hf"] = self.data_config.data_format
                 self.train_data = self.build_input(
-                    train_data_dir, self.data_config.data_format, "train"
+                    train_data_dir, data_format, "train"
                 )
                 self.train_dataset = TPPDataset(self.train_data)
                 logger.info(
@@ -337,8 +314,9 @@ class TPPDataModule(pl.LightningDataModule):
             # Only load validation data if not already loaded
             if self.val_data is None:
                 val_data_dir = self.data_config.get_data_dir("dev")
+                data_format: Literal["pkl", "json", "hf"] = self.data_config.data_format
                 self.val_data = self.build_input(
-                    val_data_dir, self.data_config.data_format, "dev"
+                    val_data_dir, data_format, "dev"
                 )
                 self.val_dataset = TPPDataset(self.val_data)
                 logger.info(
@@ -352,8 +330,9 @@ class TPPDataModule(pl.LightningDataModule):
             # Only load test data if not already loaded
             if self.test_data is None:
                 test_data_dir = self.data_config.get_data_dir("test")
+                data_format: Literal["pkl", "json", "hf"] = self.data_config.data_format
                 self.test_data = self.build_input(
-                    test_data_dir, self.data_config.data_format, "test"
+                    test_data_dir, data_format, "test"
                 )
                 self.test_dataset = TPPDataset(self.test_data)
                 logger.info(

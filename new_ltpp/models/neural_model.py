@@ -12,10 +12,7 @@ class NeuralModel(Model, ABC):
 
     def __init__(
         self,
-        model_config,
         *,
-        num_event_types: int,
-        dtime_max: float,
         dropout: float,
         hidden_size: int,
         **kwargs,
@@ -28,12 +25,10 @@ class NeuralModel(Model, ABC):
             num_event_types: Number of event types.
         """
         super(NeuralModel, self).__init__(
-            model_config,
-            num_event_types=num_event_types,
-            dtime_max=dtime_max
+            **kwargs
         )
 
-        self.num_event_types = num_event_types
+        self.num_event_types = self.num_event_types
         self.dropout = dropout
         self.hidden_size = hidden_size
 
@@ -42,5 +37,5 @@ class NeuralModel(Model, ABC):
             num_embeddings=self.num_event_types + 1,  # have padding
             embedding_dim=self.hidden_size,
             padding_idx=self.pad_token_id,
-            device=self.device,
+            device=self._device,
         )

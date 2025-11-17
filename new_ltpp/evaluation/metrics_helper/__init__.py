@@ -18,15 +18,18 @@ from .simulation_metrics.sim_types import (
     SimTypeValues,
 )
 from .simulation_metrics.sim_helper import SimMetricsHelper
+from .summary_stats import SummaryStatsHelper, SummaryStatsMetric
 
 __all__ = [
     "MetricsHelper",
     "PredMetricsHelper",
     "SimMetricsHelper",
+    "SummaryStatsHelper",
     "TimeValues",
     "TypeValues",
     "SimTimeValues",
     "SimTypeValues",
     "PredMetrics",
     "SimMetrics",
+    "SummaryStatsMetric",
 ]

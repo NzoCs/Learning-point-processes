@@ -21,16 +21,14 @@ class THP(NeuralModel):
 
     def __init__(
         self,
-        model_config: ModelConfig,
         *,
-        num_event_types: int,
-        dtime_max: float,
-        hidden_size: int ,
-        dropout: float ,
+        hidden_size: int = 128,
+        dropout: float = 0.1,
         use_norm: bool = True,
         time_emb_size: int = 32,
         num_layers: int = 2,
         num_heads: int = 4,
+        **kwargs,
     ):
         """Initialize the model
 
@@ -38,11 +36,7 @@ class THP(NeuralModel):
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
         super(THP, self).__init__(
-            model_config,
-            dtime_max=dtime_max,
-            num_event_types=num_event_types,
-            hidden_size=hidden_size,
-            dropout=dropout,
+            hidden_size=hidden_size, dropout=dropout, **kwargs
         )
         self.d_model = hidden_size
         self.d_time = time_emb_size
@@ -52,14 +46,14 @@ class THP(NeuralModel):
         self.n_head = num_heads
 
         self.layer_temporal_encoding = TimePositionalEncoding(
-            self.d_model, device=self.device
+            self.d_model, device=self._device
         )
 
         self.factor_intensity_base = nn.Parameter(
-            torch.empty([1, self.num_event_types], device=self.device)
+            torch.empty([1, self.num_event_types], device=self._device)
         )
         self.factor_intensity_decay = nn.Parameter(
-            torch.empty([1, self.num_event_types], device=self.device)
+            torch.empty([1, self.num_event_types], device=self._device)
         )
         nn.init.xavier_normal_(self.factor_intensity_base)
         nn.init.xavier_normal_(self.factor_intensity_decay)

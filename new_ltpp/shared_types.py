@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Union, Any
+from typing import Dict, List, TypedDict, Tuple, Any
 
 import torch
 
 
 
-@dataclass
-class TPPSequence:
+class TPPSequence(TypedDict):
     """A single temporal point process sequence.
     
     Args:
@@ -20,18 +19,6 @@ class TPPSequence:
     time_delta_seqs: List[float]
     type_seqs: List[int]
 
-    def to_dict(self) -> Dict[str, Union[List[float], List[int]]]:
-        """Convert to dictionary format for compatibility with existing code."""
-        return {
-            "time_seqs": self.time_seqs,
-            "time_delta_seqs": self.time_delta_seqs,
-            "type_seqs": self.type_seqs,
-        }
-
-
-# ============================================================================
-# BATCH DATA STRUCTURE
-# ============================================================================
 
 @dataclass
 class Batch:
@@ -91,9 +78,21 @@ class Batch:
 		self.type_seqs = self.type_seqs.to(device)
 		self.seq_non_pad_mask = self.seq_non_pad_mask.to(device)
 		return self
+      
+class DataStats(TypedDict):
+    """Container for dataset statistics used in model configuration.
 
-@dataclass
-class OneStepPred:
+    Args:
+        num_event_types: Number of unique event types in the dataset
+        end_time_max: Maximum end time value in the dataset
+        dtime_max: Maximum time delta value in the dataset
+    """
+
+    num_event_types: int
+    end_time_max: float
+    dtime_max: float
+
+class OneStepPred(TypedDict):
     """Container for one-step-ahead predictions.
 
     Args:
@@ -124,27 +123,16 @@ class SimulationResult:
         assert self.time_seqs.shape == self.dtime_seqs.shape, "dtime_seqs and time_seqs must have the same shape"
         assert self.time_seqs.shape == self.mask.shape, "mask and time_seqs must have the same shape"
 
-    def get_masked_time_values(self) -> torch.Tensor:
+    def mask_values(self, mask_id = -1) -> None:
+        
         """Get the valid (non-masked) time values, flattened.
         
         Returns:
             1D tensor of valid time values
         """
-        return self.time_seqs[self.mask]
 
-    def get_masked_dtime_values(self) -> torch.Tensor:
-        """Get the valid (non-masked) time delta values, flattened.
-        
-        Returns:
-            1D tensor of valid time delta values
-        """
-        return self.dtime_seqs[self.mask]
+        self.time_seqs[self.mask] = mask_id
+        self.dtime_seqs[self.mask] = mask_id
+        self.type_seqs[self.mask] = mask_id
 
-    def get_masked_type_values(self) -> torch.Tensor:
-        """Get the valid (non-masked) type values, flattened.
-        
-        Returns:
-            1D tensor of valid type values
-        """
-        return self.type_seqs[self.mask]
-
+        return 

@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 import torch
 from enum import StrEnum
+from typing import TypedDict
 
-@dataclass
-class SimTimeValues:
+
+class SimTimeValues(TypedDict):
     """Container for simulation time-related values."""
 
     true_time_seqs: torch.Tensor
@@ -12,8 +12,7 @@ class SimTimeValues:
     sim_time_delta_seqs: torch.Tensor
 
 
-@dataclass
-class SimTypeValues:
+class SimTypeValues(TypedDict):
     """Container for simulation type-related values."""
 
     true_type_seqs: torch.Tensor

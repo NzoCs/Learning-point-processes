@@ -35,6 +35,7 @@ class Runner:
             model_name=config.model_id,
             model_config=config.model_config,
             data_stats=data_stats,
+            output_dir=config.base_dir,
         )
 
         self.model_id = config.model_id
@@ -146,14 +147,14 @@ class Runner:
 
         predict_dataloader = self.datamodule.test_dataloader()
 
-        # Ensure the directory exists
-        data_save_dir = self.config.base_dir / "distributions_comparisons"
-        data_save_dir.mkdir(parents=True, exist_ok=True)
+        # # Ensure the directory exists
+        # data_save_dir = self.config.base_dir / "distributions_comparisons"
+        # data_save_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize batch statistics collector before prediction
-        self.model.init_statistics_collector(
-            output_dir=str(data_save_dir)
-            )
+        # # Initialize batch statistics collector before prediction
+        # self.model.init_statistics_collector(
+        #     output_dir=str(data_save_dir)
+        #     )
 
         trainer.predict(
             model=self.model,

@@ -2,12 +2,14 @@
 """Base mixin class providing common initialization for mixins."""
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import torch
 import pytorch_lightning as pl
 
 from new_ltpp.shared_types import Batch
 from new_ltpp.models.event_sampler import EventSampler
+from new_ltpp.globals import OUTPUT_DIR
 
 
 class BaseMixin(pl.LightningModule, ABC):
@@ -24,6 +26,7 @@ class BaseMixin(pl.LightningModule, ABC):
             dtime_max: float,
             num_samples_boundary: int,
             over_sample_rate: float,
+            output_dir: Path | str = OUTPUT_DIR,
             ):
         
         """Initialize the BaseMixin.    
@@ -38,6 +41,7 @@ class BaseMixin(pl.LightningModule, ABC):
         
         super().__init__()
 
+        self.output_dir = Path(output_dir)
         self.num_exp = num_exp
         self._device = device
         self.dtime_max = dtime_max

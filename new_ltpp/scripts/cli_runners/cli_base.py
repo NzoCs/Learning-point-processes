@@ -165,22 +165,10 @@ class CLIRunnerBase:
 
         return CONFIGS_FILE
 
-    def get_output_path(self, output_type: str, subdir: Optional[str] = None) -> Path:
+    def get_output_path(self) -> Path:
         """Retourne le chemin vers un répertoire de sortie dans artifacts/."""
-        base_dir = OUTPUT_DIR
 
-        if output_type in OUTPUT_DIRS:
-            output_dir = base_dir / OUTPUT_DIRS[output_type]
-        else:
-            output_dir = base_dir / output_type
-
-        if subdir:
-            output_dir = output_dir / subdir
-
-        # Créer le répertoire s'il n'existe pas
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        return output_dir
+        return OUTPUT_DIR
 
     def get_root_dir(self) -> Path:
         """Retourne le répertoire racine du projet."""

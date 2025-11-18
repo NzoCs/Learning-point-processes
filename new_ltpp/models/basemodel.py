@@ -1,6 +1,7 @@
 """Clean base model using mixins for separation of concerns."""
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import List, Optional
 
 import pytorch_lightning as pl
@@ -10,6 +11,7 @@ import torch.optim as optim
 
 
 from new_ltpp.configs import ModelConfig
+from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.event_sampler import EventSampler
 from new_ltpp.shared_types import Batch, DataStats
 from new_ltpp.utils import logger
@@ -26,7 +28,7 @@ class Model(TrainingMixin, VisualizationMixin, pl.LightningModule, ABC, metaclas
     - VisualizationMixin: intensity graphs and plotting
     """
 
-    def __init__(self, model_config: ModelConfig, data_stats: DataStats):
+    def __init__(self, model_config: ModelConfig, data_stats: DataStats, output_dir: Path | str):
         """Initialize the Model.
 
         Args:
@@ -50,8 +52,7 @@ class Model(TrainingMixin, VisualizationMixin, pl.LightningModule, ABC, metaclas
         num_sample = thinning_config.num_sample
         num_samples_boundary = thinning_config.num_samples_boundary
         over_sample_rate = thinning_config.over_sample_rate
-        num_exp = thinning_config.num_exp
-        
+        num_exp = thinning_config.num_exp        
 
         super().__init__(
             # BaseMixin params
@@ -60,6 +61,7 @@ class Model(TrainingMixin, VisualizationMixin, pl.LightningModule, ABC, metaclas
             dtime_max=data_stats["dtime_max"],
             num_samples_boundary=num_samples_boundary,
             over_sample_rate=over_sample_rate,
+            output_dir=Path(output_dir),
 
             # SimulationMixin params
             simulation_start_time=simulation_start_time,

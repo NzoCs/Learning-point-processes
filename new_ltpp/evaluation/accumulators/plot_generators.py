@@ -157,6 +157,7 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
     def generate_plot(
         self, data: Dict[str, Any], output_path: str
     ) -> None:
+        
         label_lengths = np.asarray(data["label_sequence_lengths"])
         simulated_lengths = np.asarray(data["simulated_sequence_lengths"])
 
@@ -169,12 +170,16 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
         sns.set_theme(style="whitegrid")
         plt.figure(figsize=(10, 6))
 
+        # Calculer des bins communs pour les deux distributions
+        all_lengths = np.concatenate([label_lengths, simulated_lengths])
+        common_bins = np.histogram_bin_edges(all_lengths, bins="auto")
+
         sns.histplot(
             label_lengths,
             label="Ground Truth",
             kde=False,
-            stat="density",
-            bins="auto",
+            stat="count",
+            bins=common_bins,
             color="royalblue",
             alpha=0.6,
         )
@@ -182,8 +187,8 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
             simulated_lengths,
             label="Simulation",
             kde=False,
-            stat="density",
-            bins="auto",
+            stat="count",
+            bins=common_bins,
             color="crimson",
             alpha=0.6,
         )
@@ -201,84 +206,77 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
         )
 
 
-class CrossCorrelationPlotGenerator(BasePlotGenerator):
-    """Generates cross-correlation plots (OCP)."""
+class AutocorrelationPlotGenerator(BasePlotGenerator):
+    """Generates autocorrelation function (ACF) plots similar to statsmodels."""
 
     def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
-        label_deltas = data["label_time_deltas"]
-        simulated_deltas = data["simulated_time_deltas"]
+        acf_gt = data["acf_gt_mean"]
+        acf_sim = data["acf_sim_mean"]
 
-        sns.set_theme(style="whitegrid")
-
-        times_label = np.cumsum(label_deltas)
-        times_pred = np.cumsum(simulated_deltas)
-
-        if len(times_label) == 0 or len(times_pred) == 0:
+        if len(acf_gt) == 0 or len(acf_sim) == 0:
             logger.warning(
-                "One or both time arrays are empty. Skipping cross-correlation plot."
+                "ACF data is empty. Skipping autocorrelation plot."
             )
             return
 
-        dt = 0.1
-        T_max = max(np.max(times_label), np.max(times_pred)) + 1
-        time_grid = np.arange(0, T_max, dt)
+        sns.set_theme(style="whitegrid")
 
-        N_label = self._build_count_process(times_label, time_grid)
-        N_pred = self._build_count_process(times_pred, time_grid)
+        lags = np.arange(len(acf_gt))
 
-        h = r = int(2 / dt)
-        max_lag = int(10 / dt)
+        plt.figure(figsize=(12, 8))
 
-        lags, label_corr = self._compute_cross_correlation(N_label, h, r, max_lag)
-        _, pred_corr = self._compute_cross_correlation(N_pred, h, r, max_lag)
-
-        plt.figure(figsize=(10, 6))
-        plt.plot(
-            lags * dt, label_corr, label="Ground Truth", linewidth=2, color="royalblue"
+        # Plot ground truth ACF with stems (like statsmodels)
+        markerline_gt, stemlines_gt, baseline_gt = plt.stem(
+            lags, acf_gt,
+            linefmt='royalblue',
+            markerfmt='bo',
+            basefmt='gray',
+            label="Ground Truth"
         )
-        plt.plot(
-            lags * dt,
-            pred_corr,
-            label="Simulation",
-            linewidth=2,
-            linestyle="--",
-            color="crimson",
-        )
-        plt.axvline(0, color="gray", linestyle=":", linewidth=1)
+        plt.setp(stemlines_gt, linewidth=1.5)
+        plt.setp(markerline_gt, markersize=6, alpha=0.8)
 
-        plt.title("Cross-Correlation of Counting Process Increments", fontsize=14)
-        plt.xlabel("Time lag (x - t)", fontsize=12)
-        plt.ylabel(r"$E[\Delta N(t,h) \cdot \Delta N(x,r)]$", fontsize=12)
-        plt.legend()
+        # Plot simulation ACF with stems
+        markerline_sim, stemlines_sim, baseline_sim = plt.stem(
+            lags + 0.1, acf_sim,  # Slight offset to avoid overlap
+            linefmt='crimson',
+            markerfmt='rs',
+            basefmt='gray',
+            label="Simulation"
+        )
+        plt.setp(stemlines_sim, linewidth=1.5, linestyle='--')
+        plt.setp(markerline_sim, markersize=6, alpha=0.8)
+
+        # Confidence bands (approximate, like statsmodels)
+        # For white noise, 95% confidence interval is approximately ±1.96/sqrt(n)
+        # But here we'll use a simple approximation
+        conf_level = 0.05  # 95% confidence
+        n_samples = 100  # Approximate sample size for confidence calculation
+        conf_interval = 1.96 / np.sqrt(n_samples)
+
+        plt.axhline(y=conf_interval, color='gray', linestyle='--', alpha=0.7, linewidth=1)
+        plt.axhline(y=-conf_interval, color='gray', linestyle='--', alpha=0.7, linewidth=1)
+        plt.axhline(y=0, color='black', linewidth=1)
+
+        # Fill confidence region
+        plt.fill_between(lags, -conf_interval, conf_interval,
+                        color='gray', alpha=0.1, label='95% Confidence Interval')
+
+        plt.title("Autocorrelation Function (ACF) Comparison", fontsize=16, fontweight='bold')
+        plt.xlabel("Lag", fontsize=14)
+        plt.ylabel("Autocorrelation", fontsize=14)
+        plt.legend(loc='upper right')
+        plt.grid(True, alpha=0.3)
+
+        # Set x-ticks to show all lags
+        plt.xticks(lags)
+
+        # Adjust y-limits to show confidence bands
+        y_min = min(np.min(acf_gt), np.min(acf_sim), -conf_interval * 1.2)
+        y_max = max(np.max(acf_gt), np.max(acf_sim), conf_interval * 1.2)
+        plt.ylim(y_min, y_max)
 
         plt.tight_layout()
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
-        logger.info(f"Cross-correlation comparison plot saved to {output_path}")
-
-    @staticmethod
-    def _build_count_process(
-        event_times: np.ndarray, time_grid: np.ndarray
-    ) -> np.ndarray:
-        return np.searchsorted(event_times, time_grid, side="right")
-
-    @staticmethod
-    def _compute_cross_correlation(
-        N: np.ndarray, h: int, r: int, max_lag: int
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Estimate E[(N(t+h)-N(t)) * (N(t+lag+r)-N(t+lag))] for various lags."""
-        T = len(N)
-        values = []
-        lags = np.arange(-max_lag, max_lag + 1)
-
-        for lag in lags:
-            products = []
-            for t in range(max(0, -lag), min(T - max(h, r) - abs(lag), T)):
-                delta_t = N[t + h] - N[t]
-                delta_x = N[t + lag + r] - N[t + lag]
-                products.append(delta_t * delta_x)
-            if products:
-                values.append(np.mean(products))
-            else:
-                values.append(0.0)
-        return lags, np.array(values)
+        logger.info(f"Autocorrelation comparison plot saved to {output_path}")

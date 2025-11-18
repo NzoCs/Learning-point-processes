@@ -150,27 +150,6 @@ model_configs:
     specs:
       hidden_size: 128
 
-  # Specific configurations for Hawkes - Simple (univariate)
-  hawkes1:
-    specs:
-      mu: 0.2
-      alpha: 0.8
-      beta: 1.0
-
-  # Specific configurations for Hawkes - Bivariate
-  hawkes2:
-    specs:
-      mu: [0.2, 0.2]
-      alpha: [[0.4, 0], [0, 0.8]]
-      beta: [[1.0, 0], [0, 1.0]]
-
-  # Specific configurations for Hawkes - Complex multivariate
-  hawkes_multivariate:
-    specs:
-      mu: [0.2, 0.2, 0.1]
-      alpha: [[0.4, 0.1, 0], [0.1, 0.8, 0.2], [0, 0.2, 0.6]]
-      beta: [[1.0, 0.5, 0], [0.5, 1.0, 0.8], [0, 0.8, 1.0]]
-
 
 # ===== THINNING CONFIGURATIONS =====
 thinning_configs:

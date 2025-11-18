@@ -1,15 +1,17 @@
 # new_ltpp/models/mixins/simulation_mixin.py
 """Mixin for simulation functionality."""
 
-from typing import Optional, Tuple, Literal
+from typing import Optional, Tuple, Dict, List
 
 import torch
 from tqdm import tqdm
+from pathlib import Path
 
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.evaluation.accumulators.acc_types import FinalResult
 from new_ltpp.evaluation import BatchStatisticsCollector
 from new_ltpp.utils import logger
+
 from .base_mixin import BaseMixin
 
 
@@ -43,9 +45,9 @@ class SimulationMixin(BaseMixin):
         self.simulation_end_time = simulation_end_time
         self.simulation_batch_size = simulation_batch_size
         self.initial_buffer_size = initial_buffer_size
-        self._statistics_collector = self.init_statistics_collector(output_dir="simulation_stats")
+        self._statistics_collector = self.init_statistics_collector(self.output_dir / "distribution_comparison")
 
-    def init_statistics_collector(self, output_dir: str) -> BatchStatisticsCollector:
+    def init_statistics_collector(self, output_dir: Path | str) -> BatchStatisticsCollector:
         """Initialize the batch statistics collector for distribution analysis.
         
         Args:
@@ -110,6 +112,7 @@ class SimulationMixin(BaseMixin):
                 
         if batch_size is None:
             batch_size = self.simulation_batch_size
+        
             
         if initial_buffer_size is None:
             initial_buffer_size = self.initial_buffer_size
@@ -246,7 +249,7 @@ class SimulationMixin(BaseMixin):
             "step_count": 0,
         }
 
-    def _reallocate_buffers(self, buffers: dict, current_max_len: int) -> int:
+    def _reallocate_buffers(self, buffers: Dict[str, torch.Tensor], current_max_len: int) -> int:
         """Reallocate buffers with double the size.
         
         Args:

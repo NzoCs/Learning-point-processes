@@ -4,9 +4,9 @@ Benchmark Runner
 Runner pour les tests de performance et benchmarking TPP.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 
-from .cli_base import CONFIG_MAP, CLIRunnerBase
+from .cli_base import CLIRunnerBase
 
 
 from new_ltpp.configs import DataConfigBuilder
@@ -92,7 +92,7 @@ class BenchmarkRunner(CLIRunnerBase):
             self.print_info(f"Configuration chargée: {built_config.dataset_id}")
 
         # Créer le BenchmarkManager
-        benchmark_manager = BenchmarkManager(base_dir=output_dir or self.get_output_path("benchmarks"))
+        benchmark_manager = BenchmarkManager(base_dir=output_dir or self.get_output_path())
 
         try:
             self.print_info("Configuration du benchmark...")
@@ -106,15 +106,15 @@ class BenchmarkRunner(CLIRunnerBase):
                 self.print_info(
                     f"Datasets: {', '.join(dataset_ids)}"
                 )
-                results = benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
+                benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
 
             elif run_all:
                 self.print_info("Exécution de tous les benchmarks disponibles...")
-                results = benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
+                benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
 
             elif benchmarks:
                 self.print_info(f"Exécution des benchmarks: {benchmarks}")
-                results = benchmark_manager.run_by_names(benchmarks, all_data_configs, **benchmark_params)
+                benchmark_manager.run_by_names(benchmarks, all_data_configs, **benchmark_params)
 
             else:
                 # Par défaut, exécuter quelques benchmarks essentiels
@@ -124,26 +124,9 @@ class BenchmarkRunner(CLIRunnerBase):
                     Benchmarks.MARK_DISTRIBUTION,
                     Benchmarks.INTERTIME_DISTRIBUTION,
                 ]
-                results = benchmark_manager.run(default_benchmarks, all_data_configs, **benchmark_params)
+                benchmark_manager.run(default_benchmarks, all_data_configs, **benchmark_params)
 
-            # Calculer le nombre de benchmarks exécutés
-            if isinstance(results, dict):
-                # Vérifier si c'est multi-config
-                is_multi_config = any(isinstance(v, dict) for v in results.values())
-                if is_multi_config:
-                    num_benchmarks = sum(
-                        len(dataset_results)
-                        for dataset_results in results.values()
-                        if isinstance(dataset_results, dict)
-                    )
-                else:
-                    num_benchmarks = len(results)
-            else:
-                num_benchmarks = 1
 
-            self.print_success(
-                f"Benchmarks terminés - {num_benchmarks} benchmarks exécutés"
-            )
             self.print_info(f"Résultats sauvegardés dans: {benchmark_manager.base_dir}")
 
             return True

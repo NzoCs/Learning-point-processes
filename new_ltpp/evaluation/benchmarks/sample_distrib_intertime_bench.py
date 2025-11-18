@@ -13,7 +13,6 @@ import torch
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
-from new_ltpp.globals import OUTPUT_DIR
 
 from .time_bench import TimeBenchmark
 

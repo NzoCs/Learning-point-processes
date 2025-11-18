@@ -13,7 +13,6 @@ import torch
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
-from new_ltpp.globals import OUTPUT_DIR
 
 from .type_bench import TypeBenchmark
 
@@ -88,7 +87,7 @@ class MarkDistributionBenchmark(TypeBenchmark):
 
         logger.info(f"Collected {total_events} event marks")
         logger.info(
-            f"Event type distribution: {dict(enumerate(self.mark_probabilities))}"
+            f"Event type distribution: {dict(enumerate(self.mark_probabilities.tolist()))}"
         )
 
     def _sample_from_distribution(self, size: Tuple[int, int]) -> torch.Tensor:

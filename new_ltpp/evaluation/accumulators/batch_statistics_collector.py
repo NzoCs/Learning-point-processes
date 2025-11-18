@@ -16,24 +16,25 @@ import numpy.typing as npt
 
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
+from new_ltpp.globals import OUTPUT_DIR
 
 from .event_type_accumulator import EventTypeAccumulator
 from .metrics_calculator import MetricsCalculatorImpl
-from .moment_accumulator import MomentAccumulator
+from .corr_accumulator import CorrAccumulator
 from .plot_generators import (
-    CrossCorrelationPlotGenerator,
+    AutocorrelationPlotGenerator,
     EventTypePlotGenerator,
     InterEventTimePlotGenerator,
     SequenceLengthPlotGenerator,
 )
 
-from .sequence_length_accumulator import SequenceLengthAccumulator
+from .mean_len_accumulator import SequenceLengthAccumulator
 from .time_accumulator import InterEventTimeAccumulator
 from .acc_types import (
     AllStatistics,
     FinalResult,
     MetricsData,
-    MomentStatistics,
+    CorrelationStatistics,
     PlotData,
 )
 
@@ -62,12 +63,12 @@ class BatchStatisticsCollector:
     def __init__(
         self,
         num_event_types: int,
-        output_dir: str,
         dtime_max: float,
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         enable_plots: bool = True,
         enable_metrics: bool = True,
+        output_dir: Path | str = OUTPUT_DIR / "distribution_comparison",
     ):
         """Initialize the batch statistics collector.
         
@@ -95,8 +96,10 @@ class BatchStatisticsCollector:
                 min_sim_events=min_sim_events
                 ),
             EventTypeAccumulator(num_event_types=num_event_types, min_sim_events=min_sim_events),
-            SequenceLengthAccumulator(min_sim_events=min_sim_events),
-            MomentAccumulator(min_sim_events=min_sim_events),
+            SequenceLengthAccumulator(
+                min_sim_events=min_sim_events
+                ),
+            CorrAccumulator(min_sim_events=min_sim_events),
         )
 
         # Initialize plot generators (if enabled)
@@ -104,7 +107,7 @@ class BatchStatisticsCollector:
             InterEventTimePlotGenerator,
             EventTypePlotGenerator,
             SequenceLengthPlotGenerator,
-            CrossCorrelationPlotGenerator
+            AutocorrelationPlotGenerator
         ]] = None
 
         if self.enable_plots:
@@ -112,7 +115,7 @@ class BatchStatisticsCollector:
                 InterEventTimePlotGenerator(),
                 EventTypePlotGenerator(self.num_event_types),
                 SequenceLengthPlotGenerator(),
-                CrossCorrelationPlotGenerator(),
+                AutocorrelationPlotGenerator(),
             )
 
         # Initialize metrics calculator (if enabled)
@@ -167,7 +170,7 @@ class BatchStatisticsCollector:
             time=self._accumulators[0].compute(),
             event_type=self._accumulators[1].compute(),  
             sequence_length=self._accumulators[2].compute(),  
-            moments=self._accumulators[3].compute(),  
+            correlation=self._accumulators[3].compute(),  
         )
 
     def generate_plots(self, statistics: AllStatistics) -> None:
@@ -192,22 +195,30 @@ class BatchStatisticsCollector:
             label_sequence_lengths=statistics['sequence_length']['gt_array'],
             simulated_sequence_lengths=statistics['sequence_length']['sim_array'],
         )
+        
+        # Prepare ACF data separately (not in PlotData TypedDict)
+        acf_data = {
+            "acf_gt_mean": statistics['correlation']['acf_gt_mean'],
+            "acf_sim_mean": statistics['correlation']['acf_sim_mean'],
+        }
 
         # Generate plots
         plot_filenames: List[str] = [
             "comparison_inter_event_time_dist.png",
             "comparison_event_type_dist.png",
             "comparison_sequence_length_dist.png",
-            "comparison_cross_correlation_moments.png",
+            "comparison_autocorrelation.png",
         ]
 
         # Type assertion safe because we checked self._plot_generators is not None
         assert self._plot_generators is not None
         # Cast TypedDict to dict for plot generators
         plot_data_dict: Dict[str, Any] = dict(plot_data)
-        for generator, filename in zip(self._plot_generators, plot_filenames):
+        for i, (generator, filename) in enumerate(zip(self._plot_generators, plot_filenames)):
             output_path: str = str(self.output_dir / filename)
-            generator.generate_plot(plot_data_dict, output_path)
+            # Use acf_data for the last plot (autocorrelation)
+            data_to_use = acf_data if i == 3 else plot_data_dict
+            generator.generate_plot(data_to_use, output_path)
             logger.info(f"Generated plot: {filename}")
 
     def compute_metrics(self, statistics: AllStatistics) -> Dict[str, float]:
@@ -235,17 +246,13 @@ class BatchStatisticsCollector:
 
         metrics: Dict[str, float] = self._metrics_calculator.calculate_metrics(metrics_data)
         
-        # Add moment statistics
-        moment_stats: MomentStatistics = statistics['moments']
+        # Add correlation statistics summary
+        corr_stats = statistics['correlation']
+        # Compute simple metric: mean absolute difference between ACFs
+        acf_diff = np.abs(corr_stats['acf_gt_mean'] - corr_stats['acf_sim_mean'])
         metrics.update({
-            'gt_inter_event_time_mean': moment_stats['gt_mean'],
-            'gt_inter_event_time_std': moment_stats['gt_std'],
-            'gt_inter_event_time_skewness': moment_stats['gt_skewness'],
-            'gt_inter_event_time_kurtosis': moment_stats['gt_kurtosis'],
-            'sim_inter_event_time_mean': moment_stats['sim_mean'],
-            'sim_inter_event_time_std': moment_stats['sim_std'],
-            'sim_inter_event_time_skewness': moment_stats['sim_skewness'],
-            'sim_inter_event_time_kurtosis': moment_stats['sim_kurtosis'],
+            'acf_mean_absolute_difference': float(np.mean(acf_diff)),
+            'acf_max_absolute_difference': float(np.max(acf_diff)),
         })
         
         return metrics

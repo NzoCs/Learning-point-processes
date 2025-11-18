@@ -9,7 +9,7 @@ from scipy.stats import entropy
 
 from new_ltpp.evaluation.accumulators.acc_types import (
     AllStatistics,
-    MomentStatistics,
+    CorrelationStatistics,
     SequenceLengthStatistics,
 )
 from new_ltpp.utils import logger
@@ -50,7 +50,7 @@ class SummaryStatsHelper:
         time_stats = statistics["time"]
         event_stats = statistics["event_type"]
         sequence_stats = statistics["sequence_length"]
-        moment_stats = statistics["moments"]
+        correlation_stats = statistics["correlation"]
 
         gt_time_hist = self._to_float_array(time_stats["gt_time_deltas"])
         sim_time_hist = self._to_float_array(time_stats["sim_time_deltas"])
@@ -64,7 +64,7 @@ class SummaryStatsHelper:
             gt_event_dist,
             sim_event_dist,
             sequence_stats,
-            moment_stats,
+            correlation_stats,
         )
 
         for metric_name, (func, *args) in metric_mapping.items():
@@ -150,7 +150,7 @@ class SummaryStatsHelper:
         gt_event_dist: NDArray[np.float64],
         sim_event_dist: NDArray[np.float64],
         sequence_stats: SequenceLengthStatistics,
-        moment_stats: MomentStatistics,
+        correlation_stats: CorrelationStatistics,
     ) -> Dict[str, tuple[Callable[..., float], Any, Any]]:
         return {
             SummaryStatsMetric.TIME_HIST_L1.value: (
@@ -192,25 +192,5 @@ class SummaryStatsHelper:
                 self._absolute_difference,
                 sequence_stats["gt_median"],
                 sequence_stats["sim_median"],
-            ),
-            SummaryStatsMetric.MOMENT_MEAN_DIFF.value: (
-                self._absolute_difference,
-                moment_stats["gt_mean"],
-                moment_stats["sim_mean"],
-            ),
-            SummaryStatsMetric.MOMENT_VARIANCE_DIFF.value: (
-                self._absolute_difference,
-                moment_stats["gt_variance"],
-                moment_stats["sim_variance"],
-            ),
-            SummaryStatsMetric.MOMENT_SKEWNESS_DIFF.value: (
-                self._absolute_difference,
-                moment_stats["gt_skewness"],
-                moment_stats["sim_skewness"],
-            ),
-            SummaryStatsMetric.MOMENT_KURTOSIS_DIFF.value: (
-                self._absolute_difference,
-                moment_stats["gt_kurtosis"],
-                moment_stats["sim_kurtosis"],
             ),
         }

@@ -19,16 +19,16 @@ class PlotData(TypedDict):
     time_bin_edges: npt.NDArray[np.float64]  # Bin edges for time histogram
     label_event_types: npt.NDArray[np.int64]
     simulated_event_types: npt.NDArray[np.int64]
-    label_sequence_lengths: npt.NDArray[np.int64]
-    simulated_sequence_lengths: npt.NDArray[np.int64]
+    label_sequence_lengths: npt.NDArray[np.float64]
+    simulated_sequence_lengths: npt.NDArray[np.float64]
 
 
 class MetricsData(TypedDict):
     """Type definition for metrics calculation data."""
     label_time_deltas: npt.NDArray[np.float64]
     simulated_time_deltas: npt.NDArray[np.float64]
-    label_sequence_lengths: npt.NDArray[np.int64]
-    simulated_sequence_lengths: npt.NDArray[np.int64]
+    label_sequence_lengths: npt.NDArray[np.float64]
+    simulated_sequence_lengths: npt.NDArray[np.float64]
 
 
 class TimeStatistics(TypedDict):
@@ -52,8 +52,8 @@ class EventTypeStatistics(TypedDict):
 
 class SequenceLengthStatistics(TypedDict):
     """Type definition for sequence length statistics."""
-    gt_array: npt.NDArray[np.int64]
-    sim_array: npt.NDArray[np.int64]
+    gt_array: npt.NDArray[np.float64]
+    sim_array: npt.NDArray[np.float64]
     gt_mean: float
     gt_median: float
     sim_mean: float
@@ -61,21 +61,10 @@ class SequenceLengthStatistics(TypedDict):
     gt_count: int
     sim_count: int
 
-
-class MomentStatistics(TypedDict):
-    """Type definition for moment statistics."""
-    gt_mean: float
-    gt_variance: float
-    gt_std: float
-    gt_skewness: float
-    gt_kurtosis: float
-    gt_n: int
-    sim_mean: float
-    sim_variance: float
-    sim_std: float
-    sim_skewness: float
-    sim_kurtosis: float
-    sim_n: int
+class CorrelationStatistics(TypedDict):
+    """Type definition for autocorrelation statistics."""
+    acf_gt_mean: npt.NDArray[np.float64]  # Mean ACF for ground truth (max_lag + 1,)
+    acf_sim_mean: npt.NDArray[np.float64]  # Mean ACF for simulation (max_lag + 1,)
 
 
 class AllStatistics(TypedDict):
@@ -83,8 +72,7 @@ class AllStatistics(TypedDict):
     time: TimeStatistics
     event_type: EventTypeStatistics
     sequence_length: SequenceLengthStatistics
-    moments: MomentStatistics
-
+    correlation: CorrelationStatistics
 
 class FinalResult(TypedDict):
     """Type definition for finalize_and_save return value."""

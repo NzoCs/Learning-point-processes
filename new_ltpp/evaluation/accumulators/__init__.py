@@ -37,21 +37,21 @@ from .base_plot_generator import BasePlotGenerator
 from .batch_statistics_collector import BatchStatisticsCollector
 from .event_type_accumulator import EventTypeAccumulator
 from .metrics_calculator import MetricsCalculatorImpl
-from .moment_accumulator import MomentAccumulator
+from .corr_accumulator import CorrAccumulator
 from .plot_generators import (
-    CrossCorrelationPlotGenerator,
+    AutocorrelationPlotGenerator,
     EventTypePlotGenerator,
     InterEventTimePlotGenerator,
     SequenceLengthPlotGenerator,
 )
-from .sequence_length_accumulator import SequenceLengthAccumulator
+from .mean_len_accumulator import SequenceLengthAccumulator
 from .time_accumulator import InterEventTimeAccumulator
 from .acc_types import (
     AllStatistics,
     EventTypeStatistics,
     FinalResult,
     MetricsData,
-    MomentStatistics,
+    CorrelationStatistics,
     PlotData,
     SequenceLengthStatistics,
     TimeStatistics,
@@ -65,13 +65,13 @@ __all__ = [
     "InterEventTimeAccumulator",
     "EventTypeAccumulator",
     "SequenceLengthAccumulator",
-    "MomentAccumulator",
+    "CorrAccumulator",
     # Plot Generators
     "BasePlotGenerator",
     "InterEventTimePlotGenerator",
     "EventTypePlotGenerator",
     "SequenceLengthPlotGenerator",
-    "CrossCorrelationPlotGenerator",
+    "AutocorrelationPlotGenerator",
     # Metrics
     "MetricsCalculatorImpl",
     # Types
@@ -79,7 +79,7 @@ __all__ = [
     "TimeStatistics",
     "EventTypeStatistics",
     "SequenceLengthStatistics",
-    "MomentStatistics",
+    "CorrelationStatistics",
     "FinalResult",
     "PlotData",
     "MetricsData",

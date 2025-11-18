@@ -1,9 +1,9 @@
 import math
+from typing import Tuple
 
 import torch
 from torch import nn
 from torch.nn import functional as F
-from typing import Tuple
 
 from new_ltpp.configs import ModelConfig
 from new_ltpp.shared_types import Batch
@@ -71,7 +71,9 @@ class RMTPP(NeuralModel):
 
         return intensity_BNGM
 
-    def forward(self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Suppose we have inputs with original sequence length N+1
         ts: [t0, t1, ..., t_N]
@@ -110,7 +112,9 @@ class RMTPP(NeuralModel):
         batch_non_pad_mask = batch.seq_non_pad_mask
 
         # Call forward with batch directly
-        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward((ts_BN, dts_BN, marks_BN))
+        left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward(
+            (ts_BN, dts_BN, marks_BN)
+        )
         right_hiddens_B_Nm1_H = right_hiddens_BNH[
             ..., :-1, :
         ]  # discard right limit at t_N for logL

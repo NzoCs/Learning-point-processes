@@ -1,10 +1,10 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
-import torch
 import pytorch_lightning as pl
+import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers.logger import Logger as LightningLogger
 from pytorch_lightning.strategies import DDPStrategy
@@ -53,6 +53,7 @@ class CheckpointManager:
             return str(path)
         console_logger.warning(f"Checkpoint not found: {path}")
         return None
+
 
 import pytorch_lightning as pl
 
@@ -141,9 +142,7 @@ class TrainerFactory:
     # ============================================================
 
     @staticmethod
-    def _build_callbacks(
-        training_config: TrainingConfig, checkpoints_dir: Path | str
-    ):
+    def _build_callbacks(training_config: TrainingConfig, checkpoints_dir: Path | str):
         ckpt_callback = ModelCheckpoint(
             monitor="val_loss",
             dirpath=checkpoints_dir,
@@ -183,10 +182,7 @@ class TrainerFactory:
         cls._configure_matmul_precision()
 
         # 3. callbacks
-        callbacks = cls._build_callbacks(
-            training_config,
-            checkpoints_dir
-        )
+        callbacks = cls._build_callbacks(training_config, checkpoints_dir)
 
         # 4. device resolution
         devices, accelerator = cls._resolve_devices(training_config.devices)

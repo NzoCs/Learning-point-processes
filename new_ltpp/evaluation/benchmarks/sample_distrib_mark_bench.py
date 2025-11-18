@@ -5,8 +5,8 @@ This benchmark creates bins to approximate the distribution of event marks (type
 from the training dataset, then predicts marks by sampling from this distribution.
 """
 
-from typing import Any, Dict, Tuple, Union
 from pathlib import Path
+from typing import Any, Dict, Tuple, Union
 
 import torch
 
@@ -103,8 +103,10 @@ class MarkDistributionBenchmark(TypeBenchmark):
         total_samples = size[0] * size[1]
         # Sample event types according to probabilities
         if self.mark_probabilities is None:
-            raise ValueError("Mark probabilities have not been initialized. Call _prepare_benchmark first.")
-        
+            raise ValueError(
+                "Mark probabilities have not been initialized. Call _prepare_benchmark first."
+            )
+
         sampled_marks = torch.multinomial(
             self.mark_probabilities, num_samples=total_samples, replacement=True
         )

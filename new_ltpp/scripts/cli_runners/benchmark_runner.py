@@ -6,16 +6,16 @@ Runner pour les tests de performance et benchmarking TPP.
 
 from typing import List, Optional, Union
 
-from .cli_base import CLIRunnerBase
-
-
 from new_ltpp.configs import DataConfigBuilder
 from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
 )
 from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarksEnum as Benchmarks,
-    )
+)
+
+from .cli_base import CLIRunnerBase
+
 
 class BenchmarkRunner(CLIRunnerBase):
     """
@@ -57,13 +57,12 @@ class BenchmarkRunner(CLIRunnerBase):
         required_modules = ["new_ltpp.configs", "new_ltpp.evaluation.benchmarks"]
         if not self.check_dependencies(required_modules):
             return False
-        
+
         # Support de plusieurs configurations
         data_configs_list = (
             data_config if isinstance(data_config, list) else [data_config]
         )
 
-        
         # Configuration par défaut si aucun fichier spécifié
         if config_path is None:
             config_path = str(self.get_config_path())
@@ -71,7 +70,6 @@ class BenchmarkRunner(CLIRunnerBase):
                 f"Utilisation de la configuration par défaut: {config_path}"
             )
 
-        
         # Construire toutes les configurations
         all_data_configs = []
         for data_cfg in data_configs_list:
@@ -92,7 +90,9 @@ class BenchmarkRunner(CLIRunnerBase):
             self.print_info(f"Configuration chargée: {built_config.dataset_id}")
 
         # Créer le BenchmarkManager
-        benchmark_manager = BenchmarkManager(base_dir=output_dir or self.get_output_path())
+        benchmark_manager = BenchmarkManager(
+            base_dir=output_dir or self.get_output_path()
+        )
 
         try:
             self.print_info("Configuration du benchmark...")
@@ -103,18 +103,22 @@ class BenchmarkRunner(CLIRunnerBase):
                     f"Exécution de tous les benchmarks sur {len(all_data_configs)} configurations..."
                 )
                 dataset_ids = [cfg.dataset_id for cfg in all_data_configs]
-                self.print_info(
-                    f"Datasets: {', '.join(dataset_ids)}"
+                self.print_info(f"Datasets: {', '.join(dataset_ids)}")
+                benchmark_manager.run_all_benchmarks(
+                    all_data_configs, **benchmark_params
                 )
-                benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
 
             elif run_all:
                 self.print_info("Exécution de tous les benchmarks disponibles...")
-                benchmark_manager.run_all_benchmarks(all_data_configs, **benchmark_params)
+                benchmark_manager.run_all_benchmarks(
+                    all_data_configs, **benchmark_params
+                )
 
             elif benchmarks:
                 self.print_info(f"Exécution des benchmarks: {benchmarks}")
-                benchmark_manager.run_by_names(benchmarks, all_data_configs, **benchmark_params)
+                benchmark_manager.run_by_names(
+                    benchmarks, all_data_configs, **benchmark_params
+                )
 
             else:
                 # Par défaut, exécuter quelques benchmarks essentiels
@@ -124,8 +128,9 @@ class BenchmarkRunner(CLIRunnerBase):
                     Benchmarks.MARK_DISTRIBUTION,
                     Benchmarks.INTERTIME_DISTRIBUTION,
                 ]
-                benchmark_manager.run(default_benchmarks, all_data_configs, **benchmark_params)
-
+                benchmark_manager.run(
+                    default_benchmarks, all_data_configs, **benchmark_params
+                )
 
             self.print_info(f"Résultats sauvegardés dans: {benchmark_manager.base_dir}")
 

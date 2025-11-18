@@ -10,17 +10,17 @@ from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 
 from .predictions_metrics.pred_helper import PredMetricsHelper
 from .predictions_metrics.pred_types import PredMetrics
-from .simulation_metrics.sim_types import SimMetrics
 from .simulation_metrics.sim_helper import SimMetricsHelper
+from .simulation_metrics.sim_types import SimMetrics
 
 
 class MetricsHelper:
     """
     Main metrics computation orchestrator for TPP evaluation.
-    
+
     Simple interface with three main methods:
     - compute_prediction_metrics: for prediction evaluation
-    - compute_simulation_metrics: for simulation evaluation  
+    - compute_simulation_metrics: for simulation evaluation
     - compute_all_metrics: runs both prediction and simulation metrics
     """
 
@@ -80,7 +80,9 @@ class MetricsHelper:
         Returns:
             Dictionary of computed time metrics (time_rmse, time_mae)
         """
-        return self._prediction_computer.compute_all_time_metrics(batch, pred_time_tensor)
+        return self._prediction_computer.compute_all_time_metrics(
+            batch, pred_time_tensor
+        )
 
     def compute_prediction_type_metrics(
         self, batch: Batch, pred_type_tensor: torch.Tensor
@@ -95,7 +97,9 @@ class MetricsHelper:
         Returns:
             Dictionary of computed type metrics (type_accuracy, f1_score, recall, precision, etc.)
         """
-        return self._prediction_computer.compute_all_type_metrics(batch, pred_type_tensor)
+        return self._prediction_computer.compute_all_type_metrics(
+            batch, pred_type_tensor
+        )
 
     def compute_simulation_metrics(
         self,

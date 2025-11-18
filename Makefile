@@ -24,7 +24,7 @@ install-dev: ## Installation with development tools
 
 lint: ## Run linting (flake8)
 	@echo "Running flake8..."
-	@python -m flake8 new_ltpp/ tests/ examples/ scripts/ || true
+	@python -m flake8 new_ltpp/ tests/ examples/ || true
 	@echo "Linting finished (errors reported above)."
 
 format: ## Format code (black + isort)
@@ -66,9 +66,6 @@ run-thp: ## Run full pipeline for THP model (demo uses `test` configs)
 run-rmtpp: ## Run full pipeline for RMTPP model (demo uses `test` configs)
 	@$(MAKE) run MODEL_ID=RMTPP MODEL=neural_small DATA=test TRAINING=quick_test DATA_LOADING=quick_test SIMULATION=quick_test THINNING=quick_test LOGGER=tensorboard
 
-.DEFAULT_GOAL := help
-
-	@make benchmark ALL=1
 
 benchmark-list: ## [BENCH-LIST] List available benchmarks
 	@$(CLI) benchmark --list
@@ -112,8 +109,7 @@ cli-help: ## [HELP] Display new_ltpp CLI help
 	@echo ">> Aide du CLI new_ltpp..."
 	@$(CLI) --help
 
-
-quick-demo: ## [DEMO] Quick demonstration of all features
+demo: ## [DEMO] Quick demonstration of all features
 	@echo "=================================================="
 	@echo "      new_ltpp DEMO - NEW CLI ARCHITECTURE"
 	@echo "=================================================="
@@ -125,18 +121,15 @@ quick-demo: ## [DEMO] Quick demonstration of all features
 	@make version
 	@echo ""
 	@echo "3. Quick Training (5 epochs)"
-	@make run-quick
+	@make run-nhp EPOCHS=5
 	@echo ""
 	@echo "4. Benchmarks"
-	@make benchmark-all
+	@make benchmark-list
 	@echo ""
 	@echo "=================================================="
 	@echo "      DEMO COMPLETED!"
 	@echo "=================================================="
 
 # ============================================================================
-
-# Default targets
-all: install-all setup-dev check test
 
 .DEFAULT_GOAL := help

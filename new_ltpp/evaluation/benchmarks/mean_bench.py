@@ -5,8 +5,8 @@ This benchmark always predicts the mean inter-time from the training dataset.
 It computes RMSE and other time-based metrics using the metrics helper.
 """
 
-from typing import Any, Dict, Tuple, Union
 from pathlib import Path
+from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 import torch
@@ -83,8 +83,10 @@ class MeanInterTimeBenchmark(TimeBenchmark):
 
         # Create predictions with mean inter-time
         if self.mean_inter_time is None:
-            raise ValueError("Mean inter-time has not been computed. Call _prepare_benchmark first.")
-        
+            raise ValueError(
+                "Mean inter-time has not been computed. Call _prepare_benchmark first."
+            )
+
         pred_inter_times = torch.full_like(time_delta_seqs, self.mean_inter_time)
 
         return pred_inter_times

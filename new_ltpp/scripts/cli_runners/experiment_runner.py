@@ -8,10 +8,11 @@ Inspiré de run_all_phase.py pour charger toute la configuration depuis YAML.
 from pathlib import Path
 from typing import Optional, Union
 
-from .cli_base import CONFIG_MAP, CLIRunnerBase
-
 from new_ltpp.configs.config_builders import RunnerConfigBuilder
 from new_ltpp.runners.runner_manager import RunnerManager
+
+from .cli_base import CONFIG_MAP, CLIRunnerBase
+
 
 class ExperimentRunner(CLIRunnerBase):
     """

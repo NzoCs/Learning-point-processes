@@ -1,13 +1,14 @@
 # new_ltpp/models/mixins/training_mixin.py
 """Mixin for PyTorch Lightning training, validation, and testing steps."""
 
-from pytorch_lightning.utilities.types import STEP_OUTPUT
 from typing import List, Optional
+
 import torch
 import torch.nn.functional as F
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 
-from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 from new_ltpp.evaluation.metrics_helper import MetricsHelper
+from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 from new_ltpp.utils import logger
 
 from .prediction_mixin import PredictionMixin
@@ -16,8 +17,8 @@ from .simulation_mixin import SimulationMixin
 
 class TrainingMixin(PredictionMixin, SimulationMixin):
     """Mixin providing training, validation, and test step implementations.
-    
-    Requires: self.loglike_loss, self.predict_one_step_at_every_event, 
+
+    Requires: self.loglike_loss, self.predict_one_step_at_every_event,
               self.simulate, self.num_event_types, self.compute_simulation,
               self.max_simul_events, self.sim_events_counter, self._simulations,
               self._statistics_collector
@@ -81,7 +82,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             on_epoch=True,
             on_step=False,
         )
-        
+
         # Compute validation metrics
         pred = self.predict_one_step_at_every_event(
             time_seq=batch.time_seqs,
@@ -134,9 +135,11 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
         return avg_loss
 
-    def _compute_and_log_metrics(self, batch: Batch, pred: OneStepPred, prefix: str = ""):
+    def _compute_and_log_metrics(
+        self, batch: Batch, pred: OneStepPred, prefix: str = ""
+    ):
         """Compute and log prediction metrics.
-        
+
         Args:
             batch: Batch object
             pred: Prediction results
@@ -149,19 +152,19 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             if key == "confusion_matrix":
                 continue
             self.log(f"{prefix}{key}", value, prog_bar=False, sync_dist=True)
-        
+
         return metrics
 
     def _handle_test_simulation(self, batch: Batch):
         """Handle simulation during test step.
-        
+
         Args:
             batch: Batch object
         """
 
         # Run simulation
         sim = self.simulate(batch=batch)
-        
+
         # Update counter and store
         n_events_generated = (sim.type_seqs != 0).sum().item()
         self.sim_events_counter += int(n_events_generated)
@@ -172,13 +175,15 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             raise NotImplementedError(
                 "No statistics collector initialized. Call 'init_statistics_collector' before testing."
             )
-        
+
         self._statistics_collector.update_batch(batch, sim)
 
         # Compute and log simulation metrics
         metrics_helper = MetricsHelper(num_event_types=self.num_event_types)
-        simulation_metrics = metrics_helper.compute_simulation_metrics(batch=batch, sim=sim)
-        
+        simulation_metrics = metrics_helper.compute_simulation_metrics(
+            batch=batch, sim=sim
+        )
+
         for key, value in simulation_metrics.items():
             if key == "confusion_matrix":
                 continue
@@ -190,14 +195,14 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         Args:
             batch: Batch object containing sequences and masks
             batch_idx: Index of the batch
-            
+
         Returns:
             STEP_OUTPUT: None (simulations are stored internally)
         """
 
         # Run simulation
         sim = self.simulate(batch=batch)
-        
+
         # Update counter
         n_events_generated = (sim.type_seqs != 0).sum().item()
         self.sim_events_counter += int(n_events_generated)
@@ -212,15 +217,14 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         self._simulations.append(sim)
 
         return
-    
-    
+
     def compute_loglikelihood(
-        self, 
-        time_delta_seq: torch.Tensor, 
-        lambda_at_event: torch.Tensor, 
-        lambdas_loss_samples: torch.Tensor, 
-        seq_mask: torch.Tensor, 
-        type_seq: torch.Tensor
+        self,
+        time_delta_seq: torch.Tensor,
+        lambda_at_event: torch.Tensor,
+        lambdas_loss_samples: torch.Tensor,
+        seq_mask: torch.Tensor,
+        type_seq: torch.Tensor,
     ):
         """Compute the loglikelihood of the event sequence based on Equation (8) of NHP paper.
 
@@ -256,9 +260,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
         total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
 
-        non_event_ll = (
-            total_sampled_lambdas.mean(dim=-1) * time_delta_seq * seq_mask
-        )
+        non_event_ll = total_sampled_lambdas.mean(dim=-1) * time_delta_seq * seq_mask
 
         num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
 

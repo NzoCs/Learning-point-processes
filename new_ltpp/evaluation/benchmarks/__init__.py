@@ -6,8 +6,6 @@ performance comparisons for temporal point process models.
 """
 
 from .base_bench import BaseBenchmark
-from .time_bench import TimeBenchmark
-from .type_bench import TypeBenchmark
 from .benchmark_manager import BenchmarkManager, BenchmarksEnum
 from .last_mark_bench import LastMarkBenchmark
 from .mean_bench import MeanInterTimeBenchmark
@@ -17,6 +15,8 @@ from .sample_distrib_intertime_bench import (
 from .sample_distrib_mark_bench import (
     MarkDistributionBenchmark,
 )
+from .time_bench import TimeBenchmark
+from .type_bench import TypeBenchmark
 
 __all__ = [
     "BaseBenchmark",

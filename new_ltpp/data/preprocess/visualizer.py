@@ -32,7 +32,7 @@ class Visualizer:
             comparison_data_module: Optional data module for comparison dataset
             comparison_split: Optional split for comparison dataset
         """
-        
+
         self.data_module = data_module
         self.num_event_types = data_module.num_event_types
         self.save_dir = save_dir
@@ -282,7 +282,6 @@ class Visualizer:
             )
 
         plt.yscale("log")
-
 
         if self.is_comparison_mode and len(filtered_comp_hist) > 1:
             comp_X = filtered_comp_bin_centers.reshape(-1, 1)

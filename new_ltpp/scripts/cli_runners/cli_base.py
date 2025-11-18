@@ -13,8 +13,7 @@ from rich.logging import RichHandler
 from rich.progress import Progress
 from rich.table import Table
 
-
-from new_ltpp.globals import ROOT_DIR, OUTPUT_DIR, CONFIGS_FILE 
+from new_ltpp.globals import CONFIGS_FILE, OUTPUT_DIR, ROOT_DIR
 
 # Configuration globale pour les répertoires de sortie (dans artifacts/)
 OUTPUT_DIRS = {
@@ -50,7 +49,7 @@ class CLIRunnerBase:
     def __init__(self, name: str = "CLIRunner", debug: bool = False):
         self.name = name
         self.debug = debug
-        self.console = Console() 
+        self.console = Console()
         self.logger = self._setup_logging()
 
     def _setup_logging(self) -> logging.Logger:
@@ -61,10 +60,9 @@ class CLIRunnerBase:
         # Éviter les doublons de handlers
         if logger.handlers:
             return logger
-    
+
         handler = RichHandler(console=self.console, rich_tracebacks=True)
         formatter = logging.Formatter("%(message)s", datefmt="[%X]")
-
 
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -138,7 +136,9 @@ class CLIRunnerBase:
         else:
             print(f"ℹ {message}")
 
-    def print_error_with_traceback(self, message: str, exception: Optional[Exception] = None):
+    def print_error_with_traceback(
+        self, message: str, exception: Optional[Exception] = None
+    ):
         """Affiche un message d'erreur avec traceback complet si debug activé."""
         self.print_error(message)
 

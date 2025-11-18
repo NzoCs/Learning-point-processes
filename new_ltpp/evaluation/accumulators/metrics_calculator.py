@@ -15,19 +15,16 @@ from .acc_types import MetricsData
 class MetricsCalculatorImpl:
     """Calculates summary metrics from temporal point process data (SRP)."""
 
-    def calculate_metrics(
-        self, 
-        data: MetricsData
-    ) -> Dict[str, float]:
+    def calculate_metrics(self, data: MetricsData) -> Dict[str, float]:
         """Calculate comprehensive summary metrics.
-        
+
         Args:
             data: Dictionary containing arrays for:
                 - label_time_deltas: Ground truth time deltas
                 - simulated_time_deltas: Simulated time deltas
                 - label_sequence_lengths: Ground truth sequence lengths
                 - simulated_sequence_lengths: Simulated sequence lengths
-                
+
         Returns:
             Dictionary of computed metrics
         """
@@ -40,15 +37,11 @@ class MetricsCalculatorImpl:
         if len(label_deltas) > 0:
             metrics.update(
                 {
-                    "ground_truth_mean_inter_event_time": float(
-                        np.mean(label_deltas)
-                    ),
+                    "ground_truth_mean_inter_event_time": float(np.mean(label_deltas)),
                     "ground_truth_median_inter_event_time": float(
                         np.median(label_deltas)
                     ),
-                    "ground_truth_std_inter_event_time": float(
-                        np.std(label_deltas)
-                    ),
+                    "ground_truth_std_inter_event_time": float(np.std(label_deltas)),
                 }
             )
 
@@ -61,9 +54,7 @@ class MetricsCalculatorImpl:
                     "simulation_median_inter_event_time": float(
                         np.median(simulated_deltas)
                     ),
-                    "simulation_std_inter_event_time": float(
-                        np.std(simulated_deltas)
-                    ),
+                    "simulation_std_inter_event_time": float(np.std(simulated_deltas)),
                 }
             )
 
@@ -74,9 +65,7 @@ class MetricsCalculatorImpl:
         if len(label_lengths) > 0:
             metrics.update(
                 {
-                    "ground_truth_mean_sequence_length": float(
-                        np.mean(label_lengths)
-                    ),
+                    "ground_truth_mean_sequence_length": float(np.mean(label_lengths)),
                     "ground_truth_median_sequence_length": float(
                         np.median(label_lengths)
                     ),

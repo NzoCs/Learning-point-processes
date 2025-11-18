@@ -12,8 +12,8 @@ import torch
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
-from .base_accumulator import BaseAccumulator
 from .acc_types import EventTypeStatistics
+from .base_accumulator import BaseAccumulator
 
 
 class EventTypeAccumulator(BaseAccumulator):
@@ -27,7 +27,7 @@ class EventTypeAccumulator(BaseAccumulator):
 
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
         """Accumulate event types from batch.
-        
+
         Args:
             batch: Ground truth batch containing type_seqs
             simulation: Simulation result containing type_seqs (required)
@@ -65,20 +65,24 @@ class EventTypeAccumulator(BaseAccumulator):
 
     def compute(self) -> EventTypeStatistics:
         """Compute event type distribution statistics.
-        
+
         Returns:
             Dictionary with event type arrays and distributions
         """
         # Validate sufficient ground truth data
         if len(self._gt_event_types) == 0:
             logger.error("EventTypeAccumulator: No ground truth event types collected")
-            raise ValueError("Cannot compute event type statistics: no ground truth data available")
-        
+            raise ValueError(
+                "Cannot compute event type statistics: no ground truth data available"
+            )
+
         # Validate sufficient simulation data
         if len(self._sim_event_types) == 0:
             logger.error("EventTypeAccumulator: No simulated event types collected")
-            raise ValueError("Cannot compute event type statistics: no simulation data available")
-        
+            raise ValueError(
+                "Cannot compute event type statistics: no simulation data available"
+            )
+
         gt_array = np.array(self._gt_event_types, dtype=int)
         sim_array = np.array(self._sim_event_types, dtype=int)
 
@@ -90,15 +94,17 @@ class EventTypeAccumulator(BaseAccumulator):
         sim_distribution = (sim_counts / sim_counts.sum()).astype(np.float64)
 
         result: EventTypeStatistics = EventTypeStatistics(
-            gt_array = gt_array,
-            sim_array = sim_array,
-            gt_distribution = gt_distribution,
-            sim_distribution = sim_distribution,
-            gt_count = len(gt_array),
-            sim_count = len(sim_array),
+            gt_array=gt_array,
+            sim_array=sim_array,
+            gt_distribution=gt_distribution,
+            sim_distribution=sim_distribution,
+            gt_count=len(gt_array),
+            sim_count=len(sim_array),
         )
 
-        logger.info(f"EventTypeAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated event types")
+        logger.info(
+            f"EventTypeAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated event types"
+        )
         return result
 
     def reset(self) -> None:

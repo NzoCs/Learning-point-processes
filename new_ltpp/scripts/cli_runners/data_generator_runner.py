@@ -7,9 +7,10 @@ Runner pour la génération de données synthétiques TPP.
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from new_ltpp.data.generation import HawkesSimulator, SelfCorrecting
+
 from .cli_base import CLIRunnerBase
 
-from new_ltpp.data.generation import HawkesSimulator, SelfCorrecting
 
 class DataGenerator(CLIRunnerBase):
     """

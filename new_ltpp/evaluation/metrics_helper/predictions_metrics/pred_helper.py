@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import Any, Dict, List, Literal, Optional, Union
+
 import torch
 import torch.nn.functional as F
 import torchmetrics
@@ -7,14 +8,15 @@ import torchmetrics
 from new_ltpp.shared_types import Batch, OneStepPred
 from new_ltpp.utils import logger
 
-from .pred_types import PredMetrics, TimeValues, TypeValues
 from .pred_extractor import (
     PredictionDataExtractor,
     TimeDataExtractor,
     TypeDataExtractor,
 )
+from .pred_types import PredMetrics, TimeValues, TypeValues
 
-class PredMetricsHelper():
+
+class PredMetricsHelper:
     """
     Computes prediction-specific metrics.
 
@@ -40,9 +42,7 @@ class PredMetricsHelper():
                              Can be strings or PredMetrics enum values.
         """
         self.num_event_types = num_event_types
-        self._data_extractor = PredictionDataExtractor(
-            num_event_types
-        )
+        self._data_extractor = PredictionDataExtractor(num_event_types)
         self._time_extractor = TimeDataExtractor()
         self._type_extractor = TypeDataExtractor()
 
@@ -84,7 +84,7 @@ class PredMetricsHelper():
         Returns:
             Dictionary of computed metrics (only selected ones)
         """
-        
+
         metrics = {}
         time_values, type_values = self._data_extractor.extract_values(batch, pred)
 
@@ -103,7 +103,9 @@ class PredMetricsHelper():
 
         return metrics
 
-    def compute_all_time_metrics(self, batch: Batch, pred_time_tensor: torch.Tensor) -> Dict[str, Any]:
+    def compute_all_time_metrics(
+        self, batch: Batch, pred_time_tensor: torch.Tensor
+    ) -> Dict[str, Any]:
         """
         Compute all time-related metrics using the time extractor.
 
@@ -115,7 +117,6 @@ class PredMetricsHelper():
             Dictionary of computed time metrics
         """
 
-
         metrics = {}
         time_values = self._time_extractor.extract_time_values(batch, pred_time_tensor)
         metric_mapping = self._build_time_metric_mapping(time_values)
@@ -124,7 +125,9 @@ class PredMetricsHelper():
             metrics[metric_name] = func(*args)
         return metrics
 
-    def compute_all_type_metrics(self, batch: Batch, pred_type_tensor: torch.Tensor) -> Dict[str, Any]:
+    def compute_all_type_metrics(
+        self, batch: Batch, pred_type_tensor: torch.Tensor
+    ) -> Dict[str, Any]:
         """
         Compute all type-related metrics using the type extractor.
 
@@ -138,7 +141,9 @@ class PredMetricsHelper():
         metrics = {}
 
         if self.num_event_types > 1:
-            type_values = self._type_extractor.extract_type_values(batch, pred_type_tensor)
+            type_values = self._type_extractor.extract_type_values(
+                batch, pred_type_tensor
+            )
             metric_mapping = self._build_type_metric_mapping(type_values)
             for metric_name, entry in metric_mapping.items():
                 func, args = entry
@@ -156,7 +161,6 @@ class PredMetricsHelper():
             }
 
         return metrics
-
 
     def get_available_metrics(self) -> List[str]:
         """Get list of available prediction metrics."""
@@ -188,14 +192,12 @@ class PredMetricsHelper():
             return float("nan")
         return F.l1_loss(time_values["pred_times"], time_values["true_times"]).item()
 
-    def _calculate_type_accuracy(
-        self, type_values: TypeValues
-    ) -> float:
+    def _calculate_type_accuracy(self, type_values: TypeValues) -> float:
         """Calculate type classification accuracy."""
 
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
-        
+
         device = type_values["true_types"].device
 
         accuracy_metric = torchmetrics.Accuracy(
@@ -210,10 +212,10 @@ class PredMetricsHelper():
         self, type_values: TypeValues, average: Literal["macro", "micro"] = "macro"
     ) -> float:
         """Calculate F1 score."""
-        
+
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
-        
+
         device = type_values["true_types"].device
 
         f1_metric = torchmetrics.F1Score(
@@ -229,7 +231,7 @@ class PredMetricsHelper():
 
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
-        
+
         device = type_values["true_types"].device
 
         recall_metric = torchmetrics.Recall(
@@ -245,7 +247,7 @@ class PredMetricsHelper():
 
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
-        
+
         device = type_values["true_types"].device
         precision_metric = torchmetrics.Precision(
             task="multiclass", num_classes=self.num_event_types, average="macro"
@@ -255,9 +257,7 @@ class PredMetricsHelper():
 
         return precision_metric.compute().item() * 100
 
-    def _calculate_cross_entropy(
-        self, type_values: TypeValues
-    ) -> float:
+    def _calculate_cross_entropy(self, type_values: TypeValues) -> float:
         """Calculate cross entropy loss."""
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return float("nan")
@@ -273,9 +273,7 @@ class PredMetricsHelper():
         loss = F.cross_entropy(pred_logits, type_values["true_types"])
         return loss.item()
 
-    def _calculate_confusion_matrix(
-        self, type_values: TypeValues
-    ) -> torch.Tensor:
+    def _calculate_confusion_matrix(self, type_values: TypeValues) -> torch.Tensor:
         """Calculate confusion matrix using torchmetrics."""
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
             return torch.full(
@@ -286,9 +284,10 @@ class PredMetricsHelper():
         confusion_matrix_metric = torchmetrics.ConfusionMatrix(
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
-        confusion_matrix_metric.update(type_values["pred_types"], type_values["true_types"])
+        confusion_matrix_metric.update(
+            type_values["pred_types"], type_values["true_types"]
+        )
         return confusion_matrix_metric.compute()
-    
 
     def _get_nan_metrics(self) -> Dict[str, Any]:
         """Get a dictionary of NaN metrics for error cases."""

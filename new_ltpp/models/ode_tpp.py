@@ -4,8 +4,8 @@ from torch import nn
 from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import DNN
 from new_ltpp.models.basemodel import Model
-from new_ltpp.utils import rk4_step_method
 from new_ltpp.shared_types import Batch
+from new_ltpp.utils import rk4_step_method
 
 
 def flatten_parameters(model):
@@ -165,7 +165,7 @@ class ODETPP(Model):
         num_event_types: int,
         dtime_max: float,
         hidden_size: int,
-        dropout: float ,
+        dropout: float,
         ode_num_sample_per_step: int = 10,
     ):
         """Initialize the model

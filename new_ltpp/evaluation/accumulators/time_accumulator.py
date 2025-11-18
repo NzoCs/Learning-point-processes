@@ -12,30 +12,37 @@ import torch
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
-from .base_accumulator import BaseAccumulator
 from .acc_types import TimeStatistics
+from .base_accumulator import BaseAccumulator
+
 
 class InterEventTimeAccumulator(BaseAccumulator):
     """Accumulates inter-event time statistics from batches using histogram bins."""
 
-    def __init__(self, dtime_min: float, dtime_max: float, min_sim_events: int = 1, num_bins: int = 100):
+    def __init__(
+        self,
+        dtime_min: float,
+        dtime_max: float,
+        min_sim_events: int = 1,
+        num_bins: int = 100,
+    ):
         super().__init__(min_sim_events)
         self.num_bins = num_bins
         self.min_dtime = dtime_min
         self.max_dtime = dtime_max
         self.bin_edges = np.linspace(dtime_min, dtime_max, num_bins + 1)
-        
+
         # Histogram counters
         self._gt_hist = np.zeros(num_bins, dtype=np.int64)
         self._sim_hist = np.zeros(num_bins, dtype=np.int64)
-        
+
         # Keep track of total counts
         self._gt_total = 0
         self._sim_total = 0
 
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
         """Accumulate inter-event times from batch.
-        
+
         Args:
             batch: Ground truth batch containing time_delta_seqs
             simulation: Simulation result containing dtime_seqs (required)
@@ -88,20 +95,28 @@ class InterEventTimeAccumulator(BaseAccumulator):
 
     def compute(self) -> TimeStatistics:
         """Compute inter-event time statistics.
-        
+
         Returns:
             Dictionary with histogram bins and counts
         """
         # Validate sufficient ground truth data
         if self._gt_total == 0:
-            logger.error("InterEventTimeAccumulator: No ground truth time deltas collected")
-            raise ValueError("Cannot compute time statistics: no ground truth data available")
-        
+            logger.error(
+                "InterEventTimeAccumulator: No ground truth time deltas collected"
+            )
+            raise ValueError(
+                "Cannot compute time statistics: no ground truth data available"
+            )
+
         # Validate sufficient simulation data
         if self._sim_total == 0:
-            logger.error("InterEventTimeAccumulator: No simulated time deltas collected")
-            raise ValueError("Cannot compute time statistics: no simulation data available")
-        
+            logger.error(
+                "InterEventTimeAccumulator: No simulated time deltas collected"
+            )
+            raise ValueError(
+                "Cannot compute time statistics: no simulation data available"
+            )
+
         result = TimeStatistics(
             gt_time_deltas=self._gt_hist.astype(np.float64),
             sim_time_deltas=self._sim_hist.astype(np.float64),
@@ -110,7 +125,9 @@ class InterEventTimeAccumulator(BaseAccumulator):
             sim_count=self._sim_total,
         )
 
-        logger.info(f"InterEventTimeAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated time deltas in {self.num_bins} bins")
+        logger.info(
+            f"InterEventTimeAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated time deltas in {self.num_bins} bins"
+        )
         return result
 
     def reset(self) -> None:

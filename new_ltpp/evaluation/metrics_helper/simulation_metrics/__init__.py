@@ -3,10 +3,11 @@ Simulation metrics subpackage.
 
 Exports the extractor and computer classes for convenience.
 """
+
 from .sim_extractor import (
-    SimulationDataExtractor,
     SimTimeDataExtractor,
     SimTypeDataExtractor,
+    SimulationDataExtractor,
 )
 from .sim_helper import SimMetricsHelper
 

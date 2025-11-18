@@ -6,15 +6,17 @@ from typing import Optional, Tuple
 import torch
 
 from new_ltpp.shared_types import Batch, OneStepPred
+
 from .base_mixin import BaseMixin
 
 
 class PredictionMixin(BaseMixin):
     """Mixin providing prediction functionality.
-    
+
     Requires: self.event_sampler, self.num_sample, self.num_step_gen,
               self.compute_intensities_at_sample_times, self.num_event_types
     """
+
     def __init__(self, num_sample: int, num_step_gen: int, **kwargs):
         """Initialize the PredictionMixin.
 
@@ -43,7 +45,7 @@ class PredictionMixin(BaseMixin):
 
         time_delta_seq = time_delta_seq[:, :-1]
         event_seq = event_seq[:, :-1]
-        time_seq = time_seq[:, :-1] 
+        time_seq = time_seq[:, :-1]
 
         # Draw next time samples
         accepted_dtimes, weights = self._event_sampler.draw_next_time_one_step(

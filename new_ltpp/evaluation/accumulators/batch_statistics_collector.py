@@ -14,48 +14,47 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import numpy.typing as npt
 
+from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
-from new_ltpp.globals import OUTPUT_DIR
 
-from .event_type_accumulator import EventTypeAccumulator
-from .metrics_calculator import MetricsCalculatorImpl
+from .acc_types import (
+    AllStatistics,
+    CorrelationStatistics,
+    FinalResult,
+    MetricsData,
+    PlotData,
+)
 from .corr_accumulator import CorrAccumulator
+from .event_type_accumulator import EventTypeAccumulator
+from .mean_len_accumulator import SequenceLengthAccumulator
+from .metrics_calculator import MetricsCalculatorImpl
 from .plot_generators import (
     AutocorrelationPlotGenerator,
     EventTypePlotGenerator,
     InterEventTimePlotGenerator,
     SequenceLengthPlotGenerator,
 )
-
-from .mean_len_accumulator import SequenceLengthAccumulator
 from .time_accumulator import InterEventTimeAccumulator
-from .acc_types import (
-    AllStatistics,
-    FinalResult,
-    MetricsData,
-    CorrelationStatistics,
-    PlotData,
-)
 
 
 class BatchStatisticsCollector:
     """Main class for collecting statistics batch-by-batch during prediction.
-    
+
     This class orchestrates multiple accumulators that collect different
     statistical properties from batches of ground truth and simulated data.
     It's designed to be called in the predict_step of a model.
-    
+
     Usage:
         # Initialization (once, before prediction loop)
         collector = BatchStatisticsCollector(
             num_event_types=10,
             output_dir="./output",
         )
-        
+
         # In predict_step (called for each batch)
         collector.update_batch(batch, simulation)
-        
+
         # After prediction loop (generate results)
         collector.finalize_and_save()
     """
@@ -71,7 +70,7 @@ class BatchStatisticsCollector:
         output_dir: Path | str = OUTPUT_DIR / "distribution_comparison",
     ):
         """Initialize the batch statistics collector.
-        
+
         Args:
             num_event_types: Number of event types in the dataset
             output_dir: Directory where results will be saved
@@ -91,24 +90,24 @@ class BatchStatisticsCollector:
         # Initialize accumulators
         self._accumulators = (
             InterEventTimeAccumulator(
-                dtime_min=dtime_min,
-                dtime_max=dtime_max, 
-                min_sim_events=min_sim_events
-                ),
-            EventTypeAccumulator(num_event_types=num_event_types, min_sim_events=min_sim_events),
-            SequenceLengthAccumulator(
-                min_sim_events=min_sim_events
-                ),
+                dtime_min=dtime_min, dtime_max=dtime_max, min_sim_events=min_sim_events
+            ),
+            EventTypeAccumulator(
+                num_event_types=num_event_types, min_sim_events=min_sim_events
+            ),
+            SequenceLengthAccumulator(min_sim_events=min_sim_events),
             CorrAccumulator(min_sim_events=min_sim_events),
         )
 
         # Initialize plot generators (if enabled)
-        self._plot_generators: Optional[Tuple[
-            InterEventTimePlotGenerator,
-            EventTypePlotGenerator,
-            SequenceLengthPlotGenerator,
-            AutocorrelationPlotGenerator
-        ]] = None
+        self._plot_generators: Optional[
+            Tuple[
+                InterEventTimePlotGenerator,
+                EventTypePlotGenerator,
+                SequenceLengthPlotGenerator,
+                AutocorrelationPlotGenerator,
+            ]
+        ] = None
 
         if self.enable_plots:
             self._plot_generators = (
@@ -127,20 +126,22 @@ class BatchStatisticsCollector:
         self._batch_count: int = 0
         self._is_finalized: bool = False
 
-        logger.info(f"BatchStatisticsCollector initialized with {len(self._accumulators)} accumulators")
+        logger.info(
+            f"BatchStatisticsCollector initialized with {len(self._accumulators)} accumulators"
+        )
 
     def update_batch(self, batch: Batch, simulation: SimulationResult) -> bool:
         """Update all accumulators with new batch data.
-        
+
         This method should be called in the predict_step for each batch.
-        
+
         Args:
             batch: Ground truth batch data
             simulation: Optional simulation results for the batch
-            
+
         Returns:
         """
-        
+
         if self._is_finalized:
             logger.warning("Collector already finalized, ignoring update")
             return False
@@ -153,14 +154,18 @@ class BatchStatisticsCollector:
 
         # Log progress periodically
         if self._batch_count % 100 == 0:
-            sample_counts = {type(acc).__name__: acc.sample_count for acc in self._accumulators}
-            logger.info(f"Processed {self._batch_count} batches. Sample counts: {sample_counts}")
+            sample_counts = {
+                type(acc).__name__: acc.sample_count for acc in self._accumulators
+            }
+            logger.info(
+                f"Processed {self._batch_count} batches. Sample counts: {sample_counts}"
+            )
 
         return True
 
     def compute_statistics(self) -> AllStatistics:
         """Compute final statistics from all accumulators.
-        
+
         Returns:
             Dictionary containing all computed statistics
         """
@@ -168,14 +173,14 @@ class BatchStatisticsCollector:
 
         return AllStatistics(
             time=self._accumulators[0].compute(),
-            event_type=self._accumulators[1].compute(),  
-            sequence_length=self._accumulators[2].compute(),  
-            correlation=self._accumulators[3].compute(),  
+            event_type=self._accumulators[1].compute(),
+            sequence_length=self._accumulators[2].compute(),
+            correlation=self._accumulators[3].compute(),
         )
 
     def generate_plots(self, statistics: AllStatistics) -> None:
         """Generate and save all plots.
-        
+
         Args:
             statistics: Dictionary containing computed statistics
         """
@@ -187,19 +192,19 @@ class BatchStatisticsCollector:
 
         # Prepare data in the format expected by plot generators
         plot_data = PlotData(
-            label_time_deltas=statistics['time']['gt_time_deltas'],
-            simulated_time_deltas=statistics['time']['sim_time_deltas'],
-            time_bin_edges=statistics['time']['bin_edges'],
-            label_event_types=statistics['event_type']['gt_array'],
-            simulated_event_types=statistics['event_type']['sim_array'],
-            label_sequence_lengths=statistics['sequence_length']['gt_array'],
-            simulated_sequence_lengths=statistics['sequence_length']['sim_array'],
+            label_time_deltas=statistics["time"]["gt_time_deltas"],
+            simulated_time_deltas=statistics["time"]["sim_time_deltas"],
+            time_bin_edges=statistics["time"]["bin_edges"],
+            label_event_types=statistics["event_type"]["gt_array"],
+            simulated_event_types=statistics["event_type"]["sim_array"],
+            label_sequence_lengths=statistics["sequence_length"]["gt_array"],
+            simulated_sequence_lengths=statistics["sequence_length"]["sim_array"],
         )
-        
+
         # Prepare ACF data separately (not in PlotData TypedDict)
         acf_data = {
-            "acf_gt_mean": statistics['correlation']['acf_gt_mean'],
-            "acf_sim_mean": statistics['correlation']['acf_sim_mean'],
+            "acf_gt_mean": statistics["correlation"]["acf_gt_mean"],
+            "acf_sim_mean": statistics["correlation"]["acf_sim_mean"],
         }
 
         # Generate plots
@@ -214,7 +219,9 @@ class BatchStatisticsCollector:
         assert self._plot_generators is not None
         # Cast TypedDict to dict for plot generators
         plot_data_dict: Dict[str, Any] = dict(plot_data)
-        for i, (generator, filename) in enumerate(zip(self._plot_generators, plot_filenames)):
+        for i, (generator, filename) in enumerate(
+            zip(self._plot_generators, plot_filenames)
+        ):
             output_path: str = str(self.output_dir / filename)
             # Use acf_data for the last plot (autocorrelation)
             data_to_use = acf_data if i == 3 else plot_data_dict
@@ -223,10 +230,10 @@ class BatchStatisticsCollector:
 
     def compute_metrics(self, statistics: AllStatistics) -> Dict[str, float]:
         """Compute summary metrics from statistics.
-        
+
         Args:
             statistics: Dictionary containing computed statistics
-            
+
         Returns:
             Dictionary of computed metrics
         """
@@ -238,30 +245,34 @@ class BatchStatisticsCollector:
 
         # Prepare data in the format expected by metrics calculator
         metrics_data = MetricsData(
-            label_time_deltas=statistics['time']['gt_time_deltas'],
-            simulated_time_deltas=statistics['time']['sim_time_deltas'],
-            label_sequence_lengths=statistics['sequence_length']['gt_array'],
-            simulated_sequence_lengths=statistics['sequence_length']['sim_array'],
+            label_time_deltas=statistics["time"]["gt_time_deltas"],
+            simulated_time_deltas=statistics["time"]["sim_time_deltas"],
+            label_sequence_lengths=statistics["sequence_length"]["gt_array"],
+            simulated_sequence_lengths=statistics["sequence_length"]["sim_array"],
         )
 
-        metrics: Dict[str, float] = self._metrics_calculator.calculate_metrics(metrics_data)
-        
+        metrics: Dict[str, float] = self._metrics_calculator.calculate_metrics(
+            metrics_data
+        )
+
         # Add correlation statistics summary
-        corr_stats = statistics['correlation']
+        corr_stats = statistics["correlation"]
         # Compute simple metric: mean absolute difference between ACFs
-        acf_diff = np.abs(corr_stats['acf_gt_mean'] - corr_stats['acf_sim_mean'])
-        metrics.update({
-            'acf_mean_absolute_difference': float(np.mean(acf_diff)),
-            'acf_max_absolute_difference': float(np.max(acf_diff)),
-        })
-        
+        acf_diff = np.abs(corr_stats["acf_gt_mean"] - corr_stats["acf_sim_mean"])
+        metrics.update(
+            {
+                "acf_mean_absolute_difference": float(np.mean(acf_diff)),
+                "acf_max_absolute_difference": float(np.max(acf_diff)),
+            }
+        )
+
         return metrics
 
     def finalize_and_save(self) -> FinalResult:
         """Finalize collection, compute statistics, generate plots, and save results.
-        
+
         This method should be called after all batches have been processed.
-        
+
         Returns:
             Dictionary containing:
                 - 'statistics': All computed statistics
@@ -270,9 +281,11 @@ class BatchStatisticsCollector:
         """
         if self._is_finalized:
             logger.warning("Collector already finalized, computing statistics anyway")
-            # Continue to compute instead of returning empty result  
+            # Continue to compute instead of returning empty result
 
-        logger.info(f"Finalizing statistics collection after {self._batch_count} batches")
+        logger.info(
+            f"Finalizing statistics collection after {self._batch_count} batches"
+        )
 
         # Compute statistics
         statistics: AllStatistics = self.compute_statistics()
@@ -286,7 +299,7 @@ class BatchStatisticsCollector:
         # Save metrics to file
         if metrics:
             metrics_file: Path = self.output_dir / "distribution_metrics.txt"
-            with open(metrics_file, 'w') as f:
+            with open(metrics_file, "w") as f:
                 f.write("Distribution Comparison Metrics\n")
                 f.write("=" * 50 + "\n\n")
                 for key, value in metrics.items():

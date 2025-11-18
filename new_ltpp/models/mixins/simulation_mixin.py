@@ -1,15 +1,15 @@
 # new_ltpp/models/mixins/simulation_mixin.py
 """Mixin for simulation functionality."""
 
-from typing import Optional, Tuple, Dict, List
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import torch
 from tqdm import tqdm
-from pathlib import Path
 
-from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.evaluation.accumulators.acc_types import FinalResult
 from new_ltpp.evaluation import BatchStatisticsCollector
+from new_ltpp.evaluation.accumulators.acc_types import FinalResult
+from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .base_mixin import BaseMixin
@@ -17,7 +17,7 @@ from .base_mixin import BaseMixin
 
 class SimulationMixin(BaseMixin):
     """Mixin providing simulation functionality.
-    
+
     Requires: self.num_event_types, self.initial_buffer_size, self._statistics_collector,
               self.device, self.simulation_start_time, self.simulation_end_time,
               self.simulation_batch_size, self.event_sampler, self.num_sample,
@@ -25,14 +25,14 @@ class SimulationMixin(BaseMixin):
     """
 
     def __init__(
-            self,
-            num_event_types: int, 
-            simulation_start_time: float,
-            simulation_end_time: float,
-            simulation_batch_size: int,
-            initial_buffer_size: int,
-            **kwargs):
-        
+        self,
+        num_event_types: int,
+        simulation_start_time: float,
+        simulation_end_time: float,
+        simulation_batch_size: int,
+        initial_buffer_size: int,
+        **kwargs,
+    ):
         """Initialize the SimulationMixin.
 
         Args:
@@ -45,11 +45,15 @@ class SimulationMixin(BaseMixin):
         self.simulation_end_time = simulation_end_time
         self.simulation_batch_size = simulation_batch_size
         self.initial_buffer_size = initial_buffer_size
-        self._statistics_collector = self.init_statistics_collector(self.output_dir / "distribution_comparison")
+        self._statistics_collector = self.init_statistics_collector(
+            self.output_dir / "distribution_comparison"
+        )
 
-    def init_statistics_collector(self, output_dir: Path | str) -> BatchStatisticsCollector:
+    def init_statistics_collector(
+        self, output_dir: Path | str
+    ) -> BatchStatisticsCollector:
         """Initialize the batch statistics collector for distribution analysis.
-        
+
         Args:
             output_dir: Directory where results will be saved
         """
@@ -60,12 +64,14 @@ class SimulationMixin(BaseMixin):
             dtime_min=0.0,
         )
 
-        logger.info(f"BatchStatisticsCollector initialized with output_dir={output_dir}")
+        logger.info(
+            f"BatchStatisticsCollector initialized with output_dir={output_dir}"
+        )
         return self._statistics_collector
 
     def finalize_statistics(self) -> FinalResult:
         """Finalize statistics collection and generate plots/metrics.
-        
+
         Returns:
             Dictionary containing statistics, metrics, and batch count
         """
@@ -73,10 +79,12 @@ class SimulationMixin(BaseMixin):
             raise NotImplementedError(
                 "No statistics collector to finalize. Initialize it first with 'init_statistics_collector'."
             )
-        
+
         logger.info("Finalizing batch statistics collection...")
         results = self._statistics_collector.finalize_and_save()
-        logger.info(f"Statistics finalized: {results.get('batch_count', 0)} batches processed")
+        logger.info(
+            f"Statistics finalized: {results.get('batch_count', 0)} batches processed"
+        )
         return results
 
     def simulate(
@@ -103,17 +111,20 @@ class SimulationMixin(BaseMixin):
         if start_time is None:
             start_time = self.simulation_start_time
             if start_time is None:
-                raise ValueError("start_time must be provided or set via set_simulation_times()")
-                
+                raise ValueError(
+                    "start_time must be provided or set via set_simulation_times()"
+                )
+
         if end_time is None:
             end_time = self.simulation_end_time
             if end_time is None:
-                raise ValueError("end_time must be provided or set via set_simulation_times()")
-                
+                raise ValueError(
+                    "end_time must be provided or set via set_simulation_times()"
+                )
+
         if batch_size is None:
             batch_size = self.simulation_batch_size
-        
-            
+
         if initial_buffer_size is None:
             initial_buffer_size = self.initial_buffer_size
 
@@ -125,7 +136,7 @@ class SimulationMixin(BaseMixin):
 
         # Pre-allocate buffers
         buffers = self._allocate_simulation_buffers(batch, initial_buffer_size)
-        
+
         # Initialize tracking state
         sim_state = self._initialize_simulation_state(batch, start_time, batch_size)
 
@@ -133,7 +144,9 @@ class SimulationMixin(BaseMixin):
         self._run_simulation_loop(buffers, sim_state, start_time, end_time)
 
         # Extract and return results
-        return self._extract_simulation_results(buffers, sim_state, start_time, end_time)
+        return self._extract_simulation_results(
+            buffers, sim_state, start_time, end_time
+        )
 
     def simulate_one_step(
         self,
@@ -189,10 +202,16 @@ class SimulationMixin(BaseMixin):
     def _create_empty_batch(self, batch_size: int) -> Batch:
         """Create an empty batch for simulation initialization."""
         return Batch(
-            time_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
-            time_delta_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.float32),
+            time_seqs=torch.zeros(
+                batch_size, 2, device=self.device, dtype=torch.float32
+            ),
+            time_delta_seqs=torch.zeros(
+                batch_size, 2, device=self.device, dtype=torch.float32
+            ),
             type_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
-            seq_non_pad_mask=torch.ones(batch_size, 2, device=self.device, dtype=torch.bool),
+            seq_non_pad_mask=torch.ones(
+                batch_size, 2, device=self.device, dtype=torch.bool
+            ),
         )
 
     def _allocate_simulation_buffers(self, batch: Batch, initial_buffer_size: int):
@@ -223,7 +242,9 @@ class SimulationMixin(BaseMixin):
             "initial_len": initial_len,
         }
 
-    def _initialize_simulation_state(self, batch: Batch, start_time: float, batch_size: int):
+    def _initialize_simulation_state(
+        self, batch: Batch, start_time: float, batch_size: int
+    ):
         """Initialize simulation tracking state."""
         # Track last event time for each mark
         last_event_time = torch.zeros(
@@ -245,23 +266,27 @@ class SimulationMixin(BaseMixin):
         return {
             "last_event_time": last_event_time,
             "current_time": start_time,
-            "batch_active": torch.ones(batch_size, dtype=torch.bool, device=self.device),
+            "batch_active": torch.ones(
+                batch_size, dtype=torch.bool, device=self.device
+            ),
             "step_count": 0,
         }
 
-    def _reallocate_buffers(self, buffers: Dict[str, torch.Tensor], current_max_len: int) -> int:
+    def _reallocate_buffers(
+        self, buffers: Dict[str, torch.Tensor], current_max_len: int
+    ) -> int:
         """Reallocate buffers with double the size.
-        
+
         Args:
             buffers: Dictionary containing current buffers
             current_max_len: Current maximum sequence length
-            
+
         Returns:
             New maximum sequence length
         """
         batch_size = buffers["time"].size(0)
         new_max_seq_len = current_max_len * 2
-        
+
         # Allocate new larger buffers
         new_time_buffer = torch.zeros(
             batch_size, new_max_seq_len, device=self.device, dtype=torch.float32
@@ -272,21 +297,23 @@ class SimulationMixin(BaseMixin):
         new_event_buffer = torch.zeros(
             batch_size, new_max_seq_len, device=self.device, dtype=torch.long
         ).contiguous()
-        
+
         # Copy existing data
         new_time_buffer[:, :current_max_len].copy_(buffers["time"])
         new_time_delta_buffer[:, :current_max_len].copy_(buffers["time_delta"])
         new_event_buffer[:, :current_max_len].copy_(buffers["event"])
-        
+
         # Update buffers
         buffers["time"] = new_time_buffer
         buffers["time_delta"] = new_time_delta_buffer
         buffers["event"] = new_event_buffer
-        
+
         logger.info(f"Reallocated buffers to size {new_max_seq_len}")
         return new_max_seq_len
 
-    def _run_simulation_loop(self, buffers: dict, sim_state: dict, start_time: float, end_time: float) -> None:
+    def _run_simulation_loop(
+        self, buffers: dict, sim_state: dict, start_time: float, end_time: float
+    ) -> None:
         """Run the main simulation loop."""
         initial_len = buffers["initial_len"]
         max_seq_len = buffers["time"].size(1)
@@ -304,7 +331,7 @@ class SimulationMixin(BaseMixin):
                     break
 
                 current_len = initial_len + sim_state["step_count"]
-                
+
                 # Check if we need to reallocate buffers (double the size)
                 if current_len >= max_seq_len - 1:
                     max_seq_len = self._reallocate_buffers(buffers, max_seq_len)
@@ -325,10 +352,14 @@ class SimulationMixin(BaseMixin):
                 active_batch_size = len(active_indices)
                 type_pred_flat = type_pred.squeeze(-1)
                 last_times_flat = active_time_seq[:, -1]
-                sim_state["last_event_time"][active_indices, type_pred_flat] = last_times_flat
+                sim_state["last_event_time"][
+                    active_indices, type_pred_flat
+                ] = last_times_flat
 
                 # Recalculate deltas
-                batch_indices_active = torch.arange(active_batch_size, device=self.device)
+                batch_indices_active = torch.arange(
+                    active_batch_size, device=self.device
+                )
                 last_events_active = sim_state["last_event_time"][active_indices][
                     batch_indices_active, type_pred_flat
                 ]
@@ -354,7 +385,9 @@ class SimulationMixin(BaseMixin):
 
             pbar.close()
 
-    def _extract_simulation_results(self, buffers: dict, sim_state: dict, start_time: float, end_time: float) -> SimulationResult:
+    def _extract_simulation_results(
+        self, buffers: dict, sim_state: dict, start_time: float, end_time: float
+    ) -> SimulationResult:
         """Extract final simulation results from buffers."""
         initial_len = buffers["initial_len"]
         current_len = initial_len + sim_state["step_count"]
@@ -368,4 +401,6 @@ class SimulationMixin(BaseMixin):
             final_time_seq >= start_time, final_time_seq <= end_time
         )
 
-        return SimulationResult(final_time_seq, final_time_delta, final_event_seq, simul_mask)
+        return SimulationResult(
+            final_time_seq, final_time_delta, final_event_seq, simul_mask
+        )

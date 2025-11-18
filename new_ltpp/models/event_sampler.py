@@ -1,11 +1,11 @@
-
 # Vectorized Event Sampler for Multivariate TPP with Thinning
 # Compatible with intensity_fn(time_seq, time_delta_seq, event_seq, dtime, ...)
 # Includes: vectorized Exp sampling, vectorized uniform draws, stable accept step.
 
+from typing import Callable, Literal, Tuple
+
 import torch
 import torch.nn as nn
-from typing import Literal, Callable, Tuple
 
 
 class EventSampler(nn.Module):
@@ -32,12 +32,10 @@ class EventSampler(nn.Module):
         time_seq: torch.Tensor,
         time_delta_seq: torch.Tensor,
         event_seq: torch.Tensor,
-        intensity_fn: Callable[
-            ..., torch.Tensor
-        ],
+        intensity_fn: Callable[..., torch.Tensor],
         compute_last_step_only: bool,
     ) -> torch.Tensor:
-        """ Compute upper bound M(t) for thinning algorithm.
+        """Compute upper bound M(t) for thinning algorithm.
         Args:
             time_seq: [B,L]
             time_delta_seq: [B,L]
@@ -49,7 +47,11 @@ class EventSampler(nn.Module):
         """
         batch_size, seq_len = time_seq.size()
 
-        tnorm = torch.linspace(0., self.dtime_max, self.num_samples_boundary, device=self.device)[None, None, :]  # [1,1,K]
+        tnorm = torch.linspace(
+            0.0, self.dtime_max, self.num_samples_boundary, device=self.device
+        )[
+            None, None, :
+        ]  # [1,1,K]
         tnorm = tnorm.expand(batch_size, seq_len, self.num_samples_boundary)  # [B,L,K]
 
         # intensities: [B,L,K,num_events]
@@ -76,7 +78,7 @@ class EventSampler(nn.Module):
     # 2. Sample exponential jumps
     # ----------------------------------------------------------------------
     def sample_exp_distribution(self, rate: torch.Tensor) -> torch.Tensor:
-        """ Sample Exp(rate) i.i.d. with vectorization.
+        """Sample Exp(rate) i.i.d. with vectorization.
         rate: [B,L]
         returns: [B,L,num_exp]
         """
@@ -91,7 +93,7 @@ class EventSampler(nn.Module):
     def sample_uniform(self, rate: torch.Tensor, num_samples: int) -> torch.Tensor:
         B, L = rate.shape
         u = torch.empty(B, L, num_samples, self.num_exp, device=self.device)
-        u.uniform_(0., 1.)
+        u.uniform_(0.0, 1.0)
         return u
 
     # ----------------------------------------------------------------------
@@ -147,7 +149,7 @@ class EventSampler(nn.Module):
         num_exp: int = 0,
         compute_last_step_only: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """ Vectorized thinning step """
+        """Vectorized thinning step"""
 
         # 1. upper bound M
         M = self.compute_intensity_upper_bound(
@@ -156,7 +158,7 @@ class EventSampler(nn.Module):
 
         # 2. exp samples
         exp_j = self.sample_exp_distribution(M)  # [B,L,E]
-        exp_j = torch.cumsum(exp_j, dim=-1)      # accumulate
+        exp_j = torch.cumsum(exp_j, dim=-1)  # accumulate
 
         # 3. evaluate intensity at sampled times
         intens = intensity_fn(
@@ -170,8 +172,12 @@ class EventSampler(nn.Module):
         intens_total = intens.sum(-1)  # [B,L,E]
 
         # 4. tile for num_sample (like in thinning.py)
-        intens_total = intens_total[:, :, None, :].expand(-1, -1, num_sample, -1)  # [B,L,num_sample,E]
-        exp_j_tiled = exp_j[:, :, None, :].expand(-1, -1, num_sample, -1)  # [B,L,num_sample,E]
+        intens_total = intens_total[:, :, None, :].expand(
+            -1, -1, num_sample, -1
+        )  # [B,L,num_sample,E]
+        exp_j_tiled = exp_j[:, :, None, :].expand(
+            -1, -1, num_sample, -1
+        )  # [B,L,num_sample,E]
 
         # 5. uniform
         u = self.sample_uniform(M, num_sample)  # [B,L,num_sample,E]

@@ -3,6 +3,7 @@
 Contains `SimMetricsHelper` which uses extractors from
 `.extractor` to compute simulation metrics.
 """
+
 from collections.abc import Callable
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -12,8 +13,8 @@ from scipy.stats import wasserstein_distance
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
-from .sim_types import SimMetrics, SimTimeValues
 from .sim_extractor import SimulationDataExtractor
+from .sim_types import SimMetrics, SimTimeValues
 
 
 class SimMetricsHelper:
@@ -60,7 +61,9 @@ class SimMetricsHelper:
 
         return metrics
 
-    def compute_all_time_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, Any]:
+    def compute_all_time_metrics(
+        self, batch: Batch, pred: SimulationResult
+    ) -> Dict[str, Any]:
         metrics: Dict[str, Any] = {}
         time_values, _ = self._data_extractor.extract_values(batch, pred)
 
@@ -70,10 +73,14 @@ class SimMetricsHelper:
 
         return metrics
 
-    def compute_all_type_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, Any]:
+    def compute_all_type_metrics(
+        self, batch: Batch, pred: SimulationResult
+    ) -> Dict[str, Any]:
         metrics: Dict[str, Any] = {}
         _, type_values = self._data_extractor.extract_values(batch, pred)
-        type_distance = self._wasserstein_1d(type_values["true_type_seqs"], type_values["sim_type_seqs"])
+        type_distance = self._wasserstein_1d(
+            type_values["true_type_seqs"], type_values["sim_type_seqs"]
+        )
         metrics["type_wasserstein"] = float(type_distance.item())
         return metrics
 
@@ -85,7 +92,9 @@ class SimMetricsHelper:
         ]
 
     # --- internal helpers ---
-    def _wasserstein_1d(self, true_seqs: torch.Tensor, sim_seqs: torch.Tensor) -> torch.Tensor:
+    def _wasserstein_1d(
+        self, true_seqs: torch.Tensor, sim_seqs: torch.Tensor
+    ) -> torch.Tensor:
         device = true_seqs.device if true_seqs.numel() > 0 else sim_seqs.device
         if true_seqs.numel() == 0 or sim_seqs.numel() == 0:
             return torch.tensor(float("nan"), device=device)
@@ -95,7 +104,9 @@ class SimMetricsHelper:
         dist = wasserstein_distance(true_np, sim_np)
         return torch.tensor(dist, device=device)
 
-    def _mmd_rbf(self, true_seqs: torch.Tensor, sim_seqs: torch.Tensor, sigma: float = 1.0) -> torch.Tensor:
+    def _mmd_rbf(
+        self, true_seqs: torch.Tensor, sim_seqs: torch.Tensor, sigma: float = 1.0
+    ) -> torch.Tensor:
         device = true_seqs.device if true_seqs.numel() > 0 else sim_seqs.device
         if true_seqs.numel() == 0 or sim_seqs.numel() == 0:
             return torch.tensor(float("nan"), device=device)
@@ -103,7 +114,9 @@ class SimMetricsHelper:
         true_vals = true_seqs.view(-1, 1)
         sim_vals = sim_seqs.view(-1, 1)
 
-        def rbf(X: torch.Tensor, Y: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        def rbf(
+            X: torch.Tensor, Y: torch.Tensor
+        ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
             XX = torch.cdist(X, X) ** 2
             YY = torch.cdist(Y, Y) ** 2
             XY = torch.cdist(X, Y) ** 2
@@ -116,7 +129,9 @@ class SimMetricsHelper:
         kxx, kyy, kxy = rbf(true_vals, sim_vals)
         return kxx + kyy - 2 * kxy
 
-    def _mmd_wasserstein(self, true_seqs: torch.Tensor, sim_seqs: torch.Tensor, sigma: float = 1.0) -> torch.Tensor:
+    def _mmd_wasserstein(
+        self, true_seqs: torch.Tensor, sim_seqs: torch.Tensor, sigma: float = 1.0
+    ) -> torch.Tensor:
         device = true_seqs.device if true_seqs.numel() > 0 else sim_seqs.device
         if true_seqs.numel() == 0 or sim_seqs.numel() == 0:
             return torch.tensor(float("nan"), device=device)
@@ -124,7 +139,9 @@ class SimMetricsHelper:
         true_np = true_seqs.cpu().numpy()
         sim_np = sim_seqs.cpu().numpy()
         cross_distance = wasserstein_distance(true_np, sim_np)
-        k_ts = torch.exp(-torch.tensor(cross_distance**2, device=device) / (2 * sigma**2))
+        k_ts = torch.exp(
+            -torch.tensor(cross_distance**2, device=device) / (2 * sigma**2)
+        )
         return 2 - 2 * k_ts
 
     def _build_time_metric_mapping(

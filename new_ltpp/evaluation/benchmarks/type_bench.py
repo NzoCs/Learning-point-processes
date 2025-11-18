@@ -18,7 +18,7 @@ from .base_bench import BaseBenchmark
 class TypeBenchmark(BaseBenchmark):
     """
     Abstract base class for type/mark prediction benchmarks.
-    
+
     This class handles benchmarks that focus on predicting event types/marks.
     """
 
@@ -46,7 +46,7 @@ class TypeBenchmark(BaseBenchmark):
 
         # Prepare benchmark-specific parameters
         self._prepare_benchmark()
-        
+
         # Evaluate on test data
         test_loader = self.data_module.test_dataloader()
         all_metrics = []

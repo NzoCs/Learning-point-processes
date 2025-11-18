@@ -139,7 +139,6 @@ class BaseBenchmark(ABC):
         if "macro_f1score_mean" in metrics:
             logger.info(f"Macro F1 Score: {metrics['macro_f1score_mean']:.6f}")
 
-
     def get_available_metrics(self) -> List[str]:
         """
         Get the list of available metrics for this benchmark.

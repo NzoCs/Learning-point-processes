@@ -7,13 +7,12 @@ Runner pour la configuration guidée d'expériences TPP.
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-import yaml
-
-from .cli_base import CLIRunnerBase
-
 import typer
+import yaml
 from rich.prompt import Confirm, FloatPrompt, IntPrompt, Prompt
 from rich.table import Table
+
+from .cli_base import CLIRunnerBase
 
 
 class InteractiveSetup(CLIRunnerBase):
@@ -43,7 +42,6 @@ class InteractiveSetup(CLIRunnerBase):
             True si la configuration a été créée avec succès
         """
 
-    
         self.print_info(f"Configuration interactive - Type: {setup_type}")
 
         if setup_type == "experiment":
@@ -83,7 +81,6 @@ class InteractiveSetup(CLIRunnerBase):
                 return self._launch_experiment(output_path_obj)
 
         return True
-
 
     def _setup_experiment_config(self, quick_mode: bool) -> Dict[str, Any]:
         """Configuration interactive d'une expérience complète."""

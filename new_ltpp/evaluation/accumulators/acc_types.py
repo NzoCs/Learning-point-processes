@@ -11,9 +11,10 @@ from typing import Dict, TypedDict
 import numpy as np
 import numpy.typing as npt
 
-class PlotData(TypedDict):
 
+class PlotData(TypedDict):
     """Type definition for plot generation data."""
+
     label_time_deltas: npt.NDArray[np.float64]  # Histogram counts
     simulated_time_deltas: npt.NDArray[np.float64]  # Histogram counts
     time_bin_edges: npt.NDArray[np.float64]  # Bin edges for time histogram
@@ -25,6 +26,7 @@ class PlotData(TypedDict):
 
 class MetricsData(TypedDict):
     """Type definition for metrics calculation data."""
+
     label_time_deltas: npt.NDArray[np.float64]
     simulated_time_deltas: npt.NDArray[np.float64]
     label_sequence_lengths: npt.NDArray[np.float64]
@@ -33,6 +35,7 @@ class MetricsData(TypedDict):
 
 class TimeStatistics(TypedDict):
     """Type definition for time-related statistics (histogram-based)."""
+
     gt_time_deltas: npt.NDArray[np.float64]  # Histogram counts
     sim_time_deltas: npt.NDArray[np.float64]  # Histogram counts
     bin_edges: npt.NDArray[np.float64]  # Bin edges for histogram
@@ -42,6 +45,7 @@ class TimeStatistics(TypedDict):
 
 class EventTypeStatistics(TypedDict):
     """Type definition for event type statistics."""
+
     gt_array: npt.NDArray[np.int64]
     sim_array: npt.NDArray[np.int64]
     gt_distribution: npt.NDArray[np.float64]
@@ -52,6 +56,7 @@ class EventTypeStatistics(TypedDict):
 
 class SequenceLengthStatistics(TypedDict):
     """Type definition for sequence length statistics."""
+
     gt_array: npt.NDArray[np.float64]
     sim_array: npt.NDArray[np.float64]
     gt_mean: float
@@ -61,21 +66,26 @@ class SequenceLengthStatistics(TypedDict):
     gt_count: int
     sim_count: int
 
+
 class CorrelationStatistics(TypedDict):
     """Type definition for autocorrelation statistics."""
+
     acf_gt_mean: npt.NDArray[np.float64]  # Mean ACF for ground truth (max_lag + 1,)
     acf_sim_mean: npt.NDArray[np.float64]  # Mean ACF for simulation (max_lag + 1,)
 
 
 class AllStatistics(TypedDict):
     """Type definition for all collected statistics."""
+
     time: TimeStatistics
     event_type: EventTypeStatistics
     sequence_length: SequenceLengthStatistics
     correlation: CorrelationStatistics
 
+
 class FinalResult(TypedDict):
     """Type definition for finalize_and_save return value."""
+
     statistics: AllStatistics
     metrics: Dict[str, float]
     batch_count: int

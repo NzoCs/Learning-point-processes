@@ -12,9 +12,8 @@ import torch
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
-from .base_accumulator import BaseAccumulator
 from .acc_types import SequenceLengthStatistics
-
+from .base_accumulator import BaseAccumulator
 
 
 class SequenceLengthAccumulator(BaseAccumulator):
@@ -28,7 +27,7 @@ class SequenceLengthAccumulator(BaseAccumulator):
 
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
         """Accumulate sequence lengths from batch.
-        
+
         Args:
             batch: Ground truth batch
             simulation: Simulation result (required)
@@ -48,12 +47,12 @@ class SequenceLengthAccumulator(BaseAccumulator):
             raise ValueError(
                 f"SequenceLengthAccumulator requires at least {self.min_sim_events} simulated events, got {sim_event_count}"
             )
-        
+
         # Extract simulated sequence lengths (vectorized)
-        
+
         time_seqs = simulation.time_seqs
 
-        time_seqs[~sim_mask] = float('inf')
+        time_seqs[~sim_mask] = float("inf")
         time_starts = time_seqs.min(dim=1).values
 
         time_seqs[~sim_mask] = -1
@@ -64,15 +63,13 @@ class SequenceLengthAccumulator(BaseAccumulator):
 
         self._sim_mean.extend(sim_event_count_normalized.view(-1).cpu().tolist())
 
-
-        
         # Extract ground truth sequence lengths (vectorized)
         mask = batch.seq_non_pad_mask.bool()
         gt_seq_lengths = mask.sum(dim=1)
 
         gt_time_seqs = batch.time_seqs
 
-        gt_time_seqs[~mask] = float('inf')
+        gt_time_seqs[~mask] = float("inf")
         gt_time_starts = gt_time_seqs.min(dim=1).values
 
         gt_time_seqs[~mask] = -1
@@ -83,28 +80,35 @@ class SequenceLengthAccumulator(BaseAccumulator):
 
         self._gt_mean.extend(gt_event_count_normalized.view(-1).cpu().tolist())
 
-
     def compute(self) -> SequenceLengthStatistics:
         """Compute sequence length statistics.
-        
+
         Returns:
             Dictionary with sequence length arrays and statistics
         """
 
         # Validate sufficient ground truth data
         if len(self._gt_mean) == 0:
-            logger.error("SequenceLengthAccumulator: No ground truth sequence lengths collected")
-            raise ValueError("Cannot compute sequence length statistics: no ground truth data available")
+            logger.error(
+                "SequenceLengthAccumulator: No ground truth sequence lengths collected"
+            )
+            raise ValueError(
+                "Cannot compute sequence length statistics: no ground truth data available"
+            )
 
         # Validate sufficient simulation data
         if len(self._sim_mean) == 0:
-            logger.error("SequenceLengthAccumulator: No simulated sequence lengths collected")
-            raise ValueError("Cannot compute sequence length statistics: no simulation data available")
+            logger.error(
+                "SequenceLengthAccumulator: No simulated sequence lengths collected"
+            )
+            raise ValueError(
+                "Cannot compute sequence length statistics: no simulation data available"
+            )
 
         # Expand counters into arrays for statistics computation
-        gt_lengths = np.array(self._gt_mean, dtype=float) 
+        gt_lengths = np.array(self._gt_mean, dtype=float)
 
-        sim_lengths = np.array(self._sim_mean, dtype=float) 
+        sim_lengths = np.array(self._sim_mean, dtype=float)
 
         result = SequenceLengthStatistics(
             gt_array=gt_lengths,
@@ -117,7 +121,9 @@ class SequenceLengthAccumulator(BaseAccumulator):
             sim_count=len(sim_lengths),
         )
 
-        logger.info(f"SequenceLengthAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated sequence lengths")
+        logger.info(
+            f"SequenceLengthAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated sequence lengths"
+        )
         return result
 
     def reset(self) -> None:

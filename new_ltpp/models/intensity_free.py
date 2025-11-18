@@ -1,4 +1,5 @@
 from typing import Literal, Tuple
+
 import torch
 import torch.distributions as D
 from torch import nn
@@ -8,9 +9,9 @@ from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
 from new_ltpp.configs import ModelConfig
+from new_ltpp.models.basemodel import Model
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch, OneStepPred
-from new_ltpp.models.basemodel import Model
 
 
 def clamp_preserve_gradients(x, min_val, max_val):
@@ -195,7 +196,7 @@ class IntensityFree(NeuralModel):
         Returns:
             tuple: loglikelihood loss and number of events.
         """
-        
+
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
@@ -309,11 +310,11 @@ class IntensityFree(NeuralModel):
         return dtimes_pred, types_pred
 
     def predict_one_step_at_every_event(
-            self, 
-            time_seq: torch.Tensor, 
-            time_delta_seq: torch.Tensor, 
-            event_seq: torch.Tensor
-            ) -> OneStepPred:
+        self,
+        time_seq: torch.Tensor,
+        time_delta_seq: torch.Tensor,
+        event_seq: torch.Tensor,
+    ) -> OneStepPred:
         """One-step prediction for every event in the sequence.
 
         Args:
@@ -325,10 +326,8 @@ class IntensityFree(NeuralModel):
             tuple: tensors of dtime and type prediction, [batch_size, seq_len].
         """
 
-
         time_delta_seq = time_delta_seq[:, :-1]
         event_seq = event_seq[:, :-1]
-        
 
         # [batch_size, seq_len, hidden_size]
         context = self.forward(time_delta_seq, event_seq)
@@ -353,7 +352,7 @@ class IntensityFree(NeuralModel):
 
         # [num_samples, batch_size, seq_len]
         accepted_dtimes = inter_time_dist.sample((self.event_sampler.num_sample,))
-        dtimes_pred = accepted_dtimes.mean(dim=0)   
+        dtimes_pred = accepted_dtimes.mean(dim=0)
 
         # [batch_size, seq_len, num_marks]
         mark_logits = torch.log_softmax(

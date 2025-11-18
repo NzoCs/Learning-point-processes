@@ -94,7 +94,6 @@ class RunnerConfig(Config):
         data_config (dict): Dictionnaire de configuration pour les données.
     """
 
-
     def __init__(
         self,
         model_id: str,
@@ -137,7 +136,7 @@ class RunnerConfig(Config):
         # Checkpoints directory
         self.checkpoints_dir = self.base_dir / "checkpoints"
         self.checkpoints_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Logger save directory (separate from checkpoints)
         self.save_dir = str(self.base_dir / "logs")
 

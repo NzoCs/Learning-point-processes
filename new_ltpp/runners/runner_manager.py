@@ -31,9 +31,10 @@ class RunnerManager:
         )
 
     def setup_runner(self, enable_logging: bool = True):
+
         if not self.is_setup:
             # Create runner for the first time
-            logger.info(
+            logger.critical(
                 f"Setting up runner with logging {'enabled' if enable_logging else 'disabled'}."
             )
 
@@ -44,6 +45,7 @@ class RunnerManager:
 
             self.is_setup = True
             self.enable_logging = enable_logging
+
         elif self.enable_logging != enable_logging:
             # Just change the logging configuration
             self.runner.set_logging(enable_logging)

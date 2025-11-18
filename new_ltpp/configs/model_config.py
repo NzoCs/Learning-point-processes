@@ -92,11 +92,12 @@ class ThinningConfig(Config):
             raise ConfigValidationError(
                 "over_sample_rate must be greater than 1.0", "over_sample_rate"
             )
-    
+
+
 @dataclass
 class SimulationConfig(Config):
     """Configuration for event sequence simulation.
-    
+
     The start_time for simulation is dynamically computed from the dataset (end_time_max).
     time_window specifies the additional time duration beyond the last observed event.
     """

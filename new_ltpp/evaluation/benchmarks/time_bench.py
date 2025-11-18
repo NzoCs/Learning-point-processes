@@ -18,7 +18,7 @@ from .base_bench import BaseBenchmark
 class TimeBenchmark(BaseBenchmark):
     """
     Abstract base class for time prediction benchmarks.
-    
+
     This class handles benchmarks that focus on predicting inter-arrival times.
     """
 
@@ -35,7 +35,6 @@ class TimeBenchmark(BaseBenchmark):
         """
         pass
 
-
     def evaluate(self) -> Dict[str, Any]:
         """
         Run the time benchmark evaluation.
@@ -47,7 +46,7 @@ class TimeBenchmark(BaseBenchmark):
 
         # Prepare benchmark-specific parameters
         self._prepare_benchmark()
-        
+
         # Evaluate on test data
         test_loader = self.data_module.test_dataloader()
         all_metrics = []
@@ -55,8 +54,10 @@ class TimeBenchmark(BaseBenchmark):
         for batch_idx, batch in enumerate(test_loader):
             # Only compute time metrics
             dtime_predictions = self._create_dtime_predictions(batch)
-            
-            metrics = self.metrics_helper.compute_prediction_time_metrics(batch, dtime_predictions)
+
+            metrics = self.metrics_helper.compute_prediction_time_metrics(
+                batch, dtime_predictions
+            )
 
             all_metrics.append(metrics)
 

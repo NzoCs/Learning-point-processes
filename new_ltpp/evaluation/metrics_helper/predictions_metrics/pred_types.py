@@ -1,6 +1,7 @@
-import torch
 from enum import StrEnum
 from typing import TypedDict
+
+import torch
 
 
 class TimeValues(TypedDict):
@@ -15,7 +16,6 @@ class TypeValues(TypedDict):
 
     true_types: torch.Tensor
     pred_types: torch.Tensor
-
 
 
 class PredMetrics(StrEnum):

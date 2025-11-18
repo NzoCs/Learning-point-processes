@@ -206,7 +206,7 @@ class LoggerConfig(Config):
         config (Dict[str, Any]): Additional configuration parameters for the logger.
     """
 
-    save_dir: str
+    save_dir: str | Path
     type: LoggerType = LoggerType.TENSORBOARD
     config: Dict[str, Any] = field(default_factory=dict)
 
@@ -229,7 +229,7 @@ class LoggerConfig(Config):
 
         # Prepare config with save_dir
         self.config = dict(self.config)
-        self.config["save_dir"] = self.save_dir
+        self.config["save_dir"] = str(self.save_dir)
 
         # Validate the configuration with the adapter
         self.config = adapter.validate_config(self.config)
@@ -238,7 +238,7 @@ class LoggerConfig(Config):
 
     def get_yaml_config(self) -> Dict[str, Any]:
         return {
-            "save_dir": self.save_dir,
+            "save_dir": str(self.save_dir),
             "logger_type": self.type.value,
             "config": self.config,
         }

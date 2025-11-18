@@ -14,6 +14,7 @@ from new_ltpp.evaluation.benchmarks.benchmark_manager import (
 )
 from new_ltpp.globals import CONFIGS_FILE
 
+
 def example_simple_benchmark():
     """Simple example with a single benchmark."""
     # Use DataConfigBuilder to construct the config
@@ -131,7 +132,7 @@ def example_multiple_configs():
 
     # Run on multiple configs returns nested dict: {dataset_id: {benchmark_name: result}}
     results = manager.run_all_benchmarks([config1, config2])
-    
+
     print(f"Benchmarks completed on {len(results)} datasets:")
     for dataset_id in results.keys():
         print(f"  - {dataset_id}: {len(results[dataset_id])} benchmarks")

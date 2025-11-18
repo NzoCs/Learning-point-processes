@@ -9,6 +9,7 @@ from new_ltpp.shared_types import Batch
 
 from .neural_model import NeuralModel
 
+
 class CumulHazardFunctionNetwork(nn.Module):
     """Cumulative Hazard Function Network
     ref: https://github.com/wassname/torch-neuralpointprocess
@@ -140,20 +141,20 @@ class FullyNN(NeuralModel):
         """
         super(FullyNN, self).__init__(
             hidden_size=hidden_size, dropout=dropout, **kwargs
-            )
-        
+        )
+
         self.hidden_size = hidden_size
         self.rnn_type = rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
         self.n_layers = num_layers
-        
+
         # Initialize type embedding layer
         self.layer_type_emb = nn.Embedding(
             num_embeddings=self.num_event_types + 1,  # +1 for pad token
             embedding_dim=hidden_size,
             padding_idx=self.pad_token_id,
         )
-        
+
         for sub_rnn_class in self.rnn_list:
             if sub_rnn_class.__name__ == self.rnn_type:
                 self.layer_rnn = sub_rnn_class(

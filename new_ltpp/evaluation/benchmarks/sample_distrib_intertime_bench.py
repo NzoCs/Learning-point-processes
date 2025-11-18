@@ -5,8 +5,8 @@ This benchmark creates bins to approximate the distribution of inter-times from 
 training dataset, then predicts inter-times by sampling from these bins.
 """
 
-from typing import Any, Dict, Tuple, Union
 from pathlib import Path
+from typing import Any, Dict, Tuple, Union
 
 import torch
 
@@ -114,9 +114,15 @@ class InterTimeDistributionBenchmark(TimeBenchmark):
         total_samples = size[0] * size[1]
 
         # Sample bin indices according to probabilities using PyTorch
-        if self.bin_probabilities is None or self.bin_centers is None or self.bins is None:
-            raise ValueError("Bins have not been computed. Call _build_intertime_distribution first.")
-        
+        if (
+            self.bin_probabilities is None
+            or self.bin_centers is None
+            or self.bins is None
+        ):
+            raise ValueError(
+                "Bins have not been computed. Call _build_intertime_distribution first."
+            )
+
         bin_indices = torch.multinomial(
             self.bin_probabilities, num_samples=total_samples, replacement=True
         )

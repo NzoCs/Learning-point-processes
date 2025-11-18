@@ -1,4 +1,5 @@
 from typing import Tuple
+
 import torch
 from torch import nn
 
@@ -106,9 +107,7 @@ class NHP(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(NHP, self).__init__(
-            hidden_size=hidden_size, dropout=dropout, **kwargs
-        )
+        super(NHP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
 
         self.beta = beta
         self.bias = bias
@@ -130,7 +129,9 @@ class NHP(NeuralModel):
             o_t,
         )  # Okay to initialize delta to be zero because c==c_bar at the beginning
 
-    def forward(self, batch: Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, batch: Tuple[torch.Tensor, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Suppose we have inputs with original sequence length N+1
         ts: [t0, t1, ..., t_N]
@@ -213,9 +214,7 @@ class NHP(NeuralModel):
         # 1. compute hidden states at event time
         # left limits of [t_1, ..., t_N]
         # right limits of [t_0, ..., t_{N-1}, t_N]
-        left_hiddens, right_hiddens = self.forward(
-            (dts_BN, marks_BN)
-        )
+        left_hiddens, right_hiddens = self.forward((dts_BN, marks_BN))
         right_hiddens = right_hiddens[
             ..., :-1, :
         ]  # discard right limit at t_N for logL

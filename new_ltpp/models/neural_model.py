@@ -1,6 +1,7 @@
 from abc import ABC
 
 import torch.nn as nn
+
 from .basemodel import Model
 
 
@@ -24,9 +25,7 @@ class NeuralModel(Model, ABC):
             model_config: Configuration of the model.
             num_event_types: Number of event types.
         """
-        super(NeuralModel, self).__init__(
-            **kwargs
-        )
+        super(NeuralModel, self).__init__(**kwargs)
 
         self.num_event_types = self.num_event_types
         self.dropout = dropout

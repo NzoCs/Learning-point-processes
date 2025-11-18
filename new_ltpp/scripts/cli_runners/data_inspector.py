@@ -7,11 +7,11 @@ Runner pour l'inspection et visualisation de données TPP.
 from pathlib import Path
 from typing import List, Optional
 
-from .cli_base import CLIRunnerBase
-
-
 from new_ltpp.configs import DataConfigBuilder
 from new_ltpp.data.preprocess import Visualizer
+
+from .cli_base import CLIRunnerBase
+
 
 class DataInspector(CLIRunnerBase):
     """

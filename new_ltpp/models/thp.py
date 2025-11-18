@@ -35,9 +35,7 @@ class THP(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(THP, self).__init__(
-            hidden_size=hidden_size, dropout=dropout, **kwargs
-        )
+        super(THP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
         self.d_model = hidden_size
         self.d_time = time_emb_size
         self.use_norm = use_norm

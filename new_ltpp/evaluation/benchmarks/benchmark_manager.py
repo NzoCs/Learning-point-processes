@@ -15,11 +15,10 @@ Usage:
 
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Optional, Type, Union, Any
+from typing import Any, Dict, Optional, Type, Union
 
 from new_ltpp.configs import DataConfig
 from new_ltpp.globals import OUTPUT_DIR
-
 
 from .base_bench import BaseBenchmark
 from .last_mark_bench import LastMarkBenchmark
@@ -30,6 +29,7 @@ from .sample_distrib_intertime_bench import (
 from .sample_distrib_mark_bench import (
     MarkDistributionBenchmark,
 )
+
 
 class BenchmarksEnum(Enum):
     """Enum of available benchmarks."""
@@ -195,9 +195,7 @@ class BenchmarkManager:
         benchmarks = []
         for name in benchmark_names:
             try:
-                benchmark_enum = next(
-                    b for b in BenchmarksEnum if b.get_name() == name
-                )
+                benchmark_enum = next(b for b in BenchmarksEnum if b.get_name() == name)
                 benchmarks.append(benchmark_enum)
             except StopIteration:
                 raise ValueError(

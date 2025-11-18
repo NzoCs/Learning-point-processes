@@ -1,12 +1,12 @@
-from typing import Any, Optional, List
+from typing import Any, List, Optional
 
 import pytorch_lightning as pl
 
 from new_ltpp.configs import RunnerConfig
+from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.data.preprocess import TPPDataModule
 from new_ltpp.models.model_factory import ModelFactory
 from new_ltpp.runners.trainer_factory import CheckpointManager, TrainerFactory
-from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.utils import logger
 
 
@@ -42,6 +42,9 @@ class Runner:
 
         self.dirpath = config.checkpoints_dir
         self.logger_config = config.logger_config
+        config.logger_config.save_dir = str(
+            self.dirpath / config.logger_config.save_dir
+        )
 
         self.checkpoint_path = CheckpointManager(str(self.dirpath)).latest_best()
 
@@ -50,8 +53,6 @@ class Runner:
         self._lightning_logger = self._build_lightning_logger(enable_logging)
         self.config = config  # Store config for access in save method
 
-
-
     def set_logging(self, enable_logging: bool):
         """Toggle logging, causing trainer recreation if needed."""
         if self.enable_logging == enable_logging:
@@ -59,13 +60,11 @@ class Runner:
 
         self.enable_logging = enable_logging
         self._lightning_logger = self._build_lightning_logger(enable_logging)
-    
-    
-    def _build_lightning_logger(self, enable_logging: bool) -> Any|None:
+
+    def _build_lightning_logger(self, enable_logging: bool) -> Any | None:
         if not enable_logging:
             return None
         return LoggerFactory.create_logger(self.logger_config)
-    
 
     @property
     def trainer(self) -> pl.Trainer:
@@ -75,8 +74,6 @@ class Runner:
             checkpoints_dir=self.dirpath,
         )
         return trainer
-
-    
 
     def train(self) -> None:
         """Training a model with optional resumption from a checkpoint."""
@@ -133,7 +130,6 @@ class Runner:
 
             logger.info(f"Test results saved to {results_file}")
 
-
     def predict(self) -> None:
         """
         Run predictions (e.g., simulations) using the model and save results.
@@ -147,22 +143,12 @@ class Runner:
 
         predict_dataloader = self.datamodule.test_dataloader()
 
-        # # Ensure the directory exists
-        # data_save_dir = self.config.base_dir / "distributions_comparisons"
-        # data_save_dir.mkdir(parents=True, exist_ok=True)
-
-        # # Initialize batch statistics collector before prediction
-        # self.model.init_statistics_collector(
-        #     output_dir=str(data_save_dir)
-        #     )
-
         trainer.predict(
             model=self.model,
             dataloaders=predict_dataloader,
             ckpt_path=self.checkpoint_path,
         )
 
-        # Finalize statistics and generate plots/metrics
         self.model.finalize_statistics()
 
         # logger.info("Generating intensity graph...")

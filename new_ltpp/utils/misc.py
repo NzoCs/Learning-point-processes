@@ -129,4 +129,3 @@ def format_multivariate_simulations(simulations: list[dict], dim_process) -> lis
         formatted_data.append(seq_dict)
 
     return formatted_data
-

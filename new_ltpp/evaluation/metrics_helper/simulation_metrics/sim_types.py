@@ -1,6 +1,7 @@
-import torch
 from enum import StrEnum
 from typing import TypedDict
+
+import torch
 
 
 class SimTimeValues(TypedDict):
@@ -17,7 +18,6 @@ class SimTypeValues(TypedDict):
 
     true_type_seqs: torch.Tensor
     sim_type_seqs: torch.Tensor
-
 
 
 class SimMetrics(StrEnum):

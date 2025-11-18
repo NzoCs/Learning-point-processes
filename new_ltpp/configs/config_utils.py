@@ -8,7 +8,7 @@ legacy field mappings, type conversions, and other preprocessing tasks.
 
 import logging
 from dataclasses import fields
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, Dict, List
 
 from new_ltpp.configs.config_interface import ConfigInterface, ConfigValidationError
 from new_ltpp.utils import logger

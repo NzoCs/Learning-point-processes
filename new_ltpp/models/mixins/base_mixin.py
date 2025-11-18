@@ -4,32 +4,31 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-import torch
 import pytorch_lightning as pl
+import torch
 
-from new_ltpp.shared_types import Batch
-from new_ltpp.models.event_sampler import EventSampler
 from new_ltpp.globals import OUTPUT_DIR
+from new_ltpp.models.event_sampler import EventSampler
+from new_ltpp.shared_types import Batch
 
 
 class BaseMixin(pl.LightningModule, ABC):
     """Base class for mixins providing shared interface.
-    
+
     Note: This is a mixin and should not be instantiated directly.
     It declares attributes that concrete models must provide.
     """
 
     def __init__(
-            self, 
-            num_exp: int,
-            device: torch.device,
-            dtime_max: float,
-            num_samples_boundary: int,
-            over_sample_rate: float,
-            output_dir: Path | str = OUTPUT_DIR,
-            ):
-        
-        """Initialize the BaseMixin.    
+        self,
+        num_exp: int,
+        device: torch.device,
+        dtime_max: float,
+        num_samples_boundary: int,
+        over_sample_rate: float,
+        output_dir: Path | str = OUTPUT_DIR,
+    ):
+        """Initialize the BaseMixin.
 
         Args:
             num_exp: Number of exponential random variables for thinning
@@ -38,7 +37,7 @@ class BaseMixin(pl.LightningModule, ABC):
             num_samples_boundary: Number of samples at boundary times
             over_sample_rate: Oversampling rate for thinning
         """
-        
+
         super().__init__()
 
         self.output_dir = Path(output_dir)
@@ -49,7 +48,6 @@ class BaseMixin(pl.LightningModule, ABC):
         self.over_sample_rate = over_sample_rate
         self._event_sampler = self.init_event_sampler()
 
-    
     def init_event_sampler(self) -> EventSampler:
         """Get the event sampler used for thinning-based generation.
 
@@ -63,7 +61,7 @@ class BaseMixin(pl.LightningModule, ABC):
             dtime_max=self.dtime_max,
             device=self._device,
         )
-    
+
     @abstractmethod
     def compute_intensities_at_sample_times(
         self,
@@ -84,17 +82,18 @@ class BaseMixin(pl.LightningModule, ABC):
         Returns:
             tensor: [batch_size, num_times, num_mc_sample, num_event_types],
                     intensity at each timestamp for each event type."""
-        raise NotImplementedError("Subclasses must implement compute_intensities_at_sample_times")
+        raise NotImplementedError(
+            "Subclasses must implement compute_intensities_at_sample_times"
+        )
 
     @abstractmethod
     def loglike_loss(self, batch: Batch) -> tuple:
         """Compute the log-likelihood loss.
-        
+
         Args:
             batch: Batch object containing sequences and masks
-            
+
         Returns:
             Tuple of (loss, num_events)
         """
         raise NotImplementedError("Subclasses must implement loglike_loss")
-    

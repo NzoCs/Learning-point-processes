@@ -9,6 +9,7 @@ import torch
 from matplotlib import pyplot as plt
 
 from new_ltpp.utils import logger, save_json
+
 from .base_mixin import BaseMixin
 
 
@@ -75,15 +76,26 @@ class VisualizationMixin(BaseMixin):
         # Save data if requested
         if save_data:
             self._save_intensity_data(
-                time_flat, intensities_flat, marked_times, 
-                save_dir, precision, start_time, end_time, num_mark
+                time_flat,
+                intensities_flat,
+                marked_times,
+                save_dir,
+                precision,
+                start_time,
+                end_time,
+                num_mark,
             )
 
         # Plot if requested
         if plot or save_plot:
             self._plot_intensity_graphs(
-                time_flat, intensities_flat, marked_times, 
-                num_mark, save_dir, plot, save_plot
+                time_flat,
+                intensities_flat,
+                marked_times,
+                num_mark,
+                save_dir,
+                plot,
+                save_plot,
             )
 
         return intensities_flat, time_flat, marked_times
@@ -102,7 +114,10 @@ class VisualizationMixin(BaseMixin):
         # Add hyperparameters if available
         if hasattr(self, "hparams"):
             for key, value in self.hparams.items():
-                if isinstance(value, (int, float, str, bool, list, dict)) or value is None:
+                if (
+                    isinstance(value, (int, float, str, bool, list, dict))
+                    or value is None
+                ):
                     if key not in metadata:
                         metadata[key] = value
 
@@ -111,8 +126,8 @@ class VisualizationMixin(BaseMixin):
     def _get_simulation_data(self, start_time: float, end_time: float):
         """Get or generate simulation data for visualization."""
         if self.simulations == []:
-            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = self.simulate(
-                start_time=start_time, end_time=end_time, batch_size=1
+            simul_time_seq, simul_dtime_seq, simul_event_seq, simul_mask = (
+                self.simulate(start_time=start_time, end_time=end_time, batch_size=1)
             )
             time_seq = simul_time_seq[0]
             time_delta_seq = simul_dtime_seq[0]
@@ -173,8 +188,15 @@ class VisualizationMixin(BaseMixin):
         return marked_times
 
     def _save_intensity_data(
-        self, time_flat, intensities_flat, marked_times, 
-        save_dir, precision, start_time, end_time, num_mark
+        self,
+        time_flat,
+        intensities_flat,
+        marked_times,
+        save_dir,
+        precision,
+        start_time,
+        end_time,
+        num_mark,
     ):
         """Save intensity data to JSON file."""
         os.makedirs(save_dir, exist_ok=True)
@@ -195,13 +217,21 @@ class VisualizationMixin(BaseMixin):
             },
         }
 
-        data_file = os.path.join(save_dir, f"{self.__class__.__name__}_intensity_data.json")
+        data_file = os.path.join(
+            save_dir, f"{self.__class__.__name__}_intensity_data.json"
+        )
         save_json(intensity_data, data_file)
         logger.info(f"Intensity data saved to {data_file}")
 
     def _plot_intensity_graphs(
-        self, time_flat, intensities_flat, marked_times, 
-        num_mark, save_dir, plot, save_plot
+        self,
+        time_flat,
+        intensities_flat,
+        marked_times,
+        num_mark,
+        save_dir,
+        plot,
+        save_plot,
     ):
         """Generate and optionally save intensity plots."""
         if save_plot:

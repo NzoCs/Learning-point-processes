@@ -1,7 +1,8 @@
 import math
+from typing import Callable, List, Optional, Tuple, Union
+
 import torch
 from torch import nn
-from typing import Optional, Union, Tuple, List, Callable
 
 
 # -------------------------------------------------------------------------
@@ -14,7 +15,7 @@ class ScaledSoftplus(nn.Module):
         self.log_beta = nn.Parameter(torch.zeros(num_marks))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        beta = self.log_beta.exp()                    # [num_marks]
+        beta = self.log_beta.exp()  # [num_marks]
         beta_x = beta * x
         return torch.where(
             beta_x <= self.threshold,
@@ -27,7 +28,14 @@ class ScaledSoftplus(nn.Module):
 # PYTORCH NATIF POUR MULTI-HEAD ATTENTION
 # -------------------------------------------------------------------------
 class MultiHeadAttention(nn.Module):
-    def __init__(self, n_head: int, d_input: int, d_model: int, dropout: float = 0.1, output_linear: bool = False):
+    def __init__(
+        self,
+        n_head: int,
+        d_input: int,
+        d_model: int,
+        dropout: float = 0.1,
+        output_linear: bool = False,
+    ):
         super().__init__()
         self.output_linear = output_linear
 
@@ -41,12 +49,19 @@ class MultiHeadAttention(nn.Module):
             embed_dim=d_model,
             num_heads=n_head,
             dropout=dropout,
-            batch_first=True,      # évite les permutes
+            batch_first=True,  # évite les permutes
         )
 
         self.out_proj = nn.Linear(d_model, d_model) if output_linear else nn.Identity()
 
-    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: Optional[torch.Tensor] = None, output_weight: bool = False) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def forward(
+        self,
+        query: torch.Tensor,
+        key: torch.Tensor,
+        value: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+        output_weight: bool = False,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         q = self.input_proj(query)
         k = self.input_proj(key)
         v = self.input_proj(value)
@@ -71,7 +86,9 @@ class SublayerConnection(nn.Module):
         self.norm = nn.LayerNorm(d_model)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x: torch.Tensor, sublayer: Callable[[torch.Tensor], torch.Tensor]) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, sublayer: Callable[[torch.Tensor], torch.Tensor]
+    ) -> torch.Tensor:
         return x + self.dropout(sublayer(self.norm(x)))
 
 
@@ -79,19 +96,30 @@ class SublayerConnection(nn.Module):
 # ENCODER LAYER (self-attn + MLP)
 # -------------------------------------------------------------------------
 class EncoderLayer(nn.Module):
-    def __init__(self, d_model: int, self_attn: nn.Module, feed_forward: Optional[nn.Module] = None, use_residual: bool = False, dropout: float = 0.1):
+    def __init__(
+        self,
+        d_model: int,
+        self_attn: nn.Module,
+        feed_forward: Optional[nn.Module] = None,
+        use_residual: bool = False,
+        dropout: float = 0.1,
+    ):
         super().__init__()
         self.self_attn = self_attn
         self.feed_forward = feed_forward
         self.use_residual = use_residual
 
         if use_residual:
-            self.sublayers = nn.ModuleList([
-                SublayerConnection(d_model, dropout),
-                SublayerConnection(d_model, dropout),
-            ])
+            self.sublayers = nn.ModuleList(
+                [
+                    SublayerConnection(d_model, dropout),
+                    SublayerConnection(d_model, dropout),
+                ]
+            )
 
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         if self.use_residual:
             x = self.sublayers[0](x, lambda x: self.self_attn(x, x, x, mask))
             if self.feed_forward is not None:
@@ -145,7 +173,14 @@ class TimeShiftedPositionalEncoding(nn.Module):
 # DNN (MLP modernisé)
 # -------------------------------------------------------------------------
 class DNN(nn.Module):
-    def __init__(self, inputs_dim: int, hidden_size: List[int], activation: str = "ReLU", dropout_rate: float = 0.0, use_bn: bool = False):
+    def __init__(
+        self,
+        inputs_dim: int,
+        hidden_size: List[int],
+        activation: str = "ReLU",
+        dropout_rate: float = 0.0,
+        use_bn: bool = False,
+    ):
         super().__init__()
         layers = []
         in_dim = inputs_dim

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from new_ltpp.globals import CONFIGS_FILE
 from new_ltpp.configs.config_builders import RunnerConfigBuilder
+from new_ltpp.globals import CONFIGS_FILE
 from new_ltpp.runners import RunnerManager
 
 

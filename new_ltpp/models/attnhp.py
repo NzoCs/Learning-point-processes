@@ -124,7 +124,7 @@ class AttNHP(NeuralModel):
             # Get the head's layer list - cast to ModuleList for type checker
             head_layers = self.heads[head_i]
             assert isinstance(head_layers, nn.ModuleList)
-            
+
             for layer_i in range(self.n_layers):
                 # each layer concats the temporal emb
                 # [batch_size, seq_len, hidden_size*2]

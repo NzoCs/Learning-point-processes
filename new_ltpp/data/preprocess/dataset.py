@@ -3,8 +3,8 @@ from typing import Dict
 import numpy as np
 from torch.utils.data import Dataset
 
-from new_ltpp.utils import py_assert
 from new_ltpp.shared_types import TPPSequence
+from new_ltpp.utils import py_assert
 
 
 class TPPDataset(Dataset):

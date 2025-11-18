@@ -73,7 +73,6 @@ class SummaryStatsHelper:
 
         return metrics
 
-
     @staticmethod
     def get_available_metrics() -> List[str]:
         return [metric.value for metric in SummaryStatsMetric]
@@ -141,7 +140,6 @@ class SummaryStatsHelper:
     @staticmethod
     def _absolute_difference(a: float, b: float) -> float:
         return float(abs(float(a) - float(b)))
-
 
     def _build_metric_mapping(
         self,

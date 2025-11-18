@@ -2,10 +2,10 @@ import torch
 from torch import nn
 
 from new_ltpp.configs import ModelConfig
-from new_ltpp.shared_types import Batch
-from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 from new_ltpp.models.baselayer import MultiHeadAttention
 from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.shared_types import Batch
+from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 
 
 class ANHN(NeuralModel):

@@ -12,7 +12,7 @@ from new_ltpp.shared_types import Batch, SimulationResult
 
 class BaseAccumulator(ABC):
     """Base class for all statistical accumulators.
-    
+
     Accumulators are designed to:
     1. Process data batch-by-batch during predict_step
     2. Maintain internal state (accumulated statistics)
@@ -21,7 +21,7 @@ class BaseAccumulator(ABC):
 
     def __init__(self, min_sim_events: int = 1):
         """Initialize the accumulator.
-        
+
         Args:
             min_sim_events: Minimum number of simulated events required per batch
         """
@@ -32,7 +32,7 @@ class BaseAccumulator(ABC):
     @abstractmethod
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
         """Update accumulator with new batch data.
-        
+
         Args:
             batch: Ground truth batch data
             simulation: Simulation results for the batch (required)
@@ -42,7 +42,7 @@ class BaseAccumulator(ABC):
     @abstractmethod
     def compute(self) -> Any:
         """Compute and return final statistics from accumulated data.
-        
+
         Returns:
             Dictionary containing computed statistics
         """
@@ -57,4 +57,3 @@ class BaseAccumulator(ABC):
     def sample_count(self) -> int:
         """Return number of samples accumulated."""
         return self._sample_count
-

@@ -1,7 +1,8 @@
+from typing import Iterator, Literal, Optional
+
+import numpy as np
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-from typing import Iterator, Literal, Optional
-import numpy as np
 
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_collator import TPPDataCollator
@@ -36,7 +37,7 @@ class TypedDataLoader:
 
 # PyTorch Lightning DataModule for TPP
 class TPPDataModule(pl.LightningDataModule):
-    
+
     def __init__(self, data_config: DataConfig):
         """Initialize the PyTorch Lightning DataModule.
 
@@ -58,8 +59,10 @@ class TPPDataModule(pl.LightningDataModule):
         self.val_data = None
         self.test_data = None
         self.predict_data = None
-        
-    def estimate_dtime_range(self, split: str = "train", quantile: float = 0.995, nb_samples: int = 10**5):
+
+    def estimate_dtime_range(
+        self, split: str = "train", quantile: float = 0.995, nb_samples: int = 10**5
+    ):
         """
         Estimate the minimum and maximum time deltas (dtime) from the dataset.
         This is useful for understanding the range of time intervals in the data.
@@ -73,7 +76,7 @@ class TPPDataModule(pl.LightningDataModule):
         # Ensure data is loaded using setup()
         stage = "fit" if split == "train" else split
         data_attr = f"{split}_data"
-        
+
         if getattr(self, data_attr, None) is None:
             self.setup(stage)
 
@@ -103,8 +106,10 @@ class TPPDataModule(pl.LightningDataModule):
         )
 
         return dtime_min_estimate, dtime_max_estimate
-    
-    def estimate_end_time_max(self, split: str = "train", quantile: float = 0.995, nb_samples: int = 10**5):
+
+    def estimate_end_time_max(
+        self, split: str = "train", quantile: float = 0.995, nb_samples: int = 10**5
+    ):
         """
         Estimate the maximum end time (last event time) from the dataset.
         This is useful for understanding the temporal extent of sequences.
@@ -119,7 +124,7 @@ class TPPDataModule(pl.LightningDataModule):
         # Ensure data is loaded using setup()
         stage = "fit" if split == "train" else split
         data_attr = f"{split}_data"
-        
+
         if getattr(self, data_attr, None) is None:
             self.setup(stage)
 
@@ -148,7 +153,7 @@ class TPPDataModule(pl.LightningDataModule):
         )
 
         return end_time_max_estimate
-    
+
     def get_data_stats(self) -> DataStats:
         """Get dataset statistics for model configuration.
 
@@ -171,9 +176,11 @@ class TPPDataModule(pl.LightningDataModule):
 
         return data_stats
 
-
     def build_input(
-        self, source_dir: str, data_format: Literal["json", "pkl", "hf"] = "json", split: str = "train"
+        self,
+        source_dir: str,
+        data_format: Literal["json", "pkl", "hf"] = "json",
+        split: str = "train",
     ) -> dict:
         """Helper function to load and process dataset based on file format.
 
@@ -197,7 +204,7 @@ class TPPDataModule(pl.LightningDataModule):
             return self._build_input_from_hf(source_dir, split)
         else:
             raise ValueError(f"Unsupported data format: {data_format}")
-    
+
     def _build_input_from_hf(self, source_dir: str, split: str) -> dict:
         """Load and process data from a Hugging Face dataset.
 
@@ -301,9 +308,7 @@ class TPPDataModule(pl.LightningDataModule):
             if self.train_data is None:
                 train_data_dir = self.data_config.get_data_dir("train")
                 data_format: Literal["pkl", "json", "hf"] = self.data_config.data_format
-                self.train_data = self.build_input(
-                    train_data_dir, data_format, "train"
-                )
+                self.train_data = self.build_input(train_data_dir, data_format, "train")
                 self.train_dataset = TPPDataset(self.train_data)
                 logger.info(
                     f"Train dataset created with {len(self.train_dataset)} sequences"
@@ -315,9 +320,7 @@ class TPPDataModule(pl.LightningDataModule):
             if self.val_data is None:
                 val_data_dir = self.data_config.get_data_dir("dev")
                 data_format: Literal["pkl", "json", "hf"] = self.data_config.data_format
-                self.val_data = self.build_input(
-                    val_data_dir, data_format, "dev"
-                )
+                self.val_data = self.build_input(val_data_dir, data_format, "dev")
                 self.val_dataset = TPPDataset(self.val_data)
                 logger.info(
                     f"Validation dataset created with {len(self.val_dataset)} sequences"
@@ -331,9 +334,7 @@ class TPPDataModule(pl.LightningDataModule):
             if self.test_data is None:
                 test_data_dir = self.data_config.get_data_dir("test")
                 data_format: Literal["pkl", "json", "hf"] = self.data_config.data_format
-                self.test_data = self.build_input(
-                    test_data_dir, data_format, "test"
-                )
+                self.test_data = self.build_input(test_data_dir, data_format, "test")
                 self.test_dataset = TPPDataset(self.test_data)
                 logger.info(
                     f"Test dataset created with {len(self.test_dataset)} sequences"
@@ -351,14 +352,16 @@ class TPPDataModule(pl.LightningDataModule):
             tokenizer=self.tokenizer,
         )
 
-        train_data_loader = TypedDataLoader(DataLoader(
-            self.train_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            collate_fn=collate_fn,
-            num_workers=self.num_workers,
-            persistent_workers=True,
-        ))
+        train_data_loader = TypedDataLoader(
+            DataLoader(
+                self.train_dataset,
+                batch_size=self.batch_size,
+                shuffle=True,
+                collate_fn=collate_fn,
+                num_workers=self.num_workers,
+                persistent_workers=True,
+            )
+        )
 
         return train_data_loader
 
@@ -372,14 +375,16 @@ class TPPDataModule(pl.LightningDataModule):
             tokenizer=self.tokenizer,
         )
 
-        val_data_loader = TypedDataLoader(DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            collate_fn=collate_fn,
-            num_workers=self.num_workers,
-            persistent_workers=True,
-        ))
+        val_data_loader = TypedDataLoader(
+            DataLoader(
+                self.val_dataset,
+                batch_size=self.batch_size,
+                shuffle=False,
+                collate_fn=collate_fn,
+                num_workers=self.num_workers,
+                persistent_workers=True,
+            )
+        )
 
         return val_data_loader
 
@@ -393,14 +398,16 @@ class TPPDataModule(pl.LightningDataModule):
             tokenizer=self.tokenizer,
         )
 
-        test_data_loader = TypedDataLoader(DataLoader(
-            self.test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            collate_fn=collate_fn,
-            num_workers=self.num_workers,
-            persistent_workers=True,
-        ))
+        test_data_loader = TypedDataLoader(
+            DataLoader(
+                self.test_dataset,
+                batch_size=self.batch_size,
+                shuffle=False,
+                collate_fn=collate_fn,
+                num_workers=self.num_workers,
+                persistent_workers=True,
+            )
+        )
 
         return test_data_loader
 

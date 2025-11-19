@@ -35,7 +35,7 @@ format: ## Format code (black + isort)
 
 type-check: ## Type check with mypy
 	@echo "Running mypy type checks..."
-	@python -m mypy new_ltpp || true
+	@python -m mypy new_ltpp/ tests/ examples/ || true
 	@echo "Type checking finished (issues reported above)."
 
 # Generic run target (defaults to demo/test configs)

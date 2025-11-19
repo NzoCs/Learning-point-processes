@@ -28,7 +28,7 @@ class BenchmarkRunner(CLIRunnerBase):
 
     def run_benchmark(
         self,
-        data_config: Union[str, List[str]],
+        data_config: str | List[str] | None,
         data_loading_config: str,
         config_path: Optional[str] = None,
         benchmarks: Optional[List[str]] = None,
@@ -47,7 +47,7 @@ class BenchmarkRunner(CLIRunnerBase):
             benchmarks: Liste des noms de benchmarks à exécuter
             output_dir: Répertoire de sortie
             run_all: Exécuter tous les benchmarks disponibles
-            run_all_configs: Exécuter sur toutes les configurations
+            run_all_configs: Exécuter sur toutes les configurations disponibles dans le YAML
             **benchmark_params: Paramètres supplémentaires pour les benchmarks
 
         Returns:
@@ -58,11 +58,6 @@ class BenchmarkRunner(CLIRunnerBase):
         if not self.check_dependencies(required_modules):
             return False
 
-        # Support de plusieurs configurations
-        data_configs_list = (
-            data_config if isinstance(data_config, list) else [data_config]
-        )
-
         # Configuration par défaut si aucun fichier spécifié
         if config_path is None:
             config_path = str(self.get_config_path())
@@ -70,24 +65,61 @@ class BenchmarkRunner(CLIRunnerBase):
                 f"Utilisation de la configuration par défaut: {config_path}"
             )
 
+        # Si run_all_configs, récupérer toutes les configurations du YAML
+        if run_all_configs:
+            import yaml
+
+            self.print_info("Récupération de toutes les configurations disponibles...")
+            
+            with open(config_path, "r") as f:
+                yaml_content = yaml.safe_load(f)
+            
+            # Extraire tous les noms de configs data disponibles
+            available_data_configs = list(yaml_content.get("data_configs", {}).keys())
+            
+            if not available_data_configs:
+                self.print_error("Aucune configuration de données trouvée dans le YAML")
+                return False
+            
+            self.print_info(
+                f"Configurations trouvées: {', '.join(available_data_configs)}"
+            )
+            data_configs_list = available_data_configs
+        else:
+            # Support de plusieurs configurations spécifiées
+            data_configs_list = (
+                data_config if isinstance(data_config, list) else [data_config]
+            )
+
         # Construire toutes les configurations
         all_data_configs = []
         for data_cfg in data_configs_list:
-            # Construire les chemins de configuration avec la méthode utilitaire
-            config_paths = self._build_config_paths(
-                data=data_cfg, data_loading=data_loading_config
-            )
+            try:
+                # Construire les chemins de configuration avec la méthode utilitaire
+                config_paths = self._build_config_paths(
+                    data=data_cfg, data_loading=data_loading_config
+                )
 
-            self.print_info(
-                f"Configuration des données: {config_paths.get('data_config_path')}"
-            )
+                self.print_info(
+                    f"Configuration des données: {config_paths.get('data_config_path')}"
+                )
 
-            builder = DataConfigBuilder()
-            builder.load_from_yaml(yaml_path=config_path, **config_paths)
-            built_config = builder.build()
-            all_data_configs.append(built_config)
+                builder = DataConfigBuilder()
+                builder.load_from_yaml(yaml_path=config_path, **config_paths)
+                built_config = builder.build()
+                all_data_configs.append(built_config)
 
-            self.print_info(f"Configuration chargée: {built_config.dataset_id}")
+                self.print_info(f"Configuration chargée: {built_config.dataset_id}")
+            
+            except Exception as e:
+                self.print_error(f"Erreur lors du chargement de {data_cfg}: {e}")
+                if self.debug:
+                    self.logger.exception(f"Détails de l'erreur pour {data_cfg}:")
+                # Continue avec les autres configs
+
+        if not all_data_configs:
+            self.print_error("Aucune configuration n'a pu être chargée")
+            return False
 
         # Créer le BenchmarkManager
         benchmark_manager = BenchmarkManager(
@@ -96,19 +128,14 @@ class BenchmarkRunner(CLIRunnerBase):
 
         try:
             self.print_info("Configuration du benchmark...")
+            self.print_info(
+                f"Exécution sur {len(all_data_configs)} configuration(s)..."
+            )
+            dataset_ids = [cfg.dataset_id for cfg in all_data_configs]
+            self.print_info(f"Datasets: {', '.join(dataset_ids)}")
 
             # Déterminer quels benchmarks exécuter
-            if run_all and run_all_configs and len(all_data_configs) > 1:
-                self.print_info(
-                    f"Exécution de tous les benchmarks sur {len(all_data_configs)} configurations..."
-                )
-                dataset_ids = [cfg.dataset_id for cfg in all_data_configs]
-                self.print_info(f"Datasets: {', '.join(dataset_ids)}")
-                benchmark_manager.run_all_benchmarks(
-                    all_data_configs, **benchmark_params
-                )
-
-            elif run_all:
+            if run_all:
                 self.print_info("Exécution de tous les benchmarks disponibles...")
                 benchmark_manager.run_all_benchmarks(
                     all_data_configs, **benchmark_params

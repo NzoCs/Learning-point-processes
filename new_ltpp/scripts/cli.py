@@ -282,10 +282,6 @@ def benchmark_performance(
         runner.list_available_benchmarks()
         return
 
-    # If no config specified, use 'test' by default
-    if data_config is None:
-        data_config = ["test"]
-
     success = runner.run_benchmark(
         config_path=config_path,
         data_config=data_config,

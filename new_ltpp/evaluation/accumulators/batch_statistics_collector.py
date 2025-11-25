@@ -228,45 +228,6 @@ class BatchStatisticsCollector:
             generator.generate_plot(data_to_use, output_path)
             logger.info(f"Generated plot: {filename}")
 
-    def compute_metrics(self, statistics: AllStatistics) -> Dict[str, float]:
-        """Compute summary metrics from statistics.
-
-        Args:
-            statistics: Dictionary containing computed statistics
-
-        Returns:
-            Dictionary of computed metrics
-        """
-        if not self.enable_metrics or self._metrics_calculator is None:
-            logger.info("Metrics computation disabled")
-            return {}
-
-        logger.info("Computing summary metrics...")
-
-        # Prepare data in the format expected by metrics calculator
-        metrics_data = MetricsData(
-            label_time_deltas=statistics["time"]["gt_time_deltas"],
-            simulated_time_deltas=statistics["time"]["sim_time_deltas"],
-            label_sequence_lengths=statistics["sequence_length"]["gt_array"],
-            simulated_sequence_lengths=statistics["sequence_length"]["sim_array"],
-        )
-
-        metrics: Dict[str, float] = self._metrics_calculator.calculate_metrics(
-            metrics_data
-        )
-
-        # Add correlation statistics summary
-        corr_stats = statistics["correlation"]
-        # Compute simple metric: mean absolute difference between ACFs
-        acf_diff = np.abs(corr_stats["acf_gt_mean"] - corr_stats["acf_sim_mean"])
-        metrics.update(
-            {
-                "acf_mean_absolute_difference": float(np.mean(acf_diff)),
-                "acf_max_absolute_difference": float(np.max(acf_diff)),
-            }
-        )
-
-        return metrics
 
     def finalize_and_save(self) -> FinalResult:
         """Finalize collection, compute statistics, generate plots, and save results.
@@ -293,24 +254,11 @@ class BatchStatisticsCollector:
         # Generate plots
         self.generate_plots(statistics)
 
-        # Compute metrics
-        metrics: Dict[str, float] = self.compute_metrics(statistics)
-
-        # Save metrics to file
-        if metrics:
-            metrics_file: Path = self.output_dir / "distribution_metrics.txt"
-            with open(metrics_file, "w") as f:
-                f.write("Distribution Comparison Metrics\n")
-                f.write("=" * 50 + "\n\n")
-                for key, value in metrics.items():
-                    f.write(f"{key}: {value}\n")
-            logger.info(f"Metrics saved to {metrics_file}")
 
         self._is_finalized = True
 
         result = FinalResult(
             statistics=statistics,
-            metrics=metrics,
             batch_count=self._batch_count,
         )
 

@@ -94,21 +94,14 @@ class ConfigFactory:
 
         logger.info(f"Creating configuration: {config_name}")
 
-        try:
-            # Create the instance directly
-            instance = config_class(**config_data, **kwargs)
+        # Create the instance directly
+        instance = config_class(**config_data, **kwargs)
 
-            # Additional validation
-            if hasattr(instance, "validate"):
-                instance.validate()
+        # Additional validation
+        if hasattr(instance, "validate"):
+            instance.validate()
 
-            return instance
-
-        except Exception as e:
-            logger.error(f"Error creating configuration {config_name}: {e}")
-            raise ConfigValidationError(
-                f"Failed to create {config_name} configuration: {str(e)}"
-            ) from e
+        return instance
 
     def create_config_by_name(
         self, config_name: str, config_data: dict, **kwargs
@@ -176,13 +169,8 @@ class ConfigFactory:
         """
         from omegaconf import OmegaConf
 
-        try:
-            config_dict = dict(OmegaConf.load(yaml_path))
-            return self.create_config(config_type, config_dict, **kwargs)
-        except Exception as e:
-            raise ConfigValidationError(
-                f"Failed to load configuration from {yaml_path}: {str(e)}"
-            ) from e
+        config_dict = dict(OmegaConf.load(yaml_path))
+        return self.create_config(config_type, config_dict, **kwargs)
 
 
 # Global factory instance

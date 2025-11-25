@@ -1,9 +1,9 @@
+from sympy import ask
 import torch
 import torch.nn as nn
 
-from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.shared_types import Batch
-from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
+from new_ltpp.utils.attention import build_causal_attn_mask
 
 from .baselayer import (
     EncoderLayer,
@@ -22,8 +22,6 @@ class THP(NeuralModel):
     def __init__(
         self,
         *,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
         use_norm: bool = True,
         time_emb_size: int = 32,
         num_layers: int = 2,
@@ -35,8 +33,8 @@ class THP(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(THP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
-        self.d_model = hidden_size
+        super(THP, self).__init__(**kwargs)
+        self.d_model = self.hidden_size
         self.d_time = time_emb_size
         self.use_norm = use_norm
 
@@ -89,7 +87,7 @@ class THP(NeuralModel):
             ]
         )
 
-    def forward(self, time_seqs, type_seqs, attention_mask):
+    def forward(self, time_seqs, type_seqs, key_padding_mask, attn_mask):
         """Call the model
 
         Args:
@@ -107,7 +105,7 @@ class THP(NeuralModel):
         # [batch_size, seq_len, hidden_size]
         for enc_layer in self.stack_layers:
             enc_output += tem_enc
-            enc_output = enc_layer(enc_output, mask=attention_mask)
+            enc_output = enc_layer(enc_output, key_padding_mask, attn_mask)
 
         return enc_output
 
@@ -124,10 +122,13 @@ class THP(NeuralModel):
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = build_attention_mask_from_seq_mask(batch.seq_non_pad_mask)
+        attn_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
 
         enc_out = self.forward(
-            time_seqs[:, :-1], type_seqs[:, :-1], attention_mask[:, :-1, :-1]
+            time_seqs[:, :-1], 
+            type_seqs[:, :-1], 
+            key_padding_mask=~batch_non_pad_mask[:, :-1], 
+            attn_mask=attn_mask[:-1, :-1]
         )
 
         # [batch_size, seq_len, num_event_types]
@@ -215,18 +216,11 @@ class THP(NeuralModel):
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
 
-        attention_mask = kwargs.get("attention_mask", None)
         compute_last_step_only = kwargs.get("compute_last_step_only", False)
-
-        if attention_mask is None:
-            batch_size, seq_len = time_seqs.size()
-            attention_mask = torch.triu(
-                torch.ones(seq_len, seq_len, device=self.device), diagonal=1
-            ).unsqueeze(0)
-            attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
+        attn_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
 
         # [batch_size, seq_len, num_samples]
-        enc_out = self.forward(time_seqs, type_seqs, attention_mask)
+        enc_out = self.forward(time_seqs, type_seqs, key_padding_mask=None, attn_mask=attn_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(enc_out, sample_dtimes)

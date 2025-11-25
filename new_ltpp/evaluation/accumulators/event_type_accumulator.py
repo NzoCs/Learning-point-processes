@@ -4,10 +4,9 @@ Event Type Accumulator
 Accumulates event type distribution statistics from batches during prediction.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import List
 
 import numpy as np
-import torch
 
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
@@ -35,7 +34,7 @@ class EventTypeAccumulator(BaseAccumulator):
 
         # Validate simulation has sufficient events (assumes simulation.type_seqs already masked)
         sim_types = simulation.type_seqs
-        sim_event_count = int((sim_types > 0).sum().item())
+        sim_event_count = sim_types.sum().item()
         if sim_event_count < self.min_sim_events:
             logger.error(
                 "EventTypeAccumulator: Too few simulated events (%d < %d)",
@@ -51,7 +50,6 @@ class EventTypeAccumulator(BaseAccumulator):
         mask = batch.seq_non_pad_mask
 
         gt_valid = type_seqs[mask.bool()]
-        gt_valid = gt_valid[gt_valid > 0]
 
         if gt_valid.numel() > 0:
             # Move to CPU only once for conversion to Python ints
@@ -59,7 +57,7 @@ class EventTypeAccumulator(BaseAccumulator):
             self._sample_count += int(gt_valid.numel())
 
         # Process simulation vectorized (torch)
-        valid_sim_types = sim_types[sim_types > 0]
+        valid_sim_types = sim_types[simulation.mask.bool()]
         if valid_sim_types.numel() > 0:
             self._sim_event_types.extend(valid_sim_types.view(-1).cpu().tolist())
 

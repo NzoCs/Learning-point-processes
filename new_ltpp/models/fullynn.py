@@ -128,8 +128,6 @@ class FullyNN(NeuralModel):
     def __init__(
         self,
         *,
-        hidden_size: int = 64,
-        dropout: float = 0.1,
         num_layers: int = 2,
         rnn_type: str = "LSTM",
         **kwargs,
@@ -139,11 +137,9 @@ class FullyNN(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(FullyNN, self).__init__(
-            hidden_size=hidden_size, dropout=dropout, **kwargs
-        )
+        super(FullyNN, self).__init__(**kwargs)
 
-        self.hidden_size = hidden_size
+        self.hidden_size = self.hidden_size
         self.rnn_type = rnn_type
         self.rnn_list = [nn.LSTM, nn.RNN, nn.GRU]
         self.n_layers = num_layers
@@ -151,7 +147,7 @@ class FullyNN(NeuralModel):
         # Initialize type embedding layer
         self.layer_type_emb = nn.Embedding(
             num_embeddings=self.num_event_types + 1,  # +1 for pad token
-            embedding_dim=hidden_size,
+            embedding_dim=self.hidden_size,
             padding_idx=self.pad_token_id,
         )
 
@@ -166,7 +162,7 @@ class FullyNN(NeuralModel):
                 )
 
         self.layer_intensity = CumulHazardFunctionNetwork(
-            hidden_size=hidden_size,
+            hidden_size=self.hidden_size,
             num_event_types=self.num_event_types,
         )
 

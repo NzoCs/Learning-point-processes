@@ -29,7 +29,8 @@ OUTPUT_DIRS = {
 
 CONFIG_MAP = {
     "data": "data_configs",
-    "model": "model_configs",
+    "general_specs": "general_specs",
+    "model_specs": "model_specs",
     "runner": "runner_configs",
     "simulation": "simulation_configs",
     "hpo": "hpo_configs",

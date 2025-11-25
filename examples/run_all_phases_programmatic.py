@@ -27,7 +27,8 @@ def main() -> None:
 
     # Build model config using the model_builder attribute
     print("🧠 Configuring model settings...")
-    builder.model_builder.set_specs({"hidden_size": 64, "mlp_dims": [64, 64]})
+    builder.model_builder.set_general_specs({"hidden_size": 64})
+    builder.model_builder.set_model_specs({})
 
     # Set scheduler config with explicit parameters
     builder.model_builder.set_scheduler_config(lr_scheduler=True, lr=1e-3)

@@ -19,8 +19,6 @@ class RMTPP(NeuralModel):
     def __init__(
         self,
         *,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
         num_layers: int = 1,
         **kwargs,
     ) -> None:
@@ -31,7 +29,7 @@ class RMTPP(NeuralModel):
             dropout: dropout probability.
             num_layers: number of RNN layers.
         """
-        super(RMTPP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
+        super(RMTPP, self).__init__(**kwargs)
         # self.hidden_size is now set in Model's __init__ via model_config.hidden_size
 
         self.layer_temporal_emb = nn.Linear(1, self.hidden_size)

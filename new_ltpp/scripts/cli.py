@@ -49,12 +49,17 @@ def run_experiment(
     data_config: str = typer.Option(
         "test",
         "--data-config",
-        help="Data configuration (taxi, taobao, amazon, test, hawkes1, hawkes2, H2expi, H2expc) [default: test]",
+        help="Data configuration (taxi, taobao, amazon, retweet, volcano, earthquake, stackoverflow, test, hawkes1, hawkes2, H2expi, H2expc) [default: test]",
     ),
-    model_config: str = typer.Option(
+    general_specs_config: str = typer.Option(
         "quick_test",
-        "--model-config",
-        help="Model configuration (quick_test, debug, h16_e8_l1_h2, h32_e16_l2_h4, h64_e32_l3_h8, h128_e64_l4_h16, hawkes1, hawkes2, hawkes_multivariate) [default: quick_test]",
+        "--general-specs-config",
+        help="General model specs configuration (quick_test, debug, h16, h32, h64, h128) [default: quick_test]",
+    ),
+    model_specs_config: Optional[str] = typer.Option(
+        None,
+        "--model-specs-config",
+        help="Model-specific specs configuration (optional, depends on model) [default: None]",
     ),
     training_config: str = typer.Option(
         "quick_test",
@@ -69,7 +74,7 @@ def run_experiment(
     simulation_config: str = typer.Option(
         "quick_test",
         "--simulation-config",
-        help="Simulation configuration (quick_test, debug, s20_e50_5000_b16, s50_e120_15000_b32, s100_e200_50000_b64, s100_e300_100000_b128, s100_e400_150000_b256, s80_e160_30000_b64, s50_e120_15000_b32) [default: quick_test]",
+        help="Simulation configuration (quick_test, debug, tw30_b5000_b16, tw70_b15000_b32, tw100_b50000_b64, tw200_b100000_b128, tw300_b150000_b256, tw80_b30000_b64, tw70_b15000_b32) [default: quick_test]",
     ),
     thinning_config: str = typer.Option(
         "quick_test",
@@ -103,7 +108,8 @@ def run_experiment(
     success = runner.run_experiment(
         config_path=config,
         data_config=data_config,
-        model_config=model_config,
+        general_specs_config=general_specs_config,
+        model_specs_config=model_specs_config,
         training_config=training_config,
         data_loading_config=data_loading_config,
         simulation_config=simulation_config,
@@ -236,32 +242,32 @@ def interactive_setup(
 @app.command("benchmark")
 def benchmark_performance(
     config_path: str = typer.Option(
-        CONFIGS_FILE, "--config", "-c", help="Fichier de configuration YAML"
+        CONFIGS_FILE, "--config", "-c", help="YAML configuration file"
     ),
     data_config: Optional[List[str]] = typer.Option(
         None,
         "--data-config",
-        help="Configuration(s) des données (ex: test, large). Peut être répété pour plusieurs configs",
+        help="Data configuration(s) (e.g., test, large). Can be repeated for multiple configs",
     ),
     data_loading_config: str = typer.Option(
         "quick_test",
         "--data-loading-config",
-        help="Configuration du chargement des données",
+        help="Data loading configuration",
     ),
     benchmarks: Optional[List[str]] = typer.Option(
-        None, "--benchmarks", "-b", help="Liste des benchmarks à exécuter"
+        None, "--benchmarks", "-b", help="List of benchmarks to run"
     ),
     output_dir: Optional[str] = typer.Option(
-        None, "--output", "-o", help="Répertoire de sortie"
+        None, "--output", "-o", help="Output directory"
     ),
-    run_all: bool = typer.Option(False, "--all", help="Exécuter tous les benchmarks"),
+    run_all: bool = typer.Option(False, "--all", help="Run all benchmarks"),
     run_all_configs: bool = typer.Option(
-        False, "--all-configs", help="Exécuter sur toutes les configurations"
+        False, "--all-configs", help="Run on all configurations"
     ),
     list_benchmarks: bool = typer.Option(
-        False, "--list", help="Lister les benchmarks disponibles"
+        False, "--list", help="List available benchmarks"
     ),
-    debug: bool = typer.Option(False, "--debug", help="Mode debug"),
+    debug: bool = typer.Option(False, "--debug", help="Debug mode"),
 ):
     """
     Run TPP benchmarks with BenchmarkRunner.

@@ -97,11 +97,11 @@ class RunnerConfig(Config):
     def __init__(
         self,
         model_id: str,
-        training_config: Union[TrainingConfig, dict],
-        model_config: Union[ModelConfig, dict],
-        data_config: Union[DataConfig, dict],
-        logger_config: Optional[Union[LoggerConfig, dict]] = None,
-        save_dir: Optional[str] = None,
+        training_config: TrainingConfig | dict,
+        model_config: ModelConfig | dict,
+        data_config: DataConfig | dict,
+        logger_config: LoggerConfig | dict | None = None,
+        save_dir: str | None = None,
         enable_logging: bool = True,
         **kwargs,
     ):
@@ -129,8 +129,13 @@ class RunnerConfig(Config):
         self.dataset_id = self.data_config.dataset_id
         self.model_id = model_id
 
+        model_spec = self.model_config.specs
+
+        # Build a string from all model specs for directory naming
+        specs_str = "_".join(f"{k}_{v}" for k, v in vars(model_spec).items() if not k.startswith('_'))
+
         # Base directory for all outputs
-        self.base_dir = OUTPUT_DIR / self.dataset_id / self.model_id
+        self.base_dir = OUTPUT_DIR / self.dataset_id / f"{self.model_id}_{specs_str}"
 
         # Directory setup
         # Checkpoints directory

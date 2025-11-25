@@ -43,7 +43,8 @@ run: ## Run full pipeline via CLI (pass variables to override)
 	@$(CLI) run \
 		$(if $(CONFIG),--config $(CONFIG),) \
 		$(if $(DATA),--data-config $(DATA),--data-config test) \
-		$(if $(MODEL),--model-config $(MODEL),--model-config quick_test) \
+		$(if $(GENERAL_SPECS),--general-specs-config $(GENERAL_SPECS),--general-specs-config quick_test) \
+		$(if $(MODEL_SPECS),--model-specs-config $(MODEL_SPECS),) \
 		$(if $(TRAINING),--training-config $(TRAINING),--training-config quick_test) \
 		$(if $(DATA_LOADING),--data-loading-config $(DATA_LOADING),--data-loading-config quick_test) \
 		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config quick_test) \
@@ -51,29 +52,57 @@ run: ## Run full pipeline via CLI (pass variables to override)
 		$(if $(LOGGER),--logger-config $(LOGGER),--logger-config tensorboard) \
 		$(if $(MODEL_ID),--model $(MODEL_ID),--model NHP) \
 		--phase all \
-		$(if $(EPOCHS),--epochs $(EPOCHS),--epochs 5) \
+		$(if $(EPOCHS),--epochs $(EPOCHS),--epochs 100) \
 		$(if $(SAVE_DIR),--save-dir $(SAVE_DIR),) \
-		$(if $(GPU),--gpu $(GPU),) \
 		$(if $(DEBUG),--debug,)
 
 # Model-specific shortcuts that run the entire pipeline with sensible defaults
 run-nhp: ## Run full pipeline for NHP model (demo uses `test` configs)
-	@$(MAKE) run MODEL_ID=NHP MODEL=neural_small DATA=test TRAINING=quick_test DATA_LOADING=quick_test SIMULATION=quick_test THINNING=quick_test LOGGER=tensorboard
+	@$(MAKE) run \
+	MODEL_ID=NHP \
+	GENERAL_SPECS=h16 \
+	TRAINING=e500_b1 \
+	DATA_LOADING=b128_w10 \
+	SIMULATION=tw100_b50000_b128 \
+	THINNING=e200_s60 \
+	LOGGER=tensorboard
 
+# Model-specific shortcuts that run the entire pipeline with sensible defaults
 run-thp: ## Run full pipeline for THP model (demo uses `test` configs)
-	@$(MAKE) run MODEL_ID=THP MODEL=neural_large DATA=test TRAINING=quick_test DATA_LOADING=quick_test SIMULATION=quick_test THINNING=quick_test LOGGER=tensorboard
+	@$(MAKE) run \
+	MODEL_ID=THP \
+	GENERAL_SPECS=h16 \
+	TRAINING=e500_b1 \
+	DATA_LOADING=b128_w10 \
+	SIMULATION=tw100_b50000_b128 \
+	THINNING=e1000_s100 \
+	LOGGER=tensorboard
 
-run-rmtpp: ## Run full pipeline for RMTPP model (demo uses `test` configs)
-	@$(MAKE) run MODEL_ID=RMTPP MODEL=neural_small DATA=test TRAINING=quick_test DATA_LOADING=quick_test SIMULATION=quick_test THINNING=quick_test LOGGER=tensorboard
+# Model-specific shortcuts that run the entire pipeline with sensible defaults
+run-rmtpp: ## Run full pipeline for RMTTP model (demo uses `test` configs)
+	@$(MAKE) run \
+	MODEL_ID=RMTPP \
+	GENERAL_SPECS=h64 \
+	TRAINING=e500_b1 \
+	DATA_LOADING=b128_w10 \
+	SIMULATION=tw100_b50000_b128 \
+	THINNING=e200_s60 \
+	LOGGER=tensorboard
 
+run-sahp: ## Run full pipeline for SAHP model (demo uses `test` configs)
+	@$(MAKE) run \
+	MODEL_ID=SAHP \
+	GENERAL_SPECS=h64 \
+	TRAINING=e500_b1 \
+	DATA_LOADING=b128_w10 \
+	SIMULATION=tw100_b50000_b128 \
+	THINNING=e200_s60 \
+	LOGGER=tensorboard
 
 benchmark-list: ## [BENCH-LIST] List available benchmarks
 	@$(CLI) benchmark --list
 
-benchmark-mean: ## [BENCH-MEAN] Run mean inter-time benchmark
-	@make benchmark BENCHMARKS=mean_inter_time
-
-benchmark-multi: ## [BENCH-MULTI] Run benchmarks on multiple configs
+all-benchmarks: ## [BENCH-MULTI] Run benchmarks on multiple configs
 	@echo ">> Benchmarks multi-configurations..."
 	@$(CLI) benchmark \
 		--data-config test --data-config large \

@@ -87,5 +87,4 @@ class FinalResult(TypedDict):
     """Type definition for finalize_and_save return value."""
 
     statistics: AllStatistics
-    metrics: Dict[str, float]
     batch_count: int

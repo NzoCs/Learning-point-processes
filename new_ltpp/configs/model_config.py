@@ -6,10 +6,8 @@ best practices for configuration management with proper validation,
 error handling, and maintainable architecture.
 """
 
-import logging
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 from new_ltpp.utils import logger
 
@@ -136,9 +134,32 @@ class SimulationConfig(Config):
             )
 
 
-# ModelSpecsConfig is intentionally a thin alias for a plain dict.
-# Each model should define its own defaults and explicit parameters.
-ModelSpecsConfig = dict
+@dataclass
+class ModelSpecsConfig:
+    """Dataclass for model specs with required fields and extra kwargs support.
+
+    Required fields:
+        hidden_size: number of hidden units
+        dropout: dropout probability
+    """
+
+    hidden_size: int
+    dropout: float = 0.0
+
+    def __init__(self, hidden_size: int, dropout: float = 0.0, **kwargs):
+        self.hidden_size = hidden_size
+        self.dropout = dropout
+        # Store extra kwargs as attributes
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def get_yaml_config(self) -> Dict[str, Any]:
+        config = {"hidden_size": self.hidden_size, "dropout": self.dropout}
+        # Add any extra attributes
+        for attr in dir(self):
+            if not attr.startswith('_') and attr not in ['hidden_size', 'dropout', 'get_yaml_config']:
+                config[attr] = getattr(self, attr)
+        return config
 
 
 @dataclass
@@ -169,12 +190,13 @@ class ModelConfig(Config):
 
     def __init__(
         self,
-        simulation_config: Union[dict, SimulationConfig],
-        scheduler_config: Union[dict, SchedulerConfig],
-        specs: ModelSpecsConfig,
-        thinning_config: Optional[Union[dict, ThinningConfig]] = None,
+        simulation_config: dict | SimulationConfig,
+        scheduler_config: dict | SchedulerConfig,
+        general_specs: dict | ModelSpecsConfig,
+        model_specs: dict,
+        thinning_config: dict | ThinningConfig | None = None,
         device: str = "auto",
-        gpu: Optional[int] = None,
+        gpu: int | None = None,
         is_training: bool = False,
         compute_simulation: bool = False,
         **kwargs,
@@ -184,8 +206,15 @@ class ModelConfig(Config):
         self.is_training = is_training
         self.compute_simulation = compute_simulation
 
-        # Instancie les sous-configs à partir des dicts
-        self.specs = specs or {}
+        # Specs: accept dict or ModelSpecsConfig, instantiate if dict
+        if isinstance(general_specs, ModelSpecsConfig):
+            general_specs = general_specs.get_yaml_config()
+            self.specs = ModelSpecsConfig(**general_specs, **model_specs)
+        elif isinstance(general_specs, dict):
+            self.specs = ModelSpecsConfig(**general_specs, **model_specs)
+        else:
+            raise TypeError("specs must be a dict or ModelSpecsConfig instance")
+        
         self.thinning_config = (
             thinning_config
             if isinstance(thinning_config, ThinningConfig)

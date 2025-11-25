@@ -47,9 +47,8 @@ def test_runner_config_builder_programmatic():
     runner_config_builder.data_builder.set_max_len(128)
 
     # Build model config
-    runner_config_builder.model_builder.set_specs(
-        {"hidden_size": 32, "mlp_dims": [32, 32]}
-    )
+    runner_config_builder.model_builder.set_general_specs({"hidden_size": 32})
+    runner_config_builder.model_builder.set_model_specs({})
     runner_config_builder.model_builder.set_scheduler_config(lr_scheduler=True, lr=1e-3)
     runner_config_builder.model_builder.set_simulation_config(
         start_time=20, end_time=50, batch_size=16, max_sim_events=5000, seed=42
@@ -92,9 +91,9 @@ training_configs:
 
 model_configs:
   neural_small:
-    specs:
+    general_specs:
       hidden_size: 32
-      mlp_dims: [32, 32]
+    model_specs: {}
 
 data_configs:
   test:

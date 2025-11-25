@@ -19,11 +19,9 @@ class SelfCorrecting(Model):
 
     def __init__(
         self,
-        model_config: ModelConfig,
         *,
         mu: Union[list, torch.Tensor],
         alpha: Union[list, torch.Tensor],
-        num_event_types: int,
         **kwargs,
     ):
         """
@@ -35,11 +33,9 @@ class SelfCorrecting(Model):
                 - 'mu' (list or tensor): Base log-intensity parameter for each type.
                 - 'alpha' (list or tensor): Correction factor for each type (often negative).
         """
-        super(SelfCorrecting, self).__init__(
-            model_config, num_event_types=num_event_types
-        )
+        super(SelfCorrecting, self).__init__(**kwargs)
 
-        self.num_event_types = num_event_types
+        self.num_event_types = self.num_event_types
 
         # Convert parameters to tensors and move to the correct device
         mu = torch.tensor(mu, dtype=torch.float32)

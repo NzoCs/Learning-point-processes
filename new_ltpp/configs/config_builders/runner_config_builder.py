@@ -51,7 +51,7 @@ class RunnerConfigBuilder(ConfigBuilder):
         # Method 1: Using sub-builders
         builder = RunnerConfigBuilder()
         builder.data_builder.set_dataset_id("my_dataset")
-        builder.model_builder.set_specs({"hidden_size": 64})
+        builder.model_builder.set_general_specs({"hidden_size": 64})
         builder.training_builder.set_max_epochs(100)
         config = builder.build(model_id="NHP")
 
@@ -80,13 +80,15 @@ class RunnerConfigBuilder(ConfigBuilder):
         self,
         data: Dict[str, Any],
         training_config_path: str,
-        model_config_path: str,
         data_config_path: str,
+        model_config_path: Optional[str] = None,
         data_loading_config_path: Optional[str] = None,
         data_specs_path: Optional[str] = None,
         simulation_config_path: Optional[str] = None,
         thinning_config_path: Optional[str] = None,
         logger_config_path: Optional[str] = None,
+        general_specs_path: Optional[str] = None,
+        model_specs_path: Optional[str] = None,
     ) -> List[str]:
 
         # Use TrainingConfigBuilder to load training config
@@ -94,7 +96,10 @@ class RunnerConfigBuilder(ConfigBuilder):
         training_cfg = self.training_builder.get_config_dict()
 
         self.model_builder.from_dict(
-            data, model_config_path, simulation_config_path, thinning_config_path
+            data, model_config_path, simulation_config_path, thinning_config_path,
+            scheduler_config_path=None,
+            general_specs_path=general_specs_path,
+            model_specs_path=model_specs_path,
         )
 
         model_cfg = self.model_builder.get_config_dict()
@@ -138,13 +143,15 @@ class RunnerConfigBuilder(ConfigBuilder):
         self,
         yaml_file_path: Union[str, Path],
         training_config_path: str,
-        model_config_path: str,
         data_config_path: str,
+        model_config_path: Optional[str] = None,
         data_loading_config_path: Optional[str] = None,
         data_specs_path: Optional[str] = None,
         simulation_config_path: Optional[str] = None,
         thinning_config_path: Optional[str] = None,
         logger_config_path: Optional[str] = None,
+        general_specs_config_path: Optional[str] = None,
+        model_specs_config_path: Optional[str] = None,
     ) -> List[str]:
         """
         Load complete config from YAML using other builders.
@@ -152,13 +159,15 @@ class RunnerConfigBuilder(ConfigBuilder):
         Args:
             yaml_file_path: Path to YAML file
             training_config_path: Path to training config (e.g., 'trainer_configs.quick_test')
-            model_config_path: Path to model config (e.g., 'model_configs.neural_small')
             data_config_path: Path to data config (e.g., 'data_configs.test')
+            model_config_path: Path to model config (optional, for backward compatibility)
             data_loading_config_path: Path to data_loading_config (e.g., 'data_loading_configs.default')
             data_specs_path: Path to tokenizer_specs (e.g., 'tokenizer_specs.standard')
             simulation_config_path: Path to simulation config (e.g., 'simulation_configs.simulation_fast')
             thinning_config_path: Path to thinning config (e.g., 'thinning_configs.thinning_fast')
             logger_config_path: Path to logger config (e.g., 'logger_configs.csv')
+            general_specs_path: Path to general specs (e.g., 'general_specs.default')
+            model_specs_path: Path to model specs (e.g., 'model_specs.nhp')
 
         Returns:
             List of missing fields after loading
@@ -167,13 +176,15 @@ class RunnerConfigBuilder(ConfigBuilder):
         return self.from_dict(
             data,
             training_config_path,
-            model_config_path,
             data_config_path,
+            model_config_path,
             data_loading_config_path,
             data_specs_path,
             simulation_config_path,
             thinning_config_path,
             logger_config_path,
+            general_specs_config_path,
+            model_specs_config_path,
         )
 
     def set_trainer_config(self, trainer_cfg: Union[Dict[str, Any], Any]):

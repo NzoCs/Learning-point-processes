@@ -16,8 +16,10 @@ class ModelConfigBuilder(ConfigBuilder):
     Required Parameters (must be set):
     ===================================
     Core Model Settings:
-    - set_specs(dict): Model architecture specifications
-      Example: {"hidden_size": 64, "mlp_dims": [64, 64], "num_layers": 2}
+    - set_general_specs(dict): General model architecture specifications (hidden_size, dropout)
+      Example: {"hidden_size": 64, "dropout": 0.1}
+    - set_model_specs(dict): Model-specific specifications (num_layers, num_heads, etc.)
+      Example: {"num_layers": 2, "num_heads": 4}
 
     Algorithm Configurations (choose based on use case):
     - set_simulation_config(): For event simulation during training/inference
@@ -67,7 +69,8 @@ class ModelConfigBuilder(ConfigBuilder):
     .. code-block:: python
 
         builder = ModelConfigBuilder()
-        builder.set_specs({"hidden_size": 64, "mlp_dims": [64, 64]})
+        builder.set_general_specs({"hidden_size": 64, "dropout": 0.1})
+        builder.set_model_specs({"num_layers": 2, "num_heads": 4})
         builder.set_simulation_config(
             start_time=0, end_time=50, batch_size=16,
             max_sim_events=1000, seed=42
@@ -87,12 +90,18 @@ class ModelConfigBuilder(ConfigBuilder):
     def from_dict(
         self,
         data: Dict[str, Any],
-        model_config_path: str,
+        model_config_path: Optional[str] = None,
         simulation_config_path: Optional[str] = None,
         thinning_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
+        general_specs_path: Optional[str] = None,
+        model_specs_path: Optional[str] = None,
     ):
-        model_cfg = self._get_nested_value(data, model_config_path)
+        # Load model_cfg only if model_config_path is provided (backward compatibility)
+        model_cfg = {}
+        if model_config_path:
+            model_cfg = self._get_nested_value(data, model_config_path)
+        
         simulation_cfg = (
             self._get_nested_value(data, simulation_config_path)
             if simulation_config_path
@@ -108,7 +117,20 @@ class ModelConfigBuilder(ConfigBuilder):
             if thinning_config_path
             else {}
         )
-        self.config_dict = model_cfg
+        
+        # Load general_specs and model_specs from specific paths or from model_cfg
+        if general_specs_path:
+            general_specs = self._get_nested_value(data, general_specs_path)
+        else:
+            general_specs = model_cfg.get("general_specs", {})
+            
+        if model_specs_path:
+            model_specs = self._get_nested_value(data, model_specs_path)
+        else:
+            model_specs = model_cfg.get("model_specs", {})
+        
+        self.config_dict["general_specs"] = general_specs
+        self.config_dict["model_specs"] = model_specs
         self.config_dict["simulation_config"] = simulation_cfg
         self.config_dict["thinning_config"] = thinning_cfg
         self.config_dict["scheduler_config"] = scheduler_cfg
@@ -118,19 +140,23 @@ class ModelConfigBuilder(ConfigBuilder):
     def load_from_yaml(
         self,
         yaml_path: Union[str, Path],
-        model_config_path: str,
+        model_config_path: Optional[str] = None,
         simulation_config_path: Optional[str] = None,
         thinning_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
+        general_specs_path: Optional[str] = None,
+        model_specs_path: Optional[str] = None,
     ):
         """Load model config from YAML file.
 
         Args:
             yaml_path: Path to YAML file
-            model_config_path: Path to model config (e.g., 'model_configs.neural_small')
+            model_config_path: Path to model config (e.g., 'model_configs.neural_small') - optional, for backward compatibility
             simulation_config_path: Path to simulation config
             thinning_config_path: Path to thinning config
             scheduler_config_path: Path to scheduler config
+            general_specs_path: Path to general specs (e.g., 'general_specs.default')
+            model_specs_path: Path to model specs (e.g., 'model_specs.nhp')
         """
         data = self._load_yaml(yaml_path)
         return self.from_dict(
@@ -139,6 +165,8 @@ class ModelConfigBuilder(ConfigBuilder):
             simulation_config_path,
             thinning_config_path,
             scheduler_config_path,
+            general_specs_path,
+            model_specs_path,
         )
 
     # ModelConfig explicit parameters
@@ -182,13 +210,21 @@ class ModelConfigBuilder(ConfigBuilder):
         """
         return self.set_field("pretrain_model_path", pretrain_model_path)
 
-    def set_specs(self, specs: Union[Dict[str, Any], Any]):
-        """Set complete model specifications dictionary.
+    def set_general_specs(self, general_specs: Union[Dict[str, Any], Any]):
+        """Set general model specifications (hidden_size, dropout).
 
         Args:
-            specs: Dictionary containing all model specifications
+            general_specs: Dictionary containing general model specs
         """
-        return self.set_field("specs", specs)
+        return self.set_field("general_specs", general_specs)
+
+    def set_model_specs(self, model_specs: Union[Dict[str, Any], Any]):
+        """Set model-specific specifications (num_layers, num_heads, etc.).
+
+        Args:
+            model_specs: Dictionary containing model-specific specs
+        """
+        return self.set_field("model_specs", model_specs)
 
     # SimulationConfig explicit parameters
     def set_simulation_config(

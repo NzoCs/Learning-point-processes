@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.shared_types import Batch
-from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
+from new_ltpp.utils.attention import build_causal_attn_mask
 
 from .baselayer import (
     EncoderLayer,
@@ -25,8 +25,6 @@ class SAHP(NeuralModel):
     def __init__(
         self,
         *,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
         use_norm: bool = True,
         time_emb_size: int = 32,
         num_layers: int = 2,
@@ -38,7 +36,7 @@ class SAHP(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(SAHP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
+        super(SAHP, self).__init__(**kwargs)
         self.d_model = self.hidden_size
         self.d_time = time_emb_size
 
@@ -117,13 +115,14 @@ class SAHP(NeuralModel):
         states = mu + (eta - mu) * torch.exp(-gamma * duration_t)
         return states
 
-    def forward(self, time_seqs, time_delta_seqs, event_seqs, attention_mask):
+    def forward(self, time_seqs, time_delta_seqs, event_seqs, key_padding_mask, attention_mask):
         """Call the model
 
         Args:
             time_seqs (tensor): [batch_size, seq_len], timestamp seqs.
             time_delta_seqs (tensor): [batch_size, seq_len], inter-event time seqs.
             event_seqs (tensor): [batch_size, seq_len], event type seqs.
+            key_padding_mask (tensor): [batch_size, seq_len], key padding mask.
             attention_mask (tensor): [batch_size, seq_len, hidden_size], attention masks.
 
         Returns:
@@ -135,7 +134,7 @@ class SAHP(NeuralModel):
         enc_output = type_embedding + position_embedding
 
         for enc_layer in self.stack_layers:
-            enc_output = enc_layer(enc_output, mask=attention_mask)
+            enc_output = enc_layer(enc_output, key_padding_mask, attention_mask)
             if self.use_norm:
                 enc_output = self.norm(enc_output)
         # [batch_size, seq_len, hidden_dim]
@@ -154,12 +153,14 @@ class SAHP(NeuralModel):
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = build_attention_mask_from_seq_mask(batch.seq_non_pad_mask)
+        attention_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
+        
         enc_out = self.forward(
             time_seqs[:, :-1],
             time_delta_seqs[:, :-1],
             type_seqs[:, :-1],
-            attention_mask[:, :-1, :-1],
+            batch_non_pad_mask[:, :-1],
+            attention_mask[:-1, :-1],
         )
 
         cell_t = self.state_decay(
@@ -229,14 +230,10 @@ class SAHP(NeuralModel):
         compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         if attention_mask is None:
-            batch_size, seq_len = time_seqs.size()
-            attention_mask = torch.triu(
-                torch.ones(seq_len, seq_len, device=self.device), diagonal=1
-            ).unsqueeze(0)
-            attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
+            attention_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
 
         # [batch_size, seq_len, num_samples]
-        enc_out = self.forward(time_seqs, time_delta_seqs, type_seqs, attention_mask)
+        enc_out = self.forward(time_seqs, time_delta_seqs, type_seqs, None, attention_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(enc_out, sample_dtimes)

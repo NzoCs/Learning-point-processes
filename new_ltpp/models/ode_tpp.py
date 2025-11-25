@@ -1,9 +1,8 @@
 import torch
 from torch import nn
 
-from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import DNN
-from new_ltpp.models.basemodel import Model
+from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils import rk4_step_method
 
@@ -149,7 +148,7 @@ class NeuralODE(nn.Module):
         return output_state
 
 
-class ODETPP(Model):
+class ODETPP(NeuralModel):
     """Torch implementation of a TPP with Neural ODE state evolution, which is a simplified version of TPP in
     https://arxiv.org/abs/2011.04583, ICLR 2021
 
@@ -160,26 +159,16 @@ class ODETPP(Model):
 
     def __init__(
         self,
-        model_config: ModelConfig,
         *,
-        num_event_types: int,
-        dtime_max: float,
-        hidden_size: int,
-        dropout: float,
         ode_num_sample_per_step: int = 10,
+        **kwargs,
     ):
         """Initialize the model
 
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super().__init__(
-            model_config,
-            num_event_types=num_event_types,
-            dtime_max=dtime_max,
-            hidden_size=hidden_size,
-            dropout=dropout,
-        )
+        super().__init__(**kwargs,)
 
         self.layer_intensity = nn.Sequential(
             nn.Linear(self.hidden_size, self.num_event_types), nn.Softplus()

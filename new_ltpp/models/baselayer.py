@@ -59,18 +59,18 @@ class MultiHeadAttention(nn.Module):
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
+        key_padding_mask: torch.Tensor,
+        attn_mask: torch.Tensor,
         output_weight: bool = False,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        
         q = self.input_proj(query)
         k = self.input_proj(key)
         v = self.input_proj(value)
 
-        # PyTorch MHA attend un mask booléen : True = MASQUÉ
-        if mask is not None:
-            mask = mask.bool()
-
-        attn_out, attn_weights = self.mha(q, k, v, key_padding_mask=mask)
+        attn_out, attn_weights = self.mha(
+            q, k, v, key_padding_mask=key_padding_mask, attn_mask=attn_mask
+            )
 
         out = self.out_proj(attn_out)
 
@@ -118,16 +118,18 @@ class EncoderLayer(nn.Module):
             )
 
     def forward(
-        self, x: torch.Tensor, mask: Optional[torch.Tensor] = None
+        self, x: torch.Tensor, key_padding_mask: torch.Tensor | None, attn_mask: torch.Tensor
     ) -> torch.Tensor:
         if self.use_residual:
-            x = self.sublayers[0](x, lambda x: self.self_attn(x, x, x, mask))
+            x = self.sublayers[0](x, lambda x: self.self_attn(
+                x, x, x, key_padding_mask=key_padding_mask, attn_mask=attn_mask
+                ))
             if self.feed_forward is not None:
                 x = self.sublayers[1](x, self.feed_forward)
             return x
 
         # Sans résiduel
-        x = self.self_attn(x, x, x, mask)
+        x = self.self_attn(x, x, x, key_padding_mask=key_padding_mask, attn_mask=attn_mask)
         return self.feed_forward(x) if self.feed_forward is not None else x
 
 
@@ -135,11 +137,14 @@ class EncoderLayer(nn.Module):
 # ENCODAGE TEMPOREL THP / SAHP (à garder, pas dans Torch)
 # -------------------------------------------------------------------------
 class TimePositionalEncoding(nn.Module):
-    def __init__(self, d_model: int, max_len: int = 5000, device: str = "cpu"):
+
+    div_term: torch.Tensor
+    
+    def __init__(self, d_model: int, max_len: int = 5000, device: str | torch.device = "cpu"):
         super().__init__()
         i = torch.arange(0, d_model, device=device)
-        self.div_term = (2 * (i // 2) * -(math.log(10000.0) / d_model)).exp()
-        self.register_buffer("div_term", self.div_term)
+        div_term = (2 * (i // 2) * -(math.log(10000.0) / d_model)).exp()
+        self.register_buffer("div_term", div_term)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         result = x.unsqueeze(-1) * self.div_term
@@ -149,16 +154,20 @@ class TimePositionalEncoding(nn.Module):
 
 
 class TimeShiftedPositionalEncoding(nn.Module):
-    def __init__(self, d_model: int, max_len: int = 5000, device: str = "cpu"):
+
+    position: torch.Tensor
+    div_term: torch.Tensor
+
+    def __init__(self, d_model: int, max_len: int = 5000, device: str | torch.device = "cpu"):
         super().__init__()
-        self.position = torch.arange(max_len, device=device).float().unsqueeze(1)
-        self.div_term = torch.arange(0, d_model, 2, device=device).float()
-        self.div_term = (self.div_term * -(math.log(10000.0) / d_model)).exp()
+        position = torch.arange(max_len, device=device).float().unsqueeze(1)
+        div_term = torch.arange(0, d_model, 2, device=device).float()
+        div_term = (div_term * -(math.log(10000.0) / d_model)).exp()
 
         self.layer_time_delta = nn.Linear(1, d_model // 2, bias=False)
 
-        self.register_buffer("position", self.position)
-        self.register_buffer("div_term", self.div_term)
+        self.register_buffer("position", position)
+        self.register_buffer("div_term", div_term)
 
     def forward(self, x: torch.Tensor, interval: torch.Tensor) -> torch.Tensor:
         phi = self.layer_time_delta(interval.unsqueeze(-1))

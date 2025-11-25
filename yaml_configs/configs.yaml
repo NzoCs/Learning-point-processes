@@ -119,36 +119,34 @@ logger_configs:
   #     run_name: run_1
 
 # ===== MODEL CONFIGURATIONS =====
-model_configs:
-# Configurations for model-specific parameters (architecture, hyperparameters, etc.)
+general_specs:
+
+  default:
+    hidden_size: 16
+    dropout: 0.1
 
   quick_test:
-    specs:
-      hidden_size: 8
+    hidden_size: 4
   
   debug:
-    specs:
-      hidden_size: 8
+    hidden_size: 4
 
   # Configurations for neural models - Size Small
-  h16_e8_l1_h2:
-    specs:
-      hidden_size: 16
+  h16:
+    hidden_size: 16
 
   # Configurations for neural models - Size Medium
-  h32_e16_l2_h4:
-    specs:
-      hidden_size: 32
+  h32:
+    hidden_size: 32
 
   # Configurations for neural models - Size Large
-  h64_e32_l3_h8:
-    specs:
-      hidden_size: 64
+  h64:
+    hidden_size: 64
 
   # Configurations for neural models - Size Extra Large
-  h128_e64_l4_h16:
-    specs:
-      hidden_size: 128
+  h128:
+    hidden_size: 128
+
 
 
 # ===== THINNING CONFIGURATIONS =====
@@ -188,6 +186,11 @@ thinning_configs:
     over_sample_rate: 2.0
     num_sample: 60
 
+  e1000_s100:
+    num_exp: 1000
+    over_sample_rate: 2.5
+    num_sample: 300
+
   # Minimal thinning configuration (debug/CPU)
   e20_s10:
     num_exp: 20
@@ -209,43 +212,48 @@ simulation_configs:
     batch_size: 8
 
   # Fast simulation configuration (tests)
-  tw30_5000_b16:
+  tw30_b5000_b16:
     time_window: 30
     initial_buffer_size: 5000
     batch_size: 16
 
   # Development simulation configuration
-  tw70_15000_b32:
+  tw70_b15000_b32:
     time_window: 70
     initial_buffer_size: 15000
     batch_size: 32
 
+  tw100_b50000_b128:
+    time_window: 100
+    initial_buffer_size: 50000
+    batch_size: 128
+
   # Standard simulation configuration
-  tw100_50000_b64:
+  tw100_b50000_b64:
     time_window: 100
     initial_buffer_size: 50000
     batch_size: 64
 
   # Extended simulation configuration
-  tw200_100000_b128:
+  tw200_b100000_b128:
     time_window: 200
     initial_buffer_size: 100000
     batch_size: 128
 
   # Simulation configuration for large datasets
-  tw300_150000_b256:
+  tw300_b150000_b256:
     time_window: 300
     initial_buffer_size: 150000
     batch_size: 256
 
   # Simulation configuration for cross-validation
-  tw80_30000_b64:
+  tw80_b30000_b64:
     time_window: 80
     initial_buffer_size: 30000
     batch_size: 64
 
   # Simulation configuration for experiments
-  tw70_15000_b32:
+  tw70_b15000_b32:
     time_window: 70
     initial_buffer_size: 15000
     batch_size: 32
@@ -272,6 +280,10 @@ data_loading_configs:
     num_workers: 2
 
   b128_w4:
+    batch_size: 128
+    num_workers: 4
+
+  b128_w10:
     batch_size: 128
     num_workers: 4
 

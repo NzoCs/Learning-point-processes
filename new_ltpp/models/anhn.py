@@ -1,11 +1,10 @@
 import torch
 from torch import nn
 
-from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import MultiHeadAttention
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
-from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
+from new_ltpp.utils.attention import build_causal_attn_mask
 
 
 class ANHN(NeuralModel):
@@ -16,8 +15,6 @@ class ANHN(NeuralModel):
     def __init__(
         self,
         *,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
         num_layers: int = 2,
         num_heads: int = 2,
         use_norm: bool = True,
@@ -29,7 +26,7 @@ class ANHN(NeuralModel):
         Args:
             model_config (ModelConfig): config of model specs.
         """
-        super(ANHN, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
+        super(ANHN, self).__init__(**kwargs)
 
         self.d_time = time_emb_size
         self.use_norm = use_norm
@@ -68,12 +65,13 @@ class ANHN(NeuralModel):
         # Fix: add missing softplus attribute for intensity computation
         self.softplus = nn.Softplus()
 
-    def forward(self, dtime_seqs, type_seqs, attention_mask):
+    def forward(self, dtime_seqs, type_seqs, key_padding_mask, attention_mask):
         """Call the model.
 
         Args:
             dtime_seqs (tensor): [batch_size, seq_len].
             type_seqs (tensor): [batch_size, seq_len].
+            key_padding_mask (tensor): [batch_size, seq_len].
             attention_mask (tensor): [batch_size, seq_len, hidden_size].
 
         Returns:
@@ -94,7 +92,7 @@ class ANHN(NeuralModel):
 
         # [batch_size, num_head, seq_len, seq_len]
         _, att_weight = self.layer_att(
-            rnn_output, rnn_output, rnn_output, mask=attention_mask, output_weight=True
+            rnn_output, rnn_output, rnn_output, key_padding_mask=key_padding_mask, attn_mask=attention_mask, output_weight=True
         )
 
         # [batch_size, seq_len, seq_len, 1]
@@ -146,14 +144,14 @@ class ANHN(NeuralModel):
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = build_attention_mask_from_seq_mask(batch.seq_non_pad_mask)
+        attention_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
 
         (
             imply_lambdas,
             (intensity_base, intensity_alpha, intensity_delta),
             (base_dtime, target_cumsum_dtime),
         ) = self.forward(
-            time_delta_seqs[:, 1:], type_seqs[:, :-1], attention_mask[:, 1:, :-1]
+            time_delta_seqs[:, 1:], type_seqs[:, :-1], batch_non_pad_mask[:, :-1], attention_mask[:, 1:, :-1]
         )
         lambda_at_event = self.layer_intensity(imply_lambdas)
 
@@ -320,7 +318,7 @@ class ANHN(NeuralModel):
             imply_lambdas,
             (intensity_base, intensity_alpha, intensity_delta),
             (base_dtime, target_cumsum_dtime),
-        ) = self.forward(time_delta_seqs, type_seqs, attention_mask)
+        ) = self.forward(time_delta_seqs, type_seqs, None, attention_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(

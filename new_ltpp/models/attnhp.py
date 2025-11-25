@@ -7,7 +7,7 @@ from torch import nn
 from new_ltpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
-from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
+# from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 
 
 class AttNHP(NeuralModel):
@@ -19,8 +19,6 @@ class AttNHP(NeuralModel):
     def __init__(
         self,
         *,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
         use_norm: bool = True,
         time_emb_size: int = 32,
         num_layers: int = 2,
@@ -32,7 +30,7 @@ class AttNHP(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super(AttNHP, self).__init__(hidden_size=hidden_size, dropout=dropout, **kwargs)
+        super(AttNHP, self).__init__(**kwargs)
 
         self.d_model = self.hidden_size
         self.use_norm = use_norm

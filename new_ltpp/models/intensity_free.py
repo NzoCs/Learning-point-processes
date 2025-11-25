@@ -132,8 +132,6 @@ class IntensityFree(NeuralModel):
         num_mix_components: int = 32,
         mean_log_inter_time: float = 0.0,
         std_log_inter_time: float = 1.0,
-        hidden_size: int = 128,
-        dropout: float = 0.1,
         **kwargs,
     ):
         """Initialize the model
@@ -142,9 +140,7 @@ class IntensityFree(NeuralModel):
             model_config (new_ltpp.ModelConfig): config of model specs.
 
         """
-        super(IntensityFree, self).__init__(
-            hidden_size=hidden_size, dropout=dropout, **kwargs
-        )
+        super(IntensityFree, self).__init__(**kwargs)
 
         self.num_mix_components = num_mix_components
         self.mean_log_inter_time = mean_log_inter_time

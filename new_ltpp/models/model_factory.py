@@ -67,7 +67,7 @@ class ModelFactory:
                 model_config=model_config,
                 data_stats=data_stats,
                 output_dir=Path(output_dir),
-                **model_config.specs,
+                **model_config.specs.get_yaml_config(),
                 **kwargs,
             )
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")

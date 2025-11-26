@@ -27,14 +27,16 @@ class Runner:
 
         # Initialize your datamodule
         self.datamodule = TPPDataModule(config.data_config)
-        data_stats = self.datamodule.get_data_stats()
+        data_info = self.datamodule.get_data_info()
+
+        pad_token_id = config.data_config.tokenizer_specs.pad_token_id
 
         # Initialize your model
         # Use the ModelFactory to create the model
         self.model = ModelFactory.create_model_by_name(
             model_name=config.model_id,
             model_config=config.model_config,
-            data_stats=data_stats,
+            data_info=data_info,
             output_dir=config.base_dir,
         )
 
@@ -151,5 +153,5 @@ class Runner:
 
         self.model.finalize_statistics()
 
-        # logger.info("Generating intensity graph...")
-        # self.model.intensity_graph(save_dir=str(data_save_dir))
+        logger.info("Generating intensity graph...")
+        self.model.intensity_graph(save_dir=str(self.config.base_dir / "intensity_graphs"))

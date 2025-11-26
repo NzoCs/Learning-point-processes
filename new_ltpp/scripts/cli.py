@@ -92,8 +92,8 @@ def run_experiment(
     phase: str = typer.Option(
         "all", "--phase", "-p", help="Execution phase (train/test/predict/all)"
     ),
-    max_epochs: int = typer.Option(
-        100,
+    max_epochs: int | None = typer.Option(
+        None,
         "--epochs",
         "-e",
         help="Maximum number of epochs [default: 100]",

@@ -18,7 +18,7 @@ class BaseSimulator(ABC):
         dim_process: int,
         start_time: float = 100,
         end_time: float = 200,
-        nb_events: int = float("inf"),
+        nb_events: int = int("inf"),
         output_dir: str = "data",
         seed: Optional[int] = None,
     ):

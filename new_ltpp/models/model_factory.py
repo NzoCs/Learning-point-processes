@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Type
 
 from new_ltpp.configs import ModelConfig, ModelSpecsConfig
-from new_ltpp.shared_types import DataStats
+from new_ltpp.shared_types import DataInfo
 from new_ltpp.utils import logger
 
 from .basemodel import Model
@@ -32,7 +32,7 @@ class ModelFactory:
     def create_model_by_name(
         model_name: str,
         model_config: ModelConfig,
-        data_stats: DataStats,
+        data_info: DataInfo,
         output_dir: Path | str,
         **kwargs,
     ) -> Model:
@@ -65,7 +65,7 @@ class ModelFactory:
         try:
             instance = model_class(
                 model_config=model_config,
-                data_stats=data_stats,
+                data_info=data_info,
                 output_dir=Path(output_dir),
                 **model_config.specs.get_yaml_config(),
                 **kwargs,
@@ -97,7 +97,12 @@ class ModelFactory:
 
         try:
             model_specs = model_config.specs if hasattr(model_config, "specs") else {}
-            instance = model_class(model_config, **model_specs, **kwargs)
+            model_specs_dict = (
+                model_specs.get_yaml_config()
+                if isinstance(model_specs, ModelSpecsConfig)
+                else model_specs
+            )
+            instance = model_class(model_config, **model_specs_dict, **kwargs)
             logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
             return instance
 

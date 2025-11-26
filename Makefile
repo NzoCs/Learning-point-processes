@@ -1,7 +1,7 @@
 # Makefile for New_LTPP project
 # Automates installation and common tasks with pyproject.toml
 
-.PHONY: help install install-dev lint format type-check run run-nhp run-thp run-rmtpp
+.PHONY: help install install-dev lint format type-check run run-demo
 
 # Variables
 UV = uv
@@ -38,8 +38,8 @@ type-check: ## Type check with mypy
 	@python -m mypy new_ltpp/ tests/ examples/ || true
 	@echo "Type checking finished (issues reported above)."
 
-# Generic run target (defaults to demo/test configs)
-run: ## Run full pipeline via CLI (pass variables to override)
+# Demo run target (defaults to demo/test configs)
+run-demo: ## Run demo pipeline via CLI (pass variables to override)
 	@$(CLI) run \
 		$(if $(CONFIG),--config $(CONFIG),) \
 		$(if $(DATA),--data-config $(DATA),--data-config test) \
@@ -56,48 +56,23 @@ run: ## Run full pipeline via CLI (pass variables to override)
 		$(if $(SAVE_DIR),--save-dir $(SAVE_DIR),) \
 		$(if $(DEBUG),--debug,)
 
-# Model-specific shortcuts that run the entire pipeline with sensible defaults
-run-nhp: ## Run full pipeline for NHP model (demo uses `test` configs)
-	@$(MAKE) run \
-	MODEL_ID=NHP \
-	GENERAL_SPECS=h16 \
-	TRAINING=e500_b1 \
-	DATA_LOADING=b128_w10 \
-	SIMULATION=tw100_b50000_b128 \
-	THINNING=e200_s60 \
-	LOGGER=tensorboard
-
-# Model-specific shortcuts that run the entire pipeline with sensible defaults
-run-thp: ## Run full pipeline for THP model (demo uses `test` configs)
-	@$(MAKE) run \
-	MODEL_ID=THP \
-	GENERAL_SPECS=h16 \
-	TRAINING=e500_b1 \
-	DATA_LOADING=b128_w10 \
-	SIMULATION=tw100_b50000_b128 \
-	THINNING=e1000_s100 \
-	LOGGER=tensorboard
-
-# Model-specific shortcuts that run the entire pipeline with sensible defaults
-run-rmtpp: ## Run full pipeline for RMTTP model (demo uses `test` configs)
-	@$(MAKE) run \
-	MODEL_ID=RMTPP \
-	GENERAL_SPECS=h64 \
-	TRAINING=e500_b1 \
-	DATA_LOADING=b128_w10 \
-	SIMULATION=tw100_b50000_b128 \
-	THINNING=e200_s60 \
-	LOGGER=tensorboard
-
-run-sahp: ## Run full pipeline for SAHP model (demo uses `test` configs)
-	@$(MAKE) run \
-	MODEL_ID=SAHP \
-	GENERAL_SPECS=h64 \
-	TRAINING=e500_b1 \
-	DATA_LOADING=b128_w10 \
-	SIMULATION=tw100_b50000_b128 \
-	THINNING=e200_s60 \
-	LOGGER=tensorboard
+# Generic run target with defaults for real runs
+run: ## Run full pipeline via CLI with real run defaults (pass variables to override)
+	@$(CLI) run \
+		$(if $(CONFIG),--config $(CONFIG),) \
+		$(if $(DATA),--data-config $(DATA),--data-config hawkes1) \
+		$(if $(GENERAL_SPECS),--general-specs-config $(GENERAL_SPECS),--general-specs-config h64) \
+		$(if $(MODEL_SPECS),--model-specs-config $(MODEL_SPECS),) \
+		$(if $(TRAINING),--training-config $(TRAINING),--training-config e1000_b4) \
+		$(if $(DATA_LOADING),--data-loading-config $(DATA_LOADING),--data-loading-config b32_w1) \
+		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config tw70_b15000_b32) \
+		$(if $(THINNING),--thinning-config $(THINNING),--thinning-config e200_s60) \
+		$(if $(LOGGER),--logger-config $(LOGGER),--logger-config tensorboard) \
+		$(if $(MODEL_ID),--model $(MODEL_ID),--model NHP) \
+		--phase all \
+		$(if $(EPOCHS),--epochs $(EPOCHS),--epochs 1000) \
+		$(if $(SAVE_DIR),--save-dir $(SAVE_DIR),) \
+		$(if $(DEBUG),--debug,)
 
 benchmark-list: ## [BENCH-LIST] List available benchmarks
 	@$(CLI) benchmark --list
@@ -150,7 +125,7 @@ demo: ## [DEMO] Quick demonstration of all features
 	@make version
 	@echo ""
 	@echo "3. Quick Training (5 epochs)"
-	@make run-nhp EPOCHS=5
+	@make run-demo EPOCHS=5
 	@echo ""
 	@echo "4. Benchmarks"
 	@make benchmark-list

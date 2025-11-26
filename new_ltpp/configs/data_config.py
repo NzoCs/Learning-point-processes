@@ -57,7 +57,7 @@ class TokenizerConfig(Config):
     truncation_strategy: Optional[Literal["longest_first", "do_not_truncate"]] = None
     padding_side: Literal["left", "right"] = "left"
     truncation_side: Literal["left", "right"] = "left"
-    pad_token_id: Optional[int] = None
+    pad_token_id: int = -1
     num_event_types_pad: Optional[int] = None
     model_input_names: Optional[List[str]] = None
 
@@ -69,9 +69,7 @@ class TokenizerConfig(Config):
     def __post_init__(self):
         """Validate and normalize configuration."""
 
-        # Auto-set pad_token_id and num_event_types_pad
-        if self.pad_token_id is None:
-            self.pad_token_id = self.num_event_types
+
         if self.num_event_types_pad is None:
             self.num_event_types_pad = self.num_event_types + 1
 

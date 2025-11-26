@@ -83,19 +83,20 @@ class Batch:
         return self
 
 
-class DataStats(TypedDict):
+class DataInfo(TypedDict):
     """Container for dataset statistics used in model configuration.
 
     Args:
         num_event_types: Number of unique event types in the dataset
         end_time_max: Maximum end time value in the dataset
         dtime_max: Maximum time delta value in the dataset
+        pad_token_id: Padding token ID used in the dataset
     """
 
     num_event_types: int
     end_time_max: float
     dtime_max: float
-
+    pad_token_id: int
 
 class OneStepPred(TypedDict):
     """Container for one-step-ahead predictions.

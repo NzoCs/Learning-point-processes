@@ -8,7 +8,7 @@ from new_ltpp.runners import RunnerManager
 def main() -> None:
     # Load configuration
     config_path = CONFIGS_FILE
-    model_id = "THP"
+    model_id = "NHP"
 
     # Build runner configuration from YAML
     config_builder = RunnerConfigBuilder()

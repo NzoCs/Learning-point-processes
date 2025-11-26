@@ -12,7 +12,7 @@ import torch.optim as optim
 from new_ltpp.configs import ModelConfig
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.event_sampler import EventSampler
-from new_ltpp.shared_types import Batch, DataStats
+from new_ltpp.shared_types import Batch, DataInfo
 from new_ltpp.utils import logger
 
 from .mixins import TrainingMixin, VisualizationMixin
@@ -30,13 +30,13 @@ class Model(
     """
 
     def __init__(
-        self, model_config: ModelConfig, data_stats: DataStats, output_dir: Path | str
+        self, model_config: ModelConfig, data_info: DataInfo, output_dir: Path | str
     ):
         """Initialize the Model.
 
         Args:
             model_config: Model configuration
-            data_stats: Statistics from the dataset (num_event_types, end_time_max, dtime_max)
+            data_info: Statistics from the dataset (num_event_types, end_time_max, dtime_max, pad_token_id)
         """
 
         # Simulation configuration for simulation mixin
@@ -44,8 +44,8 @@ class Model(
 
         self.seed = simulation_config.seed
         simulation_batch_size = simulation_config.batch_size
-        simulation_start_time = data_stats["end_time_max"]
-        simulation_end_time = data_stats["end_time_max"] + simulation_config.time_window
+        simulation_start_time = data_info["end_time_max"]
+        simulation_end_time = data_info["end_time_max"] + simulation_config.time_window
         initial_buffer_size = simulation_config.initial_buffer_size
 
         # Prediction configuration for prediction mixin, and event sampler
@@ -60,20 +60,21 @@ class Model(
             # BaseMixin params
             num_exp=num_exp,
             device=model_config.device,
-            dtime_max=data_stats["dtime_max"],
+            dtime_max=data_info["dtime_max"],
             num_samples_boundary=num_samples_boundary,
             over_sample_rate=over_sample_rate,
             output_dir=Path(output_dir),
             # SimulationMixin params
             simulation_start_time=simulation_start_time,
             simulation_end_time=simulation_end_time,
-            num_event_types=data_stats["num_event_types"],
+            num_event_types=data_info["num_event_types"],
             initial_buffer_size=initial_buffer_size,
             simulation_batch_size=simulation_batch_size,
             # PredictionMixin params
-            pad_token_id=data_stats["num_event_types"],
             num_sample=num_sample,
             num_step_gen=model_config.num_steps,
+            # TrainingMixin paramok
+            pad_token_id=data_info["pad_token_id"],
         )
 
         # Save hyperparameters

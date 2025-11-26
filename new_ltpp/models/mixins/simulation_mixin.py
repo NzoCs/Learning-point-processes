@@ -2,7 +2,7 @@
 """Mixin for simulation functionality."""
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 from tqdm import tqdm
@@ -18,7 +18,7 @@ from .base_mixin import BaseMixin
 class SimulationMixin(BaseMixin):
     """Mixin providing simulation functionality.
 
-    Requires: self.num_event_types, self.initial_buffer_size, self._statistics_collector,
+    Requires: self.num_event_types, self.pad_token_id, self.initial_buffer_size, self._statistics_collector,
               self.device, self.simulation_start_time, self.simulation_end_time,
               self.simulation_batch_size, self.event_sampler, self.num_sample,
               self.compute_intensities_at_sample_times
@@ -312,9 +312,11 @@ class SimulationMixin(BaseMixin):
         return new_max_seq_len
 
     def _run_simulation_loop(
-        self, buffers: dict, sim_state: dict, start_time: float, end_time: float
+        self, buffers: Dict[str, torch.Tensor], sim_state: Dict[str, Any], start_time: float, end_time: float
     ) -> None:
+        
         """Run the main simulation loop."""
+
         initial_len = buffers["initial_len"]
         max_seq_len = buffers["time"].size(1)
 

@@ -55,7 +55,7 @@ class ExperimentRunner(CLIRunnerBase):
 
     def run_experiment(
         self,
-        max_epochs: int,
+        max_epochs: int | None,
         config_path: Union[str, Path],
         data_config: str,
         general_specs_config: str,
@@ -154,7 +154,7 @@ class ExperimentRunner(CLIRunnerBase):
         config_dict = config_builder.config_dict
 
         # Appliquer les overrides de paramètres CLI en utilisant les méthodes du builder
-        if max_epochs:
+        if max_epochs is not None:
             config_builder.set_max_epochs(max_epochs)
             self.print_info(f"Override: max_epochs = {max_epochs}")
 

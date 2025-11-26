@@ -8,7 +8,7 @@ from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_collator import TPPDataCollator
 from new_ltpp.data.preprocess.dataset import TPPDataset
 from new_ltpp.data.preprocess.event_tokenizer import EventTokenizer
-from new_ltpp.shared_types import Batch, DataStats
+from new_ltpp.shared_types import Batch, DataInfo
 from new_ltpp.utils import load_pickle, logger, py_assert
 
 
@@ -50,6 +50,7 @@ class TPPDataModule(pl.LightningDataModule):
         self.batch_size = data_config.data_loading_specs.batch_size
         self.tokenizer = EventTokenizer(data_config.tokenizer_specs)
         self.tokenizer_specs = data_config.tokenizer_specs
+        self.pad_token_id = self.tokenizer_specs.pad_token_id
 
         data_loading_specs = data_config.data_loading_specs
         self.num_workers = data_loading_specs.num_workers
@@ -154,11 +155,11 @@ class TPPDataModule(pl.LightningDataModule):
 
         return end_time_max_estimate
 
-    def get_data_stats(self) -> DataStats:
+    def get_data_info(self) -> DataInfo:
         """Get dataset statistics for model configuration.
 
         Returns:
-            DataStats: Dataset statistics including number of event types,
+            DataInfo: Dataset statistics including number of event types,
                        maximum sequence length, and maximum time delta.
         """
         # Estimate dtime_max from training data
@@ -168,13 +169,14 @@ class TPPDataModule(pl.LightningDataModule):
         # Get number of event types and max sequence length from tokenizer specs
         num_event_types = self.tokenizer_specs.num_event_types
 
-        data_stats = DataStats(
+        data_info = DataInfo(
             num_event_types=num_event_types,
             end_time_max=end_time_max,
             dtime_max=dtime_max,
+            pad_token_id=self.pad_token_id,
         )
 
-        return data_stats
+        return data_info
 
     def build_input(
         self,

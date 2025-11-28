@@ -106,6 +106,7 @@ class PredMetricsHelper:
     def compute_all_time_metrics(
         self, batch: Batch, pred_time_tensor: torch.Tensor
     ) -> Dict[str, Any]:
+        
         """
         Compute all time-related metrics using the time extractor.
 

@@ -127,10 +127,12 @@ class EventSampler(nn.Module):
         # Gather the delta
         gathered = torch.gather(exp_jumps, dim=3, index=idx[..., None])  # [B,L,K,1]
 
-        # Replace missing by dtime_max
+        # if none accepted, return 0.0 (no time jump) ??? Have to check what is best here, maybe dtime_max is better
+        # We could also filter these later on by masking 0.0 dts an exactly 0.0 dt should happen with prb 0 ??? idk
+        # [B,L,K, 1]
         res = torch.where(
             none_accepted[..., None],
-            torch.tensor(self.dtime_max, device=self.device),
+            torch.tensor(0.0, device=self.device), 
             gathered,
         )
 

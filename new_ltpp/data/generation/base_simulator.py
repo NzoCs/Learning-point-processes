@@ -16,9 +16,9 @@ class BaseSimulator(ABC):
     def __init__(
         self,
         dim_process: int,
+        nb_events: int = 1000,
         start_time: float = 100,
         end_time: float = 200,
-        nb_events: int = int("inf"),
         output_dir: str = "data",
         seed: Optional[int] = None,
     ):
@@ -30,6 +30,7 @@ class BaseSimulator(ABC):
             start_time (float): Temps de début de la simulation
             end_time (float): Temps de fin de la simulation
             seed (int, optional): Graine pour la reproductibilité
+            nb_events (int): Nombre d'événements à simuler
         """
         self.dim_process = dim_process
         self.start_time = start_time

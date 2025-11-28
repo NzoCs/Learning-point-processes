@@ -32,11 +32,11 @@ def main() -> None:
 
     # Run complete pipeline: train -> test -> predict
 
-    # # 1. Training
-    # runner.run(phase="train")
+    # 1. Training
+    runner.run(phase="train")
 
-    # # # 2. Testing
-    # runner.run(phase="test")
+    # # 2. Testing
+    runner.run(phase="test")
 
     # 3. Prediction and distribution comparison
     runner.run(phase="predict")

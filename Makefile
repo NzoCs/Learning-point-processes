@@ -39,22 +39,11 @@ type-check: ## Type check with mypy
 	@echo "Type checking finished (issues reported above)."
 
 # Demo run target (defaults to demo/test configs)
-run-demo: ## Run demo pipeline via CLI (pass variables to override)
-	@$(CLI) run \
-		$(if $(CONFIG),--config $(CONFIG),) \
-		$(if $(DATA),--data-config $(DATA),--data-config test) \
-		$(if $(GENERAL_SPECS),--general-specs-config $(GENERAL_SPECS),--general-specs-config quick_test) \
-		$(if $(MODEL_SPECS),--model-specs-config $(MODEL_SPECS),) \
-		$(if $(TRAINING),--training-config $(TRAINING),--training-config quick_test) \
-		$(if $(DATA_LOADING),--data-loading-config $(DATA_LOADING),--data-loading-config quick_test) \
-		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config quick_test) \
-		$(if $(THINNING),--thinning-config $(THINNING),--thinning-config quick_test) \
-		$(if $(LOGGER),--logger-config $(LOGGER),--logger-config tensorboard) \
-		$(if $(MODEL_ID),--model $(MODEL_ID),--model NHP) \
-		--phase all \
-		$(if $(EPOCHS),--epochs $(EPOCHS),--epochs 100) \
-		$(if $(SAVE_DIR),--save-dir $(SAVE_DIR),) \
-		$(if $(DEBUG),--debug,)
+run-demo: ## Run demo pipeline via CLI (fixed demo args)
+	@$(CLI) run --data-config test --general-specs-config quick_test \
+		--training-config quick_test --data-loading-config quick_test \
+		--simulation-config quick_test --thinning-config quick_test \
+		--logger-config tensorboard --model NHP --phase all --epochs 100
 
 # Generic run target with defaults for real runs
 run: ## Run full pipeline via CLI with real run defaults (pass variables to override)

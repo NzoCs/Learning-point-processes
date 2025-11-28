@@ -169,29 +169,9 @@ class BaseBenchmark(ABC):
         aggregated = {}
         for metric_name in metric_names:
             # Skip aggregation for non-scalar metrics like confusion matrices
+            # Skip any confusion-matrix / matrix-like metrics entirely.
             if "confusion" in metric_name.lower() or "matrix" in metric_name.lower():
-                # For confusion matrices, sum them up instead of averaging
-                try:
-                    confusion_matrices = []
-                    for m in all_metrics:
-                        if metric_name in m:
-                            value = m[metric_name]
-                            if hasattr(value, "cpu"):
-                                value = value.cpu().detach()
-                            confusion_matrices.append(value)
-
-                    if confusion_matrices:
-                        # Sum all confusion matrices
-                        if isinstance(confusion_matrices[0], torch.Tensor):
-                            total_confusion = torch.stack(confusion_matrices).sum(dim=0)
-                            aggregated[metric_name] = total_confusion.tolist()
-                        else:
-                            total_confusion = np.sum(confusion_matrices, axis=0)
-                            aggregated[metric_name] = total_confusion.tolist()
-                except Exception as e:
-                    logger.warning(
-                        f"Could not aggregate confusion matrix {metric_name}: {e}"
-                    )
+                logger.debug(f"Skipping confusion/matrix metric '{metric_name}'")
                 continue
 
             # Extract values and convert tensors to scalars for regular metrics
@@ -202,44 +182,18 @@ class BaseBenchmark(ABC):
 
                     # Handle different types of values
                     try:
-                        # For torch tensors
-                        if hasattr(value, "item"):
-                            # Single element tensor
-                            if value.numel() == 1:
-                                value = value.item()
-                            else:
-                                # Multi-element tensor - convert to float and take mean
-                                if value.dtype in [
-                                    torch.long,
-                                    torch.int,
-                                    torch.int32,
-                                    torch.int64,
-                                ]:
-                                    value = value.float()
-                                value = float(value.mean().item())
-                        elif hasattr(value, "cpu"):
-                            # Tensor that needs to be moved to CPU first
-                            cpu_value = value.cpu().detach()
-                            if cpu_value.numel() == 1:
-                                value = float(cpu_value.numpy())
-                            else:
-                                # Convert to float if integer type
-                                if cpu_value.dtype in [
-                                    torch.long,
-                                    torch.int,
-                                    torch.int32,
-                                    torch.int64,
-                                ]:
-                                    cpu_value = cpu_value.float()
-                                value = float(cpu_value.mean().numpy())
-                        elif hasattr(value, "__len__") and len(value) > 1:
-                            # Array-like object
-                            value = float(np.mean(value))
+                        # Torch tensor -> numpy
+                        if isinstance(value, torch.Tensor):
+                            arr = value.detach().cpu().numpy()
+                            value = float(np.mean(arr)) if arr.size > 0 else float("nan")
+                        # Numpy array or sequence -> numpy
+                        elif isinstance(value, (np.ndarray, list, tuple)):
+                            arr = np.array(value)
+                            value = float(np.mean(arr)) if arr.size > 0 else float("nan")
                         else:
-                            # Already a scalar
+                            # Scalar-like (int/float)
                             value = float(value)
 
-                        # Check if value is not NaN
                         if not np.isnan(value):
                             values.append(value)
                     except Exception as e:
@@ -248,16 +202,11 @@ class BaseBenchmark(ABC):
                         )
                         continue
 
+            # Only keep the mean when aggregating to simplify outputs.
             if values:
                 aggregated[f"{metric_name}_mean"] = float(np.mean(values))
-                aggregated[f"{metric_name}_std"] = float(np.std(values))
-                aggregated[f"{metric_name}_min"] = float(np.min(values))
-                aggregated[f"{metric_name}_max"] = float(np.max(values))
             else:
                 aggregated[f"{metric_name}_mean"] = float("nan")
-                aggregated[f"{metric_name}_std"] = float("nan")
-                aggregated[f"{metric_name}_min"] = float("nan")
-                aggregated[f"{metric_name}_max"] = float("nan")
 
         return aggregated
 
@@ -274,10 +223,13 @@ class BaseBenchmark(ABC):
         Returns:
             Results dictionary
         """
+        # Keep only the mean variants of each metric when saving benchmark results.
+        mean_metrics = {k: v for k, v in aggregated_metrics.items() if k.endswith("_mean")}
+
         results = {
             "benchmark_name": self.benchmark_name,
             "num_event_types": self.num_event_types,
-            "metrics": aggregated_metrics,
+            "metrics": mean_metrics,
             "num_batches_evaluated": num_batches,
         }
 

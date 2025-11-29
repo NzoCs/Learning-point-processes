@@ -140,7 +140,7 @@ class TimePositionalEncoding(nn.Module):
 
     div_term: torch.Tensor
     
-    def __init__(self, d_model: int, max_len: int = 5000, device: str | torch.device = "cpu"):
+    def __init__(self, d_model: int, device: str | torch.device, max_len: int = 5000,):
         super().__init__()
         i = torch.arange(0, d_model, device=device)
         div_term = (2 * (i // 2) * -(math.log(10000.0) / d_model)).exp()

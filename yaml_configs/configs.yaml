@@ -202,7 +202,7 @@ thinning_configs:
 simulation_configs:
 
   quick_test:
-    time_window: 120
+    time_window: 10
     initial_buffer_size: 1000
     batch_size: 4
   
@@ -268,7 +268,7 @@ data_loading_configs:
     num_workers: 1
 
   quick_test:
-    batch_size: 8
+    batch_size: 2
     num_workers: 1
 
   b32_w1:

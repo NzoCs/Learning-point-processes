@@ -22,6 +22,4 @@ def build_causal_attn_mask(
         diagonal=1
     )
 
-    float_mask = mask.masked_fill(mask == 0, float(0.0)).masked_fill(mask == 1, float("-inf"))
-
-    return float_mask
+    return mask

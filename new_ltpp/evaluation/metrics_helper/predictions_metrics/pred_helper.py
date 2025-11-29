@@ -8,6 +8,8 @@ import torchmetrics
 from new_ltpp.shared_types import Batch, OneStepPred
 from new_ltpp.utils import logger
 
+from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
+
 from .pred_extractor import (
     PredictionDataExtractor,
     TimeDataExtractor,
@@ -16,7 +18,7 @@ from .pred_extractor import (
 from .pred_types import PredMetrics, TimeValues, TypeValues
 
 
-class PredMetricsHelper:
+class PredMetricsHelper(MetricsHelper):
     """
     Computes prediction-specific metrics.
 
@@ -41,37 +43,12 @@ class PredMetricsHelper:
             selected_metrics: List of metrics to compute. If None, compute all available metrics.
                              Can be strings or PredMetrics enum values.
         """
-        self.num_event_types = num_event_types
+        # delegate selected_metrics handling to MetricsHelper
+        super().__init__(num_event_types, selected_metrics=selected_metrics)
+
         self._data_extractor = PredictionDataExtractor(num_event_types)
         self._time_extractor = TimeDataExtractor()
         self._type_extractor = TypeDataExtractor()
-
-        # Process selected metrics
-        if selected_metrics is None:
-            # By default, compute all available metrics
-            self.selected_metrics = set(self.get_available_metrics())
-        else:
-            # Convert to set of strings for faster lookup
-            processed_metrics = []
-            for metric in selected_metrics:
-                if isinstance(metric, PredMetrics):
-                    processed_metrics.append(metric.value)
-                else:
-                    processed_metrics.append(str(metric))
-
-            # Validate that all selected metrics are available
-            available = set(self.get_available_metrics())
-            selected_set = set(processed_metrics)
-            invalid_metrics = selected_set - available
-            if invalid_metrics:
-                logger.warning(
-                    f"Invalid prediction metrics requested: {invalid_metrics}. "
-                    f"Available metrics: {available}"
-                )
-                # Keep only valid metrics
-                selected_set = selected_set & available
-
-            self.selected_metrics = selected_set
 
     def compute_metrics(self, batch: Batch, pred: OneStepPred) -> Dict[str, Any]:
         """

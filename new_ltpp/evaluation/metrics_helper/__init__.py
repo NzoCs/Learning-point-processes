@@ -4,7 +4,7 @@ Metrics Helper Package
 A modular metrics computation system following SOLID principles.
 """
 
-from .metrics_helper import MetricsHelper
+from .metrics_manager import MetricsManager
 from .predictions_metrics.pred_helper import PredMetricsHelper
 from .predictions_metrics.pred_types import (
     PredMetrics,
@@ -20,7 +20,7 @@ from .simulation_metrics.sim_types import (
 from .summary_stats import SummaryStatsHelper, SummaryStatsMetric
 
 __all__ = [
-    "MetricsHelper",
+    "MetricsManager",
     "PredMetricsHelper",
     "SimMetricsHelper",
     "SummaryStatsHelper",

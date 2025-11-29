@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 
-from new_ltpp.evaluation.metrics_helper import MetricsHelper
+from new_ltpp.evaluation.metrics_helper import MetricsManager
 from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 from new_ltpp.utils import logger
 
@@ -145,7 +145,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             pred: Prediction results
             prefix: Prefix for metric names (e.g., "sim_")
         """
-        metrics_helper = MetricsHelper(num_event_types=self.num_event_types)
+        metrics_helper = MetricsManager(num_event_types=self.num_event_types)
         metrics = metrics_helper.compute_prediction_metrics(batch=batch, pred=pred)
 
         for key, value in metrics.items():
@@ -179,7 +179,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         self._statistics_collector.update_batch(batch, sim)
 
         # Compute and log simulation metrics
-        metrics_helper = MetricsHelper(num_event_types=self.num_event_types)
+        metrics_helper = MetricsManager(num_event_types=self.num_event_types)
         simulation_metrics = metrics_helper.compute_simulation_metrics(
             batch=batch, sim=sim
         )

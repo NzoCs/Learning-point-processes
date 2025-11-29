@@ -14,34 +14,22 @@ from new_ltpp.evaluation.accumulators.acc_types import (
 )
 from new_ltpp.utils import logger
 
+from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
+
 from .summary_stats_metrics import SummaryStatsMetric
 
 
-class SummaryStatsHelper:
+class SummaryStatsHelper(MetricsHelper):
     """Computes metrics that summarize accumulated statistics."""
 
     EPSILON: float = float(np.finfo(np.float64).eps)
 
     def __init__(
         self,
+        num_event_types: int,
         selected_metrics: Optional[List[Union[str, SummaryStatsMetric]]] = None,
     ) -> None:
-        processed_metrics: Set[str]
-        if selected_metrics is None:
-            processed_metrics = set(self.get_available_metrics())
-        else:
-            processed_metrics = self._normalize_metric_selection(selected_metrics)
-            available = set(self.get_available_metrics())
-            invalid = processed_metrics - available
-            if invalid:
-                logger.warning(
-                    "Invalid summary stats metrics requested: %s. Available: %s",
-                    invalid,
-                    available,
-                )
-            processed_metrics &= available
-
-        self.selected_metrics: Set[str] = processed_metrics
+        super().__init__(num_event_types, selected_metrics=selected_metrics)
 
     def compute_metrics(self, statistics: AllStatistics) -> Dict[str, float]:
         """Compute the configured summary statistics metrics."""
@@ -73,20 +61,8 @@ class SummaryStatsHelper:
 
         return metrics
 
-    @staticmethod
-    def get_available_metrics() -> List[str]:
+    def get_available_metrics(self) -> List[str]:
         return [metric.value for metric in SummaryStatsMetric]
-
-    def _normalize_metric_selection(
-        self, selections: Iterable[Union[str, SummaryStatsMetric]]
-    ) -> Set[str]:
-        normalized: Set[str] = set()
-        for metric in selections:
-            if isinstance(metric, SummaryStatsMetric):
-                normalized.add(metric.value)
-            else:
-                normalized.add(str(metric))
-        return normalized
 
     def _to_float_array(
         self, array: NDArray[Any] | Sequence[Any]
@@ -137,8 +113,7 @@ class SummaryStatsHelper:
             return np.zeros_like(values)
         return values / total
 
-    @staticmethod
-    def _absolute_difference(a: float, b: float) -> float:
+    def _absolute_difference(self, a: float, b: float) -> float:
         return float(abs(float(a) - float(b)))
 
     def _build_metric_mapping(

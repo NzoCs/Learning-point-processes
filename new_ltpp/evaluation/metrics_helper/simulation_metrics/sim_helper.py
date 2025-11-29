@@ -13,11 +13,12 @@ from scipy.stats import wasserstein_distance
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
+from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
 from .sim_extractor import SimulationDataExtractor
 from .sim_types import SimMetrics, SimTimeValues
 
 
-class SimMetricsHelper:
+class SimMetricsHelper(MetricsHelper):
     """Computes simulation-specific metrics."""
 
     def __init__(
@@ -25,29 +26,8 @@ class SimMetricsHelper:
         num_event_types: int,
         selected_metrics: Optional[List[Union[str, SimMetrics]]] = None,
     ):
-        self.num_event_types = num_event_types
+        super().__init__(num_event_types, selected_metrics=selected_metrics)
         self._data_extractor = SimulationDataExtractor(num_event_types)
-
-        if selected_metrics is None:
-            self.selected_metrics = set(self.get_available_metrics())
-        else:
-            processed_metrics: List[str] = []
-            for metric in selected_metrics:
-                if isinstance(metric, SimMetrics):
-                    processed_metrics.append(metric.value)
-                else:
-                    processed_metrics.append(str(metric))
-
-            available = set(self.get_available_metrics())
-            selected_set = set(processed_metrics)
-            invalid_metrics = selected_set - available
-            if invalid_metrics:
-                logger.warning(
-                    f"Invalid simulation metrics requested: {invalid_metrics}. Available: {available}"
-                )
-                selected_set = selected_set & available
-
-            self.selected_metrics = selected_set
 
     def compute_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, float]:
         time_values, _ = self._data_extractor.extract_values(batch, pred)

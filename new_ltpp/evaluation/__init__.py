@@ -6,11 +6,11 @@ from .benchmarks import BenchmarkManager
 
 # Export the metrics helper subpackage (import lazily by consumers)
 from .metrics_helper import (  # consumers can access metrics via this submodule
-    MetricsHelper,
+    MetricsManager,
 )
 
 __all__ = [
     "BatchStatisticsCollector",
-    "MetricsHelper",
+    "MetricsManager",
     "BenchmarkManager",
 ]

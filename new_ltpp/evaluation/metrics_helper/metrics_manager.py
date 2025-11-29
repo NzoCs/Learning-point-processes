@@ -1,5 +1,5 @@
 """
-Main MetricsHelper class that orchestrates metrics computation.
+Main MetricsManager class that orchestrates metrics computation.
 """
 
 from typing import Dict, List, Optional, Union
@@ -14,7 +14,7 @@ from .simulation_metrics.sim_helper import SimMetricsHelper
 from .simulation_metrics.sim_types import SimMetrics
 
 
-class MetricsHelper:
+class MetricsManager:
     """
     Main metrics computation orchestrator for TPP evaluation.
 

@@ -64,7 +64,7 @@ class BaseMixin(pl.LightningModule, ABC):
 
     @abstractmethod
     def compute_intensities_at_sample_times(
-        self, 
+        self,
         *,
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,

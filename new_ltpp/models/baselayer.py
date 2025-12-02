@@ -62,14 +62,12 @@ class MultiHeadAttention(nn.Module):
         attn_mask: torch.Tensor,
         output_weight: bool = False,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-        
+
         q = self.input_proj(query)
         k = self.input_proj(key)
         v = self.input_proj(value)
 
-        attn_out, attn_weights = self.mha(
-            q, k, v, attn_mask=attn_mask
-            )
+        attn_out, attn_weights = self.mha(q, k, v, attn_mask=attn_mask)
 
         out = self.out_proj(attn_out)
 
@@ -117,12 +115,15 @@ class EncoderLayer(nn.Module):
             )
 
     def forward(
-        self, x: torch.Tensor, attn_mask: torch.Tensor, key_padding_mask: Optional[torch.Tensor] = None
+        self,
+        x: torch.Tensor,
+        attn_mask: torch.Tensor,
+        key_padding_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         if self.use_residual:
-            x = self.sublayers[0](x, lambda x: self.self_attn(
-                x, x, x, attn_mask=attn_mask
-                ))
+            x = self.sublayers[0](
+                x, lambda x: self.self_attn(x, x, x, attn_mask=attn_mask)
+            )
             if self.feed_forward is not None:
                 x = self.sublayers[1](x, self.feed_forward)
             return x
@@ -133,13 +134,18 @@ class EncoderLayer(nn.Module):
 
 
 # -------------------------------------------------------------------------
-# ENCODAGE TEMPOREL THP / SAHP 
+# ENCODAGE TEMPOREL THP / SAHP
 # -------------------------------------------------------------------------
 class TimePositionalEncoding(nn.Module):
 
     div_term: torch.Tensor
-    
-    def __init__(self, d_model: int, device: str | torch.device, max_len: int = 5000,):
+
+    def __init__(
+        self,
+        d_model: int,
+        device: str | torch.device,
+        max_len: int = 5000,
+    ):
         super().__init__()
         i = torch.arange(0, d_model, device=device)
         div_term = (2 * (i // 2) * -(math.log(10000.0) / d_model)).exp()
@@ -157,7 +163,9 @@ class TimeShiftedPositionalEncoding(nn.Module):
     position: torch.Tensor
     div_term: torch.Tensor
 
-    def __init__(self, d_model: int, max_len: int = 5000, device: str | torch.device = "cpu"):
+    def __init__(
+        self, d_model: int, max_len: int = 5000, device: str | torch.device = "cpu"
+    ):
         super().__init__()
         position = torch.arange(max_len, device=device).float().unsqueeze(1)
         div_term = torch.arange(0, d_model, 2, device=device).float()

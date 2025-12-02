@@ -101,7 +101,7 @@ class ModelConfigBuilder(ConfigBuilder):
         model_cfg = {}
         if model_config_path:
             model_cfg = self._get_nested_value(data, model_config_path)
-        
+
         simulation_cfg = (
             self._get_nested_value(data, simulation_config_path)
             if simulation_config_path
@@ -117,18 +117,18 @@ class ModelConfigBuilder(ConfigBuilder):
             if thinning_config_path
             else {}
         )
-        
+
         # Load general_specs and model_specs from specific paths or from model_cfg
         if general_specs_path:
             general_specs = self._get_nested_value(data, general_specs_path)
         else:
             general_specs = model_cfg.get("general_specs", {})
-            
+
         if model_specs_path:
             model_specs = self._get_nested_value(data, model_specs_path)
         else:
             model_specs = model_cfg.get("model_specs", {})
-        
+
         self.config_dict["general_specs"] = general_specs
         self.config_dict["model_specs"] = model_specs
         self.config_dict["simulation_config"] = simulation_cfg

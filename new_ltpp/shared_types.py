@@ -98,6 +98,7 @@ class DataInfo(TypedDict):
     dtime_max: float
     pad_token_id: int
 
+
 class OneStepPred(TypedDict):
     """Container for one-step-ahead predictions.
 

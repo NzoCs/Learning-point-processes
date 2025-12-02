@@ -94,12 +94,6 @@ logging = [
     "comet-ml>=3.53.0",
 ]
 
-[project.urls]
-Homepage = "https://github.com/ant-research/EasyTemporalPointProcess/"
-Repository = "https://github.com/ant-research/EasyTemporalPointProcess/"
-Documentation = "https://github.com/ant-research/EasyTemporalPointProcess/"
-"Bug Tracker" = "https://github.com/ant-research/EasyTemporalPointProcess/issues"
-
 [project.scripts]
 new-ltpp = "scripts.cli:main"
 

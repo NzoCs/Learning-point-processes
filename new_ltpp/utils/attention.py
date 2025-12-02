@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import torch
 
+
 def get_causal_attn_mask(
-    size:int,
+    size: int,
     device: torch.device | str,
 ) -> torch.Tensor:
     """
@@ -20,10 +21,9 @@ def get_causal_attn_mask(
     """
     # Appliquer le masque de non-remboursement
 
-
     # Créer le masque causal
     attn_mask = torch.triu(
-        torch.ones((size, size), device=device) * float('-inf'), diagonal=1
+        torch.ones((size, size), device=device) * float("-inf"), diagonal=1
     )
 
     return attn_mask

@@ -66,8 +66,15 @@ class ANHN(NeuralModel):
         self.softplus = nn.Softplus()
 
     def forward(
-            self, dtime_seqs: torch.Tensor, type_seqs: torch.Tensor, attention_mask: torch.Tensor
-            ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
+        self,
+        dtime_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        attention_mask: torch.Tensor,
+    ) -> tuple[
+        torch.Tensor,
+        tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+        tuple[torch.Tensor, torch.Tensor],
+    ]:
         """Call the model.
 
         Args:
@@ -93,7 +100,11 @@ class ANHN(NeuralModel):
 
         # [batch_size, num_head, seq_len, seq_len]
         _, att_weight = self.layer_att(
-            rnn_output, rnn_output, rnn_output, attn_mask=attention_mask, output_weight=True
+            rnn_output,
+            rnn_output,
+            rnn_output,
+            attn_mask=attention_mask,
+            output_weight=True,
         )
 
         # [batch_size, seq_len, seq_len, 1]
@@ -141,7 +152,7 @@ class ANHN(NeuralModel):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        
+
         attn_mask = get_causal_attn_mask(
             batch.time_delta_seqs.size(1), device=self._device
         )
@@ -290,14 +301,14 @@ class ANHN(NeuralModel):
         return states_samples
 
     def compute_intensities_at_sample_times(
-            self, 
-            *,
-            time_delta_seqs: torch.Tensor, 
-            type_seqs: torch.Tensor, 
-            sample_dtimes: torch.Tensor, 
-            compute_last_step_only: bool = False,
-            **kwargs,
-            ) -> torch.Tensor:
+        self,
+        *,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        compute_last_step_only: bool = False,
+        **kwargs,
+    ) -> torch.Tensor:
         """Compute the intensity at sampled times.
 
         Args:
@@ -308,11 +319,7 @@ class ANHN(NeuralModel):
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
 
-
-        attn_mask = get_causal_attn_mask(
-            time_delta_seqs.size(1), device=self._device
-        )
-
+        attn_mask = get_causal_attn_mask(time_delta_seqs.size(1), device=self._device)
 
         # [batch_size, seq_len, num_samples]
         (

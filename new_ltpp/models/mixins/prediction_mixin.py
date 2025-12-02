@@ -59,10 +59,10 @@ class PredictionMixin(BaseMixin):
 
         # Compute intensities at sampled times
         intensities_at_times = self.compute_intensities_at_sample_times(
-            time_seqs = time_seqs, 
-            time_delta_seqs = time_delta_seqs,
-            type_seqs = type_seqs,
-            sample_dtimes = accepted_dtimes,
+            time_seqs=time_seqs,
+            time_delta_seqs=time_delta_seqs,
+            type_seqs=type_seqs,
+            sample_dtimes=accepted_dtimes,
         )
 
         # Normalize intensities and compute weighted sum

@@ -132,7 +132,9 @@ class RunnerConfig(Config):
         model_spec = self.model_config.specs
 
         # Build a string from all model specs for directory naming
-        specs_str = "_".join(f"{k}_{v}" for k, v in vars(model_spec).items() if not k.startswith('_'))
+        specs_str = "_".join(
+            f"{k}_{v}" for k, v in vars(model_spec).items() if not k.startswith("_")
+        )
 
         # Base directory for all outputs
         self.base_dir = OUTPUT_DIR / self.dataset_id / f"{self.model_id}_{specs_str}"

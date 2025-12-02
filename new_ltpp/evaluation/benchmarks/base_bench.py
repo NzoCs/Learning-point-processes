@@ -139,7 +139,6 @@ class BaseBenchmark(ABC):
         if "macro_f1score_mean" in metrics:
             logger.info(f"Macro F1 Score: {metrics['macro_f1score_mean']:.6f}")
 
-
     def _aggregate_metrics(
         self, all_metrics: List[Dict[str, float]]
     ) -> Dict[str, float]:
@@ -175,11 +174,15 @@ class BaseBenchmark(ABC):
                         # Torch tensor -> numpy
                         if isinstance(value, torch.Tensor):
                             arr = value.detach().cpu().numpy()
-                            value = float(np.mean(arr)) if arr.size > 0 else float("nan")
+                            value = (
+                                float(np.mean(arr)) if arr.size > 0 else float("nan")
+                            )
                         # Numpy array or sequence -> numpy
                         elif isinstance(value, (np.ndarray, list, tuple)):
                             arr = np.array(value)
-                            value = float(np.mean(arr)) if arr.size > 0 else float("nan")
+                            value = (
+                                float(np.mean(arr)) if arr.size > 0 else float("nan")
+                            )
                         else:
                             # Scalar-like (int/float)
                             value = float(value)
@@ -214,7 +217,9 @@ class BaseBenchmark(ABC):
             Results dictionary
         """
         # Keep only the mean variants of each metric when saving benchmark results.
-        mean_metrics = {k: v for k, v in aggregated_metrics.items() if k.endswith("_mean")}
+        mean_metrics = {
+            k: v for k, v in aggregated_metrics.items() if k.endswith("_mean")
+        }
 
         results = {
             "benchmark_name": self.benchmark_name,

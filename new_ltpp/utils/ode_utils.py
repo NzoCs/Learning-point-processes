@@ -1,4 +1,5 @@
 from typing import List
+
 import torch
 
 
@@ -70,7 +71,7 @@ def rk2_step_method(diff_func, dt, z0):
         return z0 + dt * (k1 + k2) * 0.5
 
 
-def rk4_step_method(diff_func, dt: torch.Tensor, z0: torch.Tensor) -> torch.Tensor :
+def rk4_step_method(diff_func, dt: torch.Tensor, z0: torch.Tensor) -> torch.Tensor:
     """
     Fourth order Runge-Kutta method for solving ODEs.
 
@@ -89,5 +90,5 @@ def rk4_step_method(diff_func, dt: torch.Tensor, z0: torch.Tensor) -> torch.Tens
     k2 = diff_func(ode_update_op(z0, k1, dt / 2.0))
     k3 = diff_func(ode_update_op(z0, k2, dt / 2.0))
     k4 = diff_func(ode_update_op(z0, k3, dt))
-    
+
     return z0 + dt * (k1 + k2 * 2.0 + k3 * 2.0 + k4) / 6.0

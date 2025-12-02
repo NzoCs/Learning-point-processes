@@ -154,4 +154,6 @@ class Runner:
         self.model.finalize_statistics()
 
         logger.info("Generating intensity graph...")
-        self.model.intensity_graph(save_dir=str(self.config.base_dir / "intensity_graphs"))
+        self.model.intensity_graph(
+            save_dir=str(self.config.base_dir / "intensity_graphs")
+        )

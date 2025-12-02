@@ -96,7 +96,10 @@ class RunnerConfigBuilder(ConfigBuilder):
         training_cfg = self.training_builder.get_config_dict()
 
         self.model_builder.from_dict(
-            data, model_config_path, simulation_config_path, thinning_config_path,
+            data,
+            model_config_path,
+            simulation_config_path,
+            thinning_config_path,
             scheduler_config_path=None,
             general_specs_path=general_specs_path,
             model_specs_path=model_specs_path,

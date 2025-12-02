@@ -5,10 +5,9 @@ import torch
 import torch.nn.functional as F
 import torchmetrics
 
+from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
 from new_ltpp.shared_types import Batch, OneStepPred
 from new_ltpp.utils import logger
-
-from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
 
 from .pred_extractor import (
     PredictionDataExtractor,
@@ -83,7 +82,6 @@ class PredMetricsHelper(MetricsHelper):
     def compute_all_time_metrics(
         self, batch: Batch, pred_time_tensor: torch.Tensor
     ) -> Dict[str, Any]:
-        
         """
         Compute all time-related metrics using the time extractor.
 

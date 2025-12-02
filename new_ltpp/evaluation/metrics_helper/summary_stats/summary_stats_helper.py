@@ -12,9 +12,8 @@ from new_ltpp.evaluation.accumulators.acc_types import (
     CorrelationStatistics,
     SequenceLengthStatistics,
 )
-from new_ltpp.utils import logger
-
 from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
+from new_ltpp.utils import logger
 
 from .summary_stats_metrics import SummaryStatsMetric
 

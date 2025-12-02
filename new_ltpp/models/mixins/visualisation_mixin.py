@@ -28,7 +28,7 @@ class VisualizationMixin(SimulationMixin):
         save_plot: bool = True,
         save_data: bool = True,
         **kwargs,
-        ) -> Tuple[torch.Tensor, torch.Tensor, Dict[int, torch.Tensor]]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, Dict[int, torch.Tensor]]:
         """Generate and visualize intensity curves for the model.
 
         Args:
@@ -68,9 +68,14 @@ class VisualizationMixin(SimulationMixin):
         intensities_flat = intensities[0, ...].view(-1, self.num_event_types)
 
         # Collect marked event times
-        marked_times, intensities_at_marked_times = self._collect_marked_times_intensities(
-            intensities_at_times, time_seq[:, 1:], type_seq[:, 1:], self.num_event_types
+        marked_times, intensities_at_marked_times = (
+            self._collect_marked_times_intensities(
+                intensities_at_times,
+                time_seq[:, 1:],
+                type_seq[:, 1:],
+                self.num_event_types,
             )
+        )
 
         # Save data if requested
         if save_data:
@@ -89,8 +94,8 @@ class VisualizationMixin(SimulationMixin):
         if plot or save_plot:
             self._plot_intensity_graphs(
                 time_flat,
-                marked_times,                
-                intensities_flat,                
+                marked_times,
+                intensities_flat,
                 intensities_at_marked_times,
                 self.num_event_types,
                 save_dir,
@@ -123,18 +128,20 @@ class VisualizationMixin(SimulationMixin):
 
         return metadata
 
-    def _get_simulation_data(self, start_time: float, end_time: float) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _get_simulation_data(
+        self, start_time: float, end_time: float
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get or generate simulation data for visualization.
-        
+
         Args:
             start_time: Start time for simulation
             end_time: End time for simulation
         Returns:
-            Tuple of (time_seq, time_delta_seq, type_seq) tensors [seq_len]    
+            Tuple of (time_seq, time_delta_seq, type_seq) tensors [seq_len]
         """
 
-        simul_result = (
-            self.simulate(start_time=start_time, end_time=end_time, batch_size=1)
+        simul_result = self.simulate(
+            start_time=start_time, end_time=end_time, batch_size=1
         )
         time_seq = simul_result.time_seqs
         time_delta_seq = simul_result.dtime_seqs
@@ -142,9 +149,11 @@ class VisualizationMixin(SimulationMixin):
 
         return time_seq, time_delta_seq, type_seq
 
-    def _generate_intensity_time_points(self, time_seq: torch.Tensor, time_delta_seq: torch.Tensor, precision: int):
+    def _generate_intensity_time_points(
+        self, time_seq: torch.Tensor, time_delta_seq: torch.Tensor, precision: int
+    ):
         """Generate time points for intensity calculation.
-        
+
         Args:
             time_seq: [1, seq_len]
             time_delta_seq: [1, seq_len]
@@ -170,16 +179,20 @@ class VisualizationMixin(SimulationMixin):
         return time_points, time_deltas_sample
 
     def _calculate_intensities(
-        self, time_seqs: torch.Tensor, time_delta_seqs: torch.Tensor, type_seqs: torch.Tensor, time_deltas_sample: torch.Tensor
+        self,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        time_deltas_sample: torch.Tensor,
     ):
         """Calculate intensities on time grid.
-        
+
         Args:
             time_seqs: [1, seq_len]
             time_delta_seqs: [1, seq_len]
             type_seqs: [1, seq_len]
             time_deltas_sample: [1, seq_len - 1, precision]
-            
+
         Returns:
             intensities: [1, seq_len - 1, precision, num_event_types]
         """
@@ -196,8 +209,12 @@ class VisualizationMixin(SimulationMixin):
         return intensities.detach().clone()
 
     def _collect_marked_times_intensities(
-            self, intensities_at_times: torch.Tensor, time_seqs: torch.Tensor, type_seqs: torch.Tensor, num_mark: int
-            ) -> Tuple[dict[int, torch.Tensor], dict[int, torch.Tensor]]:
+        self,
+        intensities_at_times: torch.Tensor,
+        time_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        num_mark: int,
+    ) -> Tuple[dict[int, torch.Tensor], dict[int, torch.Tensor]]:
         """Collect times where each event type occurs."""
 
         marked_times = {}
@@ -205,11 +222,11 @@ class VisualizationMixin(SimulationMixin):
         time_seqs_flat = time_seqs.squeeze(0)
         type_seqs_flat = type_seqs.squeeze(0)
 
-        valid_mask = (time_seqs_flat != 0)
+        valid_mask = time_seqs_flat != 0
 
         for i in range(num_mark):
             mask = (type_seqs_flat == i) & valid_mask
-            
+
             if mask.any():
                 marked_times[i] = time_seqs_flat[mask]
                 intensities_at_marked_times[i] = intensities_at_times[0, :, 0, i][mask]

@@ -4,7 +4,7 @@ from torch import nn
 from new_ltpp.models.baselayer import MultiHeadAttention
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
-from new_ltpp.utils.attention import build_causal_attn_mask
+from new_ltpp.utils.attention import get_causal_attn_mask
 
 
 class ANHN(NeuralModel):
@@ -65,13 +65,14 @@ class ANHN(NeuralModel):
         # Fix: add missing softplus attribute for intensity computation
         self.softplus = nn.Softplus()
 
-    def forward(self, dtime_seqs, type_seqs, key_padding_mask, attention_mask):
+    def forward(
+            self, dtime_seqs: torch.Tensor, type_seqs: torch.Tensor, attention_mask: torch.Tensor
+            ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
         """Call the model.
 
         Args:
             dtime_seqs (tensor): [batch_size, seq_len].
             type_seqs (tensor): [batch_size, seq_len].
-            key_padding_mask (tensor): [batch_size, seq_len].
             attention_mask (tensor): [batch_size, seq_len, hidden_size].
 
         Returns:
@@ -92,7 +93,7 @@ class ANHN(NeuralModel):
 
         # [batch_size, num_head, seq_len, seq_len]
         _, att_weight = self.layer_att(
-            rnn_output, rnn_output, rnn_output, key_padding_mask=key_padding_mask, attn_mask=attention_mask, output_weight=True
+            rnn_output, rnn_output, rnn_output, attn_mask=attention_mask, output_weight=True
         )
 
         # [batch_size, seq_len, seq_len, 1]
@@ -140,19 +141,19 @@ class ANHN(NeuralModel):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        time_seqs = batch.time_seqs
-        time_delta_seqs = batch.time_delta_seqs
-        type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
+        
+        attn_mask = get_causal_attn_mask(
+            batch.time_delta_seqs.size(1), device=self._device
+        )
 
         (
             imply_lambdas,
             (intensity_base, intensity_alpha, intensity_delta),
             (base_dtime, target_cumsum_dtime),
         ) = self.forward(
-            time_delta_seqs[:, 1:], type_seqs[:, :-1], batch_non_pad_mask[:, :-1], attention_mask[:, 1:, :-1]
+            batch.time_delta_seqs[:, 1:], batch.type_seqs[:, :-1], attn_mask[:, 1:, :-1]
         )
+
         lambda_at_event = self.layer_intensity(imply_lambdas)
 
         # Num of samples in each batch and num of event time point in the sequence
@@ -167,7 +168,7 @@ class ANHN(NeuralModel):
         # interval_t_sample - [batch_size, num_times=max_len-1, num_mc_sample]
         # for every batch and every event point => do a sampling (num_mc_sampling)
         # the first dtime is zero, so we use time_delta_seqs[:, 1:]
-        interval_t_sample = self.make_dtime_loss_samples(time_delta_seqs[:, 1:])
+        interval_t_sample = self.make_dtime_loss_samples(batch.time_delta_seqs[:, 1:])
 
         state_t_sample = self.compute_states_at_sample_times(
             intensity_base,
@@ -181,9 +182,9 @@ class ANHN(NeuralModel):
         event_ll, non_event_ll, num_events = self.compute_loglikelihood(
             lambda_at_event=lambda_at_event,
             lambdas_loss_samples=lambda_t_sample,
-            time_delta_seq=time_delta_seqs[:, 1:],
-            seq_mask=batch_non_pad_mask[:, 1:],
-            type_seq=type_seqs[:, 1:],
+            time_delta_seq=batch.time_delta_seqs[:, 1:],
+            seq_mask=batch.seq_non_pad_mask[:, 1:],
+            type_seq=batch.type_seqs[:, 1:],
         )
 
         # (num_samples, num_times)
@@ -289,36 +290,36 @@ class ANHN(NeuralModel):
         return states_samples
 
     def compute_intensities_at_sample_times(
-        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
-    ):
+            self, 
+            *,
+            time_delta_seqs: torch.Tensor, 
+            type_seqs: torch.Tensor, 
+            sample_dtimes: torch.Tensor, 
+            compute_last_step_only: bool = False,
+            **kwargs,
+            ) -> torch.Tensor:
         """Compute the intensity at sampled times.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], sequences of timestamps.
-            time_delta_seqs (tensor): [batch_size, seq_len], sequences of delta times.
-            type_seqs (tensor): [batch_size, seq_len], sequences of event types.
+            batch (Batch): batch input.
             sampled_dtimes (tensor): [batch_size, seq_len, num_sample], sampled time delta sequence.
 
         Returns:
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
 
-        attention_mask = kwargs.get("attention_mask", None)
-        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
-        if attention_mask is None:
-            batch_size, seq_len = time_seqs.size()
-            attention_mask = torch.triu(
-                torch.ones(seq_len, seq_len), diagonal=1
-            ).unsqueeze(0)
-            attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
+        attn_mask = get_causal_attn_mask(
+            time_delta_seqs.size(1), device=self._device
+        )
+
 
         # [batch_size, seq_len, num_samples]
         (
             imply_lambdas,
             (intensity_base, intensity_alpha, intensity_delta),
             (base_dtime, target_cumsum_dtime),
-        ) = self.forward(time_delta_seqs, type_seqs, None, attention_mask)
+        ) = self.forward(time_delta_seqs, type_seqs, attn_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(

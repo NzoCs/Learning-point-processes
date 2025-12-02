@@ -64,27 +64,24 @@ class BaseMixin(pl.LightningModule, ABC):
 
     @abstractmethod
     def compute_intensities_at_sample_times(
-        self,
+        self, 
+        *,
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
-        **kwargs,
+        compute_last_step_only: bool = False,
     ) -> torch.Tensor:
         """Compute the intensity at sampled times, not only event times.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], times seqs.
-            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
-            type_seqs (tensor): [batch_size, seq_len], event type seqs.
+            batch (Batch): batch input.
             sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
 
         Returns:
             tensor: [batch_size, num_times, num_mc_sample, num_event_types],
                     intensity at each timestamp for each event type."""
-        raise NotImplementedError(
-            "Subclasses must implement compute_intensities_at_sample_times"
-        )
+        pass
 
     @abstractmethod
     def loglike_loss(self, batch: Batch) -> tuple:

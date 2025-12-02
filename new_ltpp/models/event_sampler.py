@@ -2,7 +2,7 @@
 # Compatible with intensity_fn(time_seq, time_delta_seq, event_seq, dtime, ...)
 # Includes: vectorized Exp sampling, vectorized uniform draws, stable accept step.
 
-from typing import Callable, Literal, Tuple
+from typing import Callable, Tuple
 
 import torch
 import torch.nn as nn
@@ -29,9 +29,9 @@ class EventSampler(nn.Module):
     # ----------------------------------------------------------------------
     def compute_intensity_upper_bound(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
         intensity_fn: Callable[..., torch.Tensor],
         compute_last_step_only: bool,
     ) -> torch.Tensor:
@@ -45,22 +45,22 @@ class EventSampler(nn.Module):
         Returns:
             bound: [B,L]
         """
-        batch_size, seq_len = time_seq.size()
+        batch_size, seq_len = time_seqs.size()
 
         tnorm = torch.linspace(
             0.0, self.dtime_max, self.num_samples_boundary, device=self.device
         )[
             None, None, :
         ]  # [1,1,K]
+
         tnorm = tnorm.expand(batch_size, seq_len, self.num_samples_boundary)  # [B,L,K]
 
         # intensities: [B,L,K,num_events]
         intens = intensity_fn(
-            time_seq,
-            time_delta_seq,
-            event_seq,
-            tnorm,
-            max_steps=seq_len,
+            time_seqs=time_seqs,
+            time_delta_seqs=time_delta_seqs,
+            type_seqs=type_seqs,
+            sample_dtimes=tnorm,
             compute_last_step_only=compute_last_step_only,
         )
 
@@ -143,19 +143,18 @@ class EventSampler(nn.Module):
     # ----------------------------------------------------------------------
     def draw_next_time_one_step(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
         intensity_fn: Callable[..., torch.Tensor],
         num_sample: int,
-        num_exp: int = 0,
         compute_last_step_only: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Vectorized thinning step"""
 
         # 1. upper bound M
         M = self.compute_intensity_upper_bound(
-            time_seq, time_delta_seq, event_seq, intensity_fn, compute_last_step_only
+            time_seqs, time_delta_seqs, type_seqs, intensity_fn, compute_last_step_only
         )  # [B,L]
 
         # 2. exp samples
@@ -164,13 +163,13 @@ class EventSampler(nn.Module):
 
         # 3. evaluate intensity at sampled times
         intens = intensity_fn(
-            time_seq,
-            time_delta_seq,
-            event_seq,
-            exp_j,
-            max_steps=time_seq.size(1),
+            time_seqs = time_seqs,
+            time_delta_seqs = time_delta_seqs,
+            type_seqs = type_seqs,
+            sample_dtimes = exp_j,
             compute_last_step_only=compute_last_step_only,
         )
+
         intens_total = intens.sum(-1)  # [B,L,E]
 
         # 4. tile for num_sample (like in thinning.py)

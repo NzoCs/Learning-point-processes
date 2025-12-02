@@ -150,16 +150,16 @@ class SimulationMixin(BaseMixin):
 
     def simulate_one_step(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Simulate one step of event generation.
 
         Args:
-            time_seq: Time sequence [batch_size, seq_len]
-            time_delta_seq: Time delta sequence [batch_size, seq_len]
-            event_seq: Event type sequence [batch_size, seq_len]
+            time_seqs: Time sequence [batch_size, seq_len]
+            time_delta_seqs: Time delta sequence [batch_size, seq_len]
+            type_seqs: Event type sequence [batch_size, seq_len]
             mode: "train" or "simulation" mode
 
         Returns:
@@ -168,9 +168,9 @@ class SimulationMixin(BaseMixin):
 
         # Draw next time
         accepted_dtimes, weights = self._event_sampler.draw_next_time_one_step(
-            time_seq,
-            time_delta_seq,
-            event_seq,
+            time_seqs,
+            time_delta_seqs,
+            type_seqs,
             self.compute_intensities_at_sample_times,
             num_sample=1,
             compute_last_step_only=True,
@@ -178,14 +178,14 @@ class SimulationMixin(BaseMixin):
 
         # Estimate next time delta
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)
-        batch_size, num_mark = time_seq.size(0), self.num_event_types
+        batch_size, num_mark = time_seqs.size(0), self.num_event_types
 
         # Select next event type based on intensities
         intensities_at_times = self.compute_intensities_at_sample_times(
-            time_seq,
-            time_delta_seq,
-            event_seq,
-            dtimes_pred[:, :, None],
+            time_seqs=time_seqs,
+            time_delta_seqs=time_delta_seqs,
+            type_seqs=type_seqs,
+            sample_dtimes=dtimes_pred[:, :, None],
             compute_last_step_only=True,
         ).view(batch_size, num_mark)
 

@@ -241,10 +241,11 @@ class NHP(NeuralModel):
 
     def compute_intensities_at_sample_times(
         self,
-        time_seqs: torch.Tensor,
+        *,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
         """Compute the intensity at sampled times, not only event times.
@@ -259,8 +260,6 @@ class NHP(NeuralModel):
             tensor: [batch_size, num_times, num_mc_sample, num_event_types],
                     intensity at each timestamp for each event type.
         """
-
-        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         # We will need the right limit at the last given event to decay from and get the left limits for sampling
         _, right_hiddens = self.forward((time_delta_seqs, type_seqs))

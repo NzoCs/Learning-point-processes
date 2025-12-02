@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from new_ltpp.shared_types import Batch
-from new_ltpp.utils.attention import build_causal_attn_mask
+from new_ltpp.utils.attention import get_causal_attn_mask
 
 from .baselayer import (
     EncoderLayer,
@@ -87,7 +87,7 @@ class THP(NeuralModel):
             ]
         )
 
-    def forward(self, time_seqs, type_seqs, key_padding_mask, attn_mask):
+    def forward(self, time_seqs, type_seqs, attn_mask):
         """Call the model
 
         Args:
@@ -105,7 +105,7 @@ class THP(NeuralModel):
         # [batch_size, seq_len, hidden_size]
         for enc_layer in self.stack_layers:
             enc_output += tem_enc
-            enc_output = enc_layer(enc_output, key_padding_mask, attn_mask)
+            enc_output = enc_layer(enc_output, key_padding_mask=None, attn_mask=attn_mask)
 
         return enc_output
 
@@ -122,12 +122,12 @@ class THP(NeuralModel):
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask
-        attn_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
+
+        attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self._device)
 
         enc_out = self.forward(
             time_seqs[:, :-1], 
             type_seqs[:, :-1], 
-            key_padding_mask=~batch_non_pad_mask[:, :-1], 
             attn_mask=attn_mask[:-1, :-1]
         )
 
@@ -202,26 +202,29 @@ class THP(NeuralModel):
         return intensity_states
 
     def compute_intensities_at_sample_times(
-        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
-    ):
+        self, *, 
+        time_seqs: torch.Tensor, 
+        type_seqs: torch.Tensor, 
+        sample_dtimes: torch.Tensor, 
+        compute_last_step_only: bool = False, 
+        **kwargs
+    ) -> torch.Tensor:
         """Compute hidden states at sampled times.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], times seqs.
-            time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
-            type_seqs (tensor): [batch_size, seq_len], event type seqs.
+            batch (Batch): batch input.
             sample_dtimes (tensor): [batch_size, seq_len, num_samples], sampled inter-event timestamps.
 
         Returns:
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
 
-        compute_last_step_only = kwargs.get("compute_last_step_only", False)
-        attn_mask = build_causal_attn_mask(len=time_seqs.size(1), device=self._device)
+        attn_mask = get_causal_attn_mask(
+            time_seqs.size(1), device=self._device
+        )
 
         # [batch_size, seq_len, num_samples]
-        enc_out = self.forward(time_seqs, type_seqs, key_padding_mask=None, attn_mask=attn_mask)
-
+        enc_out = self.forward(time_seqs, type_seqs, attn_mask=attn_mask)
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(enc_out, sample_dtimes)
 
@@ -230,4 +233,5 @@ class THP(NeuralModel):
         else:
             # [batch_size, seq_len, num_samples, num_event_types]
             lambdas = self.softplus(encoder_output)
+
         return lambdas

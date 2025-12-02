@@ -170,14 +170,14 @@ class VisualizationMixin(SimulationMixin):
         return time_points, time_deltas_sample
 
     def _calculate_intensities(
-        self, time_seq: torch.Tensor, time_delta_seq: torch.Tensor, type_seq: torch.Tensor, time_deltas_sample: torch.Tensor
+        self, time_seqs: torch.Tensor, time_delta_seqs: torch.Tensor, type_seqs: torch.Tensor, time_deltas_sample: torch.Tensor
     ):
         """Calculate intensities on time grid.
         
         Args:
-            time_seq: [1, seq_len]
-            time_delta_seq: [1, seq_len]
-            type_seq: [1, seq_len]
+            time_seqs: [1, seq_len]
+            time_delta_seqs: [1, seq_len]
+            type_seqs: [1, seq_len]
             time_deltas_sample: [1, seq_len - 1, precision]
             
         Returns:
@@ -188,30 +188,30 @@ class VisualizationMixin(SimulationMixin):
 
             # Compute intensities at sampled times, excluding initial zero time because we could not compute dt there
             intensities = self.compute_intensities_at_sample_times(
-                time_seq[:, 1:],
-                time_delta_seq[:, 1:],
-                type_seq[:, 1:],
-                time_deltas_sample,
+                time_seqs=time_seqs[:, 1:],
+                time_delta_seqs=time_delta_seqs[:, 1:],
+                type_seqs=type_seqs[:, 1:],
+                sample_dtimes=time_deltas_sample,
             )
         return intensities.detach().clone()
 
     def _collect_marked_times_intensities(
-            self, intensities_at_times: torch.Tensor, time_seq: torch.Tensor, type_seq: torch.Tensor, num_mark: int
+            self, intensities_at_times: torch.Tensor, time_seqs: torch.Tensor, type_seqs: torch.Tensor, num_mark: int
             ) -> Tuple[dict[int, torch.Tensor], dict[int, torch.Tensor]]:
         """Collect times where each event type occurs."""
 
         marked_times = {}
         intensities_at_marked_times = {}
-        time_seq_flat = time_seq.squeeze(0)
-        type_seq_flat = type_seq.squeeze(0)
+        time_seqs_flat = time_seqs.squeeze(0)
+        type_seqs_flat = type_seqs.squeeze(0)
 
-        valid_mask = (time_seq_flat != 0)
+        valid_mask = (time_seqs_flat != 0)
 
         for i in range(num_mark):
-            mask = (type_seq_flat == i) & valid_mask
+            mask = (type_seqs_flat == i) & valid_mask
             
             if mask.any():
-                marked_times[i] = time_seq_flat[mask]
+                marked_times[i] = time_seqs_flat[mask]
                 intensities_at_marked_times[i] = intensities_at_times[0, :, 0, i][mask]
             else:
                 marked_times[i] = torch.empty(0, device=self.device)

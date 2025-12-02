@@ -6,7 +6,7 @@ from torch import nn
 
 
 # -------------------------------------------------------------------------
-# ACTIVATION SCALÉE PERSONNALISÉE (pas dans PyTorch)
+# ACTIVATION SCALÉE PERSONNALISÉE
 # -------------------------------------------------------------------------
 class ScaledSoftplus(nn.Module):
     def __init__(self, num_marks: int, threshold: float = 20.0):
@@ -59,7 +59,6 @@ class MultiHeadAttention(nn.Module):
         query: torch.Tensor,
         key: torch.Tensor,
         value: torch.Tensor,
-        key_padding_mask: torch.Tensor,
         attn_mask: torch.Tensor,
         output_weight: bool = False,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
@@ -69,7 +68,7 @@ class MultiHeadAttention(nn.Module):
         v = self.input_proj(value)
 
         attn_out, attn_weights = self.mha(
-            q, k, v, key_padding_mask=key_padding_mask, attn_mask=attn_mask
+            q, k, v, attn_mask=attn_mask
             )
 
         out = self.out_proj(attn_out)
@@ -118,23 +117,23 @@ class EncoderLayer(nn.Module):
             )
 
     def forward(
-        self, x: torch.Tensor, key_padding_mask: torch.Tensor | None, attn_mask: torch.Tensor
+        self, x: torch.Tensor, attn_mask: torch.Tensor, key_padding_mask: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         if self.use_residual:
             x = self.sublayers[0](x, lambda x: self.self_attn(
-                x, x, x, key_padding_mask=key_padding_mask, attn_mask=attn_mask
+                x, x, x, attn_mask=attn_mask
                 ))
             if self.feed_forward is not None:
                 x = self.sublayers[1](x, self.feed_forward)
             return x
 
         # Sans résiduel
-        x = self.self_attn(x, x, x, key_padding_mask=key_padding_mask, attn_mask=attn_mask)
+        x = self.self_attn(x, x, x, attn_mask=attn_mask)
         return self.feed_forward(x) if self.feed_forward is not None else x
 
 
 # -------------------------------------------------------------------------
-# ENCODAGE TEMPOREL THP / SAHP (à garder, pas dans Torch)
+# ENCODAGE TEMPOREL THP / SAHP 
 # -------------------------------------------------------------------------
 class TimePositionalEncoding(nn.Module):
 

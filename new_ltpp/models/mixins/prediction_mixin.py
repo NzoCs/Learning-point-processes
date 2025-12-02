@@ -30,9 +30,9 @@ class PredictionMixin(BaseMixin):
 
     def predict_one_step_at_every_event(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
     ) -> OneStepPred:
         """One-step prediction for every event in the sequence.
 
@@ -43,15 +43,15 @@ class PredictionMixin(BaseMixin):
             OneStepPred: Predicted time deltas and event types, [batch_size, seq_len].
         """
 
-        time_delta_seq = time_delta_seq[:, :-1]
-        event_seq = event_seq[:, :-1]
-        time_seq = time_seq[:, :-1]
+        time_delta_seqs = time_delta_seqs[:, :-1]
+        type_seqs = type_seqs[:, :-1]
+        time_seqs = time_seqs[:, :-1]
 
         # Draw next time samples
         accepted_dtimes, weights = self._event_sampler.draw_next_time_one_step(
-            time_seq,
-            time_delta_seq,
-            event_seq,
+            time_seqs,
+            time_delta_seqs,
+            type_seqs,
             self.compute_intensities_at_sample_times,
             self.num_sample,
             compute_last_step_only=False,
@@ -59,7 +59,10 @@ class PredictionMixin(BaseMixin):
 
         # Compute intensities at sampled times
         intensities_at_times = self.compute_intensities_at_sample_times(
-            time_seq, time_delta_seq, event_seq, accepted_dtimes
+            time_seqs = time_seqs, 
+            time_delta_seqs = time_delta_seqs,
+            type_seqs = type_seqs,
+            sample_dtimes = accepted_dtimes,
         )
 
         # Normalize intensities and compute weighted sum

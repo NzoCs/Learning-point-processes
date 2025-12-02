@@ -4,22 +4,26 @@ from __future__ import annotations
 
 import torch
 
-
-
-def build_causal_attn_mask(
-    len: int,
+def get_causal_attn_mask(
+    size:int,
     device: torch.device | str,
-    dtype=torch.bool,
 ) -> torch.Tensor:
     """
-    Retourne un masque causal pour la MHA PyTorch :
-    - shape (q_len, k_len)
-    - True = MASQUÉ
+    Prépare l'entrée et le masque d'attention causal pour une couche d'attention multi-tête PyTorch.
+
+    Args:
+        input (torch.Tensor): Le tenseur d'entrée de forme (batch_size, seq_len, feature_dim).
+        device (torch.device | str): Le dispositif sur lequel les tenseurs doivent être placés.
+
+    Returns:
+        torch.Tensor: Le masque d'attention causal.
     """
-    # positions futures interdites → causal
-    mask = torch.triu(
-        torch.ones(len, len, dtype=dtype, device=device),
-        diagonal=1
+    # Appliquer le masque de non-remboursement
+
+
+    # Créer le masque causal
+    attn_mask = torch.triu(
+        torch.ones((size, size), device=device) * float('-inf'), diagonal=1
     )
 
-    return mask
+    return attn_mask

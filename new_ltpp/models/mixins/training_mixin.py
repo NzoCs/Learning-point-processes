@@ -85,9 +85,9 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
         # Compute validation metrics
         pred = self.predict_one_step_at_every_event(
-            time_seq=batch.time_seqs,
-            time_delta_seq=batch.time_delta_seqs,
-            event_seq=batch.type_seqs,
+            time_seqs=batch.time_seqs,
+            time_delta_seqs=batch.time_delta_seqs,
+            type_seqs=batch.type_seqs,
         )
 
         # Mutate the batch in-place so subsequent operations use sequences starting at the second event
@@ -117,9 +117,9 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
         # Compute prediction metrics
         pred = self.predict_one_step_at_every_event(
-            time_seq=batch.time_seqs,
-            time_delta_seq=batch.time_delta_seqs,
-            event_seq=batch.type_seqs,
+            time_seqs=batch.time_seqs,
+            time_delta_seqs=batch.time_delta_seqs,
+            type_seqs=batch.type_seqs,
         )
 
         # Mutate the batch in-place

@@ -243,10 +243,11 @@ class FullyNN(NeuralModel):
 
     def compute_intensities_at_sample_times(
         self,
-        time_seqs: torch.Tensor,
+        *,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
         """Compute hidden states at sampled times.
@@ -260,8 +261,6 @@ class FullyNN(NeuralModel):
         Returns:
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
-
-        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         # [batch_size, seq_len, hidden_size]
         hidden_states = self.forward(

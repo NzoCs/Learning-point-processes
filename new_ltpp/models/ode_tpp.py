@@ -295,8 +295,15 @@ class ODETPP(NeuralModel):
         return state
 
     def compute_intensities_at_sample_times(
-        self, time_seqs, time_delta_seqs, type_seqs, sample_dtimes, **kwargs
-    ):
+        self, 
+        *,  
+        time_delta_seqs: torch.Tensor, 
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor, 
+        compute_last_step_only: bool = False,
+        **kwargs
+    ) -> torch.Tensor:
+        
         """Compute the intensity at sampled times, not only event times.
 
         Args:
@@ -310,7 +317,6 @@ class ODETPP(NeuralModel):
                     intensity at each timestamp for each event type.
         """
 
-        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
         _, right_limits = self.forward(time_delta_seqs, type_seqs)
 

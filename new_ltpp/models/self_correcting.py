@@ -185,8 +185,8 @@ class SelfCorrecting(Model):
 
     def compute_intensities_at_sample_times(
         self,
+        *,
         time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,  # Not directly used
         type_seq: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,

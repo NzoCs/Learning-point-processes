@@ -58,9 +58,8 @@ class Hawkes(Model):
 
     def compute_intensities_at_times(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,  # Not directly used here
-        type_seq: torch.Tensor,
+        time_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
         query_times: torch.Tensor,
         **kwargs,
     ) -> torch.Tensor:
@@ -154,9 +153,9 @@ class Hawkes(Model):
 
     def compute_intensities_at_sample_times(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        type_seq: torch.Tensor,
+        *,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
         **kwargs,
@@ -167,23 +166,23 @@ class Hawkes(Model):
         Calculates lambda(t_k + delta_t) using history up to event k (time_seq[k]).
 
         Args:
-            time_seq (torch.Tensor): Event timestamps [B, L].
-            time_delta_seq (torch.Tensor): Time differences between events [B, L].
-            type_seq (torch.Tensor): Event types [B, L].
+            time_seqs (torch.Tensor): Event timestamps [B, L].
+            time_delta_seqs (torch.Tensor): Time differences between events [B, L].
+            type_seqs (torch.Tensor): Event types [B, L].
             sample_dtimes (torch.Tensor): Sampled time deltas relative to each event [B, L, N_samples].
             compute_last_step_only (bool): If True, only compute for the last event in the sequence.
 
         Returns:
             torch.Tensor: Intensities lambda_i(t_k + delta_t). Shape [B, L, N_samples, D] or [B, 1, N_samples, D] if compute_last_step_only.
         """
-        batch_size, seq_len = time_seq.shape
+        batch_size, seq_len = time_seqs.shape
         num_samples = sample_dtimes.shape[-1]
         device = self.device
 
         num_samples = sample_dtimes.shape[-1] if sample_dtimes.dim() == 3 else 1
 
         if compute_last_step_only:
-            time_seq_clone = time_seq[:, -2:]
+            time_seqs_clone = time_seqs[:, -2:]
             safe_dtimes = time_seq_clone.diff(dim=1).unsqueeze(-1)  # [B, 1, 1]
             ratios = torch.linspace(0, 1, num_samples, device=device).view(
                 1, 1, num_samples

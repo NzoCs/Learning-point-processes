@@ -10,7 +10,6 @@ def main() -> None:
     config_path = CONFIGS_FILE
     model_id = "THP"
 
-
     # Build runner configuration from YAML
     config_builder = RunnerConfigBuilder()
 

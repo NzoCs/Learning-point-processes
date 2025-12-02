@@ -7,6 +7,7 @@ from torch import nn
 from new_ltpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
+from new_ltpp.utils.attention import get_causal_attn_mask
 # from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 
 
@@ -252,19 +253,18 @@ class AttNHP(NeuralModel):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
-        time_seqs = batch.time_seqs
-        time_delta_seqs = batch.time_delta_seqs
-        type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
-        attention_mask = build_attention_mask_from_seq_mask(batch.seq_non_pad_mask)
+
+        attn_mask = get_causal_attn_mask(
+            batch.time_seqs.size(1), device=self._device
+        )
         # 1. compute event-loglik
         # the prediction of last event has no label, so we proceed to the last but one
         # att mask => diag is False, not mask.
         enc_out = self.forward(
-            time_seqs[:, :-1],
-            type_seqs[:, :-1],
-            attention_mask[:, :-1, :-1],
-            time_seqs[:, 1:],
+            batch.time_seqs[:, :-1],
+            batch.type_seqs[:, :-1],
+            attn_mask[:, :-1, :-1],
+            batch.time_seqs[:, 1:],
         )
         # [batch_size, seq_len, num_event_types]
         lambda_at_event = self.layer_intensity(enc_out)
@@ -272,27 +272,27 @@ class AttNHP(NeuralModel):
         # 2. compute non-event-loglik (using MC sampling to compute integral)
         # 2.1 sample times
         # [batch_size, seq_len, num_sample]
-        temp_time = self.make_dtime_loss_samples(time_delta_seqs[:, 1:])
+        temp_time = self.make_dtime_loss_samples(batch.time_delta_seqs[:, 1:])
 
         # [batch_size, seq_len, num_sample]
-        sample_times = temp_time + time_seqs[:, :-1].unsqueeze(-1)
+        sample_times = temp_time + batch.time_seqs[:, :-1].unsqueeze(-1)
 
         # 2.2 compute intensities at sampled times
         # [batch_size, seq_len = max_len - 1, num_sample, event_num]
         lambda_t_sample = self.compute_intensities_at_sample_times(
-            time_seqs[:, :-1],
-            time_delta_seqs[:, :-1],  # not used
-            type_seqs[:, :-1],
-            sample_times,
-            attention_mask=attention_mask[:, :-1, :-1],
+            time_seqs=batch.time_seqs[:, :-1],
+            time_delta_seqs=batch.time_delta_seqs[:, :-1],  # not used
+            type_seqs=batch.type_seqs[:, :-1],
+            sample_dtimes=sample_times,
+            attention_mask=attn_mask[:, :-1, :-1],
         )
 
         event_ll, non_event_ll, num_events = self.compute_loglikelihood(
             lambda_at_event=lambda_at_event,
             lambdas_loss_samples=lambda_t_sample,
-            time_delta_seq=time_delta_seqs[:, 1:],
-            seq_mask=batch_non_pad_mask[:, 1:],
-            type_seq=type_seqs[:, 1:],
+            time_delta_seq=batch.time_delta_seqs[:, 1:],
+            seq_mask=batch.seq_non_pad_mask[:, 1:],
+            type_seq=batch.type_seqs[:, 1:],
         )
 
         # compute loss to minimize
@@ -350,46 +350,31 @@ class AttNHP(NeuralModel):
 
     def compute_intensities_at_sample_times(
         self,
+        *,
         time_seqs: torch.Tensor,
-        time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
         """Compute the intensity at sampled times.
 
         Args:
             time_seqs: [batch_size, seq_len], sequences of timestamps.
-            time_delta_seqs: [batch_size, seq_len], sequences of delta times.
             type_seqs: [batch_size, seq_len], sequences of event types.
             sample_dtimes: [batch_size, seq_len, num_sample], sampled time delta sequence.
 
         Returns:
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
-        attention_mask = kwargs.get("attention_mask", None)
-        compute_last_step_only = kwargs.get("compute_last_step_only", False)
 
-        if attention_mask is None:
-            batch_size, seq_len = time_seqs.size()
-            attention_mask = (
-                torch.triu(torch.ones(seq_len, seq_len), diagonal=1)
-                .unsqueeze(0)
-                .to(type_seqs.device)
-            )
-            attention_mask = attention_mask.expand(batch_size, -1, -1).to(torch.bool)
-
-        if sample_dtimes.size()[1] < time_seqs.size()[1]:
-            # we pass sample_dtimes for last time step here
-            # we do a temp solution
-            # [batch_size, seq_len, num_samples]
-            sample_dtimes = time_seqs[:, :, None] + torch.tile(
-                sample_dtimes, [1, time_seqs.size()[1], 1]
-            )
+        attn_mask = get_causal_attn_mask(
+            time_seqs.size(1), device=self._device
+        )
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(
-            time_seqs, type_seqs, attention_mask, sample_dtimes
+            time_seqs, type_seqs, attn_mask, sample_dtimes
         )
 
         if compute_last_step_only:

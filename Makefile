@@ -47,9 +47,15 @@ run-demo: ## Run demo pipeline via CLI (fixed demo args)
 
 # Generic run target with defaults for real runs
 run: ## Run full pipeline via CLI with real run defaults (pass variables to override)
+ifndef MODEL_ID
+	$(error MODEL_ID is required. Usage: make run MODEL_ID=NHP DATA=hawkes1)
+endif
+ifndef DATA
+	$(error DATA is required. Usage: make run MODEL_ID=NHP DATA=hawkes1)
+endif
 	@$(CLI) run \
 		$(if $(CONFIG),--config $(CONFIG),) \
-		$(if $(DATA),--data-config $(DATA),--data-config hawkes1) \
+		--data-config $(DATA) \
 		$(if $(GENERAL_SPECS),--general-specs-config $(GENERAL_SPECS),--general-specs-config h64) \
 		$(if $(MODEL_SPECS),--model-specs-config $(MODEL_SPECS),) \
 		$(if $(TRAINING),--training-config $(TRAINING),--training-config e1000_b4) \
@@ -57,8 +63,8 @@ run: ## Run full pipeline via CLI with real run defaults (pass variables to over
 		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config tw70_b15000_b32) \
 		$(if $(THINNING),--thinning-config $(THINNING),--thinning-config e200_s60) \
 		$(if $(LOGGER),--logger-config $(LOGGER),--logger-config tensorboard) \
-		$(if $(MODEL_ID),--model $(MODEL_ID),--model NHP) \
-		--phase all \
+		--model $(MODEL_ID) \
+		$(if $(PHASE),--phase $(PHASE),--phase all) \
 		$(if $(EPOCHS),--epochs $(EPOCHS),--epochs 1000) \
 		$(if $(SAVE_DIR),--save-dir $(SAVE_DIR),) \
 		$(if $(DEBUG),--debug,)

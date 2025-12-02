@@ -8,6 +8,7 @@ from new_ltpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSo
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
+
 # from new_ltpp.utils.attention import build_attention_mask_from_seq_mask
 
 
@@ -254,9 +255,7 @@ class AttNHP(NeuralModel):
             tuple: loglikelihood loss and num of events.
         """
 
-        attn_mask = get_causal_attn_mask(
-            batch.time_seqs.size(1), device=self._device
-        )
+        attn_mask = get_causal_attn_mask(batch.time_seqs.size(1), device=self._device)
         # 1. compute event-loglik
         # the prediction of last event has no label, so we proceed to the last but one
         # att mask => diag is False, not mask.
@@ -368,9 +367,7 @@ class AttNHP(NeuralModel):
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
 
-        attn_mask = get_causal_attn_mask(
-            time_seqs.size(1), device=self._device
-        )
+        attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self._device)
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(

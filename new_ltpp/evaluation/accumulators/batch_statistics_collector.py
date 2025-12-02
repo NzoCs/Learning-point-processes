@@ -228,7 +228,6 @@ class BatchStatisticsCollector:
             generator.generate_plot(data_to_use, output_path)
             logger.info(f"Generated plot: {filename}")
 
-
     def finalize_and_save(self) -> FinalResult:
         """Finalize collection, compute statistics, generate plots, and save results.
 
@@ -253,7 +252,6 @@ class BatchStatisticsCollector:
 
         # Generate plots
         self.generate_plots(statistics)
-
 
         self._is_finalized = True
 

@@ -135,16 +135,15 @@ class RMTPP(NeuralModel):
         return loss, num_events
 
     def compute_intensities_at_sample_times(
-        self, 
-        *, 
-        time_seqs: torch.Tensor, 
-        time_delta_seqs: torch.Tensor, 
-        type_seqs: torch.Tensor, 
-        sample_dtimes: torch.Tensor, 
+        self,
+        *,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
-        
         """Compute the intensity at sampled times, not only event times.
 
         Args:
@@ -157,7 +156,6 @@ class RMTPP(NeuralModel):
             tensor: [batch_size, num_times, num_mc_sample, num_event_types],
                     intensity at each timestamp for each event type.
         """
-
 
         _, right_hiddens_BNH = self.forward((time_seqs, time_delta_seqs, type_seqs))
 

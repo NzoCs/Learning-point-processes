@@ -168,7 +168,9 @@ class ODETPP(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
-        super().__init__(**kwargs,)
+        super().__init__(
+            **kwargs,
+        )
 
         self.layer_intensity = nn.Sequential(
             nn.Linear(self.hidden_size, self.num_event_types), nn.Softplus()
@@ -295,15 +297,14 @@ class ODETPP(NeuralModel):
         return state
 
     def compute_intensities_at_sample_times(
-        self, 
-        *,  
-        time_delta_seqs: torch.Tensor, 
+        self,
+        *,
+        time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        sample_dtimes: torch.Tensor, 
+        sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
-        **kwargs
+        **kwargs,
     ) -> torch.Tensor:
-        
         """Compute the intensity at sampled times, not only event times.
 
         Args:
@@ -316,7 +317,6 @@ class ODETPP(NeuralModel):
             tensor: [batch_size, num_times, num_mc_sample, num_event_types],
                     intensity at each timestamp for each event type.
         """
-
 
         _, right_limits = self.forward(time_delta_seqs, type_seqs)
 

@@ -154,7 +154,7 @@
 #         type_seqs = batch.type_seqs
 #         batch_non_pad_mask = batch.seq_non_pad_mask
 #         attention_mask = prepare_for_attn_layer(, device=self._device)
-        
+
 #         enc_out = self.forward(
 #             time_seqs[:, :-1],
 #             time_delta_seqs[:, :-1],
@@ -214,7 +214,7 @@
 #     def compute_intensities_at_sample_times(
 #         self, time_seqs: torch.Tensor, time_delta_seqs: torch.Tensor, type_seqs: torch.Tensor, sample_dtimes: torch.Tensor, **kwargs
 #     ) -> torch.Tensor:
-        
+
 #         """Compute hidden states at sampled times.
 
 #         Args:

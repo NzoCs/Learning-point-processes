@@ -1,6 +1,6 @@
-from sympy import ask
 import torch
 import torch.nn as nn
+from sympy import ask
 
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
@@ -105,7 +105,9 @@ class THP(NeuralModel):
         # [batch_size, seq_len, hidden_size]
         for enc_layer in self.stack_layers:
             enc_output += tem_enc
-            enc_output = enc_layer(enc_output, key_padding_mask=None, attn_mask=attn_mask)
+            enc_output = enc_layer(
+                enc_output, key_padding_mask=None, attn_mask=attn_mask
+            )
 
         return enc_output
 
@@ -126,9 +128,7 @@ class THP(NeuralModel):
         attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self._device)
 
         enc_out = self.forward(
-            time_seqs[:, :-1], 
-            type_seqs[:, :-1], 
-            attn_mask=attn_mask[:-1, :-1]
+            time_seqs[:, :-1], type_seqs[:, :-1], attn_mask=attn_mask[:-1, :-1]
         )
 
         # [batch_size, seq_len, num_event_types]
@@ -202,12 +202,13 @@ class THP(NeuralModel):
         return intensity_states
 
     def compute_intensities_at_sample_times(
-        self, *, 
-        time_seqs: torch.Tensor, 
-        type_seqs: torch.Tensor, 
-        sample_dtimes: torch.Tensor, 
-        compute_last_step_only: bool = False, 
-        **kwargs
+        self,
+        *,
+        time_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        compute_last_step_only: bool = False,
+        **kwargs,
     ) -> torch.Tensor:
         """Compute hidden states at sampled times.
 
@@ -219,9 +220,7 @@ class THP(NeuralModel):
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
 
-        attn_mask = get_causal_attn_mask(
-            time_seqs.size(1), device=self._device
-        )
+        attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self._device)
 
         # [batch_size, seq_len, num_samples]
         enc_out = self.forward(time_seqs, type_seqs, attn_mask=attn_mask)

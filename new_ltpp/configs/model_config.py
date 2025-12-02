@@ -157,7 +157,11 @@ class ModelSpecsConfig:
         config = {"hidden_size": self.hidden_size, "dropout": self.dropout}
         # Add any extra attributes
         for attr in dir(self):
-            if not attr.startswith('_') and attr not in ['hidden_size', 'dropout', 'get_yaml_config']:
+            if not attr.startswith("_") and attr not in [
+                "hidden_size",
+                "dropout",
+                "get_yaml_config",
+            ]:
                 config[attr] = getattr(self, attr)
         return config
 
@@ -214,7 +218,7 @@ class ModelConfig(Config):
             self.specs = ModelSpecsConfig(**general_specs, **model_specs)
         else:
             raise TypeError("specs must be a dict or ModelSpecsConfig instance")
-        
+
         self.thinning_config = (
             thinning_config
             if isinstance(thinning_config, ThinningConfig)

@@ -132,7 +132,7 @@ class EventSampler(nn.Module):
         # [B,L,K, 1]
         res = torch.where(
             none_accepted[..., None],
-            torch.tensor(0.0, device=self.device), 
+            torch.tensor(0.0, device=self.device),
             gathered,
         )
 
@@ -163,10 +163,10 @@ class EventSampler(nn.Module):
 
         # 3. evaluate intensity at sampled times
         intens = intensity_fn(
-            time_seqs = time_seqs,
-            time_delta_seqs = time_delta_seqs,
-            type_seqs = type_seqs,
-            sample_dtimes = exp_j,
+            time_seqs=time_seqs,
+            time_delta_seqs=time_delta_seqs,
+            type_seqs=type_seqs,
+            sample_dtimes=exp_j,
             compute_last_step_only=compute_last_step_only,
         )
 

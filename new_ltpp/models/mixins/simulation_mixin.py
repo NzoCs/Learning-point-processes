@@ -312,9 +312,12 @@ class SimulationMixin(BaseMixin):
         return new_max_seq_len
 
     def _run_simulation_loop(
-        self, buffers: Dict[str, torch.Tensor], sim_state: Dict[str, Any], start_time: float, end_time: float
+        self,
+        buffers: Dict[str, torch.Tensor],
+        sim_state: Dict[str, Any],
+        start_time: float,
+        end_time: float,
     ) -> None:
-        
         """Run the main simulation loop."""
 
         initial_len = buffers["initial_len"]

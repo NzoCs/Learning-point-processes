@@ -99,22 +99,15 @@ class InterEventTimeAccumulator(BaseAccumulator):
         Returns:
             Dictionary with histogram bins and counts
         """
-        # Validate sufficient ground truth data
+        # Handle cases with no data gracefully
         if self._gt_total == 0:
-            logger.error(
-                "InterEventTimeAccumulator: No ground truth time deltas collected"
+            logger.warning(
+                "InterEventTimeAccumulator: No ground truth time deltas collected, returning empty statistics"
             )
-            raise ValueError(
-                "Cannot compute time statistics: no ground truth data available"
-            )
-
-        # Validate sufficient simulation data
+        
         if self._sim_total == 0:
-            logger.error(
-                "InterEventTimeAccumulator: No simulated time deltas collected"
-            )
-            raise ValueError(
-                "Cannot compute time statistics: no simulation data available"
+            logger.warning(
+                "InterEventTimeAccumulator: No simulated time deltas collected, returning empty statistics"
             )
 
         result = TimeStatistics(

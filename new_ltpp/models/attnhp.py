@@ -255,7 +255,7 @@ class AttNHP(NeuralModel):
             tuple: loglikelihood loss and num of events.
         """
 
-        attn_mask = get_causal_attn_mask(batch.time_seqs.size(1), device=self._device)
+        attn_mask = get_causal_attn_mask(batch.time_seqs.size(1), device=self.device)
         # 1. compute event-loglik
         # the prediction of last event has no label, so we proceed to the last but one
         # att mask => diag is False, not mask.
@@ -367,7 +367,7 @@ class AttNHP(NeuralModel):
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
 
-        attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self._device)
+        attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self.device)
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(

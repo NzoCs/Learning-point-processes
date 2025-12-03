@@ -42,14 +42,14 @@ class THP(NeuralModel):
         self.n_head = num_heads
 
         self.layer_temporal_encoding = TimePositionalEncoding(
-            self.d_model, device=self._device
+            self.d_model, device=self.device
         )
 
         self.factor_intensity_base = nn.Parameter(
-            torch.empty([1, self.num_event_types], device=self._device)
+            torch.empty([1, self.num_event_types], device=self.device)
         )
         self.factor_intensity_decay = nn.Parameter(
-            torch.empty([1, self.num_event_types], device=self._device)
+            torch.empty([1, self.num_event_types], device=self.device)
         )
         nn.init.xavier_normal_(self.factor_intensity_base)
         nn.init.xavier_normal_(self.factor_intensity_decay)
@@ -220,7 +220,7 @@ class THP(NeuralModel):
             tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
         """
 
-        attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self._device)
+        attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self.device)
 
         # [batch_size, seq_len, num_samples]
         enc_out = self.forward(time_seqs, type_seqs, attn_mask=attn_mask)

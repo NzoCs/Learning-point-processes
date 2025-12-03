@@ -87,36 +87,30 @@ class SequenceLengthAccumulator(BaseAccumulator):
             Dictionary with sequence length arrays and statistics
         """
 
-        # Validate sufficient ground truth data
+        # Handle cases with no data gracefully
         if len(self._gt_mean) == 0:
-            logger.error(
-                "SequenceLengthAccumulator: No ground truth sequence lengths collected"
+            logger.warning(
+                "SequenceLengthAccumulator: No ground truth sequence lengths collected, returning empty statistics"
             )
-            raise ValueError(
-                "Cannot compute sequence length statistics: no ground truth data available"
-            )
+            gt_lengths = np.array([], dtype=float)
+        else:
+            gt_lengths = np.array(self._gt_mean, dtype=float)
 
-        # Validate sufficient simulation data
         if len(self._sim_mean) == 0:
-            logger.error(
-                "SequenceLengthAccumulator: No simulated sequence lengths collected"
+            logger.warning(
+                "SequenceLengthAccumulator: No simulated sequence lengths collected, returning empty statistics"
             )
-            raise ValueError(
-                "Cannot compute sequence length statistics: no simulation data available"
-            )
-
-        # Expand counters into arrays for statistics computation
-        gt_lengths = np.array(self._gt_mean, dtype=float)
-
-        sim_lengths = np.array(self._sim_mean, dtype=float)
+            sim_lengths = np.array([], dtype=float)
+        else:
+            sim_lengths = np.array(self._sim_mean, dtype=float)
 
         result = SequenceLengthStatistics(
             gt_array=gt_lengths,
             sim_array=sim_lengths,
-            gt_mean=float(gt_lengths.mean()),
-            gt_median=float(np.median(gt_lengths)),
-            sim_mean=float(sim_lengths.mean()),
-            sim_median=float(np.median(sim_lengths)),
+            gt_mean=float(gt_lengths.mean()) if len(gt_lengths) > 0 else 0.0,
+            gt_median=float(np.median(gt_lengths)) if len(gt_lengths) > 0 else 0.0,
+            sim_mean=float(sim_lengths.mean()) if len(sim_lengths) > 0 else 0.0,
+            sim_median=float(np.median(sim_lengths)) if len(sim_lengths) > 0 else 0.0,
             gt_count=len(gt_lengths),
             sim_count=len(sim_lengths),
         )

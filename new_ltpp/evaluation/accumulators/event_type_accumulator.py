@@ -67,29 +67,34 @@ class EventTypeAccumulator(BaseAccumulator):
         Returns:
             Dictionary with event type arrays and distributions
         """
-        # Validate sufficient ground truth data
+        # Handle case with no ground truth data
         if len(self._gt_event_types) == 0:
-            logger.error("EventTypeAccumulator: No ground truth event types collected")
-            raise ValueError(
-                "Cannot compute event type statistics: no ground truth data available"
-            )
+            logger.warning("EventTypeAccumulator: No ground truth event types collected, returning empty statistics")
+            gt_array = np.array([], dtype=int)
+        else:
+            gt_array = np.array(self._gt_event_types, dtype=int)
 
-        # Validate sufficient simulation data
+        # Handle case with no simulation data
         if len(self._sim_event_types) == 0:
-            logger.error("EventTypeAccumulator: No simulated event types collected")
-            raise ValueError(
-                "Cannot compute event type statistics: no simulation data available"
-            )
-
-        gt_array = np.array(self._gt_event_types, dtype=int)
-        sim_array = np.array(self._sim_event_types, dtype=int)
+            logger.warning("EventTypeAccumulator: No simulated event types collected, returning empty statistics")
+            sim_array = np.array([], dtype=int)
+        else:
+            sim_array = np.array(self._sim_event_types, dtype=int)
 
         # Compute distributions
-        gt_counts = np.bincount(gt_array, minlength=self.num_event_types + 1)
-        gt_distribution = (gt_counts / gt_counts.sum()).astype(np.float64)
+        if len(gt_array) > 0:
+            gt_counts = np.bincount(gt_array, minlength=self.num_event_types + 1)
+            gt_distribution = (gt_counts / gt_counts.sum()).astype(np.float64)
+        else:
+            gt_counts = np.zeros(self.num_event_types + 1, dtype=int)
+            gt_distribution = np.zeros(self.num_event_types + 1, dtype=np.float64)
 
-        sim_counts = np.bincount(sim_array, minlength=self.num_event_types + 1)
-        sim_distribution = (sim_counts / sim_counts.sum()).astype(np.float64)
+        if len(sim_array) > 0:
+            sim_counts = np.bincount(sim_array, minlength=self.num_event_types + 1)
+            sim_distribution = (sim_counts / sim_counts.sum()).astype(np.float64)
+        else:
+            sim_counts = np.zeros(self.num_event_types + 1, dtype=int)
+            sim_distribution = np.zeros(self.num_event_types + 1, dtype=np.float64)
 
         result: EventTypeStatistics = EventTypeStatistics(
             gt_array=gt_array,

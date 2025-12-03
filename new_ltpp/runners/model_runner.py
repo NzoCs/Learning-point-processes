@@ -6,7 +6,11 @@ from new_ltpp.configs import RunnerConfig
 from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.data.preprocess import TPPDataModule
 from new_ltpp.models.model_factory import ModelFactory
-from new_ltpp.runners.trainer_factory import CheckpointManager, TrainerFactory
+from new_ltpp.runners.trainer_factory import (
+    CheckpointManager,
+    PredictionStatsCallback,
+    TrainerFactory,
+)
 from new_ltpp.utils import logger
 
 
@@ -70,10 +74,16 @@ class Runner:
 
     @property
     def trainer(self) -> pl.Trainer:
+        """Create trainer with all necessary callbacks for the current phase."""
         trainer = TrainerFactory.create(
             training_config=self.config.training_config,
             trainer_logger=self._lightning_logger,
             checkpoints_dir=self.dirpath,
+            extra_callbacks=[
+                PredictionStatsCallback(
+                    output_dir=str(self.config.base_dir / "distribution_comparison")
+                )
+            ],
         )
         return trainer
 
@@ -135,6 +145,9 @@ class Runner:
     def predict(self) -> None:
         """
         Run predictions (e.g., simulations) using the model and save results.
+        
+        The PredictionStatsCallback handles statistics finalization and intensity
+        graph generation automatically while the model is still on the correct device.
         """
         logger.info(
             f"--- Starting Prediction for Model : {self.model_id} on dataset : {self.dataset_id} ---"
@@ -145,15 +158,9 @@ class Runner:
 
         predict_dataloader = self.datamodule.test_dataloader()
 
+        # The callback will handle finalize_statistics() and intensity_graph()
         trainer.predict(
             model=self.model,
             dataloaders=predict_dataloader,
             ckpt_path=self.checkpoint_path,
-        )
-
-        self.model.finalize_statistics()
-
-        logger.info("Generating intensity graph...")
-        self.model.intensity_graph(
-            save_dir=str(self.config.base_dir / "intensity_graphs")
         )

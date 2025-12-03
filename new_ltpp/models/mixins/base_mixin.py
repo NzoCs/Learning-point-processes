@@ -42,25 +42,32 @@ class BaseMixin(pl.LightningModule, ABC):
 
         self.output_dir = Path(output_dir)
         self.num_exp = num_exp
-        self._device = device
+        # Don't store device - use self.device property from PyTorch Lightning instead
         self.dtime_max = dtime_max
         self.num_samples_boundary = num_samples_boundary
         self.over_sample_rate = over_sample_rate
-        self._event_sampler = self.init_event_sampler()
+        # EventSampler will be initialized lazily to use correct device
+        self._event_sampler = None
+        self._init_device = device  # Only for initial module creation
 
-    def init_event_sampler(self) -> EventSampler:
-        """Get the event sampler used for thinning-based generation.
+    def get_event_sampler(self) -> EventSampler:
+        """Get or create the event sampler with the current device.
+        
+        This uses self.device (PyTorch Lightning property) which always
+        reflects the current device of the model, not a cached value.
 
         Returns:
             EventSampler: The event sampler instance
         """
-        return EventSampler(
-            num_exp=self.num_exp,
-            over_sample_rate=self.over_sample_rate,
-            num_samples_boundary=self.num_samples_boundary,
-            dtime_max=self.dtime_max,
-            device=self._device,
-        )
+        if self._event_sampler is None or self._event_sampler.device != self.device:
+            self._event_sampler = EventSampler(
+                num_exp=self.num_exp,
+                over_sample_rate=self.over_sample_rate,
+                num_samples_boundary=self.num_samples_boundary,
+                dtime_max=self.dtime_max,
+                device=self.device,
+            )
+        return self._event_sampler
 
     @abstractmethod
     def compute_intensities_at_sample_times(

@@ -36,5 +36,5 @@ class NeuralModel(Model, ABC):
             num_embeddings=self.num_event_types + 1,  # have padding
             embedding_dim=self.hidden_size,
             padding_idx=self.pad_token_id,
-            device=self._device,
+            device=self.device,
         )

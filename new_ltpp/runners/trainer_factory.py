@@ -55,9 +55,6 @@ class CheckpointManager:
         return None
 
 
-import pytorch_lightning as pl
-
-
 class PredictionStatsCallback(pl.Callback):
     def __init__(self, output_dir: str):
         super().__init__()
@@ -173,9 +170,16 @@ class TrainerFactory:
         training_config: TrainingConfig,
         checkpoints_dir: Path | str,
         trainer_logger: LightningLogger | None = None,
+        extra_callbacks: List[pl.Callback] | None = None,
     ) -> pl.Trainer:
         """
         Create a full trainer from RunnerConfig.
+        
+        Args:
+            training_config: Training configuration
+            checkpoints_dir: Directory for checkpoints
+            trainer_logger: Optional logger
+            extra_callbacks: Additional callbacks to include
         """
 
         # 2. matmul precision (Tensor Core optimization)
@@ -183,6 +187,8 @@ class TrainerFactory:
 
         # 3. callbacks
         callbacks = cls._build_callbacks(training_config, checkpoints_dir)
+        if extra_callbacks:
+            callbacks.extend(extra_callbacks)
 
         # 4. device resolution
         devices, accelerator = cls._resolve_devices(training_config.devices)

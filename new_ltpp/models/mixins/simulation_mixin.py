@@ -167,7 +167,7 @@ class SimulationMixin(BaseMixin):
         """
 
         # Draw next time
-        accepted_dtimes, weights = self._event_sampler.draw_next_time_one_step(
+        accepted_dtimes, weights = self.get_event_sampler().draw_next_time_one_step(
             time_seqs,
             time_delta_seqs,
             type_seqs,

@@ -154,7 +154,7 @@ class ANHN(NeuralModel):
         """
 
         attn_mask = get_causal_attn_mask(
-            batch.time_delta_seqs.size(1), device=self._device
+            batch.time_delta_seqs.size(1), device=self.device
         )
 
         (
@@ -319,7 +319,7 @@ class ANHN(NeuralModel):
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
 
-        attn_mask = get_causal_attn_mask(time_delta_seqs.size(1), device=self._device)
+        attn_mask = get_causal_attn_mask(time_delta_seqs.size(1), device=self.device)
 
         # [batch_size, seq_len, num_samples]
         (

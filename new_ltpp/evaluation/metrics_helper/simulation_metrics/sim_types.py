@@ -5,19 +5,23 @@ import torch
 
 
 class SimTimeValues(TypedDict):
-    """Container for simulation time-related values."""
+    """Container for simulation time-related values, including masks for vectorized metrics."""
 
-    true_time_seqs: torch.Tensor
-    true_time_delta_seqs: torch.Tensor
-    sim_time_seqs: torch.Tensor
-    sim_time_delta_seqs: torch.Tensor
+    true_time_seqs: torch.Tensor         # (B, N)
+    true_time_delta_seqs: torch.Tensor   # (B, N)
+    sim_time_seqs: torch.Tensor          # (B, N)
+    sim_time_delta_seqs: torch.Tensor    # (B, N)
+    true_mask: torch.Tensor               # (B, N)  -> 1=valid, 0=padding
+    sim_mask: torch.Tensor                # (B, N)  -> 1=valid, 0=padding
 
 
 class SimTypeValues(TypedDict):
-    """Container for simulation type-related values."""
+    """Container for simulation type-related values, including masks."""
 
-    true_type_seqs: torch.Tensor
-    sim_type_seqs: torch.Tensor
+    true_type_seqs: torch.Tensor         # (B, N)
+    sim_type_seqs: torch.Tensor          # (B, N)
+    true_mask: torch.Tensor               # (B, N)  -> 1=valid, 0=padding
+    sim_mask: torch.Tensor                # (B, N)  -> 1=valid, 0=padding
 
 
 class SimMetrics(StrEnum):

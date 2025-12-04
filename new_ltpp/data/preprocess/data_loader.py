@@ -60,6 +60,12 @@ class TPPDataModule(pl.LightningDataModule):
         self.val_data = None
         self.test_data = None
         self.predict_data = None
+    
+    def state_dict(self):
+        return {"idx": self.current_idx}
+
+    def load_state_dict(self, state_dict):
+        self.current_idx = state_dict["idx"]
 
     def estimate_dtime_range(
         self, split: str = "train", quantile: float = 0.995, nb_samples: int = 10**5

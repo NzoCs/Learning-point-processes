@@ -68,9 +68,12 @@ class InterEventTimeAccumulator(BaseAccumulator):
         # Quick validation
         sim_event_count = int(valid_sim.numel())
         if sim_event_count < self.min_sim_events:
-            raise ValueError(
-                f"InterEventTimeAccumulator requires at least {self.min_sim_events} simulated events, got {sim_event_count}"
+            logger.warning(
+                "InterEventTimeAccumulator: Too few simulated events (%d < %d), skipping batch",
+                sim_event_count,
+                self.min_sim_events,
             )
+            return
 
         # Prepare bin edges as torch tensor on same device
         device = valid_gt.device if valid_gt.numel() > 0 else valid_sim.device

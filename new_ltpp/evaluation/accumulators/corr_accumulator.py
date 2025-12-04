@@ -38,7 +38,8 @@ class CorrAccumulator(BaseAccumulator):
 
         # Validate simulation has sufficient events
         if simulation is None:
-            raise ValueError("CorrAccumulator requires simulation results")
+            logger.warning("CorrAccumulator: No simulation results provided, skipping batch")
+            return
 
         # Compute ACF for ground truth
         acf_gt = self.compute_acf_from_batch(batch, self.nb_bins, self.max_lag)

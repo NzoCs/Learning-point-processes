@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional
 
 import pytorch_lightning as pl
 import torch
@@ -10,10 +9,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from new_ltpp.configs import ModelConfig
-from new_ltpp.globals import OUTPUT_DIR
-from new_ltpp.models.event_sampler import EventSampler
 from new_ltpp.shared_types import Batch, DataInfo
-from new_ltpp.utils import logger
 
 from .mixins import TrainingMixin, VisualizationMixin
 from .model_registry import RegistryMeta

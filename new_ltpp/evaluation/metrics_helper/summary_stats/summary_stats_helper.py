@@ -45,13 +45,22 @@ class SummaryStatsHelper(MetricsHelper):
         gt_event_dist = self._to_float_array(event_stats["gt_distribution"])
         sim_event_dist = self._to_float_array(event_stats["sim_distribution"])
 
+        gt_seq_hist = self._to_float_array(sequence_stats["gt_array"])
+        sim_seq_hist = self._to_float_array(sequence_stats["sim_array"])
+
+        gt_acf = self._to_float_array(correlation_stats["acf_gt_mean"])
+        sim_acf = self._to_float_array(correlation_stats["acf_sim_mean"])
+
         metric_mapping = self._build_metric_mapping(
             gt_time_hist,
             sim_time_hist,
             gt_event_dist,
             sim_event_dist,
+            gt_seq_hist,
+            sim_seq_hist,
+            gt_acf,
+            sim_acf,
             sequence_stats,
-            correlation_stats,
         )
 
         for metric_name, (func, *args) in metric_mapping.items():
@@ -121,8 +130,11 @@ class SummaryStatsHelper(MetricsHelper):
         sim_time_hist: NDArray[np.float64],
         gt_event_dist: NDArray[np.float64],
         sim_event_dist: NDArray[np.float64],
+        gt_seq_hist: NDArray[np.float64],
+        sim_seq_hist: NDArray[np.float64],
+        gt_acf: NDArray[np.float64],
+        sim_acf: NDArray[np.float64],
         sequence_stats: SequenceLengthStatistics,
-        correlation_stats: CorrelationStatistics,
     ) -> Dict[str, tuple[Callable[..., float], Any, Any]]:
         return {
             SummaryStatsMetric.TIME_HIST_L1.value: (
@@ -155,6 +167,21 @@ class SummaryStatsHelper(MetricsHelper):
                 gt_event_dist,
                 sim_event_dist,
             ),
+            SummaryStatsMetric.SEQUENCE_LENGTH_HIST_L1.value: (
+                self._histogram_distance_l1,
+                gt_seq_hist,
+                sim_seq_hist,
+            ),
+            SummaryStatsMetric.SEQUENCE_LENGTH_HIST_L2.value: (
+                self._histogram_distance_l2,
+                gt_seq_hist,
+                sim_seq_hist,
+            ),
+            SummaryStatsMetric.SEQUENCE_LENGTH_HIST_KL.value: (
+                self._kl_divergence,
+                gt_seq_hist,
+                sim_seq_hist,
+            ),
             SummaryStatsMetric.SEQUENCE_LENGTH_MEAN_DIFF.value: (
                 self._absolute_difference,
                 sequence_stats["gt_mean"],
@@ -164,5 +191,20 @@ class SummaryStatsHelper(MetricsHelper):
                 self._absolute_difference,
                 sequence_stats["gt_median"],
                 sequence_stats["sim_median"],
+            ),
+            SummaryStatsMetric.ACF_HIST_L1.value: (
+                self._histogram_distance_l1,
+                gt_acf,
+                sim_acf,
+            ),
+            SummaryStatsMetric.ACF_HIST_L2.value: (
+                self._histogram_distance_l2,
+                gt_acf,
+                sim_acf,
+            ),
+            SummaryStatsMetric.ACF_HIST_KL.value: (
+                self._kl_divergence,
+                gt_acf,
+                sim_acf,
             ),
         }

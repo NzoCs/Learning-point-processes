@@ -20,11 +20,9 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
     Requires: self.loglike_loss, self.predict_one_step_at_every_event,
               self.simulate, self.num_event_types, self.compute_simulation,
-              self.max_simul_events, self.sim_events_counter, self._simulations,
-              self._statistics_collector
+              self.max_simul_events, self._statistics_collector
     """
 
-    sim_events_counter: int = 0  # Counter for total simulated events
     eps: float = torch.finfo(torch.float32).eps  # Small epsilon for numerical stability
 
     def __init__(self, pad_token_id: int, **kwargs):

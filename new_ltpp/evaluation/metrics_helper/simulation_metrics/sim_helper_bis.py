@@ -88,13 +88,10 @@ class SimMetricsHelperFixed:
             true_mask: (B, L) validity mask for true sequences
             sim_mask: (B, L) validity mask for simulated sequences
         """
+
         device = true_seqs.device
-
-        # Extract only valid values
-        true_valid = self._extract_valid_values(true_seqs, true_mask)
-        sim_valid = self._extract_valid_values(sim_seqs, sim_mask)
-
-        if true_valid.numel() == 0 or sim_valid.numel() == 0:
+*
+        if .numel() == 0 or sim_valid.numel() == 0:
             return torch.tensor(float("nan"), device=device)
 
         # Compute Wasserstein on valid values only
@@ -103,4 +100,3 @@ class SimMetricsHelperFixed:
         dist = wasserstein_distance(true_np, sim_np)
 
         return torch.tensor(dist, device=device)
-    

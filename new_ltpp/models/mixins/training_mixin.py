@@ -24,7 +24,6 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
               self._statistics_collector
     """
 
-    _simulations: List[SimulationResult] = []  # Store simulation results
     sim_events_counter: int = 0  # Counter for total simulated events
     eps: float = torch.finfo(torch.float32).eps  # Small epsilon for numerical stability
 
@@ -165,11 +164,6 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         # Run simulation
         sim = self.simulate(batch=batch)
 
-        # Update counter and store
-        n_events_generated = (sim.type_seqs != 0).sum().item()
-        self.sim_events_counter += int(n_events_generated)
-        self._simulations.append(sim)
-
         # Update statistics collector
         if self._statistics_collector is None:
             raise NotImplementedError(
@@ -178,16 +172,16 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
         self._statistics_collector.update_batch(batch, sim)
 
-        # Compute and log simulation metrics
-        metrics_helper = MetricsManager(num_event_types=self.num_event_types)
-        simulation_metrics = metrics_helper.compute_simulation_metrics(
-            batch=batch, sim=sim
-        )
+        # # Compute and log simulation metrics
+        # metrics_helper = MetricsManager(num_event_types=self.num_event_types)
+        # simulation_metrics = metrics_helper.compute_simulation_metrics(
+        #     batch=batch, sim=sim
+        # )
 
-        for key, value in simulation_metrics.items():
-            if key == "confusion_matrix":
-                continue
-            self.log(f"sim_{key}", value, prog_bar=False, sync_dist=True)
+        # for key, value in simulation_metrics.items():
+        #     if key == "confusion_matrix":
+        #         continue
+        #     self.log(f"sim_{key}", value, prog_bar=False, sync_dist=True)
 
     def predict_step(self, batch: Batch, batch_idx, **kwargs) -> STEP_OUTPUT:
         """Prediction step for Lightning.
@@ -203,10 +197,6 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         # Run simulation
         sim = self.simulate(batch=batch)
 
-        # Update counter
-        n_events_generated = (sim.type_seqs != 0).sum().item()
-        self.sim_events_counter += int(n_events_generated)
-
         # Update statistics collector
         if self._statistics_collector is None:
             raise NotImplementedError(
@@ -214,7 +204,6 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             )
 
         self._statistics_collector.update_batch(batch, sim)
-        self._simulations.append(sim)
 
         return
 

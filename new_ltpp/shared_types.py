@@ -129,6 +129,9 @@ class SimulationResult:
     def __post_init__(self):
         """Validate simulation result after initialization."""
         # Ensure all tensors have the same shape
+
+        self.mask = self.mask.bool() & (self.dtime_seqs > 0)
+
         assert (
             self.time_seqs.shape == self.type_seqs.shape
         ), "time_seqs and type_seqs must have the same shape"

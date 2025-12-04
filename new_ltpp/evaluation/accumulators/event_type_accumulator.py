@@ -36,14 +36,12 @@ class EventTypeAccumulator(BaseAccumulator):
         sim_types = simulation.type_seqs
         sim_event_count = sim_types.sum().item()
         if sim_event_count < self.min_sim_events:
-            logger.error(
-                "EventTypeAccumulator: Too few simulated events (%d < %d)",
+            logger.warning(
+                "EventTypeAccumulator: Too few simulated events (%d < %d), skipping batch",
                 sim_event_count,
                 self.min_sim_events,
             )
-            raise ValueError(
-                f"EventTypeAccumulator requires at least {self.min_sim_events} simulated events, got {sim_event_count}"
-            )
+            return
 
         # Extract ground truth event types using torch (keeps tensors on device)
         type_seqs = batch.type_seqs

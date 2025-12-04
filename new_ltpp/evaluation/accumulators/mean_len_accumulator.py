@@ -39,14 +39,12 @@ class SequenceLengthAccumulator(BaseAccumulator):
         sim_event_count = int(sim_seq_lengths.sum().item())
 
         if sim_event_count < self.min_sim_events:
-            logger.error(
-                "SequenceLengthAccumulator: Too few simulated events (%d < %d)",
+            logger.warning(
+                "SequenceLengthAccumulator: Too few simulated events (%d < %d), skipping batch",
                 sim_event_count,
                 self.min_sim_events,
             )
-            raise ValueError(
-                f"SequenceLengthAccumulator requires at least {self.min_sim_events} simulated events, got {sim_event_count}"
-            )
+            return
 
         # Extract simulated sequence lengths (vectorized)
 

@@ -1,7 +1,0 @@
-model_config: {}
-num_event_types: 2
-dtime_max: 24.554404841587466
-dropout: 0.1
-hidden_size: 128
-beta: 1.0
-bias: true

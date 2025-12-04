@@ -52,3 +52,6 @@ log
 # slurm files
 **.out
 **.err
+
+# logs
+**lightning_logs/

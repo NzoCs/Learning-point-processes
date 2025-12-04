@@ -95,7 +95,7 @@ class SAHP(NeuralModel):
             nn.Softplus(),
         )
 
-    def state_decay(self, encode_state, duration_t):
+    def state_decay(self, encode_state: torch.Tensor, duration_t: torch.Tensor) -> torch.Tensor:
         """Equation (15), which computes the pre-intensity states
 
         Args:
@@ -115,28 +115,39 @@ class SAHP(NeuralModel):
         states = mu + (eta - mu) * torch.exp(-gamma * duration_t)
         return states
 
-    def forward(self, time_seqs, time_delta_seqs, event_seqs, key_padding_mask, attention_mask):
+    def forward(
+            self, 
+            time_seqs: torch.Tensor, 
+            time_delta_seqs: torch.Tensor, 
+            type_seqs: torch.Tensor, 
+            attention_mask: torch.Tensor, 
+            key_padding_mask: torch.Tensor | None = None, 
+            ) -> torch.Tensor:
         """Call the model
 
         Args:
             time_seqs (tensor): [batch_size, seq_len], timestamp seqs.
             time_delta_seqs (tensor): [batch_size, seq_len], inter-event time seqs.
-            event_seqs (tensor): [batch_size, seq_len], event type seqs.
+            type_seqs (tensor): [batch_size, seq_len], event type seqs.
             key_padding_mask (tensor): [batch_size, seq_len], key padding mask.
             attention_mask (tensor): [batch_size, seq_len, hidden_size], attention masks.
 
         Returns:
             tensor: hidden states at event times.
         """
-        type_embedding = self.layer_type_emb(event_seqs)
+        type_embedding = self.layer_type_emb(type_seqs)
         position_embedding = self.layer_position_emb(time_seqs, time_delta_seqs)
 
         enc_output = type_embedding + position_embedding
 
         for enc_layer in self.stack_layers:
-            enc_output = enc_layer(enc_output, key_padding_mask, attention_mask)
+            enc_output = enc_layer(enc_output, attn_mask=attention_mask)
             if self.use_norm:
                 enc_output = self.norm(enc_output)
+
+        if key_padding_mask is not None:
+            enc_output = enc_output * key_padding_mask.unsqueeze(-1)
+
         # [batch_size, seq_len, hidden_dim]
         return enc_output
 
@@ -158,9 +169,9 @@ class SAHP(NeuralModel):
         enc_out = self.forward(
             time_seqs[:, :-1],
             time_delta_seqs[:, :-1],
-            type_seqs[:, :-1],
-            batch_non_pad_mask[:, :-1],
+            type_seqs[:, :-1],            
             attention_mask[:-1, :-1],
+            ~batch_non_pad_mask[:, :-1],
         )
 
         cell_t = self.state_decay(
@@ -194,7 +205,7 @@ class SAHP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_times(self, encode_state, sample_dtimes):
+    def compute_states_at_sample_times(self, encode_state: torch.Tensor, sample_dtimes: torch.Tensor) -> torch.Tensor:
         """Compute the hidden states at sampled times.
 
         Args:
@@ -236,7 +247,7 @@ class SAHP(NeuralModel):
         attention_mask = get_causal_attn_mask(time_seqs.size(1), device=self.device)
 
         # [batch_size, seq_len, num_samples]
-        enc_out = self.forward(time_seqs, time_delta_seqs, type_seqs, None, attention_mask)
+        enc_out = self.forward(time_seqs, time_delta_seqs, type_seqs, attention_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = self.compute_states_at_sample_times(enc_out, sample_dtimes)

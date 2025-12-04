@@ -244,7 +244,6 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
         # Compute non-event LL [batch_size, seq_len]
         # interval_integral = length_interval * average of sampled lambda(t)
-
         total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
 
         non_event_ll = total_sampled_lambdas.mean(dim=-1) * time_delta_seq * seq_mask

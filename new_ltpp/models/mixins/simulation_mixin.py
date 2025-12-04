@@ -2,7 +2,7 @@
 """Mixin for simulation functionality."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 import torch
 from tqdm import tqdm
@@ -14,6 +14,17 @@ from new_ltpp.utils import logger
 
 from .base_mixin import BaseMixin
 
+class Buffers(TypedDict):
+    time: torch.Tensor
+    time_delta: torch.Tensor
+    event: torch.Tensor
+    initial_len: int
+
+class SimulationState(TypedDict):
+    last_event_time: torch.Tensor
+    current_time: float
+    batch_active: torch.Tensor
+    step_count: int
 
 class SimulationMixin(BaseMixin):
     """Mixin providing simulation functionality.
@@ -87,6 +98,8 @@ class SimulationMixin(BaseMixin):
         )
         return results
 
+
+
     def simulate(
         self,
         batch: Optional[Batch] = None,
@@ -134,19 +147,38 @@ class SimulationMixin(BaseMixin):
         else:
             batch_size = batch.time_seqs.size(0)
 
+        start_times, end_times = self.compute_start_end_time(batch.time_seqs, batch.seq_non_pad_mask)
+
         # Pre-allocate buffers
         buffers = self._allocate_simulation_buffers(batch, initial_buffer_size)
 
         # Initialize tracking state
-        sim_state = self._initialize_simulation_state(batch, start_time, batch_size)
+        sim_state = self._initialize_simulation_state(batch, batch_size)
+
 
         # Run simulation loop
-        self._run_simulation_loop(buffers, sim_state, start_time, end_time)
-
+        self._run_simulation_loop(buffers, sim_state, start_times, end_times)
         # Extract and return results
         return self._extract_simulation_results(
-            buffers, sim_state, start_time, end_time
+            buffers, sim_state, start_times, end_times
         )
+
+    def compute_start_end_time(self, time_seqs: torch.Tensor, seq_non_pad_mask: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Compute start and end times for simulation.
+
+        Returns:
+            Tuple of (start_time, end_time)
+        """
+
+        # put the padded items to infinity so that they won't affect min computation
+        time_seqs[~seq_non_pad_mask] = float("inf")
+        start_times = time_seqs.min(dim=1).values
+
+        # put it back to original values
+        time_seqs[~seq_non_pad_mask] = 0.0
+        end_times = time_seqs.max(dim=1).values
+
+        return start_times, end_times
 
     def simulate_one_step(
         self,
@@ -214,7 +246,7 @@ class SimulationMixin(BaseMixin):
             ),
         )
 
-    def _allocate_simulation_buffers(self, batch: Batch, initial_buffer_size: int):
+    def _allocate_simulation_buffers(self, batch: Batch, initial_buffer_size: int) -> Buffers:
         """Allocate buffers for simulation."""
         batch_size = batch.time_seqs.size(0)
         initial_len = batch.time_seqs.size(1)
@@ -235,16 +267,16 @@ class SimulationMixin(BaseMixin):
         time_delta_buffer[:, :initial_len].copy_(batch.time_delta_seqs)
         event_buffer[:, :initial_len].copy_(batch.type_seqs)
 
-        return {
-            "time": time_buffer,
-            "time_delta": time_delta_buffer,
-            "event": event_buffer,
-            "initial_len": initial_len,
-        }
+        return Buffers(
+            time=time_buffer,
+            time_delta=time_delta_buffer,
+            event=event_buffer,
+            initial_len=initial_len,
+        )
 
     def _initialize_simulation_state(
-        self, batch: Batch, start_time: float, batch_size: int
-    ):
+        self, batch: Batch, batch_size: int
+    ) -> SimulationState:
         """Initialize simulation tracking state."""
         # Track last event time for each mark
         last_event_time = torch.zeros(
@@ -263,22 +295,22 @@ class SimulationMixin(BaseMixin):
                 valid_mask = max_times != float("-inf")
                 last_event_time[valid_mask, mark] = max_times[valid_mask]
 
-        return {
-            "last_event_time": last_event_time,
-            "current_time": start_time,
-            "batch_active": torch.ones(
+        return SimulationState(
+            last_event_time=last_event_time,
+            current_time=batch.time_seqs[:, -1].min().item(),
+            batch_active=torch.ones(
                 batch_size, dtype=torch.bool, device=self.device
             ),
-            "step_count": 0,
-        }
+            step_count=0,
+        )
 
     def _reallocate_buffers(
-        self, buffers: Dict[str, torch.Tensor], current_max_len: int
+        self, buffers: Buffers, current_max_len: int
     ) -> int:
         """Reallocate buffers with double the size.
 
         Args:
-            buffers: Dictionary containing current buffers
+            buffers: Buffers TypedDict containing current buffers
             current_max_len: Current maximum sequence length
 
         Returns:
@@ -309,89 +341,118 @@ class SimulationMixin(BaseMixin):
         buffers["event"] = new_event_buffer
 
         logger.info(f"Reallocated buffers to size {new_max_seq_len}")
-        return new_max_seq_len
 
+        return new_max_seq_len
+    
     def _run_simulation_loop(
         self,
-        buffers: Dict[str, torch.Tensor],
-        sim_state: Dict[str, Any],
-        start_time: float,
-        end_time: float,
+        buffers: Buffers,
+        sim_state: SimulationState,
+        start_times: torch.Tensor,
+        end_times: torch.Tensor,
     ) -> None:
-        """Run the main simulation loop."""
+        
+        """Run the main simulation loop. Simulates starting from the end of initial sequences, so at end_time to start_time + end_time for each sequence.
+        
+        Args:   
+            buffers: Buffers TypedDict containing simulation buffers
+            sim_state: SimulationState TypedDict tracking simulation state
+            start_times: Tensor of start times for each sequence
+            end_times: Tensor of end times for each sequence"""
 
         initial_len = buffers["initial_len"]
         max_seq_len = buffers["time"].size(1)
 
+        # 1. Calcul du temps de fin absolu pour chaque séquence
+        # We start at end_time and simulate for the same duration (end_time - start_time) for each sequence
+        absolute_end_times = end_times + (end_times - start_times)
+        max_absolute_end_time = absolute_end_times.max().item()
+
+        # 2. Application du décalage (start_time) et initialisation de current_time
+        if sim_state["step_count"] == 0:
+            if initial_len > 0:
+                # Ajout du décalage start_time aux temps initiaux (si initialement relatifs à t=0)
+                # Cette ligne suppose que le code appelant n'a pas encore appliqué le décalage.
+                buffers["time"][:, :initial_len] += start_times.unsqueeze(1)
+                sim_state["last_event_time"] += start_times.unsqueeze(1)
+                sim_state["current_time"] = buffers["time"][:, initial_len - 1].min().item()
+            else:
+                # Si le buffer est vide (initial_len=0), le temps courant minimum est le temps de début minimum
+                sim_state["current_time"] = start_times.min().item()
         with torch.no_grad():
-            pbar = tqdm(total=end_time, desc="Simulation", leave=False)
+            pbar = tqdm(total=max_absolute_end_time, desc="Simulation", leave=False)
+            pbar.n = min(sim_state["current_time"], max_absolute_end_time)
+            pbar.refresh()
 
-            while sim_state["current_time"] < end_time:
-                if not sim_state["batch_active"].any():
-                    break
 
-                # Get active sequences
-                active_indices = sim_state["batch_active"].nonzero(as_tuple=True)[0]
-                if len(active_indices) == 0:
-                    break
+        while sim_state["batch_active"].any():
+            
+            # Get active sequences
+            active_indices = sim_state["batch_active"].nonzero(as_tuple=True)[0]
+            if len(active_indices) == 0:
+                break
 
-                current_len = initial_len + sim_state["step_count"]
+            current_len = initial_len + sim_state["step_count"]
 
-                # Check if we need to reallocate buffers (double the size)
-                if current_len >= max_seq_len - 1:
-                    max_seq_len = self._reallocate_buffers(buffers, max_seq_len)
+            # Check if we need to reallocate buffers (double the size)
+            if current_len >= max_seq_len - 1:
+                max_seq_len = self._reallocate_buffers(buffers, max_seq_len)
 
-                # Predict on active sequences
-                active_time_seq = buffers["time"][active_indices, :current_len]
-                active_time_delta = buffers["time_delta"][active_indices, :current_len]
-                active_event_seq = buffers["event"][active_indices, :current_len]
+            # Predict on active sequences
+            active_time_seq = buffers["time"][active_indices, :current_len]
+            active_time_delta = buffers["time_delta"][active_indices, :current_len]
+            active_event_seq = buffers["event"][active_indices, :current_len]
 
-                dtimes_pred, type_pred = self.simulate_one_step(
-                    active_time_seq, active_time_delta, active_event_seq
-                )
+            dtimes_pred, type_pred = self.simulate_one_step(
+                active_time_seq, active_time_delta, active_event_seq
+            )
 
-                # Calculate new times
-                new_times = active_time_seq[:, -1:] + dtimes_pred
+            # Calculate new times (Active_time_seq[-1] est maintenant un temps absolu)
+            new_times = active_time_seq[:, -1:] + dtimes_pred
 
-                # Update last_event_time
-                active_batch_size = len(active_indices)
-                type_pred_flat = type_pred.squeeze(-1)
-                last_times_flat = active_time_seq[:, -1]
-                sim_state["last_event_time"][
-                    active_indices, type_pred_flat
-                ] = last_times_flat
+            # Update last_event_time
+            active_batch_size = len(active_indices)
+            type_pred_flat = type_pred.squeeze(-1)
+            last_times_flat = active_time_seq[:, -1]
+            sim_state["last_event_time"][
+                active_indices, type_pred_flat
+            ] = last_times_flat
 
-                # Recalculate deltas
-                batch_indices_active = torch.arange(
-                    active_batch_size, device=self.device
-                )
-                last_events_active = sim_state["last_event_time"][active_indices][
-                    batch_indices_active, type_pred_flat
-                ]
-                dtimes_corrected = new_times.squeeze(-1) - last_events_active
+            # Recalculate deltas
+            batch_indices_active = torch.arange(
+                active_batch_size, device=self.device
+            )
+            last_events_active = sim_state["last_event_time"][active_indices][
+                batch_indices_active, type_pred_flat
+            ]
+            dtimes_corrected = new_times.squeeze(-1) - last_events_active
 
-                # Update buffers
-                buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
-                buffers["time_delta"][active_indices, current_len] = dtimes_corrected
-                buffers["event"][active_indices, current_len] = type_pred.squeeze(-1)
+            # Update buffers
+            buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
+            buffers["time_delta"][active_indices, current_len] = dtimes_corrected
+            buffers["event"][active_indices, current_len] = type_pred.squeeze(-1)
 
-                # Update current time and deactivate sequences that exceeded end_time
-                sim_state["current_time"] = new_times.min().item()
-                exceed_time_mask = new_times.squeeze(-1) >= end_time
-                if exceed_time_mask.any():
-                    exceed_indices = active_indices[exceed_time_mask]
-                    sim_state["batch_active"][exceed_indices] = False
+            # Update current time (minimum across all active sequences)
+            sim_state["current_time"] = new_times.min().item()
+            
+            # Désactivation des séquences ayant atteint leur temps de fin individuel
+            active_end_times = absolute_end_times[active_indices].unsqueeze(-1)
+            exceed_time_mask = new_times >= active_end_times
+            
+            if exceed_time_mask.any():
+                exceed_indices = active_indices[exceed_time_mask.squeeze(-1)]
+                sim_state["batch_active"][exceed_indices] = False
 
-                sim_state["step_count"] += 1
+            sim_state["step_count"] += 1
 
-                if sim_state["step_count"] % 50 == 0:
-                    pbar.n = min(sim_state["current_time"], end_time)
-                    pbar.refresh()
+            if sim_state["step_count"] % 50 == 0:
+                pbar.n = min(sim_state["current_time"], max_absolute_end_time)
+                pbar.refresh()
 
-            pbar.close()
+        pbar.close()
 
     def _extract_simulation_results(
-        self, buffers: dict, sim_state: dict, start_time: float, end_time: float
+        self, buffers: Buffers, sim_state: SimulationState, start_times: torch.Tensor, end_times: torch.Tensor
     ) -> SimulationResult:
         """Extract final simulation results from buffers."""
         initial_len = buffers["initial_len"]
@@ -401,11 +462,93 @@ class SimulationMixin(BaseMixin):
         final_time_delta = buffers["time_delta"][:, initial_len:current_len]
         final_event_seq = buffers["event"][:, initial_len:current_len]
 
+        absolute_end_times = end_times + (end_times - start_times) 
+
         # Create final mask
         simul_mask = torch.logical_and(
-            final_time_seq >= start_time, final_time_seq <= end_time
+            final_time_seq >= end_times.unsqueeze(-1), final_time_seq <= absolute_end_times.unsqueeze(-1)
         )
 
         return SimulationResult(
             final_time_seq, final_time_delta, final_event_seq, simul_mask
         )
+
+
+    # def _run_simulation_loop(
+    #     self,
+    #     buffers: Buffers,
+    #     sim_state: SimulationState,
+    #     start_time: float,
+    #     end_time: float,
+    # ) -> None:
+    #     """Run the main simulation loop."""
+
+    #     initial_len = buffers["initial_len"]
+    #     max_seq_len = buffers["time"].size(1)
+
+    #     with torch.no_grad():
+    #         pbar = tqdm(total=end_time, desc="Simulation", leave=False)
+
+    #         while sim_state["current_time"] < end_time:
+    #             if not sim_state["batch_active"].any():
+    #                 break
+
+    #             # Get active sequences
+    #             active_indices = sim_state["batch_active"].nonzero(as_tuple=True)[0]
+    #             if len(active_indices) == 0:
+    #                 break
+
+    #             current_len = initial_len + sim_state["step_count"]
+
+    #             # Check if we need to reallocate buffers (double the size)
+    #             if current_len >= max_seq_len - 1:
+    #                 max_seq_len = self._reallocate_buffers(buffers, max_seq_len)
+
+    #             # Predict on active sequences
+    #             active_time_seq = buffers["time"][active_indices, :current_len]
+    #             active_time_delta = buffers["time_delta"][active_indices, :current_len]
+    #             active_event_seq = buffers["event"][active_indices, :current_len]
+
+    #             dtimes_pred, type_pred = self.simulate_one_step(
+    #                 active_time_seq, active_time_delta, active_event_seq
+    #             )
+
+    #             # Calculate new times
+    #             new_times = active_time_seq[:, -1:] + dtimes_pred
+
+    #             # Update last_event_time
+    #             active_batch_size = len(active_indices)
+    #             type_pred_flat = type_pred.squeeze(-1)
+    #             last_times_flat = active_time_seq[:, -1]
+    #             sim_state["last_event_time"][
+    #                 active_indices, type_pred_flat
+    #             ] = last_times_flat
+
+    #             # Recalculate deltas
+    #             batch_indices_active = torch.arange(
+    #                 active_batch_size, device=self.device
+    #             )
+    #             last_events_active = sim_state["last_event_time"][active_indices][
+    #                 batch_indices_active, type_pred_flat
+    #             ]
+    #             dtimes_corrected = new_times.squeeze(-1) - last_events_active
+
+    #             # Update buffers
+    #             buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
+    #             buffers["time_delta"][active_indices, current_len] = dtimes_corrected
+    #             buffers["event"][active_indices, current_len] = type_pred.squeeze(-1)
+
+    #             # Update current time and deactivate sequences that exceeded end_time
+    #             sim_state["current_time"] = new_times.min().item()
+    #             exceed_time_mask = new_times.squeeze(-1) >= end_time
+    #             if exceed_time_mask.any():
+    #                 exceed_indices = active_indices[exceed_time_mask]
+    #                 sim_state["batch_active"][exceed_indices] = False
+
+    #             sim_state["step_count"] += 1
+
+    #             if sim_state["step_count"] % 50 == 0:
+    #                 pbar.n = min(sim_state["current_time"], end_time)
+    #                 pbar.refresh()
+
+    #         pbar.close()

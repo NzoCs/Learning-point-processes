@@ -118,7 +118,6 @@ class EncoderLayer(nn.Module):
         self,
         x: torch.Tensor,
         attn_mask: torch.Tensor,
-        key_padding_mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         if self.use_residual:
             x = self.sublayers[0](

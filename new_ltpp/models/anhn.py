@@ -98,7 +98,7 @@ class ANHN(NeuralModel):
         # mu in Equation (3)
         intensity_base = self.layer_base_intensity(rnn_output)
 
-        # [batch_size, num_head, seq_len, seq_len]
+        # [batch_size, seq_len, seq_len]
         _, att_weight = self.layer_att(
             rnn_output,
             rnn_output,
@@ -107,15 +107,13 @@ class ANHN(NeuralModel):
             output_weight=True,
         )
 
-        # [batch_size, seq_len, seq_len, 1]
-        att_weight = torch.sum(att_weight, dim=1)[..., None]
-
         # At each step, alpha and delta reply on all previous event embeddings because there is a cumsum in Equation
         # (3), therefore the alpha and beta have shape [batch_size, seq_len, seq_len, hidden_size] when performing
         # matrix operations.
+
         # [batch_size, seq_len, seq_len, hidden_dim]
         # alpha in Equation (3)
-        intensity_alpha = att_weight * rnn_output[:, None, :, :]
+        intensity_alpha = att_weight[:, :, :, None] * rnn_output[:, None, :, :]
 
         # compute delta
         max_len = event_emb.size()[1]
@@ -153,6 +151,7 @@ class ANHN(NeuralModel):
             tuple: loglikelihood loss and num of events.
         """
 
+        # [seq_len, seq_len]
         attn_mask = get_causal_attn_mask(
             batch.time_delta_seqs.size(1), device=self.device
         )
@@ -162,9 +161,10 @@ class ANHN(NeuralModel):
             (intensity_base, intensity_alpha, intensity_delta),
             (base_dtime, target_cumsum_dtime),
         ) = self.forward(
-            batch.time_delta_seqs[:, 1:], batch.type_seqs[:, :-1], attn_mask[:, 1:, :-1]
+            batch.time_delta_seqs[:, 1:], batch.type_seqs[:, :-1], attn_mask[1:, :-1]
         )
 
+        # [batch_size, seq_len, num_event_types]
         lambda_at_event = self.layer_intensity(imply_lambdas)
 
         # Num of samples in each batch and num of event time point in the sequence
@@ -181,6 +181,7 @@ class ANHN(NeuralModel):
         # the first dtime is zero, so we use time_delta_seqs[:, 1:]
         interval_t_sample = self.make_dtime_loss_samples(batch.time_delta_seqs[:, 1:])
 
+        # [batch_size, num_times=max_len-1, num_mc_sample, hidden_size]
         state_t_sample = self.compute_states_at_sample_times(
             intensity_base,
             intensity_alpha,
@@ -202,16 +203,22 @@ class ANHN(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_cumsum_dtime(self, dtime_seqs):
+    def compute_cumsum_dtime(self, dtime_seqs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute cumulative delta times.
 
         Args:
             dtime_seqs (tensor): [batch_size, seq_len].
 
         Returns:
-            tensor: [batch_size, seq_len].
+            tuple[torch.Tensor, torch.Tensor]: Two tensors each of shape [batch_size, seq_len, seq_len, 1].
+
+            The first tensor is the base elapses between events which is the time passed since another event, for each
+            event
+            
+            The second tensor is the target cumulative delta times used in intensity computation.
         """
-        # try to replicate tf.cumsum()
+
+        # try to replicate tf.cumsum() 
         # [batch_size, seq_len, num_sample]
         # [0, dt_1, dt_2] => [dt_1 + dt_2, dt_2, 0]
         cum_dtimes = torch.cumsum(torch.flip(dtime_seqs, dims=[-1]), dim=1)
@@ -230,8 +237,8 @@ class ANHN(NeuralModel):
         return base_elapses, target_cumsum
 
     def compute_states_at_event_times(
-        self, intensity_base, intensity_alpha, intensity_delta, cumsum_dtimes
-    ):
+        self, intensity_base: torch.Tensor, intensity_alpha: torch.Tensor, intensity_delta: torch.Tensor, cumsum_dtimes: torch.Tensor
+    ) -> torch.Tensor:
         """Compute implied lambda based on Equation (3).
 
         Args:
@@ -241,7 +248,7 @@ class ANHN(NeuralModel):
             cumsum_dtimes: [batch_size, seq_len, (num_sample), 1]
 
         Returns:
-            hidden states at all cumsum_dtimes: [batch_size, seq_len, num_samples, hidden_size]
+            hidden states at all cumsum_dtimes: [batch_size, seq_len, (num_sample), hidden_size]
 
         """
         # to avoid nan calculated by exp after (nan * 0 = nan)
@@ -251,7 +258,7 @@ class ANHN(NeuralModel):
         cumsum_term = torch.sum(
             intensity_alpha * torch.exp(-intensity_delta * elapse), dim=-2
         )
-        # [batch_size, seq_len, hidden_dim]
+        # [batch_size, seq_len, (num_sample), hidden_dim]
         imply_lambdas = intensity_base + cumsum_term
 
         return imply_lambdas
@@ -278,19 +285,21 @@ class ANHN(NeuralModel):
         """
 
         # [batch_size, seq_len, 1, hidden_size]
-        mu = intensity_base[:, :, None]
+        mu = intensity_base[:, :, None, :]
 
-        # [batch_size, seq_len, 1, seq_len, hidden_size]
-        alpha = intensity_alpha[:, :, None]
-        delta = intensity_delta[:, :, None]
-        base_elapses = base_dtime[:, :, None]
+        # [batch_size, seq_len, seq_len, 1, hidden_size]
+        alpha = intensity_alpha[:, :, :, None, :]
+        delta = intensity_delta[:, :, :, None, :]
+        base_elapses = base_dtime[:, :, :, None, :]
 
         # [batch_size, seq_len, num_samples, 1, 1]
-        sample_dtimes_ = sample_dtimes[:, :, :, None, None]
+        sample_dtimes_ = sample_dtimes[:, :, :, None]
 
         states_samples = []
         seq_len = intensity_base.size()[1]
         for _ in range(seq_len):
+
+            # [batch_size, seq_len, (num_sample), hidden_size]
             states_samples_ = self.compute_states_at_event_times(
                 mu, alpha, delta, base_elapses + sample_dtimes_
             )

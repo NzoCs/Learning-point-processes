@@ -87,7 +87,9 @@ class THP(NeuralModel):
             ]
         )
 
-    def forward(self, time_seqs, type_seqs, attn_mask):
+    def forward(
+            self, time_seqs: torch.Tensor, type_seqs: torch.Tensor, attn_mask: torch.Tensor
+            ) -> torch.Tensor:
         """Call the model
 
         Args:
@@ -106,7 +108,7 @@ class THP(NeuralModel):
         for enc_layer in self.stack_layers:
             enc_output += tem_enc
             enc_output = enc_layer(
-                enc_output, key_padding_mask=None, attn_mask=attn_mask
+                enc_output, attn_mask=attn_mask
             )
 
         return enc_output

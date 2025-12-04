@@ -27,7 +27,6 @@ class NeuralModel(Model, ABC):
         """
         super(NeuralModel, self).__init__(**kwargs)
 
-        self.num_event_types = self.num_event_types
         self.dropout = dropout
         self.hidden_size = hidden_size
 

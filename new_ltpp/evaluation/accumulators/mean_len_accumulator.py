@@ -4,10 +4,7 @@ Sequence Length Accumulator
 Accumulates sequence length statistics from batches during prediction.
 """
 
-from collections import Counter
-
 import numpy as np
-import torch
 
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
@@ -53,7 +50,7 @@ class SequenceLengthAccumulator(BaseAccumulator):
         time_seqs[~sim_mask] = float("inf")
         time_starts = time_seqs.min(dim=1).values
 
-        time_seqs[~sim_mask] = -1
+        time_seqs[~sim_mask] = 0.0
         time_ends = time_seqs.max(dim=1).values
 
         sim_time_windows = time_ends - time_starts
@@ -70,7 +67,7 @@ class SequenceLengthAccumulator(BaseAccumulator):
         gt_time_seqs[~mask] = float("inf")
         gt_time_starts = gt_time_seqs.min(dim=1).values
 
-        gt_time_seqs[~mask] = -1
+        gt_time_seqs[~mask] = 0.0
         gt_time_ends = gt_time_seqs.max(dim=1).values
 
         gt_time_windows = gt_time_ends - gt_time_starts

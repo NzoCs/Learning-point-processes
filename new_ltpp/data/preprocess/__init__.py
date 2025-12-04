@@ -11,6 +11,5 @@ __all__ = [
     "TPPDataLoader",
     "EventTokenizer",
     "TPPDataset",
-    "get_data_loader",
     "Visualizer",
 ]

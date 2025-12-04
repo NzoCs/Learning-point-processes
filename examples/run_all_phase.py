@@ -8,7 +8,7 @@ from new_ltpp.runners import RunnerManager
 def main() -> None:
     # Load configuration
     config_path = CONFIGS_FILE
-    model_id = "THP"
+    model_id = "SAHP"
 
     # Build runner configuration from YAML
     config_builder = RunnerConfigBuilder()
@@ -32,8 +32,8 @@ def main() -> None:
 
     # Run complete pipeline: train -> test -> predict
 
-    # 1. Training
-    runner.run(phase="train")
+    # # 1. Training
+    # runner.run(phase="train")
 
     # # 2. Testing
     runner.run(phase="test")

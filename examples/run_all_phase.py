@@ -8,7 +8,7 @@ from new_ltpp.runners import RunnerManager
 def main() -> None:
     # Load configuration
     config_path = CONFIGS_FILE
-    model_id = "SAHP"
+    model_id = "Hawkes"
 
     # Build runner configuration from YAML
     config_builder = RunnerConfigBuilder()
@@ -16,9 +16,9 @@ def main() -> None:
     # You can modify the paths below to point to different configurations as needed
     config_builder.load_from_yaml(
         yaml_file_path=config_path,
-        data_config_path="data_configs.test",
+        data_config_path="data_configs.hawkes1",
         training_config_path="training_configs.quick_test",
-        general_specs_config_path="general_specs.default",
+        general_specs_config_path="general_specs.hawkes1",
         thinning_config_path="thinning_configs.quick_test",
         simulation_config_path="simulation_configs.quick_test",
         data_loading_config_path="data_loading_configs.debug",
@@ -35,8 +35,8 @@ def main() -> None:
     # # 1. Training
     # runner.run(phase="train")
 
-    # # 2. Testing
-    runner.run(phase="test")
+    # # # 2. Testing
+    # runner.run(phase="test")
 
     # 3. Prediction and distribution comparison
     runner.run(phase="predict")

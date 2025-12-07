@@ -25,14 +25,13 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
     eps: float = torch.finfo(torch.float32).eps  # Small epsilon for numerical stability
 
-    def __init__(self, pad_token_id: int, **kwargs):
+    def __init__(self, **kwargs):
         """Initialize the TrainingMixin.
 
         Args:
             kwargs: Additional keyword arguments
         """
         super().__init__(**kwargs)
-        self.pad_token_id = pad_token_id
 
     def training_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
         """Training step for Lightning.
@@ -85,6 +84,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             time_seqs=batch.time_seqs,
             time_delta_seqs=batch.time_delta_seqs,
             type_seqs=batch.type_seqs,
+            seq_non_pad_mask=batch.seq_non_pad_mask,
         )
 
         # Mutate the batch in-place so subsequent operations use sequences starting at the second event
@@ -117,6 +117,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             time_seqs=batch.time_seqs,
             time_delta_seqs=batch.time_delta_seqs,
             type_seqs=batch.type_seqs,
+            seq_non_pad_mask=batch.seq_non_pad_mask,
         )
 
         # Mutate the batch in-place

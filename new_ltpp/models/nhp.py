@@ -239,7 +239,7 @@ class NHP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_delta_seqs: torch.Tensor,
@@ -248,7 +248,7 @@ class NHP(NeuralModel):
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
-        """Compute the intensity at sampled times, not only event times.
+        """Compute the intensity at sampled delta times, not only event times.
 
         Args:
             time_seqs (tensor): [batch_size, seq_len], times seqs.

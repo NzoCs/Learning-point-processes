@@ -116,7 +116,10 @@ class TPPModelProtocol(Protocol):
     
     def predict_one_step_at_every_event(
         self,
-        batch: Batch,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Predict next event time and type given history up to each event.
         

@@ -26,7 +26,7 @@ class Model(
     """
 
     def __init__(
-        self, model_config: ModelConfig, data_info: DataInfo, output_dir: Path | str
+        self, model_config: ModelConfig, data_info: DataInfo, output_dir: Path | str, **kwargs
     ):
         """Initialize the Model.
 

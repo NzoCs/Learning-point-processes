@@ -255,7 +255,7 @@ class ODETPP(NeuralModel):
         interval_t_sample = self.make_dtime_loss_samples(time_delta_seqs[:, 1:])
 
         # [batch_size, num_times = max_len - 1, num_mc_sample, hidden_size]
-        sample_state_ti = self.compute_states_at_sample_times(
+        sample_state_ti = self.compute_states_at_sample_dtimes(
             right_limits, interval_t_sample
         )
 
@@ -274,8 +274,8 @@ class ODETPP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_times(self, state_ti_plus, sample_dtimes):
-        """Compute the states at sampling times.
+    def compute_states_at_sample_dtimes(self, state_ti_plus, sample_dtimes):
+        """Compute the states at sampling delta times.
 
         Args:
             state_ti_plus (tensor): [batch_size, seq_len, hidden_size], states right after the events.
@@ -296,7 +296,7 @@ class ODETPP(NeuralModel):
 
         return state
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_delta_seqs: torch.Tensor,
@@ -305,7 +305,7 @@ class ODETPP(NeuralModel):
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
-        """Compute the intensity at sampled times, not only event times.
+        """Compute the intensity at sampled delta times, not only event times.
 
         Args:
             time_seqs (tensor): [batch_size, seq_len], times seqs.
@@ -321,7 +321,7 @@ class ODETPP(NeuralModel):
         _, right_limits = self.forward(time_delta_seqs, type_seqs)
 
         # [batch_size, num_sample_times, num_mc_sample, hidden_size]
-        sample_state_ti = self.compute_states_at_sample_times(
+        sample_state_ti = self.compute_states_at_sample_dtimes(
             right_limits, sample_dtimes
         )
 

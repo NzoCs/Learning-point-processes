@@ -126,13 +126,16 @@ class AttNHP(NeuralModel):
             assert isinstance(head_layers, nn.ModuleList)
 
             for layer_i in range(self.n_layers):
+
                 # each layer concats the temporal emb
-                # [batch_size, seq_len, hidden_size*2]
+                                # [batch_size, seq_len, hidden_size*2]
                 layer_ = torch.cat([cur_layer_, sample_time_emb], dim=-1)
+
                 # make combined input from event emb + layer emb
                 # [batch_size, seq_len*2, hidden_size*2]
                 _combined_input = torch.cat([event_emb, layer_], dim=1)
                 enc_layer = head_layers[layer_i]
+                
                 # compute the output
                 enc_output = enc_layer(_combined_input, combined_mask)
 
@@ -269,24 +272,22 @@ class AttNHP(NeuralModel):
             attn_mask[:, :-1, :-1],
             batch.time_seqs[:, 1:],
         )
+
         # [batch_size, seq_len, num_event_types]
         lambda_at_event = self.layer_intensity(enc_out)
 
         # 2. compute non-event-loglik (using MC sampling to compute integral)
         # 2.1 sample times
         # [batch_size, seq_len, num_sample]
-        temp_time = self.make_dtime_loss_samples(batch.time_delta_seqs[:, 1:])
-
-        # [batch_size, seq_len, num_sample]
-        sample_times = temp_time + batch.time_seqs[:, :-1].unsqueeze(-1)
+        sample_dtimes = self.make_dtime_loss_samples(batch.time_delta_seqs[:, 1:])
 
         # 2.2 compute intensities at sampled times
         # [batch_size, seq_len = max_len - 1, num_sample, event_num]
-        lambda_t_sample = self.compute_intensities_at_sample_times(
+        lambda_t_sample = self.compute_intensities_at_sample_dtimes(
             time_seqs=batch.time_seqs[:, :-1],
             time_delta_seqs=batch.time_delta_seqs[:, :-1],  # not used
             type_seqs=batch.type_seqs[:, :-1],
-            sample_dtimes=sample_times,
+            sample_dtimes=sample_dtimes,
             attention_mask=attn_mask[:, :-1, :-1],
         )
 
@@ -302,12 +303,12 @@ class AttNHP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_times(
+    def compute_states_at_sample_dtimes(
         self,
         time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         attention_mask: torch.Tensor,
-        sample_times: torch.Tensor,
+        sample_dtimes: torch.Tensor,
     ) -> torch.Tensor:
         """Compute the states at sampling times.
 
@@ -315,19 +316,19 @@ class AttNHP(NeuralModel):
             time_seqs: [batch_size, seq_len], sequences of timestamps.
             type_seqs: [batch_size, seq_len], sequences of event types.
             attention_mask: [batch_size, seq_len, seq_len], masks for event sequences.
-            sample_times: delta times in sampling.
+            sample_dtimes: delta times in sampling.
 
         Returns:
             tensor: hiddens states at sampling times.
         """
         batch_size = type_seqs.size(0)
         seq_len = type_seqs.size(1)
-        num_samples = sample_times.size(-1)
+        num_samples = sample_dtimes.size(-1)
 
         # [num_samples, batch_size, seq_len]
-        sample_times = sample_times.permute((2, 0, 1))
+        sample_dtimes = sample_dtimes.permute((2, 0, 1))
         # [num_samples * batch_size, seq_len]
-        _sample_time = sample_times.reshape(num_samples * batch_size, -1)
+        _sample_dtimes = sample_dtimes.reshape(num_samples * batch_size, -1)
         # [num_samples * batch_size, seq_len]
         _types = type_seqs.expand(num_samples, -1, -1).reshape(
             num_samples * batch_size, -1
@@ -343,7 +344,7 @@ class AttNHP(NeuralModel):
             .reshape(num_samples * batch_size, seq_len, seq_len)
         )
         # [num_samples * batch_size, seq_len, hidden_size]
-        encoder_output = self.forward(_times, _types, _attn_mask, _sample_time)
+        encoder_output = self.forward(_times, _types, _attn_mask, _sample_dtimes)
 
         # [num_samples, batch_size, seq_len, hidden_size]
         encoder_output = encoder_output.reshape(num_samples, batch_size, seq_len, -1)
@@ -351,7 +352,7 @@ class AttNHP(NeuralModel):
         encoder_output = encoder_output.permute((1, 2, 0, 3))
         return encoder_output
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_seqs: torch.Tensor,
@@ -360,23 +361,25 @@ class AttNHP(NeuralModel):
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
-        """Compute the intensity at sampled times.
+        """Compute the intensity at sampled delta times.
 
         Args:
             time_seqs: [batch_size, seq_len], sequences of timestamps.
             type_seqs: [batch_size, seq_len], sequences of event types.
-            sample_dtimes: [batch_size, seq_len, num_sample], sampled time delta sequence.
+            sample_dtimes: [batch_size, seq_len, num_sample], sampled delta time sequence.
 
         Returns:
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
         """
+
+        sample_times = time_seqs.unsqueeze(-1) + sample_dtimes
 
         attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self.device).expand(
             time_seqs.size(0), -1, -1
         )
 
         # [batch_size, seq_len, num_samples, hidden_size]
-        encoder_output = self.compute_states_at_sample_times(
+        encoder_output = self.compute_states_at_sample_dtimes(
             time_seqs, type_seqs, attn_mask, sample_dtimes
         )
 

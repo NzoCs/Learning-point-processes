@@ -185,6 +185,7 @@ class SimulationMixin(BaseMixin):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Simulate one step of event generation.
 
@@ -203,7 +204,8 @@ class SimulationMixin(BaseMixin):
             time_seqs,
             time_delta_seqs,
             type_seqs,
-            self.compute_intensities_at_sample_times,
+            seq_non_pad_mask,
+            self.compute_intensities_at_sample_dtimes,
             num_sample=1,
             compute_last_step_only=True,
         )
@@ -213,10 +215,11 @@ class SimulationMixin(BaseMixin):
         batch_size, num_mark = time_seqs.size(0), self.num_event_types
 
         # Select next event type based on intensities
-        intensities_at_times = self.compute_intensities_at_sample_times(
+        intensities_at_times = self.compute_intensities_at_sample_dtimes(
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
+            seq_non_pad_mask=seq_non_pad_mask,
             sample_dtimes=dtimes_pred[:, :, None],
             compute_last_step_only=True,
         ).view(batch_size, num_mark)
@@ -402,34 +405,26 @@ class SimulationMixin(BaseMixin):
             active_time_seq = buffers["time"][active_indices, :current_len]
             active_time_delta = buffers["time_delta"][active_indices, :current_len]
             active_event_seq = buffers["event"][active_indices, :current_len]
+            active_seq_non_pad_mask = (active_event_seq != self.pad_token_id)
 
             dtimes_pred, type_pred = self.simulate_one_step(
-                active_time_seq, active_time_delta, active_event_seq
+                active_time_seq, active_time_delta, active_event_seq, active_seq_non_pad_mask
             )
 
             # Calculate new times (Active_time_seq[-1] est maintenant un temps absolu)
             new_times = active_time_seq[:, -1:] + dtimes_pred
 
             # Update last_event_time
-            active_batch_size = len(active_indices)
             type_pred_flat = type_pred.squeeze(-1)
             last_times_flat = active_time_seq[:, -1]
             sim_state["last_event_time"][
                 active_indices, type_pred_flat
             ] = last_times_flat
 
-            # Recalculate deltas
-            batch_indices_active = torch.arange(
-                active_batch_size, device=self.device
-            )
-            last_events_active = sim_state["last_event_time"][active_indices][
-                batch_indices_active, type_pred_flat
-            ]
-            dtimes_corrected = new_times.squeeze(-1) - last_events_active
 
             # Update buffers
             buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
-            buffers["time_delta"][active_indices, current_len] = dtimes_corrected
+            buffers["time_delta"][active_indices, current_len] = dtimes_pred.squeeze(-1)
             buffers["event"][active_indices, current_len] = type_pred.squeeze(-1)
 
             # Update current time (minimum across all active sequences)
@@ -472,83 +467,3 @@ class SimulationMixin(BaseMixin):
         return SimulationResult(
             final_time_seq, final_time_delta, final_event_seq, simul_mask
         )
-
-
-    # def _run_simulation_loop(
-    #     self,
-    #     buffers: Buffers,
-    #     sim_state: SimulationState,
-    #     start_time: float,
-    #     end_time: float,
-    # ) -> None:
-    #     """Run the main simulation loop."""
-
-    #     initial_len = buffers["initial_len"]
-    #     max_seq_len = buffers["time"].size(1)
-
-    #     with torch.no_grad():
-    #         pbar = tqdm(total=end_time, desc="Simulation", leave=False)
-
-    #         while sim_state["current_time"] < end_time:
-    #             if not sim_state["batch_active"].any():
-    #                 break
-
-    #             # Get active sequences
-    #             active_indices = sim_state["batch_active"].nonzero(as_tuple=True)[0]
-    #             if len(active_indices) == 0:
-    #                 break
-
-    #             current_len = initial_len + sim_state["step_count"]
-
-    #             # Check if we need to reallocate buffers (double the size)
-    #             if current_len >= max_seq_len - 1:
-    #                 max_seq_len = self._reallocate_buffers(buffers, max_seq_len)
-
-    #             # Predict on active sequences
-    #             active_time_seq = buffers["time"][active_indices, :current_len]
-    #             active_time_delta = buffers["time_delta"][active_indices, :current_len]
-    #             active_event_seq = buffers["event"][active_indices, :current_len]
-
-    #             dtimes_pred, type_pred = self.simulate_one_step(
-    #                 active_time_seq, active_time_delta, active_event_seq
-    #             )
-
-    #             # Calculate new times
-    #             new_times = active_time_seq[:, -1:] + dtimes_pred
-
-    #             # Update last_event_time
-    #             active_batch_size = len(active_indices)
-    #             type_pred_flat = type_pred.squeeze(-1)
-    #             last_times_flat = active_time_seq[:, -1]
-    #             sim_state["last_event_time"][
-    #                 active_indices, type_pred_flat
-    #             ] = last_times_flat
-
-    #             # Recalculate deltas
-    #             batch_indices_active = torch.arange(
-    #                 active_batch_size, device=self.device
-    #             )
-    #             last_events_active = sim_state["last_event_time"][active_indices][
-    #                 batch_indices_active, type_pred_flat
-    #             ]
-    #             dtimes_corrected = new_times.squeeze(-1) - last_events_active
-
-    #             # Update buffers
-    #             buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
-    #             buffers["time_delta"][active_indices, current_len] = dtimes_corrected
-    #             buffers["event"][active_indices, current_len] = type_pred.squeeze(-1)
-
-    #             # Update current time and deactivate sequences that exceeded end_time
-    #             sim_state["current_time"] = new_times.min().item()
-    #             exceed_time_mask = new_times.squeeze(-1) >= end_time
-    #             if exceed_time_mask.any():
-    #                 exceed_indices = active_indices[exceed_time_mask]
-    #                 sim_state["batch_active"][exceed_indices] = False
-
-    #             sim_state["step_count"] += 1
-
-    #             if sim_state["step_count"] % 50 == 0:
-    #                 pbar.n = min(sim_state["current_time"], end_time)
-    #                 pbar.refresh()
-
-    #         pbar.close()

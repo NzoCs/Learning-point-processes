@@ -182,13 +182,14 @@ class ANHN(NeuralModel):
         interval_t_sample = self.make_dtime_loss_samples(batch.time_delta_seqs[:, 1:])
 
         # [batch_size, num_times=max_len-1, num_mc_sample, hidden_size]
-        state_t_sample = self.compute_states_at_sample_times(
+        state_t_sample = self.compute_states_at_sample_dtimes(
             intensity_base,
             intensity_alpha,
             intensity_delta,
             base_dtime,
             interval_t_sample,
         )
+
         lambda_t_sample = self.layer_intensity(state_t_sample)
 
         event_ll, non_event_ll, num_events = self.compute_loglikelihood(
@@ -249,8 +250,8 @@ class ANHN(NeuralModel):
 
         Returns:
             hidden states at all cumsum_dtimes: [batch_size, seq_len, (num_sample), hidden_size]
-
         """
+        
         # to avoid nan calculated by exp after (nan * 0 = nan)
         elapse = torch.abs(cumsum_dtimes)
 
@@ -263,7 +264,7 @@ class ANHN(NeuralModel):
 
         return imply_lambdas
 
-    def compute_states_at_sample_times(
+    def compute_states_at_sample_dtimes(
         self,
         intensity_base,
         intensity_alpha,
@@ -271,7 +272,7 @@ class ANHN(NeuralModel):
         base_dtime,
         sample_dtimes,
     ):
-        """Compute the hidden states at sampled times.
+        """Compute the hidden states at sampled delta times.
 
         Args:
             intensity_base (tensor): [batch_size, seq_len, hidden_size].
@@ -281,7 +282,7 @@ class ANHN(NeuralModel):
             sample_dtimes (tensor): [batch_size, seq_len, num_samples].
 
         Returns:
-            tensor: hidden state at each sampled time, [batch_size, seq_len, num_sample, hidden_size].
+            tensor: hidden state at each sampled delta time, [batch_size, seq_len, num_sample, hidden_size].
         """
 
         # [batch_size, seq_len, 1, hidden_size]
@@ -309,10 +310,11 @@ class ANHN(NeuralModel):
         states_samples = torch.stack(states_samples, dim=1)
         return states_samples
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_delta_seqs: torch.Tensor,
+        time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
@@ -321,8 +323,7 @@ class ANHN(NeuralModel):
         """Compute the intensity at sampled times.
 
         Args:
-            batch (Batch): batch input.
-            sampled_dtimes (tensor): [batch_size, seq_len, num_sample], sampled time delta sequence.
+            sample_dtimes (tensor): [batch_size, seq_len, num_sample], delta times at which to sample intensities.
 
         Returns:
             tensor: intensities as sampled_dtimes, [batch_size, seq_len, num_samples, event_num].
@@ -338,7 +339,7 @@ class ANHN(NeuralModel):
         ) = self.forward(time_delta_seqs, type_seqs, attn_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
-        encoder_output = self.compute_states_at_sample_times(
+        encoder_output = self.compute_states_at_sample_dtimes(
             intensity_base, intensity_alpha, intensity_delta, base_dtime, sample_dtimes
         )
 

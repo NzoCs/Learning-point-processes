@@ -14,14 +14,10 @@ class HawkesSimulator(BaseSimulator):
 
     def __init__(
         self,
-        mu: List[float],  # dim_process
-        alpha: List[List[float]],  # dim_process x dim_process
-        beta: List[List[float]],  # dim_process x dim_process
-        dim_process: int,
-        start_time: float = 100,
-        end_time: float = 200,
-        nb_events: int = float("inf"),
-        seed: Optional[int] = None,
+        mu: np.ndarray,
+        alpha: np.ndarray,
+        beta: np.ndarray,
+        **kwargs,
     ):
         """
         Initialise un simulateur de processus de Hawkes.
@@ -36,33 +32,36 @@ class HawkesSimulator(BaseSimulator):
             seed (int, optional): Graine pour la reproductibilité
         """
         # Initialisation de la classe parente
-        super().__init__(dim_process, start_time, end_time, nb_events, seed)
+        super().__init__(**kwargs)
 
         # Vérification des dimensions
-        if len(mu) != dim_process:
+        if len(mu) != self.dim_process:
             raise ValueError(
-                f"mu doit être de dimension {dim_process}, mais a {len(mu)}"
+                f"mu doit être de dimension {self.dim_process}, mais a {len(mu)}"
             )
-        self.mu = np.array(mu).reshape(dim_process)
-        self.alpha = np.array(alpha).reshape(dim_process, dim_process)
-        self.beta = np.array(beta).reshape(dim_process, dim_process)
+        self.mu = np.array(mu).reshape(self.dim_process)
+        self.alpha = np.array(alpha).reshape(self.dim_process, self.dim_process)
+        self.beta = np.array(beta).reshape(self.dim_process, self.dim_process)
 
-    def simulate(self) -> Tuple[List[np.ndarray]]:
+    def simulate(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Simule un processus de Hawkes multivarié jusqu'au temps end_time.
 
         Returns:
-            tuple: Liste d'arrays de temps d'événements pour chaque dimension
+            tuple: (times, marks) où:
+                - times: np.ndarray de tous les temps d'événements
+                - marks: np.ndarray de tous les types/dimensions d'événements
         """
         dim = self.dim_process
-        events = [[] for _ in range(dim)]
+        times = []
+        marks = []
 
         # Temps actuel
         t = self.start_time
         event_count = 0
 
         # Matrice de contribution d'intensité initiale [to_process][from_process]
-        lambda_trg = np.zeros((dim, dim))
+        lambda_trg = np.ones((dim, dim))
 
         while t < self.end_time:
             # Intensité totale pour chaque dimension
@@ -100,18 +99,17 @@ class HawkesSimulator(BaseSimulator):
                 # Sélection aléatoire de la dimension à laquelle appartient l'événement
                 event_dim = np.random.choice(dim, p=lambda_total / lambda_sum)
 
-                # Ajout de l'événement à la dimension correspondante
-                events[event_dim].append(t)
+                # Ajout de l'événement
+                times.append(t)
+                marks.append(event_dim)
 
                 # Mise à jour des contributions d'intensité
                 lambda_trg[:, event_dim] += self.alpha[:, event_dim]
 
                 event_count += 1
-                if event_count >= self.nb_events:
-                    return tuple(np.array(events_dim) for events_dim in events)
 
         # Conversion en tableaux numpy
-        return tuple(np.array(events_dim) for events_dim in events)
+        return np.array(times), np.array(marks)
 
     def get_simulator_metadata(self) -> Dict:
         """
@@ -129,7 +127,7 @@ class HawkesSimulator(BaseSimulator):
         }
 
     def compute_theoretical_intensities(
-        self, time_points: np.ndarray, events_by_dim: Tuple[np.ndarray, ...]
+        self, time_points: np.ndarray, event_times: np.ndarray, event_marks: np.ndarray
     ) -> np.ndarray:
         """
         Calcule les intensités théoriques du processus de Hawkes aux points temporels donnés.
@@ -138,7 +136,8 @@ class HawkesSimulator(BaseSimulator):
 
         Args:
             time_points (np.ndarray): Points temporels où calculer les intensités
-            events_by_dim (Tuple[np.ndarray, ...]): Événements générés par dimension
+            event_times (np.ndarray): Tous les temps d'événements
+            event_marks (np.ndarray): Tous les types/dimensions d'événements
 
         Returns:
             np.ndarray: Matrice des intensités [len(time_points), dim_process]
@@ -152,7 +151,9 @@ class HawkesSimulator(BaseSimulator):
 
                 # Contribution des événements passés
                 for j in range(self.dim_process):
-                    past_events = events_by_dim[j][events_by_dim[j] < t]
+                    # Filtrer les événements passés de type j
+                    mask = (event_times < t) & (event_marks == j)
+                    past_events = event_times[mask]
                     if len(past_events) > 0:
                         # Somme des contributions exponentielles décroissantes
                         contributions = self.alpha[i, j] * np.exp(

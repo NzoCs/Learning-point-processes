@@ -156,9 +156,10 @@ class THP(NeuralModel):
 
         # 2.2 compute intensities at sampled times
         # [batch_size, num_times = max_len - 1, num_sample, event_num]
-        state_t_sample = self.compute_states_at_sample_times(
+        state_t_sample = self.compute_states_at_sample_dtimes(
             event_states=enc_out, sample_dtimes=sample_dtimes
         )
+        
         lambda_t_sample = self.softplus(state_t_sample)
 
         event_ll, non_event_ll, num_events = self.compute_loglikelihood(
@@ -173,7 +174,7 @@ class THP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_times(self, event_states, sample_dtimes):
+    def compute_states_at_sample_dtimes(self, event_states, sample_dtimes):
         """Compute the hidden states at sampled times.
 
         Args:
@@ -203,7 +204,7 @@ class THP(NeuralModel):
 
         return intensity_states
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_seqs: torch.Tensor,
@@ -212,7 +213,7 @@ class THP(NeuralModel):
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
-        """Compute hidden states at sampled times.
+        """Compute hidden states at sampled delta times.
 
         Args:
             batch (Batch): batch input.
@@ -227,7 +228,7 @@ class THP(NeuralModel):
         # [batch_size, seq_len, num_samples]
         enc_out = self.forward(time_seqs, type_seqs, attn_mask=attn_mask)
         # [batch_size, seq_len, num_samples, hidden_size]
-        encoder_output = self.compute_states_at_sample_times(enc_out, sample_dtimes)
+        encoder_output = self.compute_states_at_sample_dtimes(enc_out, sample_dtimes)
 
         if compute_last_step_only:
             lambdas = self.softplus(encoder_output[:, -1:, :, :])

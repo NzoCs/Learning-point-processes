@@ -24,6 +24,7 @@ class BaseMixin(pl.LightningModule, ABC):
         num_exp: int,
         device: torch.device,
         dtime_max: float,
+        pad_token_id: int,
         num_samples_boundary: int,
         over_sample_rate: float,
         output_dir: Path | str = OUTPUT_DIR,
@@ -50,6 +51,8 @@ class BaseMixin(pl.LightningModule, ABC):
         self._event_sampler = None
         self._init_device = device  # Only for initial module creation
 
+        self.pad_token_id = pad_token_id
+
     def get_event_sampler(self) -> EventSampler:
         """Get or create the event sampler with the current device.
         
@@ -70,14 +73,16 @@ class BaseMixin(pl.LightningModule, ABC):
         return self._event_sampler
 
     @abstractmethod
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
+        
     ) -> torch.Tensor:
         """Compute the intensity at sampled times, not only event times.
 

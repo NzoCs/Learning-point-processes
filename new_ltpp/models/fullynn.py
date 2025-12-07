@@ -241,7 +241,7 @@ class FullyNN(NeuralModel):
 
         return loss, num_events
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_delta_seqs: torch.Tensor,
@@ -250,16 +250,16 @@ class FullyNN(NeuralModel):
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
-        """Compute hidden states at sampled times.
+        """Compute hidden states at sampled delta times.
 
         Args:
             time_seqs: [batch_size, seq_len], times seqs.
             time_delta_seqs: [batch_size, seq_len], time delta seqs.
             type_seqs: [batch_size, seq_len], event type seqs.
-            sample_dtimes: [batch_size, seq_len, num_samples], sampled inter-event timestamps.
+            sample_dtimes: [batch_size, seq_len, num_samples], sampled delta times.
 
         Returns:
-            tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
+            tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled delta times.
         """
 
         # [batch_size, seq_len, hidden_size]

@@ -7,7 +7,7 @@ error handling, and maintainable architecture.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from new_ltpp.utils import logger
 
@@ -143,12 +143,12 @@ class ModelSpecsConfig:
         dropout: dropout probability
     """
 
-    hidden_size: int
-    dropout: float = 0.0
 
-    def __init__(self, hidden_size: int, dropout: float = 0.0, **kwargs):
+    def __init__(self, hidden_size: Optional[int] = None, dropout: Optional[float] = 0.0, **kwargs):
+
         self.hidden_size = hidden_size
         self.dropout = dropout
+
         # Store extra kwargs as attributes
         for k, v in kwargs.items():
             setattr(self, k, v)

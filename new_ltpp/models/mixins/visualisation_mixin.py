@@ -45,7 +45,7 @@ class VisualizationMixin(SimulationMixin):
         end_time = self.simulation_end_time
 
         # Get or generate simulation data
-        time_seq, time_delta_seq, type_seq = self._get_simulation_data(
+        time_seq, time_delta_seq, type_seq, seq_non_pad_mask = self._get_simulation_data(
             start_time, end_time
         )
 
@@ -56,11 +56,11 @@ class VisualizationMixin(SimulationMixin):
 
         # Calculate intensities
         intensities = self._calculate_intensities(
-            time_seq, time_delta_seq, type_seq, time_deltas_sample
+            time_seq, time_delta_seq, type_seq, seq_non_pad_mask, time_deltas_sample
         )
 
         intensities_at_times = self._calculate_intensities(
-            time_seq, time_delta_seq, type_seq, time_delta_seq[:, 1:, None]
+            time_seq, time_delta_seq, type_seq, seq_non_pad_mask, time_delta_seq[:, 1:, None]
         )
 
         # Flatten for analysis
@@ -73,6 +73,7 @@ class VisualizationMixin(SimulationMixin):
                 intensities_at_times,
                 time_seq[:, 1:],
                 type_seq[:, 1:],
+                seq_non_pad_mask[:, 1:],
                 self.num_event_types,
             )
         )
@@ -130,14 +131,14 @@ class VisualizationMixin(SimulationMixin):
 
     def _get_simulation_data(
         self, start_time: float, end_time: float
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Get or generate simulation data for visualization.
 
         Args:
             start_time: Start time for simulation
             end_time: End time for simulation
         Returns:
-            Tuple of (time_seq, time_delta_seq, type_seq) tensors [seq_len]
+            Tuple of (time_seq, time_delta_seq, type_seq, seq_non_pad_mask) tensors [seq_len]
         """
 
         simul_result = self.simulate(
@@ -146,8 +147,9 @@ class VisualizationMixin(SimulationMixin):
         time_seq = simul_result.time_seqs
         time_delta_seq = simul_result.dtime_seqs
         type_seq = simul_result.type_seqs
+        seq_pad_mask = simul_result.mask
 
-        return time_seq, time_delta_seq, type_seq
+        return time_seq, time_delta_seq, type_seq, ~seq_pad_mask
 
     def _generate_intensity_time_points(
         self, time_seq: torch.Tensor, time_delta_seq: torch.Tensor, precision: int
@@ -183,6 +185,7 @@ class VisualizationMixin(SimulationMixin):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
         time_deltas_sample: torch.Tensor,
     ):
         """Calculate intensities on time grid.
@@ -191,7 +194,7 @@ class VisualizationMixin(SimulationMixin):
             time_seqs: [1, seq_len]
             time_delta_seqs: [1, seq_len]
             type_seqs: [1, seq_len]
-            time_deltas_sample: [1, seq_len - 1, precision]
+            seq_non_pad_mask: [1, seq_len]
 
         Returns:
             intensities: [1, seq_len - 1, precision, num_event_types]
@@ -200,10 +203,11 @@ class VisualizationMixin(SimulationMixin):
         with torch.no_grad():
 
             # Compute intensities at sampled times, excluding initial zero time because we could not compute dt there
-            intensities = self.compute_intensities_at_sample_times(
+            intensities = self.compute_intensities_at_sample_dtimes(
                 time_seqs=time_seqs[:, 1:],
                 time_delta_seqs=time_delta_seqs[:, 1:],
                 type_seqs=type_seqs[:, 1:],
+                seq_non_pad_mask=seq_non_pad_mask[:, 1:],
                 sample_dtimes=time_deltas_sample,
             )
         return intensities.detach().clone()
@@ -213,6 +217,7 @@ class VisualizationMixin(SimulationMixin):
         intensities_at_times: torch.Tensor,
         time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
         num_mark: int,
     ) -> Tuple[dict[int, torch.Tensor], dict[int, torch.Tensor]]:
         """Collect times where each event type occurs."""
@@ -221,8 +226,9 @@ class VisualizationMixin(SimulationMixin):
         intensities_at_marked_times = {}
         time_seqs_flat = time_seqs.squeeze(0)
         type_seqs_flat = type_seqs.squeeze(0)
+        seq_non_pad_mask_flat = seq_non_pad_mask.squeeze(0)
 
-        valid_mask = time_seqs_flat != 0
+        valid_mask = (time_seqs_flat != 0) & seq_non_pad_mask_flat
 
         for i in range(num_mark):
             mask = (type_seqs_flat == i) & valid_mask

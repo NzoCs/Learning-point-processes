@@ -13,51 +13,46 @@ class SelfCorrecting(BaseSimulator):
 
     def __init__(
         self,
-        dim_process: int,
         mu: float = 1.0,
         alpha: float = 1.0,
-        start_time: float = 100,
-        end_time: float = 200,
-        seed: Optional[int] = None,
+        **kwargs
     ):
         """
         Initialise un simulateur de processus ponctuel temporel avec correction automatique.
 
         Args:
-            dim_process (int): Dimension du processus (nombre de types d'événements)
             mu (float): Paramètre de taux de base
             alpha (float): Paramètre de réduction après un événement
-            start_time (float): Temps de début de la simulation
-            end_time (float): Temps de fin de la simulation
-            seed (int, optional): Graine pour la reproductibilité
         """
-        super().__init__(dim_process, start_time, end_time, seed)
+        super().__init__(**kwargs)
 
         # Support both scalar and array inputs for mu and alpha
         if isinstance(mu, (int, float)):
-            self.mu = np.array([mu] * dim_process)
+            self.mu = np.array([mu] * self.dim_process)
         else:
             self.mu = np.array(mu)
 
         if isinstance(alpha, (int, float)):
-            self.alpha = np.array([alpha] * dim_process)
+            self.alpha = np.array([alpha] * self.dim_process)
         else:
             self.alpha = np.array(alpha)
 
-    def simulate(self) -> Tuple[List[np.ndarray]]:
+    def simulate(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Génère un processus auto-correctif pour chaque dimension.
 
         Returns:
-            Tuple[List[np.ndarray]]: Tuple d'arrays de temps d'événements pour chaque dimension
+            Tuple[np.ndarray, np.ndarray]: (times, marks) où:
+                - times: np.ndarray de tous les temps d'événements
+                - marks: np.ndarray de tous les types/dimensions d'événements
         """
-        events = []
+        all_times = []
+        all_marks = []
 
         for dim in range(self.dim_process):
             # Simulate each dimension independently
             t = self.start_time
             x = 0
-            dim_events = []
 
             while t < self.end_time:
                 e = np.random.exponential()
@@ -67,13 +62,17 @@ class SelfCorrecting(BaseSimulator):
                 if t >= self.end_time:
                     break
 
-                dim_events.append(t)
+                all_times.append(t)
+                all_marks.append(dim)
                 x = x + self.mu[dim] * tau
                 x = x - self.alpha[dim]
 
-            events.append(np.array(dim_events))
-
-        return tuple(events)
+        # Sort by time
+        times = np.array(all_times)
+        marks = np.array(all_marks)
+        sort_idx = np.argsort(times)
+        
+        return times[sort_idx], marks[sort_idx]
 
     def get_simulator_metadata(self) -> Dict:
         """
@@ -90,7 +89,7 @@ class SelfCorrecting(BaseSimulator):
         }
 
     def compute_theoretical_intensities(
-        self, time_points: np.ndarray, events_by_dim: Tuple[np.ndarray, ...]
+        self, time_points: np.ndarray, event_times: np.ndarray, event_marks: np.ndarray
     ) -> np.ndarray:
         """
         Calcule les intensités théoriques du processus auto-correctif aux points temporels donnés.
@@ -100,7 +99,8 @@ class SelfCorrecting(BaseSimulator):
 
         Args:
             time_points (np.ndarray): Points temporels où calculer les intensités
-            events_by_dim (Tuple[np.ndarray, ...]): Événements générés par dimension
+            event_times (np.ndarray): Tous les temps d'événements
+            event_marks (np.ndarray): Tous les types/dimensions d'événements
 
         Returns:
             np.ndarray: Matrice des intensités [len(time_points), dim_process]
@@ -110,7 +110,8 @@ class SelfCorrecting(BaseSimulator):
         for t_idx, t in enumerate(time_points):
             for i in range(self.dim_process):
                 # Événements passés pour cette dimension
-                past_events = events_by_dim[i][events_by_dim[i] < t]
+                mask = (event_times < t) & (event_marks == i)
+                past_events = event_times[mask]
 
                 # Temps du dernier événement (ou start_time si aucun événement)
                 if len(past_events) > 0:
@@ -138,57 +139,53 @@ class MultivariableSelfCorrecting(BaseSimulator):
 
     def __init__(
         self,
-        dim_process: int,
         mu: float = 1.0,
         alpha_matrix: Optional[np.ndarray] = None,
-        start_time: float = 100,
-        end_time: float = 200,
-        seed: Optional[int] = None,
+        **kwargs
     ):
         """
         Initialise un simulateur de processus ponctuel temporel avec correction automatique multivariable.
 
         Args:
-            dim_process (int): Dimension du processus (nombre de types d'événements)
             mu (float): Paramètre de taux de base (scalaire ou array)
             alpha_matrix (np.ndarray, optional): Matrice d'influence entre dimensions.
                                                alpha_matrix[i,j] indique l'influence d'un événement de type j sur le taux de la dimension i.
                                                Si None, une matrice identité est utilisée (pas d'influence croisée).
-            start_time (float): Temps de début de la simulation
-            end_time (float): Temps de fin de la simulation
-            seed (int, optional): Graine pour la reproductibilité
         """
-        super().__init__(dim_process, start_time, end_time, seed)
+        super().__init__(**kwargs)
 
         # Support both scalar and array inputs for mu
         if isinstance(mu, (int, float)):
-            self.mu = np.array([mu] * dim_process)
+            self.mu = np.array([mu] * self.dim_process)
         else:
             self.mu = np.array(mu)
 
         # Initialize alpha_matrix
         if alpha_matrix is None:
             # Default: identity matrix (no cross-influence)
-            self.alpha_matrix = np.eye(dim_process)
+            self.alpha_matrix = np.eye(self.dim_process)
         else:
-            if alpha_matrix.shape != (dim_process, dim_process):
+            if alpha_matrix.shape != (self.dim_process, self.dim_process):
                 raise ValueError(
-                    f"alpha_matrix must be of shape ({dim_process}, {dim_process})"
+                    f"alpha_matrix must be of shape ({self.dim_process}, {self.dim_process})"
                 )
             self.alpha_matrix = alpha_matrix
 
-    def simulate(self) -> Tuple[List[np.ndarray]]:
+    def simulate(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Génère un processus auto-correctif multivariable.
 
         Returns:
-            Tuple[List[np.ndarray]]: Tuple d'arrays de temps d'événements pour chaque dimension
+            Tuple[np.ndarray, np.ndarray]: (times, marks) où:
+                - times: np.ndarray de tous les temps d'événements
+                - marks: np.ndarray de tous les types/dimensions d'événements
         """
         # Initialize state variables for each dimension
         x = np.zeros(self.dim_process)
         t = self.start_time
         next_event_times = np.full(self.dim_process, np.inf)
-        events_by_dim = [[] for _ in range(self.dim_process)]
+        all_times = []
+        all_marks = []
 
         # Generate initial next event times for each dimension
         for dim in range(self.dim_process):
@@ -207,7 +204,8 @@ class MultivariableSelfCorrecting(BaseSimulator):
             x += self.mu * delta_t
 
             # Record the event
-            events_by_dim[next_dim].append(next_time)
+            all_times.append(next_time)
+            all_marks.append(next_dim)
 
             # Apply the influence of the event on all dimensions
             x -= self.alpha_matrix[:, next_dim]
@@ -223,8 +221,8 @@ class MultivariableSelfCorrecting(BaseSimulator):
             # Update current time
             t = next_time
 
-        # Convert event lists to numpy arrays
-        return tuple(np.array(events) for events in events_by_dim)
+        # Convert to numpy arrays (already sorted by time due to simulation logic)
+        return np.array(all_times), np.array(all_marks)
 
     def get_simulator_metadata(self) -> Dict:
         """
@@ -241,14 +239,15 @@ class MultivariableSelfCorrecting(BaseSimulator):
         }
 
     def compute_theoretical_intensities(
-        self, time_points: np.ndarray, events_by_dim: Tuple[np.ndarray, ...]
+        self, time_points: np.ndarray, event_times: np.ndarray, event_marks: np.ndarray
     ) -> np.ndarray:
         """
         Calcule les intensités théoriques du processus auto-correctif multivariable.
 
         Args:
             time_points (np.ndarray): Points temporels où calculer les intensités
-            events_by_dim (Tuple[np.ndarray, ...]): Événements générés par dimension
+            event_times (np.ndarray): Tous les temps d'événements
+            event_marks (np.ndarray): Tous les types/dimensions d'événements
 
         Returns:
             np.ndarray: Matrice des intensités [len(time_points), dim_process]
@@ -262,7 +261,8 @@ class MultivariableSelfCorrecting(BaseSimulator):
 
                 # Contribution de chaque dimension
                 for j in range(self.dim_process):
-                    past_events = events_by_dim[j][events_by_dim[j] < t]
+                    mask = (event_times < t) & (event_marks == j)
+                    past_events = event_times[mask]
 
                     if len(past_events) > 0:
                         # Temps depuis le dernier événement de la dimension j

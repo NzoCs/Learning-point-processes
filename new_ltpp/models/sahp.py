@@ -188,7 +188,7 @@ class SAHP(NeuralModel):
 
         # 2.2 compute intensities at sampled times
         # [batch_size, num_times = max_len - 1, num_sample, event_num]
-        state_t_sample = self.compute_states_at_sample_times(
+        state_t_sample = self.compute_states_at_sample_dtimes(
             encode_state=enc_out, sample_dtimes=sample_dtimes
         )
         lambda_t_sample = self.softplus(state_t_sample)
@@ -205,8 +205,8 @@ class SAHP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_times(self, encode_state: torch.Tensor, sample_dtimes: torch.Tensor) -> torch.Tensor:
-        """Compute the hidden states at sampled times.
+    def compute_states_at_sample_dtimes(self, encode_state: torch.Tensor, sample_dtimes: torch.Tensor) -> torch.Tensor:
+        """Compute the hidden states at sampled delta times.
 
         Args:
             encode_state (tensor): three tensors with each shape [batch_size, seq_len, hidden_size].
@@ -250,7 +250,7 @@ class SAHP(NeuralModel):
         enc_out = self.forward(time_seqs, time_delta_seqs, type_seqs, attention_mask)
 
         # [batch_size, seq_len, num_samples, hidden_size]
-        encoder_output = self.compute_states_at_sample_times(enc_out, sample_dtimes)
+        encoder_output = self.compute_states_at_sample_dtimes(enc_out, sample_dtimes)
 
         if compute_last_step_only:
             lambdas = self.softplus(encoder_output[:, -1:, :, :])

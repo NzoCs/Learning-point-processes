@@ -32,6 +32,7 @@ class EventSampler(nn.Module):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
         intensity_fn: Callable[..., torch.Tensor],
         compute_last_step_only: bool,
     ) -> torch.Tensor:
@@ -60,6 +61,7 @@ class EventSampler(nn.Module):
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
+            seq_non_pad_mask=seq_non_pad_mask,
             sample_dtimes=tnorm,
             compute_last_step_only=compute_last_step_only,
         )
@@ -146,6 +148,7 @@ class EventSampler(nn.Module):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
         intensity_fn: Callable[..., torch.Tensor],
         num_sample: int,
         compute_last_step_only: bool = False,
@@ -154,7 +157,7 @@ class EventSampler(nn.Module):
 
         # 1. upper bound M
         M = self.compute_intensity_upper_bound(
-            time_seqs, time_delta_seqs, type_seqs, intensity_fn, compute_last_step_only
+            time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask, intensity_fn, compute_last_step_only
         )  # [B,L]
 
         # 2. exp samples
@@ -166,6 +169,7 @@ class EventSampler(nn.Module):
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
+            seq_non_pad_mask=seq_non_pad_mask,
             sample_dtimes=exp_j,
             compute_last_step_only=compute_last_step_only,
         )

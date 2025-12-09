@@ -1,11 +1,9 @@
 # new_ltpp/models/mixins/prediction_mixin.py
 """Mixin for prediction methods (one-step and multi-step)."""
 
-from typing import Optional, Tuple
-
 import torch
 
-from new_ltpp.shared_types import Batch, OneStepPred
+from new_ltpp.shared_types import OneStepPred
 
 from .base_mixin import BaseMixin
 

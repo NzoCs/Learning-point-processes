@@ -13,7 +13,7 @@ def main() -> None:
     """
     # Load configuration
     config_path = CONFIGS_FILE
-    model_id = "ANHP"
+    model_id = "FullyNN"  # Specify the model ID to run
 
     # Build runner configuration from YAML
     config_builder = RunnerConfigBuilder()
@@ -37,11 +37,11 @@ def main() -> None:
 
     # Run complete pipeline: train -> test -> predict
 
-    # # 1. Training
-    # runner.run(phase="train")
+    # 1. Training
+    runner.run(phase="train")
 
-    # # 2. Testing
-    # runner.run(phase="test")
+    # 2. Testing
+    runner.run(phase="test")
 
     # 3. Prediction and distribution comparison
     runner.run(phase="predict")

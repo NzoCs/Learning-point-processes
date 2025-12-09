@@ -214,6 +214,7 @@ class TrainerFactory:
             check_val_every_n_epoch=training_config.val_freq,
             precision=precision,
             accumulate_grad_batches=training_config.accumulate_grad_batches,
+            inference_mode=False
         )
 
         return trainer

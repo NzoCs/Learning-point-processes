@@ -184,7 +184,7 @@ class SimulationMixin(BaseMixin):
 
         return start_times, end_times
 
-    def simulate_one_step(
+    def _simulate_one_step(
         self,
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
@@ -410,7 +410,7 @@ class SimulationMixin(BaseMixin):
             active_event_seq = buffers["event"][active_indices, :current_len]
             active_seq_non_pad_mask = active_event_seq != self.pad_token_id
 
-            dtimes_pred, type_pred = self.simulate_one_step(
+            dtimes_pred, type_pred = self._simulate_one_step(
                 active_time_seq,
                 active_time_delta,
                 active_event_seq,

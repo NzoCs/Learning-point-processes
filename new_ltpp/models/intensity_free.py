@@ -257,28 +257,27 @@ class IntensityFree(NeuralModel):
             "The IntnsityFree model does not have an intensity function."
         )
 
-    def simulate_one_step(
+    def _simulate_one_step(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
-        mode: Literal["simulation", "train"] = "train",
-        compute_last_step_only: bool = True,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Utility method to predict the next time delta and type using intensity-free approach.
 
         Args:
-            time_seq (torch.Tensor): Time sequence [batch_size, seq_len]
-            time_delta_seq (torch.Tensor): Time delta sequence [batch_size, seq_len]
-            event_seq (torch.Tensor): Event type sequence [batch_size, seq_len]
-            compute_last_step_only (bool): Whether to compute only the last step
+            time_seqs (torch.Tensor): Time sequence [batch_size, seq_len]
+            time_delta_seqs (torch.Tensor): Time delta sequence [batch_size, seq_len]
+            type_seqs (torch.Tensor): Event type sequence [batch_size, seq_len]
+            seq_non_pad_mask (torch.Tensor): Non-padding mask [batch_size, seq_len]
 
         Returns:
             tuple: tensors of predicted time deltas and event types
         """
         # [batch_size, seq_len, hidden_size]
-        context = self.forward(time_delta_seq, event_seq)
+        context = self.forward(time_delta_seqs, type_seqs)
 
         # [batch_size, 1, hidden_size]
         context = context[:, -1:, :]
@@ -318,9 +317,10 @@ class IntensityFree(NeuralModel):
 
     def predict_one_step_at_every_event(
         self,
-        time_seq: torch.Tensor,
-        time_delta_seq: torch.Tensor,
-        event_seq: torch.Tensor,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        seq_non_pad_mask: torch.Tensor,
     ) -> OneStepPred:
         """One-step prediction for every event in the sequence.
 
@@ -333,12 +333,11 @@ class IntensityFree(NeuralModel):
             tuple: tensors of dtime and type prediction, [batch_size, seq_len].
         """
 
-        time_delta_seq = time_delta_seq[:, :-1]
-        event_seq = event_seq[:, :-1]
+        time_delta_seqs = time_delta_seqs[:, :-1]
+        type_seqs = type_seqs[:, :-1]
 
         # [batch_size, seq_len, hidden_size]
-        context = self.forward(time_delta_seq, event_seq)
-
+        context = self.forward(time_delta_seqs, type_seqs)
         # [batch_size, seq_len, 3 * num_mix_components]
         raw_params = self.linear(context)
         locs = raw_params[..., : self.num_mix_components]

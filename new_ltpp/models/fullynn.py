@@ -66,25 +66,42 @@ class CumulHazardFunctionNetwork(nn.Module):
     def forward(
         self, hidden_states: torch.Tensor, time_delta_seqs: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        for p in self.parameters():
-            p.data = torch.clamp(p.data, min=self.params_eps)
-
-        time_delta_seqs.requires_grad_(True)
-
-        # [batch_size, seq_len, hidden_size]
-        t = self.layer_dense_1(time_delta_seqs.unsqueeze(dim=-1))
-
-        # [batch_size, seq_len, hidden_size]
-        out = torch.tanh(self.layer_dense_2(torch.cat([hidden_states, t], dim=-1)))
-        for layer in self.module_list:
-            out = torch.tanh(layer(out))
-
-        # [batch_size, seq_len, num_event_types]
-        integral_lambda = self.layer_dense_3(out)
-
+        """Forward pass to compute cumulative hazard function and its derivative.
+        Args:
+            hidden_states: [batch_size, seq_len, (num_samples), hidden_size], hidden states at event times.
+            time_delta_seqs: [batch_size, seq_len, (num_samples)], inter-event time seqs.
+        Returns:
+            tuple: cumulative hazard function values and their derivatives w.r.t. time deltas.
+        """
+        
         # Enable gradient computation specifically for the derivative calculation
         with torch.enable_grad():
-            # [batch_size, seq_len, num_event_types]
+            
+            for p in self.parameters():
+                p.data = torch.clamp(p.data, min=self.params_eps)
+
+            time_delta_seqs.requires_grad_(True)
+            
+            # [batch_size, seq_len, (num_samples), hidden_size] or [batch_size, 1, (num_samples), hidden_size] when compute_last_step_only is True
+            t = self.layer_dense_1(time_delta_seqs.unsqueeze(dim=-1))
+
+            # [batch_size, seq_len, (num_samples), hidden_size] or [batch_size, 1, (num_samples), hidden_size] when compute_last_step_only is True
+            if len(t.shape) == 4:
+                t = t.expand(
+                    -1,
+                    hidden_states.shape[1],
+                    -1,
+                    -1,
+                )  # expand seq_len dimension when compute_last_step_only is True
+
+            out = torch.tanh(self.layer_dense_2(torch.cat([hidden_states, t], dim=-1)))
+            for layer in self.module_list:
+                out = torch.tanh(layer(out))
+
+            # [batch_size, seq_len, (num_samples), num_event_types]
+            integral_lambda = self.layer_dense_3(out)
+
+            # [batch_size, seq_len, (num_samples), num_event_types]
             if self.proper_marked_intensities:
                 derivative_integral_lambdas = []
                 for i in range(integral_lambda.shape[-1]):  # iterate over marks
@@ -275,8 +292,8 @@ class FullyNN(NeuralModel):
             batch_size, seq_len, num_samples, hidden_size
         )
         _, derivative_integral_lambda = self.layer_intensity.forward(
-            hidden_states=hidden_states_,
-            time_delta_seqs=sample_dtimes,
+            hidden_states=hidden_states_, # [batch_size, seq_len, num_samples, hidden_size]
+            time_delta_seqs=sample_dtimes, # [batch_size, seq_len, num_samples] or 
         )
 
         if compute_last_step_only:

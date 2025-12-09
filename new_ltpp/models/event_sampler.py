@@ -184,8 +184,11 @@ class EventSampler(nn.Module):
         )  # [B,L]
 
         # 2. exp samples
-        exp_j = self.sample_exp_distribution(upper_bound)  # [B,L,E]
-        exp_j = torch.cumsum(exp_j, dim=-1)  # accumulate
+        exp_j = self.sample_exp_distribution(upper_bound)  # [B,L,E] or [B,1,E] if compute_last_step_only is True
+        exp_j = torch.cumsum(exp_j, dim=-1)
+
+        if compute_last_step_only:
+            pass # for debugging
 
         # 3. evaluate intensity at sampled times
         intens = intensity_fn(
@@ -197,7 +200,7 @@ class EventSampler(nn.Module):
             compute_last_step_only=compute_last_step_only,
         )
 
-        intens_total = intens.sum(-1)  # [B,L,E]
+        intens_total = intens.sum(-1)  # [B,L,E] or [B,1,E]
 
         # 4. tile for num_sample (like in thinning.py)
         intens_total = intens_total[:, :, None, :].expand(

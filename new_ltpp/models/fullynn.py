@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union
+from typing import Tuple
 
 import torch
 from torch import nn
@@ -81,7 +81,7 @@ class CumulHazardFunctionNetwork(nn.Module):
                 p.data = torch.clamp(p.data, min=self.params_eps)
 
             time_delta_seqs.requires_grad_(True)
-            
+
             # [batch_size, seq_len, (num_samples), hidden_size] or [batch_size, 1, (num_samples), hidden_size] when compute_last_step_only is True
             t = self.layer_dense_1(time_delta_seqs.unsqueeze(dim=-1))
 

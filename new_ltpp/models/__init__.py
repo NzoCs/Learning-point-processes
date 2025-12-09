@@ -1,7 +1,7 @@
 
 # Non-parametric models
 from new_ltpp.models.anhn import ANHN
-from new_ltpp.models.attnhp import AttNHP
+from new_ltpp.models.attnhp import ANHP
 from new_ltpp.models.basemodel import Model
 from new_ltpp.models.fullynn import FullyNN
 from new_ltpp.models.intensity_free import IntensityFree
@@ -21,7 +21,7 @@ __all__ = [
     "Model",
     "RMTPP",
     "NHP",
-    "AttNHP",
+    "ANHP",
     "FullyNN",
     "IntensityFree",
     "ODETPP",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -9,11 +9,9 @@ from scipy.stats import entropy
 
 from new_ltpp.evaluation.accumulators.acc_types import (
     AllStatistics,
-    CorrelationStatistics,
     SequenceLengthStatistics,
 )
 from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
-from new_ltpp.utils import logger
 
 from .summary_stats_metrics import SummaryStatsMetric
 

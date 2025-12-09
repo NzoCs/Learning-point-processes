@@ -96,7 +96,7 @@ New-LTPP implements state-of-the-art TPP models with modern PyTorch implementati
 |  5  |   ICML'20   |      THP      | [Transformer Hawkes process](https://arxiv.org/abs/2002.09291)                                                                           | [Model](new_ltpp/models/thp.py)                       |
 |  6  |   ICLR'20   | IntensityFree | [Intensity-Free Learning of Temporal Point Processes](https://arxiv.org/abs/1909.12127)                                                  | [Model](new_ltpp/models/intensity_free.py) |
 |  7  |   ICLR'21   |    ODETPP     | [Neural Spatio-Temporal Point Processes (simplified)](https://arxiv.org/abs/2011.04583)                                                  | [Model](new_ltpp/models/ode_tpp.py)               |
-|  8  |   ICLR'22   |    AttNHP     | [Transformer Embeddings of Irregularly Spaced Events and Their Participants](https://arxiv.org/abs/2201.00044)                           | [Model](new_ltpp/models/attnhp.py)                 |
+|  8  |   ICLR'22   |    ANHP     | [Transformer Embeddings of Irregularly Spaced Events and Their Participants](https://arxiv.org/abs/2201.00044)                           | [Model](new_ltpp/models/attnhp.py)                 |
 |  9  |   Custom    |    Hawkes     | Classical Hawkes Process implementation                                                                                                     | [Model](new_ltpp/models/hawkes.py)                |
 | 10  |   Custom    | SelfCorrect   | Self-Correcting Point Process                                                                                                               | [Model](new_ltpp/models/self_correcting.py)       |
 

@@ -6,7 +6,6 @@ from tqdm import tqdm
 
 from new_ltpp.models.basemodel import Model
 from new_ltpp.shared_types import Batch
-from new_ltpp.models.mixins.simulation_mixin import Buffers, SimulationState
 
 class SelfCorrecting(Model):
     """
@@ -201,143 +200,8 @@ class SelfCorrecting(Model):
         
         return loss, int(num_events)
     
-    def _run_simulation_loop(
-        self,
-        buffers: Buffers,
-        sim_state: SimulationState,
-        start_times: torch.Tensor,
-        end_times: torch.Tensor,
-    ) -> None:
+    def simulate(self, batch: Batch, num_samples: int = 1) -> torch.Tensor:
         """
-        Simulation loop optimisée pour Self-Correcting.
-        Maintient les compteurs N(t) au lieu de relire l'historique.
+        Simule des séquences de types d'événements.
         """
-        initial_len = buffers["initial_len"]
-        max_seq_len = buffers["time"].size(1)
-        batch_size = start_times.size(0)
-        device = self.device
-
-        # 1. Initialisation de l'état N(t)
-        # [Batch, D]
-        current_counts = torch.zeros(batch_size, self.num_event_types, device=device)
-        
-        if initial_len > 0:
-            init_types = buffers["event"][:, :initial_len] # [B, L]
-            # One hot sum
-            # [B, L, D]
-            one_hots = F.one_hot(init_types.long(), self.num_event_types).float()
-            # Mask padding
-            mask = init_types != self.pad_token_id
-            one_hots = one_hots * mask.unsqueeze(-1)
-            current_counts = one_hots.sum(dim=1)
-            
-            current_abs_time = buffers["time"][:, initial_len-1]
-        else:
-            current_abs_time = start_times
-
-        absolute_end_times = end_times + (end_times - start_times)
-        
-        # Paramètres pour broadcasting [1, D]
-        mu = self.mu.unsqueeze(0)
-        alpha = self.alpha.unsqueeze(0)
-
-        pbar = tqdm(total=absolute_end_times.max().item(), desc="Simulating (SCPP)", leave=False)
-
-        while sim_state["batch_active"].any():
-            active_idx = sim_state["batch_active"]
-            
-            # --- Ogata's Thinning pour SCPP ---
-            # Intensité lambda(t) = exp(mu + alpha*t - alpha*N)
-            # Si alpha > 0, l'intensité AUGMENTE avec le temps (entre deux événements N est constant).
-            # Donc lambda(t_curr) est un MINORANT (pas bon pour thinning classique).
-            # On doit majorer lambda sur un intervalle [t, t+delta].
-            # Ou utiliser l'Inverse Transform Method si on peut intégrer lambda.
-            
-            # CAS SIMPLIFIÉ (Inverse Method approchée ou Thinning avec Lookahead) :
-            # Comme SCPP "explose" si on attend trop, on majore lambda à t_curr + step_lookahead.
-            # Supposons un horizon de sureté (ex: moyenne des dt précédents ou constante).
-            # Prenons lambda_bar = lambda(t_curr + horizon).
-            
-            horizon = 1.0 # À tuner ou dynamique
-            
-            # Bound calculation
-            # [B, D]
-            exponent_bound = mu + alpha * ((current_abs_time.unsqueeze(1) + horizon) - current_counts)
-            lambda_bound_vec = torch.exp(exponent_bound)
-            lambda_bar = lambda_bound_vec.sum(dim=1) # [B]
-            
-            # Sampling candidat
-            u = torch.rand(batch_size, device=device)
-            dt_candidate = -torch.log(u) / (lambda_bar + 1e-9)
-            
-            # Si le candidat dépasse l'horizon, on avance juste le temps (pas d'event) et on update la borne
-            # C'est une variante de l'algo de Lewis & Shedler pour processus non-homogènes.
-            
-            candidate_time = current_abs_time + dt_candidate
-            
-            # Rejet si on dépasse l'horizon (car la borne n'est plus valide)
-            # Dans ce cas, on avance t à t + horizon (ou t + dt) et on ne génère rien (fictive rejection)
-            # Mais pour simplifier ici : si dt > horizon, on rejette tout de suite.
-            valid_bound_mask = dt_candidate <= horizon
-            
-            if not valid_bound_mask.all():
-                # Pour ceux qui dépassent l'horizon, on avance le temps sans event
-                # et on recommence la boucle (counts ne change pas, donc intensité monte)
-                too_far = (~valid_bound_mask) & sim_state["batch_active"]
-                current_abs_time[too_far] += horizon # Avance prudente
-                # Pas de mise à jour de N, on boucle
-                # (Attention boucle infinie si lambda très petit, mais SCPP lambda augmente avec t)
-            
-            # Pour ceux dans l'horizon, on fait le vrai test de rejet Ogata
-            check_mask = valid_bound_mask & sim_state["batch_active"]
-            
-            if check_mask.any():
-                # Vraie intensité à t_candidate
-                exponent_true = mu + alpha * (candidate_time.unsqueeze(1) - current_counts)
-                true_lambda_vec = torch.exp(exponent_true)
-                true_lambda = true_lambda_vec.sum(dim=1)
-                
-                v = torch.rand(batch_size, device=device) * lambda_bar
-                
-                # Check Rejet et Fin de simulation
-                accepted = (v < true_lambda) & check_mask
-                over_time = candidate_time >= absolute_end_times
-                accepted = accepted & (~over_time)
-                
-                # Désactivation finis
-                sim_state["batch_active"][over_time & active_idx] = False
-                
-                # Mise à jour ACCEPTÉS
-                if accepted.any():
-                    # Sample Type
-                    probs = true_lambda_vec[accepted]
-                    types_sample = torch.multinomial(probs, num_samples=1).squeeze(-1)
-                    
-                    idx_acc = torch.nonzero(accepted, as_tuple=True)[0]
-                    
-                    # Update Buffer
-                    for i, batch_idx in enumerate(idx_acc):
-                         pos = sim_state.get("seq_lens", torch.full((batch_size,), initial_len, device=device))[batch_idx]
-                         if pos < max_seq_len:
-                            buffers["time"][batch_idx, pos] = candidate_time[batch_idx]
-                            buffers["time_delta"][batch_idx, pos] = dt_candidate[batch_idx]
-                            buffers["event"][batch_idx, pos] = types_sample[i]
-                            if "seq_lens" in sim_state: sim_state["seq_lens"][batch_idx] += 1
-
-                    # UPDATE STATE : N(t) += 1 pour le type choisi
-                    # [N_acc, D]
-                    one_hot_inc = F.one_hot(types_sample, self.num_event_types).float()
-                    current_counts[accepted] += one_hot_inc
-                    
-                    current_abs_time[accepted] = candidate_time[accepted]
-                
-                # Mise à jour REJETÉS (dans l'horizon)
-                # Ils avancent le temps mais ne changent pas N
-                rejected = check_mask & (~accepted) & sim_state["batch_active"]
-                if rejected.any():
-                    current_abs_time[rejected] = candidate_time[rejected]
-
-            pbar.n = int(current_abs_time.min().item())
-            pbar.refresh()
-            
-        pbar.close()
+        raise NotImplementedError("Simulation not implemented for Self-Correcting model, there is a custom implementation in the data generation class. This class serves as a benchmark for the other models in prediction phase for the loglike loss.")

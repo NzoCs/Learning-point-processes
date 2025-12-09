@@ -68,7 +68,7 @@ class TPPModelProtocol(Protocol):
         """
         ...
     
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_seqs: torch.Tensor,
@@ -150,9 +150,9 @@ class TPPModelProtocol(Protocol):
     def simulate(
         self,
         *,
-        start_time: float,
-        end_time: float,
-        batch_size: int = 1,
+        start_time: torch.Tensor,
+        end_time: torch.Tensor,
+        batch_size: int,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Generate synthetic event sequences using the learned model.
         
@@ -227,6 +227,20 @@ class TPPModelProtocol(Protocol):
         Example:
             >>> trainer.predict(model, dataloader)
             >>> model.finalize_statistics()  # Saves statistics and plots
+        """
+        ...
+    
+    def init_statistics_collector(self, *, output_dir: str) -> None:
+        """Initialize data structures for collecting statistics.
+        
+        Prepares internal buffers to store event sequences and metrics during
+        prediction or simulation phases. Called automatically at the start of
+        prediction phase.
+        
+        Args:
+            output_dir: Directory to save collected statistics
+        Example:
+            >>> model.init_statistics_collector(output_dir="./outputs/stats")
         """
         ...
     

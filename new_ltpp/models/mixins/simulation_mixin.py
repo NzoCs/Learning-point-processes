@@ -14,17 +14,20 @@ from new_ltpp.utils import logger
 
 from .base_mixin import BaseMixin
 
+
 class Buffers(TypedDict):
     time: torch.Tensor
     time_delta: torch.Tensor
     event: torch.Tensor
     initial_len: int
 
+
 class SimulationState(TypedDict):
     last_event_time: torch.Tensor
     current_time: float
     batch_active: torch.Tensor
     step_count: int
+
 
 class SimulationMixin(BaseMixin):
     """Mixin providing simulation functionality.
@@ -98,8 +101,6 @@ class SimulationMixin(BaseMixin):
         )
         return results
 
-
-
     def simulate(
         self,
         batch: Optional[Batch] = None,
@@ -147,14 +148,15 @@ class SimulationMixin(BaseMixin):
         else:
             batch_size = batch.time_seqs.size(0)
 
-        start_times, end_times = self.compute_start_end_time(batch.time_seqs, batch.seq_non_pad_mask)
+        start_times, end_times = self.compute_start_end_time(
+            batch.time_seqs, batch.seq_non_pad_mask
+        )
 
         # Pre-allocate buffers
         buffers = self._allocate_simulation_buffers(batch, initial_buffer_size)
 
         # Initialize tracking state
         sim_state = self._initialize_simulation_state(batch, batch_size)
-
 
         # Run simulation loop
         self._run_simulation_loop(buffers, sim_state, start_times, end_times)
@@ -163,7 +165,9 @@ class SimulationMixin(BaseMixin):
             buffers, sim_state, start_times, end_times
         )
 
-    def compute_start_end_time(self, time_seqs: torch.Tensor, seq_non_pad_mask: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def compute_start_end_time(
+        self, time_seqs: torch.Tensor, seq_non_pad_mask: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute start and end times for simulation.
 
         Returns:
@@ -200,6 +204,7 @@ class SimulationMixin(BaseMixin):
         """
 
         # Draw next time
+        # [batch_size, num_marks],
         accepted_dtimes, weights = self.get_event_sampler().draw_next_time_one_step(
             time_seqs,
             time_delta_seqs,
@@ -249,7 +254,9 @@ class SimulationMixin(BaseMixin):
             ),
         )
 
-    def _allocate_simulation_buffers(self, batch: Batch, initial_buffer_size: int) -> Buffers:
+    def _allocate_simulation_buffers(
+        self, batch: Batch, initial_buffer_size: int
+    ) -> Buffers:
         """Allocate buffers for simulation."""
         batch_size = batch.time_seqs.size(0)
         initial_len = batch.time_seqs.size(1)
@@ -301,15 +308,11 @@ class SimulationMixin(BaseMixin):
         return SimulationState(
             last_event_time=last_event_time,
             current_time=batch.time_seqs[:, -1].min().item(),
-            batch_active=torch.ones(
-                batch_size, dtype=torch.bool, device=self.device
-            ),
+            batch_active=torch.ones(batch_size, dtype=torch.bool, device=self.device),
             step_count=0,
         )
 
-    def _reallocate_buffers(
-        self, buffers: Buffers, current_max_len: int
-    ) -> int:
+    def _reallocate_buffers(self, buffers: Buffers, current_max_len: int) -> int:
         """Reallocate buffers with double the size.
 
         Args:
@@ -346,7 +349,7 @@ class SimulationMixin(BaseMixin):
         logger.info(f"Reallocated buffers to size {new_max_seq_len}")
 
         return new_max_seq_len
-    
+
     def _run_simulation_loop(
         self,
         buffers: Buffers,
@@ -354,10 +357,9 @@ class SimulationMixin(BaseMixin):
         start_times: torch.Tensor,
         end_times: torch.Tensor,
     ) -> None:
-        
         """Run the main simulation loop. Simulates starting from the end of initial sequences, so at end_time to start_time + end_time for each sequence.
-        
-        Args:   
+
+        Args:
             buffers: Buffers TypedDict containing simulation buffers
             sim_state: SimulationState TypedDict tracking simulation state
             start_times: Tensor of start times for each sequence
@@ -378,7 +380,9 @@ class SimulationMixin(BaseMixin):
                 # Cette ligne suppose que le code appelant n'a pas encore appliqué le décalage.
                 buffers["time"][:, :initial_len] += start_times.unsqueeze(1)
                 sim_state["last_event_time"] += start_times.unsqueeze(1)
-                sim_state["current_time"] = buffers["time"][:, initial_len - 1].min().item()
+                sim_state["current_time"] = (
+                    buffers["time"][:, initial_len - 1].min().item()
+                )
             else:
                 # Si le buffer est vide (initial_len=0), le temps courant minimum est le temps de début minimum
                 sim_state["current_time"] = start_times.min().item()
@@ -387,9 +391,8 @@ class SimulationMixin(BaseMixin):
             pbar.n = min(sim_state["current_time"], max_absolute_end_time)
             pbar.refresh()
 
-
         while sim_state["batch_active"].any():
-            
+
             # Get active sequences
             active_indices = sim_state["batch_active"].nonzero(as_tuple=True)[0]
             if len(active_indices) == 0:
@@ -405,10 +408,13 @@ class SimulationMixin(BaseMixin):
             active_time_seq = buffers["time"][active_indices, :current_len]
             active_time_delta = buffers["time_delta"][active_indices, :current_len]
             active_event_seq = buffers["event"][active_indices, :current_len]
-            active_seq_non_pad_mask = (active_event_seq != self.pad_token_id)
+            active_seq_non_pad_mask = active_event_seq != self.pad_token_id
 
             dtimes_pred, type_pred = self.simulate_one_step(
-                active_time_seq, active_time_delta, active_event_seq, active_seq_non_pad_mask
+                active_time_seq,
+                active_time_delta,
+                active_event_seq,
+                active_seq_non_pad_mask,
             )
 
             # Calculate new times (Active_time_seq[-1] est maintenant un temps absolu)
@@ -421,7 +427,6 @@ class SimulationMixin(BaseMixin):
                 active_indices, type_pred_flat
             ] = last_times_flat
 
-
             # Update buffers
             buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
             buffers["time_delta"][active_indices, current_len] = dtimes_pred.squeeze(-1)
@@ -429,11 +434,11 @@ class SimulationMixin(BaseMixin):
 
             # Update current time (minimum across all active sequences)
             sim_state["current_time"] = new_times.min().item()
-            
+
             # Désactivation des séquences ayant atteint leur temps de fin individuel
             active_end_times = absolute_end_times[active_indices].unsqueeze(-1)
             exceed_time_mask = new_times >= active_end_times
-            
+
             if exceed_time_mask.any():
                 exceed_indices = active_indices[exceed_time_mask.squeeze(-1)]
                 sim_state["batch_active"][exceed_indices] = False
@@ -447,7 +452,11 @@ class SimulationMixin(BaseMixin):
         pbar.close()
 
     def _extract_simulation_results(
-        self, buffers: Buffers, sim_state: SimulationState, start_times: torch.Tensor, end_times: torch.Tensor
+        self,
+        buffers: Buffers,
+        sim_state: SimulationState,
+        start_times: torch.Tensor,
+        end_times: torch.Tensor,
     ) -> SimulationResult:
         """Extract final simulation results from buffers."""
         initial_len = buffers["initial_len"]
@@ -457,11 +466,12 @@ class SimulationMixin(BaseMixin):
         final_time_delta = buffers["time_delta"][:, initial_len:current_len]
         final_event_seq = buffers["event"][:, initial_len:current_len]
 
-        absolute_end_times = end_times + (end_times - start_times) 
+        absolute_end_times = end_times + (end_times - start_times)
 
         # Create final mask
         simul_mask = torch.logical_and(
-            final_time_seq >= end_times.unsqueeze(-1), final_time_seq <= absolute_end_times.unsqueeze(-1)
+            final_time_seq >= end_times.unsqueeze(-1),
+            final_time_seq <= absolute_end_times.unsqueeze(-1),
         )
 
         return SimulationResult(

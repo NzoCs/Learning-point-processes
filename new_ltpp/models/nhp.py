@@ -1,11 +1,9 @@
-from typing import Tuple
+from typing import Tuple, Any
 
 import torch
 from torch import nn
 
-from new_ltpp.configs import ModelConfig
 from new_ltpp.models.baselayer import ScaledSoftplus
-from new_ltpp.models.basemodel import Model
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
 
@@ -13,7 +11,7 @@ from new_ltpp.shared_types import Batch
 class ContTimeLSTMCell(nn.Module):
     """LSTM Cell in Neural Hawkes Process, NeurIPS'17."""
 
-    def __init__(self, hidden_dim):
+    def __init__(self, hidden_dim: int):
         """Initialize the continuous LSTM cell.
 
         Args:
@@ -21,9 +19,9 @@ class ContTimeLSTMCell(nn.Module):
         """
         super(ContTimeLSTMCell, self).__init__()
         self.hidden_dim = hidden_dim
-        self.init_dense_layer(hidden_dim, bias=True)
+        self.init_dense_layer(hidden_dim=hidden_dim, bias=True)
 
-    def init_dense_layer(self, hidden_dim, bias):
+    def init_dense_layer(self, hidden_dim: int, bias: bool) -> None:
         """Initialize linear layers given Equations (5a-6c) in the paper.
 
         Args:
@@ -33,7 +31,13 @@ class ContTimeLSTMCell(nn.Module):
         self.linear_layer = nn.Linear(2 * hidden_dim, 7 * hidden_dim, bias=bias)
         self.softplus = nn.Softplus()
 
-    def forward(self, x_i, hidden_ti_minus, ct_ti_minus, c_bar_im1):
+    def forward(
+        self,
+        x_i: torch.Tensor,
+        hidden_ti_minus: torch.Tensor,
+        ct_ti_minus: torch.Tensor,
+        c_bar_im1: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Update the continuous-time LSTM cell.
 
         Args:
@@ -70,7 +74,14 @@ class ContTimeLSTMCell(nn.Module):
 
         return c_i, c_bar_i, delta_i, o_i
 
-    def decay(self, c_i, c_bar_i, delta_i, o_i, dtime):
+    def decay(
+        self,
+        c_i: torch.Tensor,
+        c_bar_i: torch.Tensor,
+        delta_i: torch.Tensor,
+        o_i: torch.Tensor,
+        dtime: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Cell and hidden state decay according to Equation (7).
 
         Args:
@@ -98,7 +109,7 @@ class NHP(NeuralModel):
         self,
         beta: float = 1.0,
         bias: bool = True,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Initialize the NHP model.
 
@@ -115,7 +126,9 @@ class NHP(NeuralModel):
             ScaledSoftplus(self.num_event_types),
         )  # learnable mark-specific beta
 
-    def get_init_state(self, batch_size):
+    def get_init_state(
+        self, batch_size: int
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         c_t, c_bar_t, delta_t, o_t = torch.zeros(
             batch_size, 4 * self.hidden_size, device=self.device
         ).chunk(4, dim=1)
@@ -178,7 +191,9 @@ class NHP(NeuralModel):
         )  # (batch_size, seq_len, 4 * hidden_dim)
         return left_hiddens, right_hiddens
 
-    def get_states(self, right_hiddens, sample_dts):
+    def get_states(
+        self, right_hiddens: torch.Tensor, sample_dts: torch.Tensor
+    ) -> torch.Tensor:
         """
         right_hiddens:  (batch_size, seq_len, 4 * hidden_dim): (c_t, c_bar_t, delta_t, o_t)
         sample_dts: (batch_size, seq_len, MC_points)
@@ -195,7 +210,7 @@ class NHP(NeuralModel):
         )
         return h_ts
 
-    def loglike_loss(self, batch: Batch):
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
         """Compute the log-likelihood loss.
 
         Args:
@@ -246,7 +261,7 @@ class NHP(NeuralModel):
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> torch.Tensor:
         """Compute the intensity at sampled delta times, not only event times.
 
@@ -254,7 +269,8 @@ class NHP(NeuralModel):
             time_seqs (tensor): [batch_size, seq_len], times seqs.
             time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
             type_seqs (tensor): [batch_size, seq_len], event type seqs.
-            sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
+            sample_dtimes (tensor): [batch_size, seq_len, num_sample],
+            sampled inter-event timestamps.
 
         Returns:
             tensor: [batch_size, num_times, num_mc_sample, num_event_types],
@@ -277,7 +293,7 @@ class NHP(NeuralModel):
             )
 
             # [batch_size, 1, num_mc_sample, num_marks]
-            sampled_intensities = self.layer_intensity(h_ts)
+            sampled_intensities: torch.Tensor = self.layer_intensity(h_ts)
 
         else:
             # interval_t_sample - [batch_size, seq_len, num_mc_sample, 1]

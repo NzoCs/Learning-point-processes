@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
+from typing import Optional
 
-from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
 
@@ -95,7 +95,9 @@ class SAHP(NeuralModel):
             nn.Softplus(),
         )
 
-    def state_decay(self, encode_state: torch.Tensor, duration_t: torch.Tensor) -> torch.Tensor:
+    def state_decay(
+        self, encode_state: torch.Tensor, duration_t: torch.Tensor
+    ) -> torch.Tensor:
         """Equation (15), which computes the pre-intensity states
 
         Args:
@@ -116,13 +118,13 @@ class SAHP(NeuralModel):
         return states
 
     def forward(
-            self, 
-            time_seqs: torch.Tensor, 
-            time_delta_seqs: torch.Tensor, 
-            type_seqs: torch.Tensor, 
-            attention_mask: torch.Tensor, 
-            key_padding_mask: torch.Tensor | None = None, 
-            ) -> torch.Tensor:
+        self,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        attention_mask: torch.Tensor,
+        key_padding_mask: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         """Call the model
 
         Args:
@@ -169,7 +171,7 @@ class SAHP(NeuralModel):
         enc_out = self.forward(
             time_seqs[:, :-1],
             time_delta_seqs[:, :-1],
-            type_seqs[:, :-1],            
+            type_seqs[:, :-1],
             attention_mask[:-1, :-1],
             ~batch_non_pad_mask[:, :-1],
         )
@@ -205,7 +207,9 @@ class SAHP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_dtimes(self, encode_state: torch.Tensor, sample_dtimes: torch.Tensor) -> torch.Tensor:
+    def compute_states_at_sample_dtimes(
+        self, encode_state: torch.Tensor, sample_dtimes: torch.Tensor
+    ) -> torch.Tensor:
         """Compute the hidden states at sampled delta times.
 
         Args:
@@ -213,7 +217,8 @@ class SAHP(NeuralModel):
             sample_dtimes (tensor): [batch_size, seq_len, num_samples].
 
         Returns:
-            tensor: [batch_size, seq_len, num_samples, hidden_size]， hidden state at each sampled time.
+            tensor: [batch_size, seq_len, num_samples, hidden_size], hidden state at each sampled
+            time.
         """
 
         cell_states = self.state_decay(
@@ -222,7 +227,7 @@ class SAHP(NeuralModel):
 
         return cell_states
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_seqs: torch.Tensor,
@@ -238,11 +243,13 @@ class SAHP(NeuralModel):
             time_seqs (tensor): [batch_size, seq_len], times seqs.
             time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
             type_seqs (tensor): [batch_size, seq_len], event type seqs.
-            sample_dtimes (tensor): [batch_size, seq_len, num_samples], sampled inter-event timestamps.
+            sample_dtimes (tensor): [batch_size, seq_len, num_samples],
+            sampled inter-event timestamps.
             compute_last_step_only (bool): whether to compute only last step.
 
         Returns:
-            tensor: [batch_size, seq_len, num_samples, num_event_types], intensity at all sampled times.
+            tensor: [batch_size, seq_len, num_samples, num_event_types],
+            intensity at all sampled times.
         """
         attention_mask = get_causal_attn_mask(time_seqs.size(1), device=self.device)
 

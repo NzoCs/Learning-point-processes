@@ -47,6 +47,7 @@ class ModelFactory:
         Returns:
             Instance du modèle
         """
+        
         logger.info(f"Création du modèle: {model_name}")
 
         # Récupérer la classe du modèle via le registry

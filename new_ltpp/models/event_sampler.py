@@ -93,6 +93,11 @@ class EventSampler(nn.Module):
     # 3. Sample uniform numbers for acceptance
     # ----------------------------------------------------------------------
     def sample_uniform(self, rate: torch.Tensor, num_samples: int) -> torch.Tensor:
+        """Sample uniform numbers for acceptance
+        rate: [B,L]
+        num_samples: int
+        returns: [B,L,num_samples,self.num_exp]"""
+
         B, L = rate.shape
         u = torch.empty(B, L, num_samples, self.num_exp, device=self.device)
         u.uniform_(0.0, 1.0)
@@ -153,15 +158,33 @@ class EventSampler(nn.Module):
         num_sample: int,
         compute_last_step_only: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Vectorized thinning step"""
+        """Vectorized thinning step
+
+        Args:
+            time_seqs: [B,L]
+            time_delta_seqs: [B,L]
+            type_seqs: [B,L]
+            seq_non_pad_mask: [B,L]
+            intensity_fn: Callable[..., torch.Tensor]
+            num_sample: int
+            compute_last_step_only: bool
+        Returns:
+            accepted_dtimes: [B,L,num_sample]
+            weights: [B,L,num_sample]
+        """
 
         # 1. upper bound M
-        M = self.compute_intensity_upper_bound(
-            time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask, intensity_fn, compute_last_step_only
+        upper_bound = self.compute_intensity_upper_bound(
+            time_seqs,
+            time_delta_seqs,
+            type_seqs,
+            seq_non_pad_mask,
+            intensity_fn,
+            compute_last_step_only,
         )  # [B,L]
 
         # 2. exp samples
-        exp_j = self.sample_exp_distribution(M)  # [B,L,E]
+        exp_j = self.sample_exp_distribution(upper_bound)  # [B,L,E]
         exp_j = torch.cumsum(exp_j, dim=-1)  # accumulate
 
         # 3. evaluate intensity at sampled times
@@ -185,10 +208,12 @@ class EventSampler(nn.Module):
         )  # [B,L,num_sample,E]
 
         # 5. uniform
-        u = self.sample_uniform(M, num_sample)  # [B,L,num_sample,E]
+        u = self.sample_uniform(upper_bound, num_sample)  # [B,L,num_sample,E]
 
         # 6. accept
-        res = self.sample_accept(u, M, intens_total, exp_j_tiled)  # [B,L,num_sample]
+        res = self.sample_accept(
+            u, upper_bound, intens_total, exp_j_tiled
+        )  # [B,L,num_sample]
 
         # uniform weights
         weights = torch.ones_like(res) / num_sample

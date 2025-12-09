@@ -55,7 +55,7 @@ class BaseMixin(pl.LightningModule, ABC):
 
     def get_event_sampler(self) -> EventSampler:
         """Get or create the event sampler with the current device.
-        
+
         This uses self.device (PyTorch Lightning property) which always
         reflects the current device of the model, not a cached value.
 
@@ -82,7 +82,6 @@ class BaseMixin(pl.LightningModule, ABC):
         seq_non_pad_mask: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
-        
     ) -> torch.Tensor:
         """Compute the intensity at sampled times, not only event times.
 

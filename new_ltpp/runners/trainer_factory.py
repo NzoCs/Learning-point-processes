@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import pytorch_lightning as pl
 import torch
@@ -10,6 +10,7 @@ from pytorch_lightning.loggers.logger import Logger as LightningLogger
 from pytorch_lightning.strategies import DDPStrategy
 
 from new_ltpp.configs.runner_config import TrainingConfig
+from new_ltpp.models.model_protocol import TPPModelProtocol as ModelProtocol
 from new_ltpp.utils import logger as console_logger
 
 
@@ -60,12 +61,12 @@ class PredictionStatsCallback(pl.Callback):
         super().__init__()
         self.output_dir = output_dir
 
-    def on_predict_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+    def on_predict_start(self, trainer: pl.Trainer, pl_module: ModelProtocol):
         """Called once before prediction begins."""
         if hasattr(pl_module, "init_statistics_collector"):
             pl_module.init_statistics_collector(output_dir=self.output_dir)
 
-    def on_predict_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+    def on_predict_end(self, trainer: pl.Trainer, pl_module: ModelProtocol):
         """Called once after prediction ends."""
         if hasattr(pl_module, "finalize_statistics"):
             pl_module.finalize_statistics()

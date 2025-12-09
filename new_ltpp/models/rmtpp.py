@@ -1,11 +1,9 @@
 import math
-from typing import Tuple
+from typing import Tuple, Any
 
 import torch
 from torch import nn
-from torch.nn import functional as F
 
-from new_ltpp.configs import ModelConfig
 from new_ltpp.shared_types import Batch
 
 from .neural_model import NeuralModel
@@ -20,7 +18,7 @@ class RMTPP(NeuralModel):
         self,
         *,
         num_layers: int = 1,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Initialize the model
 
@@ -49,15 +47,17 @@ class RMTPP(NeuralModel):
         nn.init.xavier_normal_(self.b_t)
         nn.init.xavier_normal_(self.w_t)
 
-    def evolve_and_get_intentsity(self, right_hiddens_BNH, dts_BNG):
+    def evolve_and_get_intentsity(
+        self, right_hiddens_BNH: torch.Tensor, dts_BNG: torch.Tensor
+    ) -> torch.Tensor:
         """
         Eq.11 that computes intensity.
         """
 
-        past_influence_BNGM = self.hidden_to_intensity_logits(
+        past_influence_BNGM: torch.Tensor = self.hidden_to_intensity_logits(
             right_hiddens_BNH[..., None, :]
         )
-        intensity_BNGM = (
+        intensity_BNGM: torch.Tensor = (
             (
                 past_influence_BNGM
                 + self.w_t[None, None, :] * dts_BNG[..., None]
@@ -95,7 +95,7 @@ class RMTPP(NeuralModel):
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
 
-    def loglike_loss(self, batch: Batch):
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
         """Compute the log-likelihood loss.
 
         Args:
@@ -142,7 +142,7 @@ class RMTPP(NeuralModel):
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> torch.Tensor:
         """Compute the intensity at sampled delta times, not only event times.
 

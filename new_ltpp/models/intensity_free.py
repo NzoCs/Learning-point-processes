@@ -246,6 +246,17 @@ class IntensityFree(NeuralModel):
 
         return loss, num_events
 
+    def compute_intensities_at_sample_dtimes(
+        self,
+        time_delta_seqs,
+        type_seqs,
+    ):
+        """."""
+
+        raise NotImplementedError(
+            "The IntnsityFree model does not have an intensity function."
+        )
+
     def simulate_one_step(
         self,
         time_seq: torch.Tensor,

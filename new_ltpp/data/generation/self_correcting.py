@@ -1,20 +1,18 @@
 from typing import Dict, List, Optional, Tuple
-
 import numpy as np
-from tqdm import tqdm
 
-from new_ltpp.data.generation.base_simulator import BaseSimulator
+from new_ltpp.data.generation.base_simulator import Simulator
 
 
-class SelfCorrecting(BaseSimulator):
+class SelfCorrecting(Simulator):
     """
     Simulateur de processus ponctuels temporels avec correction automatique.
     """
 
     def __init__(
         self,
-        mu: float = 1.0,
-        alpha: float = 1.0,
+        mu: float,
+        alpha: float,
         **kwargs
     ):
         """
@@ -131,7 +129,7 @@ class SelfCorrecting(BaseSimulator):
         return intensities
 
 
-class MultivariableSelfCorrecting(BaseSimulator):
+class MultivariableSelfCorrecting(Simulator):
     """
     Simulateur de processus ponctuels temporels avec correction automatique multivariable.
     Cette version permet aux événements de différentes dimensions d'avoir une influence les uns sur les autres.

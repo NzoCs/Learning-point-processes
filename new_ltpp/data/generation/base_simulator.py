@@ -4,7 +4,7 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 
 
-class BaseSimulator(ABC):
+class Simulator(ABC):
     """
     Classe de base pour tous les simulateurs de processus ponctuels temporels.
     Responsabilité unique : simuler un processus et retourner (times, marks).

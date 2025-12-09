@@ -2,10 +2,10 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from new_ltpp.data.generation.base_simulator import BaseSimulator
+from new_ltpp.data.generation.base_simulator import Simulator
 
 
-class HawkesSimulator(BaseSimulator):
+class HawkesSimulator(Simulator):
     """
     Classe pour simuler des processus de Hawkes multidimensionnels.
     Un processus de Hawkes est un processus de points auto-excitant où l'occurrence
@@ -14,9 +14,9 @@ class HawkesSimulator(BaseSimulator):
 
     def __init__(
         self,
-        mu: np.ndarray,
-        alpha: np.ndarray,
-        beta: np.ndarray,
+        mu: np.ndarray | List[float],
+        alpha: np.ndarray | List[float],
+        beta: np.ndarray | List[float],
         **kwargs,
     ):
         """

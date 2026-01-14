@@ -166,7 +166,7 @@ class SAHP(NeuralModel):
         time_seqs = batch.time_seqs
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
         attention_mask = get_causal_attn_mask(time_seqs.size(1), device=self.device)
 
         enc_out = self.forward(
@@ -235,6 +235,9 @@ class SAHP(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        valid_event_mask: Optional[
+            torch.Tensor
+        ] = None,  # Not used in SAHP but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:

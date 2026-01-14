@@ -83,14 +83,14 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             time_seqs=batch.time_seqs,
             time_delta_seqs=batch.time_delta_seqs,
             type_seqs=batch.type_seqs,
-            seq_non_pad_mask=batch.seq_non_pad_mask,
+            valid_event_mask=batch.valid_event_mask,
         )
 
         # Mutate the batch in-place so subsequent operations use sequences starting at the second event
         batch.time_seqs = batch.time_seqs[:, 1:]
         batch.time_delta_seqs = batch.time_delta_seqs[:, 1:]
         batch.type_seqs = batch.type_seqs[:, 1:]
-        batch.seq_non_pad_mask = batch.seq_non_pad_mask[:, 1:]
+        batch.valid_event_mask = batch.valid_event_mask[:, 1:]
 
         _ = self._compute_and_log_metrics(batch, pred, prefix="")
 
@@ -116,14 +116,14 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
             time_seqs=batch.time_seqs,
             time_delta_seqs=batch.time_delta_seqs,
             type_seqs=batch.type_seqs,
-            seq_non_pad_mask=batch.seq_non_pad_mask,
+            valid_event_mask=batch.valid_event_mask,
         )
 
         # Mutate the batch in-place
         batch.time_seqs = batch.time_seqs[:, 1:]
         batch.time_delta_seqs = batch.time_delta_seqs[:, 1:]
         batch.type_seqs = batch.type_seqs[:, 1:]
-        batch.seq_non_pad_mask = batch.seq_non_pad_mask[:, 1:]
+        batch.valid_event_mask = batch.valid_event_mask[:, 1:]
 
         self._compute_and_log_metrics(batch, pred, prefix="")
 

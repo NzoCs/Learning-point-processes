@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
-from new_ltpp.configs.base_config import Config
 from new_ltpp.configs.config_factory import ConfigType
 from new_ltpp.configs.data_config import DataConfig
 

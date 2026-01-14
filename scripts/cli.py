@@ -23,7 +23,6 @@ from new_ltpp.globals import CONFIGS_FILE, OUTPUT_DIR
 # Import runners
 from .cli_runners import (
     BenchmarkRunner,
-    DataGenerator,
     DataInspector,
     ExperimentRunner,
     InteractiveSetup,
@@ -172,21 +171,11 @@ def generate_data(
     dim_process: int = typer.Option(
         2, "--dim", "-d", help="Number of event types/dimensions"
     ),
-    start_time: float = typer.Option(
-        0.0, "--start", help="Start time for simulation"
-    ),
-    end_time: float = typer.Option(
-        100.0, "--end", help="End time for simulation"
-    ),
-    train_ratio: float = typer.Option(
-        0.6, "--train-ratio", help="Train split ratio"
-    ),
-    test_ratio: float = typer.Option(
-        0.2, "--test-ratio", help="Test split ratio"
-    ),
-    dev_ratio: float = typer.Option(
-        0.2, "--dev-ratio", help="Dev split ratio"
-    ),
+    start_time: float = typer.Option(0.0, "--start", help="Start time for simulation"),
+    end_time: float = typer.Option(100.0, "--end", help="End time for simulation"),
+    train_ratio: float = typer.Option(0.6, "--train-ratio", help="Train split ratio"),
+    test_ratio: float = typer.Option(0.2, "--test-ratio", help="Test split ratio"),
+    dev_ratio: float = typer.Option(0.2, "--dev-ratio", help="Dev split ratio"),
     push_to_hub: bool = typer.Option(
         False, "--push", help="Push dataset to Hugging Face Hub"
     ),
@@ -201,34 +190,30 @@ def generate_data(
 ):
     """
     Generate synthetic TPP data with DataGenerator.
-    
+
     Examples:
         # Generate Hawkes process data
         new-ltpp generate --method hawkes --num-sim 1000 --dim 2
-        
+
         # Generate self-correcting process data
         new-ltpp generate --method self_correcting --num-sim 500 --dim 3
-        
+
         # Generate and push to Hugging Face
         new-ltpp generate --method hawkes --push --repo-id username/my-dataset
     """
     # Prepare splits
-    splits = {
-        "train": train_ratio,
-        "test": test_ratio,
-        "dev": dev_ratio
-    }
-    
+    splits = {"train": train_ratio, "test": test_ratio, "dev": dev_ratio}
+
     # Validate splits
     if abs(sum(splits.values()) - 1.0) > 1e-10:
         console.print("[red]Error: Split ratios must sum to 1.0[/red]")
         raise typer.Exit(1)
-    
+
     # If push to hub is requested, check repo_id
     if push_to_hub and not repo_id:
         console.print("[red]Error: --repo-id is required when using --push[/red]")
         raise typer.Exit(1)
-    
+
     try:
         # Create simulator based on method
         import numpy as np
@@ -238,12 +223,22 @@ def generate_data(
             SelfCorrecting,
             SimulationManager,
         )
-        
+
         if method.lower() == "hawkes":
             simulator = HawkesSimulator(
                 mu=np.array([0.2] * dim_process),
-                alpha=np.array([[0.3 if i == j else 0.1 for j in range(dim_process)] for i in range(dim_process)]),
-                beta=np.array([[2.0 if i == j else 1.0 for j in range(dim_process)] for i in range(dim_process)]),
+                alpha=np.array(
+                    [
+                        [0.3 if i == j else 0.1 for j in range(dim_process)]
+                        for i in range(dim_process)
+                    ]
+                ),
+                beta=np.array(
+                    [
+                        [2.0 if i == j else 1.0 for j in range(dim_process)]
+                        for i in range(dim_process)
+                    ]
+                ),
                 dim_process=dim_process,
                 start_time=start_time,
                 end_time=end_time,
@@ -262,26 +257,30 @@ def generate_data(
             console.print(f"[red]Unknown method: {method}[/red]")
             console.print("[yellow]Available methods: hawkes, self_correcting[/yellow]")
             raise typer.Exit(1)
-        
+
         # Create simulation manager
-        console.print(f"[bold blue]Generating {num_simulations} simulations with {method} method[/bold blue]")
+        console.print(
+            f"[bold blue]Generating {num_simulations} simulations with {method} method[/bold blue]"
+        )
         sim_manager = SimulationManager(
             simulation_func=simulator.simulate,
             dim_process=dim_process,
             start_time=start_time,
             end_time=end_time,
         )
-        
+
         # Generate and format simulations
         formatted_data = sim_manager.bulk_simulate(num_simulations)
         metadata = simulator.get_metadata(num_simulations)
-        
+
         # Create IO handler
         io_handler = IOSimulator()
-        
+
         # Push to Hugging Face Hub or save locally
         if push_to_hub and repo_id:
-            console.print(f"[bold blue]Pushing dataset to Hugging Face Hub: {repo_id}[/bold blue]")
+            console.print(
+                f"[bold blue]Pushing dataset to Hugging Face Hub: {repo_id}[/bold blue]"
+            )
             io_handler.push_to_hub(
                 formatted_data=formatted_data,
                 repo_id=repo_id,
@@ -289,28 +288,36 @@ def generate_data(
                 metadata=metadata,
                 private=private,
             )
-            console.print(f"[green]✓ Dataset successfully pushed to https://huggingface.co/datasets/{repo_id}[/green]")
+            console.print(
+                f"[green]✓ Dataset successfully pushed to https://huggingface.co/datasets/{repo_id}[/green]"
+            )
         else:
             # Use output_dir or create default
             if output_dir is None:
                 from datetime import datetime
                 from pathlib import Path
+
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_dir = str(Path("artifacts") / "generated_data" / f"generated_{timestamp}")
+                output_dir = str(
+                    Path("artifacts") / "generated_data" / f"generated_{timestamp}"
+                )
                 console.print(f"Output directory: {output_dir}")
-            
+
             io_handler.save_to_json(
                 formatted_data=formatted_data,
                 output_dir=output_dir,
                 splits=splits,
                 metadata=metadata,
             )
-            console.print(f"[green]✓ Dataset successfully generated in {output_dir}[/green]")
-            
+            console.print(
+                f"[green]✓ Dataset successfully generated in {output_dir}[/green]"
+            )
+
     except Exception as e:
         console.print(f"[red]Error during generation: {e}[/red]")
         if debug:
             import traceback
+
             traceback.print_exc()
         raise typer.Exit(1)
 

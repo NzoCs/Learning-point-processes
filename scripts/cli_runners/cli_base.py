@@ -10,8 +10,6 @@ from typing import List, Optional
 
 from rich.console import Console
 from rich.logging import RichHandler
-from rich.progress import Progress
-from rich.table import Table
 
 from new_ltpp.globals import CONFIGS_FILE, OUTPUT_DIR, ROOT_DIR
 

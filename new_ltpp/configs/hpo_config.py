@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from new_ltpp.configs.base_config import Config
 from new_ltpp.configs.runner_config import RunnerConfig
-from new_ltpp.utils import parse_uri_to_protocol_and_path, py_assert
+from new_ltpp.utils import parse_uri_to_protocol_and_path
 
 
 @dataclass

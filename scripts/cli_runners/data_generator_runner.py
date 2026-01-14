@@ -5,7 +5,7 @@ Runner pour la génération de données synthétiques TPP.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from new_ltpp.data.generation import HawkesSimulator, SelfCorrecting
 

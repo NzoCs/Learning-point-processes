@@ -16,7 +16,7 @@ from typing import Any, Type
 
 from new_ltpp.utils import logger
 
-from .base_config import Config, ConfigValidationError
+from .base_config import Config
 from .data_config import DataConfig, DataLoadingSpecsConfig, TokenizerConfig
 from .hpo_config import HPOConfig, HPORunnerConfig
 from .logger_config import LoggerConfig

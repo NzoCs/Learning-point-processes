@@ -138,7 +138,7 @@ class CorrAccumulator(BaseAccumulator):
         Uses scatter_add for efficient histogram computation per sequence.
 
         Args:
-            batch: Batch containing time_seqs and seq_non_pad_mask
+            batch: Batch containing time_seqs and valid_event_mask
             nb_bins: number of bins for discretization
             max_lag: maximum integer lag to compute ACF
 

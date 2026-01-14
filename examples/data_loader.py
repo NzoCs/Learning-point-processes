@@ -91,7 +91,7 @@ def main() -> None:
     # Build the configuration directly
     data_config = builder.build()
 
-    print(f"🔧 Data configuration created:")
+    print("🔧 Data configuration created:")
     print(f"   Dataset: {data_config.dataset_id}")
     print(f"   Format: {data_config.data_format}")
     print(f"   Event types: {data_config.tokenizer_specs.num_event_types}")

@@ -1,4 +1,4 @@
-from typing import Literal, Tuple
+from typing import Tuple, cast, Any, Optional
 
 import torch
 import torch.distributions as D
@@ -8,8 +8,6 @@ from torch.distributions import MixtureSameFamily as TorchMixtureSameFamily
 from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
-from new_ltpp.configs import ModelConfig
-from new_ltpp.models.basemodel import Model
 from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch, OneStepPred
 
@@ -44,13 +42,13 @@ class MixtureSameFamily(TorchMixtureSameFamily):
 
     def log_cdf(self, x):
         x = self._pad(x)
-        log_cdf_x = self.component_distribution.log_cdf(x)
+        log_cdf_x = cast(Any, self.component_distribution).log_cdf(x)
         mix_logits = self.mixture_distribution.logits
         return torch.logsumexp(log_cdf_x + mix_logits, dim=-1)
 
     def log_survival_function(self, x):
         x = self._pad(x)
-        log_sf_x = self.component_distribution.log_survival_function(x)
+        log_sf_x = cast(Any, self.component_distribution).log_survival_function(x)
         mix_logits = self.mixture_distribution.logits
         return torch.logsumexp(log_sf_x + mix_logits, dim=-1)
 
@@ -103,9 +101,9 @@ class LogNormalMixtureDistribution(TransformedDistribution):
             self.base_dist._validate_sample(x)
 
         if self.sign == 1:
-            return self.base_dist.log_cdf(x)
+            return cast(Any, self.base_dist).log_cdf(x)
         else:
-            return self.base_dist.log_survival_function(x)
+            return cast(Any, self.base_dist).log_survival_function(x)
 
     def log_survival_function(self, x):
         for transform in self.transforms[::-1]:
@@ -114,9 +112,9 @@ class LogNormalMixtureDistribution(TransformedDistribution):
             self.base_dist._validate_sample(x)
 
         if self.sign == 1:
-            return self.base_dist.log_survival_function(x)
+            return cast(Any, self.base_dist).log_survival_function(x)
         else:
-            return self.base_dist.log_cdf(x)
+            return cast(Any, self.base_dist).log_cdf(x)
 
 
 class IntensityFree(NeuralModel):
@@ -195,7 +193,7 @@ class IntensityFree(NeuralModel):
 
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         # [batch_size, seq_len, hidden_size]
         context = self.forward(time_delta_seqs[:, :-1], type_seqs[:, :-1])
@@ -248,9 +246,14 @@ class IntensityFree(NeuralModel):
 
     def compute_intensities_at_sample_dtimes(
         self,
-        time_delta_seqs,
-        type_seqs,
-    ):
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        valid_event_mask: Optional[torch.Tensor] = None,
+        compute_last_step_only: bool = False,
+        **kwargs: Any,
+    ) -> torch.Tensor:
         """."""
 
         raise NotImplementedError(
@@ -262,7 +265,7 @@ class IntensityFree(NeuralModel):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,
+        valid_event_mask: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Utility method to predict the next time delta and type using intensity-free approach.
@@ -271,7 +274,7 @@ class IntensityFree(NeuralModel):
             time_seqs (torch.Tensor): Time sequence [batch_size, seq_len]
             time_delta_seqs (torch.Tensor): Time delta sequence [batch_size, seq_len]
             type_seqs (torch.Tensor): Event type sequence [batch_size, seq_len]
-            seq_non_pad_mask (torch.Tensor): Non-padding mask [batch_size, seq_len]
+            valid_event_mask (torch.Tensor): Non-padding mask [batch_size, seq_len]
 
         Returns:
             tuple: tensors of predicted time deltas and event types
@@ -320,7 +323,7 @@ class IntensityFree(NeuralModel):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,
+        valid_event_mask: torch.Tensor,
     ) -> OneStepPred:
         """One-step prediction for every event in the sequence.
 
@@ -330,7 +333,7 @@ class IntensityFree(NeuralModel):
             type_seqs (tensor): [batch_size, seq_len].
 
         Returns:
-            tuple: tensors of dtime and type prediction, [batch_size, seq_len].
+            OneStepPred: tensors of dtime and type prediction, [batch_size, seq_len].
         """
 
         time_delta_seqs = time_delta_seqs[:, :-1]
@@ -366,4 +369,4 @@ class IntensityFree(NeuralModel):
         )  # Marks are modeled conditionally independently from times
         types_pred = torch.argmax(mark_logits, dim=-1)
 
-        return dtimes_pred, types_pred
+        return {"dtime_predict": dtimes_pred, "type_predict": types_pred}

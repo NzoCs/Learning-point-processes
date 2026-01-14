@@ -1,6 +1,6 @@
 """Attentive Neural Hawkes Network (ANHN) implementation."""
 
-from typing import Tuple, TypedDict
+from typing import Tuple, TypedDict, Optional
 
 import torch
 from torch import nn
@@ -276,7 +276,7 @@ class ANHN(NeuralModel):
             lambda_at_event=lambda_at_event,
             lambdas_loss_samples=lambda_t_sample,
             time_delta_seq=time_delta_seqs,
-            seq_mask=batch.seq_non_pad_mask[:, 1:],
+            seq_mask=batch.valid_event_mask[:, 1:],
             type_seq=batch.type_seqs[:, 1:],
         )
 
@@ -290,6 +290,9 @@ class ANHN(NeuralModel):
         time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        valid_event_mask: Optional[
+            torch.Tensor
+        ] = None,  # Not used in ANHN but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:

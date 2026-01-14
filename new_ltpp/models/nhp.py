@@ -184,9 +184,10 @@ class NHP(NeuralModel):
             left_hs.append(h_d_t)
             right_states.append(torch.cat((c_t, c_bar_t, delta_t, o_t), dim=-1))
 
-        left_hiddens = torch.stack(
-            left_hs[1:], dim=-2
-        )  # (batch_size, seq_len - 1, hidden_dim)
+        if len(left_hs) > 1:
+            left_hiddens = torch.stack(left_hs[1:], dim=-2)
+        else:
+            left_hiddens = torch.zeros(B, 0, self.hidden_size, device=self.device)
         right_hiddens = torch.stack(
             right_states, dim=-2
         )  # (batch_size, seq_len, 4 * hidden_dim)
@@ -222,7 +223,7 @@ class NHP(NeuralModel):
         """
         dts_BN = batch.time_delta_seqs
         marks_BN = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         # 1. compute hidden states at event time
         # left limits of [t_1, ..., t_N]

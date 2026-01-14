@@ -7,7 +7,6 @@ import torchmetrics
 
 from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
 from new_ltpp.shared_types import Batch, OneStepPred
-from new_ltpp.utils import logger
 
 from .pred_extractor import (
     PredictionDataExtractor,

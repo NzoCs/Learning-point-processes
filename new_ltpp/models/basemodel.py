@@ -144,7 +144,7 @@ class Model(
         """Compute the log-likelihood loss for a batch of data.
 
         Args:
-            batch: Batch containing time_seqs, time_delta_seqs, type_seqs, seq_non_pad_mask
+            batch: Batch containing time_seqs, time_delta_seqs, type_seqs, valid_event_mask
 
         Returns:
             Tuple of (loss, number of events)

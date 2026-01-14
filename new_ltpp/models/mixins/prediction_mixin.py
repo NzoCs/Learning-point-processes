@@ -31,7 +31,7 @@ class PredictionMixin(BaseMixin):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,
+        valid_event_mask: torch.Tensor,
     ) -> OneStepPred:
         """One-step prediction for every event in the sequence.
 
@@ -39,7 +39,7 @@ class PredictionMixin(BaseMixin):
             time_seqs: Tensor of event times, shape [batch_size, seq_len]
             time_delta_seqs: Tensor of time deltas, shape [batch_size, seq_len]
             type_seqs: Tensor of event types, shape [batch_size, seq_len]
-            seq_non_pad_mask: Mask tensor indicating non-padding positions, shape [batch_size, seq_len]
+            valid_event_mask: Mask tensor indicating non-padding positions, shape [batch_size, seq_len]
 
         Returns:
             OneStepPred: Predicted time deltas and event types, [batch_size, seq_len].
@@ -48,14 +48,14 @@ class PredictionMixin(BaseMixin):
         time_delta_seqs = time_delta_seqs[:, :-1]
         type_seqs = type_seqs[:, :-1]
         time_seqs = time_seqs[:, :-1]
-        seq_non_pad_mask = seq_non_pad_mask[:, :-1]
+        valid_event_mask = valid_event_mask[:, :-1]
 
         # Draw next time samples
         accepted_dtimes, weights = self.get_event_sampler().draw_next_time_one_step(
             time_seqs,
             time_delta_seqs,
             type_seqs,
-            seq_non_pad_mask,
+            valid_event_mask,
             self.compute_intensities_at_sample_dtimes,
             self.num_sample,
             compute_last_step_only=False,
@@ -66,7 +66,7 @@ class PredictionMixin(BaseMixin):
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
-            seq_non_pad_mask=seq_non_pad_mask,
+            valid_event_mask=valid_event_mask,
             sample_dtimes=accepted_dtimes,
         )
 

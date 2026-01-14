@@ -197,7 +197,6 @@ class DataInspector(CLIRunnerBase):
 
         import matplotlib.pyplot as plt
         import numpy as np
-        import seaborn as sns
 
         results = {}
 
@@ -257,10 +256,7 @@ class DataInspector(CLIRunnerBase):
                 self.print_success(f"Sauvegardé: {filepath}")
 
             if show_graphs:
-                try:
-                    plt.show()
-                except:
-                    pass
+                plt.show()
             plt.close()
             results["sequence_lengths"] = True
 
@@ -282,10 +278,7 @@ class DataInspector(CLIRunnerBase):
                 self.print_success(f"Sauvegardé: {filepath}")
 
             if show_graphs:
-                try:
-                    plt.show()
-                except:
-                    pass
+                plt.show()
             plt.close()
             results["event_types"] = True
 
@@ -310,10 +303,7 @@ class DataInspector(CLIRunnerBase):
                         self.print_success(f"Sauvegardé: {filepath}")
 
                     if show_graphs:
-                        try:
-                            plt.show()
-                        except:
-                            pass
+                        plt.show()
 
                 plt.close()
                 results["time_intervals"] = True

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 import torch
 from torch import nn
@@ -23,7 +23,6 @@ class CumulHazardFunctionNetwork(nn.Module):
         num_mlp_layers: int = 3,
         proper_marked_intensities: bool = True,
     ):
-
         super(CumulHazardFunctionNetwork, self).__init__()
 
         self.num_mlp_layers = num_mlp_layers
@@ -76,7 +75,6 @@ class CumulHazardFunctionNetwork(nn.Module):
 
         # Enable gradient computation specifically for the derivative calculation
         with torch.enable_grad():
-
             for p in self.parameters():
                 p.data = torch.clamp(p.data, min=self.params_eps)
 
@@ -222,7 +220,7 @@ class FullyNN(NeuralModel):
         # [batch_size, seq_len]
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         # [batch_size, seq_len, hidden_size]
         hidden_states = self.forward(
@@ -264,6 +262,9 @@ class FullyNN(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        valid_event_mask: Optional[
+            torch.Tensor
+        ] = None,  # Not used in FullyNN but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:

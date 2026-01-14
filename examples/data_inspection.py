@@ -44,7 +44,7 @@ def inspect_dataset_from_yaml() -> None:
     )
     data_config = builder.build()
 
-    print(f"📊 Loaded data configuration from YAML:")
+    print("📊 Loaded data configuration from YAML:")
     print(f"   Dataset: {data_config.dataset_id}")
     print(f"   Format: {data_config.data_format}")
     print(f"   Train dir: {data_config.train_dir}")
@@ -107,7 +107,7 @@ def inspect_dataset_manual_methods() -> None:
 
     data_config = builder.build()
 
-    print(f"🔧 Manual methods configuration:")
+    print("🔧 Manual methods configuration:")
     print(f"   Dataset: {data_config.dataset_id}")
     print(f"   Train dir: {data_config.train_dir}")
     print(f"   Valid dir: {data_config.valid_dir}")
@@ -133,7 +133,7 @@ def inspect_dataset_manual_methods() -> None:
     except Exception as e:
         print(f"Manual methods example failed (expected with dummy paths): {e}")
 
-    print(f"🔧 Custom YAML configuration loaded:")
+    print("🔧 Custom YAML configuration loaded:")
     print(f"   Dataset: {data_config.dataset_id}")
     print(f"   Batch size: {data_config.data_loading_specs.batch_size}")
     print(f"   Event types: {data_config.tokenizer_specs.num_event_types}")

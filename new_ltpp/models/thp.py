@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from sympy import ask
 
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
@@ -123,7 +122,7 @@ class THP(NeuralModel):
         time_seqs = batch.time_seqs
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         attn_mask = get_causal_attn_mask(time_seqs.size(1), device=self._device)
 

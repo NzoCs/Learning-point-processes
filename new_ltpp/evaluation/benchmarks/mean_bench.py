@@ -6,9 +6,8 @@ It computes RMSE and other time-based metrics using the metrics helper.
 """
 
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Union
 
-import numpy as np
 import torch
 
 from new_ltpp.configs.data_config import DataConfig
@@ -52,7 +51,7 @@ class MeanInterTimeBenchmark(TimeBenchmark):
         for batch in test_loader:
             # Extract inter-event times from batch
             time_delta_seqs = batch.time_delta_seqs  # Inter-times
-            batch_non_pad_mask = batch.seq_non_pad_mask
+            batch_non_pad_mask = batch.valid_event_mask
 
             if batch_non_pad_mask is not None:
                 # Only consider non-padded values

@@ -1,4 +1,5 @@
 import torch
+from typing import Optional
 from torch import nn
 
 from new_ltpp.models.baselayer import DNN
@@ -17,7 +18,6 @@ def flatten_parameters(model):
 
 
 class NeuralODEAdjoint(torch.autograd.Function):
-
     @staticmethod
     def forward(
         ctx, z_init, delta_t, ode_fn, solver, num_sample_times, *model_parameters
@@ -57,7 +57,7 @@ class NeuralODEAdjoint(torch.autograd.Function):
         return state
 
     @staticmethod
-    def backward(ctx, grad_z):
+    def backward(ctx, grad_z):  # type: ignore
         output_state = ctx.saved_tensors[0]  # return a tuple
         ode_fn = ctx.ode_fn
         solver = ctx.solver
@@ -216,7 +216,12 @@ class ODETPP(NeuralModel):
             right_limits.append(right_limit)
 
         # [batch_size, seq_len-1, hidden_size]
-        left_limits = torch.stack(left_limits[1:], dim=1)
+        if len(left_limits) > 1:
+            left_limits = torch.stack(left_limits[1:], dim=1)
+        else:
+            left_limits = torch.zeros(
+                type_seq_emb.size(0), 0, self.hidden_size, device=self.device
+            )
         # [batch_size, seq_len, hidden_size]
         right_limits = torch.stack(right_limits, dim=1)
 
@@ -233,7 +238,7 @@ class ODETPP(NeuralModel):
         """
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         # compute hidden states at event time
         # left limits of [t_1, ..., t_N]
@@ -299,6 +304,9 @@ class ODETPP(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        valid_event_mask: Optional[
+            torch.Tensor
+        ] = None,  # Not used in ODETPP but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:

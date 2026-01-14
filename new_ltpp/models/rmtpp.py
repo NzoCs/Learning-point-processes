@@ -1,5 +1,5 @@
 import math
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional
 
 import torch
 from torch import nn
@@ -107,7 +107,7 @@ class RMTPP(NeuralModel):
         ts_BN = batch.time_seqs
         dts_BN = batch.time_delta_seqs
         marks_BN = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         # Call forward with batch directly
         left_intensity_B_Nm1_M, right_hiddens_BNH = self.forward(
@@ -141,6 +141,9 @@ class RMTPP(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        valid_event_mask: Optional[
+            torch.Tensor
+        ] = None,  # Not used in RMTPP but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs: Any,
     ) -> torch.Tensor:

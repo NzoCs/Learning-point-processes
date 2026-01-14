@@ -1,11 +1,7 @@
 """Fixed simulation metrics with proper handling of padding and batches."""
 
-from typing import Any, Dict, List, Tuple
 
-import torch
-from scipy.stats import wasserstein_distance
 
-from new_ltpp.shared_types import Batch, SimulationResult
 
 
 class SimMetricsHelper:

@@ -54,7 +54,7 @@ class MarkDistributionBenchmark(TypeBenchmark):
         for batch in test_loader:
             # Extract event types from batch
             type_seqs = batch.type_seqs  # Event types/marks
-            batch_non_pad_mask = batch.seq_non_pad_mask
+            batch_non_pad_mask = batch.valid_event_mask
 
             if batch_non_pad_mask is not None:
                 # Only consider non-padded values

@@ -114,7 +114,7 @@ class Hawkes(Model):
         *,
         time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,  # [Batch, Seq_Len] (1/True pour event, 0/False pour padding)
+        valid_event_mask: torch.Tensor,  # [Batch, Seq_Len] (1/True pour event, 0/False pour padding)
         sample_dtimes: Optional[torch.Tensor] = None,
         compute_last_step_only: bool = False,
         **kwargs,
@@ -141,7 +141,7 @@ class Hawkes(Model):
         safe_type_seqs = type_seqs.long().clone()
 
         # On s'assure que le masque est booléen pour l'indexation
-        is_padding = ~seq_non_pad_mask.bool()
+        is_padding = ~valid_event_mask.bool()
         safe_type_seqs[is_padding] = 0
 
         # B. Lookup (Embedding)
@@ -152,10 +152,10 @@ class Hawkes(Model):
         # C. Application du Masque (Zero-out padding influence)
         # On multiplie par 0 les paramètres récupérés pour les indices de padding.
         # non_pad_mask: [Batch, L_source] -> [Batch, L_source, 1] (Broadcasting sur K_target)
-        valid_event_mask = seq_non_pad_mask.float().unsqueeze(-1)
+        valid_event_mask_expanded = valid_event_mask.float().unsqueeze(-1)
 
-        alpha_hist = alpha_hist * valid_event_mask
-        beta_hist = beta_hist * valid_event_mask
+        alpha_hist = alpha_hist * valid_event_mask_expanded
+        beta_hist = beta_hist * valid_event_mask_expanded
 
         # 4. Préparation des dimensions pour le broadcasting
         # On aligne tout pour avoir: [Batch, L_target, L_source, N_samples, K_target]
@@ -226,7 +226,7 @@ class Hawkes(Model):
         intensities_at_events = self.compute_intensities_at_sample_dtimes(
             time_seqs=time_seq[:, 1:],  # Séquence complète
             type_seqs=type_seq[:, 1:],  # Séquence complète
-            seq_non_pad_mask=seq_non_pad_mask[:, 1:],
+            valid_event_mask=seq_non_pad_mask[:, 1:],
             sample_dtimes=None,
             compute_last_step_only=False,
         ).squeeze(-2)  # [Batch, L-1, K]

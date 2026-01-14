@@ -1,6 +1,4 @@
-from pathlib import Path
 
-from new_ltpp.configs import ConfigFactory, ConfigType
 from new_ltpp.configs.config_builders import RunnerConfigBuilder
 from new_ltpp.runners import RunnerManager
 
@@ -69,7 +67,7 @@ def main() -> None:
 
     print("✅ Programmatic runner config built successfully!")
     print(f"   🧠 Model: {model_id}")
-    print(f"   📊 Dataset: test")
+    print("   📊 Dataset: test")
     print(f"   🔢 Max Epochs: {config.training_config.max_epochs}")
     print(f"   📦 Batch Size: {config.training_config.batch_size}")
     print(f"   💾 Save Dir: {config.save_dir}")

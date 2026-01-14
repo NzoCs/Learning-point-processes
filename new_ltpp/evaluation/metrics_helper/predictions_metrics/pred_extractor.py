@@ -5,8 +5,6 @@ This module contains time/type specific extractors and a combined
 `Batch` and a `OneStepPred`.
 """
 
-from typing import Tuple
-
 import torch
 
 from new_ltpp.shared_types import Batch, OneStepPred
@@ -28,7 +26,7 @@ class TimeDataExtractor:
             pred_time_tensor: Tensor of predicted time deltas
         """
         true_time_delta_seqs = batch.time_delta_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         true_times = true_time_delta_seqs[batch_non_pad_mask]
         pred_times = pred_time_tensor[batch_non_pad_mask]
@@ -50,7 +48,7 @@ class TypeDataExtractor:
             pred_type_tensor: Tensor of predicted event types
         """
         true_type_seqs = batch.type_seqs
-        batch_non_pad_mask = batch.seq_non_pad_mask
+        batch_non_pad_mask = batch.valid_event_mask
 
         true_types = true_type_seqs[batch_non_pad_mask]
         pred_types = pred_type_tensor[batch_non_pad_mask]

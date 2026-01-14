@@ -6,7 +6,7 @@ This module contains TypedDict definitions for type-safe statistics handling.
 
 from __future__ import annotations
 
-from typing import Dict, TypedDict
+from typing import TypedDict
 
 import numpy as np
 import numpy.typing as npt

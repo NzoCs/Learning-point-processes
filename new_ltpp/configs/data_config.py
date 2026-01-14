@@ -1,9 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Union, cast
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils.const import PaddingStrategy, TruncationStrategy
-from new_ltpp.utils.log_utils import default_logger
 
 
 @dataclass

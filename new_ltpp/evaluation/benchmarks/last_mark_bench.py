@@ -4,14 +4,11 @@ Last Mark Benchmark
 This benchmark predicts the next event mark (type) using the previous event mark (lag-1).
 """
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import torch
-import yaml
 
-from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.shared_types import Batch
-from new_ltpp.utils import logger
 
 from .type_bench import TypeBenchmark
 

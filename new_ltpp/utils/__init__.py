@@ -5,8 +5,6 @@ from new_ltpp.utils.const import (
     PaddingStrategy,
     TruncationStrategy,
 )
-from new_ltpp.utils.log_utils import DEFAULT_FORMATTER
-from new_ltpp.utils.log_utils import default_logger as logger
 from new_ltpp.utils.misc import (
     dict_deep_update,
     load_pickle,
@@ -21,6 +19,7 @@ from new_ltpp.utils.multiprocess_utils import (
     parse_uri_to_protocol_and_path,
 )
 from new_ltpp.utils.ode_utils import rk4_step_method
+from new_ltpp.utils.log_utils import logger
 
 __all__ = [
     "py_assert",
@@ -38,4 +37,5 @@ __all__ = [
     "LogConst",
     "PaddingStrategy",
     "TruncationStrategy",
+    "logger",
 ]

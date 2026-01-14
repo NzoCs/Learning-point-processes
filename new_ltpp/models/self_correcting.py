@@ -8,6 +8,7 @@ from new_ltpp.models.basemodel import Model
 from new_ltpp.shared_types import Batch
 from new_ltpp.shared_types import SimulationResult
 
+
 class SelfCorrecting(Model):
     """
     PyTorch implementation of the Self-Correcting Point Process model.
@@ -62,6 +63,9 @@ class SelfCorrecting(Model):
         time_seq: torch.Tensor,
         type_seq: torch.Tensor,
         sample_dtimes: torch.Tensor,
+        valid_event_mask: Optional[
+            torch.Tensor
+        ] = None,  # Not used in SelfCorrecting but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:
@@ -125,7 +129,7 @@ class SelfCorrecting(Model):
 
         # Masque (on ignore le padding et le premier événement qui sert juste d'ancrage t0)
         # [Batch, L-1]
-        seq_mask = batch.seq_non_pad_mask[:, 1:]
+        seq_mask = batch.valid_event_mask[:, 1:]
 
         # --- Préparation des Données ---
 
@@ -207,7 +211,6 @@ class SelfCorrecting(Model):
 
         return loss, int(num_events)
 
-    
     def simulate(
         self,
         batch: Optional[Batch] = None,

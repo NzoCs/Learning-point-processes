@@ -189,7 +189,7 @@ class SimulationMixin(BaseMixin):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,
+        valid_event_mask: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Simulate one step of event generation.
 
@@ -197,7 +197,7 @@ class SimulationMixin(BaseMixin):
             time_seqs: Time sequence [batch_size, seq_len]
             time_delta_seqs: Time delta sequence [batch_size, seq_len]
             type_seqs: Event type sequence [batch_size, seq_len]
-            mode: "train" or "simulation" mode
+            valid_event_mask: Valid event mask [batch_size, seq_len]
 
         Returns:
             Tuple of (predicted_dtimes, predicted_types)
@@ -209,7 +209,7 @@ class SimulationMixin(BaseMixin):
             time_seqs,
             time_delta_seqs,
             type_seqs,
-            seq_non_pad_mask,
+            valid_event_mask,
             self.compute_intensities_at_sample_dtimes,
             num_sample=1,
             compute_last_step_only=True,
@@ -224,7 +224,7 @@ class SimulationMixin(BaseMixin):
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
-            seq_non_pad_mask=seq_non_pad_mask,
+            valid_event_mask=valid_event_mask,
             sample_dtimes=dtimes_pred[:, :, None],
             compute_last_step_only=True,
         ).view(batch_size, num_mark)
@@ -407,13 +407,13 @@ class SimulationMixin(BaseMixin):
             active_time_seq = buffers["time"][active_indices, :current_len]
             active_time_delta = buffers["time_delta"][active_indices, :current_len]
             active_event_seq = buffers["event"][active_indices, :current_len]
-            active_seq_non_pad_mask = active_event_seq != self.pad_token_id
+            active_valid_event_mask = active_event_seq != self.pad_token_id
 
             dtimes_pred, type_pred = self._simulate_one_step(
                 active_time_seq,
                 active_time_delta,
                 active_event_seq,
-                active_seq_non_pad_mask,
+                active_valid_event_mask,
             )
 
             # Calculate new times (Active_time_seq[-1] est maintenant un temps absolu)

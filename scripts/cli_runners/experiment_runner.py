@@ -55,18 +55,18 @@ class ExperimentRunner(CLIRunnerBase):
 
     def run_experiment(
         self,
-        max_epochs: int | None,
-        config_path: Union[str, Path],
-        data_config: str,
-        general_specs_config: str,
-        training_config: str,
-        data_loading_config: str,
-        simulation_config: str,
-        thinning_config: str,
-        logger_config: str,
-        model_id: str,
-        phase: str,
-        save_dir: Union[str, Path],
+        config_path: Optional[Union[str, Path]] = None,
+        phase: str = "train",
+        max_epochs: int | None = None,
+        data_config: Optional[str] = None,
+        general_specs_config: Optional[str] = None,
+        training_config: Optional[str] = None,
+        data_loading_config: Optional[str] = None,
+        simulation_config: Optional[str] = None,
+        thinning_config: Optional[str] = None,
+        logger_config: Optional[str] = None,
+        model_id: str = "NHP",
+        save_dir: Optional[Union[str, Path]] = None,
         model_specs_config: Optional[str] = None,
         debug: bool = False,
     ) -> bool:
@@ -135,11 +135,9 @@ class ExperimentRunner(CLIRunnerBase):
             logger=logger_config,
         )
 
-        self.print_info(f"Configurations utilisées:")
+        self.print_info("Configurations utilisées:")
         for path_key, path_value in config_paths.items():
-            config_type = (
-                path_key.replace("_config_path", "").replace("_", " ").title()
-            )
+            config_type = path_key.replace("_config_path", "").replace("_", " ").title()
             self.print_info(f"  • {config_type}: {path_value}")
 
         # Charger la configuration complète depuis le YAML (comme run_all_phase.py)
@@ -149,9 +147,6 @@ class ExperimentRunner(CLIRunnerBase):
         )
 
         self.print_info("Configuration YAML chargée avec succès")
-
-        # Récupérer le dictionnaire de configuration
-        config_dict = config_builder.config_dict
 
         # Appliquer les overrides de paramètres CLI en utilisant les méthodes du builder
         if max_epochs is not None:
@@ -171,9 +166,7 @@ class ExperimentRunner(CLIRunnerBase):
         # Validation de la phase
         valid_phases = ["train", "test", "predict", "all"]
         if phase not in valid_phases:
-            self.print_error(
-                f"Phase invalide: {phase}. Phases valides: {valid_phases}"
-            )
+            self.print_error(f"Phase invalide: {phase}. Phases valides: {valid_phases}")
             return False
 
         # Créer et lancer le runner

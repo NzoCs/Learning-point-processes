@@ -1,6 +1,5 @@
 import logging
 import sys
-import typing
 
 from new_ltpp.utils.const import LogConst
 
@@ -53,4 +52,4 @@ def get_logger(name, level="INFO", handlers=None, update=False):
 
 
 # -------------------------- Singleton Object --------------------------
-default_logger = get_logger(DEFAULT_LOGGER)
+logger = get_logger(DEFAULT_LOGGER)

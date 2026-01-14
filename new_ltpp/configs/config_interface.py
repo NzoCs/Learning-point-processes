@@ -5,7 +5,7 @@ Ce module définit les interfaces et protocoles de base pour les configurations,
 permettant d'éviter les imports circulaires entre les différents modules de configuration.
 """
 
-from typing import TYPE_CHECKING, Any, Dict, List, Protocol
+from typing import Any, Dict, List, Protocol
 
 
 class ConfigValidationError(Exception):

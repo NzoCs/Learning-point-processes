@@ -7,12 +7,9 @@ statistics batch-by-batch during the prediction phase.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
-import numpy.typing as npt
 
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.shared_types import Batch, SimulationResult
@@ -20,9 +17,7 @@ from new_ltpp.utils import logger
 
 from .acc_types import (
     AllStatistics,
-    CorrelationStatistics,
     FinalResult,
-    MetricsData,
     PlotData,
 )
 from .corr_accumulator import CorrAccumulator

@@ -1,4 +1,3 @@
-from typing import Any, Dict
 
 from new_ltpp.data.generation import HawkesSimulator, SelfCorrecting
 

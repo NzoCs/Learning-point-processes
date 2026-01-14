@@ -55,7 +55,7 @@ class TPPModelProtocol(Protocol):
                 - time_seqs: Event timestamps [batch_size, seq_len]
                 - time_delta_seqs: Inter-event times [batch_size, seq_len]
                 - type_seqs: Event types [batch_size, seq_len]
-                - seq_non_pad_mask: Mask for valid events [batch_size, seq_len]
+                - valid_event_mask: Mask for valid events [batch_size, seq_len]
 
         Returns:
             Tuple of (loss, num_events) where:
@@ -119,7 +119,7 @@ class TPPModelProtocol(Protocol):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,
+        valid_event_mask: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Predict next event time and type given history up to each event.
 

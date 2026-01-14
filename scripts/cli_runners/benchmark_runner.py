@@ -4,7 +4,7 @@ Benchmark Runner
 Runner pour les tests de performance et benchmarking TPP.
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from new_ltpp.configs import DataConfigBuilder
 from new_ltpp.evaluation.benchmarks.benchmark_manager import (
@@ -70,17 +70,17 @@ class BenchmarkRunner(CLIRunnerBase):
             import yaml
 
             self.print_info("Récupération de toutes les configurations disponibles...")
-            
+
             with open(config_path, "r") as f:
                 yaml_content = yaml.safe_load(f)
-            
+
             # Extraire tous les noms de configs data disponibles
             available_data_configs = list(yaml_content.get("data_configs", {}).keys())
-            
+
             if not available_data_configs:
                 self.print_error("Aucune configuration de données trouvée dans le YAML")
                 return False
-            
+
             self.print_info(
                 f"Configurations trouvées: {', '.join(available_data_configs)}"
             )
@@ -110,7 +110,7 @@ class BenchmarkRunner(CLIRunnerBase):
                 all_data_configs.append(built_config)
 
                 self.print_info(f"Configuration chargée: {built_config.dataset_id}")
-            
+
             except Exception as e:
                 self.print_error(f"Erreur lors du chargement de {data_cfg}: {e}")
                 if self.debug:

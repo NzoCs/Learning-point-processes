@@ -6,17 +6,15 @@ configuration classes should implement to ensure consistency and
 type safety across the configuration system.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Union
 
 from typing_extensions import Self
 
 from new_ltpp.configs.config_interface import (
-    ConfigInterface,
     ConfigSerializationError,
     ConfigValidationError,
 )

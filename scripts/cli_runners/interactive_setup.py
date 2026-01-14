@@ -5,12 +5,10 @@ Runner pour la configuration guidée d'expériences TPP.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
-import typer
 import yaml
 from rich.prompt import Confirm, FloatPrompt, IntPrompt, Prompt
-from rich.table import Table
 
 from .cli_base import CLIRunnerBase
 

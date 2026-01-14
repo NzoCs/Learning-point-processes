@@ -32,7 +32,7 @@ class EventSampler(nn.Module):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,
+        valid_event_mask: torch.Tensor,
         intensity_fn: Callable[..., torch.Tensor],
         compute_last_step_only: bool,
     ) -> torch.Tensor:
@@ -50,9 +50,7 @@ class EventSampler(nn.Module):
 
         tnorm = torch.linspace(
             0.0, self.dtime_max, self.num_samples_boundary, device=self.device
-        )[
-            None, None, :
-        ]  # [1,1,K]
+        )[None, None, :]  # [1,1,K]
 
         tnorm = tnorm.expand(batch_size, seq_len, self.num_samples_boundary)  # [B,L,K]
 
@@ -61,7 +59,7 @@ class EventSampler(nn.Module):
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
-            seq_non_pad_mask=seq_non_pad_mask,
+            valid_event_mask=valid_event_mask,
             sample_dtimes=tnorm,
             compute_last_step_only=compute_last_step_only,
         )
@@ -153,7 +151,7 @@ class EventSampler(nn.Module):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        seq_non_pad_mask: torch.Tensor,
+        valid_event_mask: torch.Tensor,
         intensity_fn: Callable[..., torch.Tensor],
         num_sample: int,
         compute_last_step_only: bool = False,
@@ -164,7 +162,7 @@ class EventSampler(nn.Module):
             time_seqs: [B,L]
             time_delta_seqs: [B,L]
             type_seqs: [B,L]
-            seq_non_pad_mask: [B,L]
+            valid_event_mask: [B,L]
             intensity_fn: Callable[..., torch.Tensor]
             num_sample: int
             compute_last_step_only: bool
@@ -178,7 +176,7 @@ class EventSampler(nn.Module):
             time_seqs,
             time_delta_seqs,
             type_seqs,
-            seq_non_pad_mask,
+            valid_event_mask,
             intensity_fn,
             compute_last_step_only,
         )  # [B,L]
@@ -197,7 +195,7 @@ class EventSampler(nn.Module):
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
-            seq_non_pad_mask=seq_non_pad_mask,
+            valid_event_mask=valid_event_mask,
             sample_dtimes=exp_j,
             compute_last_step_only=compute_last_step_only,
         )

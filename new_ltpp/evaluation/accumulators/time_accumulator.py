@@ -4,8 +4,6 @@ Inter-Event Time Accumulator
 Accumulates inter-event time statistics from batches during prediction.
 """
 
-from typing import Any, Dict, List, Optional
-
 import numpy as np
 import torch
 
@@ -51,18 +49,15 @@ class InterEventTimeAccumulator(BaseAccumulator):
         # Apply mask and flatten values for vectorized histogram computation.
         # Ground truth: select valid (non-padded) deltas > 0
         time_deltas = batch.time_delta_seqs
-        mask = batch.seq_non_pad_mask.bool()
+        mask = batch.valid_event_mask.bool()
         valid_gt = time_deltas[mask]
         valid_gt = valid_gt[valid_gt > 0]
 
         # Simulation: use simulation mask if provided, otherwise assume masked values are <= 0
-        sim_deltas = simulation.dtime_seqs
+        sim_deltas = simulation.time_delta_seqs
         # simulation.mask convention: True indicates masked positions (as used elsewhere)
-        if hasattr(simulation, "mask") and simulation.mask is not None:
-            sim_mask = simulation.mask.bool()
-            valid_sim = sim_deltas[~sim_mask]
-        else:
-            valid_sim = sim_deltas.view(-1)
+        sim_mask = simulation.valid_event_mask.bool()
+        valid_sim = sim_deltas[sim_mask]
         valid_sim = valid_sim[valid_sim > 0]
 
         # Quick validation
@@ -107,7 +102,7 @@ class InterEventTimeAccumulator(BaseAccumulator):
             logger.warning(
                 "InterEventTimeAccumulator: No ground truth time deltas collected, returning empty statistics"
             )
-        
+
         if self._sim_total == 0:
             logger.warning(
                 "InterEventTimeAccumulator: No simulated time deltas collected, returning empty statistics"

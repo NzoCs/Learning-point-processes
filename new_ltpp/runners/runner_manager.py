@@ -1,5 +1,3 @@
-import copy
-import traceback
 from typing import List, Optional, Union
 
 from new_ltpp.configs import RunnerConfig
@@ -57,13 +55,13 @@ class RunnerManager:
         self.runner.train()
         return None
 
-    def test(self) -> Optional[dict]:
+    def test(self) -> None:
         logger.critical("=== TESTING PHASE ===")
         self.setup_runner(enable_logging=False)
         self.runner.test()
         return None
 
-    def predict(self) -> Optional[str]:
+    def predict(self) -> None:
         logger.critical("=== PREDICTION PHASE ===")
         self.setup_runner(enable_logging=False)
         self.runner.predict()
@@ -101,15 +99,15 @@ class RunnerManager:
         for current_phase in phases:
 
             if current_phase == "train":
-                result = self.train()
+                self.train()
                 results[current_phase] = "completed"
 
             elif current_phase == "test":
-                result = self.test()
+                self.test()
                 results[current_phase] = "completed"
 
             elif current_phase == "predict":
-                result = self.predict()
+                self.predict()
                 results[current_phase] = "completed"
 
             else:

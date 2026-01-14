@@ -43,7 +43,7 @@ Example:
 """
 
 import copy
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional
 
 import numpy as np
 import torch
@@ -230,7 +230,7 @@ class EventTokenizer:
 
         # Create sequence mask
         sequence_mask = batch_output["type_seqs"] != self.pad_token_id
-        batch_output["seq_non_pad_mask"] = sequence_mask
+        batch_output["valid_event_mask"] = sequence_mask
 
         return batch_output
 
@@ -244,7 +244,6 @@ class EventTokenizer:
         Args:
             sequences: List of TPPSequence objects
             max_length: Maximum length to pad to
-            return_attention_mask: Whether to return attention mask
 
         Returns:
             Dictionary with padded tensors
@@ -275,7 +274,7 @@ class EventTokenizer:
 
         # Create sequence mask
         sequence_mask = batch_output["type_seqs"] != self.pad_token_id
-        batch_output["seq_non_pad_mask"] = sequence_mask
+        batch_output["valid_event_mask"] = sequence_mask
 
         return batch_output
 

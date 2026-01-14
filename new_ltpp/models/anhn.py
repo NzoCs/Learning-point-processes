@@ -1,6 +1,6 @@
 """Attentive Neural Hawkes Network (ANHN) implementation."""
 
-from typing import TypedDict, Tuple
+from typing import Tuple, TypedDict
 
 import torch
 from torch import nn
@@ -96,9 +96,8 @@ class ANHN(NeuralModel):
         event_emb: torch.Tensor = self.layer_type_emb(type_seqs)
 
         # [batch_size, seq_len, hidden_size]
-        rnn_output: torch.Tensor;
+        rnn_output: torch.Tensor
         rnn_output, _ = self.layer_rnn(event_emb)
-
 
         # --- 1. Calcul des paramètres du Hawkes (Mu, Alpha, Delta) ---
 

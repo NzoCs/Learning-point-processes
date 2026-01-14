@@ -143,8 +143,12 @@ class ModelSpecsConfig:
         dropout: dropout probability
     """
 
-
-    def __init__(self, hidden_size: Optional[int] = None, dropout: Optional[float] = 0.0, **kwargs):
+    def __init__(
+        self,
+        hidden_size: Optional[int] = None,
+        dropout: Optional[float] = 0.0,
+        **kwargs,
+    ):
 
         self.hidden_size = hidden_size
         self.dropout = dropout

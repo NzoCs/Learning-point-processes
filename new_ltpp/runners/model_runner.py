@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 import pytorch_lightning as pl
 
@@ -32,8 +32,6 @@ class Runner:
         # Initialize your datamodule
         self.datamodule = TPPDataModule(config.data_config)
         data_info = self.datamodule.get_data_info()
-
-        pad_token_id = config.data_config.tokenizer_specs.pad_token_id
 
         # Initialize your model
         # Use the ModelFactory to create the model
@@ -145,7 +143,7 @@ class Runner:
     def predict(self) -> None:
         """
         Run predictions (e.g., simulations) using the model and save results.
-        
+
         The PredictionStatsCallback handles statistics finalization and intensity
         graph generation automatically while the model is still on the correct device.
         """

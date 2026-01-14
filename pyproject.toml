@@ -7,10 +7,8 @@ name = "new_ltpp"
 version = "0.1.0"
 description = "An easy and flexible tool for neural temporal point process"
 readme = "README.md"
-authors = [
-    {name = "Alipay"}
-]
-license = {text = "MIT"}
+authors = [{ name = "Alipay" }]
+license = { text = "MIT" }
 requires-python = "==3.11.*"
 classifiers = [
     "Programming Language :: Python :: 3.11",
@@ -41,6 +39,9 @@ dependencies = [
     "pytest>=8.4.2",
     "pip>=25.3",
     "git-filter-repo>=2.47.0",
+    "cython>=3.2.4",
+    "sigkernel",
+    "geomloss>=0.2.6",
 ]
 
 [dependency-groups]
@@ -99,6 +100,12 @@ logging = [
 [project.scripts]
 new-ltpp = "scripts.cli:main"
 
+[tool.uv.extra-build-dependencies]
+git = ["Cython"]
+
+[tool.uv.sources]
+sigkernel = { git = "https://github.com/crispitagorico/sigkernel.git" }
+
 [tool.setuptools]
 include-package-data = true
 
@@ -145,12 +152,7 @@ python_functions = ["test_*"]
 
 [tool.coverage.run]
 source = ["new_ltpp"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "setup.py",
-    "version.py",
-]
+omit = ["*/tests/*", "*/test_*", "setup.py", "version.py"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -199,10 +201,10 @@ ignore_missing_imports = true
 [tool.flake8]
 max-line-length = 88
 extend-ignore = [
-    "E203",  # whitespace before ':'
-    "E501",  # line too long (handled by black)
-    "W503",  # line break before binary operator
-    "W504",  # line break after binary operator
+    "E203", # whitespace before ':'
+    "E501", # line too long (handled by black)
+    "W503", # line break before binary operator
+    "W504", # line break after binary operator
 ]
 exclude = [
     ".git",
@@ -220,7 +222,7 @@ exclude = [
     "node_modules",
 ]
 per-file-ignores = [
-    "__init__.py:F401",  # imported but unused
-    "tests/*:D",         # no docstrings in tests
+    "__init__.py:F401", # imported but unused
+    "tests/*:D",        # no docstrings in tests
 ]
 max-complexity = 10

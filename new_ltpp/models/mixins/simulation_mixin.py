@@ -2,7 +2,7 @@
 """Mixin for simulation functionality."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Optional, Tuple, TypedDict
 
 import torch
 from tqdm import tqdm
@@ -149,7 +149,7 @@ class SimulationMixin(BaseMixin):
             batch_size = batch.time_seqs.size(0)
 
         start_times, end_times = self.compute_start_end_time(
-            batch.time_seqs, batch.seq_non_pad_mask
+            batch.time_seqs, batch.valid_event_mask
         )
 
         # Pre-allocate buffers
@@ -166,7 +166,7 @@ class SimulationMixin(BaseMixin):
         )
 
     def compute_start_end_time(
-        self, time_seqs: torch.Tensor, seq_non_pad_mask: torch.Tensor
+        self, time_seqs: torch.Tensor, valid_event_mask: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute start and end times for simulation.
 
@@ -175,11 +175,11 @@ class SimulationMixin(BaseMixin):
         """
 
         # put the padded items to infinity so that they won't affect min computation
-        time_seqs[~seq_non_pad_mask] = float("inf")
+        time_seqs[~valid_event_mask] = float("inf")
         start_times = time_seqs.min(dim=1).values
 
         # put it back to original values
-        time_seqs[~seq_non_pad_mask] = 0.0
+        time_seqs[~valid_event_mask] = 0.0
         end_times = time_seqs.max(dim=1).values
 
         return start_times, end_times
@@ -249,7 +249,7 @@ class SimulationMixin(BaseMixin):
                 batch_size, 2, device=self.device, dtype=torch.float32
             ),
             type_seqs=torch.zeros(batch_size, 2, device=self.device, dtype=torch.long),
-            seq_non_pad_mask=torch.ones(
+            valid_event_mask=torch.ones(
                 batch_size, 2, device=self.device, dtype=torch.bool
             ),
         )
@@ -392,7 +392,6 @@ class SimulationMixin(BaseMixin):
             pbar.refresh()
 
         while sim_state["batch_active"].any():
-
             # Get active sequences
             active_indices = sim_state["batch_active"].nonzero(as_tuple=True)[0]
             if len(active_indices) == 0:
@@ -423,9 +422,9 @@ class SimulationMixin(BaseMixin):
             # Update last_event_time
             type_pred_flat = type_pred.squeeze(-1)
             last_times_flat = active_time_seq[:, -1]
-            sim_state["last_event_time"][
-                active_indices, type_pred_flat
-            ] = last_times_flat
+            sim_state["last_event_time"][active_indices, type_pred_flat] = (
+                last_times_flat
+            )
 
             # Update buffers
             buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
@@ -474,6 +473,12 @@ class SimulationMixin(BaseMixin):
             final_time_seq <= absolute_end_times.unsqueeze(-1),
         )
 
+        # Apply pad_token_id to masked/invalid entries
+        final_event_seq[~simul_mask] = self.pad_token_id
+
         return SimulationResult(
-            final_time_seq, final_time_delta, final_event_seq, simul_mask
+            time_seqs=final_time_seq,
+            time_delta_seqs=final_time_delta,
+            type_seqs=final_event_seq,
+            valid_event_mask=simul_mask,
         )

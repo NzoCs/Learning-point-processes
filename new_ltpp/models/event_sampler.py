@@ -184,11 +184,13 @@ class EventSampler(nn.Module):
         )  # [B,L]
 
         # 2. exp samples
-        exp_j = self.sample_exp_distribution(upper_bound)  # [B,L,E] or [B,1,E] if compute_last_step_only is True
+        exp_j = self.sample_exp_distribution(
+            upper_bound
+        )  # [B,L,E] or [B,1,E] if compute_last_step_only is True
         exp_j = torch.cumsum(exp_j, dim=-1)
 
         if compute_last_step_only:
-            pass # for debugging
+            pass  # for debugging
 
         # 3. evaluate intensity at sampled times
         intens = intensity_fn(

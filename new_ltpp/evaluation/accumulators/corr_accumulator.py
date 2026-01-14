@@ -4,8 +4,6 @@ Autocorrelation Accumulator
 Accumulates autocorrelation statistics for temporal point processes.
 """
 
-from typing import Any, Dict, Optional, Tuple
-
 import numpy as np
 import torch
 import torch.fft
@@ -38,7 +36,9 @@ class CorrAccumulator(BaseAccumulator):
 
         # Validate simulation has sufficient events
         if simulation is None:
-            logger.warning("CorrAccumulator: No simulation results provided, skipping batch")
+            logger.warning(
+                "CorrAccumulator: No simulation results provided, skipping batch"
+            )
             return
 
         # Compute ACF for ground truth
@@ -146,9 +146,10 @@ class CorrAccumulator(BaseAccumulator):
             Tensor of shape (batch_size, max_lag + 1)
         """
 
+        # (B, nb_bins)
         hist = CorrAccumulator.create_hist(
             times=batch.time_seqs,
-            mask=batch.seq_non_pad_mask,
+            mask=batch.valid_event_mask,
             nb_bins=nb_bins,
         )  # (B, nb_bins)
 
@@ -187,7 +188,7 @@ class CorrAccumulator(BaseAccumulator):
 
         hist = CorrAccumulator.create_hist(
             times=sim.time_seqs,
-            mask=sim.mask,
+            mask=sim.valid_event_mask,
             nb_bins=nb_bins,
         )  # (B, nb_bins)
         # Mean-center

@@ -45,8 +45,8 @@ class VisualizationMixin(SimulationMixin):
         end_time = self.simulation_end_time
 
         # Get or generate simulation data
-        time_seq, time_delta_seq, type_seq, seq_non_pad_mask = self._get_simulation_data(
-            start_time, end_time
+        time_seq, time_delta_seq, type_seq, seq_non_pad_mask = (
+            self._get_simulation_data(start_time, end_time)
         )
 
         # Generate time points for intensity calculation
@@ -60,7 +60,11 @@ class VisualizationMixin(SimulationMixin):
         )
 
         intensities_at_times = self._calculate_intensities(
-            time_seq, time_delta_seq, type_seq, seq_non_pad_mask, time_delta_seq[:, 1:, None]
+            time_seq,
+            time_delta_seq,
+            type_seq,
+            seq_non_pad_mask,
+            time_delta_seq[:, 1:, None],
         )
 
         # Flatten for analysis

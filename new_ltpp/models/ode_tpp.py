@@ -35,8 +35,6 @@ class NeuralODEAdjoint(torch.autograd.Function):
 
         """
         # Get the device from z_init for consistent usage
-        device = z_init.device
-
         ctx.ode_fn = ode_fn
         ctx.solver = solver
         ctx.delta_t = delta_t
@@ -233,7 +231,6 @@ class ODETPP(NeuralModel):
         Returns:
             list: loglike loss, num events.
         """
-        time_seqs = batch.time_seqs
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.seq_non_pad_mask

@@ -6,6 +6,7 @@ metrics like RMSE, MAE, etc.
 """
 
 from typing import Optional
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -132,9 +133,6 @@ class Hawkes(Model):
         # 2. Gestion du mode 'last step' et extraction de l'historique
         if compute_last_step_only:
             cumsum_dtimes = cumsum_dtimes[:, -1:, :, :]  # [B, 1, L, N]
-            target_seq_len = 1
-        else:
-            target_seq_len = time_seqs.shape[1]
 
         # 3. Extraction efficace des paramètres avec GESTION DU PADDING
         # A. Création d'indices sûrs (Safe Indices)
@@ -214,7 +212,7 @@ class Hawkes(Model):
 
         # Masque pour ignorer le padding
         # [Batch, L-1] (car on prédit à partir du 2ème événement jusqu'à la fin)
-        seq_non_pad_mask = batch.seq_non_pad_mask
+        seq_non_pad_mask = batch.valid_event_mask
 
         # --- 1. Terme Log-Intensité (Event Log-Likelihood) ---
         # On calcule lambda(t_i) pour chaque événement i.
@@ -231,9 +229,7 @@ class Hawkes(Model):
             seq_non_pad_mask=seq_non_pad_mask[:, 1:],
             sample_dtimes=None,
             compute_last_step_only=False,
-        ).squeeze(
-            -2
-        )  # [Batch, L-1, K]
+        ).squeeze(-2)  # [Batch, L-1, K]
 
         safe_type_seqs = type_seq.long().clone()
 
@@ -296,7 +292,6 @@ class Hawkes(Model):
 
         # L_target correspond au nombre d'intervalles sur lesquels on intègre
         batch_size, seq_len = time_seq.shape
-        L_target = seq_len - 1
 
         # --- A. Partie Intensité de Base (Mu) ---
         # Intégrale de mu_k sur dt = mu_k * dt
@@ -391,7 +386,6 @@ class Hawkes(Model):
         return integral_base + excitation_integral
 
     def simulate(self, *args, **kwargs) -> SimulationResult:
-
         raise NotImplementedError(
             "Simulation not implemented for Hawkes model, there is a custom implementation in the data generation class. This class serves as a benchmark for the other models in prediction phase for the loglike loss."
         )

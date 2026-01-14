@@ -6,7 +6,9 @@ Wasserstein 1D, Sinkhorn, or other simulation metrics.
 """
 
 from typing import Tuple
+
 from new_ltpp.shared_types import Batch, SimulationResult
+
 from .sim_types import SimTimeValues, SimTypeValues
 
 
@@ -32,9 +34,9 @@ class SimTimeDataExtractor:
             true_time_seqs=batch.time_seqs,
             true_time_delta_seqs=batch.time_delta_seqs,
             sim_time_seqs=sim.time_seqs,
-            sim_time_delta_seqs=sim.dtime_seqs,
-            true_mask=batch.seq_non_pad_mask,
-            sim_mask=sim.mask,
+            sim_time_delta_seqs=sim.time_delta_seqs,
+            true_mask=batch.valid_event_mask,
+            sim_mask=sim.valid_event_mask,
         )
 
 
@@ -57,8 +59,8 @@ class SimTypeDataExtractor:
         return SimTypeValues(
             true_type_seqs=batch.type_seqs,
             sim_type_seqs=sim.type_seqs,
-            true_mask=batch.seq_non_pad_mask,
-            sim_mask=sim.mask,
+            true_mask=batch.valid_event_mask,
+            sim_mask=sim.valid_event_mask,
         )
 
 

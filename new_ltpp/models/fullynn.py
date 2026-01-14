@@ -73,10 +73,10 @@ class CumulHazardFunctionNetwork(nn.Module):
         Returns:
             tuple: cumulative hazard function values and their derivatives w.r.t. time deltas.
         """
-        
+
         # Enable gradient computation specifically for the derivative calculation
         with torch.enable_grad():
-            
+
             for p in self.parameters():
                 p.data = torch.clamp(p.data, min=self.params_eps)
 
@@ -292,8 +292,8 @@ class FullyNN(NeuralModel):
             batch_size, seq_len, num_samples, hidden_size
         )
         _, derivative_integral_lambda = self.layer_intensity.forward(
-            hidden_states=hidden_states_, # [batch_size, seq_len, num_samples, hidden_size]
-            time_delta_seqs=sample_dtimes, # [batch_size, seq_len, num_samples] or 
+            hidden_states=hidden_states_,  # [batch_size, seq_len, num_samples, hidden_size]
+            time_delta_seqs=sample_dtimes,  # [batch_size, seq_len, num_samples] or
         )
 
         if compute_last_step_only:

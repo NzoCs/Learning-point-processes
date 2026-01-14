@@ -1,6 +1,7 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
-from typing import Optional
 
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask

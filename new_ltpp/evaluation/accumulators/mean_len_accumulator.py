@@ -31,7 +31,7 @@ class SequenceLengthAccumulator(BaseAccumulator):
         """
 
         # Validate simulation has sufficient events (vectorized torch operations)
-        sim_mask = simulation.mask.bool()
+        sim_mask = simulation.valid_event_mask.bool()
         sim_seq_lengths = sim_mask.sum(dim=1)
         sim_event_count = int(sim_seq_lengths.sum().item())
 
@@ -59,7 +59,7 @@ class SequenceLengthAccumulator(BaseAccumulator):
         self._sim_mean.extend(sim_event_count_normalized.view(-1).cpu().tolist())
 
         # Extract ground truth sequence lengths (vectorized)
-        mask = batch.seq_non_pad_mask.bool()
+        mask = batch.valid_event_mask.bool()
         gt_seq_lengths = mask.sum(dim=1)
 
         gt_time_seqs = batch.time_seqs

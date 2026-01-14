@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 
 from new_ltpp.configs import ModelConfig
@@ -26,7 +25,11 @@ class Model(
     """
 
     def __init__(
-        self, model_config: ModelConfig, data_info: DataInfo, output_dir: Path | str, **kwargs
+        self,
+        model_config: ModelConfig,
+        data_info: DataInfo,
+        output_dir: Path | str,
+        **kwargs,
     ):
         """Initialize the Model.
 
@@ -101,7 +104,6 @@ class Model(
 
         # Use cosine decay scheduler instead
         if hasattr(self, "lr_scheduler") and lr_scheduler:
-
             scheduler = optim.lr_scheduler.CosineAnnealingLR(
                 optimizer,
                 T_max=max_epochs,  # Total number of epochs
@@ -115,17 +117,17 @@ class Model(
 
         return optimizer
 
-    def make_dtime_loss_samples(self, time_delta_seq: torch.Tensor) -> torch.Tensor:
+    def make_dtime_loss_samples(self, time_delta_seqs: torch.Tensor) -> torch.Tensor:
         """Generate the time point samples for every interval.
 
         Args:
-            time_delta_seq (tensor): [batch_size, seq_len].
+            time_delta_seqs (tensor): [batch_size, seq_len].
 
         Returns:
             tensor: [batch_size, seq_len, n_samples]
         """
 
-        seq_len = time_delta_seq.size(1)
+        seq_len = time_delta_seqs.size(1)
 
         # [1, 1, n_samples] - Monte Carlo sampling on [0,1]
         dtimes_ratio_sampled = torch.rand(
@@ -133,7 +135,7 @@ class Model(
         )
 
         # [batch_size, max_len, n_samples]
-        sampled_dtimes = time_delta_seq[:, :, None] * dtimes_ratio_sampled
+        sampled_dtimes = time_delta_seqs[:, :, None] * dtimes_ratio_sampled
 
         return sampled_dtimes
 

@@ -1,4 +1,5 @@
-from typing import Iterator, Literal, Optional
+from new_ltpp.configs import TokenizerConfig
+from typing import Iterator, Literal
 
 import numpy as np
 import pytorch_lightning as pl
@@ -37,7 +38,6 @@ class TypedDataLoader:
 
 # PyTorch Lightning DataModule for TPP
 class TPPDataModule(pl.LightningDataModule):
-
     def __init__(self, data_config: DataConfig):
         """Initialize the PyTorch Lightning DataModule.
 
@@ -45,22 +45,22 @@ class TPPDataModule(pl.LightningDataModule):
             data_config (DataConfig): Configuration for the dataset
         """
         super().__init__()
-        self.data_config = data_config
-        self.num_event_types = data_config.tokenizer_specs.num_event_types
-        self.batch_size = data_config.data_loading_specs.batch_size
-        self.tokenizer = EventTokenizer(data_config.tokenizer_specs)
-        self.tokenizer_specs = data_config.tokenizer_specs
-        self.pad_token_id = self.tokenizer_specs.pad_token_id
+        self.data_config: DataConfig = data_config
+        self.num_event_types: int = data_config.tokenizer_specs.num_event_types
+        self.batch_size: int = data_config.data_loading_specs.batch_size
+        self.tokenizer: EventTokenizer = EventTokenizer(data_config.tokenizer_specs)
+        self.tokenizer_specs: TokenizerConfig = data_config.tokenizer_specs
+        self.pad_token_id: int = self.tokenizer_specs.pad_token_id
 
         data_loading_specs = data_config.data_loading_specs
-        self.num_workers = data_loading_specs.num_workers
+        self.num_workers: int = data_loading_specs.num_workers
 
         # Initialize data containers
         self.train_data = None
         self.val_data = None
         self.test_data = None
         self.predict_data = None
-    
+
     def state_dict(self):
         return {"idx": self.current_idx}
 
@@ -350,7 +350,7 @@ class TPPDataModule(pl.LightningDataModule):
             else:
                 logger.info("Test data already loaded, skipping setup")
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> TypedDataLoader:
         """Return the training data loader.
 
         Returns:
@@ -373,7 +373,7 @@ class TPPDataModule(pl.LightningDataModule):
 
         return train_data_loader
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> TypedDataLoader:
         """Return the validation data loader.
 
         Returns:
@@ -396,7 +396,7 @@ class TPPDataModule(pl.LightningDataModule):
 
         return val_data_loader
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> TypedDataLoader:
         """Return the test data loader.
 
         Returns:

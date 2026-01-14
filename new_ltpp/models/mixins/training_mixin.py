@@ -1,15 +1,14 @@
 # new_ltpp/models/mixins/training_mixin.py
 """Mixin for PyTorch Lightning training, validation, and testing steps."""
 
-from typing import List, Optional
+from typing import Tuple
 
 import torch
 import torch.nn.functional as F
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 
 from new_ltpp.evaluation.metrics_helper import MetricsManager
-from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
-from new_ltpp.utils import logger
+from new_ltpp.shared_types import Batch, OneStepPred
 
 from .prediction_mixin import PredictionMixin
 from .simulation_mixin import SimulationMixin
@@ -93,7 +92,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         batch.type_seqs = batch.type_seqs[:, 1:]
         batch.seq_non_pad_mask = batch.seq_non_pad_mask[:, 1:]
 
-        one_step_metrics = self._compute_and_log_metrics(batch, pred, prefix="")
+        _ = self._compute_and_log_metrics(batch, pred, prefix="")
 
         return avg_loss
 
@@ -213,7 +212,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         lambdas_loss_samples: torch.Tensor,
         seq_mask: torch.Tensor,
         type_seq: torch.Tensor,
-    ):
+    ) -> Tuple[torch.Tensor, torch.Tensor, int]:
         """Compute the loglikelihood of the event sequence based on Equation (8) of NHP paper.
 
         Args:

@@ -45,7 +45,7 @@ class EventTypeAccumulator(BaseAccumulator):
 
         # Extract ground truth event types using torch (keeps tensors on device)
         type_seqs = batch.type_seqs
-        mask = batch.seq_non_pad_mask
+        mask = batch.valid_event_mask
 
         gt_valid = type_seqs[mask.bool()]
 
@@ -55,7 +55,7 @@ class EventTypeAccumulator(BaseAccumulator):
             self._sample_count += int(gt_valid.numel())
 
         # Process simulation vectorized (torch)
-        valid_sim_types = sim_types[simulation.mask.bool()]
+        valid_sim_types = sim_types[simulation.valid_event_mask.bool()]
         if valid_sim_types.numel() > 0:
             self._sim_event_types.extend(valid_sim_types.view(-1).cpu().tolist())
 
@@ -67,14 +67,18 @@ class EventTypeAccumulator(BaseAccumulator):
         """
         # Handle case with no ground truth data
         if len(self._gt_event_types) == 0:
-            logger.warning("EventTypeAccumulator: No ground truth event types collected, returning empty statistics")
+            logger.warning(
+                "EventTypeAccumulator: No ground truth event types collected, returning empty statistics"
+            )
             gt_array = np.array([], dtype=int)
         else:
             gt_array = np.array(self._gt_event_types, dtype=int)
 
         # Handle case with no simulation data
         if len(self._sim_event_types) == 0:
-            logger.warning("EventTypeAccumulator: No simulated event types collected, returning empty statistics")
+            logger.warning(
+                "EventTypeAccumulator: No simulated event types collected, returning empty statistics"
+            )
             sim_array = np.array([], dtype=int)
         else:
             sim_array = np.array(self._sim_event_types, dtype=int)

@@ -1,4 +1,4 @@
-from typing import Tuple, Any
+from typing import Any, Tuple
 
 import torch
 from torch import nn
@@ -116,6 +116,7 @@ class NHP(NeuralModel):
         Args:
             model_config (new_ltpp.ModelConfig): config of model specs.
         """
+
         super(NHP, self).__init__(**kwargs)
 
         self.beta = beta

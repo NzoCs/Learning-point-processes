@@ -175,7 +175,7 @@ class TrainerFactory:
     ) -> pl.Trainer:
         """
         Create a full trainer from RunnerConfig.
-        
+
         Args:
             training_config: Training configuration
             checkpoints_dir: Directory for checkpoints
@@ -214,7 +214,7 @@ class TrainerFactory:
             check_val_every_n_epoch=training_config.val_freq,
             precision=precision,
             accumulate_grad_batches=training_config.accumulate_grad_batches,
-            inference_mode=False
+            inference_mode=False,
         )
 
         return trainer

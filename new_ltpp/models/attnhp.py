@@ -9,6 +9,7 @@ from new_ltpp.models.neural_model import NeuralModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
 
+
 class ANHP(NeuralModel):
     """Torch implementation of Attentive Neural Hawkes Process, ICLR 2022.
     https://arxiv.org/abs/2201.00044.
@@ -61,7 +62,7 @@ class ANHP(NeuralModel):
 
         if self.use_norm:
             self.norm = nn.LayerNorm(self.d_model + self.d_time)
-        
+
         # La couche finale prend l'état du transformer + l'embedding du temps courant
         # Taille d'entrée = (d_model + d_time) + d_time car on concatène l'état (d_model + d_time) avec le temps cible (d_time)
         input_size_final = self.d_model + 2 * self.d_time
@@ -101,7 +102,7 @@ class ANHP(NeuralModel):
         Architecture simplifiée et fonctionnelle.
         """
         # Dans cette version, event_emb contient déjà [Type + Time] de l'historique
-        cur_layer_ = event_emb 
+        cur_layer_ = event_emb
 
         # 1. Encodage de l'historique
         for enc_layer in self.encoder_layers:
@@ -110,9 +111,9 @@ class ANHP(NeuralModel):
         # 2. Concaténation avec le temps cible pour prédire l'intensité MAINTENANT
         # cur_layer_ : [Batch, Seq, Hidden] (Contexte historique)
         # sample_time_emb : [Batch, Seq, Hidden] (Temps où on veut l'intensité)
-        
+
         final_state = torch.cat([cur_layer_, sample_time_emb], dim=-1)
-        
+
         return final_state
 
     def seq_encoding(
@@ -135,7 +136,6 @@ class ANHP(NeuralModel):
         event_emb = torch.cat([type_emb, time_emb], dim=-1)
 
         return event_emb, time_emb, type_emb
-
 
     def forward(
         self,
@@ -160,9 +160,7 @@ class ANHP(NeuralModel):
             sample_time_emb = time_emb
         else:
             sample_time_emb = self.compute_temporal_embedding(sample_times)
-        cur_layer_ = self.forward_pass(
-            sample_time_emb, event_emb, attention_mask
-        )
+        cur_layer_ = self.forward_pass(sample_time_emb, event_emb, attention_mask)
 
         return cur_layer_
 
@@ -176,9 +174,7 @@ class ANHP(NeuralModel):
             tuple: loglikelihood loss and num of events.
         """
 
-        attn_mask = get_causal_attn_mask(
-            batch.time_seqs.size(1), device=self.device
-        )
+        attn_mask = get_causal_attn_mask(batch.time_seqs.size(1), device=self.device)
 
         # 1. compute event-loglik
         # the prediction of last event has no label, so we proceed to the last but one
@@ -254,25 +250,27 @@ class ANHP(NeuralModel):
         _times = time_seqs.expand(num_samples, -1, -1).reshape(
             num_samples * batch_size, -1
         )
-        
+
         # Correction 3 : Temps Absolu
         # On suppose que sample_dtimes a été reshape en [Batch*Samples, Seq]
         # _times aussi [Batch*Samples, Seq]
-        
+
         # On calcule le temps absolu du sampling
-        _sample_times_abs = _times + _sample_dtimes 
-        
+        _sample_times_abs = _times + _sample_dtimes
+
         # On calcule l'embedding sur le temps ABSOLU
         encoder_output = self.forward(
-            time_seqs=_times, 
-            type_seqs=_types, 
-            attention_mask=attention_mask, 
-            sample_times=_sample_times_abs # On passe le temps absolu ici
+            time_seqs=_times,
+            type_seqs=_types,
+            attention_mask=attention_mask,
+            sample_times=_sample_times_abs,  # On passe le temps absolu ici
         )
 
         # [num_samples, batch_size, seq_len, hidden_size]
         hidden_size = encoder_output.size(-1)
-        encoder_output = encoder_output.reshape(num_samples, batch_size, seq_len, hidden_size)
+        encoder_output = encoder_output.reshape(
+            num_samples, batch_size, seq_len, hidden_size
+        )
 
         # [batch_size, seq_len, num_samples, hidden_size]
         encoder_output = encoder_output.permute([1, 2, 0, 3])

@@ -88,8 +88,8 @@ class THP(NeuralModel):
         )
 
     def forward(
-            self, time_seqs: torch.Tensor, type_seqs: torch.Tensor, attn_mask: torch.Tensor
-            ) -> torch.Tensor:
+        self, time_seqs: torch.Tensor, type_seqs: torch.Tensor, attn_mask: torch.Tensor
+    ) -> torch.Tensor:
         """Call the model
 
         Args:
@@ -107,9 +107,7 @@ class THP(NeuralModel):
         # [batch_size, seq_len, hidden_size]
         for enc_layer in self.stack_layers:
             enc_output += tem_enc
-            enc_output = enc_layer(
-                enc_output, attn_mask=attn_mask
-            )
+            enc_output = enc_layer(enc_output, attn_mask=attn_mask)
 
         return enc_output
 
@@ -159,7 +157,7 @@ class THP(NeuralModel):
         state_t_sample = self.compute_states_at_sample_dtimes(
             event_states=enc_out, sample_dtimes=sample_dtimes
         )
-        
+
         lambda_t_sample = self.softplus(state_t_sample)
 
         event_ll, non_event_ll, num_events = self.compute_loglikelihood(

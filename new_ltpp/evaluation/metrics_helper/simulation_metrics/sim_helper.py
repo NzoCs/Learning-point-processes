@@ -1,14 +1,16 @@
 """Fixed simulation metrics with proper handling of padding and batches."""
 
+from typing import Any, Dict, List, Tuple
+
 import torch
 from scipy.stats import wasserstein_distance
-from typing import Dict, Any, Tuple, List
 
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
 class SimMetricsHelper:
     """Improved metrics computation with proper padding handling."""
+
     def __init__(self, num_event_types) -> None:
         pass
 
@@ -28,7 +30,7 @@ class SimMetricsHelper:
     #         1D tensor of all valid values concatenated
     #     """
     #     return seqs[mask]
-    
+
     # def compute_metrics(self, batch: Batch, pred: SimulationResult) -> Dict[str, float]:
     #     time_values, _ = self._data_extractor.extract_values(batch, pred)
 
@@ -65,14 +67,12 @@ class SimMetricsHelper:
     #     metrics["type_wasserstein"] = float(type_distance.item())
     #     return metrics
 
-
     # def get_available_metrics(self) -> List[str]:
     #     return [
     #         "wasserstein_1d",
     #         "mmd_rbf_padded",
     #         "mmd_wasserstein",
     #     ]
-
 
     # def _wasserstein_1d(
     #     self,

@@ -1,4 +1,5 @@
 from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 
 from new_ltpp.data.generation.base_simulator import Simulator
@@ -9,12 +10,7 @@ class SelfCorrecting(Simulator):
     Simulateur de processus ponctuels temporels avec correction automatique.
     """
 
-    def __init__(
-        self,
-        mu: float,
-        alpha: float,
-        **kwargs
-    ):
+    def __init__(self, mu: float, alpha: float, **kwargs):
         """
         Initialise un simulateur de processus ponctuel temporel avec correction automatique.
 
@@ -69,7 +65,7 @@ class SelfCorrecting(Simulator):
         times = np.array(all_times)
         marks = np.array(all_marks)
         sort_idx = np.argsort(times)
-        
+
         return times[sort_idx], marks[sort_idx]
 
     def get_simulator_metadata(self) -> Dict:
@@ -136,10 +132,7 @@ class MultivariableSelfCorrecting(Simulator):
     """
 
     def __init__(
-        self,
-        mu: float = 1.0,
-        alpha_matrix: Optional[np.ndarray] = None,
-        **kwargs
+        self, mu: float = 1.0, alpha_matrix: Optional[np.ndarray] = None, **kwargs
     ):
         """
         Initialise un simulateur de processus ponctuel temporel avec correction automatique multivariable.

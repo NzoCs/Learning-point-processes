@@ -8,7 +8,7 @@ statistics batch-by-batch during the prediction phase.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 from new_ltpp.globals import OUTPUT_DIR
@@ -212,12 +212,13 @@ class BatchStatisticsCollector:
 
         # Type assertion safe because we checked self._plot_generators is not None
         assert self._plot_generators is not None
-        # Cast TypedDict to dict for plot generators
-        plot_data_dict: Dict[str, Any] = dict(plot_data)
+
+        plot_data_dict = plot_data
         for i, (generator, filename) in enumerate(
             zip(self._plot_generators, plot_filenames)
         ):
             output_path: str = str(self.output_dir / filename)
+
             # Use acf_data for the last plot (autocorrelation)
             data_to_use = acf_data if i == 3 else plot_data_dict
             generator.generate_plot(data_to_use, output_path)

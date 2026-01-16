@@ -1,10 +1,11 @@
-from polars.dependencies import torch
-from typing import Protocol
-from new_ltpp.models.neural_model import NeuralModel
+from typing import Protocol, runtime_checkable
+import torch
+
+from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
 from new_ltpp.shared_types import Batch, SimulationResult
 
-
+@runtime_checkable
 class StatisticalTest(Protocol):
     """Statistical test for goodness of fit of point process models."""
 

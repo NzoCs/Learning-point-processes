@@ -18,15 +18,15 @@ from abc import ABCMeta
 from typing import Dict, Optional, Type
 
 from new_ltpp.utils import logger
-
+from .model_protocol import TPPModelProtocol
 
 class ModelRegistry:
     """Registry automatique pour les modèles TPP."""
 
-    _models: Dict[str, Type] = {}
+    _models: Dict[str, Type[TPPModelProtocol]] = {}
 
     @classmethod
-    def register_model(cls, name: str, model_class: Type) -> None:
+    def register_model(cls, name: str, model_class: Type[TPPModelProtocol]) -> None:
         """
         Enregistrer un modèle dans le registry.
 
@@ -45,12 +45,12 @@ class ModelRegistry:
         logger.debug(f"✅ Modèle '{name}' enregistré automatiquement")
 
     @classmethod
-    def get_registry(cls) -> Dict[str, Type]:
+    def get_registry(cls) -> Dict[str, Type[TPPModelProtocol]]:
         """Obtenir tous les modèles enregistrés."""
         return cls._models.copy()
 
     @classmethod
-    def get_model(cls, name: str) -> Optional[Type]:
+    def get_model(cls, name: str) -> Optional[Type[TPPModelProtocol]]:
         """
         Obtenir un modèle par son nom.
 

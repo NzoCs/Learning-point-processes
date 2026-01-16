@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple
 
 import torch
 from torch import nn
@@ -7,7 +7,7 @@ from torch.nn import functional as F
 
 from new_ltpp.shared_types import Batch
 
-from .neural_model import NeuralModel
+from .base_model import NeuralModel
 
 
 class CumulHazardFunctionNetwork(nn.Module):
@@ -262,9 +262,6 @@ class FullyNN(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
-        valid_event_mask: Optional[
-            torch.Tensor
-        ] = None,  # Not used in FullyNN but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:

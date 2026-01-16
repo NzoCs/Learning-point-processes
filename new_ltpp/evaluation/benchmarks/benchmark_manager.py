@@ -15,7 +15,7 @@ Usage:
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type, Union, List
 
 from new_ltpp.configs import DataConfig
 from new_ltpp.globals import OUTPUT_DIR
@@ -55,7 +55,7 @@ class BenchmarksEnum(Enum):
         return self.benchmark_name
 
     @classmethod
-    def get_benchmark_by_name(cls, name: str) -> Type:
+    def get_benchmark_by_name(cls, name: str) -> Type[BaseBenchmark]:
         """Get a benchmark by its name."""
         for benchmark in cls:
             if benchmark.get_name() == name:
@@ -65,7 +65,7 @@ class BenchmarksEnum(Enum):
         )
 
     @classmethod
-    def list_names(cls) -> list[str]:
+    def list_names(cls) -> List[str]:
         """List all benchmark names."""
         return [benchmark.get_name() for benchmark in cls]
 
@@ -85,8 +85,8 @@ class BenchmarkManager:
 
     def run(
         self,
-        benchmarks: Union[BenchmarksEnum, list[BenchmarksEnum]],
-        data_configs: Union[DataConfig, list[DataConfig]],
+        benchmarks: Union[BenchmarksEnum, List[BenchmarksEnum]],
+        data_configs: Union[DataConfig, List[DataConfig]],
         save_dir: Optional[Union[Path, str]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
@@ -108,7 +108,7 @@ class BenchmarkManager:
         # Normalize inputs to lists
         if isinstance(benchmarks, BenchmarksEnum):
             benchmarks = [benchmarks]
-        if not isinstance(data_configs, list):
+        if isinstance(data_configs, DataConfig):
             data_configs = [data_configs]
 
         # Determine save directory
@@ -155,7 +155,7 @@ class BenchmarkManager:
 
     def run_all_benchmarks(
         self,
-        data_configs: Union[DataConfig, list[DataConfig]],
+        data_configs: Union[DataConfig, List[DataConfig]],
         save_dir: Optional[Union[Path, str]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
@@ -175,8 +175,8 @@ class BenchmarkManager:
 
     def run_by_names(
         self,
-        benchmark_names: list[str],
-        data_configs: Union[DataConfig, list[DataConfig]],
+        benchmark_names: List[str],
+        data_configs: Union[DataConfig, List[DataConfig]],
         save_dir: Optional[Union[Path, str]] = None,
         **kwargs,
     ) -> Dict[str, Any]:

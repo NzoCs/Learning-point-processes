@@ -8,7 +8,7 @@ legacy field mappings, type conversions, and other preprocessing tasks.
 
 from typing import Callable, List
 
-from new_ltpp.configs.config_interface import ConfigInterface, ConfigValidationError
+from new_ltpp.configs.base_config import Config, ConfigValidationError
 
 
 class ConfigValidator:
@@ -20,13 +20,13 @@ class ConfigValidator:
     """
 
     def __init__(self):
-        self._validation_rules: List[Callable[[ConfigInterface], None]] = []
+        self._validation_rules: List[Callable[[Config], None]] = []
 
-    def add_rule(self, rule_func: Callable[[ConfigInterface], None]) -> None:
+    def add_rule(self, rule_func: Callable[[Config], None]) -> None:
         """Add a validation rule function."""
         self._validation_rules.append(rule_func)
 
-    def validate(self, config: ConfigInterface) -> List[str]:
+    def validate(self, config: Config) -> List[str]:
         """
         Validate configuration and return list of error messages.
 
@@ -50,7 +50,7 @@ class ConfigValidator:
         return errors
 
     def validate_required_fields(
-        self, config: ConfigInterface, required_fields: List[str]
+        self, config: Config, required_fields: List[str]
     ) -> None:
         """Validate that required fields are present and not None."""
         for field_name in required_fields:

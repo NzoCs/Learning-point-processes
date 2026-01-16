@@ -1,12 +1,12 @@
 import math
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple
 
 import torch
 from torch import nn
 
 from new_ltpp.shared_types import Batch
 
-from .neural_model import NeuralModel
+from .base_model import NeuralModel
 
 
 class RMTPP(NeuralModel):
@@ -141,9 +141,6 @@ class RMTPP(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
-        valid_event_mask: Optional[
-            torch.Tensor
-        ] = None,  # Not used in RMTPP but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs: Any,
     ) -> torch.Tensor:

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from new_ltpp.scripts.cli import app
+from scripts.cli import app
 
 
 @pytest.fixture
@@ -145,7 +145,7 @@ def test_cli_benchmark_list(runner):
 def test_cli_subprocess_version():
     """Test CLI version via subprocess."""
     result = subprocess.run(
-        [sys.executable, "-m", "new_ltpp.scripts.cli", "version"],
+        [sys.executable, "-m", "scripts.cli", "version"],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,
@@ -157,7 +157,7 @@ def test_cli_subprocess_version():
 def test_cli_subprocess_help():
     """Test CLI help via subprocess."""
     result = subprocess.run(
-        [sys.executable, "-m", "new_ltpp.scripts.cli", "--help"],
+        [sys.executable, "-m", "scripts.cli", "--help"],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent.parent,

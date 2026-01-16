@@ -12,11 +12,10 @@ Usage:
 """
 
 from enum import Enum
-from typing import Any, Type
+from typing import Any, Dict
 
 from new_ltpp.utils import logger
 
-from .base_config import Config
 from .data_config import DataConfig, DataLoadingSpecsConfig, TokenizerConfig
 from .hpo_config import HPOConfig, HPORunnerConfig
 from .logger_config import LoggerConfig
@@ -27,6 +26,7 @@ from .model_config import (
     ThinningConfig,
 )
 from .runner_config import RunnerConfig, TrainingConfig
+from .base_config import Config
 
 
 class ConfigType(Enum):
@@ -60,7 +60,7 @@ class ConfigType(Enum):
         """Return the configuration name."""
         return self.value[0]
 
-    def get_class(self) -> Any:
+    def get_class(self) -> Config:
         """Return the Config class associated with this type."""
         return self.value[1]
 
@@ -72,11 +72,8 @@ class ConfigType(Enum):
 class ConfigFactory:
     """Simple factory to create configuration instances."""
 
-    def __init__(self):
-        pass
-
     def create_config(
-        self, config_type: ConfigType, config_data: dict, **kwargs
+        self, config_type: ConfigType, config_data: Dict[str, Any], **kwargs
     ) -> Config:
         """
         Create a configuration instance.
@@ -95,7 +92,7 @@ class ConfigFactory:
         logger.info(f"Creating configuration: {config_name}")
 
         # Create the instance directly
-        instance = config_class(**config_data, **kwargs)
+        instance = config_class.__init__(**config_data, **kwargs)
 
         # Additional validation
         if hasattr(instance, "validate"):
@@ -104,7 +101,7 @@ class ConfigFactory:
         return instance
 
     def create_config_by_name(
-        self, config_name: str, config_data: dict, **kwargs
+        self, config_name: str, config_data: Dict[str, Any], **kwargs
     ) -> Config:
         """
         Create a configuration instance by name.
@@ -138,11 +135,11 @@ class ConfigFactory:
 
         return self.create_config(config_enum, config_data, **kwargs)
 
-    def list_available_configs(self) -> dict[str, str]:
+    def list_available_configs(self) -> Dict[str, str]:
         """List all available configurations with their config names and class names."""
         return {config.config_name: config.get_class_name() for config in ConfigType}
 
-    def get_config_class(self, config_type: ConfigType) -> Type[Config]:
+    def get_config_class(self, config_type: ConfigType) -> Config:
         """Get the class for a configuration type."""
         return config_type.get_class()
 

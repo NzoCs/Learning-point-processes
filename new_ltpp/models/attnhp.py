@@ -5,7 +5,7 @@ import torch
 from torch import nn
 
 from new_ltpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
-from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
 
@@ -141,6 +141,7 @@ class ANHP(NeuralModel):
         self,
         time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        *,
         attention_mask: torch.Tensor,
         sample_times: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
@@ -182,8 +183,8 @@ class ANHP(NeuralModel):
         enc_out = self.forward(
             batch.time_seqs[:, :-1],
             batch.type_seqs[:, :-1],
-            attn_mask[:-1, :-1],
-            batch.time_seqs[:, 1:],
+            attention_mask=attn_mask[:-1, :-1],
+            sample_times=batch.time_seqs[:, 1:],
         )
 
         # [batch_size, seq_len, num_event_types]
@@ -283,9 +284,6 @@ class ANHP(NeuralModel):
         time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
-        valid_event_mask: Optional[
-            torch.Tensor
-        ] = None,  # Not used in ANHP but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs: Any,
     ) -> torch.Tensor:

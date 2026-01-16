@@ -18,8 +18,8 @@ from new_ltpp.configs import ModelConfig, ModelSpecsConfig
 from new_ltpp.shared_types import DataInfo
 from new_ltpp.utils import logger
 
-from .basemodel import Model
 from .model_registry import ModelRegistry
+from .model_protocol import TPPModelProtocol
 
 
 class ModelFactory:
@@ -35,7 +35,7 @@ class ModelFactory:
         data_info: DataInfo,
         output_dir: Path | str,
         **kwargs,
-    ) -> Model:
+    ) -> TPPModelProtocol:
         """
         Créer une instance de modèle par nom.
 
@@ -80,8 +80,8 @@ class ModelFactory:
 
     @staticmethod
     def create_model(
-        model_class: Type[Model], model_config: ModelConfig, **kwargs
-    ) -> Model:
+        model_class: Type[TPPModelProtocol], model_config: ModelConfig, **kwargs
+    ) -> TPPModelProtocol:
         """
         Créer une instance de modèle directement avec la classe.
 
@@ -117,7 +117,7 @@ class ModelFactory:
         return ModelRegistry.list_models()
 
     @staticmethod
-    def get_model_class(model_name: str) -> Type[Model]:
+    def get_model_class(model_name: str) -> Type[TPPModelProtocol]:
         """Obtenir la classe d'un modèle par nom."""
         model_class = ModelRegistry.get_model(model_name)
         if model_class is None:
@@ -131,7 +131,7 @@ class ModelFactory:
         """Vérifier si un modèle existe."""
         return ModelRegistry.model_exists(model_name)
 
-    def get_registry(self) -> dict[str, Type[Model]]:
+    def get_registry(self) -> dict[str, Type[TPPModelProtocol]]:
         """Obtenir le registry complet des modèles."""
         return ModelRegistry.get_registry()
 

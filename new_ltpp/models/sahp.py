@@ -12,7 +12,7 @@ from .baselayer import (
     ScaledSoftplus,
     TimeShiftedPositionalEncoding,
 )
-from .neural_model import NeuralModel
+from .base_model import NeuralModel
 
 
 class SAHP(NeuralModel):
@@ -235,9 +235,6 @@ class SAHP(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
-        valid_event_mask: Optional[
-            torch.Tensor
-        ] = None,  # Not used in SAHP but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:

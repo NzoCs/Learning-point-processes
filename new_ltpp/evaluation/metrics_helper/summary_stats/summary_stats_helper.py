@@ -71,7 +71,7 @@ class SummaryStatsHelper(MetricsHelper):
         return [metric.value for metric in SummaryStatsMetric]
 
     def _to_float_array(
-        self, array: NDArray[Any] | Sequence[Any]
+        self, array: NDArray[Any]
     ) -> NDArray[np.float64]:
         return np.asarray(array, dtype=float)
 

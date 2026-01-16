@@ -10,6 +10,7 @@ pytest.ini
 .mypy_cache/
 __pycache__/
 pytest*
+.ruff_cache/
 
 # models
 **.ckpt
@@ -26,6 +27,7 @@ artifacts/
 #coverage
 coverage_html*
 coverage.*
+.coverage
 .coveragerc
 coverage.xml
 

@@ -43,6 +43,7 @@ dependencies = [
     "sigkernel",
     "geomloss>=0.2.6",
     "ruff>=0.14.11",
+    "nbconvert>=7.16.6",
 ]
 
 [dependency-groups]

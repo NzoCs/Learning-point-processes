@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from new_ltpp.models.basemodel import Model
+from new_ltpp.models.base_model import Model
 from new_ltpp.shared_types import Batch
 from new_ltpp.shared_types import SimulationResult
 

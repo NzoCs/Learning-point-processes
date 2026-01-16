@@ -10,7 +10,7 @@ from .baselayer import (
     ScaledSoftplus,
     TimePositionalEncoding,
 )
-from .neural_model import NeuralModel
+from .base_model import NeuralModel
 
 
 class THP(NeuralModel):

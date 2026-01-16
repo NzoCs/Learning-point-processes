@@ -11,7 +11,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from new_ltpp.models.basemodel import Model
+from new_ltpp.models.base_model import Model
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
@@ -139,6 +139,9 @@ class Hawkes(Model):
         # Si type_seqs contient du padding (ex: -1 ou num_classes), F.embedding plante.
         # On remplace temporairement le padding par 0.
         safe_type_seqs = type_seqs.long().clone()
+
+        ### Pas vraiment nécessaire si valid_event_mask est booléen de faire ca car le padding
+        ### est deja a 0
 
         # On s'assure que le masque est booléen pour l'indexation
         is_padding = ~valid_event_mask.bool()

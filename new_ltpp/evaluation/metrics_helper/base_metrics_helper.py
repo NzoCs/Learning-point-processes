@@ -25,7 +25,7 @@ class MetricsHelper(ABC):
     def __init__(
         self,
         num_event_types: int,
-        selected_metrics: Optional[List[Union[str, object]]] = None,
+        selected_metrics: Optional[List[Union[str, Any]]] = None,
     ) -> None:
         self.num_event_types = num_event_types
 

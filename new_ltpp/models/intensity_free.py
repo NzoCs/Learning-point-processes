@@ -1,4 +1,4 @@
-from typing import Tuple, cast, Any, Optional
+from typing import Tuple, cast, Any
 
 import torch
 import torch.distributions as D
@@ -8,7 +8,7 @@ from torch.distributions import MixtureSameFamily as TorchMixtureSameFamily
 from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
-from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.shared_types import Batch, OneStepPred
 
 
@@ -156,7 +156,7 @@ class IntensityFree(NeuralModel):
         self.mark_linear = nn.Linear(self.hidden_size, self.num_event_types)
         self.linear = nn.Linear(self.hidden_size, 3 * self.num_mix_components)
 
-    def forward(self, time_delta_seqs, type_seqs):
+    def forward(self, time_delta_seqs: torch.Tensor, type_seqs: torch.Tensor) -> torch.Tensor:
         """Call the model.
 
         Args:
@@ -250,7 +250,6 @@ class IntensityFree(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
-        valid_event_mask: Optional[torch.Tensor] = None,
         compute_last_step_only: bool = False,
         **kwargs: Any,
     ) -> torch.Tensor:
@@ -304,7 +303,7 @@ class IntensityFree(NeuralModel):
         )
 
         # [num_samples, batch_size, 1]
-        accepted_dtimes = inter_time_dist.sample((self.event_sampler.num_sample,))
+        accepted_dtimes = inter_time_dist.sample((self.get_event_sampler().num_sample,))
         dtimes_pred = accepted_dtimes.mean(dim=0)
 
         batch_size = context.size(0)
@@ -360,7 +359,7 @@ class IntensityFree(NeuralModel):
         )
 
         # [num_samples, batch_size, seq_len]
-        accepted_dtimes = inter_time_dist.sample((self.event_sampler.num_sample,))
+        accepted_dtimes = inter_time_dist.sample((self.get_event_sampler().num_sample,))
         dtimes_pred = accepted_dtimes.mean(dim=0)
 
         # [batch_size, seq_len, num_marks]

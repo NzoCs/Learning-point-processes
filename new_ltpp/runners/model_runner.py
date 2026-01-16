@@ -1,5 +1,4 @@
-from typing import Any
-
+from typing import Any, cast
 import pytorch_lightning as pl
 
 from new_ltpp.configs import RunnerConfig
@@ -15,7 +14,6 @@ from new_ltpp.utils import logger
 
 
 class Runner:
-
     def __init__(
         self,
         config: RunnerConfig,
@@ -67,7 +65,7 @@ class Runner:
 
     def _build_lightning_logger(self, enable_logging: bool) -> Any | None:
         if not enable_logging:
-            return None
+            return False
         return LoggerFactory.create_logger(self.logger_config)
 
     @property
@@ -100,7 +98,7 @@ class Runner:
         val_dataloader = self.datamodule.val_dataloader()
 
         trainer.fit(
-            model=self.model,
+            model=cast(pl.LightningModule, self.model),
             train_dataloaders=train_dataloader,
             val_dataloaders=val_dataloader,
             ckpt_path=self.checkpoint_path,
@@ -122,7 +120,7 @@ class Runner:
         test_dataloader = self.datamodule.test_dataloader()
 
         results = trainer.test(
-            model=self.model,
+            model=cast(pl.LightningModule, self.model),
             dataloaders=test_dataloader,
             ckpt_path=self.checkpoint_path,
         )
@@ -158,7 +156,7 @@ class Runner:
 
         # The callback will handle finalize_statistics() and intensity_graph()
         trainer.predict(
-            model=self.model,
+            model=cast(pl.LightningModule, self.model),
             dataloaders=predict_dataloader,
             ckpt_path=self.checkpoint_path,
         )

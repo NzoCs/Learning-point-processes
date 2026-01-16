@@ -7,7 +7,7 @@ from torch import nn
 
 # Assurez-vous que ces imports correspondent à votre structure de projet
 from new_ltpp.models.baselayer import MultiHeadAttention
-from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
 

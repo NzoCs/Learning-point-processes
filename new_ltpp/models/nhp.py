@@ -4,7 +4,7 @@ import torch
 from torch import nn
 
 from new_ltpp.models.baselayer import ScaledSoftplus
-from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.shared_types import Batch
 
 
@@ -141,7 +141,7 @@ class NHP(NeuralModel):
         )  # Okay to initialize delta to be zero because c==c_bar at the beginning
 
     def forward(
-        self, batch: Tuple[torch.Tensor, torch.Tensor]
+        self, time_delta_seqs: torch.Tensor, type_seqs: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Suppose we have inputs with original sequence length N+1
@@ -157,7 +157,7 @@ class NHP(NeuralModel):
         > rnn_cell.recurrence(event_emb_t, h_tm1, c_tm1, c_bar_tm1) -> c_t, c_bar_t, gate_delta, gate_o
         > rnn_cell.decay(c_t, c_bar_t, delta_t, o_t, dt) -> c_d_t, h_d_t
         """
-        dt_BN, marks_BN = batch
+        dt_BN, marks_BN = time_delta_seqs, type_seqs
         B, N = dt_BN.shape
         left_hs = []
         right_states = []
@@ -228,7 +228,7 @@ class NHP(NeuralModel):
         # 1. compute hidden states at event time
         # left limits of [t_1, ..., t_N]
         # right limits of [t_0, ..., t_{N-1}, t_N]
-        left_hiddens, right_hiddens = self.forward((dts_BN, marks_BN))
+        left_hiddens, right_hiddens = self.forward(dts_BN, marks_BN)
         right_hiddens = right_hiddens[
             ..., :-1, :
         ]  # discard right limit at t_N for logL
@@ -268,7 +268,6 @@ class NHP(NeuralModel):
         """Compute the intensity at sampled delta times, not only event times.
 
         Args:
-            time_seqs (tensor): [batch_size, seq_len], times seqs.
             time_delta_seqs (tensor): [batch_size, seq_len], time delta seqs.
             type_seqs (tensor): [batch_size, seq_len], event type seqs.
             sample_dtimes (tensor): [batch_size, seq_len, num_sample],
@@ -280,7 +279,7 @@ class NHP(NeuralModel):
         """
 
         # We will need the right limit at the last given event to decay from and get the left limits for sampling
-        _, right_hiddens = self.forward((time_delta_seqs, type_seqs))
+        _, right_hiddens = self.forward(time_delta_seqs, type_seqs)
 
         c_i, c_bar_i, delta_i, o_i = torch.chunk(right_hiddens, 4, dim=-1)
 

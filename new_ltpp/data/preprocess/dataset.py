@@ -31,18 +31,17 @@ class TPPDataset(Dataset):
 
         return len(self.time_seqs)
 
-    def __getitem__(self, idx) -> TPPSequence:
+    def __getitem__(self, index) -> TPPSequence:
         """
 
         Args:
-            idx: iteration index
-
+            index: iteration index
         Returns:
             TPPSequence: A temporal point process sequence element
 
         """
         return TPPSequence(
-            time_seqs=self.time_seqs[idx],
-            time_delta_seqs=self.time_delta_seqs[idx],
-            type_seqs=self.type_seqs[idx],
+            time_seqs=self.time_seqs[index],
+            time_delta_seqs=self.time_delta_seqs[index],
+            type_seqs=self.type_seqs[index],
         )

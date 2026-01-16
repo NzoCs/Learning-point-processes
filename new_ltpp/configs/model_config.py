@@ -6,7 +6,7 @@ best practices for configuration management with proper validation,
 error handling, and maintainable architecture.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from new_ltpp.utils import logger
@@ -58,10 +58,10 @@ class SchedulerConfig(Config):
 class ThinningConfig(Config):
     """Configuration for thinning process in temporal point processes."""
 
-    num_sample: int = 10
-    num_exp: int = 200
-    over_sample_rate: float = 1.5
-    num_samples_boundary: int = 5
+    num_sample: int
+    num_exp: int
+    num_samples_boundary: int
+    over_sample_rate: float = 2.0
 
     def get_required_fields(self) -> List[str]:
         """Return list of required field names."""
@@ -102,7 +102,7 @@ class SimulationConfig(Config):
 
     time_window: float  # Additional time duration for simulation beyond last event
     batch_size: int
-    initial_buffer_size: int = 1000
+    initial_buffer_size: int
     seed: int = 42
 
     def get_required_fields(self) -> List[str]:
@@ -177,24 +177,15 @@ class ModelConfig(Config):
     Cette classe prend des dictionnaires pour les sous-configs et instancie les classes intermédiaires.
     Args:
         model_id (str): Identifier for the model type (e.g., 'NHP', 'RMTPP').
-        num_event_types (int): Number of event types in the model.
-        num_event_types_pad (Optional[int]): Padded number of event types, defaults to num_event_types + 1.
-        pad_token_id (Optional[int]): ID for the padding token, defaults to num_event_types.
         device (str): Device to run the model on ('cpu', 'cuda', or 'auto').
         gpu (int): GPU device ID, -1 for CPU.
         is_training (bool): Whether the model is in training mode.
         compute_simulation (bool): Whether to compute simulations during training.
-        use_mc_samples (bool): Whether to use Monte Carlo samples for training.
-        pretrain_model_path (Optional[str]): Path to a pre-trained model, if applicable.
         base_config (dict): Dictionnaire de config pour TrainingConfig.
-        specs (dict): Dictionnaire de config pour ModelSpecsConfig.
-        thinning (dict): Dictionnaire de config pour ThinningConfig.
+        model_specs (dict): Dictionnaire de config pour ModelSpecsConfig.
+        thinning_config (dict): Dictionnaire de config pour ThinningConfig.
         simulation_config (dict): Dictionnaire de config pour SimulationConfig.
     """
-
-    num_mc_samples: int = field(default=10)
-    num_steps: int = field(default=10)
-    use_mc_samples: bool = field(default=True)
 
     def __init__(
         self,
@@ -202,6 +193,7 @@ class ModelConfig(Config):
         scheduler_config: dict | SchedulerConfig,
         general_specs: dict | ModelSpecsConfig,
         model_specs: dict,
+        num_mc_samples: int,
         thinning_config: dict | ThinningConfig | None = None,
         device: str = "auto",
         gpu: int | None = None,
@@ -209,6 +201,7 @@ class ModelConfig(Config):
         compute_simulation: bool = False,
         **kwargs,
     ):
+        self.num_mc_samples = num_mc_samples
         self.device = device
         self.gpu = gpu if gpu is not None else get_available_gpu()
         self.is_training = is_training
@@ -255,9 +248,6 @@ class ModelConfig(Config):
             "gpu": self.gpu,
             "is_training": self.is_training,
             "compute_simulation": self.compute_simulation,
-            "num_mc_samples": self.num_mc_samples,
-            "num_steps": self.num_steps,
-            "use_mc_samples": self.use_mc_samples,
             "thinning": self.thinning_config.get_yaml_config(),
             "simulation_config": self.simulation_config.get_yaml_config(),
         }

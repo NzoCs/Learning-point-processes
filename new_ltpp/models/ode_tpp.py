@@ -1,9 +1,8 @@
 import torch
-from typing import Optional
 from torch import nn
 
 from new_ltpp.models.baselayer import DNN
-from new_ltpp.models.neural_model import NeuralModel
+from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils import rk4_step_method
 
@@ -304,9 +303,6 @@ class ODETPP(NeuralModel):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
-        valid_event_mask: Optional[
-            torch.Tensor
-        ] = None,  # Not used in ODETPP but kept for compatibility
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor:

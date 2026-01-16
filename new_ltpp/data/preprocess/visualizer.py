@@ -39,7 +39,7 @@ class Visualizer:
         self.is_comparison_mode = comparison_data_module is not None
         # Note: saving/showing graphs are controlled per-method via arguments
         # Validate the split parameter
-        valid_splits = {"valid", "test", "train", None}
+        valid_splits = {"valid", "test", "train"}
         if split not in valid_splits:
             raise ValueError(
                 f"Split '{split}' is not valid. Choose from {valid_splits}"

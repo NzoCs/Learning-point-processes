@@ -11,12 +11,6 @@ from .predictions_metrics.pred_types import (
     TimeValues,
     TypeValues,
 )
-from .simulation_metrics.sim_helper import SimMetricsHelper
-from .simulation_metrics.sim_types import (
-    SimMetrics,
-    SimTimeValues,
-    SimTypeValues,
-)
 from .summary_stats import SummaryStatsHelper, SummaryStatsMetric
 
 __all__ = [

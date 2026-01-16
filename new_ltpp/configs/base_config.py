@@ -6,23 +6,40 @@ configuration classes should implement to ensure consistency and
 type safety across the configuration system.
 """
 
-from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Protocol, runtime_checkable
 
-from typing_extensions import Self
-
-from new_ltpp.configs.config_interface import (
-    ConfigSerializationError,
-    ConfigValidationError,
-)
+from typing import Self
 from new_ltpp.utils import logger
 
 
+
+class ConfigValidationError(Exception):
+    """Raised when configuration validation fails."""
+    def __init__(self, message: str, field_name: str = ""):
+        super().__init__(message)
+        self._field_name = field_name
+
+    @property
+    def field_name(self) -> str:
+        return self._field_name
+
+
+class ConfigSerializationError(Exception):
+    """Raised when configuration serialization/deserialization fails."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+    
+    def __str__(self) -> str:
+        return f"ConfigSerializationError: {self.args[0]}"
+
+
 @dataclass
-class Config(ABC):
+@runtime_checkable
+class Config(Protocol):
     """
     Abstract base configuration class.
 
@@ -30,27 +47,22 @@ class Config(ABC):
     validation, serialization, and type safety features.
     """
 
+    @property
+    def __name__(self) -> str:
+        return self.__class__.__name__
+
+    def __init__(self):...
+
     def __post_init__(self):
-        """Post-initialization hook for validation."""
         self.validate()
 
-    @abstractmethod
     def get_required_fields(self) -> List[str]:
-        """Return list of required field names."""
-        pass
+        ...
 
-    @abstractmethod
     def get_yaml_config(self) -> Dict[str, Any]:
-        """Get configuration as YAML-compatible dictionary."""
-        pass
+        ...
 
     def validate(self) -> None:
-        """
-        Validate the configuration.
-
-        Raises:
-            ConfigValidationError: If validation fails
-        """
         # Import ici pour éviter les imports circulaires
         from new_ltpp.configs.config_utils import ConfigValidator
 

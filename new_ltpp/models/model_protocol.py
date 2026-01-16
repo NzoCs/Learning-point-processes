@@ -326,38 +326,6 @@ class NeuralTPPModelProtocol(TPPModelProtocol, Protocol):
     dropout: float
     """Dropout rate for regularization."""
 
-    # ============================================================
-    # Neural Network Methods
-    # ============================================================
-
-    def forward(
-        self,
-        time_seqs: torch.Tensor,
-        type_seqs: torch.Tensor,
-        **kwargs,
-    ) -> torch.Tensor:
-        """Forward pass through the neural network encoder.
-
-        Processes the input sequences through the model's encoder (e.g., Transformer,
-        RNN) to produce hidden representations at each time step.
-
-        Args:
-            time_seqs: Event time sequences [batch_size, seq_len]
-            type_seqs: Event type sequences [batch_size, seq_len]
-            **kwargs: Additional model-specific arguments (e.g., attention masks)
-
-        Returns:
-            Hidden representations [batch_size, seq_len, hidden_size]
-
-        Example:
-            >>> hidden = model.forward(
-            ...     time_seqs=batch.time_seqs,
-            ...     type_seqs=batch.type_seqs,
-            ...     attn_mask=causal_mask
-            ... )
-        """
-        ...
-
 
 # ============================================================
 # Type Guards and Validation

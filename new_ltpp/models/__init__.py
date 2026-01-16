@@ -1,7 +1,7 @@
 # Non-parametric models
 from new_ltpp.models.anhn import ANHN
 from new_ltpp.models.attnhp import ANHP
-from new_ltpp.models.basemodel import Model
+from new_ltpp.models.base_model import Model
 from new_ltpp.models.fullynn import FullyNN
 
 # Parametric models

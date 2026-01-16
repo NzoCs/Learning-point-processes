@@ -1,10 +1,21 @@
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Union, Self, TypedDict, cast
 
-from new_ltpp.configs.config_factory import ConfigType
 from new_ltpp.configs.data_config import DataConfig
+from new_ltpp.configs.config_factory import ConfigType
+from new_ltpp.utils import logger
 
 from .base_config_builder import ConfigBuilder
+
+
+class DataConfigDict(TypedDict):
+    dataset_id: str | None
+    num_event_types: int | None
+    train_dir: str | None
+    valid_dir: str | None
+    test_dir: str | None
+    data_format: str | None
+    data_loading_specs: Dict[str, Any] | None
+    tokenizer_specs: Dict[str, Any] | None
 
 
 class DataConfigBuilder(ConfigBuilder):
@@ -61,159 +72,159 @@ class DataConfigBuilder(ConfigBuilder):
     .. code-block:: python
 
         # Example 1: Simple setup with single source directory
-        builder = DataConfigBuilder()
-        builder.set_dataset_id("financial_events")
-        builder.set_num_event_types(5)
-        builder.set_src_dir("/path/to/data")
-        builder.set_batch_size(32)
-        builder.set_max_len(128)
+        (builder = DataConfigBuilder()
+            .set_dataset_id("financial_events")
+            .set_num_event_types(5)
+            .set_src_dir("/path/to/data")
+            .set_batch_size(32)
+            .set_max_len(128)
+        )
         data_config = builder.build()
 
         # Example 2: Separate train/valid/test directories
-        builder = DataConfigBuilder()
-        builder.set_dataset_id("financial_events")
-        builder.set_num_event_types(5)
-        builder.set_train_dir("/path/to/train")
-        builder.set_valid_dir("/path/to/valid")
-        builder.set_test_dir("/path/to/test")
-        builder.set_data_format("csv")
-        builder.set_batch_size(64)
-        builder.set_num_workers(4)
-        builder.set_shuffle(True)
-        builder.set_max_len(256)
-        builder.set_padding_side("right")
+        (builder = DataConfigBuilder()
+            .set_dataset_id("financial_events")
+            .set_num_event_types(5)
+            .set_train_dir("/path/to/train")
+            .set_valid_dir("/path/to/valid")
+            .set_test_dir("/path/to/test")
+            .set_data_format("csv")
+            .set_batch_size(64)
+            .set_num_workers(4)
+            .set_shuffle(True)
+            .set_max_len(256)
+            .set_padding_side("right")
+        )
         data_config = builder.build()
 
         # Example 3: Using complete specs dictionaries
-        builder = DataConfigBuilder()
-        builder.set_dataset_id("events")
-        builder.set_num_event_types(3)
-        builder.set_src_dir("/data")
-        builder.set_data_loading_specs({
-            "batch_size": 128,
-            "num_workers": 8,
-            "shuffle": True,
-            "pin_memory": True
-        })
-        builder.set_tokenizer_specs({
-            "max_len": 512,
-            "padding_side": "left",
-            "truncation": True
-        })
+        (builder = DataConfigBuilder()
+            .set_dataset_id("events")
+            .set_num_event_types(3)
+            .set_src_dir("/data")
+            .set_data_loading_specs({
+                "batch_size": 128,
+                "num_workers": 8,
+                "shuffle": True,
+                "pin_memory": True
+            })
+            .set_tokenizer_specs({
+                "max_len": 512,
+                "padding_side": "left",
+                "truncation": True
+            })
+        )
         data_config = builder.build()
     """
 
-    def __init__(self, config_dict: Optional[Dict[str, Any]] = None):
-        super().__init__(ConfigType.DATA, config_dict)
+    _config_dict: DataConfigDict
+
+    def __init__(self):
+        self._config_dict = {
+            "dataset_id": None,
+            "num_event_types": None,
+            "train_dir": None,
+            "valid_dir": None,
+            "test_dir": None,
+            "data_format": None,
+            "data_loading_specs": None,
+            "tokenizer_specs": None,
+        }
+
+    @property
+    def config_dict(self) -> Dict[str, Any]:
+        return cast(dict[str, Any], self._config_dict)
+    
+    @property
+    def config_type(self) -> ConfigType:
+        return ConfigType.DATA
+
+    @property
+    def required_fields(self) -> List[str]:
+        return [
+            "train_dir",
+            "valid_dir",
+            "test_dir",
+            "dataset_id",
+            "num_event_types",
+            "data_loading_specs.batch_size",
+            "data_format",
+        ]
 
     def build(self, **kwargs) -> DataConfig:
-        return cast(DataConfig, super().build(**kwargs))
 
-    def from_dict(
-        self,
-        data: Dict[str, Any],
-        data_config_path: str,
-        data_loading_config_path: Optional[str] = None,
-        tokenizer_specs_path: Optional[str] = None,
-    ) -> List[str]:
-        data_cfg = self._get_nested_value(data, data_config_path)
+        if len(self.get_unset_required_fields()) > 0:
+            raise ValueError(
+                f"Cannot build DataConfig, required fields not set: {self.get_unset_required_fields()}"
+            )
+        
+        logger.info("Building DataConfig with:", self.config_dict)
+        logger.info("Unset fields will be assigned default values:", self.get_unset_fields())
 
-        # Ensure dataset_id exists
-        if isinstance(data_cfg, dict) and "dataset_id" not in data_cfg:
-            dataset_id = data_config_path.split(".")[-1]
-            data_cfg["dataset_id"] = dataset_id
+        config_dict_copy = self.get_clean_dict()
 
-        # Use DataLoadingSpecsBuilder if requested
-        if data_loading_config_path:
-            dl_cfg = self._get_nested_value(data, data_loading_config_path)
-            data_cfg.setdefault("data_loading_specs", dl_cfg)
+        return DataConfig(**config_dict_copy, **kwargs)
 
-        # Merge tokenizer_specs if requested
-        if tokenizer_specs_path:
-            specs_cfg = self._get_nested_value(data, tokenizer_specs_path)
-            data_cfg.setdefault("tokenizer_specs", specs_cfg)
-
-        # Edge case: if src_dir is present and any required dir is missing, set all to src_dir
-        required_dirs = ["train_dir", "valid_dir", "test_dir"]
-        if "src_dir" in data_cfg:
-            for d in required_dirs:
-                if d not in data_cfg:
-                    data_cfg[d] = data_cfg["src_dir"]
-            data_cfg.pop("src_dir", None)
-
-        self.config_dict = data_cfg
-        return self.get_missing_fields()
-
-    def load_from_yaml(
-        self,
-        yaml_path: Union[str, Path],
-        data_config_path: str,
-        data_loading_config_path: Optional[str] = None,
-        data_specs_path: Optional[str] = None,
-    ) -> List[str]:
-        """Load data config from YAML file.
-
-        Args:
-            yaml_path: Path to YAML file
-            data_config_path: Path to data config (e.g., 'data_configs.test')
-            data_loading_config_path: Optional path to data_loading_config
-            data_specs_path: Optional path to tokenizer_specs
-        """
-        data = self._load_yaml(yaml_path)
-        return self.from_dict(
-            data, data_config_path, data_loading_config_path, data_specs_path
-        )
+    def from_dict(self, config_dict: Dict[str, Any]) -> None:
+        """Load config from a dictionary matching DataConfigDict structure."""
+        self._config_dict = cast(DataConfigDict, config_dict)
 
     # DataConfig explicit parameters
-    def set_num_event_types(self, num_event_types: int) -> List[str]:
+    def set_num_event_types(self, num_event_types: int) -> Self:
         """Set number of event types.
 
         Args:
             num_event_types: Number of different event types in the dataset
         """
-        return self.set_field("num_event_types", num_event_types)
+        self.config_dict["num_event_types"] = num_event_types
+        return self
 
-    def set_train_dir(self, train_dir: str) -> List[str]:
+    def set_train_dir(self, train_dir: str) -> Self:
         """Set training data directory.
 
         Args:
             train_dir: Path to training data directory
         """
-        return self.set_field("train_dir", train_dir)
+        self.config_dict["train_dir"] = train_dir
+        return self
 
-    def set_valid_dir(self, valid_dir: str) -> List[str]:
+    def set_valid_dir(self, valid_dir: str) -> Self:
         """Set validation data directory.
 
         Args:
             valid_dir: Path to validation data directory
         """
-        return self.set_field("valid_dir", valid_dir)
+        self.config_dict["valid_dir"] = valid_dir
+        return self
 
-    def set_test_dir(self, test_dir: str) -> List[str]:
+    def set_test_dir(self, test_dir: str) -> Self:
         """Set test data directory.
 
         Args:
             test_dir: Path to test data directory
         """
-        return self.set_field("test_dir", test_dir)
+        self.config_dict["test_dir"] = test_dir
+        return self
 
-    def set_dataset_id(self, dataset_id: str) -> List[str]:
+    def set_dataset_id(self, dataset_id: str) -> Self:
         """Set dataset identifier.
 
         Args:
             dataset_id: Unique identifier for the dataset
         """
-        return self.set_field("dataset_id", dataset_id)
+        self.config_dict["dataset_id"] = dataset_id
+        return self
 
-    def set_data_format(self, data_format: str) -> List[str]:
+    def set_data_format(self, data_format: str) -> Self:
         """Set data file format.
 
         Args:
             data_format: Format of dataset files (e.g., 'csv', 'json')
         """
-        return self.set_field("data_format", data_format)
+        self.config_dict["data_format"] = data_format
+        return self
 
-    def set_src_dir(self, path: str) -> List[str]:
+    def set_src_dir(self, path: str) -> Self:
         """Helper to set train/valid/test directories at once from a single source directory.
 
         This mirrors the YAML fallback behavior where a `src_dir` may be provided.
@@ -225,95 +236,79 @@ class DataConfigBuilder(ConfigBuilder):
         self.config_dict["train_dir"] = path
         self.config_dict["valid_dir"] = path
         self.config_dict["test_dir"] = path
-        return self.get_missing_fields()
+        return self
 
-    def set_data_loading_specs(self, specs: Union[Dict[str, Any], Any]) -> List[str]:
+    def set_data_loading_specs(self, specs: Union[Dict[str, Any], Any]) -> Self:
         """Set data loading specifications.
 
         Args:
             specs: Data loading specifications dictionary or DataLoadingSpecsConfig
         """
-        return self.set_field("data_loading_specs", specs)
+        self.config_dict["data_loading_specs"] = specs
+        return self
 
-    def set_tokenizer_specs(self, specs: Union[Dict[str, Any], Any]) -> List[str]:
+    def set_tokenizer_specs(self, specs: Union[Dict[str, Any], Any]) -> Self:
         """Set tokenizer specifications.
 
         Args:
             specs: Tokenizer specifications dictionary or TokenizerConfig
         """
-        return self.set_field("tokenizer_specs", specs)
+        self.config_dict["tokenizer_specs"] = specs
+        return self
 
     # DataLoadingSpecsConfig convenience methods
-    def set_batch_size(self, batch_size: int) -> List[str]:
+    def set_batch_size(self, batch_size: int) -> Self:
         """Set batch size in data_loading_specs.
 
         Args:
             batch_size: Number of samples per batch
         """
-        if "data_loading_specs" not in self.config_dict:
+        if self.config_dict["data_loading_specs"] is None:
             self.config_dict["data_loading_specs"] = {}
         self.config_dict["data_loading_specs"]["batch_size"] = batch_size
-        return self.get_missing_fields()
+        return self
 
-    def set_num_workers(self, num_workers: int) -> List[str]:
+    def set_num_workers(self, num_workers: int) -> Self:
         """Set number of workers in data_loading_specs.
 
         Args:
             num_workers: Number of subprocesses for data loading
         """
-        if "data_loading_specs" not in self.config_dict:
+        if self.config_dict["data_loading_specs"] is None:
             self.config_dict["data_loading_specs"] = {}
         self.config_dict["data_loading_specs"]["num_workers"] = num_workers
-        return self.get_missing_fields()
+        return self
 
-    def set_shuffle(self, shuffle: bool) -> List[str]:
+    def set_shuffle(self, shuffle: bool) -> Self:
         """Set shuffle parameter in data_loading_specs.
 
         Args:
             shuffle: Whether to shuffle the dataset
         """
-        if "data_loading_specs" not in self.config_dict:
+        if self.config_dict["data_loading_specs"] is None:
             self.config_dict["data_loading_specs"] = {}
         self.config_dict["data_loading_specs"]["shuffle"] = shuffle
-        return self.get_missing_fields()
+        return self
 
     # TokenizerConfig convenience methods
-    def set_max_len(self, max_len: int) -> List[str]:
+    def set_max_len(self, max_len: int) -> Self:
         """Set maximum sequence length in tokenizer_specs.
 
         Args:
             max_len: Maximum length of sequences after padding/truncation
         """
-        if "tokenizer_specs" not in self.config_dict:
+        if self.config_dict["tokenizer_specs"] is None:
             self.config_dict["tokenizer_specs"] = {}
         self.config_dict["tokenizer_specs"]["max_len"] = max_len
-        return self.get_missing_fields()
+        return self
 
-    def set_padding_side(self, side: str) -> List[str]:
+    def set_padding_side(self, side: str) -> Self:
         """Set padding side in tokenizer_specs.
 
         Args:
             side: Side for padding ('left' or 'right')
         """
-        if "tokenizer_specs" not in self.config_dict:
+        if self.config_dict["tokenizer_specs"] is None:
             self.config_dict["tokenizer_specs"] = {}
         self.config_dict["tokenizer_specs"]["padding_side"] = side
-        return self.get_missing_fields()
-
-    def get_missing_fields(self) -> List[str]:
-        required = [
-            "train_dir",
-            "valid_dir",
-            "test_dir",
-            "dataset_id",
-            "num_event_types",
-        ]
-        # If src_dir is present, directories are considered present
-        if "src_dir" in self.config_dict:
-            return [
-                f
-                for f in required
-                if f not in self.config_dict
-                and f not in ["train_dir", "valid_dir", "test_dir"]
-            ]
-        return [f for f in required if f not in self.config_dict]
+        return self

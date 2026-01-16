@@ -267,7 +267,6 @@ class AutocorrelationPlotGenerator(BasePlotGenerator):
         # Confidence bands (approximate, like statsmodels)
         # For white noise, 95% confidence interval is approximately ±1.96/sqrt(n)
         # But here we'll use a simple approximation
-        conf_level = 0.05  # 95% confidence
         n_samples = 100  # Approximate sample size for confidence calculation
         conf_interval = 1.96 / np.sqrt(n_samples)
 

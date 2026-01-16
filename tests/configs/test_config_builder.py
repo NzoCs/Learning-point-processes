@@ -4,13 +4,16 @@ from new_ltpp.configs.config_builders import DataConfigBuilder, RunnerConfigBuil
 def test_data_config_builder():
     """Test building a DataConfig using DataConfigBuilder."""
     builder = DataConfigBuilder()
-    builder.set_dataset_id("test")
-    builder.set_src_dir("NzoCs/test_dataset")
-    builder.set_batch_size(32)
-    builder.set_num_workers(2)
-    builder.set_shuffle(True)
-    builder.set_num_event_types(2)
-    builder.set_max_len(128)
+    (
+        builder.set_dataset_id("test")
+        .set_src_dir("NzoCs/test_dataset")
+        .set_batch_size(32)
+        .set_num_workers(2)
+        .set_shuffle(True)
+        .set_num_event_types(2)
+        
+    )
+    builder.set_data_format("json")
 
     data_config = builder.build()
     assert data_config.dataset_id == "test"
@@ -19,7 +22,7 @@ def test_data_config_builder():
     assert data_config.test_dir == "NzoCs/test_dataset"
     assert data_config.data_loading_specs.batch_size == 32
     assert data_config.num_event_types == 2
-    assert data_config.tokenizer_specs.max_len == 128
+    assert data_config.tokenizer_specs.num_event_types == 2
 
 
 def test_runner_config_builder_programmatic():
@@ -27,41 +30,45 @@ def test_runner_config_builder_programmatic():
     runner_config_builder = RunnerConfigBuilder()
 
     # Set training config
-    runner_config_builder.training_builder.set_max_epochs(50)
-    runner_config_builder.training_builder.set_batch_size(64)
-    runner_config_builder.training_builder.set_lr(1e-3)
-    runner_config_builder.training_builder.set_lr_scheduler(True)
-    runner_config_builder.training_builder.set_val_freq(1)
-    runner_config_builder.training_builder.set_patience(3)
-    runner_config_builder.training_builder.set_accumulate_grad_batches(1)
-    runner_config_builder.training_builder.set_devices(1)
+    (
+        runner_config_builder.training_builder.set_max_epochs(50)
+        .set_lr(1e-3)
+        .set_lr_scheduler(True)
+        .set_val_freq(1)
+        .set_patience(3)
+        .set_accumulate_grad_batches(1)
+        .set_devices(1)
+    )
+    # Set runner-level save dir (not a training field)
     runner_config_builder.set_save_dir("./custom_output")
 
+    
+
     # Build data config
-    runner_config_builder.data_builder.set_num_event_types(2)
-    runner_config_builder.data_builder.set_dataset_id("test")
-    runner_config_builder.data_builder.set_src_dir("NzoCs/test_dataset")
-    runner_config_builder.data_builder.set_batch_size(64)
-    runner_config_builder.data_builder.set_num_workers(2)
-    runner_config_builder.data_builder.set_shuffle(True)
-    runner_config_builder.data_builder.set_max_len(128)
+    (
+        runner_config_builder.data_builder.set_num_event_types(2)
+        .set_dataset_id("test")
+        .set_src_dir("NzoCs/test_dataset")
+        .set_batch_size(64)
+        .set_num_workers(2)
+        .set_shuffle(True)
+        .set_data_format("json")
+    )
 
     # Build model config
-    runner_config_builder.model_builder.set_general_specs({"hidden_size": 32})
-    runner_config_builder.model_builder.set_model_specs({})
-    runner_config_builder.model_builder.set_scheduler_config(lr_scheduler=True, lr=1e-3)
-    runner_config_builder.model_builder.set_simulation_config(
-        start_time=20, end_time=50, batch_size=16, max_sim_events=5000, seed=42
-    )
-    runner_config_builder.model_builder.set_thinning_config(
-        num_sample=15,
-        num_exp=50,
-        use_mc_samples=True,
-        loss_integral_num_sample_per_step=10,
-        num_steps=10,
-        over_sample_rate=1.2,
-        num_samples_boundary=5,
-        dtime_max=3.0,
+    (
+        runner_config_builder.model_builder.set_general_specs({"hidden_size": 32})
+        .set_model_specs({})
+        .set_num_mc_samples(1)
+        .set_scheduler_config(lr_scheduler=True, lr=1e-3, max_epochs=50)
+        .set_simulation_config(
+            time_window=30.0, batch_size=16, max_sim_events=5000, seed=42
+        )
+        .set_thinning_config(
+            num_sample=15,
+            num_exp=50,
+            over_sample_rate=1.2,
+        )
     )
 
     # Build the config
@@ -71,9 +78,8 @@ def test_runner_config_builder_programmatic():
     assert custom_runner_config.model_id == "NHP"
     assert custom_runner_config.data_config.dataset_id == "test"
     assert custom_runner_config.training_config.max_epochs == 50
-    assert custom_runner_config.training_config.batch_size == 64
     assert "custom_output" in custom_runner_config.save_dir
-    assert custom_runner_config.model_config.specs["hidden_size"] == 32
+    assert custom_runner_config.model_config.specs.hidden_size == 32
 
 
 def test_runner_config_builder_from_yaml(tmp_path):
@@ -83,7 +89,6 @@ def test_runner_config_builder_from_yaml(tmp_path):
 training_configs:
   quick_test:
     max_epochs: 10
-    batch_size: 32
     lr: 0.001
     lr_scheduler: true
     val_freq: 1
@@ -111,13 +116,13 @@ thinning_configs:
   thinning_fast:
     num_sample: 10
     num_exp: 50
+    num_samples_boundary: 5
 
 simulation_configs:
   simulation_fast:
-    start_time: 0
-    end_time: 50
+    time_window: 30.0
     batch_size: 16
-    max_sim_events: 1000
+    initial_buffer_size: 1000
     seed: 42
 
 logger_configs:
@@ -129,19 +134,34 @@ logger_configs:
     yaml_file = tmp_path / "test_config.yaml"
     yaml_file.write_text(yaml_content)
 
-    # Build config from YAML
-    runner_builder = RunnerConfigBuilder()
-    missing = runner_builder.load_from_yaml(
-        yaml_file_path=str(yaml_file),
-        training_config_path="training_configs.quick_test",
-        model_config_path="model_configs.neural_small",
-        data_config_path="data_configs.test",
-        data_loading_config_path="data_loading_configs.quick_test",
-        thinning_config_path="thinning_configs.thinning_fast",
-        simulation_config_path="simulation_configs.simulation_fast",
-        logger_config_path="logger_configs.csv",
+    # Build config from YAML using the YAML loaders and then populate the builder
+    from new_ltpp.configs.config_loaders.runner_config_loader import (
+      RunnerConfigYamlLoader,
     )
 
+    runner_builder = RunnerConfigBuilder()
+    loader = RunnerConfigYamlLoader()
+    runner_cfg = loader.load(
+      str(yaml_file),
+      training_config_path="training_configs.quick_test",
+      model_config_path="model_configs.neural_small",
+      data_config_path="data_configs.test",
+      data_loading_config_path="data_loading_configs.quick_test",
+      thinning_config_path="thinning_configs.thinning_fast",
+      simulation_config_path="simulation_configs.simulation_fast",
+      logger_config_path="logger_configs.csv",
+    )
+
+    # Populate builder and check for missing required fields
+    runner_builder.from_dict(runner_cfg)
+    # Explicitly set required fields omitted by YAML so tests control these values
+    runner_builder.model_builder.set_num_mc_samples(1)
+    runner_builder.data_builder.set_data_format("json")
+    missing = (
+      runner_builder.model_builder.get_unset_required_fields()
+      + runner_builder.data_builder.get_unset_required_fields()
+      + runner_builder.training_builder.get_unset_required_fields()
+    )
     assert len(missing) == 0  # No missing fields
 
     runner_config = runner_builder.build(model_id="NHP")

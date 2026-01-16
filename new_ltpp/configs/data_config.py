@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union, cast
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils.const import PaddingStrategy, TruncationStrategy
@@ -144,18 +144,30 @@ class DataLoadingSpecsConfig(Config):
         shuffle (Optional[bool]): Whether to shuffle the dataset.
         padding (Optional[bool]): Whether to apply padding to sequences.
         truncation (Optional[bool]): Whether to truncate sequences to a maximum length.
-        tensor_type (str): Type of tensor to return ('pt' for PyTorch, 'tf' for TensorFlow, etc.).
         max_len (Optional[int]): Maximum length of sequences after padding/truncation.
     """
 
     batch_size: int
     num_workers: int = 1
+    shuffle: bool = False
+    padding: bool = True
+    truncation: bool = False
+    max_len: int | None = None
 
     def get_yaml_config(self) -> Dict[str, Any]:
-        return {
+        cfg: Dict[str, Any] = {
             "batch_size": self.batch_size,
             "num_workers": self.num_workers,
         }
+        if self.shuffle is not None:
+            cfg["shuffle"] = self.shuffle
+        if self.padding is not None:
+            cfg["padding"] = self.padding
+        if self.truncation is not None:
+            cfg["truncation"] = self.truncation
+        if self.max_len is not None:
+            cfg["max_len"] = self.max_len
+        return cfg
 
     def get_required_fields(self):
         return []
@@ -182,9 +194,9 @@ class DataConfig(Config):
         valid_dir: str,
         test_dir: str,
         dataset_id: str,
-        data_loading_specs: Union[DataLoadingSpecsConfig, dict],
+        data_loading_specs: Union[DataLoadingSpecsConfig, Dict[str, Any]],
         data_format: Literal["json", "pkl", "hf"],
-        tokenizer_specs: Optional[Union[TokenizerConfig, dict]] = None,
+        tokenizer_specs: Optional[Union[TokenizerConfig, Dict[str, Any]]] = None,
         **kwargs,
     ):
         self.train_dir = train_dir
@@ -194,14 +206,24 @@ class DataConfig(Config):
         self.data_format: Literal["json", "pkl", "hf"] = data_format
 
         self.dataset_id = dataset_id
+
+
         # Instancie si dict, sinon laisse tel quel
         if isinstance(data_loading_specs, dict):
+            data_loading_specs = cast(Dict[str, Any], data_loading_specs)
+            if "batch_size" not in data_loading_specs:
+                raise ConfigValidationError(
+                    "data_loading_specs must include 'batch_size' field.",
+                    "data_loading_specs.batch_size",
+                )
             self.data_loading_specs = DataLoadingSpecsConfig(
                 batch_size=data_loading_specs.pop("batch_size"), **data_loading_specs
             )
         else:
-            self.data_loading_specs = data_loading_specs
+            self.data_loading_specs = cast(DataLoadingSpecsConfig, data_loading_specs)
+
         if isinstance(tokenizer_specs, dict):
+            tokenizer_specs = cast(Dict[str, Any], tokenizer_specs)
             self.tokenizer_specs = TokenizerConfig(
                 num_event_types=num_event_types, **tokenizer_specs
             )
@@ -209,7 +231,7 @@ class DataConfig(Config):
             # Default to LONGEST padding strategy (will be set in __post_init__)
             self.tokenizer_specs = TokenizerConfig(num_event_types=num_event_types)
         else:
-            self.tokenizer_specs = tokenizer_specs
+            self.tokenizer_specs = cast(TokenizerConfig, tokenizer_specs)
 
         super().__init__(**kwargs)
 
@@ -222,13 +244,9 @@ class DataConfig(Config):
             "dataset_id": self.dataset_id,
             "data_loading_specs": (
                 self.data_loading_specs.get_yaml_config()
-                if hasattr(self.data_loading_specs, "get_yaml_config")
-                else self.data_loading_specs
             ),
             "tokenizer_specs": (
                 self.tokenizer_specs.get_yaml_config()
-                if hasattr(self.tokenizer_specs, "get_yaml_config")
-                else self.tokenizer_specs
             ),
         }
         return config

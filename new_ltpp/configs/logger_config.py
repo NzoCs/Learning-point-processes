@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Type, Union, cast
 
 from pytorch_lightning.loggers import (
     CometLogger,
@@ -278,7 +278,7 @@ class LoggerConfig(Config):
 
 class LoggerFactory:
     @staticmethod
-    def create_logger(config: Union[dict, LoggerConfig]) -> Any:
+    def create_logger(config: Union[Dict[str, Any], LoggerConfig]) -> Any:
         """
         Créer une instance de logger à partir de la configuration.
 
@@ -288,5 +288,5 @@ class LoggerFactory:
         Returns:
             Instance du logger
         """
-        logger_config = LoggerConfig(**config) if isinstance(config, dict) else config
+        logger_config = LoggerConfig(**cast(Dict[str, Any], config)) if isinstance(config, Dict[str, Any]) else cast(LoggerConfig, config)
         return logger_config.configure_logger()

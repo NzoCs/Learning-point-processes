@@ -6,16 +6,19 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 import torch.optim as optim
+import torch.nn as nn
+
 
 from new_ltpp.configs import ModelConfig
 from new_ltpp.shared_types import Batch, DataInfo
 
 from .mixins import TrainingMixin, VisualizationMixin
 from .model_registry import RegistryMeta
+from .model_protocol import TPPModelProtocol, NeuralTPPModelProtocol
 
 
 class Model(
-    TrainingMixin, VisualizationMixin, pl.LightningModule, ABC, metaclass=RegistryMeta
+    TrainingMixin, VisualizationMixin, pl.LightningModule, ABC, TPPModelProtocol, metaclass=RegistryMeta
 ):
     """Base model class for all TPP models using mixins.
 
@@ -71,7 +74,6 @@ class Model(
             simulation_batch_size=simulation_batch_size,
             # PredictionMixin params
             num_sample=num_sample,
-            num_step_gen=model_config.num_steps,
             # TrainingMixin paramok
             pad_token_id=data_info["pad_token_id"],
         )
@@ -85,8 +87,6 @@ class Model(
 
         # Loss computation configuration
         self.num_mc_samples = model_config.num_mc_samples
-        self.use_mc_samples = model_config.use_mc_samples
-        self.num_step_gen = model_config.num_steps
 
     def configure_optimizers(self):
         """Configure the optimizer for the model.
@@ -150,3 +150,37 @@ class Model(
             Tuple of (loss, number of events)
         """
         pass
+
+
+class NeuralModel(Model, ABC, NeuralTPPModelProtocol):
+    """
+    Neural Temporal Point Process model.
+    Inherits from Model.
+    """
+
+    def __init__(
+        self,
+        *,
+        dropout: float,
+        hidden_size: int,
+        **kwargs,
+    ):
+        """
+        Initialize the NeuralModel.
+
+        Args:
+            model_config: Configuration of the model.
+            num_event_types: Number of event types.
+        """
+        super(NeuralModel, self).__init__(**kwargs)
+
+        self.dropout = dropout
+        self.hidden_size = hidden_size
+
+        # Initialize type embedding
+        self.layer_type_emb = nn.Embedding(
+            num_embeddings=self.num_event_types + 1,  # have padding
+            embedding_dim=self.hidden_size,
+            padding_idx=self.pad_token_id,
+            device=self.device,
+        )

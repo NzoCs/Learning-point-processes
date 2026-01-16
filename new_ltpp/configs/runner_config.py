@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, Optional, cast
 
 import torch
 
@@ -29,7 +30,6 @@ class TrainingConfig(Config):
     """
 
     max_epochs: int
-    batch_size: int = 32
     lr: float = 1e-3
     lr_scheduler: bool = True
     dropout: float = 0.0
@@ -42,7 +42,6 @@ class TrainingConfig(Config):
     devices: Optional[int] = None
 
     def __post_init__(self):
-
         # Devices
         if self.devices is None:
             self.devices = self.detect_available_devices()
@@ -65,7 +64,6 @@ class TrainingConfig(Config):
 
     def get_yaml_config(self) -> Dict[str, Any]:
         config = {
-            "batch_size": self.batch_size,
             "max_epochs": self.max_epochs,
             "val_freq": self.val_freq,
             "patience": self.patience,
@@ -103,7 +101,6 @@ class RunnerConfig(Config):
         enable_logging: bool = True,
         **kwargs,
     ):
-
         # assign simple attributes first so they are available during setup
 
         # Instancie les configs intermédiaires à partir des dicts
@@ -135,7 +132,8 @@ class RunnerConfig(Config):
         )
 
         # Base directory for all outputs
-        self.base_dir = OUTPUT_DIR / self.dataset_id / f"{self.model_id}_{specs_str}"
+        root_dir = Path(save_dir) if save_dir else OUTPUT_DIR
+        self.base_dir = root_dir / self.dataset_id / f"{self.model_id}_{specs_str}"
 
         # Directory setup
         # Checkpoints directory
@@ -158,6 +156,7 @@ class RunnerConfig(Config):
         else:
             # If a dict was passed, extract config and type
             if isinstance(logger_config, dict):
+                logger_config = cast(Dict[str, Any], logger_config)
                 config_dict = logger_config.get("config", logger_config)
                 type_ = logger_config.get("type", LoggerType.TENSORBOARD)
                 self.logger_config = LoggerConfig(

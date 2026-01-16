@@ -228,7 +228,7 @@ class TPPDataModule(pl.LightningDataModule):
         data = load_dataset(source_dir, split=split_mapped)
 
         py_assert(
-            data["dim_process"][0] == self.num_event_types,
+            data["dim_process"][0] == self.num_event_types, #ty : ignore
             ValueError,
             "Inconsistent dim_process in different splits.",
         )
@@ -281,7 +281,7 @@ class TPPDataModule(pl.LightningDataModule):
         data = load_dataset("json", data_files={split: source_dir}, split=split_mapped)
 
         py_assert(
-            data["dim_process"][0] == self.num_event_types,
+            data["dim_process"][0] == self.num_event_types, # ty : ignore
             ValueError,
             "Inconsistent dim_process in different splits.",
         )

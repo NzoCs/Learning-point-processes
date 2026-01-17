@@ -14,6 +14,9 @@ from new_ltpp.runners.runner_manager import RunnerManager
 from .cli_base import CONFIG_MAP, CLIRunnerBase
 
 
+from new_ltpp.configs.config_loaders.runner_config_loader import RunnerConfigYamlLoader
+
+
 class ExperimentRunner(CLIRunnerBase):
     """
     Runner pour l'exécution d'expériences TPP.
@@ -57,7 +60,7 @@ class ExperimentRunner(CLIRunnerBase):
         self,
         config_path: Optional[Union[str, Path]] = None,
         phase: str = "train",
-        max_epochs: int | None = None,
+        max_epochs: Optional[int] = None,
         data_config: Optional[str] = None,
         general_specs_config: Optional[str] = None,
         training_config: Optional[str] = None,
@@ -140,11 +143,22 @@ class ExperimentRunner(CLIRunnerBase):
             config_type = path_key.replace("_config_path", "").replace("_", " ").title()
             self.print_info(f"  • {config_type}: {path_value}")
 
-        # Charger la configuration complète depuis le YAML (comme run_all_phase.py)
-        config_builder.load_from_yaml(
+        # Charger la configuration complète depuis le YAML via le Loader
+        loader = RunnerConfigYamlLoader()
+        config_dict = loader.load(
             yaml_file_path=config_path,
-            **config_paths,  # Unpacking des chemins construits dynamiquement
+            training_config_path=config_paths.get("training_config_path"),
+            data_config_path=config_paths.get("data_config_path"),
+            model_config_path=config_paths.get("model_config_path"),
+            data_loading_config_path=config_paths.get("data_loading_config_path"),
+            simulation_config_path=config_paths.get("simulation_config_path"),
+            thinning_config_path=config_paths.get("thinning_config_path"),
+            logger_config_path=config_paths.get("logger_config_path"),
+            general_specs_config_path=config_paths.get("general_specs_config_path"),
+            model_specs_config_path=config_paths.get("model_specs_config_path"),
         )
+
+        config_builder.from_dict(config_dict)
 
         self.print_info("Configuration YAML chargée avec succès")
 

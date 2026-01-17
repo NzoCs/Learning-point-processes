@@ -23,7 +23,6 @@ from new_ltpp.configs.data_config import (
     DataLoadingSpecsConfig,
     TokenizerConfig,
 )
-from new_ltpp.configs.hpo_config import HPOConfig, HPORunnerConfig
 from new_ltpp.configs.model_config import (
     ModelConfig,
     ModelSpecsConfig,
@@ -44,8 +43,6 @@ __all__ = [
     "ModelConfig",
     "Config",
     "RunnerConfig",
-    "HPOConfig",
-    "HPORunnerConfig",
     # Enhanced configuration system
     "EnhancedBaseConfig",
     "ConfigValidationError",

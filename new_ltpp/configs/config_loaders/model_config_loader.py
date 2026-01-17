@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional, Union
 from pathlib import Path
 
 from .base_config_loader import BaseConfigLoader
+from new_ltpp.utils import logger
 
 
 class ModelConfigYamlLoader(BaseConfigLoader):
@@ -17,7 +18,7 @@ class ModelConfigYamlLoader(BaseConfigLoader):
         scheduler_config_path: Optional[str] = None,
         general_specs_path: Optional[str] = None,
         model_specs_path: Optional[str] = None,
-    ) -> Dict[str, Any]: # type: ignore[override]
+    ) -> Dict[str, Any]:  # type: ignore[override]
         """
         Load model configuration from a YAML file.
 
@@ -81,9 +82,18 @@ class ModelConfigYamlLoader(BaseConfigLoader):
             "is_training",
             "compute_simulation",
             "pretrain_model_path",
-            "num_mc_samples",
         ]:
             if key in model_cfg:
                 config_dict[key] = model_cfg[key]
+
+        # Smart loading for num_mc_samples (required field)
+        if "num_mc_samples" in model_cfg:
+            config_dict["num_mc_samples"] = model_cfg["num_mc_samples"]
+        elif "num_mc_samples" in general_specs:
+            config_dict["num_mc_samples"] = general_specs["num_mc_samples"]
+        else:
+            # Fallback default if not specified anywhere
+            logger.info("num_mc_samples not found in config, defaulting to 100")
+            config_dict["num_mc_samples"] = 100
 
         return config_dict

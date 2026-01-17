@@ -18,7 +18,7 @@ from .model_protocol import TPPModelProtocol, NeuralTPPModelProtocol
 
 
 class Model(
-    TrainingMixin, VisualizationMixin, pl.LightningModule, ABC, TPPModelProtocol, metaclass=RegistryMeta
+    TrainingMixin, VisualizationMixin, pl.LightningModule, metaclass=RegistryMeta
 ):
     """Base model class for all TPP models using mixins.
 
@@ -152,7 +152,7 @@ class Model(
         pass
 
 
-class NeuralModel(Model, ABC, NeuralTPPModelProtocol):
+class NeuralModel(Model, ABC):
     """
     Neural Temporal Point Process model.
     Inherits from Model.

@@ -47,12 +47,6 @@ class SimulationMixin(BaseMixin):
         initial_buffer_size: int,
         **kwargs,
     ):
-        """Initialize the SimulationMixin.
-
-        Args:
-            num_sample: Number of samples for one-step prediction
-            num_step_gen: Number of steps for multi-step generation
-        """
         super().__init__(**kwargs)
         self.num_event_types = num_event_types
         self.simulation_start_time = simulation_start_time

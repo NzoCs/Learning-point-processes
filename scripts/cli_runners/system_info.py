@@ -179,7 +179,7 @@ class SystemInfo(CLIRunnerBase):
             new_ltpp_info["new_ltpp Version"] = getattr(
                 new_ltpp, "__version__", "Unknown"
             )
-            new_ltpp_info["Installation Path"] = str(Path(new_ltpp.__file__).parent)
+            new_ltpp_info["Installation Path"] = str(Path(new_ltpp.__file__).parent) # type: ignore
 
             # Vérifier les modules principaux
             modules_to_check = [

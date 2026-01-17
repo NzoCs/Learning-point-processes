@@ -11,20 +11,18 @@ from .base_mixin import BaseMixin
 class PredictionMixin(BaseMixin):
     """Mixin providing prediction functionality.
 
-    Requires: self.event_sampler, self.num_sample, self.num_step_gen,
+    Requires: self.event_sampler, self.num_sample,
               self.compute_intensities_at_sample_times, self.num_event_types
     """
 
-    def __init__(self, num_sample: int, num_step_gen: int, **kwargs):
+    def __init__(self, num_sample: int, **kwargs):
         """Initialize the PredictionMixin.
 
         Args:
             num_sample: Number of samples for one-step prediction
-            num_step_gen: Number of steps for multi-step generation
         """
         super().__init__(**kwargs)
         self.num_sample = num_sample
-        self.num_step_gen = num_step_gen
 
     def predict_one_step_at_every_event(
         self,

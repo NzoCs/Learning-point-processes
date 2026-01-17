@@ -179,9 +179,9 @@ class PredMetricsHelper(MetricsHelper):
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
 
-        accuracy_metric.update(type_values["pred_types"], type_values["true_types"])
+        accuracy_metric.update(type_values["pred_types"], type_values["true_types"]) # type: ignore
 
-        return accuracy_metric.compute().item() * 100
+        return accuracy_metric.compute().item() * 100 # type: ignore
 
     def _calculate_f1_score(
         self, type_values: TypeValues, average: Literal["macro", "micro"] = "macro"
@@ -197,9 +197,9 @@ class PredMetricsHelper(MetricsHelper):
             task="multiclass", num_classes=self.num_event_types, average=average
         ).to(device)
 
-        f1_metric.update(type_values["pred_types"], type_values["true_types"])
+        f1_metric.update(type_values["pred_types"], type_values["true_types"]) # type: ignore
 
-        return f1_metric.compute().item() * 100
+        return f1_metric.compute().item() * 100 # type: ignore
 
     def _calculate_recall(self, type_values: TypeValues) -> float:
         """Calculate recall."""
@@ -215,7 +215,7 @@ class PredMetricsHelper(MetricsHelper):
 
         recall_metric.update(type_values["pred_types"], type_values["true_types"])  # type: ignore
 
-        return recall_metric.compute().item() * 100
+        return recall_metric.compute().item() * 100 # type: ignore
 
     def _calculate_precision(self, type_values: TypeValues) -> float:
         """Calculate precision."""
@@ -228,9 +228,9 @@ class PredMetricsHelper(MetricsHelper):
             task="multiclass", num_classes=self.num_event_types, average="macro"
         ).to(device)
 
-        precision_metric.update(type_values["pred_types"], type_values["true_types"])
+        precision_metric.update(type_values["pred_types"], type_values["true_types"]) # type: ignore
 
-        return precision_metric.compute().item() * 100
+        return precision_metric.compute().item() * 100 # type: ignore
 
     def _calculate_cross_entropy(self, type_values: TypeValues) -> float:
         """Calculate cross entropy loss."""
@@ -260,9 +260,9 @@ class PredMetricsHelper(MetricsHelper):
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
         confusion_matrix_metric.update(
-            type_values["pred_types"], type_values["true_types"]
-        )
-        return confusion_matrix_metric.compute()
+            type_values["pred_types"], type_values["true_types"] # type: ignore
+        ) 
+        return confusion_matrix_metric.compute() # type: ignore
 
     def _get_nan_metrics(self) -> Dict[str, Any]:
         """Get a dictionary of NaN metrics for error cases."""

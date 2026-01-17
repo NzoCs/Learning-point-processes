@@ -43,7 +43,6 @@ class SchedulerConfig(Config):
         super().__init__(**kwargs)
 
     def get_yaml_config(self):
-
         return {
             "lr": self.lr,
             "lr_scheduler": self.lr_scheduler,
@@ -62,6 +61,15 @@ class ThinningConfig(Config):
     num_exp: int
     num_samples_boundary: int
     over_sample_rate: float = 2.0
+
+    def __init__(
+        self, num_sample: int, num_exp: int, over_sample_rate: float = 2.0, **kwargs
+    ):
+        self.num_sample = num_sample
+        self.num_exp = num_exp
+        self.num_samples_boundary = num_sample
+        self.over_sample_rate = over_sample_rate
+        super().__init__(**kwargs)
 
     def get_required_fields(self) -> List[str]:
         """Return list of required field names."""
@@ -149,7 +157,6 @@ class ModelSpecsConfig:
         dropout: Optional[float] = 0.0,
         **kwargs,
     ):
-
         self.hidden_size = hidden_size
         self.dropout = dropout
 

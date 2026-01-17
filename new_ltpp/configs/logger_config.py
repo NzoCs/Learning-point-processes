@@ -155,7 +155,6 @@ class CometLoggerAdapter(BaseLoggerAdapter):
 
     @classmethod
     def configure(cls, config: Dict[str, Any]) -> CometLogger:
-
         return CometLogger(**config)
 
 
@@ -166,7 +165,6 @@ class NeptuneLoggerAdapter(BaseLoggerAdapter):
 
     @classmethod
     def configure(cls, config: Dict[str, Any]) -> NeptuneLogger:
-
         return NeptuneLogger(**config)
 
 
@@ -177,7 +175,6 @@ class TensorboardLoggerAdapter(BaseLoggerAdapter):
 
     @classmethod
     def configure(cls, config: Dict[str, Any]) -> TensorBoardLogger:
-
         if not config.get("name"):
             config["name"] = "tb_logs"
 
@@ -288,5 +285,9 @@ class LoggerFactory:
         Returns:
             Instance du logger
         """
-        logger_config = LoggerConfig(**cast(Dict[str, Any], config)) if isinstance(config, Dict[str, Any]) else cast(LoggerConfig, config)
+        logger_config = (
+            LoggerConfig(**cast(Dict[str, Any], config))
+            if isinstance(config, dict)
+            else cast(LoggerConfig, config)
+        )
         return logger_config.configure_logger()

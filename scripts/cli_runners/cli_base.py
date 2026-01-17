@@ -31,7 +31,6 @@ CONFIG_MAP = {
     "model_specs": "model_specs",
     "runner": "runner_configs",
     "simulation": "simulation_configs",
-    "hpo": "hpo_configs",
     "training": "training_configs",
     "data_loading": "data_loading_configs",
     "thinning": "thinning_configs",
@@ -67,7 +66,7 @@ class CLIRunnerBase:
         logger.addHandler(handler)
         return logger
 
-    def _build_config_paths(self, **config_kwargs) -> dict:
+    def _build_config_paths(self, **config_kwargs) -> dict[str, str]:
         """
         Construit les chemins de configuration en suivant le pattern standard.
 

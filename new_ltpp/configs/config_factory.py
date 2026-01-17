@@ -17,7 +17,6 @@ from typing import Any, Dict
 from new_ltpp.utils import logger
 
 from .data_config import DataConfig, DataLoadingSpecsConfig, TokenizerConfig
-from .hpo_config import HPOConfig, HPORunnerConfig
 from .logger_config import LoggerConfig
 from .model_config import (
     ModelConfig,
@@ -47,10 +46,6 @@ class ConfigType(Enum):
     # Runner configurations
     RUNNER = ("runner_config", RunnerConfig)
     TRAINER = ("training_config", TrainingConfig)
-
-    # HPO configurations
-    HPO = ("hpo_config", HPOConfig)
-    HPO_RUNNER = ("hpo_runner_config", HPORunnerConfig)
 
     # Logger configurations
     LOGGER = ("logger_config", LoggerConfig)

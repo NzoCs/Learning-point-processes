@@ -4,8 +4,9 @@ Benchmark Runner
 Runner pour les tests de performance et benchmarking TPP.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
+from new_ltpp.configs.config_loaders.data_config_loader import DataConfigYamlLoader
 from new_ltpp.configs import DataConfigBuilder
 from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
@@ -28,7 +29,7 @@ class BenchmarkRunner(CLIRunnerBase):
 
     def run_benchmark(
         self,
-        data_config: str | List[str] | None,
+        data_config: Optional[Union[str, List[str]]],
         data_loading_config: str,
         config_path: Optional[str] = None,
         benchmarks: Optional[List[str]] = None,
@@ -104,8 +105,19 @@ class BenchmarkRunner(CLIRunnerBase):
                     f"Configuration des données: {config_paths.get('data_config_path')}"
                 )
 
+                # Use Loader to get dictionary
+                loader = DataConfigYamlLoader()
+                config_dict = loader.load(
+                    yaml_path=config_path,
+                    data_config_path=config_paths.get("data_config_path"),  # type: ignore
+                    data_loading_config_path=config_paths.get(
+                        "data_loading_config_path"
+                    ),
+                )
+
+                # Use Builder to create object
                 builder = DataConfigBuilder()
-                builder.load_from_yaml(yaml_path=config_path, **config_paths)
+                builder.from_dict(config_dict)
                 built_config = builder.build()
                 all_data_configs.append(built_config)
 

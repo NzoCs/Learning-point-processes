@@ -1,4 +1,5 @@
-from .mmd_test import MMDTest
+from .mmd_test import MMDTwoSampleTest
 from .stein_test import SteinTest
+from .test_protocol import TestProtocol
 
-__all__ = ["MMDTest", "SteinTest"]
+__all__ = ["MMDTwoSampleTest", "SteinTest", "TestProtocol"]

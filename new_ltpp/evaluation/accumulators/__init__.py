@@ -44,7 +44,7 @@ from .acc_types import (
 )
 from .base_accumulator import BaseAccumulator
 from .base_plot_generator import BasePlotGenerator
-from .batch_statistics_collector import BatchStatisticsCollector
+from .summary_statistics_accumulator import BatchStatisticsCollector
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
 from .mean_len_accumulator import SequenceLengthAccumulator

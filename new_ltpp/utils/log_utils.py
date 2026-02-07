@@ -39,7 +39,7 @@ _DEFAULT_HANDLERS = [_ch]
 _LOGGER_CACHE = {}  # type: typing.Dict[str, logging.Logger]
 
 
-def get_logger(name, level="INFO", handlers=None, update=False):
+def get_logger(name, level="INFO", handlers=None, update=False) -> logging.Logger:
     if name in _LOGGER_CACHE and not update:
         return _LOGGER_CACHE[name]
     logger = logging.getLogger(name)

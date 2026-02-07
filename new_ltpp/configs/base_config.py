@@ -15,9 +15,9 @@ from typing import Self
 from new_ltpp.utils import logger
 
 
-
 class ConfigValidationError(Exception):
     """Raised when configuration validation fails."""
+
     def __init__(self, message: str, field_name: str = ""):
         super().__init__(message)
         self._field_name = field_name
@@ -32,7 +32,7 @@ class ConfigSerializationError(Exception):
 
     def __init__(self, message: str):
         super().__init__(message)
-    
+
     def __str__(self) -> str:
         return f"ConfigSerializationError: {self.args[0]}"
 
@@ -49,18 +49,16 @@ class Config(Protocol):
 
     @property
     def __name__(self) -> str:
-        return self.__class__.__name__
+        return self.__class__.__name__  # type: ignore
 
-    def __init__(self):...
+    def __init__(self): ...
 
     def __post_init__(self):
         self.validate()
 
-    def get_required_fields(self) -> List[str]:
-        ...
+    def get_required_fields(self) -> List[str]: ...
 
-    def get_yaml_config(self) -> Dict[str, Any]:
-        ...
+    def get_yaml_config(self) -> Dict[str, Any]: ...
 
     def validate(self) -> None:
         # Import ici pour éviter les imports circulaires

@@ -52,13 +52,13 @@ class TokenizerConfig(Config):
     """
 
     num_event_types: int
-    pad_token_id: int | None = None
+    num_event_types_pad: Optional[int] = None
+    pad_token_id: Optional[int] = None
     padding_strategy: Literal["longest", "do_not_pad"] = "longest"
     truncation_strategy: Literal["longest_first", "do_not_truncate"] = "do_not_truncate"
     padding_side: Literal["left", "right"] = "left"
     truncation_side: Literal["left", "right"] = "left"
-    num_event_types_pad: int | None = None
-    model_input_names: List[str] | None = None
+    model_input_names: Optional[List[str]] = None
 
     # This will be set in __post_init__
     strategy: Union[PaddingStrategy, TruncationStrategy] = field(
@@ -67,13 +67,14 @@ class TokenizerConfig(Config):
 
     def __post_init__(self):
         """Validate and normalize configuration."""
+        super().__post_init__()
+
 
         # Set pad_token_id if not provided
         if self.pad_token_id is None:
             self.pad_token_id = self.num_event_types
 
-        if self.num_event_types_pad is None:
-            self.num_event_types_pad = self.num_event_types + 1
+        self.num_event_types_pad = self.num_event_types + 1  # +1 for padding token
 
         # Determine the final strategy: truncation takes precedence if specified
         has_truncation = (
@@ -101,7 +102,6 @@ class TokenizerConfig(Config):
             # Default to dynamic padding if nothing specified
             self.strategy = PaddingStrategy.LONGEST
 
-        super().__post_init__()
 
     def get_yaml_config(self) -> Dict[str, Any]:
         """Export configuration to YAML-compatible dict."""

@@ -14,7 +14,6 @@ from new_ltpp.shared_types import Batch, DataInfo
 
 from .mixins import TrainingMixin, VisualizationMixin
 from .model_registry import RegistryMeta
-from .model_protocol import TPPModelProtocol, NeuralTPPModelProtocol
 
 
 class Model(
@@ -74,7 +73,7 @@ class Model(
             simulation_batch_size=simulation_batch_size,
             # PredictionMixin params
             num_sample=num_sample,
-            # TrainingMixin paramok
+            # TrainingMixin params
             pad_token_id=data_info["pad_token_id"],
         )
 
@@ -88,7 +87,7 @@ class Model(
         # Loss computation configuration
         self.num_mc_samples = model_config.num_mc_samples
 
-    def configure_optimizers(self):
+    def configure_optimizers(self):  # type: ignore[override]
         """Configure the optimizer for the model.
 
         Returns:

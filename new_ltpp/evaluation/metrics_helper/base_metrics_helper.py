@@ -1,10 +1,3 @@
-"""Abstract base class for metrics helpers.
-
-Provides a small common scaffolding used by specific metric helpers
-(prediction / simulation). Subclasses must implement `get_available_metrics`
-and `compute_metrics`.
-"""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

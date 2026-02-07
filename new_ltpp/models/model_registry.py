@@ -1,16 +1,16 @@
 """
-Registry automatique pour les modèles TPP
+Automatic registry for TPP models
 
-Ce module fournit un registry qui enregistre automatiquement tous les nouveaux modèles
-sans avoir besoin de les ajouter manuellement.
+This module provides a registry that automatically registers new models
+without needing manual additions.
 
-Utilisation:
+Usage:
     from new_ltpp.models.model_registry import ModelRegistry
 
-    # Obtenir tous les modèles enregistrés
+    # Get all registered models
     registry = ModelRegistry.get_registry()
 
-    # Obtenir un modèle spécifique
+    # Get a specific model
     model_class = ModelRegistry.get_model("NHP")
 """
 
@@ -21,72 +21,72 @@ from new_ltpp.utils import logger
 from .model_protocol import TPPModelProtocol
 
 class ModelRegistry:
-    """Registry automatique pour les modèles TPP."""
+    """Automatic registry for TPP models."""
 
     _models: Dict[str, Type[TPPModelProtocol]] = {}
 
     @classmethod
     def register_model(cls, name: str, model_class: Type[TPPModelProtocol]) -> None:
         """
-        Enregistrer un modèle dans le registry.
+        Register a model in the registry.
 
         Args:
-            name: Nom du modèle
-            model_class: Classe du modèle
+            name: Model name
+            model_class: Model class
         """
         if name in cls._models:
             if cls._models[name] != model_class:
                 logger.warning(
-                    f"⚠️ Modèle '{name}' déjà enregistré avec une classe différente"
+                    f"Warning: Model '{name}' already registered with a different class"
                 )
             return
 
         cls._models[name] = model_class
-        logger.debug(f"✅ Modèle '{name}' enregistré automatiquement")
+        logger.debug(f"Model '{name}' auto-registered")
 
     @classmethod
     def get_registry(cls) -> Dict[str, Type[TPPModelProtocol]]:
-        """Obtenir tous les modèles enregistrés."""
+        """Get all registered models."""
         return cls._models.copy()
 
     @classmethod
     def get_model(cls, name: str) -> Optional[Type[TPPModelProtocol]]:
         """
-        Obtenir un modèle par son nom.
+        Get a model by its name.
 
         Args:
-            name: Nom du modèle
+            name: Model name
 
         Returns:
-            Classe du modèle ou None si non trouvé
+            Model class or None if not found
         """
         return cls._models.get(name)
 
     @classmethod
     def list_models(cls) -> list[str]:
-        """Lister tous les noms de modèles enregistrés."""
+        """List all registered model names."""
         return list(cls._models.keys())
 
     @classmethod
     def model_exists(cls, name: str) -> bool:
-        """Vérifier si un modèle existe dans le registry."""
+        """Check whether a model exists in the registry."""
         return name in cls._models
 
 
 class RegistryMeta(ABCMeta):
-    """Metaclasse pour enregistrer automatiquement les nouveaux modèles.
+    """Metaclass to automatically register new models.
 
-    Hérite de ABCMeta pour être compatible avec ABC.
+    Inherits from ABCMeta to remain compatible with ABC.
     """
 
     def __new__(mcls, name, bases, namespace):
         cls = super().__new__(mcls, name, bases, namespace)
 
-        # Enregistrer automatiquement les nouvelles classes de modèles
-        # On enregistre tout sauf Model lui-même et les classes de base Python
+        # Automatically register new model classes
+        # Register everything except the Model base itself and plain Python base classes
         if name != "Model" and bases and bases != (object,):
             # Vérifier si on a une classe qui semble être un modèle TPP
-            # (éviter d'enregistrer des classes utilitaires)
+            # (avoid registering utility/helper classes)
             is_model_class = any(
                 hasattr(base, "__module__")
                 and "new_ltpp.models" in getattr(base, "__module__", "")
@@ -95,6 +95,6 @@ class RegistryMeta(ABCMeta):
 
             if is_model_class:
                 ModelRegistry.register_model(name, cls)
-                logger.debug(f"Modèle enregistré: {name}")
+                logger.debug(f"Model registered: {name}")
 
         return cls

@@ -61,7 +61,7 @@ class CorrAccumulator(BaseAccumulator):
 
         self._sample_count += batch.time_seqs.shape[0]
 
-    def compute(self) -> CorrelationStatistics:
+    def compute(self) -> CorrelationStatistics:  # type: ignore[override]
         """Compute final autocorrelation statistics.
 
         Returns:

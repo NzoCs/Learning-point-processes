@@ -1,7 +1,7 @@
 """
 System Info Runner
 
-Runner pour afficher les informations système et environnement.
+Runner to display system and environment information.
 """
 
 import platform
@@ -14,8 +14,8 @@ from .cli_base import CLIRunnerBase
 
 class SystemInfo(CLIRunnerBase):
     """
-    Runner pour afficher les informations système et environnement.
-    Diagnostique l'installation et les dépendances new_ltpp.
+    Runner to display system and environment information.
+    Diagnoses the new_ltpp installation and its dependencies.
     """
 
     def __init__(self, debug: bool = False):
@@ -28,36 +28,36 @@ class SystemInfo(CLIRunnerBase):
         output_file: Optional[str] = None,
     ) -> bool:
         """
-        Affiche les informations système et environnement.
+        Display system and environment information.
 
         Args:
-            include_deps: Inclure les informations sur les dépendances
-            include_hardware: Inclure les informations matérielles
-            output_file: Fichier de sortie pour sauvegarder les informations
+            include_deps: Include dependency information
+            include_hardware: Include hardware information
+            output_file: Output file path to save the information
 
         Returns:
-            True si l'affichage s'est déroulé avec succès
+            True if the display completed successfully
         """
         try:
-            self.print_info("Collecte des informations système...")
+            self.print_info("Collecting system information...")
 
-            # Informations de base
+            # Basic information
             system_info = self._collect_system_info()
 
-            # Informations Python
+            # Python information
             python_info = self._collect_python_info()
 
-            # Informations sur les dépendances
+            # Dependency information
             deps_info = {}
             if include_deps:
                 deps_info = self._collect_dependencies_info()
 
-            # Informations matérielles
+            # Hardware information
             hardware_info = {}
             if include_hardware:
                 hardware_info = self._collect_hardware_info()
 
-            # Informations New_LTPP
+            # New_LTPP specific information
             new_ltpp_info = self._collect_new_ltpp_info()
 
             # Affichage
@@ -71,20 +71,20 @@ class SystemInfo(CLIRunnerBase):
 
             self._display_info_tables(all_info)
 
-            # Sauvegarde si demandé
+            # Save to file if requested
             if output_file:
                 self._save_system_info(all_info, output_file)
 
             return True
 
         except Exception as e:
-            self.print_error_with_traceback(f"Erreur affichage infos système: {e}", e)
+            self.print_error_with_traceback(f"Error displaying system info: {e}", e)
             if self.debug:
-                self.logger.exception("Détails de l'erreur:")
+                self.logger.exception("Error details:")
             return False
 
     def _collect_system_info(self) -> Dict[str, Any]:
-        """Collecte les informations système de base."""
+        """Collect basic system information."""
         return {
             "OS": platform.system(),
             "OS Version": platform.version(),
@@ -96,17 +96,17 @@ class SystemInfo(CLIRunnerBase):
         }
 
     def _collect_python_info(self) -> Dict[str, Any]:
-        """Collecte les informations Python."""
+        """Collect Python runtime information."""
         return {
             "Version": sys.version,
             "Executable": sys.executable,
-            "Path": sys.path[:3],  # Premiers 3 chemins
+            "Path": sys.path[:3],  # First 3 paths
             "Prefix": sys.prefix,
             "API Version": sys.api_version if hasattr(sys, "api_version") else "N/A",
         }
 
     def _collect_dependencies_info(self) -> Dict[str, str]:
-        """Collecte les informations sur les dépendances."""
+        """Collect information about installed dependencies."""
         dependencies = [
             "torch",
             "numpy",
@@ -138,10 +138,10 @@ class SystemInfo(CLIRunnerBase):
         return deps_info
 
     def _collect_hardware_info(self) -> Dict[str, Any]:
-        """Collecte les informations matérielles."""
+        """Collect hardware information."""
         hardware_info = {}
 
-        # Informations GPU (si PyTorch disponible)
+        # GPU information (if PyTorch available)
         try:
             import torch
 
@@ -155,7 +155,7 @@ class SystemInfo(CLIRunnerBase):
         except ImportError:
             hardware_info["PyTorch"] = "Not available"
 
-        # Informations mémoire
+        # Memory information
         try:
             import psutil
 
@@ -169,11 +169,11 @@ class SystemInfo(CLIRunnerBase):
         return hardware_info
 
     def _collect_new_ltpp_info(self) -> Dict[str, Any]:
-        """Collecte les informations spécifiques à new_ltpp."""
+        """Collect information specific to new_ltpp."""
         new_ltpp_info = {}
 
         try:
-            # Vérifier l'installation New_LTPP
+            # Check New_LTPP installation
             import new_ltpp
 
             new_ltpp_info["new_ltpp Version"] = getattr(
@@ -181,7 +181,7 @@ class SystemInfo(CLIRunnerBase):
             )
             new_ltpp_info["Installation Path"] = str(Path(new_ltpp.__file__).parent) # type: ignore
 
-            # Vérifier les modules principaux
+            # Check main modules
             modules_to_check = [
                 "new_ltpp.configs",
                 "new_ltpp.runners",
@@ -191,11 +191,11 @@ class SystemInfo(CLIRunnerBase):
             ]
 
             for module_name in modules_to_check:
-                try:
-                    __import__(module_name)
-                    new_ltpp_info[f"Module {module_name}"] = "✓ Available"
-                except ImportError:
-                    new_ltpp_info[f"Module {module_name}"] = "✗ Missing"
+                    try:
+                        __import__(module_name)
+                        new_ltpp_info[f"Module {module_name}"] = "✓ Available"
+                    except ImportError:
+                        new_ltpp_info[f"Module {module_name}"] = "✗ Missing"
 
         except ImportError:
             new_ltpp_info["new_ltpp"] = "Not installed"
@@ -203,17 +203,17 @@ class SystemInfo(CLIRunnerBase):
         return new_ltpp_info
 
     def _display_info_tables(self, all_info: Dict[str, Dict[str, Any]]):
-        """Affiche les informations sous forme de tableaux."""
+        """Display information as tables."""
         if not self.console:
-            # Version texte simple
+            # Simple text version
             for category, info in all_info.items():
-                if info:  # Seulement si il y a des infos
+                if info:  # Only if there is info
                     print(f"\n=== {category.upper()} ===")
                     for key, value in info.items():
                         print(f"{key}: {value}")
             return
 
-        # Version Rich avec tableaux
+        # Rich version with tables
         from rich.columns import Columns
         from rich.table import Table
 
@@ -224,11 +224,11 @@ class SystemInfo(CLIRunnerBase):
                 continue
 
             table = Table(title=category.title())
-            table.add_column("Propriété", style="cyan")
-            table.add_column("Valeur", style="magenta")
+            table.add_column("Property", style="cyan")
+            table.add_column("Value", style="magenta")
 
             for key, value in info.items():
-                # Traitement spécial pour les listes
+                # Special handling for lists
                 if isinstance(value, list):
                     value_str = "\\n".join(
                         str(item) for item in value[:3]
@@ -238,7 +238,7 @@ class SystemInfo(CLIRunnerBase):
                 else:
                     value_str = str(value)
 
-                # Colorisation pour les statuts
+                # Colorization for status strings
                 if "✓" in value_str:
                     value_str = f"[green]{value_str}[/green]"
                 elif "✗" in value_str or "Not" in value_str:
@@ -257,20 +257,20 @@ class SystemInfo(CLIRunnerBase):
                 self.console.print()  # Espace entre les tableaux
 
     def _save_system_info(self, all_info: Dict[str, Dict[str, Any]], output_file: str):
-        """Sauvegarde les informations système dans un fichier."""
+        """Save system information to a file."""
         import json
         from datetime import datetime
 
-        # Ajouter un timestamp
+        # Add a timestamp
         report = {"timestamp": datetime.now().isoformat(), "system_info": all_info}
 
-        # Sérialiser en évitant les erreurs de type
+        # Serialize avoiding type errors
         def serialize_value(obj):
             if isinstance(obj, (list, tuple)):
                 return [str(item) for item in obj]
             return str(obj)
 
-        # Convertir récursivement
+        # Convert recursively
         serializable_info = {}
         for category, info in all_info.items():
             serializable_info[category] = {
@@ -282,4 +282,4 @@ class SystemInfo(CLIRunnerBase):
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
-        self.print_success(f"Informations système sauvegardées: {output_file}")
+        self.print_success(f"System information saved: {output_file}")

@@ -75,7 +75,7 @@ class SequenceLengthAccumulator(BaseAccumulator):
 
         self._gt_mean.extend(gt_event_count_normalized.view(-1).cpu().tolist())
 
-    def compute(self) -> SequenceLengthStatistics:
+    def compute(self) -> SequenceLengthStatistics:  # type: ignore[override]
         """Compute sequence length statistics.
 
         Returns:

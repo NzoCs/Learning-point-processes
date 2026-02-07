@@ -1,10 +1,10 @@
 """
-Factory simple pour les modèles TPP
+Simple factory for TPP models
 
-Cette factory permet de créer facilement des instances de modèles
-en utilisant le ModelRegistry automatique.
+This factory makes it easy to create model instances
+using the automatic ModelRegistry.
 
-Utilisation:
+Usage:
     from new_ltpp.models.model_factory import ModelFactory
 
     factory = ModelFactory()
@@ -23,7 +23,7 @@ from .model_protocol import TPPModelProtocol
 
 
 class ModelFactory:
-    """Factory simple pour créer des instances de modèles."""
+    """Simple factory to create model instances."""
 
     def __init__(self):
         pass
@@ -48,7 +48,7 @@ class ModelFactory:
             Instance du modèle
         """
 
-        logger.info(f"Création du modèle: {model_name}")
+        logger.info(f"Creating model: {model_name}")
 
         # Récupérer la classe du modèle via le registry
         model_class = ModelRegistry.get_model(model_name)
@@ -57,10 +57,10 @@ class ModelFactory:
             available = ModelRegistry.list_models()
             if not available:
                 logger.warning(
-                    "Aucun modèle n'est enregistré. Assurez-vous d'importer les modèles avant d'utiliser la factory."
+                    "No models are registered. Ensure models are imported before using the factory."
                 )
             raise ValueError(
-                f"Modèle '{model_name}' introuvable. Modèles disponibles: {available}"
+                f"Model '{model_name}' not found. Available models: {available}"
             )
 
         try:
@@ -71,11 +71,11 @@ class ModelFactory:
                 **model_config.specs.get_yaml_config(),
                 **kwargs,
             )
-            logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
+            logger.debug(f"Model '{model_name}' created successfully")
             return instance
 
         except Exception as e:
-            logger.error(f"Erreur lors de la création du modèle {model_name}: {e}")
+            logger.error(f"Error creating model {model_name}: {e}")
             raise
 
     @staticmethod
@@ -94,7 +94,7 @@ class ModelFactory:
             Instance du modèle
         """
         model_name = model_class.__name__
-        logger.info(f"Création du modèle: {model_name}")
+        logger.info(f"Creating model: {model_name}")
 
         try:
             model_specs = model_config.specs if hasattr(model_config, "specs") else {}
@@ -104,37 +104,37 @@ class ModelFactory:
                 else model_specs
             )
             instance = model_class(model_config, **model_specs_dict, **kwargs)
-            logger.debug(f"✅ Modèle '{model_name}' créé avec succès")
+            logger.debug(f"Model '{model_name}' created successfully")
             return instance
 
         except Exception as e:
-            logger.error(f"Erreur lors de la création du modèle {model_name}: {e}")
+            logger.error(f"Error creating model {model_name}: {e}")
             raise
 
     @staticmethod
     def list_available_models() -> list[str]:
-        """Lister tous les modèles disponibles."""
+        """List all available models."""
         return ModelRegistry.list_models()
 
     @staticmethod
     def get_model_class(model_name: str) -> Type[TPPModelProtocol]:
-        """Obtenir la classe d'un modèle par nom."""
+        """Get the class of a model by name."""
         model_class = ModelRegistry.get_model(model_name)
         if model_class is None:
             available = ModelRegistry.list_models()
             raise ValueError(
-                f"Modèle '{model_name}' introuvable. Modèles disponibles: {available}"
+                f"Model '{model_name}' not found. Available models: {available}"
             )
         return model_class
 
     def model_exists(self, model_name: str) -> bool:
-        """Vérifier si un modèle existe."""
+        """Check if a model exists."""
         return ModelRegistry.model_exists(model_name)
 
     def get_registry(self) -> dict[str, Type[TPPModelProtocol]]:
-        """Obtenir le registry complet des modèles."""
+        """Get the full models registry."""
         return ModelRegistry.get_registry()
 
 
-# Instance globale de la factory
+# Global factory instance
 model_factory = ModelFactory()

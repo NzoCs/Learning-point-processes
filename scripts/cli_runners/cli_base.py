@@ -1,7 +1,7 @@
 """
 Base CLI Runner
 
-Classe de base pour tous les runners CLI avec fonctionnalités communes.
+Base class for all CLI runners providing common functionality.
 """
 
 import logging
@@ -13,7 +13,7 @@ from rich.logging import RichHandler
 
 from new_ltpp.globals import CONFIGS_FILE, OUTPUT_DIR, ROOT_DIR
 
-# Configuration globale pour les répertoires de sortie (dans artifacts/)
+# Global configuration for output directories (in artifacts/)
 OUTPUT_DIRS = {
     "experiments": "experiments",
     "models": "models",
@@ -40,8 +40,8 @@ CONFIG_MAP = {
 
 class CLIRunnerBase:
     """
-    Classe de base pour tous les runners CLI.
-    Fournit logging, console Rich, et vérification des dépendances.
+    Base class for all CLI runners.
+    Provides logging setup, a Rich console, and dependency checks.
     """
 
     def __init__(self, name: str = "CLIRunner", debug: bool = False):
@@ -51,11 +51,11 @@ class CLIRunnerBase:
         self.logger = self._setup_logging()
 
     def _setup_logging(self) -> logging.Logger:
-        """Configuration du logging avec Rich si disponible."""
+        """Configure logging with Rich if available."""
         logger = logging.getLogger(self.name)
         logger.setLevel(logging.INFO)
 
-        # Éviter les doublons de handlers
+        # Avoid duplicate handlers
         if logger.handlers:
             return logger
 
@@ -68,15 +68,15 @@ class CLIRunnerBase:
 
     def _build_config_paths(self, **config_kwargs) -> dict[str, str]:
         """
-        Construit les chemins de configuration en suivant le pattern standard.
+        Build configuration paths following the standard pattern.
 
         Pattern: {config_type}_configs.{config_name}
 
         Args:
-            **config_kwargs: Dictionnaire des configurations {type: name}
+            **config_kwargs: Dictionary of configurations {type: name}
 
         Returns:
-            Dictionnaire des chemins de configuration formatés
+            Dictionary of formatted configuration paths
         """
 
         config_paths = {}
@@ -90,13 +90,13 @@ class CLIRunnerBase:
                     )
                 else:
                     self.print_error(
-                        f"Type de configuration non reconnu: {config_type}"
+                        f"Unrecognized configuration type: {config_type}"
                     )
 
         return config_paths
 
     def check_dependencies(self, required_modules: List[str]) -> bool:
-        """Vérifie que les modules requis sont disponibles."""
+        """Check that required modules are available."""
         missing = []
         for module in required_modules:
             try:
@@ -105,30 +105,30 @@ class CLIRunnerBase:
                 missing.append(module)
 
         if missing:
-            error_msg = f"Modules manquants: {', '.join(missing)}"
+            error_msg = f"Missing modules: {', '.join(missing)}"
             if self.console:
-                self.console.print(f"[bold red]Erreur:[/bold red] {error_msg}")
+                self.console.print(f"[bold red]Error:[/bold red] {error_msg}")
             else:
-                print(f"Erreur: {error_msg}")
+                print(f"Error: {error_msg}")
             return False
         return True
 
     def print_success(self, message: str):
-        """Affiche un message de succès."""
+        """Print a success message."""
         if self.console:
             self.console.print(f"[bold green]✓[/bold green] {message}")
         else:
             print(f"✓ {message}")
 
     def print_error(self, message: str):
-        """Affiche un message d'erreur."""
+        """Print an error message."""
         if self.console:
             self.console.print(f"[bold red]✗[/bold red] {message}")
         else:
             print(f"✗ {message}")
 
     def print_info(self, message: str):
-        """Affiche un message d'information."""
+        """Print an informational message."""
         if self.console:
             self.console.print(f"[bold blue]ℹ[/bold blue] {message}")
         else:
@@ -137,25 +137,25 @@ class CLIRunnerBase:
     def print_error_with_traceback(
         self, message: str, exception: Optional[Exception] = None
     ):
-        """Affiche un message d'erreur avec traceback complet si debug activé."""
+        """Print an error message with full traceback if debug is enabled."""
         self.print_error(message)
 
         if self.debug and exception:
             import traceback
 
             if self.console:
-                self.console.print("[yellow]📋 Traceback complet:[/yellow]")
+                self.console.print("[yellow]📋 Full traceback:[/yellow]")
                 self.console.print(f"[red]{traceback.format_exc()}[/red]")
             else:
-                print("📋 Traceback complet:")
+                print("📋 Full traceback:")
                 print(traceback.format_exc())
 
     def set_debug(self, debug: bool):
-        """Active ou désactive le mode debug."""
+        """Enable or disable debug mode."""
         self.debug = debug
 
     def get_config_path(self, config_name: Optional[str] = None) -> Path:
-        """Retourne le chemin vers un fichier de configuration."""
+        """Return the path to a configuration file."""
         base_dir = ROOT_DIR / "yaml_configs"
 
         if config_name:
@@ -164,10 +164,10 @@ class CLIRunnerBase:
         return CONFIGS_FILE
 
     def get_output_path(self) -> Path:
-        """Retourne le chemin vers un répertoire de sortie dans artifacts/."""
+        """Return the path to an output directory under artifacts/."""
 
         return OUTPUT_DIR
 
     def get_root_dir(self) -> Path:
-        """Retourne le répertoire racine du projet."""
+        """Return the project's root directory."""
         return ROOT_DIR

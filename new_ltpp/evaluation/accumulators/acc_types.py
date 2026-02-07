@@ -12,6 +12,15 @@ import numpy as np
 import numpy.typing as npt
 
 
+class StatisticalMetrics(TypedDict):
+    """Type definition for statistical metrics collected from batches."""
+
+    mmd_values: list[float]
+    ksd_values: list[float]
+    mmd_p_values: list[float]
+    ksd_p_values: list[float]
+
+
 class PlotData(TypedDict):
     """Type definition for plot generation data."""
 
@@ -81,6 +90,7 @@ class AllStatistics(TypedDict):
     event_type: EventTypeStatistics
     sequence_length: SequenceLengthStatistics
     correlation: CorrelationStatistics
+    statistical_tests: StatisticalMetrics
 
 
 class FinalResult(TypedDict):

@@ -40,7 +40,7 @@ class BaseAccumulator(ABC):
         pass
 
     @abstractmethod
-    def compute(self) -> Any:
+    def compute(self) -> dict:
         """Compute and return final statistics from accumulated data.
 
         Returns:

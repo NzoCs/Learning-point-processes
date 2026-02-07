@@ -128,14 +128,18 @@ def run_experiment(
 @app.command("inspect")
 def inspect_data(
     data_dir: str = typer.Argument(..., help="Directory containing the data"),
-    data_format: str = typer.Option("json", "--format", "-f", help="Data format"),
+    data_format: str = typer.Option("json", "--format", "-f", help="json, csv, hf if your data is saved on Hugging Face"),
+
     output_dir: Optional[str] = typer.Option(
         None, "--output", "-o", help="Output directory"
     ),
-    save_graphs: bool = typer.Option(True, "--save/--no-save", help="Save graphs"),
-    show_graphs: bool = typer.Option(False, "--show/--no-show", help="Show graphs"),
+    save_graphs: bool = typer.Option(True, "--save/--no-save", help="whether to save graphs"),
+    show_graphs: bool = typer.Option(False, "--show/--no-show", help="whether to show graphs"),
     max_sequences: Optional[int] = typer.Option(
         None, "--max-seq", help="Maximum number of sequences"
+    ),
+    num_event_types: int = typer.Option(
+        None, "--num-event-types", help="Number of event types"
     ),
     debug: bool = typer.Option(False, "--debug", help="Debug mode"),
 ):
@@ -143,6 +147,7 @@ def inspect_data(
     runner = DataInspector(debug=debug)
     success = runner.inspect_data(
         data_dir=data_dir,
+        num_event_types=num_event_types,
         data_format=data_format,
         output_dir=output_dir,
         save_graphs=save_graphs,

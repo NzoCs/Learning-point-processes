@@ -10,18 +10,18 @@ def get_causal_attn_mask(
     device: torch.device | str,
 ) -> torch.Tensor:
     """
-    Prépare l'entrée et le masque d'attention causal pour une couche d'attention multi-tête PyTorch.
+    Prepare input and the causal attention mask for a PyTorch multi-head attention layer.
 
     Args:
-        input (torch.Tensor): Le tenseur d'entrée de forme (batch_size, seq_len, feature_dim).
-        device (torch.device | str): Le dispositif sur lequel les tenseurs doivent être placés.
+        input (torch.Tensor): The input tensor of shape (batch_size, seq_len, feature_dim).
+        device (torch.device | str): The device where tensors should be placed.
 
     Returns:
-        torch.Tensor: Le masque d'attention causal.
+        torch.Tensor: The causal attention mask.
     """
-    # Appliquer le masque de non-remboursement
+    # Apply causal masking
 
-    # Créer le masque causal
+    # Create the causal mask
     attn_mask = torch.triu(
         torch.ones((size, size), device=device) * float("-inf"), diagonal=1
     )

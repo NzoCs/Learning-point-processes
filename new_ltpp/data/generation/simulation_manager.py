@@ -6,8 +6,8 @@ from tqdm import tqdm
 
 class SimulationManager:
     """
-    Gestionnaire de simulations qui orchestre la génération et le formatage des données.
-    Prend une fonction de simulation et gère le bulk processing et le formatage.
+    Simulation manager that orchestrates generation and formatting of data.
+    Accepts a simulation function and handles bulk processing and formatting.
     """
 
     def __init__(
@@ -18,13 +18,13 @@ class SimulationManager:
         end_time: float,
     ):
         """
-        Initialise le gestionnaire de simulations.
+        Initialize the simulation manager.
 
         Args:
-            simulation_func: Fonction qui simule un processus et retourne (times, marks)
-            dim_process: Dimension du processus
-            start_time: Temps de début de la simulation
-            end_time: Temps de fin de la simulation
+            simulation_func: Function that simulates a process and returns (times, marks)
+            dim_process: Dimension of the process
+            start_time: Simulation start time
+            end_time: Simulation end time
         """
         self.simulation_func = simulation_func
         self.dim_process = dim_process
@@ -33,18 +33,18 @@ class SimulationManager:
 
     def bulk_simulate(self, num_simulations: int) -> List[Dict]:
         """
-        Génère plusieurs simulations et les formate.
+        Generate multiple simulations and format them.
 
         Args:
-            num_simulations: Nombre de simulations à générer
+            num_simulations: Number of simulations to generate
 
         Returns:
-            Liste des simulations formatées
+            A list of formatted simulations
         """
         simulations = []
 
         for _ in tqdm(
-            range(num_simulations), desc=f"Simulation de {num_simulations} processus"
+            range(num_simulations), desc=f"Simulating {num_simulations} processes"
         ):
             times, marks = self.simulation_func()
             simulations.append((times, marks))
@@ -58,18 +58,18 @@ class SimulationManager:
         self, simulations: List[Tuple[np.ndarray, np.ndarray]]
     ) -> List[Dict]:
         """
-        Formate les simulations au format dataset Hugging Face.
+        Format simulations into a Hugging Face-style dataset format.
 
         Args:
-            simulations: Liste de tuples (times, marks) issus de simulate()
+            simulations: List of tuples (times, marks) produced by the simulation function
 
         Returns:
-            Liste de dictionnaires, chacun représentant une séquence
+            A list of dictionaries, each representing a sequence
         """
         formatted_data = []
 
         for seq_idx, (times, marks) in enumerate(simulations):
-            # Filtrer les timestamps supérieurs à start_time
+            # Filter timestamps greater than start_time
             mask = times > self.start_time
             valid_times = times[mask]
             valid_marks = marks[mask]
@@ -77,12 +77,12 @@ class SimulationManager:
             if len(valid_times) == 0:
                 continue
 
-            # Trier par temps (devrait déjà être trié, mais par sécurité)
+            # Sort by time (should already be sorted, but done for safety)
             sort_idx = np.argsort(valid_times)
             sorted_times = valid_times[sort_idx]
             sorted_marks = valid_marks[sort_idx]
 
-            # Calculer time since start et time differences
+            # Compute time since start and time differences
             time_since_start = sorted_times - sorted_times[0]
             time_since_last_event = np.diff(sorted_times, prepend=sorted_times[0])
 

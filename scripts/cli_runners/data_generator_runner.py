@@ -1,7 +1,7 @@
 """
 Data Generator Runner
 
-Runner pour la génération de données synthétiques TPP.
+Runner for synthetic TPP data generation.
 """
 
 from pathlib import Path
@@ -14,8 +14,8 @@ from .cli_base import CLIRunnerBase
 
 class DataGenerator(CLIRunnerBase):
     """
-    Runner pour la génération de données synthétiques.
-    Utilise SynGenConfigBuilder pour la configuration.
+    Runner for synthetic data generation.
+    Uses SynGenConfigBuilder for configuration.
     """
 
     def __init__(self, debug: bool = False):
@@ -36,35 +36,35 @@ class DataGenerator(CLIRunnerBase):
         **kwargs,
     ) -> bool:
         """
-        Génère des données synthétiques TPP.
+        Generate synthetic TPP data.
 
         Args:
-            output_dir: Répertoire de sortie
-            num_simulations: Nombre de simulations à générer
-            generation_method: Méthode de génération (hawkes, self_correcting)
-            splits: Répartition des données (train/test/dev)
-            start_time: Temps de début
-            end_time: Temps de fin
-            dim_process: Dimension du processus
-            mu: Paramètres mu pour Hawkes
-            alpha: Paramètres alpha pour Hawkes
-            beta: Paramètres beta pour Hawkes
-            **kwargs: Paramètres additionnels
+            output_dir: Output directory
+            num_simulations: Number of simulations to generate
+            generation_method: Generation method (hawkes, self_correcting)
+            splits: Data splits (train/test/dev)
+            start_time: Start time
+            end_time: End time
+            dim_process: Process dimension
+            mu: Mu parameters for Hawkes
+            alpha: Alpha parameters for Hawkes
+            beta: Beta parameters for Hawkes
+            **kwargs: Additional parameters
 
         Returns:
-            True si la génération s'est déroulée avec succès
+            True if generation completed successfully
         """
-        # Vérifier les dépendances
+        # Check dependencies
         required_modules = ["new_ltpp.data.generation"]
         if not self.check_dependencies(required_modules):
             return False
 
         try:
             self.print_info(
-                f"Génération de {num_simulations} simulations - Méthode: {generation_method}"
+                f"Generating {num_simulations} simulations - Method: {generation_method}"
             )
 
-            # Créer le répertoire de sortie par défaut si nécessaire
+            # Create default output directory if needed
             if output_dir is None:
                 from datetime import datetime
 
@@ -72,15 +72,15 @@ class DataGenerator(CLIRunnerBase):
                 output_dir = str(
                     self.get_output_path("data_generation", f"generated_{timestamp}")
                 )
-                self.print_info(f"Répertoire de sortie: {output_dir}")
+                self.print_info(f"Output directory: {output_dir}")
 
-            # Valeurs par défaut pour les splits
+            # Default values for splits
             if splits is None:
                 splits = {"train": 0.6, "test": 0.2, "dev": 0.2}
 
-            # Génération selon la méthode
+            # Generation by method
             if generation_method.lower() == "hawkes":
-                # Paramètres par défaut pour Hawkes
+                # Default parameters for Hawkes
                 if mu is None:
                     mu = [0.2] * dim_process
                 if alpha is None:
@@ -118,24 +118,24 @@ class DataGenerator(CLIRunnerBase):
 
             else:
                 self.print_error(
-                    f"Méthode de génération non supportée: {generation_method}"
+                    f"Generation method not supported: {generation_method}"
                 )
-                self.print_info("Méthodes disponibles: hawkes, self_correcting")
+                self.print_info("Available methods: hawkes, self_correcting")
                 return False
 
-            # Générer et sauvegarder les données
-            self.print_info("Génération en cours...")
+            # Generate and save data
+            self.print_info("Generation in progress...")
 
             if self.console:
                 with self.console.status(
-                    "[bold green]Génération en cours..."
+                    "[bold green]Generation in progress..."
                 ) as status:
                     generator.generate_and_save(
                         output_dir=output_dir,
                         num_simulations=num_simulations,
                         splits=splits,
                     )
-                    status.update("[bold green]Sauvegarde terminée")
+                    status.update("[bold green]Save completed")
             else:
                 generator.generate_and_save(
                     output_dir=output_dir,
@@ -143,7 +143,7 @@ class DataGenerator(CLIRunnerBase):
                     splits=splits,
                 )
 
-            # Statistiques des données générées
+            # Statistics of generated data
             stats = {
                 "generation_method": generation_method,
                 "num_simulations": num_simulations,
@@ -157,9 +157,9 @@ class DataGenerator(CLIRunnerBase):
             if self.console:
                 from rich.table import Table
 
-                table = Table(title="Données synthétiques générées")
-                table.add_column("Statistique", style="cyan")
-                table.add_column("Valeur", style="magenta")
+                table = Table(title="Generated synthetic data")
+                table.add_column("Statistic", style="cyan")
+                table.add_column("Value", style="magenta")
 
                 for key, value in stats.items():
                     if isinstance(value, (dict, list)):
@@ -171,7 +171,7 @@ class DataGenerator(CLIRunnerBase):
 
                 self.console.print(table)
 
-            # Sauvegarder les métadonnées
+            # Save metadata
             metadata = {
                 "generation_config": {
                     "generation_method": generation_method,
@@ -192,13 +192,13 @@ class DataGenerator(CLIRunnerBase):
             with open(metadata_path, "w") as f:
                 json.dump(metadata, f, indent=2)
 
-            self.print_success(f"Données générées avec succès dans: {output_dir}")
-            self.print_success(f"Métadonnées: {metadata_path}")
+            self.print_success(f"Data generated successfully in: {output_dir}")
+            self.print_success(f"Metadata: {metadata_path}")
 
             return True
 
         except Exception as e:
-            self.print_error_with_traceback(f"Erreur lors de la génération: {e}", e)
+            self.print_error_with_traceback(f"Error during generation: {e}", e)
             if self.debug:
-                self.logger.exception("Détails de l'erreur:")
+                self.logger.exception("Error details:")
             return False

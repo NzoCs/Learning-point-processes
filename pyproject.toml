@@ -44,6 +44,7 @@ dependencies = [
     "geomloss>=0.2.6",
     "ruff>=0.14.11",
     "nbconvert>=7.16.6",
+    "ipywidgets>=8.1.8",
 ]
 
 [dependency-groups]

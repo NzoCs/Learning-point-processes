@@ -1,7 +1,7 @@
 """
 Interactive Setup Runner
 
-Runner pour la configuration guidée d'expériences TPP.
+Runner for guided configuration of TPP experiments.
 """
 
 from pathlib import Path
@@ -15,8 +15,8 @@ from .cli_base import CLIRunnerBase
 
 class InteractiveSetup(CLIRunnerBase):
     """
-    Runner pour la configuration interactive d'expériences.
-    Guide l'utilisateur à travers la création de configurations.
+    Runner for interactive experiment configuration.
+    Guides the user through creating configuration files.
     """
 
     def __init__(self, debug: bool = False):
@@ -29,15 +29,15 @@ class InteractiveSetup(CLIRunnerBase):
         quick_mode: bool = False,
     ) -> bool:
         """
-        Lance la configuration interactive.
+        Start the interactive configuration.
 
         Args:
-            setup_type: Type de setup (experiment, data, model)
-            output_path: Chemin de sauvegarde de la configuration
-            quick_mode: Mode rapide avec valeurs par défaut
+            setup_type: Type of setup (experiment, data, model)
+            output_path: Path to save the configuration
+            quick_mode: Quick mode using default values
 
         Returns:
-            True si la configuration a été créée avec succès
+            True if the configuration was created successfully
         """
 
         self.print_info(f"Configuration interactive - Type: {setup_type}")
@@ -49,17 +49,17 @@ class InteractiveSetup(CLIRunnerBase):
         elif setup_type == "model":
             config = self._setup_model_config(quick_mode)
         else:
-            self.print_error(f"Type de setup non supporté: {setup_type}")
+            self.print_error(f"Unsupported setup type: {setup_type}")
             return False
 
-        # Afficher la configuration finale
+        # Display final configuration
         self._display_final_config(config)
 
-        # Confirmer et sauvegarder
-        if Confirm.ask("Sauvegarder cette configuration?"):
+        # Confirm and save
+        if Confirm.ask("Save this configuration?"):
             if output_path is None:
                 output_path_str = Prompt.ask(
-                    "Chemin de sauvegarde", default=f"{setup_type}_config.yaml"
+                    "Save path", default=f"{setup_type}_config.yaml"
                 )
                 output_path_obj = Path(output_path_str)
             else:
@@ -70,77 +70,77 @@ class InteractiveSetup(CLIRunnerBase):
             with open(output_path_obj, "w", encoding="utf-8") as f:
                 yaml.dump(config, f, default_flow_style=False, indent=2)
 
-            self.print_success(f"Configuration sauvegardée: {output_path_obj}")
+            self.print_success(f"Configuration saved: {output_path_obj}")
 
-            # Proposer de lancer directement l'expérience
+            # Offer to launch the experiment directly
             if setup_type == "experiment" and Confirm.ask(
-                "Lancer l'expérience maintenant?"
+                "Launch the experiment now?"
             ):
                 return self._launch_experiment(output_path_obj)
 
         return True
 
     def _setup_experiment_config(self, quick_mode: bool) -> Dict[str, Any]:
-        """Configuration interactive d'une expérience complète."""
+        """Interactive configuration for a full experiment."""
         config = {}
 
         if self.console:
-            self.console.print("[bold blue]Configuration d'Expérience TPP[/bold blue]")
+            self.console.print("[bold blue]TPP Experiment Configuration[/bold blue]")
             self.console.print()
 
-        # Configuration des données
-        if not quick_mode or Confirm.ask("Configurer les données?", default=True):
+        # Data configuration
+        if not quick_mode or Confirm.ask("Configure data?", default=True):
             config["data_config"] = self._setup_data_section(quick_mode)
 
-        # Configuration du modèle
-        if not quick_mode or Confirm.ask("Configurer le modèle?", default=True):
+        # Model configuration
+        if not quick_mode or Confirm.ask("Configure model?", default=True):
             config["model_config"] = self._setup_model_section(quick_mode)
 
-        # Configuration du runner
-        if not quick_mode or Confirm.ask("Configurer l'entraînement?", default=True):
+        # Runner configuration
+        if not quick_mode or Confirm.ask("Configure training?", default=True):
             config["runner_config"] = self._setup_runner_section(quick_mode)
 
         return config
 
     def _setup_data_config(self, quick_mode: bool) -> Dict[str, Any]:
-        """Configuration interactive des données."""
+        """Interactive data configuration."""
         if self.console:
-            self.console.print("[bold green]Configuration des Données[/bold green]")
+            self.console.print("[bold green]Data Configuration[/bold green]")
 
         data_config = {}
 
-        # Répertoire des données
-        data_dir = Prompt.ask("Répertoire des données", default="./data/")
+        # Data directory
+        data_dir = Prompt.ask("Data directory", default="./data/")
         data_config["data_dir"] = data_dir
 
-        # Format des données
+        # Data format
         if quick_mode:
             data_format = "json"
         else:
             data_format = Prompt.ask(
-                "Format des données", choices=["json", "csv", "pickle"], default="json"
+                "Data format", choices=["json", "csv", "pickle"], default="json"
             )
         data_config["data_format"] = data_format
 
-        # Spécifications des données
+        # Data specifications
         tokenizer_specs = {}
 
-        num_event_types = IntPrompt.ask("Nombre de types d'événements", default=5)
+        num_event_types = IntPrompt.ask("Number of event types", default=5)
         tokenizer_specs["num_event_types"] = num_event_types
 
-        max_seq_len = IntPrompt.ask("Longueur maximale des séquences", default=100)
+        max_seq_len = IntPrompt.ask("Maximum sequence length", default=100)
         tokenizer_specs["max_seq_len"] = max_seq_len
 
         data_config["tokenizer_specs"] = tokenizer_specs
 
-        # Configuration du chargement
+        # Loading configuration
         if not quick_mode:
             loading_specs = {}
 
-            batch_size = IntPrompt.ask("Taille des batches", default=64)
+            batch_size = IntPrompt.ask("Batch size", default=64)
             loading_specs["batch_size"] = batch_size
 
-            shuffle = Confirm.ask("Mélanger les données?", default=True)
+            shuffle = Confirm.ask("Shuffle data?", default=True)
             loading_specs["shuffle"] = shuffle
 
             data_config["data_loading_specs"] = loading_specs
@@ -148,34 +148,34 @@ class InteractiveSetup(CLIRunnerBase):
         return data_config
 
     def _setup_model_config(self, quick_mode: bool) -> Dict[str, Any]:
-        """Configuration interactive du modèle."""
+        """Interactive model configuration."""
         if self.console:
-            self.console.print("[bold green]Configuration du Modèle[/bold green]")
+            self.console.print("[bold green]Model Configuration[/bold green]")
 
         model_config = {}
 
-        # Type de modèle
+        # Model type
         if quick_mode:
             model_type = "NHP"
         else:
             model_type = Prompt.ask(
-                "Type de modèle",
+                "Model type",
                 choices=["NHP", "THP", "RMTPP", "FullyNN", "LogNormMix"],
                 default="NHP",
             )
         model_config["model_type"] = model_type
 
-        # Spécifications du modèle
+        # Model specifications
         model_specs = {}
 
-        hidden_size = IntPrompt.ask("Taille des couches cachées", default=128)
+        hidden_size = IntPrompt.ask("Hidden layer size", default=128)
         model_specs["hidden_size"] = hidden_size
 
         if not quick_mode:
-            num_layers = IntPrompt.ask("Nombre de couches", default=2)
+            num_layers = IntPrompt.ask("Number of layers", default=2)
             model_specs["num_layers"] = num_layers
 
-            dropout = FloatPrompt.ask("Taux de dropout", default=0.1)
+            dropout = FloatPrompt.ask("Dropout rate", default=0.1)
             model_specs["dropout"] = dropout
 
         model_config["model_specs"] = model_specs
@@ -183,49 +183,48 @@ class InteractiveSetup(CLIRunnerBase):
         return model_config
 
     def _setup_data_section(self, quick_mode: bool) -> Dict[str, Any]:
-        """Section données pour la configuration d'expérience."""
+        """Data section for experiment configuration."""
         return self._setup_data_config(quick_mode)
 
     def _setup_model_section(self, quick_mode: bool) -> Dict[str, Any]:
-        """Section modèle pour la configuration d'expérience."""
+        """Model section for experiment configuration."""
         return self._setup_model_config(quick_mode)
 
     def _setup_runner_section(self, quick_mode: bool) -> Dict[str, Any]:
-        """Section runner pour la configuration d'expérience."""
+        """Runner section for experiment configuration."""
         if self.console:
             self.console.print(
-                "[bold green]Configuration de l'Entraînement[/bold green]"
+                "[bold green]Training Configuration[/bold green]"
             )
 
         runner_config = {}
 
-        # Identifiants
-        dataset_id = Prompt.ask("ID du dataset", default="experiment")
+        # Identifiers
+        dataset_id = Prompt.ask("Dataset ID", default="experiment")
         runner_config["dataset_id"] = dataset_id
-
-        model_id = Prompt.ask("ID du modèle", default="baseline")
+        model_id = Prompt.ask("Model ID", default="baseline")
         runner_config["model_id"] = model_id
 
-        # Paramètres d'entraînement
-        max_epochs = IntPrompt.ask("Nombre maximum d'époques", default=100)
+        # Training parameters
+        max_epochs = IntPrompt.ask("Maximum number of epochs", default=100)
         runner_config["max_epochs"] = max_epochs
 
         if not quick_mode:
-            patience = IntPrompt.ask("Patience pour early stopping", default=20)
+            patience = IntPrompt.ask("Early stopping patience", default=20)
             runner_config["patience"] = patience
 
-            val_freq = IntPrompt.ask("Fréquence de validation", default=5)
+            val_freq = IntPrompt.ask("Validation frequency", default=5)
             runner_config["val_freq"] = val_freq
 
-            save_dir = Prompt.ask("Répertoire de sauvegarde", default="./experiments/")
+            save_dir = Prompt.ask("Save directory", default="./experiments/")
             runner_config["save_dir"] = save_dir
 
         return runner_config
 
     def _display_final_config(self, config: Dict[str, Any]):
-        """Affiche la configuration finale."""
+        """Display the final configuration."""
         if not self.console:
-            print("\\n=== Configuration Finale ===")
+            print("\n=== Final Configuration ===")
             for key, value in config.items():
                 print(f"{key}: {value}")
             return
@@ -233,7 +232,7 @@ class InteractiveSetup(CLIRunnerBase):
         from rich.panel import Panel
         from rich.tree import Tree
 
-        tree = Tree("Configuration Générée")
+        tree = Tree("Generated Configuration")
 
         for section_name, section_config in config.items():
             section_node = tree.add(f"[bold cyan]{section_name}[/bold cyan]")
@@ -250,25 +249,25 @@ class InteractiveSetup(CLIRunnerBase):
                 tree.add(f"{section_name}: [green]{section_config}[/green]")
 
         self.console.print(
-            Panel(tree, title="Configuration Finale", border_style="blue")
+            Panel(tree, title="Final Configuration", border_style="blue")
         )
 
     def _launch_experiment(self, config_path: Path) -> bool:
-        """Lance directement une expérience avec la configuration créée."""
+        """Launch an experiment directly using the created configuration."""
         try:
-            # Importer et utiliser l'ExperimentRunner
+            # Import and use the ExperimentRunner
             from .experiment_runner import ExperimentRunner
 
             runner = ExperimentRunner()
             success = runner.run_experiment(config_path=str(config_path), phase="all")
 
             if success:
-                self.print_success("Expérience lancée avec succès!")
+                self.print_success("Experiment launched successfully!")
             else:
-                self.print_error("Échec du lancement de l'expérience")
+                self.print_error("Experiment launch failed")
 
             return success
 
         except Exception as e:
-            self.print_error(f"Erreur lors du lancement: {e}")
+            self.print_error(f"Error during launch: {e}")
             return False

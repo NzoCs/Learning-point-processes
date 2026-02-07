@@ -50,6 +50,9 @@ class TPPDataModule(pl.LightningDataModule):
         self.batch_size: int = data_config.data_loading_specs.batch_size
         self.tokenizer: EventTokenizer = EventTokenizer(data_config.tokenizer_specs)
         self.tokenizer_specs: TokenizerConfig = data_config.tokenizer_specs
+
+        if self.tokenizer_specs.pad_token_id is None:
+            raise ValueError("pad_token_id must be specified in tokenizer_specs")
         self.pad_token_id: int = self.tokenizer_specs.pad_token_id
 
         data_loading_specs = data_config.data_loading_specs
@@ -228,7 +231,7 @@ class TPPDataModule(pl.LightningDataModule):
         data = load_dataset(source_dir, split=split_mapped)
 
         py_assert(
-            data["dim_process"][0] == self.num_event_types, #ty : ignore
+            data["dim_process"][0] == self.num_event_types,  # type: ignore
             ValueError,
             "Inconsistent dim_process in different splits.",
         )
@@ -281,7 +284,7 @@ class TPPDataModule(pl.LightningDataModule):
         data = load_dataset("json", data_files={split: source_dir}, split=split_mapped)
 
         py_assert(
-            data["dim_process"][0] == self.num_event_types, # ty : ignore
+            data["dim_process"][0] == self.num_event_types,  # type: ignore
             ValueError,
             "Inconsistent dim_process in different splits.",
         )

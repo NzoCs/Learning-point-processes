@@ -1,8 +1,8 @@
 """
 Experiment Runner
 
-Runner pour l'exécution d'expériences TPP avec configuration builder.
-Inspiré de run_all_phase.py pour charger toute la configuration depuis YAML.
+Runner to execute TPP experiments using configuration builders.
+Inspired by run_all_phase.py for loading full configuration from YAML.
 """
 
 from pathlib import Path
@@ -19,9 +19,9 @@ from new_ltpp.configs.config_loaders.runner_config_loader import RunnerConfigYam
 
 class ExperimentRunner(CLIRunnerBase):
     """
-    Runner pour l'exécution d'expériences TPP.
-    Utilise RunnerConfigBuilder pour charger toute la configuration depuis YAML.
-    Permet de spécifier individuellement chaque type de configuration.
+    Runner for executing TPP experiments.
+    Uses RunnerConfigBuilder to load full configuration from YAML.
+    Allows specifying each configuration type individually.
     """
 
     def __init__(self, debug: bool = False):
@@ -29,15 +29,15 @@ class ExperimentRunner(CLIRunnerBase):
 
     def _build_config_paths(self, **config_kwargs) -> dict:
         """
-        Construit les chemins de configuration en suivant le pattern standard.
+        Build configuration paths following the standard pattern.
 
         Pattern: {config_type}_configs.{config_name}
 
         Args:
-            **config_kwargs: Dictionnaire des configurations {type: name}
+            **config_kwargs: Dictionary of configurations {type: name}
 
         Returns:
-            Dictionnaire des chemins de configuration formatés
+            Dictionary of formatted configuration paths
         """
 
         config_paths = {}
@@ -74,28 +74,28 @@ class ExperimentRunner(CLIRunnerBase):
         debug: bool = False,
     ) -> bool:
         """
-        Lance une expérience TPP avec les paramètres spécifiés.
+        Run a TPP experiment with the given parameters.
 
         Args:
-            config_path: Chemin vers le fichier de configuration YAML
-            data_config: Configuration des données (ex: test, large, synthetic)
-            general_specs_config: Configuration générale du modèle (ex: h16, h32, h64)
-            training_config: Configuration d'entraînement (ex: quick_test, full_training)
-            data_loading_config: Configuration du chargement de données
-            simulation_config: Configuration de simulation (optionnel)
-            thinning_config: Configuration de thinning (optionnel)
-            logger_config: Configuration du logger (ex: mlflow, tensorboard)
-            model_id: Identifiant du modèle (default: NHP)
-            phase: Phase d'exécution (train, test, predict, all)
-            max_epochs: Nombre maximum d'époques (override config)
-            save_dir: Répertoire de sauvegarde (override config)
-            model_specs_config: Configuration spécifique au modèle (optionnel)
-            debug: Mode debug
+            config_path: Path to the YAML configuration file
+            data_config: Data configuration (e.g., test, large, synthetic)
+            general_specs_config: General model configuration (e.g., h16, h32)
+            training_config: Training configuration (e.g., quick_test, full_training)
+            data_loading_config: Data loading configuration
+            simulation_config: Simulation configuration (optional)
+            thinning_config: Thinning configuration (optional)
+            logger_config: Logger configuration (e.g., mlflow, tensorboard)
+            model_id: Model identifier (default: NHP)
+            phase: Execution phase (train, test, predict, all)
+            max_epochs: Maximum epochs to override YAML
+            save_dir: Save directory to override YAML
+            model_specs_config: Model-specific configuration (optional)
+            debug: Debug mode
 
         Returns:
-            True si l'expérience s'est déroulée avec succès
+            True if the experiment completed successfully
         """
-        # Activer le mode debug si demandé
+        # Enable debug mode if requested
         self.set_debug(debug)
 
         if isinstance(save_dir, str):
@@ -104,29 +104,30 @@ class ExperimentRunner(CLIRunnerBase):
         if isinstance(config_path, str):
             config_path = Path(config_path)
 
-        # Vérifier les dépendances
+        # Check required modules
         required_modules = ["new_ltpp.configs", "new_ltpp.runners"]
         if not self.check_dependencies(required_modules):
             return False
 
-        self.print_info(f"Démarrage de l'expérience TPP - Phase: {phase}")
+        self.print_info(f"Starting TPP experiment - Phase: {phase}")
 
-        # Configuration par défaut si aucun fichier spécifié
+        # Default configuration file if none provided
         if config_path is None:
             config_path = str(self.get_config_path())
             self.print_info(
-                f"Utilisation de la configuration par défaut: {config_path}"
+                f"Using default configuration: {config_path}"
             )
 
-        # Validation du fichier de configuration
+        # Validate configuration file
         if not Path(config_path).exists():
-            self.print_error(f"Fichier de configuration non trouvé: {config_path}")
+            self.print_error(f"Configuration file not found: {config_path}")
             return False
 
         # Build runner configuration from YAML (comme dans run_all_phase.py)
         config_builder = RunnerConfigBuilder()
 
         # Construire les chemins de configuration avec la fonction utilitaire
+            # Build configuration paths with the helper function
         config_paths = self._build_config_paths(
             data=data_config,
             general_specs=general_specs_config,
@@ -138,58 +139,66 @@ class ExperimentRunner(CLIRunnerBase):
             logger=logger_config,
         )
 
-        self.print_info("Configurations utilisées:")
+        self.print_info("Configurations used:")
         for path_key, path_value in config_paths.items():
             config_type = path_key.replace("_config_path", "").replace("_", " ").title()
             self.print_info(f"  • {config_type}: {path_value}")
 
         # Charger la configuration complète depuis le YAML via le Loader
+            # Load full configuration from YAML via the Loader
         loader = RunnerConfigYamlLoader()
         config_dict = loader.load(
             yaml_file_path=config_path,
-            training_config_path=config_paths.get("training_config_path"),
-            data_config_path=config_paths.get("data_config_path"),
-            model_config_path=config_paths.get("model_config_path"),
-            data_loading_config_path=config_paths.get("data_loading_config_path"),
+            training_config_path=config_paths.get("training_config_path"), # type: ignore
+            data_config_path=config_paths.get("data_config_path"), # type: ignore
+            model_config_path=config_paths.get("model_config_path"), # type: ignore
+            data_loading_config_path=config_paths.get("data_loading_config_path"), # type: ignore
             simulation_config_path=config_paths.get("simulation_config_path"),
             thinning_config_path=config_paths.get("thinning_config_path"),
             logger_config_path=config_paths.get("logger_config_path"),
             general_specs_config_path=config_paths.get("general_specs_config_path"),
             model_specs_config_path=config_paths.get("model_specs_config_path"),
-        )
+        ) 
 
         config_builder.from_dict(config_dict)
 
-        self.print_info("Configuration YAML chargée avec succès")
+        self.print_info("YAML configuration loaded successfully")
 
         # Appliquer les overrides de paramètres CLI en utilisant les méthodes du builder
+            # Apply CLI parameter overrides using the builder's methods
         if max_epochs is not None:
             config_builder.set_max_epochs(max_epochs)
             self.print_info(f"Override: max_epochs = {max_epochs}")
 
         # Ne passer save_dir que s'il est explicitement fourni par l'utilisateur
+            # Only pass save_dir if explicitly provided by the user
         if save_dir:
             config_builder.set_save_dir(save_dir)
             self.print_info(f"Override: save_dir = {save_dir}")
         # Sinon, laisser les sous-couches générer leur propre save_dir par défaut
         # qui sera plus intelligent (model_id/dataset_id/etc.)
+            # Otherwise, let subcomponents generate their own default save_dir
+            # which will be more informative (model_id/dataset_id/etc.)
 
         # Créer la configuration finale avec la factory
+            # Build the final configuration using the factory
         config = config_builder.build(model_id=model_id)
 
-        # Validation de la phase
+        # Validate phase
         valid_phases = ["train", "test", "predict", "all"]
         if phase not in valid_phases:
-            self.print_error(f"Phase invalide: {phase}. Phases valides: {valid_phases}")
+            self.print_error(f"Invalid phase: {phase}. Valid phases: {valid_phases}")
             return False
 
         # Créer et lancer le runner
+            # Create and start the runner
         runner_manager = RunnerManager(config=config)
 
         if phase == "all":
-            self.print_info("Exécution complète: train → test → predict")
+            self.print_info("Full run: train → test → predict")
 
             # Exécuter chaque phase séparément comme dans run_all_phase.py
+                # Execute each phase separately as in run_all_phase.py
             self.print_info("Phase 1/3: Training")
             train_results = runner_manager.run(phase="train")
 
@@ -200,6 +209,7 @@ class ExperimentRunner(CLIRunnerBase):
             predict_results = runner_manager.run(phase="predict")
 
             # Combiner les résultats
+                # Combine the results
             results = {
                 "train": train_results,
                 "test": test_results,
@@ -208,24 +218,26 @@ class ExperimentRunner(CLIRunnerBase):
 
         else:
             self.print_info(f"Exécution phase: {phase}")
+            self.print_info(f"Running phase: {phase}")
             results = runner_manager.run(phase=phase)
 
-        self.print_success(f"Expérience terminée avec succès - Phase: {phase}")
+        self.print_success(f"Experiment completed successfully - Phase: {phase}")
 
         # Afficher les résultats
+            # Display the results
         if results and self.console:
             from rich.table import Table
 
-            table = Table(title="Résultats de l'expérience")
+            table = Table(title="Experiment Results")
             table.add_column("Phase", style="cyan")
-            table.add_column("Statut", style="green")
+            table.add_column("Status", style="green")
 
             if phase == "all" and isinstance(results, dict):
                 for phase_name, phase_results in results.items():
-                    status = "✓ Terminé" if phase_results else "✗ Échec"
+                    status = "✓ Finished" if phase_results else "✗ Failed"
                     table.add_row(phase_name, status)
             else:
-                status = "✓ Terminé" if results else "✗ Échec"
+                status = "✓ Finished" if results else "✗ Failed"
                 table.add_row(phase, status)
 
             self.console.print(table)

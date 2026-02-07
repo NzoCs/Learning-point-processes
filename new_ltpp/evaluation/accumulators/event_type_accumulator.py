@@ -59,7 +59,7 @@ class EventTypeAccumulator(BaseAccumulator):
         if valid_sim_types.numel() > 0:
             self._sim_event_types.extend(valid_sim_types.view(-1).cpu().tolist())
 
-    def compute(self) -> EventTypeStatistics:
+    def compute(self) -> EventTypeStatistics:  # type: ignore[override]
         """Compute event type distribution statistics.
 
         Returns:

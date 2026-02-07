@@ -328,7 +328,7 @@ class ODETPP(NeuralModel):
 
         if compute_last_step_only:
             # [batch_size, 1, num_mc_sample, num_event_types]
-            sampled_intensities = self.layer_intensity(sample_state_ti[:, -1:, :, :])
+            sampled_intensities = self.layer_intensity(sample_state_ti[:, -1:, :, :])  # type: ignore
         else:
             # [batch_size, num_sample_times, num_mc_sample, num_event_types]
             sampled_intensities = self.layer_intensity(sample_state_ti)

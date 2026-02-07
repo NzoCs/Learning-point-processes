@@ -91,7 +91,7 @@ class InterEventTimeAccumulator(BaseAccumulator):
             self._sim_hist += sim_counts.cpu().numpy()
             self._sim_total += int(valid_sim.numel())
 
-    def compute(self) -> TimeStatistics:
+    def compute(self) -> TimeStatistics:  # type: ignore[override]
         """Compute inter-event time statistics.
 
         Returns:

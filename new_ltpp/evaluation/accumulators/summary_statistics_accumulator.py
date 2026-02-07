@@ -8,7 +8,7 @@ statistics batch-by-batch during the prediction phase.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
 
 from new_ltpp.globals import OUTPUT_DIR
@@ -19,11 +19,13 @@ from .acc_types import (
     AllStatistics,
     FinalResult,
     PlotData,
+    StatisticalMetrics,
 )
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
 from .mean_len_accumulator import SequenceLengthAccumulator
 from .metrics_calculator import MetricsCalculatorImpl
+from .statistical_metrics_accumulator import StatisticalTestAccumulator
 from .plot_generators import (
     AutocorrelationPlotGenerator,
     EventTypePlotGenerator,
@@ -31,9 +33,10 @@ from .plot_generators import (
     SequenceLengthPlotGenerator,
 )
 from .time_accumulator import InterEventTimeAccumulator
+from .base_accumulator import BaseAccumulator
 
 
-class BatchStatisticsCollector:
+class BatchStatisticsCollector(BaseAccumulator):
     """Main class for collecting statistics batch-by-batch during prediction.
 
     This class orchestrates multiple accumulators that collect different
@@ -62,15 +65,20 @@ class BatchStatisticsCollector:
         min_sim_events: int = 1,
         enable_plots: bool = True,
         enable_metrics: bool = True,
+        statistical_test_accumulator: Optional[StatisticalTestAccumulator] = None,
         output_dir: Path | str = OUTPUT_DIR / "distribution_comparison",
     ):
         """Initialize the batch statistics collector.
 
         Args:
             num_event_types: Number of event types in the dataset
-            output_dir: Directory where results will be saved
+            dtime_max: Maximum inter-event time
+            dtime_min: Minimum inter-event time
+            min_sim_events: Minimum number of simulated events required per batch
             enable_plots: Whether to generate plots
             enable_metrics: Whether to compute metrics
+            statistical_test_accumulator: Optional accumulator for MMD/KSD tests
+            output_dir: Directory where results will be saved
         """
         self.num_event_types = num_event_types
         self.output_dir = Path(output_dir)
@@ -82,8 +90,8 @@ class BatchStatisticsCollector:
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize accumulators
-        self._accumulators = (
+        # Initialize base accumulators
+        base_accumulators = [
             InterEventTimeAccumulator(
                 dtime_min=dtime_min, dtime_max=dtime_max, min_sim_events=min_sim_events
             ),
@@ -92,7 +100,16 @@ class BatchStatisticsCollector:
             ),
             SequenceLengthAccumulator(min_sim_events=min_sim_events),
             CorrAccumulator(min_sim_events=min_sim_events),
-        )
+        ]
+
+        # Add statistical test accumulator if provided
+        if statistical_test_accumulator is not None:
+            base_accumulators.append(statistical_test_accumulator)
+            self._has_statistical_tests = True
+        else:
+            self._has_statistical_tests = False
+
+        self._accumulators = tuple(base_accumulators)
 
         # Initialize plot generators (if enabled)
         self._plot_generators: Optional[
@@ -166,12 +183,25 @@ class BatchStatisticsCollector:
         """
         logger.info("Computing statistics from accumulators...")
 
-        return AllStatistics(
+        # Get base statistics
+        base_stats = AllStatistics(
             time=self._accumulators[0].compute(),
             event_type=self._accumulators[1].compute(),
             sequence_length=self._accumulators[2].compute(),
             correlation=self._accumulators[3].compute(),
+            statistical_tests=StatisticalMetrics(
+                mmd_values=[],
+                ksd_values=[],
+                mmd_p_values=[],
+                ksd_p_values=[],
+            ),
         )
+
+        # Add statistical test results if available
+        if self._has_statistical_tests:
+            base_stats["statistical_tests"] = self._accumulators[4].compute()
+
+        return base_stats
 
     def generate_plots(self, statistics: AllStatistics) -> None:
         """Generate and save all plots.
@@ -221,7 +251,7 @@ class BatchStatisticsCollector:
 
             # Use acf_data for the last plot (autocorrelation)
             data_to_use = acf_data if i == 3 else plot_data_dict
-            generator.generate_plot(data_to_use, output_path)
+            generator.generate_plot(cast(dict, data_to_use), output_path)
             logger.info(f"Generated plot: {filename}")
 
     def finalize_and_save(self) -> FinalResult:

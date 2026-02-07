@@ -7,11 +7,9 @@ def test_data_config_builder():
     (
         builder.set_dataset_id("test")
         .set_src_dir("NzoCs/test_dataset")
-        .set_batch_size(32)
-        .set_num_workers(2)
-        .set_shuffle(True)
+        .set_data_format("json")
+        .set_data_loading_specs(batch_size=32, num_workers=2, shuffle=True)
         .set_num_event_types(2)
-        
     )
     builder.set_data_format("json")
 
@@ -42,17 +40,14 @@ def test_runner_config_builder_programmatic():
     # Set runner-level save dir (not a training field)
     runner_config_builder.set_save_dir("./custom_output")
 
-    
-
     # Build data config
     (
         runner_config_builder.data_builder.set_num_event_types(2)
         .set_dataset_id("test")
         .set_src_dir("NzoCs/test_dataset")
-        .set_batch_size(64)
-        .set_num_workers(2)
-        .set_shuffle(True)
         .set_data_format("json")
+        .set_data_loading_specs(batch_size=32, num_workers=2, shuffle=True)
+        .set_num_event_types(2)
     )
 
     # Build model config
@@ -136,20 +131,20 @@ logger_configs:
 
     # Build config from YAML using the YAML loaders and then populate the builder
     from new_ltpp.configs.config_loaders.runner_config_loader import (
-      RunnerConfigYamlLoader,
+        RunnerConfigYamlLoader,
     )
 
     runner_builder = RunnerConfigBuilder()
     loader = RunnerConfigYamlLoader()
     runner_cfg = loader.load(
-      str(yaml_file),
-      training_config_path="training_configs.quick_test",
-      model_config_path="model_configs.neural_small",
-      data_config_path="data_configs.test",
-      data_loading_config_path="data_loading_configs.quick_test",
-      thinning_config_path="thinning_configs.thinning_fast",
-      simulation_config_path="simulation_configs.simulation_fast",
-      logger_config_path="logger_configs.csv",
+        str(yaml_file),
+        training_config_path="training_configs.quick_test",
+        model_config_path="model_configs.neural_small",
+        data_config_path="data_configs.test",
+        data_loading_config_path="data_loading_configs.quick_test",
+        thinning_config_path="thinning_configs.thinning_fast",
+        simulation_config_path="simulation_configs.simulation_fast",
+        logger_config_path="logger_configs.csv",
     )
 
     # Populate builder and check for missing required fields
@@ -158,9 +153,9 @@ logger_configs:
     runner_builder.model_builder.set_num_mc_samples(1)
     runner_builder.data_builder.set_data_format("json")
     missing = (
-      runner_builder.model_builder.get_unset_required_fields()
-      + runner_builder.data_builder.get_unset_required_fields()
-      + runner_builder.training_builder.get_unset_required_fields()
+        runner_builder.model_builder.get_unset_required_fields()
+        + runner_builder.data_builder.get_unset_required_fields()
+        + runner_builder.training_builder.get_unset_required_fields()
     )
     assert len(missing) == 0  # No missing fields
 

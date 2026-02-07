@@ -1,11 +1,11 @@
 """
 Data Inspector Runner
 
-Runner pour l'inspection et visualisation de données TPP.
+Runner for inspection and visualization of TPP data.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from new_ltpp.configs import DataConfigBuilder
 from new_ltpp.data.preprocess import Visualizer
@@ -15,8 +15,8 @@ from .cli_base import CLIRunnerBase
 
 class DataInspector(CLIRunnerBase):
     """
-    Runner pour l'inspection et visualisation de données.
-    Utilise DataConfigBuilder et le nouveau Visualizer API.
+    Runner for inspecting and visualizing data.
+    Uses `DataConfigBuilder` and the Visualizer API.
     """
 
     def __init__(self, debug: bool = False):
@@ -25,134 +25,100 @@ class DataInspector(CLIRunnerBase):
     def inspect_data(
         self,
         data_dir: str,
+        num_event_types: int,
         data_format: str = "json",
         output_dir: Optional[str] = None,
         save_graphs: bool = True,
         show_graphs: bool = False,
         max_sequences: Optional[int] = None,
-        event_types: Optional[List[str]] = None,
     ) -> bool:
         """
-        Inspecte et visualise des données TPP.
+        Inspect and visualize TPP data.
 
         Args:
-            data_dir: Répertoire contenant les données
-            data_format: Format des données (json, csv, etc.)
-            output_dir: Répertoire de sortie pour les graphiques
-            save_graphs: Sauvegarder les graphiques
-            show_graphs: Afficher les graphiques
-            max_sequences: Nombre maximum de séquences à analyser
-            event_types: Types d'événements à analyser
+            data_dir: Directory containing the data
+            data_format: Data format (json, csv, etc.)
+            output_dir: Output directory for generated plots
+            save_graphs: Whether to save plots
+            show_graphs: Whether to display plots interactively
+            max_sequences: Maximum number of sequences to analyze
 
         Returns:
-            True si l'inspection s'est déroulée avec succès
+            True if inspection completed successfully
         """
-        # Vérifier les dépendances
+        # Check dependencies
         required_modules = ["new_ltpp.configs", "new_ltpp.data.preprocess"]
         if not self.check_dependencies(required_modules):
             return False
 
         try:
-            self.print_info(f"Inspection des données: {data_dir}")
+            self.print_info(f"Inspecting data: {data_dir}")
 
-            # Configuration des données via builder
+            # Configure data via builder
             builder = DataConfigBuilder()
-            builder.set_src_dir(
-                data_dir
-            )  # Utilise set_src_dir qui définit train/valid/test
-            builder.set_dataset_id("test")
-            builder.set_data_format(data_format)
-
-            # Spécifications de chargement par défaut
-            builder.set_data_loading_specs(
-                {"batch_size": 32, "num_workers": 1, "shuffle": False}
-            )
-
-            # Spécifications de données par défaut (dépendront des données réelles)
-            builder.set_tokenizer_specs(
-                {
-                    "num_event_types": 10,  # Sera mis à jour après lecture des données
-                    "padding_side": "left",
-                    "truncation_side": "left",
-                }
+            (builder
+                .set_src_dir(
+                    data_dir
+                )  # Uses set_src_dir which sets train/valid/test
+                .set_dataset_id("test")
+                .set_data_format(data_format)
+                # Default data loading specs
+                .set_data_loading_specs(
+                    batch_size=32,
+                    num_workers=4,
+                    shuffle=False,
+                )
+                # Default tokenizer specs (may be updated after reading data)
+                .set_tokenizer_specs()
+                .set_num_event_types(num_event_types)
             )
 
             data_config = builder.build()
 
-            # Créer le data module (comme dans l'exemple)
+            # Create the data module (as in the example)
             from new_ltpp.data.preprocess import TPPDataModule
 
             datamodule = TPPDataModule(data_config)
 
-            try:
-                datamodule.setup(stage="test")
-            except Exception as e:
-                self.print_error_with_traceback(f"Erreur setup data module: {e}", e)
-                # Fallback vers analyse directe
-                return self._fallback_direct_analysis(
-                    data_dir, output_dir, save_graphs, show_graphs, max_sequences
-                )
+            datamodule.setup(stage="test")
 
-            # Créer le visualizer (comme dans l'exemple)
-            if output_dir:
-                save_dir = output_dir
-                Path(save_dir).mkdir(parents=True, exist_ok=True)
-            else:
-                # Utiliser le répertoire par défaut dans artifacts/
-                data_name = Path(data_dir).name
-                save_dir = str(self.get_output_path("data_inspection", data_name))
-
-            # Utiliser train si disponible, sinon test
+            # Use train if available, otherwise use test
             split_to_use = "train"
-            try:
-                visualizer = Visualizer(
-                    data_module=datamodule,
-                    split=split_to_use,
-                    save_dir=save_dir,
-                    dataset_size=max_sequences if max_sequences else 10000,
-                )
+            visualizer = Visualizer(
+                data_module=datamodule,
+                split=split_to_use,
+                max_events=max_sequences if max_sequences else 10000,
+            )
 
-                self.print_info("Génération des visualisations avec Visualizer...")
+            self.print_info("Generating visualizations with Visualizer...")
 
-                # Générer toutes les distributions (comme dans l'exemple)
-                visualizer.show_all_distributions(
-                    save_graph=save_graphs, show_graph=show_graphs
-                )
+            # Generate individual visualizations as well
+            visualizer.plot_inter_event_times(
+                show=show_graphs, save=save_graphs
+            )
+            visualizer.plot_event_types(
+                show=show_graphs, save=save_graphs
+            )
+            visualizer.plot_sequence_lengths(
+                show=show_graphs, save=save_graphs
+            )
 
-                # Générer les visualisations individuelles aussi
-                visualizer.delta_times_distribution(
-                    save_graph=save_graphs, show_graph=show_graphs
-                )
-                visualizer.event_type_distribution(
-                    save_graph=save_graphs, show_graph=show_graphs
-                )
-                visualizer.sequence_length_distribution(
-                    save_graph=save_graphs, show_graph=show_graphs
-                )
+            results = {
+                "show_all_distributions": True,
+                "delta_times_distribution": True,
+                "event_type_distribution": True,
+                "sequence_length_distribution": True,
+            }
+            self.print_success("✓ All visualizations generated")
 
-                results = {
-                    "show_all_distributions": True,
-                    "delta_times_distribution": True,
-                    "event_type_distribution": True,
-                    "sequence_length_distribution": True,
-                }
 
-                self.print_success("✓ Toutes les visualisations générées")
-
-            except Exception as e:
-                self.print_error_with_traceback(f"Erreur avec Visualizer: {e}", e)
-                # Fallback vers analyse directe
-                return self._fallback_direct_analysis(
-                    data_dir, output_dir, save_graphs, show_graphs, max_sequences
-                )
-
-            # Sauvegarde des métadonnées
+            # Save metadata
             if save_graphs and output_dir:
                 metadata = {
                     "data_dir": data_dir,
                     "data_format": data_format,
                     "max_sequences": max_sequences,
-                    "event_types": event_types,
+                    "num_event_types": num_event_types,
                     "visualizations_generated": list(results.keys()),
                     "timestamp": str(Path().absolute()),
                 }
@@ -163,166 +129,34 @@ class DataInspector(CLIRunnerBase):
                 with open(metadata_path, "w") as f:
                     json.dump(metadata, f, indent=2)
 
-                self.print_success(f"Métadonnées sauvegardées: {metadata_path}")
+                self.print_success(f"Metadata saved: {metadata_path}")
 
-            # Résumé des résultats
+            # Summary of results
             if self.console and results:
                 from rich.table import Table
 
-                table = Table(title="Résultats de l'inspection")
-                table.add_column("Visualisation", style="cyan")
-                table.add_column("Statut", style="green")
+                table = Table(title="Inspection Results")
+                table.add_column("Visualization", style="cyan")
+                table.add_column("Status", style="green")
 
                 for viz_name, result in results.items():
-                    status = "✓ Généré" if result else "✗ Échec"
+                    status = "✓ Generated" if result else "✗ Failed"
                     table.add_row(viz_name, status)
 
                 self.console.print(table)
 
-            self.print_success("Inspection des données terminée")
+            self.print_success("Data inspection completed")
             return True
 
         except Exception as e:
-            self.print_error_with_traceback(f"Erreur lors de l'inspection: {e}", e)
-            self.logger.exception("Détails de l'erreur:")
+            self.print_error_with_traceback(f"Error during inspection: {e}", e)
+            self.logger.exception("Error details:")
             return False
-
-    def _analyze_data_directly(
-        self, data, save_dir, save_graphs, show_graphs, max_sequences
-    ):
-        """
-        Analyse directe des données JSON sans passer par le data loader complet.
-        """
-        from collections import Counter
-
-        import matplotlib.pyplot as plt
-        import numpy as np
-
-        results = {}
-
-        try:
-            # Les données sont une liste d'objets (séquences)
-            if not isinstance(data, list):
-                self.print_error("Format de données non reconnu - attendu une liste")
-                return {}
-
-            # Extraire les séquences
-            time_seqs = []
-            type_seqs = []
-
-            for sequence in data:
-                if isinstance(sequence, dict):
-                    if "time_since_start" in sequence and "type_event" in sequence:
-                        time_seqs.append(sequence["time_since_start"])
-                        type_seqs.append(sequence["type_event"])
-
-            if not time_seqs or not type_seqs:
-                self.print_error("Aucune séquence valide trouvée")
-                return {}
-
-            # Limiter le nombre de séquences si demandé
-            if max_sequences:
-                time_seqs = time_seqs[:max_sequences]
-                type_seqs = type_seqs[:max_sequences]
-
-            # Calculer les statistiques
-            seq_lengths = [len(seq) for seq in type_seqs]
-            all_event_types = []
-            all_time_deltas = []
-
-            for type_seq, time_seq in zip(type_seqs, time_seqs):
-                all_event_types.extend(type_seq)
-
-                # Calculer les intervalles de temps
-                if len(time_seq) > 1:
-                    deltas = np.diff(time_seq)
-                    all_time_deltas.extend(deltas)
-
-            self.print_info(f"Séquences analysées: {len(seq_lengths)}")
-            self.print_info(f"Événements totaux: {len(all_event_types)}")
-            self.print_info(f"Types d'événements: {len(set(all_event_types))}")
-
-            # 1. Distribution des longueurs de séquences
-            self.print_info("Génération: distribution des longueurs")
-            plt.figure(figsize=(10, 6))
-            plt.hist(seq_lengths, bins=30, alpha=0.7, edgecolor="black")
-            plt.title("Distribution des longueurs de séquences")
-            plt.xlabel("Longueur de séquence")
-            plt.ylabel("Fréquence")
-
-            if save_graphs:
-                filepath = Path(save_dir) / "sequence_lengths.png"
-                plt.savefig(filepath, dpi=300, bbox_inches="tight")
-                self.print_success(f"Sauvegardé: {filepath}")
-
-            if show_graphs:
-                plt.show()
-            plt.close()
-            results["sequence_lengths"] = True
-
-            # 2. Distribution des types d'événements
-            self.print_info("Génération: distribution des types d'événements")
-            event_counts = Counter(all_event_types)
-            types = list(event_counts.keys())
-            counts = list(event_counts.values())
-
-            plt.figure(figsize=(10, 6))
-            plt.bar(types, counts, alpha=0.7)
-            plt.title("Distribution des types d'événements")
-            plt.xlabel("Type d'événement")
-            plt.ylabel("Fréquence")
-
-            if save_graphs:
-                filepath = Path(save_dir) / "event_types.png"
-                plt.savefig(filepath, dpi=300, bbox_inches="tight")
-                self.print_success(f"Sauvegardé: {filepath}")
-
-            if show_graphs:
-                plt.show()
-            plt.close()
-            results["event_types"] = True
-
-            # 3. Distribution des intervalles de temps
-            if all_time_deltas:
-                self.print_info("Génération: distribution des intervalles de temps")
-                plt.figure(figsize=(10, 6))
-
-                # Utiliser log scale pour les intervalles de temps
-                positive_deltas = [d for d in all_time_deltas if d > 0]
-
-                if positive_deltas:
-                    plt.hist(positive_deltas, bins=50, alpha=0.7, edgecolor="black")
-                    plt.title("Distribution des intervalles de temps")
-                    plt.xlabel("Intervalle de temps")
-                    plt.ylabel("Fréquence")
-                    plt.yscale("log")
-
-                    if save_graphs:
-                        filepath = Path(save_dir) / "time_intervals.png"
-                        plt.savefig(filepath, dpi=300, bbox_inches="tight")
-                        self.print_success(f"Sauvegardé: {filepath}")
-
-                    if show_graphs:
-                        plt.show()
-
-                plt.close()
-                results["time_intervals"] = True
-
-            # Générer un rapport de résumé
-            self._generate_summary_report(
-                save_dir, seq_lengths, all_event_types, all_time_deltas, event_counts
-            )
-
-            return results
-
-        except Exception as e:
-            self.print_error_with_traceback(f"Erreur dans l'analyse directe: {e}", e)
-            return {}
 
     def _generate_summary_report(
         self, save_dir, seq_lengths, all_event_types, all_time_deltas, event_counts
     ):
-        """Génère un rapport de résumé."""
+        """Generate a summary report."""
         import numpy as np
 
         try:
@@ -351,83 +185,30 @@ class DataInspector(CLIRunnerBase):
                         }
                     )
 
-            # Sauvegarder le rapport
+            # Save the report
             import json
 
             report_path = Path(save_dir) / "summary_report.json"
             with open(report_path, "w") as f:
                 json.dump(summary, f, indent=2)
 
-            self.print_success(f"Rapport de résumé: {report_path}")
+            self.print_success(f"Summary report: {report_path}")
 
-            # Afficher le résumé dans la console
+            # Display the summary in the console
             if self.console:
                 from rich.table import Table
 
-                table = Table(title="Résumé de l'analyse")
-                table.add_column("Métrique", style="cyan")
-                table.add_column("Valeur", style="green")
+                table = Table(title="Analysis Summary")
+                table.add_column("Metric", style="cyan")
+                table.add_column("Value", style="green")
 
-                table.add_row("Total séquences", str(summary["total_sequences"]))
-                table.add_row("Total événements", str(summary["total_events"]))
-                table.add_row("Types d'événements", str(summary["unique_event_types"]))
-                table.add_row(
-                    "Longueur moyenne", f"{summary['avg_sequence_length']:.2f}"
-                )
-                table.add_row(
-                    "Longueur médiane", f"{summary['median_sequence_length']:.2f}"
-                )
+                table.add_row("Total sequences", str(summary["total_sequences"]))
+                table.add_row("Total events", str(summary["total_events"]))
+                table.add_row("Unique event types", str(summary["unique_event_types"]))
+                table.add_row("Average length", f"{summary['avg_sequence_length']:.2f}")
+                table.add_row("Median length", f"{summary['median_sequence_length']:.2f}")
 
                 self.console.print(table)
 
         except Exception as e:
-            self.print_error_with_traceback(f"Erreur génération rapport: {e}", e)
-
-    def _fallback_direct_analysis(
-        self, data_dir, output_dir, save_graphs, show_graphs, max_sequences
-    ):
-        """
-        Fallback vers analyse directe si le Visualizer ne fonctionne pas.
-        """
-        self.print_info("Utilisation de l'analyse directe (fallback)...")
-
-        import json
-        from pathlib import Path
-
-        data_path = Path(data_dir)
-
-        # Chercher les fichiers de données
-        json_files = {}
-        for split in ["train", "test", "dev"]:
-            json_file = data_path / f"{split}.json"
-            if json_file.exists():
-                with open(json_file, "r") as f:
-                    json_files[split] = json.load(f)
-
-        if not json_files:
-            self.print_error(
-                "Aucun fichier de données trouvé (train.json, test.json, dev.json)"
-            )
-            return False
-
-        # Utiliser le premier fichier disponible
-        split_name = list(json_files.keys())[0]
-        data = json_files[split_name]
-
-        self.print_info(f"Données chargées depuis {split_name}.json")
-
-        # Créer un répertoire de sortie
-        if output_dir:
-            save_dir = output_dir
-            Path(save_dir).mkdir(parents=True, exist_ok=True)
-        else:
-            # Utiliser le répertoire par défaut dans artifacts/
-            data_name = Path(data_dir).name
-            save_dir = str(self.get_output_path("data_inspection", data_name))
-
-        # Analyser les données directement
-        results = self._analyze_data_directly(
-            data, save_dir, save_graphs, show_graphs, max_sequences
-        )
-
-        return len(results) > 0
+            self.print_error_with_traceback(f"Error generating report: {e}", e)

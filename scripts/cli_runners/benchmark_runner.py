@@ -1,7 +1,7 @@
 """
 Benchmark Runner
 
-Runner pour les tests de performance et benchmarking TPP.
+Runner for performance tests and benchmarking of TPP.
 """
 
 from typing import List, Optional, Union
@@ -20,8 +20,8 @@ from .cli_base import CLIRunnerBase
 
 class BenchmarkRunner(CLIRunnerBase):
     """
-    Runner pour les tests de performance et benchmarking.
-    Mesure les temps d'exécution, utilisation mémoire, et performance des modèles.
+    Runner for performance testing and benchmarking.
+    Measures execution time, memory usage, and model performance.
     """
 
     def __init__(self, debug: bool = False):
@@ -39,70 +39,70 @@ class BenchmarkRunner(CLIRunnerBase):
         **benchmark_params,
     ) -> bool:
         """
-        Lance des benchmarks TPP en utilisant le BenchmarkManager.
+        Run TPP benchmarks using the BenchmarkManager.
 
         Args:
-            config_path: Chemin vers le fichier YAML de configuration
-            data_config: Configuration(s) des données (ex: 'test' ou ['test', 'large'])
-            data_loading_config: Configuration du chargement des données
-            benchmarks: Liste des noms de benchmarks à exécuter
-            output_dir: Répertoire de sortie
-            run_all: Exécuter tous les benchmarks disponibles
-            run_all_configs: Exécuter sur toutes les configurations disponibles dans le YAML
-            **benchmark_params: Paramètres supplémentaires pour les benchmarks
+            config_path: Path to the YAML configuration file
+            data_config: Data configuration(s) (e.g. 'test' or ['test','large'])
+            data_loading_config: Data loading configuration
+            benchmarks: List of benchmark names to run
+            output_dir: Output directory
+            run_all: Run all available benchmarks
+            run_all_configs: Run on all configurations available in the YAML
+            **benchmark_params: Additional benchmark parameters
 
         Returns:
-            True si les benchmarks se sont déroulés avec succès
+            True if benchmarks completed successfully
         """
-        # Vérifier les dépendances
+        # Check dependencies
         required_modules = ["new_ltpp.configs", "new_ltpp.evaluation.benchmarks"]
         if not self.check_dependencies(required_modules):
             return False
 
-        # Configuration par défaut si aucun fichier spécifié
+        # Default configuration file if none provided
         if config_path is None:
             config_path = str(self.get_config_path())
             self.print_info(
-                f"Utilisation de la configuration par défaut: {config_path}"
+                f"Using default configuration: {config_path}"
             )
 
-        # Si run_all_configs, récupérer toutes les configurations du YAML
+        # If run_all_configs, retrieve all configurations from the YAML
         if run_all_configs:
             import yaml
 
-            self.print_info("Récupération de toutes les configurations disponibles...")
+            self.print_info("Gathering all available configurations...")
 
             with open(config_path, "r") as f:
                 yaml_content = yaml.safe_load(f)
 
-            # Extraire tous les noms de configs data disponibles
+            # Extract all available data config names
             available_data_configs = list(yaml_content.get("data_configs", {}).keys())
 
             if not available_data_configs:
-                self.print_error("Aucune configuration de données trouvée dans le YAML")
+                self.print_error("No data configurations found in YAML")
                 return False
 
             self.print_info(
-                f"Configurations trouvées: {', '.join(available_data_configs)}"
+                f"Found configurations: {', '.join(available_data_configs)}"
             )
             data_configs_list = available_data_configs
         else:
-            # Support de plusieurs configurations spécifiées
+            # Support multiple specified configurations
             data_configs_list = (
                 data_config if isinstance(data_config, list) else [data_config]
             )
 
-        # Construire toutes les configurations
+        # Build all configurations
         all_data_configs = []
         for data_cfg in data_configs_list:
             try:
-                # Construire les chemins de configuration avec la méthode utilitaire
+                # Build configuration paths with the helper method
                 config_paths = self._build_config_paths(
                     data=data_cfg, data_loading=data_loading_config
                 )
 
                 self.print_info(
-                    f"Configuration des données: {config_paths.get('data_config_path')}"
+                    f"Data configuration path: {config_paths.get('data_config_path')}"
                 )
 
                 # Use Loader to get dictionary
@@ -121,47 +121,47 @@ class BenchmarkRunner(CLIRunnerBase):
                 built_config = builder.build()
                 all_data_configs.append(built_config)
 
-                self.print_info(f"Configuration chargée: {built_config.dataset_id}")
+                self.print_info(f"Configuration loaded: {built_config.dataset_id}")
 
             except Exception as e:
-                self.print_error(f"Erreur lors du chargement de {data_cfg}: {e}")
+                self.print_error(f"Error loading {data_cfg}: {e}")
                 if self.debug:
-                    self.logger.exception(f"Détails de l'erreur pour {data_cfg}:")
-                # Continue avec les autres configs
+                    self.logger.exception(f"Error details for {data_cfg}:")
+                # Continue with other configs
 
         if not all_data_configs:
-            self.print_error("Aucune configuration n'a pu être chargée")
+            self.print_error("No configuration could be loaded")
             return False
 
-        # Créer le BenchmarkManager
+        # Create the BenchmarkManager
         benchmark_manager = BenchmarkManager(
             base_dir=output_dir or self.get_output_path()
         )
 
         try:
-            self.print_info("Configuration du benchmark...")
+            self.print_info("Benchmark setup...")
             self.print_info(
-                f"Exécution sur {len(all_data_configs)} configuration(s)..."
+                f"Running on {len(all_data_configs)} configuration(s)..."
             )
             dataset_ids = [cfg.dataset_id for cfg in all_data_configs]
             self.print_info(f"Datasets: {', '.join(dataset_ids)}")
 
-            # Déterminer quels benchmarks exécuter
+            # Determine which benchmarks to run
             if run_all:
-                self.print_info("Exécution de tous les benchmarks disponibles...")
+                self.print_info("Running all available benchmarks...")
                 benchmark_manager.run_all_benchmarks(
                     all_data_configs, **benchmark_params
                 )
 
             elif benchmarks:
-                self.print_info(f"Exécution des benchmarks: {benchmarks}")
+                self.print_info(f"Running benchmarks: {benchmarks}")
                 benchmark_manager.run_by_names(
                     benchmarks, all_data_configs, **benchmark_params
                 )
 
             else:
-                # Par défaut, exécuter quelques benchmarks essentiels
-                self.print_info("Exécution des benchmarks par défaut...")
+                # By default, run a few essential benchmarks
+                self.print_info("Running default benchmarks...")
                 default_benchmarks = [
                     Benchmarks.MEAN_INTER_TIME,
                     Benchmarks.MARK_DISTRIBUTION,
@@ -171,20 +171,20 @@ class BenchmarkRunner(CLIRunnerBase):
                     default_benchmarks, all_data_configs, **benchmark_params
                 )
 
-            self.print_info(f"Résultats sauvegardés dans: {benchmark_manager.base_dir}")
+            self.print_info(f"Results saved at: {benchmark_manager.base_dir}")
 
             return True
 
         except Exception as e:
-            self.print_error_with_traceback(f"Erreur lors du benchmark: {e}", e)
+            self.print_error_with_traceback(f"Error during benchmark: {e}", e)
             if self.debug:
-                self.logger.exception("Détails de l'erreur:")
+                self.logger.exception("Error details:")
             return False
 
     def list_available_benchmarks(self) -> List[str]:
-        """Retourne la liste des benchmarks disponibles."""
+        """Return the list of available benchmarks."""
         if Benchmarks is None:
-            self.print_error("BenchmarksEnum non disponible")
+            self.print_error("BenchmarksEnum not available")
             return []
 
         benchmarks = [benchmark.benchmark_name for benchmark in Benchmarks]
@@ -192,8 +192,8 @@ class BenchmarkRunner(CLIRunnerBase):
         if self.console:
             from rich.table import Table
 
-            table = Table(title="Benchmarks TPP Disponibles")
-            table.add_column("Nom", style="cyan")
+            table = Table(title="Available TPP Benchmarks")
+            table.add_column("Name", style="cyan")
             table.add_column("Description", style="yellow")
 
             descriptions = {
@@ -211,7 +211,7 @@ class BenchmarkRunner(CLIRunnerBase):
 
             self.console.print(table)
         else:
-            print("\n=== Benchmarks Disponibles ===")
+            print("\n=== Available Benchmarks ===")
             for benchmark in benchmarks:
                 print(f"- {benchmark}")
 

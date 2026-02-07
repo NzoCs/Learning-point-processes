@@ -25,7 +25,7 @@ class SelfCorrecting(Model):
     ):
         super(SelfCorrecting, self).__init__(**kwargs)
 
-        # Validation et conversion des paramètres
+        # Validate and convert parameters
         mu = torch.as_tensor(mu, dtype=torch.float32, device=self.device)
         alpha = torch.as_tensor(alpha, dtype=torch.float32, device=self.device)
 
@@ -43,17 +43,18 @@ class SelfCorrecting(Model):
 
     def _get_cumulative_counts(self, type_seq: torch.Tensor) -> torch.Tensor:
         """
-        Calcule efficacement N_i(t) pour chaque pas de temps.
+        Efficiently compute N_i(t) for each time step.
+
         Returns:
             torch.Tensor: [Batch, Seq_Len, Num_Types]
-            counts[b, k, i] = nombre d'événements de type i dans type_seq[b, :k+1]
+            counts[b, k, i] = number of events of type i in type_seq[b, :k+1]
         """
         # [Batch, Seq, Num_Types]
         type_one_hot = F.one_hot(
             type_seq.long(), num_classes=self.num_event_types
         ).float()
 
-        # Cumsum le long de la dimension temps
+        # Cumsum along the time dimension
         cumulative_counts = torch.cumsum(type_one_hot, dim=1)
         return cumulative_counts
 
@@ -70,39 +71,39 @@ class SelfCorrecting(Model):
         **kwargs,
     ) -> torch.Tensor:
         """
-        Calcule lambda(t + delta) de manière vectorisée.
+        Compute lambda(t + delta) in a vectorized way.
         """
-        # 1. Récupération des compteurs historiques N_i(t)
-        # counts_history[b, k] contient le compte INCLUANT l'événement k.
+        # 1. Retrieve historical counts N_i(t)
+        # counts_history[b, k] contains the count INCLUDING event k.
         counts_at_events = self._get_cumulative_counts(type_seq)  # [B, L, D]
 
         if compute_last_step_only:
-            # On prend le temps du dernier événement et les comptes associés
+            # Take the time of the last event and the associated counts
             base_time = time_seq[:, -1:].unsqueeze(-1)  # [B, 1, 1]
             base_counts = counts_at_events[:, -1:, :].unsqueeze(2)  # [B, 1, 1, D]
 
-            # Si sample_dtimes est [B, 1, N_samples] ou [B, L, N_samples], on adapte
+            # If sample_dtimes is [B, 1, N_samples] or [B, L, N_samples], adapt accordingly
             if sample_dtimes.dim() == 3 and sample_dtimes.shape[1] != 1:
                 sample_dtimes = sample_dtimes[:, -1:, :]
 
-            # Temps absolu t = t_last + delta
+            # Absolute time t = t_last + delta
             # [B, 1, N_samples] -> [B, 1, N_samples, 1]
             current_times = (base_time + sample_dtimes).unsqueeze(-1)
 
         else:
-            # Pour toute la séquence
+            # For the whole sequence
             base_time = time_seq.unsqueeze(-1)  # [B, L, 1]
             base_counts = counts_at_events.unsqueeze(2)  # [B, L, 1, D]
 
-            # Temps absolu t = t_k + delta
+            # Absolute time t = t_k + delta
             # [B, L, N_samples, 1]
             current_times = (base_time + sample_dtimes).unsqueeze(-1)
 
-        # 2. Calcul de l'intensité
-        # Formule : exp(mu + alpha * (t - N(t)))
-        # N(t) ici est le nombre d'événements *strictement avant* t.
-        # Puisque t > t_k (car delta > 0), N(t) inclut l'événement k.
-        # Donc base_counts (qui est le cumsum incluant k) est correct.
+        # 2. Compute intensity
+        # Formula: exp(mu + alpha * (t - N(t)))
+        # N(t) here is the number of events *strictly before* t.
+        # Since t > t_k (because delta > 0), N(t) includes event k.
+        # Therefore base_counts (which is the cumsum including k) is correct.
 
         # [1, 1, 1, D]
         mu = self.mu.view(1, 1, 1, -1)
@@ -114,35 +115,35 @@ class SelfCorrecting(Model):
 
         intensities = torch.exp(exponent)
 
-        # Sécurité numérique optionnelle
+        # Optional numerical safety
         # intensities = torch.clamp(intensities, min=1e-9)
 
         return intensities
 
     def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
         """
-        Calcule la log-vraisemblance exacte (analytique).
+        Compute the exact (analytical) log-likelihood.
         LL = sum(log(lambda(t_i))) - int(lambda(t) dt)
         """
         time_seq = batch.time_seqs
         type_seq = batch.type_seqs
 
-        # Masque (on ignore le padding et le premier événement qui sert juste d'ancrage t0)
+        # Mask (ignore padding and the first event which is just an anchor t0)
         # [Batch, L-1]
         seq_mask = batch.valid_event_mask[:, 1:]
 
-        # --- Préparation des Données ---
+        # --- Data Preparation ---
 
-        # 1. Compteurs N(t)
+        # 1. Counters N(t)
         # [Batch, L, D]
         all_counts = self._get_cumulative_counts(type_seq)
 
-        # Pour prédire l'événement k (au temps t_k), on utilise l'historique jusqu'à k-1.
-        # Donc N(t_k) = counts[k-1]
+        # To predict event k (at time t_k), use history up to k-1.
+        # Therefore N(t_k) = counts[k-1]
         # [Batch, L-1, D]
         N_prev = all_counts[:, :-1, :]
 
-        # Temps des événements cibles t_1 ... t_N
+        # Target event times t_1 ... t_N
         # [Batch, L-1, 1]
         t_target = time_seq[:, 1:].unsqueeze(-1)
 
@@ -150,14 +151,14 @@ class SelfCorrecting(Model):
         mu = self.mu.view(1, 1, -1)
         alpha = self.alpha.view(1, 1, -1)
 
-        # --- A. Log-Vraisemblance des Événements (Event Log-Likelihood) ---
+        # --- A. Event Log-Likelihood ---
 
         # lambda(t_k) = exp(mu + alpha * (t_k - N(t_k)))
         # [Batch, L-1, D]
         exponent_at_event = mu + alpha * (t_target - N_prev)
         lambda_at_event = torch.exp(exponent_at_event)
 
-        # On sélectionne l'intensité du type qui s'est RÉELLEMENT produit
+        # Select the intensity of the type that actually occurred
         target_types = type_seq[:, 1:].long().unsqueeze(-1)  # [Batch, L-1, 1]
 
         # [Batch, L-1]
@@ -168,39 +169,39 @@ class SelfCorrecting(Model):
         # Log(lambda)
         event_ll = torch.log(lambda_target + 1e-9)
 
-        # --- B. Intégrale (Non-Event Log-Likelihood) ---
+        # --- B. Integral (Non-Event Log-Likelihood) ---
 
-        # On intègre sur les intervalles [t_{k-1}, t_k].
-        # Durée de l'intervalle : t_k - t_{k-1} (mais on utilise les temps absolus pour la formule)
-        # Dans l'intervalle (t_{k-1}, t_k), le compte N(t) est constant et vaut N_prev (comptes jusqu'à k-1).
+        # Integrate over intervals [t_{k-1}, t_k].
+        # Interval duration: t_k - t_{k-1} (we use absolute times in the formula)
+        # In the interval (t_{k-1}, t_k), the count N(t) is constant and equals N_prev (counts up to k-1).
 
         t_start = time_seq[:, :-1].unsqueeze(-1)  # t_{k-1}
 
-        # Calcul analytique de l'intégrale sur [t_start, t_end]
+        # Analytical calculation of the integral over [t_start, t_end]
         # Int = (1/alpha) * [ lambda(t_end) - lambda(t_start) ]
-        # Attention: lambda ici est calculé avec le N courant (N_prev)
+        # Note: lambda here is computed with the current N (N_prev)
 
-        # Lambda au début de l'intervalle (juste après l'événement précédent)
+        # Lambda at the start of the interval (just after the previous event)
         lambda_start = torch.exp(mu + alpha * (t_start - N_prev))
 
-        # Lambda à la fin de l'intervalle (juste avant l'événement actuel)
-        # C'est exactement `lambda_at_event` calculé plus haut !
+        # Lambda at the end of the interval (just before the current event)
+        # This is exactly `lambda_at_event` computed above.
         lambda_end = lambda_at_event
 
-        # Intégrale par type: [Batch, L-1, D]
-        # Gestion de la division par zéro si alpha ~ 0 (optionnel, ici on suppose alpha != 0)
-        # Pour stabilité : alpha + epsilon
+        # Integral per type: [Batch, L-1, D]
+        # Handle division by zero if alpha ~ 0 (optional, here we assume alpha != 0)
+        # For stability: alpha + epsilon
         alpha_safe = alpha + 1e-9 * torch.sign(alpha)
 
         integral_per_type = (lambda_end - lambda_start) / alpha_safe
 
-        # Somme sur tous les types D
+        # Sum over all types D
         # [Batch, L-1]
         non_event_ll = integral_per_type.sum(dim=-1)
 
-        # --- C. Loss Totale ---
+        # --- C. Total Loss ---
 
-        # Somme masquée
+        # Masked sum
         loss_event = (event_ll * seq_mask).sum()
         loss_non_event = (non_event_ll * seq_mask).sum()
 
@@ -220,7 +221,7 @@ class SelfCorrecting(Model):
         initial_buffer_size: Optional[int] = None,
     ) -> SimulationResult:
         """
-        Simule des séquences de types d'événements.
+        Simulate sequences of event types.
         """
         raise NotImplementedError(
             "Simulation not implemented for Self-Correcting model, there is a custom implementation in the data generation class. This class serves as a benchmark for the other models in prediction phase for the loglike loss."

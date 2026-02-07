@@ -5,14 +5,12 @@ from new_ltpp.configs.model_config import ModelConfig
 
 def test_data_config_builder_runtime_basic():
     builder = DataConfigBuilder()
-    (
-        builder.set_dataset_id("test_dataset")
+    (builder
+        .set_dataset_id("test_dataset")
         .set_src_dir("/tmp/test_dataset")
-        .set_batch_size(16)
-        .set_num_workers(2)
-        .set_shuffle(True)
+        .set_data_format("json")
+        .set_data_loading_specs(batch_size=16)
         .set_num_event_types(3)
-        .set_max_len(64)
     )
     # ensure required field `data_format` is provided for DataConfig
     builder.set_data_format("json")

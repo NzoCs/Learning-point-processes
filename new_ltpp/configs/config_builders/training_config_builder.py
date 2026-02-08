@@ -1,6 +1,6 @@
 from typing import Any, Dict, Self, TypedDict, cast, List
 
-from new_ltpp.configs.config_factory import TrainingConfig
+from new_ltpp.configs.config_factory import ConfigType, TrainingConfig
 
 from .base_config_builder import ConfigBuilder
 
@@ -91,7 +91,11 @@ class TrainingConfigBuilder(ConfigBuilder):
     @property
     def config_dict(self) -> Dict[str, Any]:
         return cast(Dict[str, Any], self._config_dict)
-    
+
+    @property
+    def config_type(self) -> ConfigType:
+        return ConfigType.TRAINER
+
     @property
     def required_fields(self) -> List[str]:
         return ["max_epochs"]

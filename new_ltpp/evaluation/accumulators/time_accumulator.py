@@ -11,10 +11,10 @@ from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .acc_types import TimeStatistics
-from .base_accumulator import BaseAccumulator
+from .base_accumulator import Accumulator
 
 
-class InterEventTimeAccumulator(BaseAccumulator):
+class InterEventTimeAccumulator(Accumulator):
     """Accumulates inter-event time statistics from batches using histogram bins."""
 
     def __init__(

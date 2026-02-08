@@ -12,7 +12,7 @@ Usage:
 """
 
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Type
 
 from new_ltpp.utils import logger
 
@@ -25,7 +25,7 @@ from .model_config import (
     ThinningConfig,
 )
 from .runner_config import RunnerConfig, TrainingConfig
-from .base_config import Config
+from .base_config import IConfig
 
 
 class ConfigType(Enum):
@@ -55,7 +55,7 @@ class ConfigType(Enum):
         """Return the configuration name."""
         return self.value[0]
 
-    def get_class(self) -> Config:
+    def get_class(self) -> Type[IConfig]:
         """Return the Config class associated with this type."""
         return self.value[1]
 
@@ -69,7 +69,7 @@ class ConfigFactory:
 
     def create_config(
         self, config_type: ConfigType, config_data: Dict[str, Any], **kwargs
-    ) -> Config:
+    ) -> IConfig:
         """
         Create a configuration instance.
 
@@ -87,17 +87,14 @@ class ConfigFactory:
         logger.info(f"Creating configuration: {config_name}")
 
         # Create the instance directly
-        instance = config_class.__init__(**config_data, **kwargs)
+        config_instance = config_class(**config_data, **kwargs)
+        config_instance.validate()
 
-        # Additional validation
-        if hasattr(instance, "validate"):
-            instance.validate()
-
-        return instance
+        return config_instance
 
     def create_config_by_name(
         self, config_name: str, config_data: Dict[str, Any], **kwargs
-    ) -> Config:
+    ) -> IConfig:
         """
         Create a configuration instance by name.
 
@@ -134,7 +131,7 @@ class ConfigFactory:
         """List all available configurations with their config names and class names."""
         return {config.config_name: config.get_class_name() for config in ConfigType}
 
-    def get_config_class(self, config_type: ConfigType) -> Config:
+    def get_config_class(self, config_type: ConfigType) -> Type[IConfig]:
         """Get the class for a configuration type."""
         return config_type.get_class()
 
@@ -147,7 +144,7 @@ class ConfigFactory:
 
     def create_from_yaml(
         self, config_type: ConfigType, yaml_path: str, **kwargs
-    ) -> Config:
+    ) -> IConfig:
         """
         Create a configuration from a YAML file.
 

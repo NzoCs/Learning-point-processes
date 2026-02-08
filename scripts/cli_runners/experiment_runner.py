@@ -114,9 +114,7 @@ class ExperimentRunner(CLIRunnerBase):
         # Default configuration file if none provided
         if config_path is None:
             config_path = str(self.get_config_path())
-            self.print_info(
-                f"Using default configuration: {config_path}"
-            )
+            self.print_info(f"Using default configuration: {config_path}")
 
         # Validate configuration file
         if not Path(config_path).exists():
@@ -127,7 +125,7 @@ class ExperimentRunner(CLIRunnerBase):
         config_builder = RunnerConfigBuilder()
 
         # Construire les chemins de configuration avec la fonction utilitaire
-            # Build configuration paths with the helper function
+        # Build configuration paths with the helper function
         config_paths = self._build_config_paths(
             data=data_config,
             general_specs=general_specs_config,
@@ -145,43 +143,43 @@ class ExperimentRunner(CLIRunnerBase):
             self.print_info(f"  • {config_type}: {path_value}")
 
         # Charger la configuration complète depuis le YAML via le Loader
-            # Load full configuration from YAML via the Loader
+        # Load full configuration from YAML via the Loader
         loader = RunnerConfigYamlLoader()
         config_dict = loader.load(
-            yaml_file_path=config_path,
-            training_config_path=config_paths.get("training_config_path"), # type: ignore
-            data_config_path=config_paths.get("data_config_path"), # type: ignore
-            model_config_path=config_paths.get("model_config_path"), # type: ignore
-            data_loading_config_path=config_paths.get("data_loading_config_path"), # type: ignore
+            yaml_path=config_path,
+            training_config_path=config_paths.get("training_config_path"),  # type: ignore
+            data_config_path=config_paths.get("data_config_path"),  # type: ignore
+            model_config_path=config_paths.get("model_config_path"),  # type: ignore
+            data_loading_config_path=config_paths.get("data_loading_config_path"),  # type: ignore
             simulation_config_path=config_paths.get("simulation_config_path"),
             thinning_config_path=config_paths.get("thinning_config_path"),
             logger_config_path=config_paths.get("logger_config_path"),
             general_specs_config_path=config_paths.get("general_specs_config_path"),
             model_specs_config_path=config_paths.get("model_specs_config_path"),
-        ) 
+        )
 
         config_builder.from_dict(config_dict)
 
         self.print_info("YAML configuration loaded successfully")
 
         # Appliquer les overrides de paramètres CLI en utilisant les méthodes du builder
-            # Apply CLI parameter overrides using the builder's methods
+        # Apply CLI parameter overrides using the builder's methods
         if max_epochs is not None:
             config_builder.set_max_epochs(max_epochs)
             self.print_info(f"Override: max_epochs = {max_epochs}")
 
         # Ne passer save_dir que s'il est explicitement fourni par l'utilisateur
-            # Only pass save_dir if explicitly provided by the user
+        # Only pass save_dir if explicitly provided by the user
         if save_dir:
             config_builder.set_save_dir(save_dir)
             self.print_info(f"Override: save_dir = {save_dir}")
         # Sinon, laisser les sous-couches générer leur propre save_dir par défaut
         # qui sera plus intelligent (model_id/dataset_id/etc.)
-            # Otherwise, let subcomponents generate their own default save_dir
-            # which will be more informative (model_id/dataset_id/etc.)
+        # Otherwise, let subcomponents generate their own default save_dir
+        # which will be more informative (model_id/dataset_id/etc.)
 
         # Créer la configuration finale avec la factory
-            # Build the final configuration using the factory
+        # Build the final configuration using the factory
         config = config_builder.build(model_id=model_id)
 
         # Validate phase
@@ -191,14 +189,14 @@ class ExperimentRunner(CLIRunnerBase):
             return False
 
         # Créer et lancer le runner
-            # Create and start the runner
+        # Create and start the runner
         runner_manager = RunnerManager(config=config)
 
         if phase == "all":
             self.print_info("Full run: train → test → predict")
 
             # Exécuter chaque phase séparément comme dans run_all_phase.py
-                # Execute each phase separately as in run_all_phase.py
+            # Execute each phase separately as in run_all_phase.py
             self.print_info("Phase 1/3: Training")
             train_results = runner_manager.run(phase="train")
 
@@ -209,7 +207,7 @@ class ExperimentRunner(CLIRunnerBase):
             predict_results = runner_manager.run(phase="predict")
 
             # Combiner les résultats
-                # Combine the results
+            # Combine the results
             results = {
                 "train": train_results,
                 "test": test_results,
@@ -224,7 +222,7 @@ class ExperimentRunner(CLIRunnerBase):
         self.print_success(f"Experiment completed successfully - Phase: {phase}")
 
         # Afficher les résultats
-            # Display the results
+        # Display the results
         if results and self.console:
             from rich.table import Table
 

@@ -25,7 +25,6 @@ from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
 from .mean_len_accumulator import SequenceLengthAccumulator
 from .metrics_calculator import MetricsCalculatorImpl
-from .statistical_metrics_accumulator import StatisticalTestAccumulator
 from .plot_generators import (
     AutocorrelationPlotGenerator,
     EventTypePlotGenerator,
@@ -33,10 +32,10 @@ from .plot_generators import (
     SequenceLengthPlotGenerator,
 )
 from .time_accumulator import InterEventTimeAccumulator
-from .base_accumulator import BaseAccumulator
+from .base_accumulator import Accumulator
 
 
-class BatchStatisticsCollector(BaseAccumulator):
+class BatchStatisticsCollector(Accumulator):
     """Main class for collecting statistics batch-by-batch during prediction.
 
     This class orchestrates multiple accumulators that collect different
@@ -65,7 +64,6 @@ class BatchStatisticsCollector(BaseAccumulator):
         min_sim_events: int = 1,
         enable_plots: bool = True,
         enable_metrics: bool = True,
-        statistical_test_accumulator: Optional[StatisticalTestAccumulator] = None,
         output_dir: Path | str = OUTPUT_DIR / "distribution_comparison",
     ):
         """Initialize the batch statistics collector.
@@ -77,7 +75,6 @@ class BatchStatisticsCollector(BaseAccumulator):
             min_sim_events: Minimum number of simulated events required per batch
             enable_plots: Whether to generate plots
             enable_metrics: Whether to compute metrics
-            statistical_test_accumulator: Optional accumulator for MMD/KSD tests
             output_dir: Directory where results will be saved
         """
         self.num_event_types = num_event_types
@@ -101,13 +98,6 @@ class BatchStatisticsCollector(BaseAccumulator):
             SequenceLengthAccumulator(min_sim_events=min_sim_events),
             CorrAccumulator(min_sim_events=min_sim_events),
         ]
-
-        # Add statistical test accumulator if provided
-        if statistical_test_accumulator is not None:
-            base_accumulators.append(statistical_test_accumulator)
-            self._has_statistical_tests = True
-        else:
-            self._has_statistical_tests = False
 
         self._accumulators = tuple(base_accumulators)
 
@@ -142,7 +132,7 @@ class BatchStatisticsCollector(BaseAccumulator):
             f"BatchStatisticsCollector initialized with {len(self._accumulators)} accumulators"
         )
 
-    def update_batch(self, batch: Batch, simulation: SimulationResult) -> bool:
+    def update(self, batch: Batch, simulation: SimulationResult) -> None:
         """Update all accumulators with new batch data.
 
         This method should be called in the predict_step for each batch.
@@ -156,7 +146,7 @@ class BatchStatisticsCollector(BaseAccumulator):
 
         if self._is_finalized:
             logger.warning("Collector already finalized, ignoring update")
-            return False
+            return
 
         # Update all accumulators (each validates simulation independently)
         for accumulator in self._accumulators:
@@ -173,9 +163,9 @@ class BatchStatisticsCollector(BaseAccumulator):
                 f"Processed {self._batch_count} batches. Sample counts: {sample_counts}"
             )
 
-        return True
+        return
 
-    def compute_statistics(self) -> AllStatistics:
+    def compute(self) -> AllStatistics:  # type: ignore[override]
         """Compute final statistics from all accumulators.
 
         Returns:
@@ -196,10 +186,6 @@ class BatchStatisticsCollector(BaseAccumulator):
                 ksd_p_values=[],
             ),
         )
-
-        # Add statistical test results if available
-        if self._has_statistical_tests:
-            base_stats["statistical_tests"] = self._accumulators[4].compute()
 
         return base_stats
 
@@ -274,7 +260,7 @@ class BatchStatisticsCollector(BaseAccumulator):
         )
 
         # Compute statistics
-        statistics: AllStatistics = self.compute_statistics()
+        statistics: AllStatistics = self.compute()
 
         # Generate plots
         self.generate_plots(statistics)

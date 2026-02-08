@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union, Protocol, runtime_checkable
 
 from new_ltpp.utils import logger
 
@@ -65,3 +65,18 @@ class MetricsHelper(ABC):
         if not self.selected_metrics:
             return mapping
         return {k: v for k, v in mapping.items() if k in self.selected_metrics}
+
+
+@runtime_checkable
+class IMetricsHelper(Protocol):
+    """Protocol for IDE type checking + isinstance() support."""
+
+    num_event_types: int
+
+    def get_available_metrics(self) -> List[str]:
+        """Return list of metric names available from this helper."""
+        ...
+
+    def compute_metrics(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        """Compute and return a mapping metric_name -> value."""
+        ...

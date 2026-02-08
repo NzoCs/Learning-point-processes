@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple, List
 
 import numpy as np
 
@@ -7,160 +7,39 @@ from new_ltpp.data.generation.base_simulator import Simulator
 
 class SelfCorrecting(Simulator):
     """
-    Simulateur de processus ponctuels temporels avec correction automatique.
-    """
-
-    def __init__(self, mu: float, alpha: float, **kwargs):
-        """
-        Initialise un simulateur de processus ponctuel temporel avec correction automatique.
-
-        Args:
-            mu (float): Paramètre de taux de base
-            alpha (float): Paramètre de réduction après un événement
-        """
-        super().__init__(**kwargs)
-
-        # Support both scalar and array inputs for mu and alpha
-        if isinstance(mu, (int, float)):
-            self.mu = np.array([mu] * self.dim_process)
-        else:
-            self.mu = np.array(mu)
-
-        if isinstance(alpha, (int, float)):
-            self.alpha = np.array([alpha] * self.dim_process)
-        else:
-            self.alpha = np.array(alpha)
-
-    def simulate(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Génère un processus auto-correctif pour chaque dimension.
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: (times, marks) où:
-                - times: np.ndarray de tous les temps d'événements
-                - marks: np.ndarray de tous les types/dimensions d'événements
-        """
-        all_times = []
-        all_marks = []
-
-        for dim in range(self.dim_process):
-            # Simulate each dimension independently
-            t = self.start_time
-            x = 0
-
-            while t < self.end_time:
-                e = np.random.exponential()
-                tau = np.log(e * self.mu[dim] / np.exp(x) + 1) / self.mu[dim]
-                t = t + tau
-
-                if t >= self.end_time:
-                    break
-
-                all_times.append(t)
-                all_marks.append(dim)
-                x = x + self.mu[dim] * tau
-                x = x - self.alpha[dim]
-
-        # Sort by time
-        times = np.array(all_times)
-        marks = np.array(all_marks)
-        sort_idx = np.argsort(times)
-
-        return times[sort_idx], marks[sort_idx]
-
-    def get_simulator_metadata(self) -> Dict:
-        """
-        Renvoie les métadonnées spécifiques au simulateur.
-
-        Returns:
-            Dict: Métadonnées spécifiques au simulateur
-        """
-        return {
-            "self_correcting_parameters": {
-                "mu": self.mu.tolist(),
-                "alpha": self.alpha.tolist(),
-            }
-        }
-
-    def compute_theoretical_intensities(
-        self, time_points: np.ndarray, event_times: np.ndarray, event_marks: np.ndarray
-    ) -> np.ndarray:
-        """
-        Calcule les intensités théoriques du processus auto-correctif aux points temporels donnés.
-
-        Pour un processus auto-correctif : λ_i(t) = μ_i * exp(x_i(t))
-        où x_i(t) = μ_i * (t - t_last) - α_i * N_i(t)
-
-        Args:
-            time_points (np.ndarray): Points temporels où calculer les intensités
-            event_times (np.ndarray): Tous les temps d'événements
-            event_marks (np.ndarray): Tous les types/dimensions d'événements
-
-        Returns:
-            np.ndarray: Matrice des intensités [len(time_points), dim_process]
-        """
-        intensities = np.zeros((len(time_points), self.dim_process))
-
-        for t_idx, t in enumerate(time_points):
-            for i in range(self.dim_process):
-                # Événements passés pour cette dimension
-                mask = (event_times < t) & (event_marks == i)
-                past_events = event_times[mask]
-
-                # Temps du dernier événement (ou start_time si aucun événement)
-                if len(past_events) > 0:
-                    t_last = past_events[-1]
-                    num_events = len(past_events)
-                else:
-                    t_last = self.start_time
-                    num_events = 0
-
-                # Calcul de x(t)
-                x_t = self.mu[i] * (t - t_last) - self.alpha[i] * num_events
-
-                # Intensité
-                intensity = self.mu[i] * np.exp(x_t)
-                intensities[t_idx, i] = max(intensity, 0)  # Intensité positive
-
-        return intensities
-
-
-class MultivariableSelfCorrecting(Simulator):
-    """
     Simulateur de processus ponctuels temporels avec correction automatique multivariable.
     Cette version permet aux événements de différentes dimensions d'avoir une influence les uns sur les autres.
     """
 
     def __init__(
-        self, mu: float = 1.0, alpha_matrix: Optional[np.ndarray] = None, **kwargs
+        self,
+        mu: np.ndarray | List[float],
+        alpha: np.ndarray | List[List[float]],
+        **kwargs,
     ):
         """
         Initialise un simulateur de processus ponctuel temporel avec correction automatique multivariable.
 
         Args:
-            mu (float): Paramètre de taux de base (scalaire ou array)
-            alpha_matrix (np.ndarray, optional): Matrice d'influence entre dimensions.
+            mu (np.ndarray | List[float]): Paramètre de taux de base (scalaire ou array)
+            alpha (np.ndarray | List[List[float]]): Matrice d'influence entre dimensions.
                                                alpha_matrix[i,j] indique l'influence d'un événement de type j sur le taux de la dimension i.
                                                Si None, une matrice identité est utilisée (pas d'influence croisée).
         """
         super().__init__(**kwargs)
 
         # Support both scalar and array inputs for mu
-        if isinstance(mu, (int, float)):
-            self.mu = np.array([mu] * self.dim_process)
+        if isinstance(mu, list):
+            self.mu = np.array(mu).reshape(self.dim_process)
         else:
-            self.mu = np.array(mu)
+            self.mu = np.full(self.dim_process, mu)
 
-        # Initialize alpha_matrix
-        if alpha_matrix is None:
-            # Default: identity matrix (no cross-influence)
-            self.alpha_matrix = np.eye(self.dim_process)
+        if isinstance(alpha, list):
+            self.alpha_matrix = np.array(alpha).reshape(
+                self.dim_process, self.dim_process
+            )
         else:
-            if alpha_matrix.shape != (self.dim_process, self.dim_process):
-                raise ValueError(
-                    f"alpha_matrix must be of shape ({self.dim_process}, {self.dim_process})"
-                )
-            self.alpha_matrix = alpha_matrix
+            self.alpha_matrix = np.full((self.dim_process, self.dim_process), alpha)
 
     def simulate(self) -> Tuple[np.ndarray, np.ndarray]:
         """

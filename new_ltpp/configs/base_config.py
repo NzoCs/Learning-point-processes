@@ -4,14 +4,16 @@ Base configuration classes and interfaces for the config factory.
 This module provides the foundational classes and protocols that all
 configuration classes should implement to ensure consistency and
 type safety across the configuration system.
+
+- Config: ABC for runtime enforcement
+- IConfig: Protocol for IDE type checking + isinstance()
 """
 
+from abc import ABC, abstractmethod
 from copy import deepcopy
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Union, Protocol, runtime_checkable
+from typing import Any, Dict, List, Protocol, Self, Union, runtime_checkable
 
-from typing import Self
 from new_ltpp.utils import logger
 
 
@@ -37,30 +39,49 @@ class ConfigSerializationError(Exception):
         return f"ConfigSerializationError: {self.args[0]}"
 
 
-@dataclass
 @runtime_checkable
-class Config(Protocol):
-    """
-    Abstract base configuration class.
-
-    Provides the foundation for all configuration classes with built-in
-    validation, serialization, and type safety features.
-    """
-
-    @property
-    def __name__(self) -> str:
-        return self.__class__.__name__  # type: ignore
-
-    def __init__(self): ...
-
-    def __post_init__(self):
-        self.validate()
+class IConfig(Protocol):
+    """Protocol for config - IDE type checking + isinstance() support."""
 
     def get_required_fields(self) -> List[str]: ...
 
     def get_yaml_config(self) -> Dict[str, Any]: ...
 
+    def validate(self) -> None: ...
+
+    def copy(self) -> Self: ...
+
+    def update(self, **kwargs) -> None: ...
+
+    def to_dict(self) -> Dict[str, Any]: ...
+
+    def save_to_yaml_file(self, file_path: Union[str, Path]) -> None: ...
+
+
+class Config(ABC):
+    """
+    Abstract base configuration class - runtime enforcement via @abstractmethod.
+
+    Provides the foundation for all configuration classes with built-in
+    validation, serialization, and type safety features.
+    """
+
+    def __post_init__(self):
+        self.validate()
+
+    @classmethod
+    @abstractmethod
+    def get_required_fields(cls) -> List[str]:
+        """Return list of required fields for this config."""
+        pass
+
+    @abstractmethod
+    def get_yaml_config(self) -> Dict[str, Any]:
+        """Return config as YAML-compatible dictionary."""
+        pass
+
     def validate(self) -> None:
+        """Validate the configuration."""
         # Import ici pour éviter les imports circulaires
         from new_ltpp.configs.config_utils import ConfigValidator
 
@@ -78,21 +99,11 @@ class Config(Protocol):
             )
 
     def copy(self) -> Self:
-        """
-        Create a deep copy of the configuration.
-
-        Returns:
-            Deep copy of the configuration
-        """
+        """Create a deep copy of the configuration."""
         return deepcopy(self)
 
     def update(self, **kwargs) -> None:
-        """
-        Update configuration fields.
-
-        Args:
-            **kwargs: Fields to update
-        """
+        """Update configuration fields."""
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
@@ -106,12 +117,7 @@ class Config(Protocol):
         return self.get_yaml_config()
 
     def save_to_yaml_file(self, file_path: Union[str, Path]) -> None:
-        """
-        Save configuration to YAML file.
-
-        Args:
-            file_path: Path to save the YAML file
-        """
+        """Save configuration to YAML file."""
         from omegaconf import OmegaConf
 
         try:

@@ -1,10 +1,10 @@
 from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.evaluation.statistical_testing import TestProtocol, MMDTwoSampleTest
-from .base_accumulator import BaseAccumulator
+from new_ltpp.evaluation.statistical_testing import MMDTwoSampleTest
+from .base_accumulator import Accumulator
 from .acc_types import StatisticalMetrics
 
 
-class StatisticalTestAccumulator(BaseAccumulator):
+class StatisticalTestAccumulator(Accumulator):
     """A class to collect and accumulate simulation statistical metrics like
     Maximum Mean Discrepancy (MMD), Kernelized Stein Discrepancy (KSD), and p-values
     for Goodness-of-Fit tests like MMD two-sample tests and Stein-Pangelou tests.
@@ -28,7 +28,7 @@ class StatisticalTestAccumulator(BaseAccumulator):
         """
 
         # Compute MMD and p-value using the provided MMDTwoSampleTest instance
-        mmd_statistic = self._mmd_two_sample_test.get_statistic_from_batches(
+        mmd_statistic = self._mmd_two_sample_test.statistic_from_batches(
             batch, simulation
         )
         mmd_p_value = self._mmd_two_sample_test.p_value_from_batches(batch, simulation)

@@ -1,8 +1,8 @@
 import torch
-from .protocol import SpaceKernel
+from .protocol import ISpaceKernel
 
 
-class MaternTimeKernel(SpaceKernel):
+class MaternTimeKernel(ISpaceKernel):
     def __init__(self, sigma: float = 1.0, nu: float = 1.5):
         self.sigma = sigma
         self.nu = nu

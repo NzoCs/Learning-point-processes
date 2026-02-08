@@ -44,14 +44,12 @@ __all__ = [
     "Config",
     "RunnerConfig",
     # Enhanced configuration system
-    "EnhancedBaseConfig",
     "ConfigValidationError",
     "ConfigSerializationError",
     "ThinningConfig",
     "SimulationConfig",
     "TrainingConfig",
     "ModelSpecsConfig",
-    "ModelType",
     # Config builders
     "DataConfigBuilder",
     "RunnerConfigBuilder",

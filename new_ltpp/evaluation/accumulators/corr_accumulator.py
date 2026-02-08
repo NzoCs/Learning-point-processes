@@ -12,10 +12,10 @@ from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .acc_types import CorrelationStatistics
-from .base_accumulator import BaseAccumulator
+from .base_accumulator import Accumulator
 
 
-class CorrAccumulator(BaseAccumulator):
+class CorrAccumulator(Accumulator):
     """Accumulates autocorrelation statistics for TPP sequences."""
 
     def __init__(self, min_sim_events: int = 1, nb_bins: int = 10, max_lag: int = 15):

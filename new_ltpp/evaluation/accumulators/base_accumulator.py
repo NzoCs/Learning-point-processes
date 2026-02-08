@@ -5,12 +5,12 @@ This module provides the abstract base class for all statistical accumulators.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Protocol, runtime_checkable
 
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
-class BaseAccumulator(ABC):
+class Accumulator(ABC):
     """Base class for all statistical accumulators.
 
     Accumulators are designed to:
@@ -57,3 +57,27 @@ class BaseAccumulator(ABC):
     def sample_count(self) -> int:
         """Return number of samples accumulated."""
         return self._sample_count
+
+
+@runtime_checkable
+class IAccumulator(Protocol):
+    """Protocol for IDE type checking + isinstance() support."""
+
+    min_sim_events: int
+
+    def update(self, batch: Batch, simulation: SimulationResult) -> None:
+        """Update accumulator with new batch data."""
+        ...
+
+    def compute(self) -> dict:
+        """Compute and return final statistics."""
+        ...
+
+    def reset(self) -> None:
+        """Reset accumulator to initial state."""
+        ...
+
+    @property
+    def sample_count(self) -> int:
+        """Return number of samples accumulated."""
+        ...

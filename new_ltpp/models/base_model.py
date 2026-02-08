@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import TypedDict
 
 import pytorch_lightning as pl
 import torch
@@ -14,6 +15,13 @@ from new_ltpp.shared_types import Batch, DataInfo
 
 from .mixins import TrainingMixin, VisualizationMixin
 from .model_registry import RegistryMeta
+
+
+class OptimizerConfig(TypedDict):
+    """Configuration for optimizer with learning rate scheduler."""
+    optimizer: optim.Optimizer
+    lr_scheduler: optim.lr_scheduler.LRScheduler
+    monitor: str
 
 
 class Model(
@@ -87,11 +95,11 @@ class Model(
         # Loss computation configuration
         self.num_mc_samples = model_config.num_mc_samples
 
-    def configure_optimizers(self):  # type: ignore[override]
+    def configure_optimizers(self) -> OptimizerConfig | optim.Optimizer:  # type: ignore[override]
         """Configure the optimizer for the model.
 
         Returns:
-            optimizer: The optimizer to use for training.
+            OptimizerConfig with optimizer, scheduler and monitor metric, or just an Optimizer.
         """
 
         # Use Adam optimizer with optional learning rate scheduler

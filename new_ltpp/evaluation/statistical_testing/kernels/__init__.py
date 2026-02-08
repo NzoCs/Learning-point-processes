@@ -1,6 +1,6 @@
 from .m_kernel import MKernel, MKernelTransform
 from .sig_kernel import SIGKernel
-from .kernel_protocol import PointProcessKernel
+from .kernel_protocol import IPointProcessKernel
 from .space_kernels import (
     TimeKernelType,
     RBFTimeKernel,
@@ -18,7 +18,7 @@ __all__ = [
     "MKernel",
     "MKernelTransform",
     "SIGKernel",
-    "PointProcessKernel",
+    "IPointProcessKernel",
     "TimeKernelType",
     "RBFTimeKernel",
     "IMQTimeKernel",

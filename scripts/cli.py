@@ -128,13 +128,21 @@ def run_experiment(
 @app.command("inspect")
 def inspect_data(
     data_dir: str = typer.Argument(..., help="Directory containing the data"),
-    data_format: str = typer.Option("json", "--format", "-f", help="json, csv, hf if your data is saved on Hugging Face"),
-
+    data_format: str = typer.Option(
+        "json",
+        "--format",
+        "-f",
+        help="json, csv, hf if your data is saved on Hugging Face",
+    ),
     output_dir: Optional[str] = typer.Option(
         None, "--output", "-o", help="Output directory"
     ),
-    save_graphs: bool = typer.Option(True, "--save/--no-save", help="whether to save graphs"),
-    show_graphs: bool = typer.Option(False, "--show/--no-show", help="whether to show graphs"),
+    save_graphs: bool = typer.Option(
+        True, "--save/--no-save", help="whether to save graphs"
+    ),
+    show_graphs: bool = typer.Option(
+        False, "--show/--no-show", help="whether to show graphs"
+    ),
     max_sequences: Optional[int] = typer.Option(
         None, "--max-seq", help="Maximum number of sequences"
     ),
@@ -252,8 +260,13 @@ def generate_data(
         elif method.lower() == "self_correcting":
             simulator = SelfCorrecting(
                 dim_process=dim_process,
-                mu=1.0,
-                alpha=1.0,
+                mu=np.array([0.2] * dim_process),
+                alpha=np.array(
+                    [
+                        [0.3 if i == j else 0.1 for j in range(dim_process)]
+                        for i in range(dim_process)
+                    ]
+                ),
                 start_time=start_time,
                 end_time=end_time,
                 seed=seed,

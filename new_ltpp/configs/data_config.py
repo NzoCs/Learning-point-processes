@@ -69,7 +69,6 @@ class TokenizerConfig(Config):
         """Validate and normalize configuration."""
         super().__post_init__()
 
-
         # Set pad_token_id if not provided
         if self.pad_token_id is None:
             self.pad_token_id = self.num_event_types
@@ -102,7 +101,6 @@ class TokenizerConfig(Config):
             # Default to dynamic padding if nothing specified
             self.strategy = PaddingStrategy.LONGEST
 
-
     def get_yaml_config(self) -> Dict[str, Any]:
         """Export configuration to YAML-compatible dict."""
         config_dict = {
@@ -120,7 +118,8 @@ class TokenizerConfig(Config):
 
         return config_dict
 
-    def get_required_fields(self):
+    @classmethod
+    def get_required_fields(cls) -> list[str]:
         return ["num_event_types"]
 
     @property
@@ -169,7 +168,8 @@ class DataLoadingSpecsConfig(Config):
             cfg["max_len"] = self.max_len
         return cfg
 
-    def get_required_fields(self):
+    @classmethod
+    def get_required_fields(cls) -> list[str]:
         return []
 
 
@@ -207,7 +207,6 @@ class DataConfig(Config):
 
         self.dataset_id = dataset_id
 
-
         # Instancie si dict, sinon laisse tel quel
         if isinstance(data_loading_specs, dict):
             data_loading_specs = cast(Dict[str, Any], data_loading_specs)
@@ -233,8 +232,6 @@ class DataConfig(Config):
         else:
             self.tokenizer_specs = cast(TokenizerConfig, tokenizer_specs)
 
-        super().__init__(**kwargs)
-
     def get_yaml_config(self) -> Dict[str, Any]:
         config = {
             "train_dir": self.train_dir,
@@ -242,12 +239,8 @@ class DataConfig(Config):
             "test_dir": self.test_dir,
             "data_format": self.data_format,
             "dataset_id": self.dataset_id,
-            "data_loading_specs": (
-                self.data_loading_specs.get_yaml_config()
-            ),
-            "tokenizer_specs": (
-                self.tokenizer_specs.get_yaml_config()
-            ),
+            "data_loading_specs": (self.data_loading_specs.get_yaml_config()),
+            "tokenizer_specs": (self.tokenizer_specs.get_yaml_config()),
         }
         return config
 
@@ -264,5 +257,6 @@ class DataConfig(Config):
             f"Unknown split: {split}. Valid splits are: train, valid, test."
         )
 
-    def get_required_fields(self):
+    @classmethod
+    def get_required_fields(cls) -> list[str]:
         return []

@@ -1,8 +1,8 @@
 import torch
-from .protocol import SpaceKernel
+from .protocol import ISpaceKernel
 
 
-class IMQTimeKernel(SpaceKernel):
+class IMQTimeKernel(ISpaceKernel):
     def __init__(self, c: float = 1.0, beta: float = 0.5):
         self.c = c
         self.beta = beta

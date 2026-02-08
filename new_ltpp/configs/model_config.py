@@ -40,7 +40,6 @@ class SchedulerConfig(Config):
         self.lr = lr or 1e-3
         self.lr_scheduler = lr_scheduler or True
         self.max_epochs = max_epochs
-        super().__init__(**kwargs)
 
     def get_yaml_config(self):
         return {
@@ -49,7 +48,8 @@ class SchedulerConfig(Config):
             "max_epochs": self.max_epochs,
         }
 
-    def get_required_fields(self) -> List[str]:
+    @classmethod
+    def get_required_fields(cls) -> List[str]:
         return ["max_epochs"]
 
 
@@ -69,9 +69,9 @@ class ThinningConfig(Config):
         self.num_exp = num_exp
         self.num_samples_boundary = num_sample
         self.over_sample_rate = over_sample_rate
-        super().__init__(**kwargs)
 
-    def get_required_fields(self) -> List[str]:
+    @classmethod
+    def get_required_fields(cls) -> List[str]:
         """Return list of required field names."""
         return []  # All fields have defaults
 
@@ -113,7 +113,8 @@ class SimulationConfig(Config):
     initial_buffer_size: int
     seed: int = 42
 
-    def get_required_fields(self) -> List[str]:
+    @classmethod
+    def get_required_fields(cls) -> List[str]:
         """Return list of required field names."""
         return []  # All fields have defaults
 
@@ -143,7 +144,7 @@ class SimulationConfig(Config):
 
 
 @dataclass
-class ModelSpecsConfig:
+class ModelSpecsConfig(Config):
     """Dataclass for model specs with required fields and extra kwargs support.
 
     Required fields:
@@ -163,6 +164,10 @@ class ModelSpecsConfig:
         # Store extra kwargs as attributes
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    @classmethod
+    def get_required_fields(cls) -> List[str]:
+        return []
 
     def get_yaml_config(self) -> Dict[str, Any]:
         config = {"hidden_size": self.hidden_size, "dropout": self.dropout}
@@ -244,9 +249,8 @@ class ModelConfig(Config):
         if self.device == "auto":
             self.device = "cuda" if self.gpu >= 0 else "cpu"
 
-        super().__init__(**kwargs)
-
-    def get_required_fields(self) -> List[str]:
+    @classmethod
+    def get_required_fields(cls) -> List[str]:
         return []
 
     def get_yaml_config(self) -> Dict[str, Any]:

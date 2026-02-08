@@ -1,15 +1,15 @@
-from .statistical_metrics import StatMetricsProtocol
-from .tests import TestProtocol, MMDTwoSampleTest  # , SteinTest
-from .tests_configs import (
+from .statistical_metrics import IStatMetric
+from .statistical_tests import ITest, MMDTwoSampleTest  # , SteinTest
+from .statistical_tests_configs import (
     KernelConfig,
     MMDTestConfig,
     KSDTestConfig,
     TestType,
 )
-from .test_factory import (
+from .statistical_tests_factory import (
     create_kernel_from_config,
     create_mmd_test_from_config,
-    create_ksd_test_from_config,
+    # create_ksd_test_from_config,
     create_test_from_config,
 )
 from .config_builders import (
@@ -20,8 +20,8 @@ from .config_builders import (
 
 __all__ = [
     # Protocols
-    "StatMetricsProtocol",
-    "TestProtocol",
+    "IStatMetric",
+    "ITest",
     # Tests
     "MMDTwoSampleTest",
     # Configs
@@ -36,6 +36,5 @@ __all__ = [
     # Factory
     "create_kernel_from_config",
     "create_mmd_test_from_config",
-    "create_ksd_test_from_config",
     "create_test_from_config",
 ]

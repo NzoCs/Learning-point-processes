@@ -16,13 +16,9 @@ from .summary_stats import SummaryStatsHelper, SummaryStatsMetric
 __all__ = [
     "MetricsManager",
     "PredMetricsHelper",
-    "SimMetricsHelper",
     "SummaryStatsHelper",
     "TimeValues",
     "TypeValues",
-    "SimTimeValues",
-    "SimTypeValues",
     "PredMetrics",
-    "SimMetrics",
     "SummaryStatsMetric",
 ]

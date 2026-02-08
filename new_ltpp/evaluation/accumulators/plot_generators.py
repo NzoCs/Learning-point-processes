@@ -10,10 +10,10 @@ import seaborn as sns
 
 from new_ltpp.utils import logger
 
-from .base_plot_generator import BasePlotGenerator
+from .base_plot_generator import PlotGenerator
 
 
-class InterEventTimePlotGenerator(BasePlotGenerator):
+class InterEventTimePlotGenerator(PlotGenerator):
     """Generates inter-event time distribution plots (OCP)."""
 
     def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
@@ -104,7 +104,7 @@ class InterEventTimePlotGenerator(BasePlotGenerator):
         logger.info(f"Inter-event time Q-Q plot saved to {qq_output_path}")
 
 
-class EventTypePlotGenerator(BasePlotGenerator):
+class EventTypePlotGenerator(PlotGenerator):
     """Generates event type distribution plots (OCP)."""
 
     def __init__(self, num_event_types: int):
@@ -170,11 +170,10 @@ class EventTypePlotGenerator(BasePlotGenerator):
         logger.info(f"Event type distribution comparison plot saved to {output_path}")
 
 
-class SequenceLengthPlotGenerator(BasePlotGenerator):
+class SequenceLengthPlotGenerator(PlotGenerator):
     """Generates sequence length distribution plots (OCP)."""
 
     def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
-
         label_lengths = np.asarray(data["label_sequence_lengths"])
         simulated_lengths = np.asarray(data["simulated_sequence_lengths"])
 
@@ -223,7 +222,7 @@ class SequenceLengthPlotGenerator(BasePlotGenerator):
         )
 
 
-class AutocorrelationPlotGenerator(BasePlotGenerator):
+class AutocorrelationPlotGenerator(PlotGenerator):
     """Generates autocorrelation function (ACF) plots similar to statsmodels."""
 
     def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:

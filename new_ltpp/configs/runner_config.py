@@ -76,7 +76,8 @@ class TrainingConfig(Config):
 
         return config
 
-    def get_required_fields(self):
+    @classmethod
+    def get_required_fields(cls) -> list[str]:
         return ["max_epochs"]
 
 
@@ -176,8 +177,6 @@ class RunnerConfig(Config):
 
         self.enable_logging = enable_logging
 
-        super().__init__(**kwargs)
-
     def get_yaml_config(self) -> Dict[str, Any]:
         return {
             "training_config": self.training_config.get_yaml_config(),
@@ -185,5 +184,6 @@ class RunnerConfig(Config):
             "data_config": self.data_config.get_yaml_config(),
         }
 
-    def get_required_fields(self):
+    @classmethod
+    def get_required_fields(cls) -> list[str]:
         return ["training_config", "model_config", "data_config"]

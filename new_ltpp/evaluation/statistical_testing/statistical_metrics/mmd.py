@@ -2,10 +2,10 @@ from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
 
-from .protocols import StatMetricsProtocol
+from .base_stat_metric import StatMetric
 
 
-class MMD(StatMetricsProtocol):
+class MMD(StatMetric):
     def __call__(
         self, phi: Batch | SimulationResult, psi: Batch | SimulationResult
     ) -> float:

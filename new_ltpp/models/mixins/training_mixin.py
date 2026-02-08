@@ -168,7 +168,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
                 "No statistics collector initialized. Call 'init_statistics_collector' before testing."
             )
 
-        self._statistics_collector.update_batch(batch, sim)
+        self._statistics_collector.update(batch, sim)
 
         # # Compute and log simulation metrics
         # metrics_helper = MetricsManager(num_event_types=self.num_event_types)
@@ -201,7 +201,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
                 "No statistics collector initialized. Call 'init_statistics_collector' before prediction."
             )
 
-        self._statistics_collector.update_batch(batch, sim)
+        self._statistics_collector.update(batch, sim)
 
         return
 

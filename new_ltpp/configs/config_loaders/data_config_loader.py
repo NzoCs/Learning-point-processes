@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional, Union
 from pathlib import Path
 
-from .base_config_loader import BaseConfigLoader
+from .base_config_loader import ConfigLoader
 
 
-class DataConfigYamlLoader(BaseConfigLoader):
+class DataConfigYamlLoader(ConfigLoader):
     """Loader to extract DataConfig dictionary from YAML."""
 
     def load(
@@ -14,7 +14,8 @@ class DataConfigYamlLoader(BaseConfigLoader):
         data_config_path: str,
         data_loading_config_path: Optional[str] = None,
         tokenizer_specs_path: Optional[str] = None,
-    ) -> Dict[str, Any]: # type: ignore[override]
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Load data configuration from a YAML file.
 

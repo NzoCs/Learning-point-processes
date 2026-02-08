@@ -20,7 +20,7 @@ from typing import Any, Dict, Optional, Type, Union, List
 from new_ltpp.configs import DataConfig
 from new_ltpp.globals import OUTPUT_DIR
 
-from .base_bench import BaseBenchmark
+from .base_bench import Benchmark
 from .last_mark_bench import LastMarkBenchmark
 from .mean_bench import MeanInterTimeBenchmark
 from .sample_distrib_intertime_bench import (
@@ -42,11 +42,11 @@ class BenchmarksEnum(Enum):
     )
     MARK_DISTRIBUTION = ("mark_distribution_sampling", MarkDistributionBenchmark)
 
-    def __init__(self, benchmark_name: str, benchmark_class: Type[BaseBenchmark]):
+    def __init__(self, benchmark_name: str, benchmark_class: Type[Benchmark]):
         self.benchmark_name = benchmark_name
         self.benchmark_class = benchmark_class
 
-    def get_class(self) -> Type[BaseBenchmark]:
+    def get_class(self) -> Type[Benchmark]:
         """Return the benchmark class."""
         return self.benchmark_class
 
@@ -55,7 +55,7 @@ class BenchmarksEnum(Enum):
         return self.benchmark_name
 
     @classmethod
-    def get_benchmark_by_name(cls, name: str) -> Type[BaseBenchmark]:
+    def get_benchmark_by_name(cls, name: str) -> Type[Benchmark]:
         """Get a benchmark by its name."""
         for benchmark in cls:
             if benchmark.get_name() == name:

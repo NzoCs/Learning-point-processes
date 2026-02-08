@@ -2,7 +2,7 @@ import torch
 from sigkernel import SigKernel, LinearKernel, RBFKernel
 from typing import Optional, TypedDict, Literal
 
-from .kernel_protocol import PointProcessKernel
+from .kernel_protocol import IPointProcessKernel
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
@@ -11,7 +11,7 @@ class Embedding(TypedDict):
     counting_seqs: torch.Tensor
 
 
-class SIGKernel(PointProcessKernel):
+class SIGKernel(IPointProcessKernel):
     def __init__(
         self,
         static_kernel_type: Literal["linear", "rbf"],
@@ -20,6 +20,9 @@ class SIGKernel(PointProcessKernel):
         num_event_types: int,
         sigma: Optional[float] = None,
     ):
+        self.static_kernel_type = static_kernel_type
+        self.embedding_type = embedding_type
+        self.dyadic_order = dyadic_order
         match static_kernel_type:
             case "linear":
                 self.kernel = SigKernel(
@@ -136,7 +139,7 @@ class SIGKernel(PointProcessKernel):
             case _:
                 raise ValueError(f"Unknown embedding type: {self.embedding_type}")
 
-    def graam_matrix(
+    def compute_gram_matrix(
         self,
         phi_batch: Batch | SimulationResult,
         psi_batch: Batch | SimulationResult,

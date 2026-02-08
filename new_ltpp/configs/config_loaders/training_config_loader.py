@@ -1,10 +1,10 @@
 from typing import Any, Dict, Union
 from pathlib import Path
 
-from .base_config_loader import BaseConfigLoader
+from .base_config_loader import ConfigLoader
 
 
-class TrainingConfigYamlLoader(BaseConfigLoader):
+class TrainingConfigYamlLoader(ConfigLoader):
     """Loader to extract TrainingConfig dictionary from YAML."""
 
     def load(
@@ -12,7 +12,8 @@ class TrainingConfigYamlLoader(BaseConfigLoader):
         yaml_path: Union[str, Path],
         *,
         training_config_path: str,
-    ) -> Dict[str, Any]: # type: ignore[override]
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Load training configuration from a YAML file.
 

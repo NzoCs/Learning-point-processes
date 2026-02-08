@@ -85,20 +85,20 @@ class LogNormalMixtureDistribution(TransformedDistribution):
             ]
         self.mean_log_inter_time = mean_log_inter_time
         self.std_log_inter_time = std_log_inter_time
-        transforms.append(D.ExpTransform())
+        transforms.append(D.ExpTransform())  # type: ignore
 
         self.transforms = transforms
         sign = 1
         for transform in self.transforms:
             sign = sign * transform.sign
         self.sign = int(sign)
-        super().__init__(GMM, transforms, validate_args=validate_args)
+        super().__init__(GMM, transforms, validate_args=validate_args)  # type: ignore
 
     def log_cdf(self, x):
         for transform in self.transforms[::-1]:
             x = transform.inv(x)
         if self._validate_args:
-            self.base_dist._validate_sample(x)
+            self.base_dist._validate_sample(x)  # type: ignore
 
         if self.sign == 1:
             return cast(Any, self.base_dist).log_cdf(x)
@@ -109,7 +109,7 @@ class LogNormalMixtureDistribution(TransformedDistribution):
         for transform in self.transforms[::-1]:
             x = transform.inv(x)
         if self._validate_args:
-            self.base_dist._validate_sample(x)
+            self.base_dist._validate_sample(x)  # type: ignore
 
         if self.sign == 1:
             return cast(Any, self.base_dist).log_survival_function(x)
@@ -156,7 +156,9 @@ class IntensityFree(NeuralModel):
         self.mark_linear = nn.Linear(self.hidden_size, self.num_event_types)
         self.linear = nn.Linear(self.hidden_size, 3 * self.num_mix_components)
 
-    def forward(self, time_delta_seqs: torch.Tensor, type_seqs: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, time_delta_seqs: torch.Tensor, type_seqs: torch.Tensor
+    ) -> torch.Tensor:
         """Call the model.
 
         Args:
@@ -246,6 +248,7 @@ class IntensityFree(NeuralModel):
 
     def compute_intensities_at_sample_dtimes(
         self,
+        *,
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
@@ -303,7 +306,7 @@ class IntensityFree(NeuralModel):
         )
 
         # [num_samples, batch_size, 1]
-        accepted_dtimes = inter_time_dist.sample((self.get_event_sampler().num_sample,))
+        accepted_dtimes: torch.Tensor = inter_time_dist.sample((self.num_sample,))  # type: ignore[assignment]
         dtimes_pred = accepted_dtimes.mean(dim=0)
 
         batch_size = context.size(0)
@@ -359,7 +362,7 @@ class IntensityFree(NeuralModel):
         )
 
         # [num_samples, batch_size, seq_len]
-        accepted_dtimes = inter_time_dist.sample((self.get_event_sampler().num_sample,))
+        accepted_dtimes: torch.Tensor = inter_time_dist.sample((self.num_sample,))  # type: ignore[assignment]
         dtimes_pred = accepted_dtimes.mean(dim=0)
 
         # [batch_size, seq_len, num_marks]

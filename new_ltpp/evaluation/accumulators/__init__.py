@@ -42,8 +42,8 @@ from .acc_types import (
     SequenceLengthStatistics,
     TimeStatistics,
 )
-from .base_accumulator import BaseAccumulator
-from .base_plot_generator import BasePlotGenerator
+from .base_accumulator import Accumulator
+from .base_plot_generator import PlotGenerator
 from .summary_statistics_accumulator import BatchStatisticsCollector
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
@@ -61,13 +61,13 @@ __all__ = [
     # Main Class (primary interface)
     "BatchStatisticsCollector",
     # Accumulators (base and specific)
-    "BaseAccumulator",
+    "Accumulator",
     "InterEventTimeAccumulator",
     "EventTypeAccumulator",
     "SequenceLengthAccumulator",
     "CorrAccumulator",
     # Plot Generators
-    "BasePlotGenerator",
+    "PlotGenerator",
     "InterEventTimePlotGenerator",
     "EventTypePlotGenerator",
     "SequenceLengthPlotGenerator",

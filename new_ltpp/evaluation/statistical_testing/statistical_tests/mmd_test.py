@@ -1,17 +1,19 @@
 import torch
+import numpy as np
+from scipy import stats
 
 from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
 from new_ltpp.evaluation.statistical_testing.statistical_metrics import MMD
 from new_ltpp.evaluation.statistical_testing.kernels.kernel_protocol import (
-    PointProcessKernel,
+    IPointProcessKernel,
 )
 from new_ltpp.shared_types import Batch
 
-from .test_protocol import TestProtocol
+from .base_test import Test
 
 
-class MMDTwoSampleTest(TestProtocol):
+class MMDTwoSampleTest(Test):
     """MMD two-sample permutation test for temporal point processes.
 
     Tests whether two sets of event sequences come from the same distribution.
@@ -21,11 +23,11 @@ class MMDTwoSampleTest(TestProtocol):
     If p-value < threshold, we reject H0 (distributions are different).
     """
 
-    kernel: PointProcessKernel
+    kernel: IPointProcessKernel
 
     def __init__(
         self,
-        kernel: PointProcessKernel,
+        kernel: IPointProcessKernel,
         n_permutations: int,
     ):
         """Initialize the MMD two-sample permutation test.
@@ -38,10 +40,74 @@ class MMDTwoSampleTest(TestProtocol):
         self.n_permutations = n_permutations
         self.mmd = MMD(kernel=kernel)
 
+        # Aggregated statistics (no lists, direct aggregation)
+        self.sum_mmd_values: float = 0.0
+        self.sum_log_p_values: float = 0.0  # For Fisher's method: -2 * sum(log(p))
+        self.sum_z_scores: float = 0.0  # For Stouffer's method: sum(Z)
+        self.n_batches_processed: int = 0
+
     @property
     def name(self) -> str:
         """Return the name of the test."""
         return self.__class__.__name__
+
+    def reset_accumulators(self) -> None:
+        """Reset the batch-wise aggregators."""
+        self.sum_mmd_values = 0.0
+        self.sum_log_p_values = 0.0
+        self.sum_z_scores = 0.0
+        self.n_batches_processed = 0
+
+    def get_mean_mmd(self) -> float:
+        """Get the mean of aggregated MMD² values.
+
+        Returns:
+            Mean MMD² value, or 0.0 if no batches have been processed.
+        """
+        if self.n_batches_processed == 0:
+            return 0.0
+        return self.sum_mmd_values / self.n_batches_processed
+
+    def get_combined_p_value_fisher(self) -> float:
+        """Combine aggregated p-values using Fisher's method.
+
+        Fisher's method combines independent p-values using:
+            χ² = -2 * Σ log(p_i) ~ χ²(2k)
+        where k is the number of p-values.
+
+        Returns:
+            Combined p-value, or 1.0 if no batches have been processed.
+        """
+        if self.n_batches_processed == 0:
+            return 1.0
+
+        # Fisher's statistic was already accumulated as sum_log_p_values
+        chi2_stat = self.sum_log_p_values
+        df = 2 * self.n_batches_processed
+
+        # p-value from chi-squared distribution
+        combined_p = 1.0 - stats.chi2.cdf(chi2_stat, df)
+        return float(combined_p)
+
+    def get_combined_p_value_stouffer(self) -> float:
+        """Combine aggregated p-values using Stouffer's Z-score method.
+
+        Stouffer's method combines independent p-values using:
+            Z = Σ Z_i / sqrt(k)
+        where Z_i = Φ⁻¹(1 - p_i) and k is the number of p-values.
+
+        Returns:
+            Combined p-value, or 1.0 if no batches have been processed.
+        """
+        if self.n_batches_processed == 0:
+            return 1.0
+
+        # Combined Z-score was already accumulated as sum_z_scores
+        combined_z = self.sum_z_scores / np.sqrt(self.n_batches_processed)
+
+        # Convert back to p-value
+        combined_p = 1.0 - stats.norm.cdf(combined_z)
+        return float(combined_p)
 
     def _concat_batches(self, batch_x: Batch, batch_y: Batch) -> Batch:
         """Concatenate two batches along the batch dimension.
@@ -146,6 +212,7 @@ class MMDTwoSampleTest(TestProtocol):
         self,
         batch_x: Batch,
         batch_y: Batch,
+        accumulate: bool = True,
     ) -> float:
         """Compute the p-value of the MMD two-sample permutation test
         on a single pair of batches.
@@ -155,18 +222,37 @@ class MMDTwoSampleTest(TestProtocol):
         Args:
             batch_x: Batch of sequences from distribution X.
             batch_y: Batch of sequences from distribution Y.
+            accumulate: If True, accumulate MMD² and p-value for later combination.
 
         Returns:
             p-value of the permutation test.
         """
         observed_mmd, perm_mmds = self._permutation_test_from_batches(batch_x, batch_y)
         count_ge = sum(1 for pm in perm_mmds if pm >= observed_mmd)
-        return (count_ge + 1) / (self.n_permutations + 1)
+        p_value = (count_ge + 1) / (self.n_permutations + 1)
+
+        if accumulate:
+            # Aggregate statistics directly without storing lists
+            self.sum_mmd_values += observed_mmd
+
+            # For Fisher: accumulate -2 * log(p)
+            p_clipped = np.clip(p_value, 1e-16, 1.0)
+            self.sum_log_p_values += -2 * np.log(p_clipped)
+
+            # For Stouffer: accumulate Z-score
+            p_clipped_z = np.clip(p_value, 1e-16, 1.0 - 1e-16)
+            z_score = stats.norm.ppf(1.0 - p_clipped_z)
+            self.sum_z_scores += z_score.item()
+
+            self.n_batches_processed += 1
+
+        return p_value
 
     def p_value_from_model(
         self,
         model: NeuralModel,
         data_loader: TypedDataLoader,
+        accumulate: bool = True,
     ) -> float:
         """Compute the p-value of the MMD two-sample permutation test.
 
@@ -182,6 +268,7 @@ class MMDTwoSampleTest(TestProtocol):
         Args:
             model: The neural point process model to evaluate.
             data_loader: DataLoader providing batches of real sequences.
+            accumulate: If True, accumulate per-batch MMD² and p-values.
 
         Returns:
             p-value of the aggregated permutation test.
@@ -199,6 +286,27 @@ class MMDTwoSampleTest(TestProtocol):
             )
             t_obs += observed_mmd_i
             all_perm_mmds.append(perm_mmds_i)
+
+            # Aggregate per-batch statistics directly if requested
+            if accumulate:
+                # Compute per-batch p-value
+                count_ge_i = sum(1 for pm in perm_mmds_i if pm >= observed_mmd_i)
+                p_value_i = (count_ge_i + 1) / (self.n_permutations + 1)
+
+                # Aggregate statistics directly without storing lists
+                self.sum_mmd_values += observed_mmd_i
+
+                # For Fisher: accumulate -2 * log(p)
+                p_clipped = np.clip(p_value_i, 1e-16, 1.0)
+                self.sum_log_p_values += -2 * np.log(p_clipped)
+
+                # For Stouffer: accumulate Z-score
+                p_clipped_z = np.clip(p_value_i, 1e-16, 1.0 - 1e-16)
+                z_score = stats.norm.ppf(1.0 - p_clipped_z)
+                self.sum_z_scores += z_score.item()
+
+                self.n_batches_processed += 1
+
             n_batches += 1
 
         if n_batches == 0:
@@ -217,6 +325,7 @@ class MMDTwoSampleTest(TestProtocol):
         self,
         data_loader_x: TypedDataLoader,
         data_loader_y: TypedDataLoader,
+        accumulate: bool = True,
     ) -> float:
         """Compute the p-value of the MMD two-sample permutation test
         between two dataloaders (e.g. real vs pre-simulated).
@@ -230,6 +339,7 @@ class MMDTwoSampleTest(TestProtocol):
         Args:
             data_loader_x: DataLoader providing batches of sequences from distribution X.
             data_loader_y: DataLoader providing batches of sequences from distribution Y.
+            accumulate: If True, accumulate per-batch MMD² and p-values.
 
         Returns:
             p-value of the aggregated permutation test.
@@ -245,6 +355,27 @@ class MMDTwoSampleTest(TestProtocol):
             )
             t_obs += observed_mmd_i
             all_perm_mmds.append(perm_mmds_i)
+
+            # Aggregate per-batch statistics directly if requested
+            if accumulate:
+                # Compute per-batch p-value
+                count_ge_i = sum(1 for pm in perm_mmds_i if pm >= observed_mmd_i)
+                p_value_i = (count_ge_i + 1) / (self.n_permutations + 1)
+
+                # Aggregate statistics directly without storing lists
+                self.sum_mmd_values += observed_mmd_i
+
+                # For Fisher: accumulate -2 * log(p)
+                p_clipped = np.clip(p_value_i, 1e-16, 1.0)
+                self.sum_log_p_values += -2 * np.log(p_clipped)
+
+                # For Stouffer: accumulate Z-score
+                p_clipped_z = np.clip(p_value_i, 1e-16, 1.0 - 1e-16)
+                z_score = stats.norm.ppf(1.0 - p_clipped_z)
+                self.sum_z_scores += z_score.item()
+
+                self.n_batches_processed += 1
+
             n_batches += 1
 
         if n_batches == 0:

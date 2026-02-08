@@ -15,17 +15,17 @@ class HawkesSimulator(Simulator):
     def __init__(
         self,
         mu: np.ndarray | List[float],
-        alpha: np.ndarray | List[float],
-        beta: np.ndarray | List[float],
+        alpha: np.ndarray | List[List[float]],
+        beta: np.ndarray | List[List[float]],
         **kwargs,
     ):
         """
         Initialise un simulateur de processus de Hawkes.
 
         Args:
-            mu (np.ndarray): Intensités de base pour chaque dimension [dim]
-            alpha (np.ndarray): Matrice d'excitation des intensités [dim, dim]
-            beta (np.ndarray): Matrice des taux de décroissance exponentielle [dim, dim]
+            mu (np.ndarray | List[float]): Intensités de base pour chaque dimension [dim]
+            alpha (np.ndarray | List[List[float]]): Matrice d'excitation des intensités [dim, dim]
+            beta (np.ndarray | List[List[float]]): Matrice des taux de décroissance exponentielle [dim, dim]
             dim_process (int): Dimension du processus (nombre de types d'événements)
             start_time (float): Temps de début de la simulation
             end_time (float): Temps de fin de la simulation

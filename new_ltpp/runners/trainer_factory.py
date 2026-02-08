@@ -11,7 +11,7 @@ from pytorch_lightning.loggers.logger import Logger as LightningLogger
 from pytorch_lightning.strategies import DDPStrategy
 
 from new_ltpp.configs.runner_config import TrainingConfig
-from new_ltpp.models.model_protocol import TPPModelProtocol
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.utils import logger as console_logger
 
 
@@ -64,14 +64,15 @@ class PredictionStatsCallback(pl.Callback):
 
     def on_predict_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         """Called once before prediction begins."""
-        model = cast(TPPModelProtocol, pl_module)
+        model = cast(ITPPModel, pl_module)
         model.init_statistics_collector(output_dir=self.output_dir)
 
     def on_predict_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         """Called once after prediction ends."""
-        model = cast(TPPModelProtocol, pl_module)
+        model = cast(ITPPModel, pl_module)
         model.finalize_statistics()
         model.intensity_graph(save_dir=self.output_dir)
+
 
 class TrainerFactory:
     """

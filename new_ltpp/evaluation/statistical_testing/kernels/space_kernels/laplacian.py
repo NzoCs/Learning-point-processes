@@ -1,8 +1,8 @@
 import torch
-from .protocol import SpaceKernel
+from .protocol import ISpaceKernel
 
 
-class LaplacianTimeKernel(SpaceKernel):
+class LaplacianTimeKernel(ISpaceKernel):
     def __init__(self, sigma: float = 1.0):
         self.sigma = sigma
 

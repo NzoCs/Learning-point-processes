@@ -11,8 +11,6 @@ from new_ltpp.evaluation.statistical_testing import (
     # Configs
     KernelConfig,
     MMDTestConfig,
-    KSDTestConfig,
-    # Builders
     KernelConfigBuilder,
     MMDTestConfigBuilder,
     KSDTestConfigBuilder,

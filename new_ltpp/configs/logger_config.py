@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Dict, List, Type, Union, cast
+from typing import Any, Dict, List, Type, Union, cast, Protocol, runtime_checkable
 
 from pytorch_lightning.loggers import (
     CometLogger,
@@ -27,7 +27,7 @@ class LoggerType(StrEnum):
     TENSORBOARD = "tensorboard"
 
 
-class BaseLoggerAdapter(ABC):
+class LoggerAdapter(ABC):
     """Abstract class defining the interface for all logger adapters, see the documentation of different loggers to
     understand the various parameters."""
 
@@ -54,7 +54,27 @@ class BaseLoggerAdapter(ABC):
         pass
 
 
-class CSVLoggerAdapter(BaseLoggerAdapter):
+@runtime_checkable
+class ILoggerAdapter(Protocol):
+    """Protocol for IDE type checking + isinstance() support."""
+
+    @classmethod
+    def get_required_params(cls) -> List[str]:
+        """Returns the list of required parameters for this logger."""
+        ...
+
+    @classmethod
+    def validate_config(cls, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Validates and completes the configuration."""
+        ...
+
+    @classmethod
+    def configure(cls, config: Dict[str, Any]) -> Any:
+        """Configures and returns a logger instance."""
+        ...
+
+
+class CSVLoggerAdapter(LoggerAdapter):
     @classmethod
     def get_required_params(cls) -> List[str]:
         """
@@ -73,7 +93,7 @@ class CSVLoggerAdapter(BaseLoggerAdapter):
         return CSVLogger(**config)
 
 
-class WandBLoggerAdapter(BaseLoggerAdapter):
+class WandBLoggerAdapter(LoggerAdapter):
     @classmethod
     def get_required_params(cls) -> List[str]:
         """
@@ -95,7 +115,7 @@ class WandBLoggerAdapter(BaseLoggerAdapter):
         return WandbLogger(**config)
 
 
-class MLflowLoggerAdapter(BaseLoggerAdapter):
+class MLflowLoggerAdapter(LoggerAdapter):
     @classmethod
     def get_required_params(cls) -> List[str]:
         """
@@ -148,7 +168,7 @@ class MLflowLoggerAdapter(BaseLoggerAdapter):
             )
 
 
-class CometLoggerAdapter(BaseLoggerAdapter):
+class CometLoggerAdapter(LoggerAdapter):
     @classmethod
     def get_required_params(cls) -> List[str]:
         return ["api_key", "project_name"]
@@ -158,7 +178,7 @@ class CometLoggerAdapter(BaseLoggerAdapter):
         return CometLogger(**config)
 
 
-class NeptuneLoggerAdapter(BaseLoggerAdapter):
+class NeptuneLoggerAdapter(LoggerAdapter):
     @classmethod
     def get_required_params(cls) -> List[str]:
         return ["api_token", "project"]
@@ -168,7 +188,7 @@ class NeptuneLoggerAdapter(BaseLoggerAdapter):
         return NeptuneLogger(**config)
 
 
-class TensorboardLoggerAdapter(BaseLoggerAdapter):
+class TensorboardLoggerAdapter(LoggerAdapter):
     @classmethod
     def get_required_params(cls) -> List[str]:
         return ["save_dir"]
@@ -182,7 +202,7 @@ class TensorboardLoggerAdapter(BaseLoggerAdapter):
 
 
 # Registry of adapters
-LOGGER_ADAPTERS: Dict[LoggerType, Type[BaseLoggerAdapter]] = {
+LOGGER_ADAPTERS: Dict[LoggerType, Type[LoggerAdapter]] = {
     LoggerType.CSV: CSVLoggerAdapter,
     LoggerType.WandB: WandBLoggerAdapter,
     LoggerType.MLFLOW: MLflowLoggerAdapter,
@@ -206,6 +226,20 @@ class LoggerConfig(Config):
     save_dir: str | Path
     type: LoggerType = LoggerType.TENSORBOARD
     config: Dict[str, Any] = field(default_factory=dict)
+
+    def __init__(
+        self,
+        save_dir: str | Path,
+        type: Union[LoggerType, str] = LoggerType.TENSORBOARD,
+        config: Dict[str, Any] | None = None,
+    ):
+        self.save_dir = save_dir
+        self.type = LoggerType(type) if isinstance(type, str) else type
+        self.config = config or {}
+
+    @classmethod
+    def get_required_fields(cls) -> List[str]:
+        return ["save_dir", "type"]
 
     def __post_init__(self):
         # Convert string type to LoggerType if needed
@@ -268,9 +302,6 @@ class LoggerConfig(Config):
         if not adapter:
             raise ValueError(f"No adapter available for logger type: {type}")
         return adapter.get_required_params()
-
-    def get_required_fields(self):
-        return ["save_dir"]
 
 
 class LoggerFactory:

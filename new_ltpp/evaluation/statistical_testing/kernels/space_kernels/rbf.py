@@ -1,8 +1,8 @@
 import torch
-from .protocol import SpaceKernel
+from .protocol import ISpaceKernel
 
 
-class RBFTimeKernel(SpaceKernel):
+class RBFTimeKernel(ISpaceKernel):
     def __init__(self, sigma: float):
         self.sigma = sigma
 

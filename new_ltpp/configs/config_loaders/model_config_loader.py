@@ -1,11 +1,11 @@
 from typing import Any, Dict, Optional, Union
 from pathlib import Path
 
-from .base_config_loader import BaseConfigLoader
+from .base_config_loader import ConfigLoader
 from new_ltpp.utils import logger
 
 
-class ModelConfigYamlLoader(BaseConfigLoader):
+class ModelConfigYamlLoader(ConfigLoader):
     """Loader to extract ModelConfig dictionary from YAML."""
 
     def load(
@@ -18,7 +18,8 @@ class ModelConfigYamlLoader(BaseConfigLoader):
         scheduler_config_path: Optional[str] = None,
         general_specs_path: Optional[str] = None,
         model_specs_path: Optional[str] = None,
-    ) -> Dict[str, Any]:  # type: ignore[override]
+        **kwargs,
+    ) -> Dict[str, Any]:
         """
         Load model configuration from a YAML file.
 

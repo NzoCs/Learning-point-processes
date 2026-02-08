@@ -12,10 +12,10 @@ import torch
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 
-from .base_bench import BaseBenchmark
+from .base_bench import Benchmark
 
 
-class TypeBenchmark(BaseBenchmark):
+class TypeBenchmark(Benchmark):
     """
     Abstract base class for type/mark prediction benchmarks.
 

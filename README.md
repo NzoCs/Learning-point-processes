@@ -62,7 +62,7 @@ make run-demo
 
 You can run experiments directly using the `new-ltpp` command (or `scripts/cli.py`).
 
-**Example: Train THP on the Taxi dataset**
+## Example: Train THP on the Taxi dataset
 
 ```bash
 # Using the installed script entry point

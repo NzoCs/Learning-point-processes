@@ -10,10 +10,10 @@ from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .acc_types import SequenceLengthStatistics
-from .base_accumulator import BaseAccumulator
+from .base_accumulator import Accumulator
 
 
-class SequenceLengthAccumulator(BaseAccumulator):
+class SequenceLengthAccumulator(Accumulator):
     """Accumulates sequence length statistics."""
 
     def __init__(self, min_sim_events: int = 1):

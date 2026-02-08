@@ -12,10 +12,10 @@ from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .acc_types import EventTypeStatistics
-from .base_accumulator import BaseAccumulator
+from .base_accumulator import Accumulator
 
 
-class EventTypeAccumulator(BaseAccumulator):
+class EventTypeAccumulator(Accumulator):
     """Accumulates event type distribution statistics."""
 
     def __init__(self, num_event_types: int, min_sim_events: int = 1):

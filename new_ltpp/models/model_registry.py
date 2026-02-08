@@ -18,15 +18,16 @@ from abc import ABCMeta
 from typing import Dict, Optional, Type
 
 from new_ltpp.utils import logger
-from .model_protocol import TPPModelProtocol
+from .model_protocol import ITPPModel
+
 
 class ModelRegistry:
     """Automatic registry for TPP models."""
 
-    _models: Dict[str, Type[TPPModelProtocol]] = {}
+    _models: Dict[str, Type[ITPPModel]] = {}
 
     @classmethod
-    def register_model(cls, name: str, model_class: Type[TPPModelProtocol]) -> None:
+    def register_model(cls, name: str, model_class: Type[ITPPModel]) -> None:
         """
         Register a model in the registry.
 
@@ -45,12 +46,12 @@ class ModelRegistry:
         logger.debug(f"Model '{name}' auto-registered")
 
     @classmethod
-    def get_registry(cls) -> Dict[str, Type[TPPModelProtocol]]:
+    def get_registry(cls) -> Dict[str, Type[ITPPModel]]:
         """Get all registered models."""
         return cls._models.copy()
 
     @classmethod
-    def get_model(cls, name: str) -> Optional[Type[TPPModelProtocol]]:
+    def get_model(cls, name: str) -> Optional[Type[ITPPModel]]:
         """
         Get a model by its name.
 
@@ -79,8 +80,8 @@ class RegistryMeta(ABCMeta):
     Inherits from ABCMeta to remain compatible with ABC.
     """
 
-    def __new__(mcls, name, bases, namespace):
-        cls = super().__new__(mcls, name, bases, namespace)
+    def __new__(mcls, name: str, bases, namespace) -> Type[ITPPModel]:
+        cls: Type[ITPPModel] = super().__new__(mcls, name, bases, namespace)  # type: ignore
 
         # Automatically register new model classes
         # Register everything except the Model base itself and plain Python base classes

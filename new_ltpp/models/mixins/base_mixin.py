@@ -79,18 +79,21 @@ class BaseMixin(pl.LightningModule, ABC):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        valid_event_mask: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
+        **kwargs,
     ) -> torch.Tensor:
         """Compute the intensity at sampled times, not only event times.
 
         Args:
-            batch (Batch): batch input.
+            time_seqs (tensor): [batch_size, seq_len], cumulative times.
+            time_delta_seqs (tensor): [batch_size, seq_len], inter-event times.
+            type_seqs (tensor): [batch_size, seq_len], event types.
             sample_dtimes (tensor): [batch_size, seq_len, num_sample], sampled inter-event timestamps.
+            compute_last_step_only (bool): whether to compute only last step.
 
         Returns:
-            tensor: [batch_size, num_times, num_mc_sample, num_event_types],
+            tensor: [batch_size, seq_len, num_mc_sample, num_event_types],
                     intensity at each timestamp for each event type."""
         pass
 

@@ -12,10 +12,10 @@ import torch
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils import logger
 
-from .base_bench import BaseBenchmark
+from .base_bench import Benchmark
 
 
-class TimeBenchmark(BaseBenchmark):
+class TimeBenchmark(Benchmark):
     """
     Abstract base class for time prediction benchmarks.
 

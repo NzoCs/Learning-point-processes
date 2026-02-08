@@ -1,9 +1,9 @@
 """Builders for statistical test configurations."""
 
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 from typing import Self
 
-from new_ltpp.evaluation.statistical_testing.tests_configs import (
+from new_ltpp.evaluation.statistical_testing.statistical_tests_configs import (
     KernelConfig,
     MMDTestConfig,
     KSDTestConfig,

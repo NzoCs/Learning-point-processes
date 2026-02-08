@@ -1,10 +1,10 @@
 import torch
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.models.base_model import NeuralModel
-from .protocols import StatMetricsProtocol
+from .base_stat_metric import StatMetric
 
 
-class KSD(StatMetricsProtocol):
+class KSD(StatMetric):
     def __call__(self, model: NeuralModel, batch: Batch) -> float:
         pass  # TODO: Implement KSD metric calculation
 

@@ -1,18 +1,18 @@
 from typing import Any, Dict, Optional, Union
 from pathlib import Path
 
-from .base_config_loader import BaseConfigLoader
+from .base_config_loader import ConfigLoader
 from .training_config_loader import TrainingConfigYamlLoader
 from .model_config_loader import ModelConfigYamlLoader
 from .data_config_loader import DataConfigYamlLoader
 
 
-class RunnerConfigYamlLoader(BaseConfigLoader):
+class RunnerConfigYamlLoader(ConfigLoader):
     """Loader to extract RunnerConfig dictionary from YAML and sub-loaders."""
 
     def load(
         self,
-        yaml_file_path: Union[str, Path],
+        yaml_path: Union[str, Path],
         *,
         training_config_path: str,
         data_config_path: str,
@@ -24,18 +24,19 @@ class RunnerConfigYamlLoader(BaseConfigLoader):
         logger_config_path: Optional[str] = None,
         general_specs_config_path: Optional[str] = None,
         model_specs_config_path: Optional[str] = None,
-    ) -> Dict[str, Any]: # type: ignore[override]
+        **kwargs,
+    ) -> Dict[str, Any]:
         # Load raw data once
-        config_data = self.load_yaml(yaml_file_path)
+        config_data = self.load_yaml(yaml_path)
 
         training_loader = TrainingConfigYamlLoader()
         training_cfg = training_loader.load(
-            yaml_file_path, training_config_path=training_config_path
+            yaml_path, training_config_path=training_config_path
         )
 
         model_loader = ModelConfigYamlLoader()
         model_cfg = model_loader.load(
-            yaml_file_path,
+            yaml_path,
             model_config_path=model_config_path,
             simulation_config_path=simulation_config_path,
             thinning_config_path=thinning_config_path,
@@ -59,7 +60,7 @@ class RunnerConfigYamlLoader(BaseConfigLoader):
 
         data_loader = DataConfigYamlLoader()
         data_cfg = data_loader.load(
-            yaml_file_path,
+            yaml_path,
             data_config_path=data_config_path,
             data_loading_config_path=data_loading_config_path,
             tokenizer_specs_path=data_specs_path,

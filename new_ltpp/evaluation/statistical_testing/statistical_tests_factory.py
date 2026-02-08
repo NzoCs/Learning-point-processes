@@ -1,27 +1,23 @@
 """Factory for creating statistical test instances from configurations."""
 
-from typing import Any, Dict
-
-from new_ltpp.evaluation.statistical_testing.tests_configs import (
+from new_ltpp.evaluation.statistical_testing.statistical_tests_configs import (
     MMDTestConfig,
-    KSDTestConfig,
     KernelConfig,
 )
-from new_ltpp.evaluation.statistical_testing.tests import (
+from new_ltpp.evaluation.statistical_testing.statistical_tests import (
     MMDTwoSampleTest,
-    SteinTest,
-    TestProtocol,
+    ITest,
 )
 from new_ltpp.evaluation.statistical_testing.kernels import (
     MKernel,
     SIGKernel,
-    PointProcessKernel,
+    IPointProcessKernel,
     create_time_kernel,
     EmbeddingKernel,
 )
 
 
-def create_kernel_from_config(kernel_config: KernelConfig) -> PointProcessKernel:
+def create_kernel_from_config(kernel_config: KernelConfig) -> IPointProcessKernel:
     """Create a kernel instance from a KernelConfig.
 
     Args:
@@ -96,23 +92,23 @@ def create_mmd_test_from_config(config: MMDTestConfig) -> MMDTwoSampleTest:
     )
 
 
-def create_ksd_test_from_config(config: KSDTestConfig) -> SteinTest:
-    """Create a KSD test instance from configuration.
+# def create_ksd_test_from_config(config: KSDTestConfig) -> SteinTest:  # noqa: F821
+#     """Create a KSD test instance from configuration.
 
-    Args:
-        config: KSD test configuration
+#     Args:
+#         config: KSD test configuration
 
-    Returns:
-        Instantiated SteinTest
-    """
-    kernel = create_kernel_from_config(config.kernel_config)
+#     Returns:
+#         Instantiated SteinTest
+#     """
+#     kernel = create_kernel_from_config(config.kernel_config)
 
-    return SteinTest(kernel=kernel)
+#     return SteinTest(kernel=kernel)
 
 
 def create_test_from_config(
-    config: MMDTestConfig | KSDTestConfig,
-) -> TestProtocol:
+    config: MMDTestConfig,
+) -> ITest:
     """Create a test instance from configuration (auto-detects type).
 
     Args:
@@ -126,8 +122,8 @@ def create_test_from_config(
     """
     if isinstance(config, MMDTestConfig):
         return create_mmd_test_from_config(config)
-    elif isinstance(config, KSDTestConfig):
-        return create_ksd_test_from_config(config)
+    # elif isinstance(config, KSDTestConfig):
+    #     return create_ksd_test_from_config(config)
     else:
         raise ValueError(
             f"Unknown config type: {type(config).__name__}. "

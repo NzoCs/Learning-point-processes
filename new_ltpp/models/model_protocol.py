@@ -5,15 +5,16 @@ providing type safety and clear contracts for model behavior.
 """
 
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 import torch
 
-from new_ltpp.shared_types import Batch
+from new_ltpp.configs import ModelConfig
+from new_ltpp.shared_types import Batch, DataInfo
 
 
 @runtime_checkable
-class TPPModelProtocol(Protocol):
+class ITPPModel(Protocol):
     """Protocol defining the interface for Temporal Point Process models.
 
     This protocol ensures that all TPP models implement the required methods
@@ -22,6 +23,27 @@ class TPPModelProtocol(Protocol):
 
     All models should inherit from the base Model class which implements this protocol.
     """
+
+    # ============================================================
+    # Initialization
+    # ============================================================
+
+    def __init__(
+        self,
+        model_config: ModelConfig,
+        data_info: DataInfo,
+        output_dir: Path | str,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the TPP model.
+
+        Args:
+            model_config: Configuration for the model
+            data_info: Dataset information (num_event_types, dtime_max, etc.)
+            output_dir: Directory for saving model outputs
+            **kwargs: Additional model-specific parameters
+        """
+        ...
 
     # ============================================================
     # Required Attributes
@@ -309,7 +331,7 @@ class TPPModelProtocol(Protocol):
 
 
 @runtime_checkable
-class NeuralTPPModelProtocol(TPPModelProtocol, Protocol):
+class INeuralTPPModel(ITPPModel, Protocol):
     """Extended protocol for neural network-based TPP models.
 
     Adds additional attributes and methods specific to neural architectures
@@ -333,7 +355,7 @@ class NeuralTPPModelProtocol(TPPModelProtocol, Protocol):
 
 
 def is_valid_tpp_model(obj: object) -> bool:
-    """Check if an object implements the TPPModelProtocol.
+    """Check if an object implements the ITPPModel protocol.
 
     Args:
         obj: Object to check
@@ -346,11 +368,11 @@ def is_valid_tpp_model(obj: object) -> bool:
         >>> model = THP(...)
         >>> assert is_valid_tpp_model(model)
     """
-    return isinstance(obj, TPPModelProtocol)
+    return isinstance(obj, ITPPModel)
 
 
 def is_neural_tpp_model(obj: object) -> bool:
-    """Check if an object implements the NeuralTPPModelProtocol.
+    """Check if an object implements the INeuralTPPModel protocol.
 
     Args:
         obj: Object to check
@@ -362,4 +384,4 @@ def is_neural_tpp_model(obj: object) -> bool:
         >>> model = THP(...)
         >>> assert is_neural_tpp_model(model)
     """
-    return isinstance(obj, NeuralTPPModelProtocol)
+    return isinstance(obj, INeuralTPPModel)

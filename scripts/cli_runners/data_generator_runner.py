@@ -66,12 +66,7 @@ class DataGenerator(CLIRunnerBase):
 
             # Create default output directory if needed
             if output_dir is None:
-                from datetime import datetime
-
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_dir = str(
-                    self.get_output_path("data_generation", f"generated_{timestamp}")
-                )
+                output_dir = str(self.get_output_path())
                 self.print_info(f"Output directory: {output_dir}")
 
             # Default values for splits
@@ -110,7 +105,18 @@ class DataGenerator(CLIRunnerBase):
                 )
 
             elif generation_method.lower() == "self_correcting":
+                # Default parameters for SelfCorrecting
+                if mu is None:
+                    mu = [0.2] * dim_process
+                if alpha is None:
+                    alpha = [
+                        [0.3 if i == j else 0.1 for j in range(dim_process)]
+                        for i in range(dim_process)
+                    ]
+
                 generator = SelfCorrecting(
+                    mu=mu,
+                    alpha=alpha,
                     dim_process=dim_process,
                     start_time=start_time,
                     end_time=end_time,

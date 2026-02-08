@@ -1,8 +1,8 @@
 import torch
-from .protocol import SpaceKernel
+from .protocol import ISpaceKernel
 
 
-class BSplineTimeKernel(SpaceKernel):
+class BSplineTimeKernel(ISpaceKernel):
     def __init__(self, sigma: float = 1.0, order: int = 3):
         self.sigma = sigma
         self.order = order

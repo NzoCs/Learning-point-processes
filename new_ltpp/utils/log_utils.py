@@ -1,3 +1,6 @@
+# pyright: reportMissingImports=false
+# pyright: reportMissingTypeStubs=false
+
 import logging
 import sys
 

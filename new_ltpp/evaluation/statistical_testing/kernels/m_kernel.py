@@ -2,8 +2,8 @@ import torch
 from typing import Literal
 from enum import Enum
 
-from .kernel_protocol import PointProcessKernel
-from .space_kernels import SpaceKernel
+from .kernel_protocol import IPointProcessKernel
+from .space_kernels import ISpaceKernel
 from new_ltpp.shared_types import Batch, SimulationResult
 
 LossEnum = Literal["energy", "sinkhorn", "hausdorff", "gaussian", "laplacian"]
@@ -20,11 +20,11 @@ class MKernelTransform(Enum):
     CAUCHY = "cauchy"  # 1/(1 + d²/σ²)
 
 
-TimeKernel = SpaceKernel
-TypeKernel = SpaceKernel
+TimeKernel = ISpaceKernel
+TypeKernel = ISpaceKernel
 
 
-class MKernel(PointProcessKernel):
+class MKernel(IPointProcessKernel):
     def __init__(
         self,
         time_kernel: TimeKernel,
@@ -98,7 +98,7 @@ class MKernel(PointProcessKernel):
         else:
             raise ValueError(f"Unknown transform: {self.transform}")
 
-    def graam_matrix(
+    def compute_gram_matrix(
         self,
         phi_batch: Batch | SimulationResult,
         psi_batch: Batch | SimulationResult,
@@ -121,7 +121,7 @@ class MKernel(PointProcessKernel):
         # Normalize delta time sequences to [0, 1] range per sequence
         phi_max = phi_delta_time_seqs.max(dim=1, keepdim=True)[0] + 1e-8
         phi_delta_time_seqs = phi_delta_time_seqs / phi_max  # (B1, L)
-        
+
         psi_max = psi_delta_time_seqs.max(dim=1, keepdim=True)[0] + 1e-8
         psi_delta_time_seqs = psi_delta_time_seqs / psi_max  # (B2, K)
 

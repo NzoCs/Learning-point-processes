@@ -1,8 +1,9 @@
 import torch
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
-class SpaceKernel(Protocol):
+@runtime_checkable
+class ISpaceKernel(Protocol):
     def cross_batch_kernel_matrix(
         self, phi: torch.Tensor, psi: torch.Tensor
     ) -> torch.Tensor:

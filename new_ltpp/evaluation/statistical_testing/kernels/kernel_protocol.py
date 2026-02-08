@@ -5,8 +5,8 @@ from new_ltpp.shared_types import Batch, SimulationResult
 
 
 @runtime_checkable
-class PointProcessKernel(Protocol):
-    def graam_matrix(
+class IPointProcessKernel(Protocol):
+    def compute_gram_matrix(
         self,
         phi_batch: Batch | SimulationResult,
         psi_batch: Batch | SimulationResult,

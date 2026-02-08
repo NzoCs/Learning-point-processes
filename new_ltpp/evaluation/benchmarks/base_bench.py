@@ -8,7 +8,7 @@ It defines the common interface and shared functionality that all benchmarks sho
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Protocol, runtime_checkable
 
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.utils import logger
 
 
-class BaseBenchmark(ABC):
+class Benchmark(ABC):
     """
     Abstract base class for all TPP benchmarks.
 
@@ -234,3 +234,17 @@ class BaseBenchmark(ABC):
             results.update(custom_info)
 
         return results
+
+
+@runtime_checkable
+class IBenchmark(Protocol):
+    """Protocol for IDE type checking + isinstance() support."""
+
+    @property
+    def benchmark_name(self) -> str:
+        """Return the name of this benchmark."""
+        ...
+
+    def evaluate(self) -> Dict[str, Any]:
+        """Run the benchmark evaluation."""
+        ...

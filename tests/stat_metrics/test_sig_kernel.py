@@ -262,7 +262,7 @@ class TestGramMatrixWithRealData:
             num_event_types=max(2, num_event_types),
         )
 
-        gram = kernel.graam_matrix(batch1, batch2)
+        gram = kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -282,7 +282,7 @@ class TestGramMatrixWithRealData:
             num_event_types=max(2, num_event_types),
         )
 
-        gram = kernel.graam_matrix(batch1, batch1)
+        gram = kernel.compute_gram_matrix(batch1, batch1)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -304,7 +304,7 @@ class TestGramMatrixWithRealData:
             num_event_types=max(2, num_event_types),
         )
 
-        gram = kernel.graam_matrix(batch1, batch1)
+        gram = kernel.compute_gram_matrix(batch1, batch1)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -325,7 +325,7 @@ class TestGramMatrixWithRealData:
             sigma=1.0,
         )
 
-        gram = kernel.graam_matrix(batch1, batch2)
+        gram = kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -335,7 +335,7 @@ class TestGramMatrixWithRealData:
         assert gram.shape == (batch1.time_seqs.shape[0], batch2.time_seqs.shape[0])
 
         # Self-similarity should be symmetric
-        gram_self = kernel.graam_matrix(batch1, batch1)
+        gram_self = kernel.compute_gram_matrix(batch1, batch1)
         assert torch.allclose(gram_self, gram_self.t(), atol=1e-4)
 
 
@@ -510,7 +510,7 @@ class TestDTypePreservation:
         )
 
         original_dtype = batch1.time_seqs.dtype
-        gram = kernel.graam_matrix(batch1, batch2)
+        gram = kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -551,7 +551,7 @@ class TestNoNaNOrInf:
             num_event_types=max(2, num_event_types),
         )
 
-        gram = kernel.graam_matrix(batch1, batch2)
+        gram = kernel.compute_gram_matrix(batch1, batch2)
 
         # Check no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN values"
@@ -604,7 +604,7 @@ class TestNoNaNOrInf:
             sigma=1.0,
         )
 
-        gram = kernel.graam_matrix(batch1, batch2)
+        gram = kernel.compute_gram_matrix(batch1, batch2)
 
         # Check no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN values"

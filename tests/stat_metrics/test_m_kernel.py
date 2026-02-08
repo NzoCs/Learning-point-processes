@@ -7,7 +7,7 @@ from new_ltpp.evaluation.statistical_testing.kernels.m_kernel import (
     MKernel,
     MKernelTransform,
 )
-from new_ltpp.evaluation.statistical_testing.kernels.space_kernels import (
+from new_ltpp.evaluation.statistical_testing.kernels import (
     TimeKernelType,
     create_time_kernel,
     EmbeddingKernel,
@@ -97,7 +97,7 @@ class TestTimeKernelTypes:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -117,7 +117,7 @@ class TestTimeKernelTypes:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -137,7 +137,7 @@ class TestTimeKernelTypes:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -157,7 +157,7 @@ class TestTimeKernelTypes:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -179,7 +179,7 @@ class TestTimeKernelTypes:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -208,7 +208,7 @@ class TestMKernelTransforms:
             transform=MKernelTransform.EXPONENTIAL,
         )
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -235,7 +235,7 @@ class TestMKernelTransforms:
             beta=0.5,
         )
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -261,7 +261,7 @@ class TestMKernelTransforms:
             alpha=1.0,
         )
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -286,7 +286,7 @@ class TestMKernelTransforms:
             transform=MKernelTransform.LAPLACIAN,
         )
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -311,7 +311,7 @@ class TestMKernelTransforms:
             transform=MKernelTransform.LINEAR,
         )
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -336,7 +336,7 @@ class TestMKernelTransforms:
             transform=MKernelTransform.CAUCHY,
         )
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
@@ -360,7 +360,7 @@ class TestGramMatrixProperties:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch1)
+        gram = m_kernel.compute_gram_matrix(batch1, batch1)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -380,7 +380,7 @@ class TestGramMatrixProperties:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch1)
+        gram = m_kernel.compute_gram_matrix(batch1, batch1)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -400,7 +400,7 @@ class TestGramMatrixProperties:
 
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -573,7 +573,7 @@ class TestDTypePreservation:
         m_kernel = MKernel(time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0)
 
         original_dtype = batch1.time_seqs.dtype
-        gram = m_kernel.graam_matrix(batch1, batch2)
+        gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
         # Verify no NaN or Inf
         assert not torch.isnan(gram).any()
@@ -674,7 +674,7 @@ class TestNoNaNOrInf:
                 time_kernel=time_kernel, type_kernel=type_kernel, sigma=1.0
             )
 
-            gram = m_kernel.graam_matrix(batch1, batch2)
+            gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
             assert not torch.isnan(gram).any(), f"NaN with kernel {kernel_type}"
             assert not torch.isinf(gram).any(), f"Inf with kernel {kernel_type}"
@@ -708,7 +708,7 @@ class TestNoNaNOrInf:
                 alpha=1.0,
             )
 
-            gram = m_kernel.graam_matrix(batch1, batch2)
+            gram = m_kernel.compute_gram_matrix(batch1, batch2)
 
             assert not torch.isnan(gram).any(), f"NaN with transform {transform}"
             assert not torch.isinf(gram).any(), f"Inf with transform {transform}"

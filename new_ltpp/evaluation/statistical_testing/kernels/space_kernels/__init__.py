@@ -1,6 +1,6 @@
 from enum import Enum
 
-from .protocol import SpaceKernel
+from .protocol import ISpaceKernel
 
 from .rbf import RBFTimeKernel
 from .imq import IMQTimeKernel
@@ -25,7 +25,7 @@ class TimeKernelType(Enum):
 
 def create_time_kernel(
     kernel_type: TimeKernelType | str, sigma: float = 1.0, **kwargs
-) -> SpaceKernel:
+) -> ISpaceKernel:
     if isinstance(kernel_type, str):
         kernel_type = TimeKernelType(kernel_type)
 
@@ -50,7 +50,7 @@ def create_time_kernel(
 
 
 __all__ = [
-    "SpaceKernel",
+    "ISpaceKernel",
     "RBFTimeKernel",
     "IMQTimeKernel",
     "MaternTimeKernel",

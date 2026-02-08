@@ -1,5 +1,9 @@
-from .protocols import StatMetricsProtocol, PointProcessKernel
+from .base_stat_metric import IStatMetric, StatMetric
 from .mmd import MMD
 # from .ksd import KSD
 
-__all__ = ["StatMetricsProtocol", "PointProcessKernel", "MMD", "KSD"]
+__all__ = [
+    "StatMetric",
+    "IStatMetric",
+    "MMD",
+]

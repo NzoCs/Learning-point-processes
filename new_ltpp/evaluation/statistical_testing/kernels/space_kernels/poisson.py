@@ -1,8 +1,8 @@
 import torch
-from .protocol import SpaceKernel
+from .protocol import ISpaceKernel
 
 
-class PoissonTimeKernel(SpaceKernel):
+class PoissonTimeKernel(ISpaceKernel):
     def __init__(self, r: float = 0.5, d: int = 1):
         if not (0 < r < 1):
             raise ValueError("Parameter r must be in (0,1)")

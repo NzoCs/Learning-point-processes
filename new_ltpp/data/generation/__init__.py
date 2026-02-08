@@ -4,7 +4,6 @@ from new_ltpp.data.generation.self_correcting import SelfCorrecting
 from new_ltpp.data.generation.simulation_manager import SimulationManager
 
 __all__ = [
-    "BaseSimulator",
     "SelfCorrecting",
     "HawkesSimulator",
     "IOSimulator",

@@ -5,6 +5,8 @@ This module provides configuration classes for statistical hypothesis tests
 used to evaluate temporal point process models.
 """
 
+from Cython import cast
+
 from dataclasses import dataclass
 from typing import Any, Dict, Literal
 
@@ -38,12 +40,17 @@ class MMDTestConfig:
         n_permutations: Number of permutations for the permutation test
     """
 
-    kernel_config: KernelConfig | Dict[str, Any]
-    n_permutations: int = 100
+    kernel_config: KernelConfig
+    n_permutations: int
 
-    def __post_init__(self):
-        if isinstance(self.kernel_config, dict):
-            self.kernel_config = KernelConfig(**self.kernel_config)
+    def __init__(
+        self, kernel_config: KernelConfig | Dict[str, Any], n_permutations: int
+    ):
+        if isinstance(kernel_config, dict):
+            self.kernel_config = KernelConfig(**cast(dict, kernel_config))
+        else:
+            self.kernel_config = kernel_config
+        self.n_permutations = n_permutations
 
 
 @dataclass
@@ -55,9 +62,12 @@ class KSDTestConfig:
         n_samples: Number of samples for KSD estimation
     """
 
-    kernel_config: KernelConfig | Dict[str, Any]
-    n_samples: int = 100
+    kernel_config: KernelConfig
+    n_samples: int
 
-    def __post_init__(self):
-        if isinstance(self.kernel_config, dict):
-            self.kernel_config = KernelConfig(**self.kernel_config)
+    def __init__(self, kernel_config: KernelConfig | Dict[str, Any], n_samples: int):
+        if isinstance(kernel_config, dict):
+            self.kernel_config = KernelConfig(**cast(dict, kernel_config))
+        else:
+            self.kernel_config = kernel_config
+        self.n_samples = n_samples

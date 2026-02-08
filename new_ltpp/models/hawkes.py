@@ -114,7 +114,7 @@ class Hawkes(Model):
         *,
         time_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
-        valid_event_mask: torch.Tensor,  # [Batch, Seq_Len] (1/True pour event, 0/False pour padding)
+        valid_event_mask: torch.Tensor,
         sample_dtimes: Optional[torch.Tensor] = None,
         compute_last_step_only: bool = False,
         **kwargs,

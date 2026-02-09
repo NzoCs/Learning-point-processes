@@ -3,8 +3,7 @@ from .protocol import ISpaceKernel
 
 
 class BSplineTimeKernel(ISpaceKernel):
-    def __init__(self, sigma: float = 1.0, order: int = 3):
-        self.sigma = sigma
+    def __init__(self, order: int = 3):
         self.order = order
 
     def _bspline_kernel(self, t: torch.Tensor) -> torch.Tensor:
@@ -33,7 +32,8 @@ class BSplineTimeKernel(ISpaceKernel):
         X = phi.unsqueeze(-1).unsqueeze(1).expand(-1, B2, -1, 1)
         Y = psi.unsqueeze(-2).unsqueeze(0).expand(B1, -1, 1, -1)
         dist = torch.abs(X - Y)
-        normalized = dist / self.sigma
+        sigma = dist.median().item() + 1e-8  # Median heuristic for bandwidth
+        normalized = dist / sigma
         return self._bspline_kernel(normalized)
 
     def intra_batch_kernel_matrix(self, phi: torch.Tensor) -> torch.Tensor:
@@ -41,5 +41,6 @@ class BSplineTimeKernel(ISpaceKernel):
         X = phi.unsqueeze(-1).expand(-1, L, -1)
         Y = phi.unsqueeze(-2).expand(-1, 1, L)
         dist = torch.abs(X - Y)
-        normalized = dist / self.sigma
+        sigma = dist.median().item() + 1e-8  # Median heuristic for bandwidth
+        normalized = dist / sigma
         return self._bspline_kernel(normalized)

@@ -16,8 +16,8 @@ class RBFTimeKernel(ISpaceKernel):
         Y = psi.unsqueeze(-2).unsqueeze(0).expand(B1, -1, 1, -1)
 
         norm_matrix = ((X - Y) ** 2)
-        sigma = norm_matrix.median().item() ** 0.5 + 1e-8  # Median heuristic for bandwidth 
-        Kmat = torch.exp(-norm_matrix / (2 * sigma**2))
+        sigma = norm_matrix.median().item() + 1e-8  # Median heuristic for bandwidth 
+        Kmat = torch.exp(-norm_matrix / (2 * sigma))
         return Kmat
 
     def intra_batch_kernel_matrix(self, phi: torch.Tensor) -> torch.Tensor:

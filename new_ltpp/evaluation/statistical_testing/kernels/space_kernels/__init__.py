@@ -24,25 +24,25 @@ class TimeKernelType(Enum):
 
 
 def create_time_kernel(
-    kernel_type: TimeKernelType | str, sigma: float = 1.0, **kwargs
+    kernel_type: TimeKernelType | str, **kwargs
 ) -> ISpaceKernel:
     if isinstance(kernel_type, str):
         kernel_type = TimeKernelType(kernel_type)
 
     if kernel_type == TimeKernelType.RBF:
-        return RBFTimeKernel(sigma=sigma)
+        return RBFTimeKernel()
     if kernel_type == TimeKernelType.IMQ:
         return IMQTimeKernel(c=kwargs.get("c", 1.0), beta=kwargs.get("beta", 0.5))
     if kernel_type == TimeKernelType.MATERN_3_2:
-        return MaternTimeKernel(sigma=sigma, nu=1.5)
+        return MaternTimeKernel(nu=1.5)
     if kernel_type == TimeKernelType.MATERN_5_2:
-        return MaternTimeKernel(sigma=sigma, nu=2.5)
+        return MaternTimeKernel(nu=2.5)
     if kernel_type == TimeKernelType.LAPLACIAN:
-        return LaplacianTimeKernel(sigma=sigma)
+        return LaplacianTimeKernel()
     if kernel_type == TimeKernelType.RATIONAL_QUADRATIC:
-        return RationalQuadraticTimeKernel(sigma=sigma, alpha=kwargs.get("alpha", 1.0))
+        return RationalQuadraticTimeKernel(alpha=kwargs.get("alpha", 1.0))
     if kernel_type == TimeKernelType.BSPLINE:
-        return BSplineTimeKernel(sigma=sigma, order=kwargs.get("order", 3))
+        return BSplineTimeKernel(order=kwargs.get("order", 3))
     if kernel_type == TimeKernelType.POISSON:
         return PoissonTimeKernel(r=kwargs.get("r", 0.5), d=kwargs.get("d", 1))
 

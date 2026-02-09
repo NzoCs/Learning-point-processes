@@ -2,7 +2,7 @@
 Test MMD sur des processus de Hawkes avec différents paramètres
 
 Ce script génère des processus de Hawkes avec différentes configurations
-et les compare via le test MMD two-sample avec MKernel (IMQ+Cauchy) et SigKernel.
+et les compare via le test MMD two-sample avec MKernel (RBF+Exponential) et SigKernel.
 
 Usage:
     python test_mmd_hawkes.py [--num-sim 200] [--n-permutations 200] [--batch-size 64]
@@ -270,18 +270,15 @@ def setup_kernels(dim_process: int, n_permutations: int) -> Tuple:
     print("CONFIGURATION DES KERNELS")
     print("=" * 80)
 
-    # MKernel (IMQ time kernel + IMQ transform)
+    # MKernel (RBF time kernel + Exponential transform)
     # Reduced sigma for more sensitivity to differences
-    time_kernel_imq = create_time_kernel("imq", sigma=0.1)
-    type_kernel = EmbeddingKernel(num_classes=dim_process, embedding_dim=8, sigma=0.1)
+    time_kernel_rbf = create_time_kernel("rbf")
+    type_kernel = EmbeddingKernel(num_classes=dim_process, embedding_dim=8, sigma=1.0)
 
     mkernel = MKernel(
-        time_kernel=time_kernel_imq,
+        time_kernel=time_kernel_rbf,
         type_kernel=type_kernel,
-        sigma=0.5,
-        transform=MKernelTransform.IMQ,
-        c=1.0,
-        beta=0.5,
+        transform=MKernelTransform.EXPONENTIAL,
     )
 
     # SigKernel
@@ -298,7 +295,7 @@ def setup_kernels(dim_process: int, n_permutations: int) -> Tuple:
     # mmd_test_sig = MMDTwoSampleTest(kernel=sigkernel, n_permutations=n_permutations)
 
     print(
-        f"  1. MKernel : IMQ time + Embedding type, transform={mkernel.transform.value}"
+        f"  1. MKernel : RBF time + Embedding type, transform={mkernel.transform.value}"
     )
     # print(
     #     f"  2. SIGKernel : static_kernel={sigkernel.static_kernel_type}, dyadic_order={sigkernel.dyadic_order}"
@@ -319,7 +316,7 @@ def run_sanity_check(batches: Dict, mmd_test_mk, mmd_test_sig, batch_size: int):
     print("SANITY CHECK : baseline vs baseline_copy")
     print("=" * 80)
 
-    print("\n📊 Test avec MKernel (IMQ + Cauchy):")
+    print("\n📊 Test avec MKernel (RBF + Exponential):")
     print("-" * 80)
     result_mk = mmd_test_by_batch(
         batches["baseline"],
@@ -371,7 +368,7 @@ def run_pairwise_tests(
         print(f"{'─' * 60}")
 
         # MKernel
-        print("  🔹 MKernel (IMQ + Cauchy)...")
+        print("  🔹 MKernel (RBF + Exponential)...")
         res_mk = mmd_test_by_batch(
             batches[name_a], batches[name_b], mmd_test_mk, batch_size, verbose=False
         )

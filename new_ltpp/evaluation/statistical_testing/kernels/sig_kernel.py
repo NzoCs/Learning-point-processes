@@ -24,9 +24,11 @@ class SIGKernel(IPointProcessKernel):
         self.static_kernel_type = static_kernel_type
         self.embedding_type = embedding_type
         self.dyadic_order = dyadic_order
-        
+
         # Initialize with a default kernel; will be set properly in compute_gram_matrix based on static_kernel_type
-        self.kernel = SigKernel(static_kernel=LinearKernel(), dyadic_order=self.dyadic_order)  
+        self.kernel = SigKernel(
+            static_kernel=LinearKernel(), dyadic_order=self.dyadic_order
+        )
 
         self.embedding_type = embedding_type
         self.num_event_types = num_event_types
@@ -173,6 +175,7 @@ class SIGKernel(IPointProcessKernel):
 
         return emb
 
+    @torch.compile
     def compute_gram_matrix(
         self,
         phi_batch: Batch | SimulationResult,
@@ -204,17 +207,22 @@ class SIGKernel(IPointProcessKernel):
         phi_time_seqs = phi_time_seqs / global_max
         psi_time_seqs = psi_time_seqs / global_max
 
-
         match self.static_kernel_type:
             case "linear":
                 self.kernel.static_kernel = LinearKernel()
             case "rbf":
                 sigma = max(
-                    (phi_time_seqs.unsqueeze(1) - psi_time_seqs.unsqueeze(-1)).abs().median().item(), 1e-8
+                    (phi_time_seqs.unsqueeze(1) - psi_time_seqs.unsqueeze(-1))
+                    .abs()
+                    .median()
+                    .item(),
+                    1e-8,
                 )  # Median heuristic for bandwidth
-                self.kernel.static_kernel = RBFKernel(sigma=sigma) # type: ignore
+                self.kernel.static_kernel = RBFKernel(sigma=sigma)  # type: ignore
             case _:
-                raise ValueError(f"Unknown static kernel type: {self.static_kernel_type}")
+                raise ValueError(
+                    f"Unknown static kernel type: {self.static_kernel_type}"
+                )
 
         # 1) Compute embeddings (stays in original dtype, float32 is fine for sigkernel)
         # ---------------------

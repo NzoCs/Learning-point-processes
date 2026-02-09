@@ -1,4 +1,3 @@
-from networkx import sigma
 import torch
 from typing import Literal
 from enum import Enum
@@ -68,7 +67,7 @@ class MKernel(IPointProcessKernel):
         """
         # Ensure non-negative and clamp to prevent NaN
         dist_sq = dist_sq.clamp(min=0.0)
-        
+
         # Robust median heuristic: filter out zeros and NaNs
         valid_dist = dist_sq[torch.isfinite(dist_sq) & (dist_sq > 1e-10)]
         if valid_dist.numel() > 0:
@@ -76,7 +75,7 @@ class MKernel(IPointProcessKernel):
         else:
             sigma = 1.0  # Fallback when all distances are zero or invalid
         sigma = max(sigma, 1e-6)  # Ensure positive
-        
+
         if self.transform == MKernelTransform.EXPONENTIAL:
             # RBF-like: exp(-d²/(2σ²))
             return torch.exp(-dist_sq / (2 * sigma))
@@ -87,9 +86,7 @@ class MKernel(IPointProcessKernel):
 
         elif self.transform == MKernelTransform.RATIONAL_QUADRATIC:
             # Rational Quadratic: (1 + d²/(2ασ²))^(-α)
-            return torch.pow(
-                1 + dist_sq / (2 * self.alpha * sigma), -self.alpha
-            )
+            return torch.pow(1 + dist_sq / (2 * self.alpha * sigma), -self.alpha)
 
         elif self.transform == MKernelTransform.LAPLACIAN:
             # Laplacian: exp(-√d²/σ) = exp(-|d|/σ)
@@ -107,6 +104,7 @@ class MKernel(IPointProcessKernel):
         else:
             raise ValueError(f"Unknown transform: {self.transform}")
 
+    @torch.compile
     def compute_gram_matrix(
         self,
         phi_batch: Batch | SimulationResult,
@@ -142,7 +140,7 @@ class MKernel(IPointProcessKernel):
         global_max = max(phi_masked_dt.max().item(), psi_masked_dt.max().item()) + 1e-8
         phi_delta_time_seqs = phi_delta_time_seqs / global_max
         psi_delta_time_seqs = psi_delta_time_seqs / global_max
-        
+
         B1, L = phi_delta_time_seqs.shape
         B2, K = psi_delta_time_seqs.shape
 
@@ -172,17 +170,25 @@ class MKernel(IPointProcessKernel):
         # Remove diagonal (self-pairs), then normalize by n_i * (n_i - 1)
         # Clamp denominator to avoid division by zero
         denom_xx = (phi_n * (phi_n - 1)).clamp(min=1e-8)
-        Kt_XX_hat = (Kt_XX_masked.sum(-1).sum(-1) - Kt_XX_masked.diagonal(dim1=-2, dim2=-1).sum(-1)) / denom_xx  # (B1,)
+        Kt_XX_hat = (
+            Kt_XX_masked.sum(-1).sum(-1)
+            - Kt_XX_masked.diagonal(dim1=-2, dim2=-1).sum(-1)
+        ) / denom_xx  # (B1,)
 
         # Intra-batch YY: mask shape (B2, K, K)
         yy_mask = psi_mask.unsqueeze(-1) & psi_mask.unsqueeze(-2)  # (B2, K, K)
         Kt_YY_masked = Kt_YY_matrix * yy_mask.float()
         # Clamp denominator to avoid division by zero
         denom_yy = (psi_n * (psi_n - 1)).clamp(min=1e-8)
-        Kt_YY_hat = (Kt_YY_masked.sum(-1).sum(-1) - Kt_YY_masked.diagonal(dim1=-2, dim2=-1).sum(-1)) / denom_yy  # (B2,)
+        Kt_YY_hat = (
+            Kt_YY_masked.sum(-1).sum(-1)
+            - Kt_YY_masked.diagonal(dim1=-2, dim2=-1).sum(-1)
+        ) / denom_yy  # (B2,)
 
         # Cross-batch XY: mask shape (B1, B2, L, K) — phi position i and psi position j both valid
-        xy_mask = phi_mask.unsqueeze(1).unsqueeze(-1) & psi_mask.unsqueeze(0).unsqueeze(-2)  # (B1, B2, L, K)
+        xy_mask = phi_mask.unsqueeze(1).unsqueeze(-1) & psi_mask.unsqueeze(0).unsqueeze(
+            -2
+        )  # (B1, B2, L, K)
         Kt_XY_masked = (Kt_XY_matrix * marks_kernel_matrix) * xy_mask.float()
         # Normalize by n_phi_i * n_psi_j for each (i, j) pair
         xy_norm = phi_n.unsqueeze(-1) * psi_n.unsqueeze(0)  # (B1, B2)

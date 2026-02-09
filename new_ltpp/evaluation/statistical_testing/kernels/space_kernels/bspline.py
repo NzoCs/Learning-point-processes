@@ -24,6 +24,7 @@ class BSplineTimeKernel(ISpaceKernel):
         else:
             raise ValueError(f"Unsupported B-spline order: {self.order}")
 
+    @torch.compile
     def cross_batch_kernel_matrix(
         self, phi: torch.Tensor, psi: torch.Tensor
     ) -> torch.Tensor:
@@ -36,6 +37,7 @@ class BSplineTimeKernel(ISpaceKernel):
         normalized = dist / sigma
         return self._bspline_kernel(normalized)
 
+    @torch.compile
     def intra_batch_kernel_matrix(self, phi: torch.Tensor) -> torch.Tensor:
         B, L = phi.shape
         X = phi.unsqueeze(-1).expand(-1, L, -1)

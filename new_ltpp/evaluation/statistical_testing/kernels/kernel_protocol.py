@@ -6,6 +6,7 @@ from new_ltpp.shared_types import Batch, SimulationResult
 
 @runtime_checkable
 class IPointProcessKernel(Protocol):
+    @torch.compile
     def compute_gram_matrix(
         self,
         phi_batch: Batch | SimulationResult,

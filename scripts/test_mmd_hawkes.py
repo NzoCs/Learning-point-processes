@@ -661,7 +661,7 @@ def main():
         help="Nombre de permutations pour le test MMD",
     )
     parser.add_argument(
-        "--batch-size", type=int, default=16, help="Taille des batches pour les tests"
+        "--batch-size", type=int, default=32, help="Taille des batches pour les tests"
     )
     parser.add_argument(
         "--dim-process",
@@ -672,7 +672,7 @@ def main():
     parser.add_argument(
         "--end-time",
         type=int,
-        default=10,
+        default=50,
         help="End time for Hawkes simulation (controls sequence length, default=10)",
     )
     parser.add_argument(

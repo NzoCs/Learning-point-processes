@@ -27,7 +27,7 @@ class MaternTimeKernel(ISpaceKernel):
         X = phi.unsqueeze(-1).unsqueeze(1).expand(-1, B2, -1, 1)
         Y = psi.unsqueeze(-2).unsqueeze(0).expand(B1, -1, 1, -1)
         dist = torch.sqrt((X - Y) ** 2)
-        sigma = dist.median().item() + 1e-8  # Median heuristic for bandwidth
+        sigma = dist.median() + 1e-8  # Median heuristic for bandwidth
         return self._compute_kernel(dist / sigma)
 
     @torch.compile
@@ -36,5 +36,5 @@ class MaternTimeKernel(ISpaceKernel):
         X = phi.unsqueeze(-1).expand(-1, L, -1)
         Y = phi.unsqueeze(-2).expand(-1, 1, L)
         dist = torch.sqrt((X - Y) ** 2)
-        sigma = dist.median().item() + 1e-8  # Median heuristic for bandwidth
+        sigma = dist.median() + 1e-8  # Median heuristic for bandwidth
         return self._compute_kernel(dist / sigma)

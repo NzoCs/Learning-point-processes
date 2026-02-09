@@ -105,9 +105,11 @@ new-ltpp = "scripts.cli:main"
 
 [tool.uv.extra-build-dependencies]
 git = ["Cython"]
+sigkernel = ["Cython"]
 
 [tool.uv.sources]
 sigkernel = { git = "https://github.com/crispitagorico/sigkernel.git" }
+
 
 [tool.setuptools]
 include-package-data = true

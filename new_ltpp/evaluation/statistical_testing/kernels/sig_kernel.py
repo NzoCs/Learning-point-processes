@@ -18,7 +18,7 @@ class SIGKernel(IPointProcessKernel):
         embedding_type: Literal["linear_interpolant", "constant_interpolant"],
         dyadic_order: int,
         num_event_types: int,
-        sigma: Optional[float] = None,
+        sigma: float,
     ):
         self.static_kernel_type = static_kernel_type
         self.embedding_type = embedding_type
@@ -51,10 +51,9 @@ class SIGKernel(IPointProcessKernel):
 
         match self.embedding_type:
             case "linear_interpolant":
-                # Normalize time sequences to [0, 1] range per sequence
-                # Add small epsilon to avoid division by zero
-                time_max = time_seqs.max(dim=1, keepdim=True)[0] + 1e-8
-                normalized_time_seqs = time_seqs / time_max  # (B, L)
+                # NOTE: No normalization here - should be done globally in compute_gram_matrix
+                # to preserve relative time scales between sequences
+                normalized_time_seqs = time_seqs  # (B, L)
 
                 # Normalize counting sequences to [0, 1] range
                 counting_seqs = torch.arange(
@@ -79,9 +78,9 @@ class SIGKernel(IPointProcessKernel):
                     dim=-1,
                 )  # (B, L, 2 + num_event_types)
             case "constant_interpolant":
-                # Normalize time sequences to [0, 1] range per sequence
-                time_max = time_seqs.max(dim=1, keepdim=True)[0] + 1e-8
-                normalized_time_seqs = time_seqs / time_max  # (B, L)
+                # NOTE: No normalization here - should be done globally in compute_gram_matrix
+                # to preserve relative time scales between sequences
+                normalized_time_seqs = time_seqs  # (B, L)
 
                 # create the sequence of [t_1, t_1, t_2, t_2, ..., t_n, t_n]
                 pair_indexes = (
@@ -139,6 +138,46 @@ class SIGKernel(IPointProcessKernel):
             case _:
                 raise ValueError(f"Unknown embedding type: {self.embedding_type}")
 
+    def _forward_fill_padding(
+        self, emb: torch.Tensor, mask: torch.Tensor
+    ) -> torch.Tensor:
+        """Replace padded positions with the last valid embedding value.
+
+        A constant path after the last event produces zero increments,
+        so the signature kernel naturally ignores it.
+
+        Args:
+            emb: Embedding tensor (B, L', C) where L' may be L or 2*L for constant_interpolant.
+            mask: Valid event mask (B, L) with True for real events.
+
+        Returns:
+            Embedding with padded positions forward-filled. Same shape as input.
+        """
+        B, L_emb, C = emb.shape
+        B_mask, L_mask = mask.shape
+
+        # For constant_interpolant, L_emb = 2 * L_mask: expand mask to match
+        if L_emb == 2 * L_mask:
+            # Each event i maps to positions 2*i and 2*i+1
+            expanded_mask = mask.unsqueeze(-1).expand(-1, -1, 2).reshape(B, L_emb)
+        else:
+            expanded_mask = mask
+
+        # Find the index of the last valid position per sequence
+        # last_valid_idx: (B,) — index of the last True in the mask
+        last_valid_idx = expanded_mask.long().cumsum(dim=1).argmax(dim=1)  # (B,)
+
+        # Gather the last valid embedding for each sequence
+        last_valid_emb = emb[
+            torch.arange(B, device=emb.device), last_valid_idx
+        ]  # (B, C)
+
+        # Expand to full sequence length and fill where mask is False
+        fill_value = last_valid_emb.unsqueeze(1).expand_as(emb)  # (B, L', C)
+        emb = torch.where(expanded_mask.unsqueeze(-1), emb, fill_value)
+
+        return emb
+
     def compute_gram_matrix(
         self,
         phi_batch: Batch | SimulationResult,
@@ -159,28 +198,32 @@ class SIGKernel(IPointProcessKernel):
         psi_time_seqs = psi_batch.time_seqs
         psi_type_seqs = psi_batch.type_seqs
 
-        # Store original dtype for conversion back
-        original_dtype = phi_time_seqs.dtype
-
-        # Convert to float64 for sigkernel computation
         phi_time_seqs = phi_time_seqs.double()
-        phi_type_seqs = phi_type_seqs.double()
         psi_time_seqs = psi_time_seqs.double()
-        psi_type_seqs = psi_type_seqs.double()
 
-        # 1) Compute embeddings
+        # Apply uniform normalization across both batches to preserve relative structure
+        # Use masked max to ignore padded positions
+        phi_masked = phi_time_seqs.masked_fill(~phi_batch.valid_event_mask, 0.0)
+        psi_masked = psi_time_seqs.masked_fill(~psi_batch.valid_event_mask, 0.0)
+        global_max = max(phi_masked.max().item(), psi_masked.max().item()) + 1e-8
+        phi_time_seqs = phi_time_seqs / global_max
+        psi_time_seqs = psi_time_seqs / global_max
+
+        # 1) Compute embeddings (stays in original dtype, float32 is fine for sigkernel)
         # ---------------------
         # phi : (B1, Lφ, C)
         # psi : (B2, Lψ, C)
         phi_emb = self._get_embedding(phi_time_seqs, phi_type_seqs)
         psi_emb = self._get_embedding(psi_time_seqs, psi_type_seqs)
 
+        # 2) Mask out padded positions by forward-filling with the last valid value.
+        #    A constant path has zero increments → no contribution to the signature kernel.
+        phi_emb = self._forward_fill_padding(phi_emb, phi_batch.valid_event_mask)
+        psi_emb = self._forward_fill_padding(psi_emb, psi_batch.valid_event_mask)
+
         # 3) Compute full Gram matrix between all (b,i) and all (b',j)
         # ------------------------------------------------------------
         # output shape from SigKernel = (B1, B2)
         gram: torch.Tensor = self.kernel.compute_Gram(phi_emb, psi_emb)  # type: ignore
-
-        # Convert back to original dtype
-        gram = gram.to(original_dtype)
 
         return gram

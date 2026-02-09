@@ -1,3 +1,4 @@
+from networkx import sigma
 import torch
 from typing import Literal
 from enum import Enum
@@ -29,7 +30,6 @@ class MKernel(IPointProcessKernel):
         self,
         time_kernel: TimeKernel,
         type_kernel: TypeKernel,
-        sigma: float = 1.0,
         transform: MKernelTransform | str = MKernelTransform.EXPONENTIAL,
         **transform_kwargs,
     ):
@@ -38,7 +38,6 @@ class MKernel(IPointProcessKernel):
         Args:
             time_kernel: Kernel for time sequences.
             type_kernel: Kernel for type sequences.
-            sigma: Bandwidth parameter for the M-kernel.
             transform: Type de transformation à appliquer sur la distance MMD.
             **transform_kwargs: Paramètres additionnels pour la transformation:
                 - IMQ: c (default=1.0), beta (default=0.5)
@@ -48,7 +47,6 @@ class MKernel(IPointProcessKernel):
         """
         self.time_kernel = time_kernel
         self.type_kernel = type_kernel
-        self.sigma = sigma
 
         if isinstance(transform, str):
             transform = MKernelTransform(transform)
@@ -68,32 +66,43 @@ class MKernel(IPointProcessKernel):
         Returns:
             Kernel value (B1, B2)
         """
+        # Ensure non-negative and clamp to prevent NaN
+        dist_sq = dist_sq.clamp(min=0.0)
+        
+        # Robust median heuristic: filter out zeros and NaNs
+        valid_dist = dist_sq[torch.isfinite(dist_sq) & (dist_sq > 1e-10)]
+        if valid_dist.numel() > 0:
+            sigma = valid_dist.median().item()
+        else:
+            sigma = 1.0  # Fallback when all distances are zero or invalid
+        sigma = max(sigma, 1e-6)  # Ensure positive
+        
         if self.transform == MKernelTransform.EXPONENTIAL:
             # RBF-like: exp(-d²/(2σ²))
-            return torch.exp(-dist_sq / (2 * self.sigma**2))
+            return torch.exp(-dist_sq / (2 * sigma))
 
         elif self.transform == MKernelTransform.IMQ:
             # Inverse Multiquadric: (c² + d²)^(-β)
-            return torch.pow(self.c**2 + dist_sq, -self.beta)
+            return torch.pow(self.c**2 + dist_sq / sigma, -self.beta)
 
         elif self.transform == MKernelTransform.RATIONAL_QUADRATIC:
             # Rational Quadratic: (1 + d²/(2ασ²))^(-α)
             return torch.pow(
-                1 + dist_sq / (2 * self.alpha * self.sigma**2), -self.alpha
+                1 + dist_sq / (2 * self.alpha * sigma), -self.alpha
             )
 
         elif self.transform == MKernelTransform.LAPLACIAN:
             # Laplacian: exp(-√d²/σ) = exp(-|d|/σ)
             dist = torch.sqrt(dist_sq + 1e-8)
-            return torch.exp(-dist / self.sigma)
+            return torch.exp(-dist / sigma)
 
         elif self.transform == MKernelTransform.LINEAR:
             # Linear: max(0, 1 - d²/σ²)
-            return torch.clamp(1 - dist_sq / self.sigma**2, min=0.0)
+            return torch.clamp(1 - dist_sq / sigma, min=0.0)
 
         elif self.transform == MKernelTransform.CAUCHY:
             # Cauchy: 1/(1 + d²/σ²)
-            return 1.0 / (1 + dist_sq / self.sigma**2)
+            return 1.0 / (1 + dist_sq / sigma)
 
         else:
             raise ValueError(f"Unknown transform: {self.transform}")
@@ -118,13 +127,22 @@ class MKernel(IPointProcessKernel):
         psi_delta_time_seqs = psi_batch.time_delta_seqs
         psi_type_seqs = psi_batch.type_seqs
 
-        # Normalize delta time sequences to [0, 1] range per sequence
-        phi_max = phi_delta_time_seqs.max(dim=1, keepdim=True)[0] + 1e-8
-        phi_delta_time_seqs = phi_delta_time_seqs / phi_max  # (B1, L)
+        # Extract valid event masks (True = real event, False = padding)
+        phi_mask = phi_batch.valid_event_mask  # (B1, L)
+        psi_mask = psi_batch.valid_event_mask  # (B2, K)
 
-        psi_max = psi_delta_time_seqs.max(dim=1, keepdim=True)[0] + 1e-8
-        psi_delta_time_seqs = psi_delta_time_seqs / psi_max  # (B2, K)
+        # Per-sequence valid counts
+        phi_n = phi_mask.sum(dim=1).float()  # (B1,)
+        psi_n = psi_mask.sum(dim=1).float()  # (B2,)
 
+        # Apply uniform normalization across both batches to preserve relative structure
+        # Use masked max to ignore padded positions
+        phi_masked_dt = phi_delta_time_seqs.masked_fill(~phi_mask, 0.0)
+        psi_masked_dt = psi_delta_time_seqs.masked_fill(~psi_mask, 0.0)
+        global_max = max(phi_masked_dt.max().item(), psi_masked_dt.max().item()) + 1e-8
+        phi_delta_time_seqs = phi_delta_time_seqs / global_max
+        psi_delta_time_seqs = psi_delta_time_seqs / global_max
+        
         B1, L = phi_delta_time_seqs.shape
         B2, K = psi_delta_time_seqs.shape
 
@@ -146,15 +164,29 @@ class MKernel(IPointProcessKernel):
             psi_delta_time_seqs,
         )  # (B2, K, K)
 
-        Kt_XX_hat = (Kt_XX_matrix.sum(-1).sum(-1) - Kt_XX_matrix.diagonal().sum(-1)) / (
-            L * (L - 1)
-        )  # (B1,)
-        Kt_YY_hat = (Kt_YY_matrix.sum(-1).sum(-1) - Kt_YY_matrix.diagonal().sum(-1)) / (
-            K * (K - 1)
-        )  # (B2,)
-        Kt_XY_matrix = (Kt_XY_matrix * marks_kernel_matrix).sum(-1).sum(-1) / (
-            L * K
-        )  # (B1, B2)
+        # --- Mask out padded positions before summing ---
+
+        # Intra-batch XX: mask shape (B1, L, L) — both positions must be valid
+        xx_mask = phi_mask.unsqueeze(-1) & phi_mask.unsqueeze(-2)  # (B1, L, L)
+        Kt_XX_masked = Kt_XX_matrix * xx_mask.float()
+        # Remove diagonal (self-pairs), then normalize by n_i * (n_i - 1)
+        # Clamp denominator to avoid division by zero
+        denom_xx = (phi_n * (phi_n - 1)).clamp(min=1e-8)
+        Kt_XX_hat = (Kt_XX_masked.sum(-1).sum(-1) - Kt_XX_masked.diagonal(dim1=-2, dim2=-1).sum(-1)) / denom_xx  # (B1,)
+
+        # Intra-batch YY: mask shape (B2, K, K)
+        yy_mask = psi_mask.unsqueeze(-1) & psi_mask.unsqueeze(-2)  # (B2, K, K)
+        Kt_YY_masked = Kt_YY_matrix * yy_mask.float()
+        # Clamp denominator to avoid division by zero
+        denom_yy = (psi_n * (psi_n - 1)).clamp(min=1e-8)
+        Kt_YY_hat = (Kt_YY_masked.sum(-1).sum(-1) - Kt_YY_masked.diagonal(dim1=-2, dim2=-1).sum(-1)) / denom_yy  # (B2,)
+
+        # Cross-batch XY: mask shape (B1, B2, L, K) — phi position i and psi position j both valid
+        xy_mask = phi_mask.unsqueeze(1).unsqueeze(-1) & psi_mask.unsqueeze(0).unsqueeze(-2)  # (B1, B2, L, K)
+        Kt_XY_masked = (Kt_XY_matrix * marks_kernel_matrix) * xy_mask.float()
+        # Normalize by n_phi_i * n_psi_j for each (i, j) pair
+        xy_norm = phi_n.unsqueeze(-1) * psi_n.unsqueeze(0)  # (B1, B2)
+        Kt_XY_matrix = Kt_XY_masked.sum(-1).sum(-1) / xy_norm.clamp(min=1)  # (B1, B2)
 
         dist_sq = (
             Kt_XX_hat.unsqueeze(-1) + Kt_YY_hat.unsqueeze(0) - 2 * Kt_XY_matrix

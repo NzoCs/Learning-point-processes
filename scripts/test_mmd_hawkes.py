@@ -12,10 +12,11 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple
 from itertools import combinations
+from datetime import datetime
 
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
+import pandas as pd
 
 from new_ltpp.data.generation.hawkes import HawkesSimulator
 from new_ltpp.data.generation.simulation_manager import SimulationManager
@@ -26,7 +27,7 @@ from new_ltpp.evaluation.statistical_testing.kernels import (
     MKernelTransform,
     create_time_kernel,
     EmbeddingKernel,
-    SIGKernel,
+    # SIGKernel,
 )
 
 
@@ -35,7 +36,7 @@ from new_ltpp.evaluation.statistical_testing.kernels import (
 # ============================================================================
 
 
-def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
+def get_hawkes_configs(dim_process: int = 2, end_time: int = 30) -> Dict[str, dict]:
     """Définit les configurations de processus de Hawkes à tester."""
     return {
         "baseline": dict(
@@ -44,7 +45,7 @@ def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         ),
         "baseline_copy": dict(
             mu=[0.2, 0.2],
@@ -52,7 +53,7 @@ def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         ),
         "high_excitation": dict(
             mu=[0.2, 0.2],
@@ -60,7 +61,7 @@ def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         ),
         "low_excitation": dict(
             mu=[0.2, 0.2],
@@ -68,7 +69,7 @@ def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         ),
         "high_baseline": dict(
             mu=[0.8, 0.8],
@@ -76,7 +77,7 @@ def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         ),
         "slow_decay": dict(
             mu=[0.2, 0.2],
@@ -84,7 +85,7 @@ def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
             beta=[[0.5, 0.3], [0.3, 0.5]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         ),
         "asymmetric": dict(
             mu=[0.1, 0.5],
@@ -92,7 +93,7 @@ def get_hawkes_configs(dim_process: int = 2) -> Dict[str, dict]:
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         ),
     }
 
@@ -109,7 +110,7 @@ def simulate_hawkes(
     dim_process,
     num_simulations=200,
     start_time=0,
-    end_time=100,
+    end_time=30,
     seed=None,
 ) -> List[Dict]:
     """Simule des processus de Hawkes."""
@@ -175,11 +176,27 @@ def split_batch(batch: Batch, batch_size: int) -> List[Batch]:
     return sub_batches
 
 
+def estimate_memory_gb(batch_size: int, seq_len: int) -> float:
+    """Estimate peak memory usage for kernel computation in GB.
+    
+    The kernel creates 4D tensors of shape (B, B, L, L) for intra-batch
+    and (B1, B2, L, K) for cross-batch computations.
+    Multiple such tensors exist simultaneously.
+    """
+    # 3 kernel matrix calls in MMD (k_xx, k_yy, k_xy)
+    # Each creates ~3 intermediate 4D tensors
+    elements_per_tensor = batch_size * batch_size * seq_len * seq_len
+    bytes_per_tensor = elements_per_tensor * 4  # float32
+    # ~3 tensors alive at peak during one gram matrix computation
+    peak_bytes = bytes_per_tensor * 3
+    return peak_bytes / (1024 ** 3)
+
+
 def mmd_test_by_batch(
     batch_x: Batch,
     batch_y: Batch,
     test: MMDTwoSampleTest,
-    batch_size: int = 64,
+    batch_size: int = 16,
     verbose: bool = False,
 ) -> Dict:
     """Exécute le test MMD par batch et agrège les résultats."""
@@ -191,13 +208,15 @@ def mmd_test_by_batch(
     p_values = []
 
     for i in range(n_pairs):
+        if verbose:
+            print(f"  Batch {i + 1}/{n_pairs}...", end=" ", flush=True)
         mmd_val = test.statistic_from_batches(sub_x[i], sub_y[i])
         p_val = test.p_value_from_batches(sub_x[i], sub_y[i])
         mmd_values.append(mmd_val)
         p_values.append(p_val)
         if verbose:
             print(
-                f"  Batch {i + 1}/{n_pairs} : MMD² = {mmd_val:.6f}, p-value = {p_val:.4f}"
+                f"MMD² = {mmd_val:.6f}, p-value = {p_val:.4f}"
             )
 
     return {
@@ -251,38 +270,42 @@ def setup_kernels(dim_process: int, n_permutations: int) -> Tuple:
     print("CONFIGURATION DES KERNELS")
     print("=" * 80)
 
-    # MKernel (IMQ + Cauchy)
-    time_kernel_imq = create_time_kernel("imq", sigma=1.0)
-    type_kernel = EmbeddingKernel(num_classes=dim_process, embedding_dim=16, sigma=1.0)
+    # MKernel (IMQ time kernel + IMQ transform)
+    # Reduced sigma for more sensitivity to differences
+    time_kernel_imq = create_time_kernel("imq", sigma=0.1)
+    type_kernel = EmbeddingKernel(num_classes=dim_process, embedding_dim=8, sigma=0.1)
 
     mkernel = MKernel(
         time_kernel=time_kernel_imq,
         type_kernel=type_kernel,
-        sigma=1.0,
-        transform=MKernelTransform.CAUCHY,
+        sigma=0.5,
+        transform=MKernelTransform.IMQ,
+        c=1.0,
+        beta=0.5,
     )
 
     # SigKernel
-    sigkernel = SIGKernel(
-        static_kernel_type="rbf",
-        embedding_type="linear_interpolant",
-        dyadic_order=3,
-        num_event_types=dim_process,
-    )
+    # sigkernel = SIGKernel(
+    #     static_kernel_type="rbf",
+    #     embedding_type="linear_interpolant",
+    #     dyadic_order=3,
+    #     num_event_types=dim_process,
+    #     sigma=1.0,
+    # )
 
     # Tests MMD
     mmd_test_mk = MMDTwoSampleTest(kernel=mkernel, n_permutations=n_permutations)
-    mmd_test_sig = MMDTwoSampleTest(kernel=sigkernel, n_permutations=n_permutations)
+    # mmd_test_sig = MMDTwoSampleTest(kernel=sigkernel, n_permutations=n_permutations)
 
     print(
         f"  1. MKernel : IMQ time + Embedding type, transform={mkernel.transform.value}"
     )
-    print(
-        f"  2. SIGKernel : static_kernel={sigkernel.static_kernel_type}, dyadic_order={sigkernel.dyadic_order}"
-    )
+    # print(
+    #     f"  2. SIGKernel : static_kernel={sigkernel.static_kernel_type}, dyadic_order={sigkernel.dyadic_order}"
+    # )
     print(f"  Permutations : {n_permutations}")
 
-    return mmd_test_mk, mmd_test_sig
+    return mmd_test_mk, None  # mmd_test_sig
 
 
 # ============================================================================
@@ -307,26 +330,20 @@ def run_sanity_check(batches: Dict, mmd_test_mk, mmd_test_sig, batch_size: int):
     )
     print(f"\n→ MMD² moyen = {result_mk['mean_mmd']:.6f}")
     print(f"→ p-value moyenne = {result_mk['mean_p_value']:.4f}")
-    print(
-        f"→ Conclusion : {'H0 NON rejetée ✓' if result_mk['mean_p_value'] > 0.05 else 'H0 rejetée ✗ (inattendu)'}"
-    )
 
-    print("\n📊 Test avec SigKernel:")
-    print("-" * 80)
-    result_sig = mmd_test_by_batch(
-        batches["baseline"],
-        batches["baseline_copy"],
-        mmd_test_sig,
-        batch_size,
-        verbose=True,
-    )
-    print(f"\n→ MMD² moyen = {result_sig['mean_mmd']:.6f}")
-    print(f"→ p-value moyenne = {result_sig['mean_p_value']:.4f}")
-    print(
-        f"→ Conclusion : {'H0 NON rejetée ✓' if result_sig['mean_p_value'] > 0.05 else 'H0 rejetée ✗ (inattendu)'}"
-    )
+    # print("\n📊 Test avec SigKernel:")
+    # print("-" * 80)
+    # result_sig = mmd_test_by_batch(
+    #     batches["baseline"],
+    #     batches["baseline_copy"],
+    #     mmd_test_sig,
+    #     batch_size,
+    #     verbose=True,
+    # )
+    # print(f"\n→ MMD² moyen = {result_sig['mean_mmd']:.6f}")
+    # print(f"→ p-value moyenne = {result_sig['mean_p_value']:.4f}")
 
-    return result_mk, result_sig
+    return result_mk, None  # result_sig
 
 
 # ============================================================================
@@ -366,18 +383,18 @@ def run_pairwise_tests(
         print(f"    → {'H0 REJETÉE' if rejected_mk else 'H0 non rejetée'}")
 
         # SigKernel
-        print("  🔹 SigKernel...")
-        res_sig = mmd_test_by_batch(
-            batches[name_a], batches[name_b], mmd_test_sig, batch_size, verbose=False
-        )
-        results_sig[(name_a, name_b)] = res_sig
-        rejected_sig = res_sig["mean_p_value"] < 0.05
-        print(
-            f"    → MMD² = {res_sig['mean_mmd']:.6f}, p-value = {res_sig['mean_p_value']:.4f}"
-        )
-        print(f"    → {'H0 REJETÉE' if rejected_sig else 'H0 non rejetée'}")
+        # print("  🔹 SigKernel...")
+        # res_sig = mmd_test_by_batch(
+        #     batches[name_a], batches[name_b], mmd_test_sig, batch_size, verbose=False
+        # )
+        # results_sig[(name_a, name_b)] = res_sig
+        # rejected_sig = res_sig["mean_p_value"] < 0.05
+        # print(
+        #     f"    → MMD² = {res_sig['mean_mmd']:.6f}, p-value = {res_sig['mean_p_value']:.4f}"
+        # )
+        # print(f"    → {'H0 REJETÉE' if rejected_sig else 'H0 non rejetée'}")
 
-    return results_mk, results_sig
+    return results_mk, {}  # results_sig
 
 
 # ============================================================================
@@ -392,6 +409,7 @@ def study_alpha_variation(
     dim_process: int,
     num_sim: int,
     max_len: int,
+    end_time: int = 30,
 ):
     """Étudie la variation du paramètre alpha."""
     print("\n" + "=" * 80)
@@ -410,7 +428,7 @@ def study_alpha_variation(
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         )
         seqs = simulate_hawkes(**params, num_simulations=num_sim)
         batch_alpha = sequences_to_batch(seqs, max_len=max_len)
@@ -423,17 +441,17 @@ def study_alpha_variation(
         )
 
         # SigKernel
-        mmd_val_sig = mmd_test_sig.statistic_from_batches(baseline_batch, batch_alpha)
-        p_val_sig = mmd_test_sig.p_value_from_batches(baseline_batch, batch_alpha)
-        alpha_results_sig.append(
-            {"alpha": alpha_diag, "mmd": mmd_val_sig, "p_value": p_val_sig}
-        )
+        # mmd_val_sig = mmd_test_sig.statistic_from_batches(baseline_batch, batch_alpha)
+        # p_val_sig = mmd_test_sig.p_value_from_batches(baseline_batch, batch_alpha)
+        # alpha_results_sig.append(
+        #     {"alpha": alpha_diag, "mmd": mmd_val_sig, "p_value": p_val_sig}
+        # )
 
         print(f"alpha={alpha_diag:.2f}")
         print(f"  MKernel  : MMD²={mmd_val_mk:.6f}, p-value={p_val_mk:.4f}")
-        print(f"  SigKernel: MMD²={mmd_val_sig:.6f}, p-value={p_val_sig:.4f}")
+        # print(f"  SigKernel: MMD²={mmd_val_sig:.6f}, p-value={p_val_sig:.4f}")
 
-    return alpha_results_mk, alpha_results_sig
+    return alpha_results_mk, []  # alpha_results_sig
 
 
 # ============================================================================
@@ -448,6 +466,7 @@ def study_mu_variation(
     dim_process: int,
     num_sim: int,
     max_len: int,
+    end_time: int = 30,
 ):
     """Étudie la variation du paramètre mu."""
     print("\n" + "=" * 80)
@@ -465,7 +484,7 @@ def study_mu_variation(
             beta=[[2.0, 1.0], [1.0, 2.0]],
             dim_process=dim_process,
             start_time=0,
-            end_time=100,
+            end_time=end_time,
         )
         seqs = simulate_hawkes(**params, num_simulations=num_sim)
         batch_mu = sequences_to_batch(seqs, max_len=max_len)
@@ -476,23 +495,23 @@ def study_mu_variation(
         mu_results_mk.append({"mu": mu_val, "mmd": mmd_val_mk, "p_value": p_val_mk})
 
         # SigKernel
-        mmd_val_sig = mmd_test_sig.statistic_from_batches(baseline_batch, batch_mu)
-        p_val_sig = mmd_test_sig.p_value_from_batches(baseline_batch, batch_mu)
-        mu_results_sig.append({"mu": mu_val, "mmd": mmd_val_sig, "p_value": p_val_sig})
+        # mmd_val_sig = mmd_test_sig.statistic_from_batches(baseline_batch, batch_mu)
+        # p_val_sig = mmd_test_sig.p_value_from_batches(baseline_batch, batch_mu)
+        # mu_results_sig.append({"mu": mu_val, "mmd": mmd_val_sig, "p_value": p_val_sig})
 
         print(f"mu={mu_val:.2f}")
         print(f"  MKernel  : MMD²={mmd_val_mk:.6f}, p-value={p_val_mk:.4f}")
-        print(f"  SigKernel: MMD²={mmd_val_sig:.6f}, p-value={p_val_sig:.4f}")
+        # print(f"  SigKernel: MMD²={mmd_val_sig:.6f}, p-value={p_val_sig:.4f}")
 
-    return mu_results_mk, mu_results_sig
+    return mu_results_mk, []  # mu_results_sig
 
 
 # ============================================================================
-# Résumé et affichage des résultats
+# Génération des rapports CSV
 # ============================================================================
 
 
-def print_summary(
+def save_results_to_csv(
     result_same_mk,
     result_same_sig,
     results_mk,
@@ -501,82 +520,130 @@ def print_summary(
     alpha_results_sig,
     mu_results_mk,
     mu_results_sig,
+    output_dir: Path,
+    args,
 ):
-    """Affiche un résumé complet des résultats."""
-    print("\n" + "=" * 90)
-    print("RÉSUMÉ DES TESTS MMD")
-    print("=" * 90)
-
-    # MKernel
-    print("\n" + "─" * 90)
-    print("📊 MKERNEL (IMQ + Cauchy Transform)")
-    print("─" * 90)
-
-    print("\n--- Sanity check (même distribution) ---")
-    print(f"baseline vs baseline_copy : p-value = {result_same_mk['mean_p_value']:.4f}")
-    print(
-        f"  → {'PASS : H0 non rejetée ✓' if result_same_mk['mean_p_value'] > 0.05 else 'FAIL : H0 rejetée ✗ (inattendu)'}"
-    )
-
-    print("\n--- Paires avec distributions différentes ---")
-    n_rejected_mk = sum(1 for res in results_mk.values() if res["mean_p_value"] < 0.05)
-    n_total = len(results_mk)
-    print(f"H0 rejetée dans {n_rejected_mk}/{n_total} paires")
-
-    print("\n--- Étude alpha (excitation) ---")
-    for r in alpha_results_mk:
-        status = "✓ rejeté" if r["p_value"] < 0.05 else "  non rejeté"
-        baseline_marker = " ← baseline" if abs(r["alpha"] - 0.3) < 0.01 else ""
-        print(f"  α={r['alpha']:.2f} : p={r['p_value']:.4f} {status}{baseline_marker}")
-
-    print("\n--- Étude mu (intensité de base) ---")
-    for r in mu_results_mk:
-        status = "✓ rejeté" if r["p_value"] < 0.05 else "  non rejeté"
-        baseline_marker = " ← baseline" if abs(r["mu"] - 0.2) < 0.01 else ""
-        print(f"  μ={r['mu']:.2f} : p={r['p_value']:.4f} {status}{baseline_marker}")
-
-    # SigKernel
-    print("\n" + "─" * 90)
-    print("📊 SIGKERNEL")
-    print("─" * 90)
-
-    print("\n--- Sanity check (même distribution) ---")
-    print(
-        f"baseline vs baseline_copy : p-value = {result_same_sig['mean_p_value']:.4f}"
-    )
-    print(
-        f"  → {'PASS : H0 non rejetée ✓' if result_same_sig['mean_p_value'] > 0.05 else 'FAIL : H0 rejetée ✗ (inattendu)'}"
-    )
-
-    print("\n--- Paires avec distributions différentes ---")
-    n_rejected_sig = sum(
-        1 for res in results_sig.values() if res["mean_p_value"] < 0.05
-    )
-    print(f"H0 rejetée dans {n_rejected_sig}/{n_total} paires")
-
-    print("\n--- Étude alpha (excitation) ---")
-    for r in alpha_results_sig:
-        status = "✓ rejeté" if r["p_value"] < 0.05 else "  non rejeté"
-        baseline_marker = " ← baseline" if abs(r["alpha"] - 0.3) < 0.01 else ""
-        print(f"  α={r['alpha']:.2f} : p={r['p_value']:.4f} {status}{baseline_marker}")
-
-    print("\n--- Étude mu (intensité de base) ---")
-    for r in mu_results_sig:
-        status = "✓ rejeté" if r["p_value"] < 0.05 else "  non rejeté"
-        baseline_marker = " ← baseline" if abs(r["mu"] - 0.2) < 0.01 else ""
-        print(f"  μ={r['mu']:.2f} : p={r['p_value']:.4f} {status}{baseline_marker}")
-
-    # Comparaison
-    print("\n" + "=" * 90)
-    print("COMPARAISON DES DEUX KERNELS")
-    print("=" * 90)
-    print(f"\nStabilité (sanity check):")
-    print(f"  MKernel  : p-value = {result_same_mk['mean_p_value']:.4f}")
-    print(f"  SigKernel: p-value = {result_same_sig['mean_p_value']:.4f}")
-    print(f"\nPuissance de détection (paires différentes):")
-    print(f"  MKernel  : {n_rejected_mk}/{n_total} rejets")
-    print(f"  SigKernel: {n_rejected_sig}/{n_total} rejets")
-    print("\n" + "=" * 90)
+    """Sauvegarde tous les résultats en fichiers CSV."""
+    output_dir.mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # 1. Sanity check
+    sanity_data = [
+        {
+            "test": "baseline_vs_baseline_copy",
+            "kernel": "MKernel",
+            "mean_mmd": result_same_mk["mean_mmd"],
+            "mean_p_value": result_same_mk["mean_p_value"],
+            "h0_rejected": result_same_mk["mean_p_value"] < 0.05,
+            "status": "FAIL" if result_same_mk["mean_p_value"] < 0.05 else "PASS",
+        },
+        # {
+        #     "test": "baseline_vs_baseline_copy",
+        #     "kernel": "SIGKernel",
+        #     "mean_mmd": result_same_sig["mean_mmd"],
+        #     "mean_p_value": result_same_sig["mean_p_value"],
+        #     "h0_rejected": result_same_sig["mean_p_value"] < 0.05,
+        #     "status": "FAIL" if result_same_sig["mean_p_value"] < 0.05 else "PASS",
+        # },
+    ]
+    df_sanity = pd.DataFrame(sanity_data)
+    sanity_file = output_dir / f"sanity_check_{timestamp}.csv"
+    df_sanity.to_csv(sanity_file, index=False)
+    print(f"\n✓ Sanity check sauvegardé : {sanity_file}")
+    
+    # 2. Pairwise tests
+    pairwise_data = []
+    for (name_a, name_b), res_mk in results_mk.items():
+        # res_sig = results_sig[(name_a, name_b)]
+        pairwise_data.append({
+            "config_a": name_a,
+            "config_b": name_b,
+            "kernel": "MKernel",
+            "mean_mmd": res_mk["mean_mmd"],
+            "mean_p_value": res_mk["mean_p_value"],
+            "h0_rejected": res_mk["mean_p_value"] < 0.05,
+        })
+        # pairwise_data.append({
+        #     "config_a": name_a,
+        #     "config_b": name_b,
+        #     "kernel": "SIGKernel",
+        #     "mean_mmd": res_sig["mean_mmd"],
+        #     "mean_p_value": res_sig["mean_p_value"],
+        #     "h0_rejected": res_sig["mean_p_value"] < 0.05,
+        # })
+    df_pairwise = pd.DataFrame(pairwise_data)
+    pairwise_file = output_dir / f"pairwise_tests_{timestamp}.csv"
+    df_pairwise.to_csv(pairwise_file, index=False)
+    print(f"✓ Tests par paires sauvegardés : {pairwise_file}")
+    
+    # 3. Parametric studies
+    if alpha_results_mk:
+        parametric_data = []
+        for r in alpha_results_mk:
+            parametric_data.append({
+                "study": "alpha_variation",
+                "parameter": "alpha",
+                "value": r["alpha"],
+                "kernel": "MKernel",
+                "mmd": r["mmd"],
+                "p_value": r["p_value"],
+                "h0_rejected": r["p_value"] < 0.05,
+            })
+        # for r in alpha_results_sig:
+        #     parametric_data.append({
+        #         "study": "alpha_variation",
+        #         "parameter": "alpha",
+        #         "value": r["alpha"],
+        #         "kernel": "SIGKernel",
+        #         "mmd": r["mmd"],
+        #         "p_value": r["p_value"],
+        #         "h0_rejected": r["p_value"] < 0.05,
+        #     })
+        for r in mu_results_mk:
+            parametric_data.append({
+                "study": "mu_variation",
+                "parameter": "mu",
+                "value": r["mu"],
+                "kernel": "MKernel",
+                "mmd": r["mmd"],
+                "p_value": r["p_value"],
+                "h0_rejected": r["p_value"] < 0.05,
+            })
+        # for r in mu_results_sig:
+        #     parametric_data.append({
+        #         "study": "mu_variation",
+        #         "parameter": "mu",
+        #         "value": r["mu"],
+        #         "kernel": "SIGKernel",
+        #         "mmd": r["mmd"],
+        #         "p_value": r["p_value"],
+        #         "h0_rejected": r["p_value"] < 0.05,
+        #     })
+        df_parametric = pd.DataFrame(parametric_data)
+        parametric_file = output_dir / f"parametric_studies_{timestamp}.csv"
+        df_parametric.to_csv(parametric_file, index=False)
+        print(f"✓ Études paramétriques sauvegardées : {parametric_file}")
+    
+    # 4. Summary metadata
+    summary_data = {
+        "timestamp": timestamp,
+        "num_simulations": args.num_sim,
+        "n_permutations": args.n_permutations,
+        "batch_size": args.batch_size,
+        "dim_process": args.dim_process,
+        "end_time": args.end_time,
+        "sanity_check_mkernel_pass": result_same_mk["mean_p_value"] > 0.05,
+        # "sanity_check_sigkernel_pass": result_same_sig["mean_p_value"] > 0.05,
+        "pairwise_tests_count": len(results_mk),
+        "mkernel_rejections": sum(1 for r in results_mk.values() if r["mean_p_value"] < 0.05),
+        # "sigkernel_rejections": sum(1 for r in results_sig.values() if r["mean_p_value"] < 0.05),
+    }
+    df_summary = pd.DataFrame([summary_data])
+    summary_file = output_dir / f"summary_{timestamp}.csv"
+    df_summary.to_csv(summary_file, index=False)
+    print(f"✓ Résumé sauvegardé : {summary_file}")
+    
+    return output_dir
 
 
 # ============================================================================
@@ -593,11 +660,11 @@ def main():
     parser.add_argument(
         "--n-permutations",
         type=int,
-        default=200,
+        default=100,
         help="Nombre de permutations pour le test MMD",
     )
     parser.add_argument(
-        "--batch-size", type=int, default=64, help="Taille des batches pour les tests"
+        "--batch-size", type=int, default=16, help="Taille des batches pour les tests"
     )
     parser.add_argument(
         "--dim-process",
@@ -606,9 +673,21 @@ def main():
         help="Dimension du processus (nombre de types)",
     )
     parser.add_argument(
+        "--end-time",
+        type=int,
+        default=10,
+        help="End time for Hawkes simulation (controls sequence length, default=10)",
+    )
+    parser.add_argument(
         "--no-parametric",
         action="store_true",
         help="Désactiver les études paramétriques",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="mmd_test_results",
+        help="Répertoire de sortie pour les rapports CSV",
     )
 
     args = parser.parse_args()
@@ -621,13 +700,24 @@ def main():
     print(f"  - Permutations MMD : {args.n_permutations}")
     print(f"  - Batch size : {args.batch_size}")
     print(f"  - Dimension du processus : {args.dim_process}")
+    print(f"  - End time (durée simulation) : {args.end_time}")
 
     # Configuration
-    configs = get_hawkes_configs(dim_process=args.dim_process)
+    configs = get_hawkes_configs(dim_process=args.dim_process, end_time=args.end_time)
     print(f"\n{len(configs)} configurations définies : {list(configs.keys())}")
 
     # Génération des données
     batches, global_max_len = generate_all_configs(configs, args.num_sim)
+    
+    # Memory estimation and safety check
+    est_mem = estimate_memory_gb(args.batch_size, global_max_len)
+    print(f"\nEstimated peak memory per kernel call: {est_mem:.1f} GB")
+    if est_mem > 10:
+        print(f"⚠️  WARNING: Very high memory usage expected ({est_mem:.0f} GB)!")
+        print(f"   The process will likely be OOM-killed.")
+        print(f"   Reduce --end-time (current: {args.end_time}) or --batch-size (current: {args.batch_size})")
+        print(f"   Suggested: --end-time 10 --batch-size 16")
+        return
 
     # Configuration des kernels
     mmd_test_mk, mmd_test_sig = setup_kernels(args.dim_process, args.n_permutations)
@@ -653,6 +743,7 @@ def main():
             args.dim_process,
             args.num_sim,
             global_max_len,
+            end_time=args.end_time,
         )
 
         mu_results_mk, mu_results_sig = study_mu_variation(
@@ -662,13 +753,15 @@ def main():
             args.dim_process,
             args.num_sim,
             global_max_len,
+            end_time=args.end_time,
         )
     else:
         alpha_results_mk = alpha_results_sig = []
         mu_results_mk = mu_results_sig = []
 
-    # Résumé
-    print_summary(
+    # Sauvegarde des résultats en CSV
+    output_dir = Path(args.output_dir)
+    save_results_to_csv(
         result_same_mk,
         result_same_sig,
         results_mk,
@@ -677,9 +770,12 @@ def main():
         alpha_results_sig,
         mu_results_mk,
         mu_results_sig,
+        output_dir,
+        args,
     )
 
     print("\n✅ Tests terminés avec succès!")
+    print(f"📁 Rapports disponibles dans : {output_dir.absolute()}")
 
 
 if __name__ == "__main__":

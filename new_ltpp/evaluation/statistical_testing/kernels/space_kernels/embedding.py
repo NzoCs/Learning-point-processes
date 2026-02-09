@@ -21,11 +21,12 @@ class EmbeddingKernel(ISpaceKernel):
         return torch.exp(-dist_sq / (2 * self.sigma**2))
 
     def intra_batch_kernel_matrix(self, phi: torch.Tensor) -> torch.Tensor:
-        e_phi = self.emb(phi)
-        dist = torch.cdist(
-            e_phi.view(-1, e_phi.shape[-1]), e_phi.view(-1, e_phi.shape[-1])
-        )
-        dist_sq = dist.pow(2).view(
-            phi.shape[0], phi.shape[0], phi.shape[1], phi.shape[1]
-        )
+        e_phi = self.emb(phi)  # (B, L, D)
+        B, L, D = e_phi.shape
+        # Compute pairwise distances for each batch
+        dist_sq_list = []
+        for b in range(B):
+            dist = torch.cdist(e_phi[b:b+1], e_phi[b:b+1])  # (1, L, L)
+            dist_sq_list.append(dist.pow(2).squeeze(0))  # (L, L)
+        dist_sq = torch.stack(dist_sq_list, dim=0)  # (B, L, L)
         return torch.exp(-dist_sq / (2 * self.sigma**2))

@@ -32,7 +32,7 @@ class IStatMetric(Protocol):
         self,
         phi: Batch | SimulationResult,
         psi: Batch | SimulationResult,
-    ) -> float: ...
+    ) -> torch.Tensor: ...
 
 
 class StatMetric(ABC):
@@ -68,7 +68,7 @@ class StatMetric(ABC):
         self,
         phi: Batch | SimulationResult,
         psi: Batch | SimulationResult,
-    ) -> float:
+    ) -> torch.Tensor:
         """Compute the statistical metric between two batches.
 
         Args:
@@ -76,6 +76,6 @@ class StatMetric(ABC):
             psi: Second batch of sequences
 
         Returns:
-            The metric value as a float aggregated over the batch.
+            The metric value as a torch.Tensor aggregated over the batch.
         """
         pass

@@ -70,11 +70,10 @@ class MKernel(IPointProcessKernel):
 
         # Robust median heuristic: filter out zeros and NaNs
         valid_dist = dist_sq[torch.isfinite(dist_sq) & (dist_sq > 1e-10)]
-        if valid_dist.numel() > 0:
-            sigma = valid_dist.median().item()
-        else:
-            sigma = 1.0  # Fallback when all distances are zero or invalid
-        sigma = max(sigma, 1e-6)  # Ensure positive
+        sigma = valid_dist.median()
+        sigma = torch.max(
+            sigma, torch.tensor(1e-6, device=dist_sq.device)
+        )  # Ensure positive
 
         if self.transform == MKernelTransform.EXPONENTIAL:
             # RBF-like: exp(-d²/(2σ²))
@@ -137,7 +136,7 @@ class MKernel(IPointProcessKernel):
         # Use masked max to ignore padded positions
         phi_masked_dt = phi_delta_time_seqs.masked_fill(~phi_mask, 0.0)
         psi_masked_dt = psi_delta_time_seqs.masked_fill(~psi_mask, 0.0)
-        global_max = max(phi_masked_dt.max().item(), psi_masked_dt.max().item()) + 1e-8
+        global_max = max(phi_masked_dt.max(), psi_masked_dt.max()) + 1e-8
         phi_delta_time_seqs = phi_delta_time_seqs / global_max
         psi_delta_time_seqs = psi_delta_time_seqs / global_max
 

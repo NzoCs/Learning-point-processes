@@ -10,13 +10,13 @@ class MMD(StatMetric):
     @torch.compile
     def __call__(
         self, phi: Batch | SimulationResult, psi: Batch | SimulationResult
-    ) -> float:
+    ) -> torch.Tensor:
         """Compute the Maximum Mean Discrepancy (MMD) between two batches of sequences.
         args:
             phi: Batch of sequences of shape (B1, L)
             psi: Batch of sequences of shape (B2, K)
         returns:
-            The MMD value as a float.
+            The MMD value as a torch.Tensor.
         """
 
         B1, L = phi.time_seqs.shape
@@ -26,19 +26,21 @@ class MMD(StatMetric):
         k_yy = self.compute_kernel_matrix(psi, psi)  # (B2, B2)
         k_xy = self.compute_kernel_matrix(phi, psi)  # (B1, B2)
 
-        if B1 < 2 or B2 < 2:
-            XX_reg = 1
-            YY_reg = 1
-        else:
-            XX_reg = B1 * (B1 - 1)
-            YY_reg = B2 * (B2 - 1)
+        XX_reg = torch.max(
+            torch.tensor(B1 * (B1 - 1), device=phi.time_seqs.device),
+            torch.tensor(1.0, device=phi.time_seqs.device),
+        )
+        YY_reg = torch.max(
+            torch.tensor(B2 * (B2 - 1), device=psi.time_seqs.device),
+            torch.tensor(1.0, device=psi.time_seqs.device),
+        )
 
         mmd_value = (
             (k_xx.sum() - k_xx.diagonal().sum()) / XX_reg
             + (k_yy.sum() - k_yy.diagonal().sum()) / YY_reg
             - 2 * k_xy.sum() / (B1 * B2)
         )
-        return mmd_value.item()
+        return mmd_value
 
     def test(self, model: NeuralModel, data_loader: TypedDataLoader) -> float:
         """Compute the MMD over the entire dataset using the provided model. Supposed to be used to test an
@@ -50,11 +52,11 @@ class MMD(StatMetric):
             The average MMD value over the dataset.
         """
 
-        mmd = 0.0
+        mmd = torch.tensor(0.0, device=next(model.parameters()).device)
         for batch in data_loader:
             phi = model.simulate(batch=batch)
             mmd += self(phi, batch)
-        return mmd / len(data_loader)
+        return mmd.item() / len(data_loader)
 
     def evaluate(self, model: NeuralModel, batch: Batch) -> float:
         """Compute the MMD between the model's simulated sequences and the real sequences in the batch.
@@ -69,4 +71,4 @@ class MMD(StatMetric):
         psi = batch
         mmd = self(phi, psi)
 
-        return mmd
+        return mmd.item()

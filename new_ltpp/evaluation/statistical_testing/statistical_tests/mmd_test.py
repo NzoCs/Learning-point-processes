@@ -196,7 +196,7 @@ class MMDTwoSampleTest(Test):
         m = batch_y.time_seqs.shape[0]
         total = n + m
 
-        observed_mmd = self.mmd(batch_x, batch_y)
+        observed_mmd = self.mmd(batch_x, batch_y).item()
         pooled = self._concat_batches(batch_x, batch_y)
 
         perm_mmds: list[float] = []
@@ -204,7 +204,7 @@ class MMDTwoSampleTest(Test):
             perm = torch.randperm(total)
             perm_x = self._select_batch(pooled, perm[:n])
             perm_y = self._select_batch(pooled, perm[n:])
-            perm_mmds.append(self.mmd(perm_x, perm_y))
+            perm_mmds.append(self.mmd(perm_x, perm_y).item())
 
         return observed_mmd, perm_mmds
 
@@ -404,4 +404,4 @@ class MMDTwoSampleTest(Test):
         Returns:
             MMD² statistic value.
         """
-        return self.mmd(batch_x, batch_y)
+        return self.mmd(batch_x, batch_y).item()

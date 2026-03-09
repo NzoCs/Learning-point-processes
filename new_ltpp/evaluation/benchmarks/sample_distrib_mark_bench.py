@@ -143,11 +143,9 @@ class MarkDistributionBenchmark(TypeBenchmark):
         return {
             "distribution_stats": {
                 "entropy": (
-                    float(
-                        -torch.sum(
-                            self.mark_probabilities
-                            * torch.log(self.mark_probabilities + 1e-10)
-                        ).item()
+                    -torch.sum(
+                        self.mark_probabilities
+                        * torch.log(self.mark_probabilities + 1e-10)
                     )
                     if self.mark_probabilities is not None
                     else 0.0

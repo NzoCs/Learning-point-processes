@@ -270,7 +270,7 @@ class Hawkes(Model):
         non_event_ll = (integral_term * seq_non_pad_mask[:, 1:]).sum()
 
         # Nombre total d'événements (pour monitoring)
-        num_events = seq_non_pad_mask[:, 1:].sum().item()
+        num_events = seq_non_pad_mask[:, 1:].sum()
         # NLL (Negative Log Likelihood)
         loss = -(event_ll - non_event_ll)
 

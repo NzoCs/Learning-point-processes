@@ -34,7 +34,7 @@ class EventTypeAccumulator(Accumulator):
 
         # Validate simulation has sufficient events (assumes simulation.type_seqs already masked)
         sim_types = simulation.type_seqs
-        sim_event_count = sim_types.sum().item()
+        sim_event_count = sim_types.sum()
         if sim_event_count < self.min_sim_events:
             logger.warning(
                 "EventTypeAccumulator: Too few simulated events (%d < %d), skipping batch",

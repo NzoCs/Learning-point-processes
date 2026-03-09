@@ -183,7 +183,7 @@ class IntensityFree(NeuralModel):
 
         return context
 
-    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the loglikelihood loss.
 
         Args:
@@ -242,7 +242,7 @@ class IntensityFree(NeuralModel):
         # [batch_size,]
         loss = -log_p.sum()
 
-        num_events = int(event_mask.sum().item())
+        num_events = event_mask.sum()
 
         return loss, num_events
 

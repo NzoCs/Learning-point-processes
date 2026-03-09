@@ -18,10 +18,12 @@ class SIGKernel(IPointProcessKernel):
         embedding_type: Literal["linear_interpolant", "constant_interpolant"],
         dyadic_order: int,
         num_event_types: int,
+        rbf_scaling: Optional[float] = None,
     ):
         self.static_kernel_type = static_kernel_type
         self.embedding_type = embedding_type
         self.dyadic_order = dyadic_order
+        self.rbf_scaling = rbf_scaling  # if set, scales the median-heuristic sigma: sigma_final = rbf_scaling * sigma_median
 
         # Initialize with a default kernel; will be set properly in compute_gram_matrix based on static_kernel_type
         self.kernel = SigKernel(
@@ -202,6 +204,8 @@ class SIGKernel(IPointProcessKernel):
                     .median(),
                     torch.tensor(1e-8, device=phi_time_seqs.device),
                 )  # Median heuristic for bandwidth
+                if self.rbf_scaling is not None:
+                    sigma = sigma * self.rbf_scaling
                 self.kernel.static_kernel = RBFKernel(sigma=sigma)  # type: ignore
             case _:
                 raise ValueError(

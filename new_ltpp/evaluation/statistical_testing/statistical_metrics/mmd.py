@@ -25,7 +25,7 @@ class MMD(StatMetric):
         mmd_value = self.compute_mmd(phi, psi)
         return mmd_value
 
-    def test(self, model: NeuralModel, data_loader: TypedDataLoader) -> float:
+    def test(self, model: NeuralModel, data_loader: TypedDataLoader) -> torch.Tensor:
         """Compute the MMD over the entire dataset using the provided model. Supposed to be used to test an
         already trained model.
         args:
@@ -39,9 +39,9 @@ class MMD(StatMetric):
         for batch in data_loader:
             phi = model.simulate(batch=batch)
             mmd += self(phi, batch)
-        return mmd.item() / len(data_loader)
+        return mmd / len(data_loader)
 
-    def evaluate(self, model: NeuralModel, batch: Batch) -> float:
+    def evaluate(self, model: NeuralModel, batch: Batch) -> torch.Tensor:
         """Compute the MMD between the model's simulated sequences and the real sequences in the batch.
         args:
             model: The neural point process model to evaluate.
@@ -54,4 +54,4 @@ class MMD(StatMetric):
         psi = batch
         mmd = self(phi, psi)
 
-        return mmd.item()
+        return mmd

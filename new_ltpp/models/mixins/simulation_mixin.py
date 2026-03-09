@@ -24,7 +24,7 @@ class Buffers(TypedDict):
 
 class SimulationState(TypedDict):
     last_event_time: torch.Tensor
-    current_time: float
+    current_time: torch.Tensor
     batch_active: torch.Tensor
     step_count: int
 
@@ -301,7 +301,7 @@ class SimulationMixin(BaseMixin):
 
         return SimulationState(
             last_event_time=last_event_time,
-            current_time=batch.time_seqs[:, -1].min().item(),
+            current_time=batch.time_seqs[:, -1].min(),
             batch_active=torch.ones(batch_size, dtype=torch.bool, device=self.device),
             step_count=0,
         )
@@ -365,7 +365,7 @@ class SimulationMixin(BaseMixin):
         # 1. Calcul du temps de fin absolu pour chaque séquence
         # We start at end_time and simulate for the same duration (end_time - start_time) for each sequence
         absolute_end_times = end_times + (end_times - start_times)
-        max_absolute_end_time = absolute_end_times.max().item()
+        max_absolute_end_time = absolute_end_times.max()
 
         # 2. Application du décalage (start_time) et initialisation de current_time
         if sim_state["step_count"] == 0:
@@ -374,14 +374,14 @@ class SimulationMixin(BaseMixin):
                 # Cette ligne suppose que le code appelant n'a pas encore appliqué le décalage.
                 buffers["time"][:, :initial_len] += start_times.unsqueeze(1)
                 sim_state["last_event_time"] += start_times.unsqueeze(1)
-                sim_state["current_time"] = (
-                    buffers["time"][:, initial_len - 1].min().item()
-                )
+                sim_state["current_time"] = buffers["time"][:, initial_len - 1].min()
             else:
                 # Si le buffer est vide (initial_len=0), le temps courant minimum est le temps de début minimum
-                sim_state["current_time"] = start_times.min().item()
+                sim_state["current_time"] = start_times.min()
         with torch.no_grad():
-            pbar = tqdm(total=max_absolute_end_time, desc="Simulation", leave=False)
+            pbar = tqdm(
+                total=max_absolute_end_time.item(), desc="Simulation", leave=False
+            )
             pbar.n = min(sim_state["current_time"], max_absolute_end_time)
             pbar.refresh()
 
@@ -426,7 +426,7 @@ class SimulationMixin(BaseMixin):
             buffers["event"][active_indices, current_len] = type_pred.squeeze(-1)
 
             # Update current time (minimum across all active sequences)
-            sim_state["current_time"] = new_times.min().item()
+            sim_state["current_time"] = new_times.min()
 
             # Désactivation des séquences ayant atteint leur temps de fin individuel
             active_end_times = absolute_end_times[active_indices].unsqueeze(-1)

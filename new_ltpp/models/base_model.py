@@ -19,6 +19,7 @@ from .model_registry import RegistryMeta
 
 class OptimizerConfig(TypedDict):
     """Configuration for optimizer with learning rate scheduler."""
+
     optimizer: optim.Optimizer
     lr_scheduler: optim.lr_scheduler.LRScheduler
     monitor: str
@@ -147,7 +148,7 @@ class Model(
         return sampled_dtimes
 
     @abstractmethod
-    def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute the log-likelihood loss for a batch of data.
 
         Args:

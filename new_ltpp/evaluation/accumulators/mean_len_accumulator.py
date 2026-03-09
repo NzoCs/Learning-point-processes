@@ -33,7 +33,7 @@ class SequenceLengthAccumulator(Accumulator):
         # Validate simulation has sufficient events (vectorized torch operations)
         sim_mask = simulation.valid_event_mask.bool()
         sim_seq_lengths = sim_mask.sum(dim=1)
-        sim_event_count = int(sim_seq_lengths.sum().item())
+        sim_event_count = sim_seq_lengths.sum()
 
         if sim_event_count < self.min_sim_events:
             logger.warning(
@@ -71,7 +71,7 @@ class SequenceLengthAccumulator(Accumulator):
         gt_time_ends = gt_time_seqs.max(dim=1).values
 
         gt_time_windows = gt_time_ends - gt_time_starts
-        gt_event_count_normalized = gt_seq_lengths.sum().item() / gt_time_windows
+        gt_event_count_normalized = gt_seq_lengths.sum() / gt_time_windows
 
         self._gt_mean.extend(gt_event_count_normalized.view(-1).cpu().tolist())
 

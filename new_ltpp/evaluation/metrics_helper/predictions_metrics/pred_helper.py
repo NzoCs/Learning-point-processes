@@ -153,25 +153,25 @@ class PredMetricsHelper(MetricsHelper):
             )
         return metrics
 
-    def _calculate_time_rmse(self, time_values: TimeValues) -> float:
+    def _calculate_time_rmse(self, time_values: TimeValues) -> torch.Tensor:
         """Calculate time-based RMSE."""
         if time_values["true_times"].numel() == 0:
-            return float("nan")
+            return torch.tensor(float("nan"))
         return torch.sqrt(
             F.mse_loss(time_values["pred_times"], time_values["true_times"])
-        ).item()
+        )
 
-    def _calculate_time_mae(self, time_values: TimeValues) -> float:
+    def _calculate_time_mae(self, time_values: TimeValues) -> torch.Tensor:
         """Calculate time-based MAE."""
         if time_values["true_times"].numel() == 0:
-            return float("nan")
-        return F.l1_loss(time_values["pred_times"], time_values["true_times"]).item()
+            return torch.tensor(float("nan"))
+        return F.l1_loss(time_values["pred_times"], time_values["true_times"])
 
-    def _calculate_type_accuracy(self, type_values: TypeValues) -> float:
+    def _calculate_type_accuracy(self, type_values: TypeValues) -> torch.Tensor:
         """Calculate type classification accuracy."""
 
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
-            return float("nan")
+            return torch.tensor(float("nan"))
 
         device = type_values["true_types"].device
 
@@ -179,17 +179,17 @@ class PredMetricsHelper(MetricsHelper):
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
 
-        accuracy_metric.update(type_values["pred_types"], type_values["true_types"]) # type: ignore
+        accuracy_metric.update(type_values["pred_types"], type_values["true_types"])  # type: ignore
 
-        return accuracy_metric.compute().item() * 100 # type: ignore
+        return accuracy_metric.compute() * 100  # type: ignore
 
     def _calculate_f1_score(
         self, type_values: TypeValues, average: Literal["macro", "micro"] = "macro"
-    ) -> float:
+    ) -> torch.Tensor:
         """Calculate F1 score."""
 
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
-            return float("nan")
+            return torch.tensor(float("nan"))
 
         device = type_values["true_types"].device
 
@@ -197,15 +197,15 @@ class PredMetricsHelper(MetricsHelper):
             task="multiclass", num_classes=self.num_event_types, average=average
         ).to(device)
 
-        f1_metric.update(type_values["pred_types"], type_values["true_types"]) # type: ignore
+        f1_metric.update(type_values["pred_types"], type_values["true_types"])  # type: ignore
 
-        return f1_metric.compute().item() * 100 # type: ignore
+        return f1_metric.compute() * 100  # type: ignore
 
-    def _calculate_recall(self, type_values: TypeValues) -> float:
+    def _calculate_recall(self, type_values: TypeValues) -> torch.Tensor:
         """Calculate recall."""
 
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
-            return float("nan")
+            return torch.tensor(float("nan"))
 
         device = type_values["true_types"].device
 
@@ -215,27 +215,27 @@ class PredMetricsHelper(MetricsHelper):
 
         recall_metric.update(type_values["pred_types"], type_values["true_types"])  # type: ignore
 
-        return recall_metric.compute().item() * 100 # type: ignore
+        return recall_metric.compute() * 100  # type: ignore
 
-    def _calculate_precision(self, type_values: TypeValues) -> float:
+    def _calculate_precision(self, type_values: TypeValues) -> torch.Tensor:
         """Calculate precision."""
 
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
-            return float("nan")
+            return torch.tensor(float("nan"))
 
         device = type_values["true_types"].device
         precision_metric = torchmetrics.Precision(
             task="multiclass", num_classes=self.num_event_types, average="macro"
         ).to(device)
 
-        precision_metric.update(type_values["pred_types"], type_values["true_types"]) # type: ignore
+        precision_metric.update(type_values["pred_types"], type_values["true_types"])  # type: ignore
 
-        return precision_metric.compute().item() * 100 # type: ignore
+        return precision_metric.compute() * 100  # type: ignore
 
-    def _calculate_cross_entropy(self, type_values: TypeValues) -> float:
+    def _calculate_cross_entropy(self, type_values: TypeValues) -> torch.Tensor:
         """Calculate cross entropy loss."""
         if self.num_event_types <= 1 or type_values["true_types"].numel() == 0:
-            return float("nan")
+            return torch.tensor(float("nan"))
 
         # Check format of predictions
         if type_values["pred_types"].dim() == 1:
@@ -246,7 +246,7 @@ class PredMetricsHelper(MetricsHelper):
             pred_logits = type_values["pred_types"]
 
         loss = F.cross_entropy(pred_logits, type_values["true_types"])
-        return loss.item()
+        return loss
 
     def _calculate_confusion_matrix(self, type_values: TypeValues) -> torch.Tensor:
         """Calculate confusion matrix using torchmetrics."""
@@ -260,9 +260,10 @@ class PredMetricsHelper(MetricsHelper):
             task="multiclass", num_classes=self.num_event_types
         ).to(device)
         confusion_matrix_metric.update(
-            type_values["pred_types"], type_values["true_types"] # type: ignore
-        ) 
-        return confusion_matrix_metric.compute() # type: ignore
+            type_values["pred_types"],
+            type_values["true_types"],  # type: ignore
+        )
+        return confusion_matrix_metric.compute()  # type: ignore
 
     def _get_nan_metrics(self) -> Dict[str, Any]:
         """Get a dictionary of NaN metrics for error cases."""

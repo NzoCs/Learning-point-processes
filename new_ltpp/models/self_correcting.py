@@ -120,7 +120,7 @@ class SelfCorrecting(Model):
 
         return intensities
 
-    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Compute the exact (analytical) log-likelihood.
         LL = sum(log(lambda(t_i))) - int(lambda(t) dt)
@@ -205,12 +205,12 @@ class SelfCorrecting(Model):
         loss_event = (event_ll * seq_mask).sum()
         loss_non_event = (non_event_ll * seq_mask).sum()
 
-        num_events = seq_mask.sum().item()
+        num_events = seq_mask.sum()
 
         # NLL
         loss = -(loss_event - loss_non_event)
 
-        return loss, int(num_events)
+        return loss, num_events
 
     def simulate(
         self,

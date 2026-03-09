@@ -100,7 +100,7 @@ class CorrAccumulator(Accumulator):
 
         # Max time per sequence
         max_times = torch.max(times * mask, dim=1).values  # (B,)
-        max_time_global = torch.max(max_times).item()
+        max_time_global = torch.max(max_times)
 
         # Calculate bin_width based on nb_bins
         bin_width = max_time_global / nb_bins if max_time_global > 0 else 1.0

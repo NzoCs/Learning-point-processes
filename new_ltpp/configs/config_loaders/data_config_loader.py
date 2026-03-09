@@ -15,7 +15,7 @@ class DataConfigYamlLoader(ConfigLoader):
         data_loading_config_path: Optional[str] = None,
         tokenizer_specs_path: Optional[str] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:  # type: ignore[override]
         """
         Load data configuration from a YAML file.
 

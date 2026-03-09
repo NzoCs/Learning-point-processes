@@ -25,7 +25,7 @@ class RunnerConfigYamlLoader(ConfigLoader):
         general_specs_config_path: Optional[str] = None,
         model_specs_config_path: Optional[str] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:  # type: ignore[override]
         # Load raw data once
         config_data = self.load_yaml(yaml_path)
 

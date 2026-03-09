@@ -13,7 +13,7 @@ class TrainingConfigYamlLoader(ConfigLoader):
         *,
         training_config_path: str,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:  # type: ignore[override]
         """
         Load training configuration from a YAML file.
 

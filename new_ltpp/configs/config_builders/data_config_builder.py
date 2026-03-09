@@ -144,7 +144,6 @@ class DataConfigBuilder(ConfigBuilder):
             "num_event_types",
             "data_loading_specs",
             "data_format",
-            "tokenizer_specs",
         ]
 
     def build(self, **kwargs) -> DataConfig:
@@ -189,7 +188,7 @@ class DataConfigBuilder(ConfigBuilder):
         return self
 
     def set_valid_dir(self, valid_dir: str) -> Self:
-        """Set validation data directory.
+        """Set validation data directory
 
         Args:
             valid_dir: Path to validation data directory

@@ -1,5 +1,3 @@
-from re import S
-
 import torch
 from sigkernel import SigKernel, LinearKernel, RBFKernel
 from typing import Optional, TypedDict, Literal
@@ -175,22 +173,9 @@ class SIGKernel(IPointProcessKernel):
 
         return emb
 
-    @torch.compile
-    def compute_gram_matrix(
-        self,
-        phi_batch: Batch | SimulationResult,
-        psi_batch: Batch | SimulationResult,
-    ) -> torch.Tensor:
-        """Compute the Gram matrix between two batches of sequences.
-        args:
-            phi_time_seqs: (B1, L) L is the number of events in phi
-            phi_type_seqs: (B1, L)
-            psi_time_seqs: (B2, K) K is the number of events in psi
-            psi_type_seqs: (B2, K)
-        returns:
-            torch.Tensor: (B1, B2)
-        """
-
+    def _prepare_kernel(self, phi_batch: Batch | SimulationResult, psi_batch: Batch | SimulationResult) -> tuple[torch.Tensor, torch.Tensor]:
+        """Prepare the SigKernel instance with the appropriate static kernel based on the embedding."""
+        
         phi_time_seqs = phi_batch.time_seqs
         phi_type_seqs = phi_batch.type_seqs
         psi_time_seqs = psi_batch.time_seqs
@@ -203,7 +188,7 @@ class SIGKernel(IPointProcessKernel):
         # Use masked max to ignore padded positions
         phi_masked = phi_time_seqs.masked_fill(~phi_batch.valid_event_mask, 0.0)
         psi_masked = psi_time_seqs.masked_fill(~psi_batch.valid_event_mask, 0.0)
-        global_max = max(phi_masked.max().item(), psi_masked.max().item()) + 1e-8
+        global_max = torch.max(phi_masked.max(), psi_masked.max()) + 1e-8
         phi_time_seqs = phi_time_seqs / global_max
         psi_time_seqs = psi_time_seqs / global_max
 
@@ -211,12 +196,11 @@ class SIGKernel(IPointProcessKernel):
             case "linear":
                 self.kernel.static_kernel = LinearKernel()
             case "rbf":
-                sigma = max(
+                sigma = torch.max(
                     (phi_time_seqs.unsqueeze(1) - psi_time_seqs.unsqueeze(-1))
                     .abs()
-                    .median()
-                    .item(),
-                    1e-8,
+                    .median(),
+                    torch.tensor(1e-8, device=phi_time_seqs.device),
                 )  # Median heuristic for bandwidth
                 self.kernel.static_kernel = RBFKernel(sigma=sigma)  # type: ignore
             case _:
@@ -226,8 +210,8 @@ class SIGKernel(IPointProcessKernel):
 
         # 1) Compute embeddings (stays in original dtype, float32 is fine for sigkernel)
         # ---------------------
-        # phi : (B1, Lφ, C)
-        # psi : (B2, Lψ, C)
+        # phi : (B, Lφ, C)
+        # psi : (B, Lψ, C)
         phi_emb = self._get_embedding(phi_time_seqs, phi_type_seqs)
         psi_emb = self._get_embedding(psi_time_seqs, psi_type_seqs)
 
@@ -236,9 +220,35 @@ class SIGKernel(IPointProcessKernel):
         phi_emb = self._forward_fill_padding(phi_emb, phi_batch.valid_event_mask)
         psi_emb = self._forward_fill_padding(psi_emb, psi_batch.valid_event_mask)
 
+        return phi_emb, psi_emb
+
+    @torch.compile
+    def compute_gram_matrix(
+        self,
+        phi_batch: Batch | SimulationResult,
+        psi_batch: Batch | SimulationResult,
+    ) -> torch.Tensor:
+        """Compute the Gram matrix between two batches of sequences.
+        args:
+            phi_time_seqs: (B, L) L is the number of events in phi
+            phi_type_seqs: (B, L)
+            psi_time_seqs: (B, K) K is the number of events in psi
+            psi_type_seqs: (B, K)
+        returns:
+            torch.Tensor: (B, B)
+        """
+        phi_emb, psi_emb = self._prepare_kernel(phi_batch, psi_batch)
+
         # 3) Compute full Gram matrix between all (b,i) and all (b',j)
         # ------------------------------------------------------------
-        # output shape from SigKernel = (B1, B2)
+        # output shape from SigKernel = (B, B)
         gram: torch.Tensor = self.kernel.compute_Gram(phi_emb, psi_emb)  # type: ignore
 
         return gram
+
+    def compute_mmd(self, phi: Batch | SimulationResult, psi: Batch | SimulationResult) -> torch.Tensor:
+        """Compute the MMD distance between two batches of sequences."""
+        phi_emb, psi_emb = self._prepare_kernel(phi, psi)
+
+        mmd_dist = self.kernel.compute_mmd(phi_emb, psi_emb)  # type: ignore
+        return mmd_dist

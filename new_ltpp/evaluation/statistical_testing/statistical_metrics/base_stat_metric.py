@@ -47,7 +47,7 @@ class StatMetric(ABC):
     def __init__(self, kernel: IPointProcessKernel) -> None:
         self.kernel = kernel
 
-    def compute_kernel_matrix(
+    def compute_mmd(
         self,
         phi: Batch | SimulationResult,
         psi: Batch | SimulationResult,
@@ -55,13 +55,13 @@ class StatMetric(ABC):
         """Compute the kernel matrix between two batches of sequences.
 
         Args:
-            phi: First batch of sequences
-            psi: Second batch of sequences
+            phi: First batch of sequences (B, L)
+            psi: Second batch of sequences (B, K)
 
         Returns:
-            Kernel matrix of shape (B1, B2)
+            Kernel matrix of shape (B, B)
         """
-        return self.kernel.compute_gram_matrix(phi, psi)
+        return self.kernel.compute_mmd(phi, psi)
 
     @abstractmethod
     def __call__(

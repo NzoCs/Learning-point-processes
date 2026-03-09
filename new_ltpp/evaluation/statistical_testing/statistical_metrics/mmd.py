@@ -22,24 +22,7 @@ class MMD(StatMetric):
         B1, L = phi.time_seqs.shape
         B2, K = psi.time_seqs.shape
 
-        k_xx = self.compute_kernel_matrix(phi, phi)  # (B1, B1)
-        k_yy = self.compute_kernel_matrix(psi, psi)  # (B2, B2)
-        k_xy = self.compute_kernel_matrix(phi, psi)  # (B1, B2)
-
-        XX_reg = torch.max(
-            torch.tensor(B1 * (B1 - 1), device=phi.time_seqs.device),
-            torch.tensor(1.0, device=phi.time_seqs.device),
-        )
-        YY_reg = torch.max(
-            torch.tensor(B2 * (B2 - 1), device=psi.time_seqs.device),
-            torch.tensor(1.0, device=psi.time_seqs.device),
-        )
-
-        mmd_value = (
-            (k_xx.sum() - k_xx.diagonal().sum()) / XX_reg
-            + (k_yy.sum() - k_yy.diagonal().sum()) / YY_reg
-            - 2 * k_xy.sum() / (B1 * B2)
-        )
+        mmd_value = self.compute_mmd(phi, psi)
         return mmd_value
 
     def test(self, model: NeuralModel, data_loader: TypedDataLoader) -> float:

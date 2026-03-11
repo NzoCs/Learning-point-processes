@@ -143,22 +143,22 @@ class MKernel(PointProcessKernel):
         B1, L = phi_delta_time_seqs.shape
         B2, K = psi_delta_time_seqs.shape
 
-        Kt_XX_matrix = self.time_kernel.intra_batch_kernel_matrix(
-            phi_delta_time_seqs,
+        Kt_XX_matrix = self.time_kernel.batch_kernel(
+            phi_delta_time_seqs, psi_delta_time_seqs
         )  # (B, L, L)
 
-        Kt_XY_matrix = self.time_kernel.cross_batch_kernel_matrix(
+        Kt_XY_matrix = self.time_kernel.Gram_matrix(
             phi_delta_time_seqs,
             psi_delta_time_seqs,
         )  # (B, B, L, K)
 
-        marks_kernel_matrix: torch.Tensor = self.type_kernel.cross_batch_kernel_matrix(
+        marks_kernel_matrix: torch.Tensor = self.type_kernel.Gram_matrix(
             phi_type_seqs,
             psi_type_seqs,
         )  # (B, B, L, K)
 
-        Kt_YY_matrix = self.time_kernel.intra_batch_kernel_matrix(
-            psi_delta_time_seqs,
+        Kt_YY_matrix = self.time_kernel.batch_kernel(
+            psi_delta_time_seqs, psi_delta_time_seqs
         )  # (B, K, K)
 
         # --- Mask out padded positions before summing ---

@@ -1,8 +1,9 @@
 import torch
-from sigkernel import SigKernel, LinearKernel, RBFKernel
-from typing import Optional, TypedDict, Literal
+from sigkernel import SigKernel
+from typing import TypedDict, Literal
 
 from .kernel_protocol import IPointProcessKernel
+from .space_kernels.protocol import ISpaceKernel
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
@@ -14,20 +15,17 @@ class Embedding(TypedDict):
 class SIGKernel(IPointProcessKernel):
     def __init__(
         self,
-        static_kernel_type: Literal["linear", "rbf"],
+        static_kernel: ISpaceKernel,
         embedding_type: Literal["linear_interpolant", "constant_interpolant"],
         dyadic_order: int,
         num_event_types: int,
-        rbf_scaling: Optional[float] = None,
     ):
-        self.static_kernel_type = static_kernel_type
         self.embedding_type = embedding_type
         self.dyadic_order = dyadic_order
-        self.rbf_scaling = rbf_scaling  # if set, scales the median-heuristic sigma: sigma_final = rbf_scaling * sigma_median
 
         # Initialize with a default kernel; will be set properly in compute_gram_matrix based on static_kernel_type
         self.kernel = SigKernel(
-            static_kernel=LinearKernel(), dyadic_order=self.dyadic_order
+            static_kernel=static_kernel, dyadic_order=self.dyadic_order
         )
 
         self.embedding_type = embedding_type
@@ -193,24 +191,6 @@ class SIGKernel(IPointProcessKernel):
         global_max = torch.max(phi_masked.max(), psi_masked.max()) + 1e-8
         phi_time_seqs = phi_time_seqs / global_max
         psi_time_seqs = psi_time_seqs / global_max
-
-        match self.static_kernel_type:
-            case "linear":
-                self.kernel.static_kernel = LinearKernel()
-            case "rbf":
-                sigma = torch.max(
-                    (phi_time_seqs.unsqueeze(1) - psi_time_seqs.unsqueeze(-1))
-                    .abs()
-                    .median(),
-                    torch.tensor(1e-8, device=phi_time_seqs.device),
-                )  # Median heuristic for bandwidth
-                if self.rbf_scaling is not None:
-                    sigma = sigma * self.rbf_scaling
-                self.kernel.static_kernel = RBFKernel(sigma=sigma)  # type: ignore
-            case _:
-                raise ValueError(
-                    f"Unknown static kernel type: {self.static_kernel_type}"
-                )
 
         # 1) Compute embeddings (stays in original dtype, float32 is fine for sigkernel)
         # ---------------------

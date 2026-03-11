@@ -10,6 +10,7 @@ from .rational_quadratic import RationalQuadraticTimeKernel
 from .bspline import BSplineTimeKernel
 from .poisson import PoissonTimeKernel
 from .embedding import EmbeddingKernel
+from .linear_kernel import LinearKernel
 
 
 class TimeKernelType(Enum):
@@ -21,6 +22,7 @@ class TimeKernelType(Enum):
     RATIONAL_QUADRATIC = "rq"
     BSPLINE = "bspline"
     POISSON = "poisson"
+    LINEAR = "linear"
 
 
 def create_time_kernel(
@@ -45,6 +47,8 @@ def create_time_kernel(
         return BSplineTimeKernel(order=kwargs.get("order", 3))
     if kernel_type == TimeKernelType.POISSON:
         return PoissonTimeKernel(r=kwargs.get("r", 0.5), d=kwargs.get("d", 1))
+    if kernel_type == TimeKernelType.LINEAR:
+        return LinearKernel(scaling=kwargs.get("scaling", 1.0))
 
     raise ValueError(f"Unknown kernel type: {kernel_type}")
 
@@ -60,5 +64,6 @@ __all__ = [
     "PoissonTimeKernel",
     "EmbeddingKernel",
     "TimeKernelType",
+    "LinearKernel",
     "create_time_kernel",
 ]

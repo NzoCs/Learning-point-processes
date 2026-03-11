@@ -3,8 +3,9 @@ from .protocol import ISpaceKernel
 
 
 class BSplineTimeKernel(ISpaceKernel):
-    def __init__(self, order: int = 3):
+    def __init__(self, order: int = 3, scaling: float = 1.0):
         self.order = order
+        self.scaling = scaling
 
     def _bspline_kernel(self, t: torch.Tensor) -> torch.Tensor:
         if self.order == 2:
@@ -25,23 +26,23 @@ class BSplineTimeKernel(ISpaceKernel):
             raise ValueError(f"Unsupported B-spline order: {self.order}")
 
     @torch.compile
-    def cross_batch_kernel_matrix(
-        self, phi: torch.Tensor, psi: torch.Tensor
+    def Gram_matrix(
+        self, X: torch.Tensor, Y: torch.Tensor
     ) -> torch.Tensor:
-        B1, L = phi.shape
-        B2, K = psi.shape
-        X = phi.unsqueeze(-1).unsqueeze(1).expand(-1, B2, -1, 1)
-        Y = psi.unsqueeze(-2).unsqueeze(0).expand(B1, -1, 1, -1)
+        B1, L = X.shape
+        B2, K = Y.shape
+        X = X.unsqueeze(-1).unsqueeze(1).expand(-1, B2, -1, 1)
+        Y = Y.unsqueeze(-2).unsqueeze(0).expand(B1, -1, 1, -1)
         dist = torch.abs(X - Y)
         sigma = dist.median() + 1e-8  # Median heuristic for bandwidth
         normalized = dist / sigma
         return self._bspline_kernel(normalized)
 
     @torch.compile
-    def intra_batch_kernel_matrix(self, phi: torch.Tensor) -> torch.Tensor:
-        B, L = phi.shape
-        X = phi.unsqueeze(-1).expand(-1, L, -1)
-        Y = phi.unsqueeze(-2).expand(-1, 1, L)
+    def batch_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+        B, L = X.shape
+        X = X.unsqueeze(-1).expand(-1, L, -1)
+        Y = Y.unsqueeze(-2).expand(-1, 1, L)
         dist = torch.abs(X - Y)
         sigma = dist.median() + 1e-8  # Median heuristic for bandwidth
         normalized = dist / sigma

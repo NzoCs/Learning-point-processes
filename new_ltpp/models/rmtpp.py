@@ -95,7 +95,7 @@ class RMTPP(NeuralModel):
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
 
-    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the log-likelihood loss.
 
         Args:

@@ -7,6 +7,7 @@ Provides:
 
 from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable
+import torch
 
 from new_ltpp.evaluation.statistical_testing.kernels.kernel_protocol import (
     IPointProcessKernel,
@@ -35,9 +36,9 @@ class ITest(Protocol):
         self,
         batch_x: Batch,
         batch_y: Batch,
-    ) -> float: ...
+    ) -> torch.Tensor: ...
 
-    def p_value_from_dataloaders(
+    def statistic_from_dataloaders(
         self,
         data_loader_x: TypedDataLoader,
         data_loader_y: TypedDataLoader,
@@ -47,7 +48,28 @@ class ITest(Protocol):
         self,
         batch_x: Batch,
         batch_y: Batch,
-    ) -> float: ...
+    ) -> torch.Tensor: ...
+
+    def statistics_from_model(
+        self,
+        model: NeuralModel,
+        data_loader: TypedDataLoader,
+        accumulate: bool = True,
+    ) -> tuple[float, list[float], list[float], list[float]]: ...
+
+    def statistics_from_dataloaders(
+        self,
+        data_loader_x: TypedDataLoader,
+        data_loader_y: TypedDataLoader,
+        accumulate: bool = True,
+    ) -> tuple[float, list[float], list[float], list[float]]: ...
+
+    def statistics_from_batches(
+        self,
+        batch_x: Batch,
+        batch_y: Batch,
+        accumulate: bool = True,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]: ...
 
 
 class Test(ABC):
@@ -69,37 +91,55 @@ class Test(ABC):
         pass
 
     @abstractmethod
-    def p_value_from_model(
+    def statistics_from_model(
         self,
         model: NeuralModel,
         data_loader: TypedDataLoader,
-    ) -> float:
-        """Compute p-value comparing model's distribution to data distribution."""
+    ) -> tuple[float, list[float], list[float], list[float]]:
+        """Compute test statistics comparing model's distribution to data distribution."""
         pass
 
     @abstractmethod
-    def p_value_from_batches(
-        self,
-        batch_x: Batch,
-        batch_y: Batch,
-    ) -> float:
-        """Compute p-value comparing two batches of samples."""
-        pass
-
-    @abstractmethod
-    def p_value_from_dataloaders(
+    def statistics_from_dataloaders(
         self,
         data_loader_x: TypedDataLoader,
         data_loader_y: TypedDataLoader,
-    ) -> float:
-        """Compute p-value comparing two data loaders."""
+    ) -> tuple[float, list[float], list[float], list[float]]:
+        """Compute test statistics comparing two data loaders."""
         pass
 
     @abstractmethod
-    def statistic_from_batches(
+    def statistics_from_batches(
         self,
         batch_x: Batch,
         batch_y: Batch,
-    ) -> float:
-        """Compute the test statistic comparing two batches."""
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Compute the test statistics comparing two batches."""
         pass
+
+    # Convenience wrappers: extract a single value/statistic from the
+    # more general `statistics_from_*` methods. These are used by scripts
+    # and higher-level helpers that expect singular returns.
+    def p_value_from_batches(self, batch_x: Batch, batch_y: Batch) -> torch.Tensor:
+        p_value, _obs, _perms = self.statistics_from_batches(batch_x, batch_y)
+        return p_value
+
+    def statistic_from_batches(self, batch_x: Batch, batch_y: Batch) -> torch.Tensor:
+        _p, observed, _perms = self.statistics_from_batches(batch_x, batch_y)
+        return observed
+
+    def p_value_from_model(
+        self, model: NeuralModel, data_loader: TypedDataLoader
+    ) -> float:
+        p_val, _all_p, _all_mmds, _all_perms = self.statistics_from_model(
+            model, data_loader
+        )
+        return p_val
+
+    def statistic_from_dataloaders(
+        self, data_loader_x: TypedDataLoader, data_loader_y: TypedDataLoader
+    ) -> float:
+        p_val, _all_p, _all_mmds, _all_perms = self.statistics_from_dataloaders(
+            data_loader_x, data_loader_y
+        )
+        return p_val

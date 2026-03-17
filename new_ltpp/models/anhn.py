@@ -238,7 +238,7 @@ class ANHN(NeuralModel):
 
         return imply_lambdas
 
-    def loglike_loss(self, batch: Batch):
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the loglikelihood loss."""
 
         # Prep inputs

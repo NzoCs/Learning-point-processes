@@ -212,7 +212,7 @@ class NHP(NeuralModel):
         )
         return h_ts
 
-    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the log-likelihood loss.
 
         Args:

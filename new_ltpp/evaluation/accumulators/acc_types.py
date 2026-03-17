@@ -16,9 +16,8 @@ class StatisticalMetrics(TypedDict):
     """Type definition for statistical metrics collected from batches."""
 
     mmd_values: list[float]
-    ksd_values: list[float]
     mmd_p_values: list[float]
-    ksd_p_values: list[float]
+    mmd_perm_distributions: list[float]
 
 
 class PlotData(TypedDict):

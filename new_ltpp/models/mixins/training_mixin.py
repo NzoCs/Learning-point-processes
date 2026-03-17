@@ -212,7 +212,7 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
         lambdas_loss_samples: torch.Tensor,
         seq_mask: torch.Tensor,
         type_seq: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor, int]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Compute the loglikelihood of the event sequence based on Equation (8) of NHP paper.
 
         Args:
@@ -248,6 +248,6 @@ class TrainingMixin(PredictionMixin, SimulationMixin):
 
         non_event_ll = total_sampled_lambdas.mean(dim=-1) * time_delta_seq * seq_mask
 
-        num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
+        num_events = event_ll.ne(0.0).sum()
 
         return event_ll, non_event_ll, num_events

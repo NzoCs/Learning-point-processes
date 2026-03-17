@@ -30,6 +30,7 @@ class MKernel(PointProcessKernel):
         time_kernel: TimeKernel,
         type_kernel: TypeKernel,
         transform: MKernelTransform | str = MKernelTransform.EXPONENTIAL,
+        num_points: int = 100,
         **transform_kwargs,
     ):
         """Initialize the M-kernel.
@@ -38,6 +39,7 @@ class MKernel(PointProcessKernel):
             time_kernel: Kernel for time sequences.
             type_kernel: Kernel for type sequences.
             transform: Type de transformation à appliquer sur la distance MMD.
+            num_points: Number of points for the time grid évite l'explosion en mémoire.
             **transform_kwargs: Paramètres additionnels pour la transformation:
                 - IMQ: c (default=1.0), beta (default=0.5)
                 - RATIONAL_QUADRATIC: alpha (default=1.0)
@@ -55,6 +57,7 @@ class MKernel(PointProcessKernel):
         self.c = transform_kwargs.get("c", 1.0)
         self.beta = transform_kwargs.get("beta", 0.5)
         self.alpha = transform_kwargs.get("alpha", 1.0)
+        self.num_points = num_points
 
     def _apply_transform(self, dist_sq: torch.Tensor) -> torch.Tensor:
         """Applique la transformation choisie sur la distance au carré.
@@ -119,14 +122,14 @@ class MKernel(PointProcessKernel):
             torch.Tensor: (B, B)
         """
 
-        phi_delta_time_seqs = phi_batch.time_delta_seqs
-        phi_type_seqs = phi_batch.type_seqs
-        psi_delta_time_seqs = psi_batch.time_delta_seqs
-        psi_type_seqs = psi_batch.type_seqs
+        phi_delta_time_seqs = phi_batch.time_delta_seqs[:, : self.num_points]
+        phi_type_seqs = phi_batch.type_seqs[:, : self.num_points]
+        psi_delta_time_seqs = psi_batch.time_delta_seqs[:, : self.num_points]
+        psi_type_seqs = psi_batch.type_seqs[:, : self.num_points]
 
         # Extract valid event masks (True = real event, False = padding)
-        phi_mask = phi_batch.valid_event_mask  # (B, L)
-        psi_mask = psi_batch.valid_event_mask  # (B, K)
+        phi_mask = phi_batch.valid_event_mask[:, : self.num_points]  # (B, L)
+        psi_mask = psi_batch.valid_event_mask[:, : self.num_points]  # (B, K)
 
         # Per-sequence valid counts
         phi_n = phi_mask.sum(dim=1).float()  # (B,)
@@ -199,5 +202,3 @@ class MKernel(PointProcessKernel):
 
         # Applique la transformation choisie pour convertir la distance en kernel
         return self._apply_transform(dist_sq)  # (B, B)
-
-    

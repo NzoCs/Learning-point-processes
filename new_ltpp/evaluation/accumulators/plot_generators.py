@@ -307,3 +307,64 @@ class AutocorrelationPlotGenerator(PlotGenerator):
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
         logger.info(f"Autocorrelation comparison plot saved to {output_path}")
+
+
+class MMDPlotGenerator(PlotGenerator):
+    """Generates MMD distribution plots showing H0 distribution and observed MMD."""
+
+    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+        mmd_values = data.get("mmd_values", [])
+        perm_mmds = data.get("mmd_perm_distributions", [])
+
+        if not mmd_values or not perm_mmds:
+            logger.warning("MMD data is empty. Skipping MMD plot.")
+            return
+
+        sns.set_theme(style="whitegrid")
+        plt.figure(figsize=(10, 6))
+
+        # Plot H0 distribution (permutations) - Represents the Null Hypothesis
+        sns.histplot(
+            perm_mmds,
+            stat="density",
+            color="gray",
+            alpha=0.3,
+            label="H0: Permutations (Null)",
+            bins="auto",
+        )
+
+        # Plot H1 distribution (observed values) - Represents the Alternative Hypothesis
+        if len(mmd_values) > 1:
+            sns.histplot(
+                mmd_values,
+                stat="density",
+                color="red",
+                alpha=0.3,
+                label="H1: Observed MMDs (Alternative)",
+                bins="auto",
+            )
+
+        # Plot mean observed MMD
+        avg_obs_mmd = np.mean(mmd_values)
+        plt.axvline(
+            x=avg_obs_mmd,
+            color="darkred",
+            linestyle="--",
+            linewidth=2,
+            label=f"Mean Observed MMD ({avg_obs_mmd:.4f})",
+        )
+
+        # Plot individual batch MMDs as thin ticks at the bottom if not too many
+        if len(mmd_values) < 50:
+            for val in mmd_values:
+                plt.axvline(x=val, color="red", alpha=0.2, linewidth=0.5, ymax=0.05)
+
+        plt.title("MMD Distribution: H0 (Permutations) vs H1 (Observed)", fontsize=14)
+        plt.xlabel("MMD Value", fontsize=12)
+        plt.ylabel("Density", fontsize=12)
+        plt.legend()
+        plt.tight_layout()
+
+        plt.savefig(output_path, dpi=300, bbox_inches="tight")
+        plt.close()
+        logger.info(f"MMD distribution plot (H0 vs H1) saved to {output_path}")

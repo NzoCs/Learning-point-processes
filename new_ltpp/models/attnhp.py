@@ -165,7 +165,7 @@ class ANHP(NeuralModel):
 
         return cur_layer_
 
-    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the log-likelihood loss.
 
         Args:

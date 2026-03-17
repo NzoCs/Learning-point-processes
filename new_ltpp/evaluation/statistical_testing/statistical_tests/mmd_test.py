@@ -1,6 +1,4 @@
 import torch
-import numpy as np
-from scipy import stats
 
 from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
@@ -40,11 +38,9 @@ class MMDTwoSampleTest(Test):
         self.n_permutations = n_permutations
         self.mmd = MMD(kernel=kernel)
 
-        # Aggregated statistics (no lists, direct aggregation)
-        self.sum_mmd_values: float = 0.0
-        self.sum_log_p_values: float = 0.0  # For Fisher's method: -2 * sum(log(p))
-        self.sum_z_scores: float = 0.0  # For Stouffer's method: sum(Z)
-        self.n_batches_processed: int = 0
+        self.total_observed_mmd: torch.Tensor = torch.tensor(0.0)
+        self.total_perm_mmds: torch.Tensor | None = None  # (n_permutations,)
+        self.n_batches: int = 0
 
     @property
     def name(self) -> str:
@@ -52,62 +48,23 @@ class MMDTwoSampleTest(Test):
         return self.__class__.__name__
 
     def reset_accumulators(self) -> None:
-        """Reset the batch-wise aggregators."""
-        self.sum_mmd_values = 0.0
-        self.sum_log_p_values = 0.0
-        self.sum_z_scores = 0.0
-        self.n_batches_processed = 0
+        self.total_observed_mmd: torch.Tensor = torch.tensor(0.0)
+        self.total_perm_mmds: torch.Tensor | None = None  # (n_permutations,)
+        self.n_batches: int = 0
 
-    def get_mean_mmd(self) -> float:
-        """Get the mean of aggregated MMD² values.
+    def _accumulate(self, observed_mmd: torch.Tensor, perm_mmds: torch.Tensor) -> None:
+        self.total_observed_mmd += observed_mmd
+        if self.total_perm_mmds is None:
+            self.total_perm_mmds = perm_mmds.detach().clone()
+        else:
+            self.total_perm_mmds += perm_mmds.detach()
+        self.n_batches += 1
 
-        Returns:
-            Mean MMD² value, or 0.0 if no batches have been processed.
-        """
-        if self.n_batches_processed == 0:
-            return 0.0
-        return self.sum_mmd_values / self.n_batches_processed
-
-    def get_combined_p_value_fisher(self) -> float:
-        """Combine aggregated p-values using Fisher's method.
-
-        Fisher's method combines independent p-values using:
-            χ² = -2 * Σ log(p_i) ~ χ²(2k)
-        where k is the number of p-values.
-
-        Returns:
-            Combined p-value, or 1.0 if no batches have been processed.
-        """
-        if self.n_batches_processed == 0:
+    def get_final_p_value(self) -> float:
+        if self.n_batches == 0 or self.total_perm_mmds is None:
             return 1.0
-
-        # Fisher's statistic was already accumulated as sum_log_p_values
-        chi2_stat = self.sum_log_p_values
-        df = 2 * self.n_batches_processed
-
-        # p-value from chi-squared distribution
-        combined_p = 1.0 - stats.chi2.cdf(chi2_stat, df)
-        return float(combined_p)
-
-    def get_combined_p_value_stouffer(self) -> float:
-        """Combine aggregated p-values using Stouffer's Z-score method.
-
-        Stouffer's method combines independent p-values using:
-            Z = Σ Z_i / sqrt(k)
-        where Z_i = Φ⁻¹(1 - p_i) and k is the number of p-values.
-
-        Returns:
-            Combined p-value, or 1.0 if no batches have been processed.
-        """
-        if self.n_batches_processed == 0:
-            return 1.0
-
-        # Combined Z-score was already accumulated as sum_z_scores
-        combined_z = self.sum_z_scores / np.sqrt(self.n_batches_processed)
-
-        # Convert back to p-value
-        combined_p = 1.0 - stats.norm.cdf(combined_z)
-        return float(combined_p)
+        count_ge = (self.total_perm_mmds >= self.total_observed_mmd).sum()
+        return (count_ge.item() + 1) / (self.n_permutations + 1)
 
     def _concat_batches(self, batch_x: Batch, batch_y: Batch) -> Batch:
         """Concatenate two batches along the batch dimension.
@@ -176,7 +133,7 @@ class MMDTwoSampleTest(Test):
         self,
         batch_x: Batch,
         batch_y: Batch,
-    ) -> tuple[float, list[float]]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute observed MMD² and per-permutation MMD² values for a batch pair.
 
         1. Compute the observed MMD² between batch_x and batch_y.
@@ -189,31 +146,30 @@ class MMDTwoSampleTest(Test):
             batch_y: Batch of sequences from distribution Y.
 
         Returns:
-            Tuple of (observed_mmd, perm_mmds) where perm_mmds is a list
-            of MMD² values for each permutation.
+            Tuple of (observed_mmd, perm_mmds) as Tensors.
         """
         n = batch_x.time_seqs.shape[0]
         m = batch_y.time_seqs.shape[0]
         total = n + m
 
-        observed_mmd = self.mmd(batch_x, batch_y).item()
+        observed_mmd = self.mmd(batch_x, batch_y)
         pooled = self._concat_batches(batch_x, batch_y)
 
-        perm_mmds: list[float] = []
+        perm_mmds: list[torch.Tensor] = []
         for _ in range(self.n_permutations):
-            perm = torch.randperm(total)
+            perm = torch.randperm(total, device=observed_mmd.device)
             perm_x = self._select_batch(pooled, perm[:n])
             perm_y = self._select_batch(pooled, perm[n:])
-            perm_mmds.append(self.mmd(perm_x, perm_y).item())
+            perm_mmds.append(self.mmd(perm_x, perm_y))
 
-        return observed_mmd, perm_mmds
+        return observed_mmd, torch.stack(perm_mmds)
 
-    def p_value_from_batches(
+    def statistics_from_batches(
         self,
         batch_x: Batch,
         batch_y: Batch,
         accumulate: bool = True,
-    ) -> float:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Compute the p-value of the MMD two-sample permutation test
         on a single pair of batches.
 
@@ -225,176 +181,46 @@ class MMDTwoSampleTest(Test):
             accumulate: If True, accumulate MMD² and p-value for later combination.
 
         Returns:
-            p-value of the permutation test.
+            p-value of the permutation test as a Tensor.
         """
         observed_mmd, perm_mmds = self._permutation_test_from_batches(batch_x, batch_y)
-        count_ge = sum(1 for pm in perm_mmds if pm >= observed_mmd)
-        p_value = (count_ge + 1) / (self.n_permutations + 1)
+        count_ge = (perm_mmds >= observed_mmd).sum()
+        p_value = (count_ge + 1.0) / (self.n_permutations + 1.0)
 
         if accumulate:
-            # Aggregate statistics directly without storing lists
-            self.sum_mmd_values += observed_mmd
+            self.total_count_ge += int(count_ge.item())
+            self.total_n_permutations += self.n_permutations
 
-            # For Fisher: accumulate -2 * log(p)
-            p_clipped = np.clip(p_value, 1e-16, 1.0)
-            self.sum_log_p_values += -2 * np.log(p_clipped)
+        return p_value, observed_mmd, perm_mmds
 
-            # For Stouffer: accumulate Z-score
-            p_clipped_z = np.clip(p_value, 1e-16, 1.0 - 1e-16)
-            z_score = stats.norm.ppf(1.0 - p_clipped_z)
-            self.sum_z_scores += z_score.item()
-
-            self.n_batches_processed += 1
-
-        return p_value
-
-    def p_value_from_model(
+    def _aggregate_permutations(
         self,
-        model: NeuralModel,
-        data_loader: TypedDataLoader,
-        accumulate: bool = True,
-    ) -> float:
-        """Compute the p-value of the MMD two-sample permutation test.
-
-        Simulates sequences from the model for each batch and compares
-        against the real sequences using a permutation test.
-
-        Aggregates MMD² statistics across batches:
-            T_obs = Σ_i MMD²_i(real_i, sim_i)
-        For each permutation π:
-            T*_π  = Σ_i MMD²_i(perm_x_i, perm_y_i)
-        p-value = (#{T*_π >= T_obs} + 1) / (n_permutations + 1)
-
-        Args:
-            model: The neural point process model to evaluate.
-            data_loader: DataLoader providing batches of real sequences.
-            accumulate: If True, accumulate per-batch MMD² and p-values.
-
-        Returns:
-            p-value of the aggregated permutation test.
-        """
-        # Process each batch immediately to avoid memory blow-up.
-        # Store only scalar MMD values: observed + permuted per batch.
-        t_obs = 0.0
-        all_perm_mmds: list[list[float]] = []
-
-        n_batches = 0
-        for batch in data_loader:
-            simulated = model.simulate(batch=batch)
-            observed_mmd_i, perm_mmds_i = self._permutation_test_from_batches(
-                batch, simulated
-            )
-            t_obs += observed_mmd_i
-            all_perm_mmds.append(perm_mmds_i)
-
-            # Aggregate per-batch statistics directly if requested
-            if accumulate:
-                # Compute per-batch p-value
-                count_ge_i = sum(1 for pm in perm_mmds_i if pm >= observed_mmd_i)
-                p_value_i = (count_ge_i + 1) / (self.n_permutations + 1)
-
-                # Aggregate statistics directly without storing lists
-                self.sum_mmd_values += observed_mmd_i
-
-                # For Fisher: accumulate -2 * log(p)
-                p_clipped = np.clip(p_value_i, 1e-16, 1.0)
-                self.sum_log_p_values += -2 * np.log(p_clipped)
-
-                # For Stouffer: accumulate Z-score
-                p_clipped_z = np.clip(p_value_i, 1e-16, 1.0 - 1e-16)
-                z_score = stats.norm.ppf(1.0 - p_clipped_z)
-                self.sum_z_scores += z_score.item()
-
-                self.n_batches_processed += 1
-
-            n_batches += 1
-
+        t_obs: torch.Tensor,
+        all_perm_mmds: list[torch.Tensor],
+        n_batches: int,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Aggregate per-batch permutation MMDs and calculate final p-value, obs, and perms."""
         if n_batches == 0:
-            return 1.0
+            return (
+                torch.tensor(1.0, device=t_obs.device),
+                t_obs,
+                torch.zeros(self.n_permutations, device=t_obs.device),
+            )
 
         # Aggregate: T*_k = Σ_i perm_mmds[i][k], count how many >= T_obs
-        count_ge = 0
-        for k in range(self.n_permutations):
-            t_perm = sum(all_perm_mmds[i][k] for i in range(n_batches))
-            if t_perm >= t_obs:
-                count_ge += 1
+        stacked_perms = torch.stack(all_perm_mmds)  # (n_batches, n_permutations)
+        t_perms = stacked_perms.sum(dim=0)  # (n_permutations,)
 
-        return (count_ge + 1) / (self.n_permutations + 1)
+        count_ge = (t_perms >= t_obs).sum()
+        p_value = (count_ge + 1.0) / (self.n_permutations + 1.0)
 
-    def p_value_from_dataloaders(
-        self,
-        data_loader_x: TypedDataLoader,
-        data_loader_y: TypedDataLoader,
-        accumulate: bool = True,
-    ) -> float:
-        """Compute the p-value of the MMD two-sample permutation test
-        between two dataloaders (e.g. real vs pre-simulated).
+        return p_value, t_obs, t_perms
 
-        Aggregates MMD² statistics across batch pairs:
-            T_obs = Σ_i MMD²_i(x_i, y_i)
-        For each permutation π:
-            T*_π  = Σ_i MMD²_i(perm_x_i, perm_y_i)
-        p-value = (#{T*_π >= T_obs} + 1) / (n_permutations + 1)
-
-        Args:
-            data_loader_x: DataLoader providing batches of sequences from distribution X.
-            data_loader_y: DataLoader providing batches of sequences from distribution Y.
-            accumulate: If True, accumulate per-batch MMD² and p-values.
-
-        Returns:
-            p-value of the aggregated permutation test.
-        """
-        # Process each batch pair immediately to avoid memory blow-up.
-        t_obs = 0.0
-        all_perm_mmds: list[list[float]] = []
-
-        n_batches = 0
-        for batch_x, batch_y in zip(data_loader_x, data_loader_y):
-            observed_mmd_i, perm_mmds_i = self._permutation_test_from_batches(
-                batch_x, batch_y
-            )
-            t_obs += observed_mmd_i
-            all_perm_mmds.append(perm_mmds_i)
-
-            # Aggregate per-batch statistics directly if requested
-            if accumulate:
-                # Compute per-batch p-value
-                count_ge_i = sum(1 for pm in perm_mmds_i if pm >= observed_mmd_i)
-                p_value_i = (count_ge_i + 1) / (self.n_permutations + 1)
-
-                # Aggregate statistics directly without storing lists
-                self.sum_mmd_values += observed_mmd_i
-
-                # For Fisher: accumulate -2 * log(p)
-                p_clipped = np.clip(p_value_i, 1e-16, 1.0)
-                self.sum_log_p_values += -2 * np.log(p_clipped)
-
-                # For Stouffer: accumulate Z-score
-                p_clipped_z = np.clip(p_value_i, 1e-16, 1.0 - 1e-16)
-                z_score = stats.norm.ppf(1.0 - p_clipped_z)
-                self.sum_z_scores += z_score.item()
-
-                self.n_batches_processed += 1
-
-            n_batches += 1
-
-        if n_batches == 0:
-            return 1.0
-
-        # Aggregate: T*_k = Σ_i perm_mmds[i][k], count how many >= T_obs
-        count_ge = 0
-        for k in range(self.n_permutations):
-            t_perm = sum(all_perm_mmds[i][k] for i in range(n_batches))
-            if t_perm >= t_obs:
-                count_ge += 1
-
-        return (count_ge + 1) / (self.n_permutations + 1)
-
-    def statistic_from_batches(
+    def mmd_from_batches(
         self,
         batch_x: Batch,
         batch_y: Batch,
-    ) -> float:
+    ) -> torch.Tensor:
         """Compute the MMD² statistic comparing two batches of samples.
 
         Args:
@@ -402,6 +228,78 @@ class MMDTwoSampleTest(Test):
             batch_y: Batch of sequences from distribution Y.
 
         Returns:
-            MMD² statistic value.
+            MMD² statistic value as a Tensor.
         """
-        return self.mmd(batch_x, batch_y).item()
+        return self.mmd(batch_x, batch_y)
+
+    def statistics_from_model(
+        self,
+        model: NeuralModel,
+        data_loader: TypedDataLoader,
+        accumulate: bool = True,
+    ) -> tuple[float, list[float], list[float], list[float]]:
+        """Compute the p-value of the MMD two-sample permutation test for a trained model.
+
+        Args:
+            model: Model to simulate from.
+            data_loader: Data loader for ground truth batches.
+            accumulate: Whether to accumulate statistics.
+
+        Returns:
+            p-value: float
+            all_p_values: list[float]
+            all_mmds: list[float]
+            all_perm_mmds: list[float]
+        """
+
+        all_p_values = []
+        all_mmds = []
+        all_perm_mmds = []
+
+        for batch in data_loader:
+            simulated = model.simulate(batch=batch)
+            p_value_i, observed_mmd_i, perm_mmds_i = self.statistics_from_batches(
+                batch, simulated
+            )
+
+            all_p_values.append(p_value_i.item())
+            all_mmds.append(observed_mmd_i.item())
+            all_perm_mmds.extend(perm_mmds_i.tolist())
+
+        p_val = self.get_final_p_value()
+
+        return p_val, all_p_values, all_mmds, all_perm_mmds
+
+    def statistics_from_dataloaders(
+        self,
+        data_loader_x: TypedDataLoader,
+        data_loader_y: TypedDataLoader,
+        accumulate: bool = True,
+    ) -> tuple[float, list[float], list[float], list[float]]:
+        """Compute the p-value of the MMD two-sample permutation test for two data loaders, e.g. ground truth and simulation.
+
+        Args:
+            data_loader_x: Data loader for ground truth batches.
+            data_loader_y: Data loader for simulated batches.
+            accumulate: Whether to accumulate statistics.
+
+        Returns:
+            p-value as a float.
+        """
+        all_p_values = []
+        all_mmds = []
+        all_perm_mmds = []
+
+        n_batches = 0
+        for batch_x, batch_y in zip(data_loader_x, data_loader_y):
+            p_value_i, observed_mmd_i, perm_mmds_i = self.statistics_from_batches(
+                batch_x, batch_y
+            )
+
+            all_p_values.append(p_value_i.item())
+            all_mmds.append(observed_mmd_i.item())
+            all_perm_mmds.extend(perm_mmds_i.tolist())
+
+            n_batches += 1
+
+        return self.get_final_p_value(), all_p_values, all_mmds, all_perm_mmds

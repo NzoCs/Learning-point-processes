@@ -30,9 +30,12 @@ from .plot_generators import (
     EventTypePlotGenerator,
     InterEventTimePlotGenerator,
     SequenceLengthPlotGenerator,
+    MMDPlotGenerator,
 )
 from .time_accumulator import InterEventTimeAccumulator
 from .base_accumulator import Accumulator
+from .statistical_metrics_accumulator import StatisticalTestAccumulator
+from new_ltpp.evaluation.statistical_testing import MMDTwoSampleTest
 
 
 class BatchStatisticsCollector(Accumulator):
@@ -64,6 +67,7 @@ class BatchStatisticsCollector(Accumulator):
         min_sim_events: int = 1,
         enable_plots: bool = True,
         enable_metrics: bool = True,
+        mmd_test: Optional[MMDTwoSampleTest] = None,
         output_dir: Path | str = OUTPUT_DIR / "distribution_comparison",
     ):
         """Initialize the batch statistics collector.
@@ -99,6 +103,11 @@ class BatchStatisticsCollector(Accumulator):
             CorrAccumulator(min_sim_events=min_sim_events),
         ]
 
+        if mmd_test is not None:
+            base_accumulators.append(
+                StatisticalTestAccumulator(mmd_test, min_sim_events=min_sim_events)
+            )
+
         self._accumulators = tuple(base_accumulators)
 
         # Initialize plot generators (if enabled)
@@ -108,6 +117,7 @@ class BatchStatisticsCollector(Accumulator):
                 EventTypePlotGenerator,
                 SequenceLengthPlotGenerator,
                 AutocorrelationPlotGenerator,
+                MMDPlotGenerator,
             ]
         ] = None
 
@@ -117,6 +127,7 @@ class BatchStatisticsCollector(Accumulator):
                 EventTypePlotGenerator(self.num_event_types),
                 SequenceLengthPlotGenerator(),
                 AutocorrelationPlotGenerator(),
+                MMDPlotGenerator(),
             )
 
         # Initialize metrics calculator (if enabled)
@@ -179,11 +190,14 @@ class BatchStatisticsCollector(Accumulator):
             event_type=self._accumulators[1].compute(),
             sequence_length=self._accumulators[2].compute(),
             correlation=self._accumulators[3].compute(),
-            statistical_tests=StatisticalMetrics(
-                mmd_values=[],
-                ksd_values=[],
-                mmd_p_values=[],
-                ksd_p_values=[],
+            statistical_tests=(
+                self._accumulators[4].compute()
+                if len(self._accumulators) > 4
+                else StatisticalMetrics(
+                    mmd_values=[],
+                    mmd_p_values=[],
+                    mmd_perm_distributions=[],
+                )
             ),
         )
 
@@ -224,6 +238,7 @@ class BatchStatisticsCollector(Accumulator):
             "comparison_event_type_dist.png",
             "comparison_sequence_length_dist.png",
             "comparison_autocorrelation.png",
+            "mmd_test_distribution.png",
         ]
 
         # Type assertion safe because we checked self._plot_generators is not None
@@ -235,8 +250,15 @@ class BatchStatisticsCollector(Accumulator):
         ):
             output_path: str = str(self.output_dir / filename)
 
-            # Use acf_data for the last plot (autocorrelation)
-            data_to_use = acf_data if i == 3 else plot_data_dict
+            # Use acf_data for the autocorrelation plot
+            if i == 3:
+                data_to_use = acf_data
+            # Use statistical_tests for the MMD plot
+            elif i == 4:
+                data_to_use = statistics["statistical_tests"]
+            else:
+                data_to_use = plot_data_dict
+
             generator.generate_plot(cast(dict, data_to_use), output_path)
             logger.info(f"Generated plot: {filename}")
 

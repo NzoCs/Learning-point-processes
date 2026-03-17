@@ -1,10 +1,10 @@
 import torch
 from sigkernel import SigKernel
-from typing import Optional, TypedDict, Literal
+from typing import TypedDict, Literal
 
 from .kernel_protocol import IPointProcessKernel
-from .utils import _get_embedding, _forward_fill_padding
-from .space_kernels import LinearTimeKernel, RBFTimeKernel
+from .utils import _get_embedding
+from .space_kernels import ISpaceKernel
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
@@ -55,33 +55,17 @@ class SIGKernel(IPointProcessKernel):
         phi_time_seqs = phi_time_seqs / global_max
         psi_time_seqs = psi_time_seqs / global_max
 
-        match self.static_kernel_type:
-            case "linear":
-                self.kernel.static_kernel = LinearKernel()
-            case "rbf":
-                sigma = torch.max(
-                    (phi_time_seqs.unsqueeze(1) - psi_time_seqs.unsqueeze(-1))
-                    .abs()
-                    .median(),
-                    torch.tensor(1e-8, device=phi_time_seqs.device),
-                )  # Median heuristic for bandwidth
-                if self.rbf_scaling is not None:
-                self.kernel.static_kernel = RBFKernel(sigma=sigma)  # type: ignore
-            case _:
-                raise ValueError(
-                    f"Unknown static kernel type: {self.static_kernel_type}"
-                )
-
         # 1) Compute embeddings (stays in original dtype, float32 is fine for sigkernel)
         # ---------------------
-        # phi : (B, Lφ, C)
-        # psi : (B, Lψ, C)
+        # phi : (B, D, C)
+        # psi : (B, D, C)
         phi_emb = _get_embedding(
             self.num_discretization_points,
             self.embedding_type,
             self.num_event_types,
             phi_time_seqs,
             phi_type_seqs,
+            phi_batch.valid_event_mask,
         )
         psi_emb = _get_embedding(
             self.num_discretization_points,
@@ -89,12 +73,10 @@ class SIGKernel(IPointProcessKernel):
             self.num_event_types,
             psi_time_seqs,
             psi_type_seqs,
+            psi_batch.valid_event_mask,
         )
 
-        # 2) Mask out padded positions by forward-filling with the last valid value.
-        #    A constant path has zero increments → no contribution to the signature kernel.
-        phi_emb = _forward_fill_padding(phi_emb, phi_batch.valid_event_mask)
-        psi_emb = _forward_fill_padding(psi_emb, psi_batch.valid_event_mask)
+        # 2) Path is now evaluated on a regular time grid, no padding to forward fill
 
         return phi_emb, psi_emb
 

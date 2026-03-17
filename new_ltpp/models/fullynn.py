@@ -208,7 +208,7 @@ class FullyNN(NeuralModel):
 
         return hidden_states
 
-    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the loglike loss.
 
         Args:
@@ -251,7 +251,7 @@ class FullyNN(NeuralModel):
         # [batch_size, seq_len]
         # multiplied by sequence mask
         non_event_ll = integral_lambda.sum(-1) * batch_non_pad_mask[:, 1:]
-        num_events = torch.masked_select(event_ll, event_ll.ne(0.0)).size()[0]
+        num_events = event_ll.ne(0.0).sum()
         loss = -(event_ll - non_event_ll).sum()
 
         return loss, num_events

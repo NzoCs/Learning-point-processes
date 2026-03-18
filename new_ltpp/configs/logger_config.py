@@ -236,6 +236,7 @@ class LoggerConfig(Config):
         self.save_dir = save_dir
         self.type = LoggerType(type) if isinstance(type, str) else type
         self.config = config or {}
+        self.__post_init__()
 
     @classmethod
     def get_required_fields(cls) -> List[str]:

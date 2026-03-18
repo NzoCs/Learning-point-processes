@@ -24,7 +24,7 @@ from new_ltpp.data.generation.hawkes import HawkesSimulator
 from new_ltpp.data.generation.simulation_manager import SimulationManager
 from new_ltpp.shared_types import Batch
 from new_ltpp.evaluation.statistical_testing import MMDTwoSampleTest
-from new_ltpp.evaluation.statistical_testing.kernels import SIGKernel
+from new_ltpp.evaluation.statistical_testing.point_process_kernels import SIGKernel
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CLI

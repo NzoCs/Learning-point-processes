@@ -80,6 +80,11 @@ def run_experiment(
         "--thinning-config",
         help="Thinning configuration (quick_test, debug, e50_s15, e100_s30, e150_s50, e200_s60, e20_s10) [default: quick_test]",
     ),
+    statistical_test_config: str = typer.Option(
+        "quick_test",
+        "--statistical-test-config",
+        help="Statistical test configuration [default: quick_test]",
+    ),
     logger_config: str = typer.Option(
         "tensorboard",
         "--logger-config",
@@ -113,6 +118,7 @@ def run_experiment(
         data_loading_config=data_loading_config,
         simulation_config=simulation_config,
         thinning_config=thinning_config,
+        statistical_test_config=statistical_test_config,
         logger_config=logger_config,
         model_id=model_id,
         phase=phase,

@@ -11,8 +11,9 @@ from .space_kernels import (
     BSplineTimeKernel,
     PoissonTimeKernel,
     EmbeddingKernel,
-    create_time_kernel,
 )
+from .config import PointProcessKernelConfig
+
 
 __all__ = [
     "MKernel",
@@ -28,5 +29,5 @@ __all__ = [
     "BSplineTimeKernel",
     "PoissonTimeKernel",
     "EmbeddingKernel",
-    "create_time_kernel",
+    "PointProcessKernelConfig",
 ]

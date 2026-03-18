@@ -22,7 +22,7 @@ from new_ltpp.data.generation.hawkes import HawkesSimulator
 from new_ltpp.data.generation.simulation_manager import SimulationManager
 from new_ltpp.shared_types import Batch
 from new_ltpp.evaluation.statistical_testing import MMDTwoSampleTest
-from new_ltpp.evaluation.statistical_testing.kernels import (
+from new_ltpp.evaluation.statistical_testing.point_process_kernels import (
     MKernel,
     MKernelTransform,
     create_time_kernel,
@@ -157,7 +157,7 @@ def sequences_to_batch(sequences: List[Dict], max_len: int = None) -> Batch:
         type_seqs=torch.tensor(type_seqs, dtype=torch.long),
         valid_event_mask=torch.tensor(masks, dtype=torch.bool),
     )
-    
+
 
 def split_batch(batch: Batch, batch_size: int) -> List[Batch]:
     """Découpe un gros Batch en mini-batches."""
@@ -178,7 +178,7 @@ def split_batch(batch: Batch, batch_size: int) -> List[Batch]:
 
 def estimate_memory_gb(batch_size: int, seq_len: int) -> float:
     """Estimate peak memory usage for kernel computation in GB.
-    
+
     The kernel creates 4D tensors of shape (B, B, L, L) for intra-batch
     and (B1, B2, L, K) for cross-batch computations.
     Multiple such tensors exist simultaneously.
@@ -189,7 +189,7 @@ def estimate_memory_gb(batch_size: int, seq_len: int) -> float:
     bytes_per_tensor = elements_per_tensor * 4  # float32
     # ~3 tensors alive at peak during one gram matrix computation
     peak_bytes = bytes_per_tensor * 3
-    return peak_bytes / (1024 ** 3)
+    return peak_bytes / (1024**3)
 
 
 def mmd_test_by_batch(
@@ -215,9 +215,7 @@ def mmd_test_by_batch(
         mmd_values.append(mmd_val)
         p_values.append(p_val)
         if verbose:
-            print(
-                f"MMD² = {mmd_val:.6f}, p-value = {p_val:.4f}"
-            )
+            print(f"MMD² = {mmd_val:.6f}, p-value = {p_val:.4f}")
 
     return {
         "mmd_values": mmd_values,
@@ -519,7 +517,7 @@ def save_results_to_csv(
     """Sauvegarde tous les résultats en fichiers CSV."""
     output_dir.mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # 1. Sanity check
     sanity_data = [
         {
@@ -543,80 +541,92 @@ def save_results_to_csv(
     sanity_file = output_dir / f"sanity_check_{timestamp}.csv"
     df_sanity.to_csv(sanity_file, index=False)
     print(f"\n✓ Sanity check sauvegardé : {sanity_file}")
-    
+
     # 2. Pairwise tests
     pairwise_data = []
     for (name_a, name_b), res_mk in results_mk.items():
         res_sig = results_sig[(name_a, name_b)]
-        pairwise_data.append({
-            "config_a": name_a,
-            "config_b": name_b,
-            "kernel": "MKernel",
-            "mean_mmd": res_mk["mean_mmd"],
-            "mean_p_value": res_mk["mean_p_value"],
-            "h0_rejected": res_mk["mean_p_value"] < 0.05,
-        })
-        pairwise_data.append({
-            "config_a": name_a,
-            "config_b": name_b,
-            "kernel": "SIGKernel",
-            "mean_mmd": res_sig["mean_mmd"],
-            "mean_p_value": res_sig["mean_p_value"],
-            "h0_rejected": res_sig["mean_p_value"] < 0.05,
-        })
+        pairwise_data.append(
+            {
+                "config_a": name_a,
+                "config_b": name_b,
+                "kernel": "MKernel",
+                "mean_mmd": res_mk["mean_mmd"],
+                "mean_p_value": res_mk["mean_p_value"],
+                "h0_rejected": res_mk["mean_p_value"] < 0.05,
+            }
+        )
+        pairwise_data.append(
+            {
+                "config_a": name_a,
+                "config_b": name_b,
+                "kernel": "SIGKernel",
+                "mean_mmd": res_sig["mean_mmd"],
+                "mean_p_value": res_sig["mean_p_value"],
+                "h0_rejected": res_sig["mean_p_value"] < 0.05,
+            }
+        )
     df_pairwise = pd.DataFrame(pairwise_data)
     pairwise_file = output_dir / f"pairwise_tests_{timestamp}.csv"
     df_pairwise.to_csv(pairwise_file, index=False)
     print(f"✓ Tests par paires sauvegardés : {pairwise_file}")
-    
+
     # 3. Parametric studies
     if alpha_results_mk:
         parametric_data = []
         for r in alpha_results_mk:
-            parametric_data.append({
-                "study": "alpha_variation",
-                "parameter": "alpha",
-                "value": r["alpha"],
-                "kernel": "MKernel",
-                "mmd": r["mmd"],
-                "p_value": r["p_value"],
-                "h0_rejected": r["p_value"] < 0.05,
-            })
+            parametric_data.append(
+                {
+                    "study": "alpha_variation",
+                    "parameter": "alpha",
+                    "value": r["alpha"],
+                    "kernel": "MKernel",
+                    "mmd": r["mmd"],
+                    "p_value": r["p_value"],
+                    "h0_rejected": r["p_value"] < 0.05,
+                }
+            )
         for r in alpha_results_sig:
-            parametric_data.append({
-                "study": "alpha_variation",
-                "parameter": "alpha",
-                "value": r["alpha"],
-                "kernel": "SIGKernel",
-                "mmd": r["mmd"],
-                "p_value": r["p_value"],
-                "h0_rejected": r["p_value"] < 0.05,
-            })
+            parametric_data.append(
+                {
+                    "study": "alpha_variation",
+                    "parameter": "alpha",
+                    "value": r["alpha"],
+                    "kernel": "SIGKernel",
+                    "mmd": r["mmd"],
+                    "p_value": r["p_value"],
+                    "h0_rejected": r["p_value"] < 0.05,
+                }
+            )
         for r in mu_results_mk:
-            parametric_data.append({
-                "study": "mu_variation",
-                "parameter": "mu",
-                "value": r["mu"],
-                "kernel": "MKernel",
-                "mmd": r["mmd"],
-                "p_value": r["p_value"],
-                "h0_rejected": r["p_value"] < 0.05,
-            })
+            parametric_data.append(
+                {
+                    "study": "mu_variation",
+                    "parameter": "mu",
+                    "value": r["mu"],
+                    "kernel": "MKernel",
+                    "mmd": r["mmd"],
+                    "p_value": r["p_value"],
+                    "h0_rejected": r["p_value"] < 0.05,
+                }
+            )
         for r in mu_results_sig:
-            parametric_data.append({
-                "study": "mu_variation",
-                "parameter": "mu",
-                "value": r["mu"],
-                "kernel": "SIGKernel",
-                "mmd": r["mmd"],
-                "p_value": r["p_value"],
-                "h0_rejected": r["p_value"] < 0.05,
-            })
+            parametric_data.append(
+                {
+                    "study": "mu_variation",
+                    "parameter": "mu",
+                    "value": r["mu"],
+                    "kernel": "SIGKernel",
+                    "mmd": r["mmd"],
+                    "p_value": r["p_value"],
+                    "h0_rejected": r["p_value"] < 0.05,
+                }
+            )
         df_parametric = pd.DataFrame(parametric_data)
         parametric_file = output_dir / f"parametric_studies_{timestamp}.csv"
         df_parametric.to_csv(parametric_file, index=False)
         print(f"✓ Études paramétriques sauvegardées : {parametric_file}")
-    
+
     # 4. Summary metadata
     summary_data = {
         "timestamp": timestamp,
@@ -628,14 +638,18 @@ def save_results_to_csv(
         "sanity_check_mkernel_pass": result_same_mk["mean_p_value"] > 0.05,
         "sanity_check_sigkernel_pass": result_same_sig["mean_p_value"] > 0.05,
         "pairwise_tests_count": len(results_mk),
-        "mkernel_rejections": sum(1 for r in results_mk.values() if r["mean_p_value"] < 0.05),
-        "sigkernel_rejections": sum(1 for r in results_sig.values() if r["mean_p_value"] < 0.05),
+        "mkernel_rejections": sum(
+            1 for r in results_mk.values() if r["mean_p_value"] < 0.05
+        ),
+        "sigkernel_rejections": sum(
+            1 for r in results_sig.values() if r["mean_p_value"] < 0.05
+        ),
     }
     df_summary = pd.DataFrame([summary_data])
     summary_file = output_dir / f"summary_{timestamp}.csv"
     df_summary.to_csv(summary_file, index=False)
     print(f"✓ Résumé sauvegardé : {summary_file}")
-    
+
     return output_dir
 
 
@@ -662,7 +676,7 @@ def main():
     parser.add_argument(
         "--dim-process",
         type=int,
-        default=2, 
+        default=2,
         help="Dimension du processus (nombre de types)",
     )
     parser.add_argument(
@@ -701,15 +715,19 @@ def main():
 
     # Génération des données
     batches = generate_all_configs(configs, args.num_sim)
-    
+
     # Memory estimation and safety check (using max across all configs)
     max_seq_len = max(batch.time_seqs.shape[1] for batch in batches.values())
     est_mem = estimate_memory_gb(args.batch_size, max_seq_len)
-    print(f"\nEstimated peak memory per kernel call: {est_mem:.1f} GB (based on max seq len={max_seq_len})")
+    print(
+        f"\nEstimated peak memory per kernel call: {est_mem:.1f} GB (based on max seq len={max_seq_len})"
+    )
     if est_mem > 10:
         print(f"⚠️  WARNING: Very high memory usage expected ({est_mem:.0f} GB)!")
         print(f"   The process will likely be OOM-killed.")
-        print(f"   Reduce --end-time (current: {args.end_time}) or --batch-size (current: {args.batch_size})")
+        print(
+            f"   Reduce --end-time (current: {args.end_time}) or --batch-size (current: {args.batch_size})"
+        )
         print(f"   Suggested: --end-time 10 --batch-size 16")
         return
 

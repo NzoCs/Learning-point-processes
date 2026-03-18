@@ -7,11 +7,16 @@ error handling, and maintainable architecture.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 from new_ltpp.utils import logger
 
 from .base_config import Config, ConfigValidationError
+
+if TYPE_CHECKING:
+    from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
+        StatisticalTestDict,
+    )
 
 
 def get_available_gpu() -> int:
@@ -197,6 +202,7 @@ class ModelConfig(Config):
         model_specs (dict): Dictionnaire de config pour ModelSpecsConfig.
         thinning_config (dict): Dictionnaire de config pour ThinningConfig.
         simulation_config (dict): Dictionnaire de config pour SimulationConfig.
+        statistical_test_config (dict): Configuration for statistical testing.
     """
 
     def __init__(
@@ -207,6 +213,7 @@ class ModelConfig(Config):
         model_specs: dict,
         num_mc_samples: int,
         thinning_config: dict | ThinningConfig | None = None,
+        statistical_test_config: Optional[Union[dict, "StatisticalTestDict"]] = None,
         device: str = "auto",
         gpu: int | None = None,
         is_training: bool = False,
@@ -218,6 +225,7 @@ class ModelConfig(Config):
         self.gpu = gpu if gpu is not None else get_available_gpu()
         self.is_training = is_training
         self.compute_simulation = compute_simulation
+        self.statistical_test_config = statistical_test_config
 
         # Specs: accept dict or ModelSpecsConfig, instantiate if dict
         if isinstance(general_specs, ModelSpecsConfig):
@@ -261,6 +269,7 @@ class ModelConfig(Config):
             "compute_simulation": self.compute_simulation,
             "thinning": self.thinning_config.get_yaml_config(),
             "simulation_config": self.simulation_config.get_yaml_config(),
+            "statistical_test_config": self.statistical_test_config,
         }
 
     def validate(self) -> None:

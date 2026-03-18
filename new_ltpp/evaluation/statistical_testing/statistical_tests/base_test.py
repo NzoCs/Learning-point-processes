@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable
 import torch
 
-from new_ltpp.evaluation.statistical_testing.kernels.kernel_protocol import (
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protocol import (
     IPointProcessKernel,
 )
 from new_ltpp.models.base_model import NeuralModel

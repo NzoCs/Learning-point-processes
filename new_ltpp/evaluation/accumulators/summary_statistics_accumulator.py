@@ -8,8 +8,12 @@ statistics batch-by-batch during the prediction phase.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple, cast, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
+        StatisticalTestDict,
+    )
 
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.shared_types import Batch, SimulationResult
@@ -30,12 +34,11 @@ from .plot_generators import (
     EventTypePlotGenerator,
     InterEventTimePlotGenerator,
     SequenceLengthPlotGenerator,
-    MMDPlotGenerator,
+    StatTestPlotGenerator,
 )
 from .time_accumulator import InterEventTimeAccumulator
 from .base_accumulator import Accumulator
 from .statistical_metrics_accumulator import StatisticalTestAccumulator
-from new_ltpp.evaluation.statistical_testing import MMDTwoSampleTest
 
 
 class BatchStatisticsCollector(Accumulator):
@@ -63,11 +66,11 @@ class BatchStatisticsCollector(Accumulator):
         self,
         num_event_types: int,
         dtime_max: float,
+        statistical_test_config: Optional["StatisticalTestDict"] = None,
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         enable_plots: bool = True,
         enable_metrics: bool = True,
-        mmd_test: Optional[MMDTwoSampleTest] = None,
         output_dir: Path | str = OUTPUT_DIR / "distribution_comparison",
     ):
         """Initialize the batch statistics collector.
@@ -75,6 +78,7 @@ class BatchStatisticsCollector(Accumulator):
         Args:
             num_event_types: Number of event types in the dataset
             dtime_max: Maximum inter-event time
+            statistical_test_config: Configuration for statistical tests (e.g., MMD test)
             dtime_min: Minimum inter-event time
             min_sim_events: Minimum number of simulated events required per batch
             enable_plots: Whether to generate plots
@@ -103,9 +107,11 @@ class BatchStatisticsCollector(Accumulator):
             CorrAccumulator(min_sim_events=min_sim_events),
         ]
 
-        if mmd_test is not None:
+        if statistical_test_config is not None:
             base_accumulators.append(
-                StatisticalTestAccumulator(mmd_test, min_sim_events=min_sim_events)
+                StatisticalTestAccumulator(
+                    statistical_test_config, min_sim_events=min_sim_events
+                )
             )
 
         self._accumulators = tuple(base_accumulators)
@@ -117,7 +123,7 @@ class BatchStatisticsCollector(Accumulator):
                 EventTypePlotGenerator,
                 SequenceLengthPlotGenerator,
                 AutocorrelationPlotGenerator,
-                MMDPlotGenerator,
+                StatTestPlotGenerator,
             ]
         ] = None
 
@@ -127,7 +133,7 @@ class BatchStatisticsCollector(Accumulator):
                 EventTypePlotGenerator(self.num_event_types),
                 SequenceLengthPlotGenerator(),
                 AutocorrelationPlotGenerator(),
-                MMDPlotGenerator(),
+                StatTestPlotGenerator(),
             )
 
         # Initialize metrics calculator (if enabled)

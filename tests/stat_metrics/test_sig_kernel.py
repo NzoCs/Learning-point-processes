@@ -3,8 +3,10 @@
 import pytest
 import torch
 
-from new_ltpp.evaluation.statistical_testing.kernels.sig_kernel import SIGKernel
-from new_ltpp.evaluation.statistical_testing.statistical_metrics import MMD
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.sig_kernel import (
+    SIGKernel,
+)
+from new_ltpp.evaluation.statistical_testing.point_process_metric import MMD
 from new_ltpp.shared_types import Batch
 from new_ltpp.configs.config_builders import DataConfigBuilder
 from new_ltpp.data.preprocess import TPPDataModule

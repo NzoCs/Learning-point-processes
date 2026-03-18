@@ -147,7 +147,7 @@ class MKernel(PointProcessKernel):
         B2, K = psi_delta_time_seqs.shape
 
         Kt_XX_matrix = self.time_kernel.batch_kernel(
-            phi_delta_time_seqs, psi_delta_time_seqs
+            phi_delta_time_seqs, phi_delta_time_seqs
         )  # (B, L, L)
 
         Kt_XY_matrix = self.time_kernel.Gram_matrix(

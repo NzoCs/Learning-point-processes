@@ -6,8 +6,8 @@ from .protocol import ISpaceKernel
 class RBFTimeKernel(ISpaceKernel):
     def __init__(
         self,
-        sigma: Optional[torch.Tensor] = None,
-        scaling: torch.Tensor = torch.tensor(1.0, dtype=torch.float64),
+        sigma: Optional[float] = None,
+        scaling: float = 1.0,
     ):
         self.scaling = scaling
         self.sigma = sigma
@@ -33,9 +33,10 @@ class RBFTimeKernel(ISpaceKernel):
             "For batch kernel, X and Y must have the same batch size"
         )
 
-        B, L = X.shape
-        X = X.unsqueeze(-1).expand(-1, L, -1)
-        Y = Y.unsqueeze(-2).expand(-1, 1, L)
+        B, LX = X.shape
+        _, LY = Y.shape
+        X = X.unsqueeze(-1).expand(-1, -1, LY)
+        Y = Y.unsqueeze(-2).expand(-1, LX, -1)
         norm_matrix = (X - Y) ** 2
         sigma = (
             self.sigma if self.sigma is not None else norm_matrix.median() + 1e-8

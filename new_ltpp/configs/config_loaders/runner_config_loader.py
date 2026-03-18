@@ -22,6 +22,7 @@ class RunnerConfigYamlLoader(ConfigLoader):
         simulation_config_path: Optional[str] = None,
         thinning_config_path: Optional[str] = None,
         logger_config_path: Optional[str] = None,
+        statistical_test_config_path: Optional[str] = None,
         general_specs_config_path: Optional[str] = None,
         model_specs_config_path: Optional[str] = None,
         **kwargs,
@@ -40,6 +41,7 @@ class RunnerConfigYamlLoader(ConfigLoader):
             model_config_path=model_config_path,
             simulation_config_path=simulation_config_path,
             thinning_config_path=thinning_config_path,
+            statistical_test_config_path=statistical_test_config_path,
             scheduler_config_path=None,  # handled below logic
             general_specs_path=general_specs_config_path,
             model_specs_path=model_specs_config_path,

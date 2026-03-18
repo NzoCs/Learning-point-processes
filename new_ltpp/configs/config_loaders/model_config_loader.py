@@ -15,6 +15,7 @@ class ModelConfigYamlLoader(ConfigLoader):
         model_config_path: Optional[str] = None,
         simulation_config_path: Optional[str] = None,
         thinning_config_path: Optional[str] = None,
+        statistical_test_config_path: Optional[str] = None,
         scheduler_config_path: Optional[str] = None,
         general_specs_path: Optional[str] = None,
         model_specs_path: Optional[str] = None,
@@ -28,6 +29,7 @@ class ModelConfigYamlLoader(ConfigLoader):
             model_config_path: Path to model config (backward compatibility).
             simulation_config_path: Path to simulation config.
             thinning_config_path: Path to thinning config.
+            statistical_test_config_path: Path to statistical test config.
             scheduler_config_path: Path to scheduler config.
             general_specs_path: Path to general specs.
             model_specs_path: Path to model specs.
@@ -57,6 +59,11 @@ class ModelConfigYamlLoader(ConfigLoader):
             if thinning_config_path
             else {}
         )
+        statistical_test_cfg = (
+            self._get_nested_value(data, statistical_test_config_path)
+            if statistical_test_config_path
+            else None
+        )
 
         # Load general_specs and model_specs from specific paths or from model_cfg
         if general_specs_path:
@@ -75,6 +82,8 @@ class ModelConfigYamlLoader(ConfigLoader):
         config_dict["simulation_config"] = simulation_cfg
         config_dict["thinning_config"] = thinning_cfg
         config_dict["scheduler_config"] = scheduler_cfg
+        if statistical_test_cfg is not None:
+            config_dict["statistical_test_config"] = statistical_test_cfg
 
         # Merge other fields from model_cfg if present
         for key in [

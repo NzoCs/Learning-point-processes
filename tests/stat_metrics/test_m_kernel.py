@@ -3,16 +3,16 @@
 import pytest
 import torch
 
-from new_ltpp.evaluation.statistical_testing.kernels.m_kernel import (
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.m_kernel import (
     MKernel,
     MKernelTransform,
 )
-from new_ltpp.evaluation.statistical_testing.kernels import (
+from new_ltpp.evaluation.statistical_testing.point_process_kernels import (
     TimeKernelType,
     create_time_kernel,
     EmbeddingKernel,
 )
-from new_ltpp.evaluation.statistical_testing.statistical_metrics import MMD
+from new_ltpp.evaluation.statistical_testing.point_process_metric import MMD
 from new_ltpp.shared_types import Batch
 from new_ltpp.configs.config_builders import DataConfigBuilder
 from new_ltpp.data.preprocess import TPPDataModule

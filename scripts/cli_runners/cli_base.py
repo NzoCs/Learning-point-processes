@@ -35,6 +35,7 @@ CONFIG_MAP = {
     "data_loading": "data_loading_configs",
     "thinning": "thinning_configs",
     "logger": "logger_configs",
+    "statistical_test": "statistical_test_configs",
 }
 
 

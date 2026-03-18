@@ -66,6 +66,9 @@ class Model(
         over_sample_rate = thinning_config.over_sample_rate
         num_exp = thinning_config.num_exp
 
+        # Statistical test configuration for evaluation mixin
+        statistical_test_config = model_config.statistical_test_config
+
         super().__init__(
             # BaseMixin params
             num_exp=num_exp,
@@ -80,6 +83,7 @@ class Model(
             num_event_types=data_info["num_event_types"],
             initial_buffer_size=initial_buffer_size,
             simulation_batch_size=simulation_batch_size,
+            statistical_test_config=statistical_test_config,
             # PredictionMixin params
             num_sample=num_sample,
             # TrainingMixin params

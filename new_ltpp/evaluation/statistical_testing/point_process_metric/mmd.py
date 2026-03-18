@@ -1,6 +1,9 @@
 import torch
+from typing import TYPE_CHECKING
 from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.models.base_model import NeuralModel
+
+if TYPE_CHECKING:
+    from new_ltpp.models.base_model import NeuralModel
 
 from .base_stat_metric import StatMetric
 
@@ -24,7 +27,7 @@ class MMD(StatMetric):
         mmd_value = self.compute_mmd(phi, psi)
         return mmd_value
 
-    def evaluate(self, model: NeuralModel, batch: Batch) -> torch.Tensor:
+    def evaluate(self, model: "NeuralModel", batch: Batch) -> torch.Tensor:
         """Compute the MMD between the model's simulated sequences and the real sequences in the batch.
         args:
             model: The neural point process model to evaluate.

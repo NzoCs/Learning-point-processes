@@ -359,3 +359,15 @@ training_configs:
     val_freq: 10
     accumulate_grad_batches: 4  # Compensate for the small batch
     patience: 50
+
+# ===== STATISTICAL TEST CONFIGURATIONS =====
+statistical_test_configs:
+  quick_test:
+    test_type: "mmd"
+    n_permutations: 30
+    point_process_kernel_type: "m_kernel"
+    space_kernel_type: "rbf"
+    embedding_dim: 8
+    sigma: 1.0
+    scaling: 1.0
+    num_classes: 2

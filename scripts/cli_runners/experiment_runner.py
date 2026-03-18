@@ -68,6 +68,7 @@ class ExperimentRunner(CLIRunnerBase):
         simulation_config: Optional[str] = None,
         thinning_config: Optional[str] = None,
         logger_config: Optional[str] = None,
+        statistical_test_config: Optional[str] = None,
         model_id: str = "NHP",
         save_dir: Optional[Union[str, Path]] = None,
         model_specs_config: Optional[str] = None,
@@ -135,6 +136,7 @@ class ExperimentRunner(CLIRunnerBase):
             simulation=simulation_config,
             thinning=thinning_config,
             logger=logger_config,
+            statistical_test=statistical_test_config,
         )
 
         self.print_info("Configurations used:")
@@ -154,6 +156,9 @@ class ExperimentRunner(CLIRunnerBase):
             simulation_config_path=config_paths.get("simulation_config_path"),
             thinning_config_path=config_paths.get("thinning_config_path"),
             logger_config_path=config_paths.get("logger_config_path"),
+            statistical_test_config_path=config_paths.get(
+                "statistical_test_config_path"
+            ),
             general_specs_config_path=config_paths.get("general_specs_config_path"),
             model_specs_config_path=config_paths.get("model_specs_config_path"),
         )
@@ -163,23 +168,18 @@ class ExperimentRunner(CLIRunnerBase):
         self.print_info("YAML configuration loaded successfully")
 
         # Appliquer les overrides de paramètres CLI en utilisant les méthodes du builder
-        # Apply CLI parameter overrides using the builder's methods
         if max_epochs is not None:
             config_builder.set_max_epochs(max_epochs)
             self.print_info(f"Override: max_epochs = {max_epochs}")
 
         # Ne passer save_dir que s'il est explicitement fourni par l'utilisateur
-        # Only pass save_dir if explicitly provided by the user
         if save_dir:
             config_builder.set_save_dir(save_dir)
             self.print_info(f"Override: save_dir = {save_dir}")
         # Sinon, laisser les sous-couches générer leur propre save_dir par défaut
         # qui sera plus intelligent (model_id/dataset_id/etc.)
-        # Otherwise, let subcomponents generate their own default save_dir
-        # which will be more informative (model_id/dataset_id/etc.)
 
         # Créer la configuration finale avec la factory
-        # Build the final configuration using the factory
         config = config_builder.build(model_id=model_id)
 
         # Validate phase
@@ -189,14 +189,12 @@ class ExperimentRunner(CLIRunnerBase):
             return False
 
         # Créer et lancer le runner
-        # Create and start the runner
         runner_manager = RunnerManager(config=config)
 
         if phase == "all":
             self.print_info("Full run: train → test → predict")
 
             # Exécuter chaque phase séparément comme dans run_all_phase.py
-            # Execute each phase separately as in run_all_phase.py
             self.print_info("Phase 1/3: Training")
             train_results = runner_manager.run(phase="train")
 
@@ -207,7 +205,6 @@ class ExperimentRunner(CLIRunnerBase):
             predict_results = runner_manager.run(phase="predict")
 
             # Combiner les résultats
-            # Combine the results
             results = {
                 "train": train_results,
                 "test": test_results,
@@ -222,7 +219,6 @@ class ExperimentRunner(CLIRunnerBase):
         self.print_success(f"Experiment completed successfully - Phase: {phase}")
 
         # Afficher les résultats
-        # Display the results
         if results and self.console:
             from rich.table import Table
 

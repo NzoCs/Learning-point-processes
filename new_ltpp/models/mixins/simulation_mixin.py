@@ -2,17 +2,22 @@
 """Mixin for simulation functionality."""
 
 from pathlib import Path
-from typing import Optional, Tuple, TypedDict
+from typing import TYPE_CHECKING, Optional, Tuple, TypedDict
 
 import torch
 from tqdm import tqdm
 
-from new_ltpp.evaluation import BatchStatisticsCollector
 from new_ltpp.evaluation.accumulators.acc_types import FinalResult
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .base_mixin import BaseMixin
+
+if TYPE_CHECKING:
+    from new_ltpp.evaluation import BatchStatisticsCollector
+    from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
+        StatisticalTestDict,
+    )
 
 
 class Buffers(TypedDict):
@@ -45,6 +50,7 @@ class SimulationMixin(BaseMixin):
         simulation_end_time: float,
         simulation_batch_size: int,
         initial_buffer_size: int,
+        statistical_test_config: Optional["StatisticalTestDict"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -53,23 +59,27 @@ class SimulationMixin(BaseMixin):
         self.simulation_end_time = simulation_end_time
         self.simulation_batch_size = simulation_batch_size
         self.initial_buffer_size = initial_buffer_size
-        self._statistics_collector = self.init_statistics_collector(
-            self.output_dir / "distribution_comparison"
+        self.statistical_test_config = statistical_test_config
+        self.init_statistics_collector(
+            output_dir=self.output_dir / "simulation_statistics"
         )
 
     def init_statistics_collector(
         self, output_dir: Path | str
-    ) -> BatchStatisticsCollector:
+    ) -> "BatchStatisticsCollector":
         """Initialize the batch statistics collector for distribution analysis.
 
         Args:
             output_dir: Directory where results will be saved
         """
+        from new_ltpp.evaluation import BatchStatisticsCollector
+
         self._statistics_collector = BatchStatisticsCollector(
             num_event_types=self.num_event_types,
             output_dir=output_dir,
             dtime_max=self.dtime_max,
             dtime_min=0.0,
+            statistical_test_config=self.statistical_test_config,
         )
 
         logger.info(

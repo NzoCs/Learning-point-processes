@@ -309,62 +309,70 @@ class AutocorrelationPlotGenerator(PlotGenerator):
         logger.info(f"Autocorrelation comparison plot saved to {output_path}")
 
 
-class MMDPlotGenerator(PlotGenerator):
-    """Generates MMD distribution plots showing H0 distribution and observed MMD."""
+class StatTestPlotGenerator(PlotGenerator):
+    """Generates statistical test distribution plots showing H0 distribution and observed (H1) values."""
+
+    def __init__(self, test_name: str = "Test Statistic"):
+        self.test_name = test_name
 
     def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
-        mmd_values = data.get("mmd_values", [])
-        perm_mmds = data.get("mmd_perm_distributions", [])
+        # Tries to find common keys for observed statistics vs null distribution
+        obs_values = data.get("test_statistics", data.get("mmd_values", []))
+        null_dist = data.get(
+            "null_distributions", data.get("mmd_perm_distributions", [])
+        )
 
-        if not mmd_values or not perm_mmds:
-            logger.warning("MMD data is empty. Skipping MMD plot.")
+        if not obs_values or not null_dist:
+            logger.warning(f"{self.test_name} data is empty. Skipping plot.")
             return
 
         sns.set_theme(style="whitegrid")
         plt.figure(figsize=(10, 6))
 
-        # Plot H0 distribution (permutations) - Represents the Null Hypothesis
+        # Plot H0 distribution (Null)
         sns.histplot(
-            perm_mmds,
+            null_dist,
             stat="density",
             color="gray",
             alpha=0.3,
-            label="H0: Permutations (Null)",
+            label="H0 Distribution (Null)",
             bins="auto",
         )
 
-        # Plot H1 distribution (observed values) - Represents the Alternative Hypothesis
-        if len(mmd_values) > 1:
+        # Plot H1 distribution (Observed values)
+        if len(obs_values) > 1:
             sns.histplot(
-                mmd_values,
+                obs_values,
                 stat="density",
                 color="red",
                 alpha=0.3,
-                label="H1: Observed MMDs (Alternative)",
+                label=f"H1: Observed {self.test_name}s",
                 bins="auto",
             )
 
-        # Plot mean observed MMD
-        avg_obs_mmd = np.mean(mmd_values)
+        # Plot mean observed statistic
+        avg_obs_stat = np.mean(obs_values)
         plt.axvline(
-            x=avg_obs_mmd,
+            x=avg_obs_stat,
             color="darkred",
             linestyle="--",
             linewidth=2,
-            label=f"Mean Observed MMD ({avg_obs_mmd:.4f})",
+            label=f"Mean Observed ({avg_obs_stat:.4f})",
         )
 
-        # Plot individual batch MMDs as thin ticks at the bottom if not too many
-        if len(mmd_values) < 50:
-            for val in mmd_values:
+        # Plot individual batch statistics as thin ticks at the bottom if not too many
+        if len(obs_values) < 50:
+            for val in obs_values:
                 plt.axvline(x=val, color="red", alpha=0.2, linewidth=0.5, ymax=0.05)
 
-        plt.title("MMD Distribution: H0 (Permutations) vs H1 (Observed)", fontsize=14)
-        plt.xlabel("MMD Value", fontsize=12)
+        plt.title(f"{self.test_name} Distribution: H0 vs H1", fontsize=14)
+        plt.xlabel(f"{self.test_name} Value", fontsize=12)
         plt.ylabel("Density", fontsize=12)
         plt.legend()
         plt.tight_layout()
 
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
-        logger.info(f"MMD distribution plot (H0 vs H1) saved to {output_path}")
+        logger.info(
+            f"{self.test_name} distribution plot (H0 vs H1) saved to {output_path}"
+        )

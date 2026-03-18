@@ -3,7 +3,7 @@
 from typing import Any, Dict, List
 from typing import Self
 
-from new_ltpp.evaluation.statistical_testing.statistical_tests_configs import (
+from new_ltpp.evaluation.statistical_testing.statistical_tests.statistical_tests_configs import (
     KernelConfig,
     MMDTestConfig,
     KSDTestConfig,

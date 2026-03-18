@@ -5,9 +5,9 @@ from new_ltpp.configs import RunnerConfig
 from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.data.preprocess import TPPDataModule
 from new_ltpp.models.model_factory import ModelFactory
+from new_ltpp.runners.callbacks import PredictionStatsCallback
 from new_ltpp.runners.trainer_factory import (
     CheckpointManager,
-    PredictionStatsCallback,
     TrainerFactory,
 )
 from new_ltpp.utils import logger

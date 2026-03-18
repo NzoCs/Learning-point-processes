@@ -4,6 +4,13 @@ from .protocol import ISpaceKernel
 
 class BSplineTimeKernel(ISpaceKernel):
     def __init__(self, order: int = 3, scaling: float = 1.0):
+        """
+        Initialize the B-spline kernel.
+
+        Args:
+            order (int): The order of the B-spline.
+            scaling (float): The scaling factor for the kernel.
+        """
         self.order = order
         self.scaling = scaling
 

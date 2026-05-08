@@ -7,16 +7,14 @@ from typing import TYPE_CHECKING, Optional, Tuple, TypedDict
 import torch
 from tqdm import tqdm
 
-from new_ltpp.evaluation.accumulators.acc_types import FinalResult
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
 from .base_mixin import BaseMixin
 
 if TYPE_CHECKING:
-    from new_ltpp.evaluation import BatchStatisticsCollector
     from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-        StatisticalTestDict,
+        StatisticalTestConfig,
     )
 
 
@@ -50,7 +48,7 @@ class SimulationMixin(BaseMixin):
         simulation_end_time: float,
         simulation_batch_size: int,
         initial_buffer_size: int,
-        statistical_test_config: Optional["StatisticalTestDict"] = None,
+        statistical_test_config: Optional["StatisticalTestConfig"] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -60,13 +58,8 @@ class SimulationMixin(BaseMixin):
         self.simulation_batch_size = simulation_batch_size
         self.initial_buffer_size = initial_buffer_size
         self.statistical_test_config = statistical_test_config
-        self.init_statistics_collector(
-            output_dir=self.output_dir / "simulation_statistics"
-        )
 
-    def init_statistics_collector(
-        self, output_dir: Path | str
-    ) -> "BatchStatisticsCollector":
+    def init_statistics_collector(self, output_dir: Path | str) -> None:
         """Initialize the batch statistics collector for distribution analysis.
 
         Args:
@@ -85,25 +78,24 @@ class SimulationMixin(BaseMixin):
         logger.info(
             f"BatchStatisticsCollector initialized with output_dir={output_dir}"
         )
-        return self._statistics_collector
 
-    def finalize_statistics(self) -> FinalResult:
-        """Finalize statistics collection and generate plots/metrics.
+    # def finalize_statistics(self) -> FinalResult:
+    #     """Finalize statistics collection and generate plots/metrics.
 
-        Returns:
-            Dictionary containing statistics, metrics, and batch count
-        """
-        if self._statistics_collector is None:
-            raise NotImplementedError(
-                "No statistics collector to finalize. Initialize it first with 'init_statistics_collector'."
-            )
+    #     Returns:
+    #         Dictionary containing statistics, metrics, and batch count
+    #     """
+    #     if self._statistics_collector is None:
+    #         raise NotImplementedError(
+    #             "No statistics collector to finalize. Initialize it first with 'init_statistics_collector'."
+    #         )
 
-        logger.info("Finalizing batch statistics collection...")
-        results = self._statistics_collector.finalize_and_save()
-        logger.info(
-            f"Statistics finalized: {results.get('batch_count', 0)} batches processed"
-        )
-        return results
+    #     logger.info("Finalizing batch statistics collection...")
+    #     results = self._statistics_collector.finalize_and_save()
+    #     logger.info(
+    #         f"Statistics finalized: {results.get('batch_count', 0)} batches processed"
+    #     )
+    #     return results
 
     def simulate(
         self,
@@ -392,7 +384,7 @@ class SimulationMixin(BaseMixin):
             pbar = tqdm(
                 total=max_absolute_end_time.item(), desc="Simulation", leave=False
             )
-            pbar.n = min(sim_state["current_time"], max_absolute_end_time)
+            pbar.n = min(sim_state["current_time"].item(), max_absolute_end_time.item())
             pbar.refresh()
 
         while sim_state["batch_active"].any():

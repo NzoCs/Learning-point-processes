@@ -1,8 +1,8 @@
 import torch
-from sigkernel import SigKernel
+from sigkernel import LinearKernel, SigKernel
 from typing import TypedDict, Literal
 
-from .kernel_protocol import IPointProcessKernel
+from .kernel_protocol import IPointProcessKernel, PointProcessKernel
 from .utils import _get_embedding
 from .space_kernels import ISpaceKernel
 from new_ltpp.shared_types import Batch, SimulationResult
@@ -13,11 +13,11 @@ class Embedding(TypedDict):
     counting_seqs: torch.Tensor
 
 
-class SIGKernel(IPointProcessKernel):
+class SIGKernel(PointProcessKernel):
     def __init__(
         self,
         static_kernel: ISpaceKernel,
-        embedding_type: Literal["linear_interpolant", "constant_interpolant"],
+        embedding_type: Literal["linear", "constant"],
         num_discretization_points: int,
         dyadic_order: int,
         num_event_types: int,
@@ -83,8 +83,8 @@ class SIGKernel(IPointProcessKernel):
     @torch.compile
     def compute_gram_matrix(
         self,
-        phi_batch: Batch | SimulationResult,
-        psi_batch: Batch | SimulationResult,
+        X: Batch | SimulationResult,
+        Y: Batch | SimulationResult,
     ) -> torch.Tensor:
         """Compute the Gram matrix between two batches of sequences.
         args:
@@ -95,20 +95,30 @@ class SIGKernel(IPointProcessKernel):
         returns:
             torch.Tensor: (B, B)
         """
-        phi_emb, psi_emb = self._prepare_kernel(phi_batch, psi_batch)
+        X_emb, Y_emb = self._prepare_kernel(X, Y)
 
         # 3) Compute full Gram matrix between all (b,i) and all (b',j)
         # ------------------------------------------------------------
         # output shape from SigKernel = (B, B)
-        gram: torch.Tensor = self.kernel.compute_Gram(phi_emb, psi_emb)  # type: ignore
+        gram: torch.Tensor = self.kernel.compute_Gram(X_emb, Y_emb)  # type: ignore
 
         return gram
 
     def compute_mmd(
-        self, phi: Batch | SimulationResult, psi: Batch | SimulationResult
+        self, X: Batch | SimulationResult, Y: Batch | SimulationResult
     ) -> torch.Tensor:
         """Compute the MMD distance between two batches of sequences."""
-        phi_emb, psi_emb = self._prepare_kernel(phi, psi)
+        X_emb, Y_emb = self._prepare_kernel(X, Y)
 
-        mmd_dist = self.kernel.compute_mmd(phi_emb, psi_emb)  # type: ignore
+        mmd_dist = self.kernel.compute_mmd(X_emb, Y_emb)  # type: ignore
         return mmd_dist
+
+
+if __name__ == "__main__":
+    sig_kernel: IPointProcessKernel = SIGKernel(
+        static_kernel=LinearKernel(),
+        embedding_type="linear",
+        num_discretization_points=100,
+        dyadic_order=3,
+        num_event_types=10,
+    )

@@ -8,6 +8,7 @@ from torch import nn
 # Assurez-vous que ces imports correspondent à votre structure de projet
 from new_ltpp.models.baselayer import MultiHeadAttention
 from new_ltpp.models.base_model import NeuralModel
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
 
@@ -326,3 +327,15 @@ class ANHN(NeuralModel):
         # [batch_size, seq_len, num_samples, num_event_types]
         lambdas = self.layer_intensity(imply_lambdas)
         return lambdas
+
+
+# Type checking
+if __name__ == "__main__":
+    model: ITPPModel = ANHN(
+        num_event_types=3,
+        hidden_size=16,
+        time_emb_size=8,
+        num_layers=2,
+        num_heads=2,
+        dropout=0.1,
+    )

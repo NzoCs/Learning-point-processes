@@ -21,9 +21,7 @@ class PointProcessKernelConfig:
         sigma: float = 1.0,
         scaling: float = 1.0,
         num_discretization_points: int = 100,
-        embedding_type: Literal[
-            "linear_interpolant", "constant_interpolant"
-        ] = "linear_interpolant",
+        embedding_type: Literal["linear", "constant"] = "linear",
         dyadic_order: int = 0,
     ):
         self.point_process_kernel_type = point_process_kernel_type
@@ -66,7 +64,7 @@ class PointProcessKernelConfig:
             return SIGKernel(
                 static_kernel=kernels,
                 embedding_type=cast(
-                    Literal["linear_interpolant", "constant_interpolant"],
+                    Literal["linear", "constant"],
                     self.embedding_type,
                 ),
                 num_discretization_points=self.num_discretization_points,

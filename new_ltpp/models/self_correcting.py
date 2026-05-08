@@ -4,9 +4,10 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from new_ltpp.models.base_model import Model
-from new_ltpp.shared_types import Batch
-from new_ltpp.shared_types import SimulationResult
+from new_ltpp.shared_types import Batch, SimulationResult
+
+from .base_model import Model
+from .model_protocol import ITPPModel
 
 
 class SelfCorrecting(Model):
@@ -226,3 +227,11 @@ class SelfCorrecting(Model):
         raise NotImplementedError(
             "Simulation not implemented for Self-Correcting model, there is a custom implementation in the data generation class. This class serves as a benchmark for the other models in prediction phase for the loglike loss."
         )
+
+
+if __name__ == "__main__":
+    model: ITPPModel = SelfCorrecting(
+        num_event_types=3,
+        mu=[-2.0, -1.0, -0.5],
+        alpha=[0.5, 0.3, 0.1],
+    )

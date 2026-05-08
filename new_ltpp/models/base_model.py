@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, Union
 
 import pytorch_lightning as pl
 import torch
@@ -26,7 +26,11 @@ class OptimizerConfig(TypedDict):
 
 
 class Model(
-    TrainingMixin, VisualizationMixin, pl.LightningModule, metaclass=RegistryMeta
+    TrainingMixin,
+    VisualizationMixin,
+    pl.LightningModule,
+    ABC,
+    metaclass=RegistryMeta,
 ):
     """Base model class for all TPP models using mixins.
 
@@ -100,7 +104,7 @@ class Model(
         # Loss computation configuration
         self.num_mc_samples = model_config.num_mc_samples
 
-    def configure_optimizers(self) -> OptimizerConfig | optim.Optimizer:  # type: ignore[override]
+    def configure_optimizers(self) -> Union["OptimizerConfig", optim.Optimizer]:  # type: ignore[override]
         """Configure the optimizer for the model.
 
         Returns:

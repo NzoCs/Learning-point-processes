@@ -1,10 +1,10 @@
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-    StatisticalTestDict,
+    StatisticalTestConfig,
     StatisticalTestBuilder,
 )
 from .base_accumulator import Accumulator
-from .acc_types import StatisticalMetrics
+from .acc_types import StatisticalTestData
 
 
 class StatisticalTestAccumulator(Accumulator):
@@ -15,15 +15,15 @@ class StatisticalTestAccumulator(Accumulator):
 
     def __init__(
         self,
-        statistical_test_config: StatisticalTestDict,
+        statistical_test_config: StatisticalTestConfig,
         min_sim_events: int = 1,
     ):
         super().__init__(min_sim_events)
         self.statistical_test = (
             StatisticalTestBuilder().from_dict(statistical_test_config).build()
         )
-        self.statistics: list[float] = []
         self.p_values: list[float] = []
+        self.observed_statistic: list[float] = []
         self.perm_statistics: list[float] = []
 
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
@@ -36,22 +36,20 @@ class StatisticalTestAccumulator(Accumulator):
         """
 
         # Compute MMD and p-value using the provided MMDTwoSampleTest instance
-        p_value, statistic, perm_statistic = (
-            self.statistical_test.statistics_from_batches(batch, simulation)
-        )
+        stats = self.statistical_test.compute_statistics(batch, simulation)
 
-        self.statistics.append(statistic.item())
-        self.p_values.append(p_value.item())
-        self.perm_statistics.extend(perm_statistic.tolist())
+        self.p_values.append(stats["p_value"].item())
+        self.observed_statistic.append(stats["observed_statistic"].item())
+        self.perm_statistics.extend(stats["permuted_statistics"].tolist())
 
-    def compute(self) -> StatisticalMetrics:  # type: ignore[override]
+    def compute(self) -> StatisticalTestData:  # type: ignore[override]
         """Compute final statistics from accumulated data.
 
         Returns:
             Dictionary containing computed MMD, and p-value statistics
         """
-        return StatisticalMetrics(
-            mmd_values=self.statistics,
-            mmd_p_values=self.p_values,
-            mmd_perm_distributions=self.perm_statistics,
+        return StatisticalTestData(
+            p_values=self.p_values,
+            observed_statistic=self.observed_statistic,
+            permuted_statistic=self.perm_statistics,
         )

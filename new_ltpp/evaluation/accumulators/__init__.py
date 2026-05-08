@@ -43,7 +43,6 @@ from .acc_types import (
     TimeStatistics,
 )
 from .base_accumulator import Accumulator
-from .base_plot_generator import PlotGenerator
 from .summary_statistics_accumulator import BatchStatisticsCollector
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
@@ -67,7 +66,6 @@ __all__ = [
     "SequenceLengthAccumulator",
     "CorrAccumulator",
     # Plot Generators
-    "PlotGenerator",
     "InterEventTimePlotGenerator",
     "EventTypePlotGenerator",
     "SequenceLengthPlotGenerator",

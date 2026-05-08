@@ -5,6 +5,7 @@ from torch import nn
 
 from new_ltpp.models.baselayer import ScaledSoftplus
 from new_ltpp.models.base_model import NeuralModel
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 
 
@@ -315,3 +316,13 @@ class NHP(NeuralModel):
             sampled_intensities = self.layer_intensity(h_ts)
 
         return sampled_intensities
+
+
+if __name__ == "__main__":
+    model: ITPPModel = NHP(
+        num_event_types=3,
+        hidden_size=16,
+        time_emb_size=8,
+        num_layers=2,
+        dropout=0.1,
+    )

@@ -8,7 +8,7 @@ class EmbeddingKernel(ISpaceKernel):
         num_classes: int,
         embedding_dim: int = 8,
     ):
-        self.emb = torch.nn.Embedding(num_classes, embedding_dim)
+        self.emb = torch.nn.Embedding(num_classes + 1, embedding_dim)
 
     @torch.compile
     def Gram_matrix(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:

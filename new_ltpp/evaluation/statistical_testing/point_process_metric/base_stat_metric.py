@@ -6,7 +6,7 @@ Provides:
 """
 
 from abc import ABC, abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import Protocol
 
 import torch
 
@@ -16,22 +16,13 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protoc
 )
 
 
-@runtime_checkable
 class IStatMetric(Protocol):
     """Protocol for IDE type checking + isinstance() support."""
 
     kernel: IPointProcessKernel
 
-    def compute_kernel_matrix(
-        self,
-        phi: Batch | SimulationResult,
-        psi: Batch | SimulationResult,
-    ) -> torch.Tensor: ...
-
     def __call__(
-        self,
-        phi: Batch | SimulationResult,
-        psi: Batch | SimulationResult,
+        self, X: Batch | SimulationResult, Y: Batch | SimulationResult
     ) -> torch.Tensor: ...
 
 
@@ -49,31 +40,31 @@ class StatMetric(ABC):
 
     def compute_mmd(
         self,
-        phi: Batch | SimulationResult,
-        psi: Batch | SimulationResult,
+        X: Batch | SimulationResult,
+        Y: Batch | SimulationResult,
     ) -> torch.Tensor:
         """Compute the kernel matrix between two batches of sequences.
 
         Args:
-            phi: First batch of sequences (B, L)
-            psi: Second batch of sequences (B, K)
+            X: First batch of sequences (B, L)
+            Y: Second batch of sequences (B, K)
 
         Returns:
             Kernel matrix of shape (B, B)
         """
-        return self.kernel.compute_mmd(phi, psi)
+        return self.kernel.compute_mmd(X, Y)
 
     @abstractmethod
     def __call__(
         self,
-        phi: Batch | SimulationResult,
-        psi: Batch | SimulationResult,
+        X: Batch | SimulationResult,
+        Y: Batch | SimulationResult,
     ) -> torch.Tensor:
         """Compute the statistical metric between two batches.
 
         Args:
-            phi: First batch of sequences
-            psi: Second batch of sequences
+            X: First batch of sequences
+            Y: Second batch of sequences
 
         Returns:
             The metric value as a torch.Tensor aggregated over the batch.

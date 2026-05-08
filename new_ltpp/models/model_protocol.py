@@ -5,15 +5,25 @@ providing type safety and clear contracts for model behavior.
 """
 
 from pathlib import Path
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Optional, Protocol, Union
 
 import torch
+import torch.optim as optim
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 
-from new_ltpp.configs import ModelConfig
-from new_ltpp.shared_types import Batch, DataInfo
+from new_ltpp.configs.model_config import ModelConfig
+
+if TYPE_CHECKING:
+    from .base_model import OptimizerConfig
+    from new_ltpp.evaluation.accumulators.summary_statistics_accumulator import (
+        BatchStatisticsCollector,
+    )
 
 
-@runtime_checkable
+from new_ltpp.shared_types import Batch, DataInfo, SimulationResult
+from new_ltpp.shared_types import OneStepPred
+
+
 class ITPPModel(Protocol):
     """Protocol defining the interface for Temporal Point Process models.
 
@@ -25,27 +35,6 @@ class ITPPModel(Protocol):
     """
 
     # ============================================================
-    # Initialization
-    # ============================================================
-
-    def __init__(
-        self,
-        model_config: ModelConfig,
-        data_info: DataInfo,
-        output_dir: Path | str,
-        **kwargs: Any,
-    ) -> None:
-        """Initialize the TPP model.
-
-        Args:
-            model_config: Configuration for the model
-            data_info: Dataset information (num_event_types, dtime_max, etc.)
-            output_dir: Directory for saving model outputs
-            **kwargs: Additional model-specific parameters
-        """
-        ...
-
-    # ============================================================
     # Required Attributes
     # ============================================================
 
@@ -55,17 +44,35 @@ class ITPPModel(Protocol):
     pad_token_id: int
     """Token ID used for padding sequences."""
 
-    device: torch.device
-    """Current device of the model (managed by PyTorch Lightning)."""
-
     output_dir: Path
     """Directory for saving model outputs and artifacts."""
+
+    _statistics_collector: Optional["BatchStatisticsCollector"]
+    """Collector for batch statistics."""
+
+    def __init__(
+        self,
+        *,
+        model_config: "ModelConfig",
+        data_info: "DataInfo",
+        output_dir: Path | str,
+        **kwargs,
+    ) -> None:
+        """Initialize the model with configuration and data information.
+
+        Args:
+            model_config: Configuration object containing model hyperparameters
+            data_info: Dictionary with dataset statistics (num_event_types, end_time_max, dtime_max, pad_token_id)
+            output_dir: Directory to save model outputs
+            **kwargs: Additional arguments for specific model implementations
+        """
+        ...
 
     # ============================================================
     # Core Model Methods
     # ============================================================
 
-    def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, int]:
+    def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute the negative log-likelihood loss for a batch.
 
         This is the primary loss function for training TPP models. It should
@@ -142,7 +149,7 @@ class ITPPModel(Protocol):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         valid_event_mask: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> OneStepPred:
         """Predict next event time and type given history up to each event.
 
         For each event in the sequence, predict what the next event will be
@@ -171,11 +178,12 @@ class ITPPModel(Protocol):
 
     def simulate(
         self,
-        *,
-        start_time: torch.Tensor,
-        end_time: torch.Tensor,
-        batch_size: int,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        batch: Optional[Batch] = None,
+        start_time: Optional[float] = None,
+        end_time: Optional[float] = None,
+        batch_size: Optional[int] = None,
+        initial_buffer_size: Optional[int] = None,
+    ) -> SimulationResult:
         """Generate synthetic event sequences using the learned model.
 
         Simulate new event sequences from the model using thinning algorithm.
@@ -208,30 +216,25 @@ class ITPPModel(Protocol):
 
     def intensity_graph(
         self,
-        *,
         save_dir: str,
-        start_time: float | None = None,
-        end_time: float | None = None,
+        *,
         precision: int = 100,
-    ) -> None:
-        """Generate and save intensity function visualization.
-
-        Creates plots showing the intensity function λ(t) over time for each
-        event type. This helps understand the temporal dynamics learned by the model.
+        plot: bool = False,
+        save_plot: bool = True,
+        save_data: bool = True,
+        **kwargs,
+    ) -> tuple[torch.Tensor, torch.Tensor, list[torch.Tensor]]:
+        """Generate and visualize intensity curves for the model.
 
         Args:
-            save_dir: Directory to save the intensity plots
-            start_time: Start of time window (uses simulation default if None)
-            end_time: End of time window (uses simulation default if None)
-            precision: Number of time points to evaluate for smooth curves
+            precision: Number of interpolation points between events
+            plot: Whether to display the plots
+            save_plot: Whether to save plots to disk
+            save_data: Whether to save intensity data to disk
+            save_dir: Directory for saving outputs
 
-        Example:
-            >>> model.intensity_graph(
-            ...     save_dir="./outputs/intensity_plots",
-            ...     start_time=0.0,
-            ...     end_time=50.0,
-            ...     precision=200
-            ... )
+        Returns:
+            Tuple of (intensities, time_points, marked_times)
         """
         ...
 
@@ -239,30 +242,11 @@ class ITPPModel(Protocol):
     # Statistics Collection
     # ============================================================
 
-    def finalize_statistics(self) -> None:
-        """Finalize and save collected statistics from prediction/simulation.
-
-        After running predictions or simulations, this method computes aggregate
-        statistics and generates comparison plots between ground truth and
-        generated sequences. Called automatically at the end of prediction phase.
-
-        Example:
-            >>> trainer.predict(model, dataloader)
-            >>> model.finalize_statistics()  # Saves statistics and plots
-        """
-        ...
-
-    def init_statistics_collector(self, *, output_dir: str) -> None:
-        """Initialize data structures for collecting statistics.
-
-        Prepares internal buffers to store event sequences and metrics during
-        prediction or simulation phases. Called automatically at the start of
-        prediction phase.
+    def init_statistics_collector(self, output_dir: Path | str) -> None:
+        """Sets self._statistics_collector for the model.
 
         Args:
             output_dir: Directory to save collected statistics
-        Example:
-            >>> model.init_statistics_collector(output_dir="./outputs/stats")
         """
         ...
 
@@ -270,7 +254,20 @@ class ITPPModel(Protocol):
     # PyTorch Lightning Methods
     # ============================================================
 
-    def configure_optimizers(self):
+    @property
+    def device(self) -> torch.device:
+        """Get the current device of the model.
+
+        This property is managed by PyTorch Lightning and always reflects the
+        actual device the model is on (CPU, GPU, etc.). It should not be set
+        directly; instead, use PyTorch Lightning's device management.
+
+        Returns:
+            Current device of the model
+        """
+        ...
+
+    def configure_optimizers(self) -> Union["OptimizerConfig", optim.Optimizer]:  # type: ignore[override]
         """Configure optimizer and learning rate scheduler.
 
         Returns optimizer configuration for PyTorch Lightning training.
@@ -281,7 +278,7 @@ class ITPPModel(Protocol):
         """
         ...
 
-    def training_step(self, batch: Batch, batch_idx: int):
+    def training_step(self, batch: Batch, batch_idx: int) -> STEP_OUTPUT:
         """Perform a single training step.
 
         Args:
@@ -293,7 +290,7 @@ class ITPPModel(Protocol):
         """
         ...
 
-    def validation_step(self, batch: Batch, batch_idx: int):
+    def validation_step(self, batch: Batch, batch_idx: int) -> STEP_OUTPUT:
         """Perform a single validation step.
 
         Args:
@@ -305,7 +302,7 @@ class ITPPModel(Protocol):
         """
         ...
 
-    def test_step(self, batch: Batch, batch_idx: int):
+    def test_step(self, batch: Batch, batch_idx: int) -> STEP_OUTPUT:
         """Perform a single test step.
 
         Args:
@@ -317,7 +314,7 @@ class ITPPModel(Protocol):
         """
         ...
 
-    def predict_step(self, batch: Batch, batch_idx: int):
+    def predict_step(self, batch: Batch, batch_idx: int) -> STEP_OUTPUT:
         """Perform a single prediction/simulation step.
 
         Args:
@@ -330,7 +327,6 @@ class ITPPModel(Protocol):
         ...
 
 
-@runtime_checkable
 class INeuralTPPModel(ITPPModel, Protocol):
     """Extended protocol for neural network-based TPP models.
 
@@ -347,41 +343,3 @@ class INeuralTPPModel(ITPPModel, Protocol):
 
     dropout: float
     """Dropout rate for regularization."""
-
-
-# ============================================================
-# Type Guards and Validation
-# ============================================================
-
-
-def is_valid_tpp_model(obj: object) -> bool:
-    """Check if an object implements the ITPPModel protocol.
-
-    Args:
-        obj: Object to check
-
-    Returns:
-        True if object implements the protocol
-
-    Example:
-        >>> from new_ltpp.models import THP
-        >>> model = THP(...)
-        >>> assert is_valid_tpp_model(model)
-    """
-    return isinstance(obj, ITPPModel)
-
-
-def is_neural_tpp_model(obj: object) -> bool:
-    """Check if an object implements the INeuralTPPModel protocol.
-
-    Args:
-        obj: Object to check
-
-    Returns:
-        True if object implements the neural model protocol
-
-    Example:
-        >>> model = THP(...)
-        >>> assert is_neural_tpp_model(model)
-    """
-    return isinstance(obj, INeuralTPPModel)

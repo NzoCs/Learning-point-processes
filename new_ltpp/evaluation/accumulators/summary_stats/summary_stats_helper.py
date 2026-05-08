@@ -9,7 +9,6 @@ from scipy.stats import entropy
 
 from new_ltpp.evaluation.accumulators.acc_types import (
     AllStatistics,
-    SequenceLengthStatistics,
 )
 from new_ltpp.evaluation.metrics_helper.base_metrics_helper import MetricsHelper
 
@@ -58,7 +57,6 @@ class SummaryStatsHelper(MetricsHelper):
             sim_seq_hist,
             gt_acf,
             sim_acf,
-            sequence_stats,
         )
 
         for metric_name, (func, *args) in metric_mapping.items():
@@ -70,9 +68,7 @@ class SummaryStatsHelper(MetricsHelper):
     def get_available_metrics(self) -> List[str]:
         return [metric.value for metric in SummaryStatsMetric]
 
-    def _to_float_array(
-        self, array: NDArray[Any]
-    ) -> NDArray[np.float64]:
+    def _to_float_array(self, array: NDArray[Any]) -> NDArray[np.float64]:
         return np.asarray(array, dtype=float)
 
     def _align_histograms(
@@ -132,7 +128,6 @@ class SummaryStatsHelper(MetricsHelper):
         sim_seq_hist: NDArray[np.float64],
         gt_acf: NDArray[np.float64],
         sim_acf: NDArray[np.float64],
-        sequence_stats: SequenceLengthStatistics,
     ) -> Dict[str, tuple[Callable[..., float], Any, Any]]:
         return {
             SummaryStatsMetric.TIME_HIST_L1.value: (
@@ -179,16 +174,6 @@ class SummaryStatsHelper(MetricsHelper):
                 self._kl_divergence,
                 gt_seq_hist,
                 sim_seq_hist,
-            ),
-            SummaryStatsMetric.SEQUENCE_LENGTH_MEAN_DIFF.value: (
-                self._absolute_difference,
-                sequence_stats["gt_mean"],
-                sequence_stats["sim_mean"],
-            ),
-            SummaryStatsMetric.SEQUENCE_LENGTH_MEDIAN_DIFF.value: (
-                self._absolute_difference,
-                sequence_stats["gt_median"],
-                sequence_stats["sim_median"],
             ),
             SummaryStatsMetric.ACF_HIST_L1.value: (
                 self._histogram_distance_l1,

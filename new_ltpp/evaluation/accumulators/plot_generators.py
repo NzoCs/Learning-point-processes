@@ -2,21 +2,18 @@
 Plot Generators for Temporal Point Process Analysis
 """
 
-from typing import Any, Dict
-
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
+from new_ltpp.evaluation.accumulators.acc_types import PlotData
 from new_ltpp.utils import logger
 
-from .base_plot_generator import PlotGenerator
 
-
-class InterEventTimePlotGenerator(PlotGenerator):
+class InterEventTimePlotGenerator:
     """Generates inter-event time distribution plots (OCP)."""
 
-    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str) -> None:
         label_hist = data["label_time_deltas"]  # Histogram counts
         simulation_hist = data["simulated_time_deltas"]  # Histogram counts
         bin_edges = data["time_bin_edges"]
@@ -104,13 +101,13 @@ class InterEventTimePlotGenerator(PlotGenerator):
         logger.info(f"Inter-event time Q-Q plot saved to {qq_output_path}")
 
 
-class EventTypePlotGenerator(PlotGenerator):
+class EventTypePlotGenerator:
     """Generates event type distribution plots (OCP)."""
 
     def __init__(self, num_event_types: int):
         self.num_event_types = num_event_types
 
-    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str) -> None:
         label_types = data["label_event_types"]
         simulated_types = data["simulated_event_types"]
 
@@ -170,10 +167,10 @@ class EventTypePlotGenerator(PlotGenerator):
         logger.info(f"Event type distribution comparison plot saved to {output_path}")
 
 
-class SequenceLengthPlotGenerator(PlotGenerator):
+class SequenceLengthPlotGenerator:
     """Generates sequence length distribution plots (OCP)."""
 
-    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str) -> None:
         label_lengths = np.asarray(data["label_sequence_lengths"])
         simulated_lengths = np.asarray(data["simulated_sequence_lengths"])
 
@@ -222,10 +219,10 @@ class SequenceLengthPlotGenerator(PlotGenerator):
         )
 
 
-class AutocorrelationPlotGenerator(PlotGenerator):
+class AutocorrelationPlotGenerator:
     """Generates autocorrelation function (ACF) plots similar to statsmodels."""
 
-    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str) -> None:
         acf_gt = data["acf_gt_mean"]
         acf_sim = data["acf_sim_mean"]
 
@@ -309,20 +306,19 @@ class AutocorrelationPlotGenerator(PlotGenerator):
         logger.info(f"Autocorrelation comparison plot saved to {output_path}")
 
 
-class StatTestPlotGenerator(PlotGenerator):
+class StatTestPlotGenerator:
     """Generates statistical test distribution plots showing H0 distribution and observed (H1) values."""
 
     def __init__(self, test_name: str = "Test Statistic"):
         self.test_name = test_name
 
-    def generate_plot(self, data: Dict[str, Any], output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str) -> None:
         # Tries to find common keys for observed statistics vs null distribution
-        obs_values = data.get("test_statistics", data.get("mmd_values", []))
-        null_dist = data.get(
-            "null_distributions", data.get("mmd_perm_distributions", [])
-        )
+        obs_values = data["observed_statistic"]
 
-        if not obs_values or not null_dist:
+        null_dist = data["permuted_statistic"]
+
+        if obs_values is None or null_dist is None:
             logger.warning(f"{self.test_name} data is empty. Skipping plot.")
             return
 
@@ -351,7 +347,7 @@ class StatTestPlotGenerator(PlotGenerator):
             )
 
         # Plot mean observed statistic
-        avg_obs_stat = np.mean(obs_values)
+        avg_obs_stat = np.mean(obs_values).item()
         plt.axvline(
             x=avg_obs_stat,
             color="darkred",
@@ -376,3 +372,34 @@ class StatTestPlotGenerator(PlotGenerator):
         logger.info(
             f"{self.test_name} distribution plot (H0 vs H1) saved to {output_path}"
         )
+
+        # Plot p-values distribution if available
+        p_values = data["p_values"]
+        if p_values is not None and len(p_values) > 0:
+            plt.figure(figsize=(8, 5))
+            sns.histplot(
+                p_values,
+                stat="density",
+                color="purple",
+                alpha=0.6,
+                bins=np.linspace(0, 1, 21),
+            )
+            plt.axhline(
+                1.0,
+                color="gray",
+                linestyle="--",
+                label="Uniform density (Expected under H0)",
+            )
+            plt.title(f"Distribution of p-values ({self.test_name})", fontsize=14)
+            plt.xlabel("p-value", fontsize=12)
+            plt.ylabel("Density", fontsize=12)
+            plt.xlim(0, 1)
+            plt.legend()
+            plt.tight_layout()
+
+            pval_output_path = output_path.replace(".png", "_pvalues.png")
+            plt.savefig(pval_output_path, dpi=300, bbox_inches="tight")
+            plt.close()
+            logger.info(
+                f"{self.test_name} p-values distribution plot saved to {pval_output_path}"
+            )

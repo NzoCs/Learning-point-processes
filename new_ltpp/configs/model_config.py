@@ -15,7 +15,7 @@ from .base_config import Config, ConfigValidationError
 
 if TYPE_CHECKING:
     from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-        StatisticalTestDict,
+        StatisticalTestConfig,
     )
 
 
@@ -213,7 +213,7 @@ class ModelConfig(Config):
         model_specs: dict,
         num_mc_samples: int,
         thinning_config: dict | ThinningConfig | None = None,
-        statistical_test_config: Optional[Union[dict, "StatisticalTestDict"]] = None,
+        statistical_test_config: Optional[Union[dict, "StatisticalTestConfig"]] = None,
         device: str = "auto",
         gpu: int | None = None,
         is_training: bool = False,

@@ -1,14 +1,17 @@
 from typing import Any, Dict, List, Literal, Self, TypedDict, cast
 
+from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
+    MMDTwoSampleTest,
+)
+
 from .base_test import ITest
-from .configs import TestType, StatisticalTestConfig
 from new_ltpp.evaluation.statistical_testing.point_process_kernels import (
     PointProcessKernelConfig,
 )
 from new_ltpp.utils import logger
 
 
-class StatisticalTestDict(TypedDict):
+class StatisticalTestConfig(TypedDict):
     """
     Type mapping for StatisticalTestBuilder configuration state.
 
@@ -22,12 +25,12 @@ class StatisticalTestDict(TypedDict):
         sigma: Bandwidth parameter for the RBF kernel.
         scaling: General scaling factor applied to the kernel.
         num_discretization_points: Number of discretization points for the signature kernel path integration.
-        embedding_type: Path interpolation mode for the signature kernel ('linear_interpolant' or 'constant_interpolant').
+        embedding_type: Path interpolation mode for the signature kernel ('linear' or 'constant').
         dyadic_order: Dyadic order approximation level for the signature kernel.
         num_classes: Number of unique event types (classes), required to correctly size the embeddings.
     """
 
-    test_type: TestType | None
+    test_type: Literal["mmd", "ksd"] | None
     n_permutations: int | None
     n_samples: int | None
     point_process_kernel_type: Literal["m_kernel", "sig_kernel"] | None
@@ -36,7 +39,7 @@ class StatisticalTestDict(TypedDict):
     sigma: float | None
     scaling: float | None
     num_discretization_points: int | None
-    embedding_type: Literal["linear_interpolant", "constant_interpolant"] | None
+    embedding_type: Literal["linear", "constant"] | None
     dyadic_order: int | None
     num_classes: int | None
 
@@ -66,11 +69,11 @@ class StatisticalTestBuilder:
     - set_scaling(float): General scaling factor applied to the kernel (default: 1.0).
     - set_sig_kernel_params(...): Parameters exclusive to the signature kernel (sig_kernel):
         * num_discretization_points (int): Discretization points for path integration (default: 100).
-        * embedding_type ("linear_interpolant" | "constant_interpolant"): Path interpolation mode (default: "linear_interpolant").
+        * embedding_type ("linear" | "constant"): Path interpolation mode (default: "linear").
         * dyadic_order (int): Dyadic order for the signature kernel approximations (default: 0).
     """
 
-    _config_dict: StatisticalTestDict
+    _config_dict: StatisticalTestConfig
 
     def __init__(self):
         self._config_dict = {
@@ -83,7 +86,7 @@ class StatisticalTestBuilder:
             "sigma": 1.0,
             "scaling": 1.0,
             "num_discretization_points": 100,
-            "embedding_type": "linear_interpolant",
+            "embedding_type": "linear",
             "dyadic_order": 0,
             "num_classes": None,
         }
@@ -92,8 +95,8 @@ class StatisticalTestBuilder:
     def config_dict(self) -> Dict[str, Any]:
         return cast(Dict[str, Any], self._config_dict)
 
-    def from_dict(self, config_dict: StatisticalTestDict) -> Self:
-        """Load configuration from a dictionary matching StatisticalTestDict structure."""
+    def from_dict(self, config_dict: StatisticalTestConfig) -> Self:
+        """Load configuration from a dictionary matching StatisticalTestConfig structure."""
         self._config_dict.update(config_dict)
         return self
 
@@ -141,24 +144,44 @@ class StatisticalTestBuilder:
             scaling=self._config_dict["scaling"],  # type: ignore
             num_discretization_points=self._config_dict["num_discretization_points"],  # type: ignore
             embedding_type=cast(
-                Literal["linear_interpolant", "constant_interpolant"],
+                Literal["linear", "constant"],
                 self._config_dict["embedding_type"],
             ),
             dyadic_order=self._config_dict["dyadic_order"],  # type: ignore
         )
 
-        test_config = StatisticalTestConfig(
-            test_type=cast(str, self._config_dict["test_type"]),
+        return self.create_instance(
+            num_classes=cast(int, self._config_dict["num_classes"]),
             kernel_config=pp_config,
-            n_permutations=self._config_dict["n_permutations"],
-            n_samples=self._config_dict["n_samples"],
         )
 
-        return test_config.create_instance(
-            num_classes=cast(int, self._config_dict["num_classes"])
-        )
+    def create_instance(
+        self, num_classes: int, kernel_config: PointProcessKernelConfig
+    ) -> ITest:
+        """Create an instance of the statistical test based on the configuration."""
+        if self._config_dict["test_type"] == "mmd":
+            match self._config_dict.get("n_permutations"):
+                case None:
+                    raise ValueError("n_permutations must be specified for MMD test")
+                case _:
+                    return MMDTwoSampleTest(
+                        kernel=kernel_config.create_instance(num_classes=num_classes),
+                        n_permutations=self._config_dict["n_permutations"],  # type: ignore
+                    )
 
-    def set_test_type(self, test_type: TestType) -> Self:
+        elif self._config_dict["test_type"] == "ksd":
+            match self._config_dict.get("n_samples"):
+                case None:
+                    raise ValueError("n_samples must be specified for KSD test")
+                case _:
+                    raise NotImplementedError(
+                        "KSDTest implementation is not currently provided in locals."
+                    )
+
+        else:
+            raise ValueError(f"Unsupported test type: {self._config_dict['test_type']}")
+
+    def set_test_type(self, test_type: Literal["mmd", "ksd"]) -> Self:
         self._config_dict["test_type"] = test_type
         return self
 
@@ -195,9 +218,7 @@ class StatisticalTestBuilder:
     def set_sig_kernel_params(
         self,
         num_discretization_points: int = 100,
-        embedding_type: Literal[
-            "linear_interpolant", "constant_interpolant"
-        ] = "linear_interpolant",
+        embedding_type: Literal["linear", "constant"] = "linear",
         dyadic_order: int = 0,
     ) -> Self:
         """Set specialized parameters for the Signature Kernel."""

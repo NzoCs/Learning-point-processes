@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
 
@@ -110,7 +111,7 @@ class THP(NeuralModel):
 
         return enc_output
 
-    def loglike_loss(self, batch: Batch):
+    def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, torch.Tensor]:
         """Compute the loglike loss.
 
         Args:
@@ -171,7 +172,9 @@ class THP(NeuralModel):
         loss = -(event_ll - non_event_ll).sum()
         return loss, num_events
 
-    def compute_states_at_sample_dtimes(self, event_states, sample_dtimes):
+    def compute_states_at_sample_dtimes(
+        self, event_states: torch.Tensor, sample_dtimes: torch.Tensor
+    ) -> torch.Tensor:
         """Compute the hidden states at sampled times.
 
         Args:
@@ -234,3 +237,10 @@ class THP(NeuralModel):
             lambdas = self.softplus(encoder_output)
 
         return lambdas
+
+
+if __name__ == "__main__":
+    # Test the compatibility of the model with the pipeline
+    num_event_types = 5
+
+    model: ITPPModel = THP(num_event_types=num_event_types)

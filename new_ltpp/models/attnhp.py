@@ -6,6 +6,7 @@ from torch import nn
 
 from new_ltpp.models.baselayer import EncoderLayer, MultiHeadAttention, ScaledSoftplus
 from new_ltpp.models.base_model import NeuralModel
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
 
@@ -312,3 +313,14 @@ class ANHP(NeuralModel):
             # [batch_size, seq_len, num_samples, num_event_types]
             lambdas: torch.Tensor = self.layer_intensity(encoder_output)
         return lambdas
+
+
+if __name__ == "__main__":
+    model: ITPPModel = ANHP(
+        num_event_types=3,
+        hidden_size=16,
+        time_emb_size=8,
+        num_layers=2,
+        num_heads=2,
+        dropout=0.1,
+    )

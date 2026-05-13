@@ -80,7 +80,11 @@ class ModelFactory:
 
     @staticmethod
     def create_model(
-        model_class: Type[ITPPModel], model_config: ModelConfig, **kwargs
+        model_class: Type[ITPPModel],
+        model_config: ModelConfig,
+        data_info: DataInfo,
+        output_dir: Path | str,
+        **kwargs,
     ) -> ITPPModel:
         """
         Créer une instance de modèle directement avec la classe.
@@ -103,7 +107,13 @@ class ModelFactory:
                 if isinstance(model_specs, ModelSpecsConfig)
                 else model_specs
             )
-            instance = model_class(model_config, **model_specs_dict, **kwargs)
+            instance = model_class(
+                model_config=model_config,
+                data_info=data_info,
+                output_dir=output_dir,
+                **model_specs_dict,
+                **kwargs,
+            )
             logger.debug(f"Model '{model_name}' created successfully")
             return instance
 

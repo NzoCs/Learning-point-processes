@@ -9,6 +9,7 @@ from torch.distributions import Normal as TorchNormal
 from torch.distributions import TransformedDistribution
 
 from new_ltpp.models.base_model import NeuralModel
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch, OneStepPred
 
 
@@ -372,3 +373,16 @@ class IntensityFree(NeuralModel):
         types_pred = torch.argmax(mark_logits, dim=-1)
 
         return {"dtime_predict": dtimes_pred, "type_predict": types_pred}
+
+
+if __name__ == "__main__":
+    model: ITPPModel = IntensityFree(
+        num_event_types=3,
+        hidden_size=16,
+        time_emb_size=8,
+        num_layers=2,
+        dropout=0.1,
+        num_mix_components=32,
+        mean_log_inter_time=0.0,
+        std_log_inter_time=1.0,
+    )

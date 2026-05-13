@@ -33,9 +33,7 @@ class BSplineTimeKernel(ISpaceKernel):
             raise ValueError(f"Unsupported B-spline order: {self.order}")
 
     @torch.compile
-    def Gram_matrix(
-        self, X: torch.Tensor, Y: torch.Tensor
-    ) -> torch.Tensor:
+    def Gram_matrix(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         B1, L = X.shape
         B2, K = Y.shape
         X = X.unsqueeze(-1).unsqueeze(1).expand(-1, B2, -1, 1)

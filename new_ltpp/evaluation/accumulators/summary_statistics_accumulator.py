@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple, cast, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-        StatisticalTestDict,
+        StatisticalTestConfig,
     )
 
 from new_ltpp.globals import OUTPUT_DIR
@@ -23,12 +23,11 @@ from .acc_types import (
     AllStatistics,
     FinalResult,
     PlotData,
-    StatisticalMetrics,
 )
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
 from .mean_len_accumulator import SequenceLengthAccumulator
-from .metrics_calculator import MetricsCalculatorImpl
+from .summary_stats.summary_stats_helper import SummaryStatsHelper
 from .plot_generators import (
     AutocorrelationPlotGenerator,
     EventTypePlotGenerator,
@@ -37,8 +36,16 @@ from .plot_generators import (
     StatTestPlotGenerator,
 )
 from .time_accumulator import InterEventTimeAccumulator
-from .base_accumulator import Accumulator
+from .base_accumulator import IAccumulator, Accumulator
 from .statistical_metrics_accumulator import StatisticalTestAccumulator
+
+
+class AccumulatorContainer(TypedDict):
+    time: InterEventTimeAccumulator
+    event_type: EventTypeAccumulator
+    sequence_length: SequenceLengthAccumulator
+    correlation: CorrAccumulator
+    statistical_tests: Optional[StatisticalTestAccumulator]
 
 
 class BatchStatisticsCollector(Accumulator):
@@ -82,8 +89,6 @@ class BatchStatisticsCollector(Accumulator):
             statistical_test_config: Configuration for statistical tests (e.g., MMD test)
             dtime_min: Minimum inter-event time
             min_sim_events: Minimum number of simulated events required per batch
-            enable_plots: Whether to generate plots
-            enable_metrics: Whether to compute metrics
             output_dir: Directory where results will be saved
             metadata: Additional metadata dictionary to log and save
         """
@@ -91,23 +96,21 @@ class BatchStatisticsCollector(Accumulator):
         self.output_dir = Path(output_dir)
         # Minimum number of simulated events required per batch
         self.min_sim_events = int(min_sim_events)
-        self.enable_plots = enable_plots
-        self.enable_metrics = enable_metrics
-
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize base accumulators
-        base_accumulators = [
-            InterEventTimeAccumulator(
+        base_accumulators = AccumulatorContainer(
+            time=InterEventTimeAccumulator(
                 dtime_min=dtime_min, dtime_max=dtime_max, min_sim_events=min_sim_events
             ),
-            EventTypeAccumulator(
+            event_type=EventTypeAccumulator(
                 num_event_types=num_event_types, min_sim_events=min_sim_events
             ),
-            SequenceLengthAccumulator(min_sim_events=min_sim_events),
-            CorrAccumulator(min_sim_events=min_sim_events),
-        ]
+            sequence_length=SequenceLengthAccumulator(min_sim_events=min_sim_events),
+            correlation=CorrAccumulator(min_sim_events=min_sim_events),
+            statistical_tests=None,
+        )
 
         if statistical_test_config is not None:
             # Override num_classes to ensure consistency with num_event_types
@@ -118,31 +121,19 @@ class BatchStatisticsCollector(Accumulator):
                 )
             )
 
-        self._accumulators = tuple(base_accumulators)
+        self._accumulators: AccumulatorContainer = base_accumulators
 
-        # Initialize plot generators (if enabled)
-        self._plot_generators: Optional[
-            Tuple[
-                InterEventTimePlotGenerator,
-                EventTypePlotGenerator,
-                SequenceLengthPlotGenerator,
-                AutocorrelationPlotGenerator,
-                StatTestPlotGenerator,
-            ]
-        ] = None
-
-        if self.enable_plots:
-            self._plot_generators = (
-                InterEventTimePlotGenerator(),
-                EventTypePlotGenerator(self.num_event_types),
-                SequenceLengthPlotGenerator(),
-                AutocorrelationPlotGenerator(),
-                StatTestPlotGenerator(),
-            )
+        self._plot_generators = (
+            InterEventTimePlotGenerator(),
+            EventTypePlotGenerator(self.num_event_types),
+            SequenceLengthPlotGenerator(),
+            AutocorrelationPlotGenerator(),
+            StatTestPlotGenerator(),
+        )
 
         # Initialize metrics calculator (if enabled)
-        self._metrics_calculator: Optional[MetricsCalculatorImpl] = (
-            MetricsCalculatorImpl() if self.enable_metrics else None
+        self._summary_stats_helper: Optional[SummaryStatsHelper] = SummaryStatsHelper(
+            num_event_types=self.num_event_types
         )
 
         self.metadata = metadata or {}
@@ -170,24 +161,20 @@ class BatchStatisticsCollector(Accumulator):
         Returns:
         """
 
-        if self._is_finalized:
-            logger.warning("Collector already finalized, ignoring update")
-            return
-
         # Update all accumulators (each validates simulation independently)
-        for accumulator in self._accumulators:
-            accumulator.update(batch, simulation)
+        for key, accumulator in self._accumulators.items():
+            if accumulator is not None:
+                cast(IAccumulator, accumulator).update(batch, simulation)
 
         self._batch_count += 1
 
         # Log progress periodically
         if self._batch_count % 100 == 0:
-            sample_counts = {
-                type(acc).__name__: acc.sample_count for acc in self._accumulators
-            }
-            logger.info(
-                f"Processed {self._batch_count} batches. Sample counts: {sample_counts}"
-            )
+            for acc in self._accumulators.values():
+                if acc is not None:
+                    logger.info(
+                        f"Batch {self._batch_count}: {type(acc).__name__} sample count = {cast(IAccumulator, acc).sample_count}"
+                    )
 
         return
 
@@ -201,18 +188,14 @@ class BatchStatisticsCollector(Accumulator):
 
         # Get base statistics
         base_stats = AllStatistics(
-            time=self._accumulators[0].compute(),
-            event_type=self._accumulators[1].compute(),
-            sequence_length=self._accumulators[2].compute(),
-            correlation=self._accumulators[3].compute(),
+            time=self._accumulators["time"].compute(),
+            event_type=self._accumulators["event_type"].compute(),
+            sequence_length=self._accumulators["sequence_length"].compute(),
+            correlation=self._accumulators["correlation"].compute(),
             statistical_tests=(
-                self._accumulators[4].compute()
-                if len(self._accumulators) > 4
-                else StatisticalMetrics(
-                    mmd_values=[],
-                    mmd_p_values=[],
-                    mmd_perm_distributions=[],
-                )
+                self._accumulators["statistical_tests"].compute()
+                if self._accumulators["statistical_tests"] is not None
+                else None
             ),
         )
 
@@ -224,13 +207,28 @@ class BatchStatisticsCollector(Accumulator):
         Args:
             statistics: Dictionary containing computed statistics
         """
-        if not self.enable_plots or self._plot_generators is None:
-            logger.info("Plot generation disabled")
-            return
-
         logger.info("Generating comparison plots...")
 
         # Prepare data in the format expected by plot generators
+
+        observed_statistic = (
+            np.array(statistics["statistical_tests"]["observed_statistic"])
+            if statistics["statistical_tests"] is not None
+            else None
+        )
+
+        permuted_statistic = (
+            np.array(statistics["statistical_tests"]["permuted_statistic"])
+            if statistics["statistical_tests"] is not None
+            else None
+        )
+
+        p_values = (
+            np.array(statistics["statistical_tests"]["p_values"])
+            if statistics["statistical_tests"] is not None
+            else None
+        )
+
         plot_data = PlotData(
             label_time_deltas=statistics["time"]["gt_time_deltas"],
             simulated_time_deltas=statistics["time"]["sim_time_deltas"],
@@ -239,13 +237,12 @@ class BatchStatisticsCollector(Accumulator):
             simulated_event_types=statistics["event_type"]["sim_array"],
             label_sequence_lengths=statistics["sequence_length"]["gt_array"],
             simulated_sequence_lengths=statistics["sequence_length"]["sim_array"],
+            acf_gt_mean=statistics["correlation"]["acf_gt_mean"],
+            acf_sim_mean=statistics["correlation"]["acf_sim_mean"],
+            observed_statistic=observed_statistic,
+            permuted_statistic=permuted_statistic,
+            p_values=p_values,
         )
-
-        # Prepare ACF data separately (not in PlotData TypedDict)
-        acf_data = {
-            "acf_gt_mean": statistics["correlation"]["acf_gt_mean"],
-            "acf_sim_mean": statistics["correlation"]["acf_sim_mean"],
-        }
 
         # Generate plots
         plot_filenames: List[str] = [
@@ -256,25 +253,12 @@ class BatchStatisticsCollector(Accumulator):
             "mmd_test_distribution.png",
         ]
 
-        # Type assertion safe because we checked self._plot_generators is not None
-        assert self._plot_generators is not None
-
-        plot_data_dict = plot_data
         for i, (generator, filename) in enumerate(
             zip(self._plot_generators, plot_filenames)
         ):
             output_path: str = str(self.output_dir / filename)
 
-            # Use acf_data for the autocorrelation plot
-            if i == 3:
-                data_to_use = acf_data
-            # Use statistical_tests for the MMD plot
-            elif i == 4:
-                data_to_use = statistics["statistical_tests"]
-            else:
-                data_to_use = plot_data_dict
-
-            generator.generate_plot(cast(dict, data_to_use), output_path)
+            generator.generate_plot(plot_data, output_path)
             logger.info(f"Generated plot: {filename}")
 
     def finalize_and_save(self, output_dir: Optional[Path | str] = "simulation_results") -> FinalResult:
@@ -282,11 +266,18 @@ class BatchStatisticsCollector(Accumulator):
 
         This method should be called after all batches have been processed.
 
+        Args:
+            generate_plots: Whether to generate plots
+
         Returns:
             Dictionary containing:
                 - 'statistics': All computed statistics
                 - 'metrics': Summary metrics
                 - 'batch_count': Number of batches processed
+
+        Side effects:
+            - Generates plots if generate_plots is True
+            - Saves plots to output_dir
         """
 
         if output_dir is not None:
@@ -308,8 +299,26 @@ class BatchStatisticsCollector(Accumulator):
         # Compute statistics
         statistics: AllStatistics = self.compute()
 
+        # Compute metrics
+        metrics: dict[str, float] = {}
+        if self._summary_stats_helper is not None:
+            metrics.update(self._summary_stats_helper.compute_metrics(statistics))
+
+        # Add statistical test metrics
+        if statistics.get("statistical_tests") is not None:
+            stat_tests = statistics["statistical_tests"]
+            if stat_tests and stat_tests.get("p_values"):
+                metrics["statistical_test_mean_p_value"] = float(
+                    np.mean(stat_tests["p_values"])
+                )
+            if stat_tests and stat_tests.get("observed_statistic"):
+                metrics["statistical_test_mean_statistic"] = float(
+                    np.mean(stat_tests["observed_statistic"])
+                )
+
         # Generate plots
-        self.generate_plots(statistics)
+        if generate_plots:
+            self.generate_plots(statistics)
 
         # Calculate metrics if enabled
         metrics_dict: Optional[Dict[str, float]] = None
@@ -361,7 +370,7 @@ class BatchStatisticsCollector(Accumulator):
     def reset(self) -> None:
         """Reset all accumulators and state."""
         for accumulator in self._accumulators:
-            accumulator.reset()
+            cast(IAccumulator, accumulator).reset()
         self._batch_count = 0
         self._is_finalized = False
         logger.info("BatchStatisticsCollector reset")
@@ -374,4 +383,7 @@ class BatchStatisticsCollector(Accumulator):
     @property
     def sample_counts(self) -> Dict[str, int]:
         """Return sample counts for all accumulators."""
-        return {type(acc).__name__: acc.sample_count for acc in self._accumulators}
+        return {
+            type(acc).__name__: cast(IAccumulator, acc).sample_count
+            for acc in self._accumulators
+        }

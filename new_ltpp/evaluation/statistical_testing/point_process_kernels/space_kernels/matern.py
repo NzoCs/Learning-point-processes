@@ -20,9 +20,7 @@ class MaternTimeKernel(ISpaceKernel):
             return (1 + scaled + scaled**2 / 3.0) * torch.exp(-scaled)
 
     @torch.compile
-    def Gram_matrix(
-        self, X: torch.Tensor, Y: torch.Tensor
-    ) -> torch.Tensor:
+    def Gram_matrix(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         B1, L = X.shape
         B2, K = Y.shape
         X = X.unsqueeze(-1).unsqueeze(1).expand(-1, B2, -1, 1)
@@ -33,7 +31,9 @@ class MaternTimeKernel(ISpaceKernel):
 
     @torch.compile
     def batch_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
-        assert X.shape[0] == Y.shape[0], "For batch kernel, X and Y must have the same batch size"
+        assert X.shape[0] == Y.shape[0], (
+            "For batch kernel, X and Y must have the same batch size"
+        )
         B, L = X.shape
         X = X.unsqueeze(-1).expand(-1, L, -1)
         Y = Y.unsqueeze(-2).expand(-1, 1, L)

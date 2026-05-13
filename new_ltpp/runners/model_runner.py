@@ -5,7 +5,7 @@ from new_ltpp.configs import RunnerConfig
 from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.data.preprocess import TPPDataModule
 from new_ltpp.models.model_factory import ModelFactory
-from new_ltpp.runners.callbacks import PredictionStatsCallback
+from new_ltpp.runners.callbacks import PredictionStatsCallback, TestCallback
 from new_ltpp.runners.trainer_factory import (
     CheckpointManager,
     TrainerFactory,
@@ -78,7 +78,8 @@ class Runner:
             extra_callbacks=[
                 PredictionStatsCallback(
                     output_dir=str(self.config.base_dir / "distribution_comparison")
-                )
+                ),
+                TestCallback(output_dir=str(self.config.base_dir / "test_results")),
             ],
         )
         return trainer

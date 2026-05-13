@@ -8,10 +8,10 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protoc
 )
 from new_ltpp.shared_types import Batch
 
-from .base_test import Test
+from .base_test import ITest, FinalTestResult, TestStatistics
 
 
-class MMDTwoSampleTest(Test):
+class MMDTwoSampleTest:
     """MMD two-sample permutation test for temporal point processes.
 
     Tests whether two sets of event sequences come from the same distribution.
@@ -64,11 +64,11 @@ class MMDTwoSampleTest(Test):
             self.total_perm_mmds += perm_mmds.detach()
         self.n_batches += 1
 
-    def get_final_p_value(self) -> float:
+    def get_final_p_value(self) -> torch.Tensor:
         if self.n_batches == 0 or self.total_perm_mmds is None:
-            return 1.0
+            return torch.tensor(1.0)  # No data, p-value is 1
         count_ge = (self.total_perm_mmds >= self.total_observed_mmd).sum()
-        return (count_ge.item() + 1) / (self.n_permutations + 1)
+        return (count_ge + 1) / (self.n_permutations + 1)
 
     def _concat_batches(self, batch_x: Batch, batch_y: Batch) -> Batch:
         """Concatenate two batches along the batch dimension.
@@ -133,7 +133,7 @@ class MMDTwoSampleTest(Test):
             valid_event_mask=pooled.valid_event_mask[indices],
         )
 
-    def _permutation_test_from_batches(
+    def _permutation_test(
         self,
         batch_x: Batch,
         batch_y: Batch,
@@ -166,61 +166,9 @@ class MMDTwoSampleTest(Test):
             perm_y = self._select_batch(pooled, perm[n:])
             perm_mmds.append(self.mmd(perm_x, perm_y))
 
-        return observed_mmd, torch.stack(perm_mmds)
+        return observed_mmd, torch.stack(perm_mmds, dim=-1)
 
-    def statistics_from_batches(
-        self,
-        batch_x: Batch,
-        batch_y: Batch,
-        accumulate: bool = True,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Compute the p-value of the MMD two-sample permutation test
-        on a single pair of batches.
-
-        Useful for logging p-values during training.
-
-        Args:
-            batch_x: Batch of sequences from distribution X.
-            batch_y: Batch of sequences from distribution Y.
-            accumulate: If True, accumulate MMD² and p-value for later combination.
-
-        Returns:
-            p-value of the permutation test as a Tensor.
-        """
-        observed_mmd, perm_mmds = self._permutation_test_from_batches(batch_x, batch_y)
-        count_ge = (perm_mmds >= observed_mmd).sum()
-        p_value = (count_ge + 1.0) / (self.n_permutations + 1.0)
-
-        if accumulate:
-            self.total_count_ge += int(count_ge.item())
-            self.total_n_permutations += self.n_permutations
-
-        return p_value, observed_mmd, perm_mmds
-
-    def _aggregate_permutations(
-        self,
-        t_obs: torch.Tensor,
-        all_perm_mmds: list[torch.Tensor],
-        n_batches: int,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Aggregate per-batch permutation MMDs and calculate final p-value, obs, and perms."""
-        if n_batches == 0:
-            return (
-                torch.tensor(1.0, device=t_obs.device),
-                t_obs,
-                torch.zeros(self.n_permutations, device=t_obs.device),
-            )
-
-        # Aggregate: T*_k = Σ_i perm_mmds[i][k], count how many >= T_obs
-        stacked_perms = torch.stack(all_perm_mmds)  # (n_batches, n_permutations)
-        t_perms = stacked_perms.sum(dim=0)  # (n_permutations,)
-
-        count_ge = (t_perms >= t_obs).sum()
-        p_value = (count_ge + 1.0) / (self.n_permutations + 1.0)
-
-        return p_value, t_obs, t_perms
-
-    def mmd_from_batches(
+    def _mmd(
         self,
         batch_x: Batch,
         batch_y: Batch,
@@ -236,12 +184,30 @@ class MMDTwoSampleTest(Test):
         """
         return self.mmd(batch_x, batch_y)
 
-    def statistics_from_model(
+    def compute_statistics(
+        self,
+        batch_x: Batch,
+        batch_y: Batch,
+        accumulate: bool = True,
+    ) -> TestStatistics:
+        observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
+        count_ge = (perm_mmds >= observed_mmd).sum()
+        p_value = (count_ge + 1.0) / (self.n_permutations + 1.0)
+
+        if accumulate:
+            self._accumulate(observed_mmd, perm_mmds)
+
+        return TestStatistics(
+            p_value=p_value,
+            observed_statistic=observed_mmd,
+            permuted_statistics=perm_mmds,
+        )
+
+    def test_model(
         self,
         model: NeuralModel,
         data_loader: TypedDataLoader,
-        accumulate: bool = True,
-    ) -> tuple[float, list[float], list[float], list[float]]:
+    ) -> FinalTestResult:
         """Compute the p-value of the MMD two-sample permutation test for a trained model.
 
         Args:
@@ -262,29 +228,34 @@ class MMDTwoSampleTest(Test):
 
         for batch in data_loader:
             simulated = model.simulate(batch=batch)
-            p_value_i, observed_mmd_i, perm_mmds_i = self.statistics_from_batches(
-                batch, simulated
+            test_stats = self.compute_statistics(batch_x=batch, batch_y=simulated)
+
+            all_p_values.append(test_stats["p_value"].item())
+            all_mmds.append(test_stats["observed_statistic"].item())
+            all_perm_mmds.extend(test_stats["permuted_statistics"])
+            self._accumulate(
+                test_stats["observed_statistic"], test_stats["permuted_statistics"]
             )
 
-            all_p_values.append(p_value_i.item())
-            all_mmds.append(observed_mmd_i.item())
-            all_perm_mmds.extend(perm_mmds_i.tolist())
+        p_val = self.get_final_p_value().item()
 
-        p_val = self.get_final_p_value()
+        return FinalTestResult(
+            p_value=p_val,
+            all_p_values=all_p_values,
+            all_statistics=all_mmds,
+            all_permuted_statistics=all_perm_mmds,
+        )
 
-        return p_val, all_p_values, all_mmds, all_perm_mmds
-
-    def statistics_from_dataloaders(
+    def test_simulation(
         self,
-        data_loader_x: TypedDataLoader,
-        data_loader_y: TypedDataLoader,
-        accumulate: bool = True,
-    ) -> tuple[float, list[float], list[float], list[float]]:
+        simulation: TypedDataLoader,
+        ground_truth: TypedDataLoader,
+    ) -> FinalTestResult:
         """Compute the p-value of the MMD two-sample permutation test for two data loaders, e.g. ground truth and simulation.
 
         Args:
-            data_loader_x: Data loader for ground truth batches.
-            data_loader_y: Data loader for simulated batches.
+            simulation: Data loader for simulated batches.
+            ground_truth: Data loader for ground truth batches.
             accumulate: Whether to accumulate statistics.
 
         Returns:
@@ -294,16 +265,39 @@ class MMDTwoSampleTest(Test):
         all_mmds = []
         all_perm_mmds = []
 
-        n_batches = 0
-        for batch_x, batch_y in zip(data_loader_x, data_loader_y):
-            p_value_i, observed_mmd_i, perm_mmds_i = self.statistics_from_batches(
-                batch_x, batch_y
+        for batch_x, batch_y in zip(simulation, ground_truth):
+            test_stats = self.compute_statistics(batch_x=batch_x, batch_y=batch_y)
+
+            all_p_values.append(test_stats["p_value"].item())
+            all_mmds.append(test_stats["observed_statistic"].item())
+            all_perm_mmds.extend(test_stats["permuted_statistics"])
+            self._accumulate(
+                test_stats["observed_statistic"], test_stats["permuted_statistics"]
             )
 
-            all_p_values.append(p_value_i.item())
-            all_mmds.append(observed_mmd_i.item())
-            all_perm_mmds.extend(perm_mmds_i.tolist())
+        return FinalTestResult(
+            p_value=self.get_final_p_value().item(),
+            all_p_values=all_p_values,
+            all_statistics=all_mmds,
+            all_permuted_statistics=all_perm_mmds,
+        )
 
-            n_batches += 1
 
-        return self.get_final_p_value(), all_p_values, all_mmds, all_perm_mmds
+if __name__ == "__main__":
+    # Test the type compatibility of the test with the pipeline
+    from new_ltpp.evaluation.statistical_testing.point_process_kernels import (
+        SIGKernel,
+    )
+    from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
+        LinearKernel,
+    )
+
+    kernel = SIGKernel(
+        static_kernel=LinearKernel(),
+        embedding_type="linear",
+        num_discretization_points=100,
+        dyadic_order=3,
+        num_event_types=10,
+    )
+
+    test: ITest = MMDTwoSampleTest(kernel=kernel, n_permutations=10)

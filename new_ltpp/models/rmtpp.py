@@ -4,6 +4,7 @@ from typing import Any, Tuple
 import torch
 from torch import nn
 
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 
 from .base_model import NeuralModel
@@ -168,3 +169,13 @@ class RMTPP(NeuralModel):
                 right_hiddens_BNH, sample_dtimes
             )  # shape: [B, N, G, M]
         return sampled_intensities
+
+
+if __name__ == "__main__":
+    model: ITPPModel = RMTPP(
+        num_event_types=3,
+        hidden_size=16,
+        time_emb_size=8,
+        num_layers=2,
+        dropout=0.1,
+    )

@@ -2,7 +2,7 @@
 """Mixin for visualization and analysis methods."""
 
 import os
-from typing import Dict, Tuple
+from typing import Tuple
 
 import torch
 from matplotlib import pyplot as plt
@@ -27,7 +27,7 @@ class VisualizationMixin(SimulationMixin):
         save_plot: bool = True,
         save_data: bool = True,
         **kwargs,
-    ) -> Tuple[torch.Tensor, torch.Tensor, Dict[int, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor, list[torch.Tensor]]:
         """Generate and visualize intensity curves for the model.
 
         Args:
@@ -109,7 +109,7 @@ class VisualizationMixin(SimulationMixin):
 
         return intensities_flat, time_flat, marked_times
 
-    def get_model_metadata(self) -> Dict:
+    def get_model_metadata(self) -> dict:
         """Get metadata about the model for simulation purposes.
 
         Returns:
@@ -235,11 +235,11 @@ class VisualizationMixin(SimulationMixin):
         type_seqs: torch.Tensor,
         seq_non_pad_mask: torch.Tensor,
         num_mark: int,
-    ) -> Tuple[dict[int, torch.Tensor], dict[int, torch.Tensor]]:
+    ) -> Tuple[list[torch.Tensor], list[torch.Tensor]]:
         """Collect times where each event type occurs."""
 
-        marked_times = {}
-        intensities_at_marked_times = {}
+        marked_times = []
+        intensities_at_marked_times = []
         time_seqs_flat = time_seqs.squeeze(0)
         type_seqs_flat = type_seqs.squeeze(0)
         seq_non_pad_mask_flat = seq_non_pad_mask.squeeze(0)
@@ -250,11 +250,13 @@ class VisualizationMixin(SimulationMixin):
             mask = (type_seqs_flat == i) & valid_mask
 
             if mask.any():
-                marked_times[i] = time_seqs_flat[mask]
-                intensities_at_marked_times[i] = intensities_at_times[0, :, 0, i][mask]
+                marked_times.append(time_seqs_flat[mask])
+                intensities_at_marked_times.append(
+                    intensities_at_times[0, :, 0, i][mask]
+                )
             else:
-                marked_times[i] = torch.empty(0, device=self.device)
-                intensities_at_marked_times[i] = torch.empty(0, device=self.device)
+                marked_times.append(torch.empty(0, device=self.device))
+                intensities_at_marked_times.append(torch.empty(0, device=self.device))
 
         return marked_times, intensities_at_marked_times
 
@@ -276,8 +278,8 @@ class VisualizationMixin(SimulationMixin):
             "time_points": time_flat.cpu().detach().numpy().tolist(),
             "intensities": intensities_flat.cpu().detach().numpy().tolist(),
             "marked_times": {
-                str(dim): times.cpu().detach().numpy().tolist()
-                for dim, times in marked_times.items()
+                str(i): times.cpu().detach().numpy().tolist()
+                for i, times in enumerate(marked_times)
             },
             "metadata": {
                 "precision": precision,
@@ -297,9 +299,9 @@ class VisualizationMixin(SimulationMixin):
     def _plot_intensity_graphs(
         self,
         time_flat: torch.Tensor,
-        marked_times: dict[int, torch.Tensor],
+        marked_times: list[torch.Tensor],
         intensities_flat: torch.Tensor,
-        intensities_at_marked_times: dict[int, torch.Tensor],
+        intensities_at_marked_times: list[torch.Tensor],
         num_mark: int,
         save_dir: str,
         plot: bool,

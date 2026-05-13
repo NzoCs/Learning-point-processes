@@ -3,6 +3,7 @@ from torch import nn
 
 from new_ltpp.models.baselayer import DNN
 from new_ltpp.models.base_model import NeuralModel
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils import rk4_step_method
 
@@ -334,3 +335,14 @@ class ODETPP(NeuralModel):
             sampled_intensities = self.layer_intensity(sample_state_ti)
 
         return sampled_intensities
+
+
+if __name__ == "__main__":
+    model: ITPPModel = ODETPP(
+        num_event_types=3,
+        hidden_size=16,
+        time_emb_size=8,
+        num_layers=2,
+        dropout=0.1,
+        ode_num_sample_per_step=5,
+    )

@@ -6,18 +6,18 @@ This module contains TypedDict definitions for type-safe statistics handling.
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 import numpy as np
 import numpy.typing as npt
 
 
-class StatisticalMetrics(TypedDict):
+class StatisticalTestData(TypedDict):
     """Type definition for statistical metrics collected from batches."""
 
-    mmd_values: list[float]
-    mmd_p_values: list[float]
-    mmd_perm_distributions: list[float]
+    p_values: list[float]
+    observed_statistic: list[float]
+    permuted_statistic: list[float]
 
 
 class PlotData(TypedDict):
@@ -30,6 +30,11 @@ class PlotData(TypedDict):
     simulated_event_types: npt.NDArray[np.int64]
     label_sequence_lengths: npt.NDArray[np.float64]
     simulated_sequence_lengths: npt.NDArray[np.float64]
+    acf_gt_mean: npt.NDArray[np.float64]  # Mean ACF for ground truth (max_lag + 1,)
+    acf_sim_mean: npt.NDArray[np.float64]  # Mean ACF for simulation (max_lag + 1,)
+    observed_statistic: Optional[npt.NDArray[np.float64]]  # For stat test plots
+    permuted_statistic: Optional[npt.NDArray[np.float64]]  # For stat test plots
+    p_values: Optional[npt.NDArray[np.float64]]  # For stat test plots
 
 
 class MetricsData(TypedDict):
@@ -89,7 +94,7 @@ class AllStatistics(TypedDict):
     event_type: EventTypeStatistics
     sequence_length: SequenceLengthStatistics
     correlation: CorrelationStatistics
-    statistical_tests: StatisticalMetrics
+    statistical_tests: Optional[StatisticalTestData]
 
 
 class FinalResult(TypedDict, total=False):

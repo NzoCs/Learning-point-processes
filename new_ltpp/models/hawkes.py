@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from torch import nn
 
 from new_ltpp.models.base_model import Model
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
@@ -392,3 +393,11 @@ class Hawkes(Model):
         raise NotImplementedError(
             "Simulation not implemented for Hawkes model, there is a custom implementation in the data generation class. This class serves as a benchmark for the other models in prediction phase for the loglike loss."
         )
+
+
+if __name__ == "__main__":
+    model: ITPPModel = Hawkes(
+        mu=[0.1, 0.2, 0.3],
+        alpha=[[0.5, 0.1, 0.0], [0.2, 0.4, 0.1], [0.0, 0.3, 0.6]],
+        beta=[[1.0, 1.5, 2.0], [1.2, 1.8, 2.5], [1.5, 2.0, 3.0]],
+    )

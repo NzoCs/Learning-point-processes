@@ -5,7 +5,7 @@ This module provides the abstract base class for all statistical accumulators.
 """
 
 from abc import ABC, abstractmethod
-from typing import Protocol, runtime_checkable
+from typing import Protocol
 
 from new_ltpp.shared_types import Batch, SimulationResult
 
@@ -59,7 +59,6 @@ class Accumulator(ABC):
         return self._sample_count
 
 
-@runtime_checkable
 class IAccumulator(Protocol):
     """Protocol for IDE type checking + isinstance() support."""
 

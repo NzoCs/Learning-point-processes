@@ -2,7 +2,8 @@ import torch
 from typing import Literal
 from enum import Enum
 
-from .kernel_protocol import PointProcessKernel
+
+from .kernel_protocol import PointProcessKernel, IPointProcessKernel
 from .space_kernels import ISpaceKernel
 from new_ltpp.shared_types import Batch, SimulationResult
 
@@ -109,8 +110,8 @@ class MKernel(PointProcessKernel):
     @torch.compile
     def compute_gram_matrix(
         self,
-        phi_batch: Batch | SimulationResult,
-        psi_batch: Batch | SimulationResult,
+        X: Batch | SimulationResult,
+        Y: Batch | SimulationResult,
     ) -> torch.Tensor:
         """Compute the M-kernel between two batches of sequences.
         args:
@@ -122,14 +123,14 @@ class MKernel(PointProcessKernel):
             torch.Tensor: (B, B)
         """
 
-        phi_delta_time_seqs = phi_batch.time_delta_seqs[:, : self.num_points]
-        phi_type_seqs = phi_batch.type_seqs[:, : self.num_points]
-        psi_delta_time_seqs = psi_batch.time_delta_seqs[:, : self.num_points]
-        psi_type_seqs = psi_batch.type_seqs[:, : self.num_points]
+        phi_delta_time_seqs = X.time_delta_seqs[:, : self.num_points]
+        phi_type_seqs = X.type_seqs[:, : self.num_points]
+        psi_delta_time_seqs = Y.time_delta_seqs[:, : self.num_points]
+        psi_type_seqs = Y.type_seqs[:, : self.num_points]
 
         # Extract valid event masks (True = real event, False = padding)
-        phi_mask = phi_batch.valid_event_mask[:, : self.num_points]  # (B, L)
-        psi_mask = psi_batch.valid_event_mask[:, : self.num_points]  # (B, K)
+        phi_mask = X.valid_event_mask[:, : self.num_points]  # (B, L)
+        psi_mask = Y.valid_event_mask[:, : self.num_points]  # (B, K)
 
         # Per-sequence valid counts
         phi_n = phi_mask.sum(dim=1).float()  # (B,)
@@ -202,3 +203,15 @@ class MKernel(PointProcessKernel):
 
         # Applique la transformation choisie pour convertir la distance en kernel
         return self._apply_transform(dist_sq)  # (B, B)
+
+
+if __name__ == "__main__":
+    from .space_kernels import (
+        LinearKernel,
+    )
+
+    mkernel: IPointProcessKernel = MKernel(
+        time_kernel=LinearKernel(),
+        type_kernel=LinearKernel(),
+        transform=MKernelTransform.EXPONENTIAL,
+    )

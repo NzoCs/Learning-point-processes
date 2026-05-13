@@ -1,9 +1,8 @@
 from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
-from .base_test import Test
 
 
-class SteinTest(Test):
+class SteinTest:
     def __init__(self, kernel):
         self.kernel = kernel
 

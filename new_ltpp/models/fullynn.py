@@ -5,6 +5,7 @@ from torch import nn
 from torch.autograd import grad
 from torch.nn import functional as F
 
+from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 
 from .base_model import NeuralModel
@@ -300,3 +301,13 @@ class FullyNN(NeuralModel):
             # [batch_size, seq_len, num_samples, num_event_types]
             lambdas = derivative_integral_lambda
         return lambdas
+
+
+if __name__ == "__main__":
+    model: ITPPModel = FullyNN(
+        num_event_types=3,
+        hidden_size=16,
+        time_emb_size=8,
+        num_layers=2,
+        dropout=0.1,
+    )

@@ -40,6 +40,8 @@ class MMDTwoSampleTest(Test):
 
         self.total_observed_mmd: torch.Tensor = torch.tensor(0.0)
         self.total_perm_mmds: torch.Tensor | None = None  # (n_permutations,)
+        self.total_count_ge: int = 0
+        self.total_n_permutations: int = 0
         self.n_batches: int = 0
 
     @property
@@ -50,6 +52,8 @@ class MMDTwoSampleTest(Test):
     def reset_accumulators(self) -> None:
         self.total_observed_mmd: torch.Tensor = torch.tensor(0.0)
         self.total_perm_mmds: torch.Tensor | None = None  # (n_permutations,)
+        self.total_count_ge: int = 0
+        self.total_n_permutations: int = 0
         self.n_batches: int = 0
 
     def _accumulate(self, observed_mmd: torch.Tensor, perm_mmds: torch.Tensor) -> None:

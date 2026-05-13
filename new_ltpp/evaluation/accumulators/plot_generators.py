@@ -376,3 +376,30 @@ class StatTestPlotGenerator(PlotGenerator):
         logger.info(
             f"{self.test_name} distribution plot (H0 vs H1) saved to {output_path}"
         )
+
+        p_values = data.get("p_values", data.get("mmd_p_values", []))
+        if p_values:
+            p_val_path = str(output_path).replace(".png", "_p_values.png")
+            plt.figure(figsize=(10, 6))
+            sns.histplot(
+                p_values,
+                stat="count",
+                color="blue",
+                alpha=0.6,
+                bins=np.linspace(0, 1, 21),
+            )
+            plt.axvline(
+                x=0.05,
+                color="red",
+                linestyle="--",
+                linewidth=2,
+                label="Significance level (\u03b1=0.05)",
+            )
+            plt.title(f"{self.test_name} P-values Distribution", fontsize=14)
+            plt.xlabel("P-value", fontsize=12)
+            plt.ylabel("Count (Batches)", fontsize=12)
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(p_val_path, dpi=300, bbox_inches="tight")
+            plt.close()
+            logger.info(f"{self.test_name} p-values plot saved to {p_val_path}")

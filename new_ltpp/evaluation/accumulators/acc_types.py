@@ -92,8 +92,9 @@ class AllStatistics(TypedDict):
     statistical_tests: StatisticalMetrics
 
 
-class FinalResult(TypedDict):
+class FinalResult(TypedDict, total=False):
     """Type definition for finalize_and_save return value."""
 
     statistics: AllStatistics
+    metrics: dict[str, float] | None
     batch_count: int

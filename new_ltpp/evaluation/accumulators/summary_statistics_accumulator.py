@@ -8,7 +8,7 @@ statistics batch-by-batch during the prediction phase.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, cast, TYPE_CHECKING
+from typing import Dict, List, Optional, Tuple, cast, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
@@ -66,12 +66,13 @@ class BatchStatisticsCollector(Accumulator):
         self,
         num_event_types: int,
         dtime_max: float,
+        output_dir: Path | str,
         statistical_test_config: Optional["StatisticalTestDict"] = None,
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         enable_plots: bool = True,
         enable_metrics: bool = True,
-        output_dir: Path | str = OUTPUT_DIR / "distribution_comparison",
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """Initialize the batch statistics collector.
 
@@ -84,6 +85,7 @@ class BatchStatisticsCollector(Accumulator):
             enable_plots: Whether to generate plots
             enable_metrics: Whether to compute metrics
             output_dir: Directory where results will be saved
+            metadata: Additional metadata dictionary to log and save
         """
         self.num_event_types = num_event_types
         self.output_dir = Path(output_dir)
@@ -108,6 +110,8 @@ class BatchStatisticsCollector(Accumulator):
         ]
 
         if statistical_test_config is not None:
+            # Override num_classes to ensure consistency with num_event_types
+            statistical_test_config["num_classes"] = num_event_types
             base_accumulators.append(
                 StatisticalTestAccumulator(
                     statistical_test_config, min_sim_events=min_sim_events
@@ -140,6 +144,11 @@ class BatchStatisticsCollector(Accumulator):
         self._metrics_calculator: Optional[MetricsCalculatorImpl] = (
             MetricsCalculatorImpl() if self.enable_metrics else None
         )
+
+        self.metadata = metadata or {}
+        if self.metadata:
+            import json
+            logger.info(f"Initialized Evaluation Phase with Metadata:\n{json.dumps(self.metadata, indent=2)}")
 
         # State tracking
         self._batch_count: int = 0
@@ -268,7 +277,7 @@ class BatchStatisticsCollector(Accumulator):
             generator.generate_plot(cast(dict, data_to_use), output_path)
             logger.info(f"Generated plot: {filename}")
 
-    def finalize_and_save(self) -> FinalResult:
+    def finalize_and_save(self, output_dir: Optional[Path | str] = "simulation_results") -> FinalResult:
         """Finalize collection, compute statistics, generate plots, and save results.
 
         This method should be called after all batches have been processed.
@@ -279,6 +288,15 @@ class BatchStatisticsCollector(Accumulator):
                 - 'metrics': Summary metrics
                 - 'batch_count': Number of batches processed
         """
+
+        if output_dir is not None:
+            output_dir = OUTPUT_DIR / output_dir
+            output_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            output_dir = self.output_dir
+
+        import json
+
         if self._is_finalized:
             logger.warning("Collector already finalized, computing statistics anyway")
             # Continue to compute instead of returning empty result
@@ -293,10 +311,47 @@ class BatchStatisticsCollector(Accumulator):
         # Generate plots
         self.generate_plots(statistics)
 
+        # Calculate metrics if enabled
+        metrics_dict: Optional[Dict[str, float]] = None
+        if self.enable_metrics:
+            metrics_dict = {}
+            
+            # Add statistical test (MMD) metrics
+            stat_tests = statistics.get("statistical_tests", {})
+            if stat_tests and stat_tests.get("mmd_values"):
+                import numpy as np
+                metrics_dict["mean_mmd_value"] = float(np.mean(stat_tests["mmd_values"]))
+                metrics_dict["std_mmd_value"] = float(np.std(stat_tests["mmd_values"]))
+            
+            if stat_tests and stat_tests.get("mmd_p_values"):
+                import numpy as np
+                metrics_dict["mean_mmd_p_value"] = float(np.mean(stat_tests["mmd_p_values"]))
+                metrics_dict["std_mmd_p_value"] = float(np.std(stat_tests["mmd_p_values"]))
+            
+            # Save metrics to JSON
+            metrics_path = output_dir / "metrics.json"
+            try:
+                with open(metrics_path, "w") as f:
+                    json.dump(metrics_dict, f, indent=4)
+                logger.info(f"Saved metrics to {metrics_path}")
+            except Exception as e:
+                logger.error(f"Failed to save metrics to {metrics_path}: {e}")
+
+        # Save metadata to JSON
+        if self.metadata:
+            metadata_path = output_dir / "metadata.json"
+            try:
+                with open(metadata_path, "w") as f:
+                    json.dump(self.metadata, f, indent=4)
+                logger.info(f"Saved execution metadata to {metadata_path}")
+            except Exception as e:
+                logger.error(f"Failed to save metadata to {metadata_path}: {e}")
+
         self._is_finalized = True
 
         result = FinalResult(
             statistics=statistics,
+            metrics=metrics_dict,
             batch_count=self._batch_count,
         )
 

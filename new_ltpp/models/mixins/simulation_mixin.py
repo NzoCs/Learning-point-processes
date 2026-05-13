@@ -74,12 +74,30 @@ class SimulationMixin(BaseMixin):
         """
         from new_ltpp.evaluation import BatchStatisticsCollector
 
+        metadata = {
+            "model": {
+                "class_name": self.__class__.__name__,
+                "num_event_types": self.num_event_types,
+                "pad_token_id": getattr(self, "pad_token_id", None),
+            },
+            "simulation": {
+                "start_time": getattr(self, "simulation_start_time", None),
+                "end_time": getattr(self, "simulation_end_time", None),
+                "batch_size": getattr(self, "simulation_batch_size", None),
+                "initial_buffer_size": getattr(self, "initial_buffer_size", None),
+                "event_sampler": getattr(self, "event_sampler", None).__class__.__name__ if hasattr(self, "event_sampler") else None,
+            },
+            "statistical_test_config": self.statistical_test_config,
+            "device": str(self.device) if hasattr(self, "device") else "unknown",
+        }
+
         self._statistics_collector = BatchStatisticsCollector(
             num_event_types=self.num_event_types,
             output_dir=output_dir,
             dtime_max=self.dtime_max,
             dtime_min=0.0,
             statistical_test_config=self.statistical_test_config,
+            metadata=metadata,
         )
 
         logger.info(
@@ -87,7 +105,7 @@ class SimulationMixin(BaseMixin):
         )
         return self._statistics_collector
 
-    def finalize_statistics(self) -> FinalResult:
+    def finalize_statistics(self, output_dir: Path | str = "simulation_results") -> FinalResult:
         """Finalize statistics collection and generate plots/metrics.
 
         Returns:
@@ -99,7 +117,7 @@ class SimulationMixin(BaseMixin):
             )
 
         logger.info("Finalizing batch statistics collection...")
-        results = self._statistics_collector.finalize_and_save()
+        results = self._statistics_collector.finalize_and_save(output_dir)
         logger.info(
             f"Statistics finalized: {results.get('batch_count', 0)} batches processed"
         )
@@ -392,7 +410,9 @@ class SimulationMixin(BaseMixin):
             pbar = tqdm(
                 total=max_absolute_end_time.item(), desc="Simulation", leave=False
             )
-            pbar.n = min(sim_state["current_time"], max_absolute_end_time)
+            pbar.n = min(
+                sim_state["current_time"].item(), max_absolute_end_time.item()
+            )
             pbar.refresh()
 
         while sim_state["batch_active"].any():
@@ -449,7 +469,9 @@ class SimulationMixin(BaseMixin):
             sim_state["step_count"] += 1
 
             if sim_state["step_count"] % 50 == 0:
-                pbar.n = min(sim_state["current_time"], max_absolute_end_time)
+                pbar.n = min(
+                    sim_state["current_time"].item(), max_absolute_end_time.item()
+                )
                 pbar.refresh()
 
         pbar.close()

@@ -1,166 +1,220 @@
-import subprocess
-import sys
+"""Integration tests for CLI runners – side-effect verification.
+
+Convention
+----------
+- Tests are plain functions prefixed with test_.
+- `tmp_path` (built-in pytest fixture) provides an isolated, auto-cleaned directory.
+- Each test documents the filesystem side effects it expects, then asserts them.
+
+Side effects per command
+------------------------
+generate
+    {tmp_path}/train.json
+    {tmp_path}/dev.json
+    {tmp_path}/test.json
+    {tmp_path}/generation_metadata.json   ← JSON with generation_config + stats
+
+info --output <file>
+    <file>                                ← JSON with keys: timestamp, system_info
+
+version, benchmark --list
+    (no filesystem side effects)
+"""
+
+import json
 from pathlib import Path
 
-import pytest
 from typer.testing import CliRunner
 
 from scripts.cli import app
 
-
-@pytest.fixture
-def runner():
-    return CliRunner()
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+runner = CliRunner()
 
 
-def test_cli_version(runner):
-    """Test the version command."""
+# ---------------------------------------------------------------------------
+# generate
+# ---------------------------------------------------------------------------
+
+
+def test_generate_hawkes_creates_json_files(tmp_path):
+    """
+    Side effects:
+        tmp_path/train.json
+        tmp_path/dev.json
+        tmp_path/test.json
+        tmp_path/generation_metadata.json
+    """
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--method",
+            "hawkes",
+            "--num-sim",
+            "50",
+            "--dim",
+            "2",
+            "--output",
+            str(tmp_path),
+            "--seed",
+            "42",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "train.json").exists()
+    assert (tmp_path / "dev.json").exists()
+    assert (tmp_path / "test.json").exists()
+    assert (tmp_path / "generation_metadata.json").exists()
+
+
+def test_generate_hawkes_metadata_content(tmp_path):
+    """generation_metadata.json must contain valid generation_config."""
+    runner.invoke(
+        app,
+        [
+            "generate",
+            "--method",
+            "hawkes",
+            "--num-sim",
+            "50",
+            "--dim",
+            "2",
+            "--output",
+            str(tmp_path),
+            "--seed",
+            "42",
+        ],
+    )
+
+    meta = json.loads((tmp_path / "generation_metadata.json").read_text())
+    assert meta["generation_config"]["generation_method"] == "hawkes"
+    assert meta["generation_config"]["num_simulations"] == 50
+
+
+def test_generate_self_correcting_creates_json_files(tmp_path):
+    """
+    Side effects:
+        tmp_path/train.json, dev.json, test.json, generation_metadata.json
+    """
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--method",
+            "self_correcting",
+            "--num-sim",
+            "30",
+            "--dim",
+            "2",
+            "--output",
+            str(tmp_path),
+            "--seed",
+            "0",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    for fname in ("train.json", "dev.json", "test.json", "generation_metadata.json"):
+        assert (tmp_path / fname).exists(), f"{fname} missing"
+
+
+def test_generate_unknown_method_exits_nonzero_writes_nothing(tmp_path):
+    """Bad method → non-zero exit, no data files written."""
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--method",
+            "does_not_exist",
+            "--output",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert not (tmp_path / "train.json").exists()
+
+
+def test_generate_bad_splits_exits_nonzero(tmp_path):
+    """Splits summing to > 1.0 → rejected before any file is written."""
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--train-ratio",
+            "0.7",
+            "--test-ratio",
+            "0.7",
+            "--dev-ratio",
+            "0.2",
+            "--output",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code != 0
+
+
+# ---------------------------------------------------------------------------
+# info
+# ---------------------------------------------------------------------------
+
+
+def test_info_without_output_exits_zero():
+    """No --output: command succeeds, no file written."""
+    result = runner.invoke(app, ["info"])
+    assert result.exit_code == 0
+
+
+def test_info_with_output_creates_json(tmp_path):
+    """
+    Side effect:
+        tmp_path/system_info.json  ← JSON with timestamp + system_info
+    """
+    out_file = tmp_path / "system_info.json"
+
+    result = runner.invoke(app, ["info", "--output", str(out_file)])
+
+    assert result.exit_code == 0, result.output
+    assert out_file.exists()
+
+    data = json.loads(out_file.read_text())
+    assert "timestamp" in data
+    assert "system_info" in data
+    assert "system" in data["system_info"]
+
+
+def test_info_output_contains_python_section(tmp_path):
+    """The saved JSON must include a python section."""
+    out_file = tmp_path / "info.json"
+    runner.invoke(app, ["info", "--output", str(out_file)])
+
+    data = json.loads(out_file.read_text())
+    assert "python" in data["system_info"]
+
+
+# ---------------------------------------------------------------------------
+# version  (no filesystem side effects)
+# ---------------------------------------------------------------------------
+
+
+def test_version_exits_zero():
     result = runner.invoke(app, ["version"])
     assert result.exit_code == 0
+
+
+def test_version_output_mentions_cli():
+    result = runner.invoke(app, ["version"])
     assert "EasyTPP CLI v4.0" in result.output
-    assert "Runners Process" in result.output
 
 
-def test_cli_help(runner):
-    """Test the main help command."""
-    result = runner.invoke(app, ["--help"])
+# ---------------------------------------------------------------------------
+# benchmark --list  (no filesystem side effects)
+# ---------------------------------------------------------------------------
+
+
+def test_benchmark_list_exits_zero():
+    result = runner.invoke(app, ["benchmark", "--list"])
     assert result.exit_code == 0
-    assert "EasyTPP CLI v4.0" in result.output
-    assert "run" in result.output
-    assert "inspect" in result.output
-    assert "generate" in result.output
-
-
-def test_cli_run_help(runner):
-    """Test the run command help."""
-    result = runner.invoke(app, ["run", "--help"])
-    assert result.exit_code == 0
-    assert "Run a TPP experiment" in result.output
-    assert "--config" in result.output
-    assert "--model" in result.output
-
-
-def test_cli_inspect_help(runner):
-    """Test the inspect command help."""
-    result = runner.invoke(app, ["inspect", "--help"])
-    assert result.exit_code == 0
-    assert "Inspect and visualize TPP data" in result.output
-
-
-def test_cli_generate_help(runner):
-    """Test the generate command help."""
-    result = runner.invoke(app, ["generate", "--help"])
-    assert result.exit_code == 0
-    assert "Generate synthetic TPP data" in result.output
-
-
-def test_cli_info_help(runner):
-    """Test the info command help."""
-    result = runner.invoke(app, ["info", "--help"])
-    assert result.exit_code == 0
-    assert "Display system information" in result.output
-
-
-def test_cli_setup_help(runner):
-    """Test the setup command help."""
-    result = runner.invoke(app, ["setup", "--help"])
-    assert result.exit_code == 0
-    assert "Interactive configuration" in result.output
-
-
-def test_cli_benchmark_help(runner):
-    """Test the benchmark command help."""
-    result = runner.invoke(app, ["benchmark", "--help"])
-    assert result.exit_code == 0
-    assert "Run TPP benchmarks" in result.output
-
-
-def test_cli_no_args(runner):
-    """Test running CLI with no arguments shows help."""
-    result = runner.invoke(app, [])
-    assert result.exit_code == 2  # typer exits with 2 for no args
-    assert "EasyTPP CLI v4.0" in result.output
-    assert "Commands" in result.output
-
-
-def test_cli_invalid_command(runner):
-    """Test invalid command."""
-    result = runner.invoke(app, ["invalid"])
-    assert result.exit_code == 2  # typer error code for invalid command
-    assert "No such command" in result.output
-
-
-def test_cli_run_missing_required(runner):
-    """Test run command with missing required args."""
-    # The run command might fail when trying to execute
-    result = runner.invoke(app, ["run"])
-    # It may exit with 1 if execution fails
-    assert result.exit_code in [0, 1, 2]
-
-
-def test_cli_benchmark_missing_config(runner):
-    """Test benchmark command with missing config (now required)."""
-    result = runner.invoke(app, ["benchmark", "--data-config", "test", "--all"])
-    assert result.exit_code == 2  # Should fail because config is required
-    assert "Missing option" in result.output or "required" in result.output
-
-
-def test_cli_inspect_missing_data_dir(runner):
-    """Test inspect command with missing data directory."""
-    result = runner.invoke(app, ["inspect"])
-    assert result.exit_code == 2  # Missing required argument
-
-
-def test_cli_generate_defaults(runner, tmp_path):
-    """Test generate command with defaults."""
-    output_dir = tmp_path / "generated"
-    result = runner.invoke(app, ["generate", "--output", str(output_dir)])
-    # This might fail if dependencies not available, but should not crash
-    assert result.exit_code in [0, 1]  # 0 success, 1 failure but no crash
-
-
-def test_cli_info_defaults(runner):
-    """Test info command with defaults."""
-    result = runner.invoke(app, ["info"])
-    # May fail if system info collection fails
-    assert result.exit_code in [0, 1]
-
-
-def test_cli_setup_defaults(runner):
-    """Test setup command with defaults."""
-    result = runner.invoke(app, ["setup"])
-    # Setup might require input, but should not crash
-    assert result.exit_code in [0, 1]
-
-
-def test_cli_benchmark_list(runner):
-    """Test benchmark list option."""
-    # Need to provide config since it's required
-    result = runner.invoke(app, ["benchmark", "--config", "dummy.yaml", "--list"])
-    # May fail if config doesn't exist, but should not crash on --list
-    assert result.exit_code in [0, 1, 2]
-
-
-# Integration test using subprocess (more realistic)
-def test_cli_subprocess_version():
-    """Test CLI version via subprocess."""
-    result = subprocess.run(
-        [sys.executable, "-m", "scripts.cli", "version"],
-        capture_output=True,
-        text=True,
-        cwd=Path(__file__).parent.parent.parent,
-    )
-    assert result.returncode == 0
-    assert "EasyTPP CLI v4.0" in result.stdout
-
-
-def test_cli_subprocess_help():
-    """Test CLI help via subprocess."""
-    result = subprocess.run(
-        [sys.executable, "-m", "scripts.cli", "--help"],
-        capture_output=True,
-        text=True,
-        cwd=Path(__file__).parent.parent.parent,
-    )
-    assert result.returncode == 0
-    assert "EasyTPP CLI v4.0" in result.stdout

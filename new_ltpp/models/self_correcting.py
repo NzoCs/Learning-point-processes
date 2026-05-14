@@ -59,7 +59,7 @@ class SelfCorrecting(Model):
         cumulative_counts = torch.cumsum(type_one_hot, dim=1)
         return cumulative_counts
 
-    def compute_intensities_at_sample_times(
+    def compute_intensities_at_sample_dtimes(
         self,
         *,
         time_seq: torch.Tensor,

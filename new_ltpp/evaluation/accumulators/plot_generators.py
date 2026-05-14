@@ -373,8 +373,8 @@ class StatTestPlotGenerator:
             f"{self.test_name} distribution plot (H0 vs H1) saved to {output_path}"
         )
 
-        p_values = data.get("p_values", data.get("mmd_p_values", []))
-        if p_values:
+        p_values = data.get("p_values")
+        if p_values is not None:
             p_val_path = str(output_path).replace(".png", "_p_values.png")
             plt.figure(figsize=(10, 6))
             sns.histplot(

@@ -1,218 +1,122 @@
-from typing import Any, Dict, List, Literal, Self, TypedDict, cast
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Dict, List, Literal, Self, cast
 
 from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
     MMDTwoSampleTest,
 )
-
-from .base_test import ITest
 from new_ltpp.evaluation.statistical_testing.point_process_kernels import (
     PointProcessKernelConfig,
 )
 from new_ltpp.utils import logger
 
+from .base_test import ITest
 
-class StatisticalTestConfig(TypedDict):
-    """
-    Type mapping for StatisticalTestBuilder configuration state.
 
-    Attributes:
-        test_type: The type of statistical test, e.g., 'mmd' or 'ksd'.
-        n_permutations: Number of permutations for the MMD permutation test.
-        n_samples: Number of samples for KSD estimation.
-        point_process_kernel_type: The higher-level kernel operating on point processes ('m_kernel' or 'sig_kernel').
-        space_kernel_type: The base spatial/time kernel type to utilize ('rbf' or 'linear').
-        embedding_dim: Spatial embedding dimension for categorical event types.
-        sigma: Bandwidth parameter for the RBF kernel.
-        scaling: General scaling factor applied to the kernel.
-        num_discretization_points: Number of discretization points for the signature kernel path integration.
-        embedding_type: Path interpolation mode for the signature kernel ('linear' or 'constant').
-        dyadic_order: Dyadic order approximation level for the signature kernel.
-        num_classes: Number of unique event types (classes), required to correctly size the embeddings.
+# ---------------------------------------------------------------------------
+# Config — aucun champ Optional / None
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class StatisticalTestConfig:
+    """Configuration complète et validée d'un test statistique.
+
+    Tous les champs sont résolus (pas de None).
+    Les champs test-spécifiques non pertinents ont une valeur sentinelle (0).
     """
 
-    test_type: Literal["mmd", "ksd"] | None
-    n_permutations: int | None
-    n_samples: int | None
-    point_process_kernel_type: Literal["m_kernel", "sig_kernel"] | None
-    space_kernel_type: Literal["rbf", "linear"] | None
-    embedding_dim: int | None
-    sigma: float | None
-    scaling: float | None
-    num_discretization_points: int | None
-    embedding_type: Literal["linear", "constant"] | None
-    dyadic_order: int | None
-    num_classes: int | None
+    # Requis
+    test_type: Literal["mmd", "ksd"]
+    point_process_kernel_type: Literal["m_kernel", "sig_kernel"]
+    space_kernel_type: Literal["rbf", "linear"]
+    num_classes: int
 
+    # Test-spécifiques (un seul est utilisé selon test_type)
+    n_permutations: int = 0   # actif si test_type="mmd"
+    n_samples: int = 0        # actif si test_type="ksd"
+
+    # Optionnels avec defaults
+    embedding_dim: int = 8
+    sigma: float = 1.0
+    scaling: float = 1.0
+    num_discretization_points: int = 100
+    embedding_type: Literal["linear", "constant"] = "linear"
+    dyadic_order: int = 0
+
+
+# ---------------------------------------------------------------------------
+# Builder — porte les Optional, résout vers StatisticalTestConfig
+# ---------------------------------------------------------------------------
 
 class StatisticalTestBuilder:
-    """
-    Builder for Statistical Tests.
-    Provides a fluent interface to configure and build a statistical test instance
-    (e.g., MMD, KSD) along with its underlying point process and space kernels.
+    """Builder fluent pour StatisticalTestConfig.
 
-    Required Parameters (must be set):
-    ===================================
-    - set_test_type("mmd" | "ksd"): Type of the statistical test.
-    - set_point_process_kernel_type("m_kernel" | "sig_kernel"): Type of point process kernel.
-    - set_space_kernel_type("rbf" | "linear"): Base spatial/time kernel to utilize.
-    - set_num_classes(int): Number of unique event types (classes), needed for embedding.
+    Required:
+        set_test_type / set_point_process_kernel_type / set_space_kernel_type / set_num_classes
 
-    Test-Specific Required Parameters:
-    ==================================
-    - set_n_permutations(int): Number of permutations for the test. Required if test_type="mmd".
-    - set_n_samples(int): Number of samples. Required if test_type="ksd".
+    Test-specific required:
+        set_n_permutations  →  si test_type="mmd"
+        set_n_samples       →  si test_type="ksd"
 
-    Optional / Kernel-Specific Parameters:
-    ======================================
-    - set_embedding_dim(int): Spatial embedding dimension for event types (default: 8).
-    - set_sigma(float): Bandwidth parameter for the RBF kernel (default: 1.0).
-    - set_scaling(float): General scaling factor applied to the kernel (default: 1.0).
-    - set_sig_kernel_params(...): Parameters exclusive to the signature kernel (sig_kernel):
-        * num_discretization_points (int): Discretization points for path integration (default: 100).
-        * embedding_type ("linear" | "constant"): Path interpolation mode (default: "linear").
-        * dyadic_order (int): Dyadic order for the signature kernel approximations (default: 0).
+    Optional (defaults dans StatisticalTestConfig):
+        set_embedding_dim / set_sigma / set_scaling / set_sig_kernel_params
     """
 
-    _config_dict: StatisticalTestConfig
+    def __init__(self) -> None:
+        self._test_type: Literal["mmd", "ksd"] | None = None
+        self._point_process_kernel_type: Literal["m_kernel", "sig_kernel"] | None = None
+        self._space_kernel_type: Literal["rbf", "linear"] | None = None
+        self._num_classes: int | None = None
 
-    def __init__(self):
-        self._config_dict = {
-            "test_type": None,
-            "n_permutations": None,
-            "n_samples": None,
-            "point_process_kernel_type": None,
-            "space_kernel_type": None,
-            "embedding_dim": 8,
-            "sigma": 1.0,
-            "scaling": 1.0,
-            "num_discretization_points": 100,
-            "embedding_type": "linear",
-            "dyadic_order": 0,
-            "num_classes": None,
-        }
+        self._n_permutations: int | None = None
+        self._n_samples: int | None = None
 
-    @property
-    def config_dict(self) -> Dict[str, Any]:
-        return cast(Dict[str, Any], self._config_dict)
+        self._embedding_dim: int | None = None
+        self._sigma: float | None = None
+        self._scaling: float | None = None
+        self._num_discretization_points: int | None = None
+        self._embedding_type: Literal["linear", "constant"] | None = None
+        self._dyadic_order: int | None = None
 
-    def from_dict(self, config_dict: StatisticalTestConfig) -> Self:
-        """Load configuration from a dictionary matching StatisticalTestConfig structure."""
-        self._config_dict.update(config_dict)
-        return self
-
-    def get_unset_required_fields(self) -> List[str]:
-        required = [
-            "test_type",
-            "point_process_kernel_type",
-            "space_kernel_type",
-            "num_classes",
-        ]
-
-        # Add test-specific required fields
-        if self._config_dict.get("test_type") == "mmd":
-            required.append("n_permutations")
-        elif self._config_dict.get("test_type") == "ksd":
-            required.append("n_samples")
-
-        unset = []
-        for field in required:
-            if self._config_dict.get(field) is None:
-                unset.append(field)
-        return unset
-
-    def build(self) -> ITest:
-        """Create the statistical test instance directly from the configured parameters."""
-        unset_fields = self.get_unset_required_fields()
-        if len(unset_fields) > 0:
-            raise ValueError(
-                f"Cannot build StatisticalTest, required fields not set: {unset_fields}"
-            )
-
-        logger.info("Building Statistical Test with: %s", self.config_dict)
-
-        # Create the PointProcessKernelConfig
-        pp_config = PointProcessKernelConfig(
-            point_process_kernel_type=cast(
-                Literal["m_kernel", "sig_kernel"],
-                self._config_dict["point_process_kernel_type"],
-            ),
-            space_kernel_type=cast(
-                Literal["rbf", "linear"], self._config_dict["space_kernel_type"]
-            ),
-            embedding_dim=self._config_dict["embedding_dim"],  # type: ignore
-            sigma=self._config_dict["sigma"],  # type: ignore
-            scaling=self._config_dict["scaling"],  # type: ignore
-            num_discretization_points=self._config_dict["num_discretization_points"],  # type: ignore
-            embedding_type=cast(
-                Literal["linear", "constant"],
-                self._config_dict["embedding_type"],
-            ),
-            dyadic_order=self._config_dict["dyadic_order"],  # type: ignore
-        )
-
-        return self.create_instance(
-            num_classes=cast(int, self._config_dict["num_classes"]),
-            kernel_config=pp_config,
-        )
-
-    def create_instance(
-        self, num_classes: int, kernel_config: PointProcessKernelConfig
-    ) -> ITest:
-        """Create an instance of the statistical test based on the configuration."""
-        if self._config_dict["test_type"] == "mmd":
-            match self._config_dict.get("n_permutations"):
-                case None:
-                    raise ValueError("n_permutations must be specified for MMD test")
-                case _:
-                    return MMDTwoSampleTest(
-                        kernel=kernel_config.create_instance(num_classes=num_classes),
-                        n_permutations=self._config_dict["n_permutations"],  # type: ignore
-                    )
-
-        elif self._config_dict["test_type"] == "ksd":
-            match self._config_dict.get("n_samples"):
-                case None:
-                    raise ValueError("n_samples must be specified for KSD test")
-                case _:
-                    raise NotImplementedError(
-                        "KSDTest implementation is not currently provided in locals."
-                    )
-
-        else:
-            raise ValueError(f"Unsupported test type: {self._config_dict['test_type']}")
+    # --- setters ---
 
     def set_test_type(self, test_type: Literal["mmd", "ksd"]) -> Self:
-        self._config_dict["test_type"] = test_type
+        self._test_type = test_type
         return self
 
-    def set_n_permutations(self, n_permutations: int) -> Self:
-        self._config_dict["n_permutations"] = n_permutations
+    def set_n_permutations(self, n: int) -> Self:
+        self._n_permutations = n
         return self
 
-    def set_n_samples(self, n_samples: int) -> Self:
-        self._config_dict["n_samples"] = n_samples
+    def set_n_samples(self, n: int) -> Self:
+        self._n_samples = n
         return self
 
     def set_point_process_kernel_type(
         self, kernel_type: Literal["m_kernel", "sig_kernel"]
     ) -> Self:
-        self._config_dict["point_process_kernel_type"] = kernel_type
+        self._point_process_kernel_type = kernel_type
         return self
 
     def set_space_kernel_type(self, kernel_type: Literal["rbf", "linear"]) -> Self:
-        self._config_dict["space_kernel_type"] = kernel_type
+        self._space_kernel_type = kernel_type
+        return self
+
+    def set_num_classes(self, num_classes: int) -> Self:
+        self._num_classes = num_classes
         return self
 
     def set_embedding_dim(self, embedding_dim: int) -> Self:
-        self._config_dict["embedding_dim"] = embedding_dim
+        self._embedding_dim = embedding_dim
         return self
 
     def set_sigma(self, sigma: float) -> Self:
-        self._config_dict["sigma"] = sigma
+        self._sigma = sigma
         return self
 
     def set_scaling(self, scaling: float) -> Self:
-        self._config_dict["scaling"] = scaling
+        self._scaling = scaling
         return self
 
     def set_sig_kernel_params(
@@ -221,13 +125,87 @@ class StatisticalTestBuilder:
         embedding_type: Literal["linear", "constant"] = "linear",
         dyadic_order: int = 0,
     ) -> Self:
-        """Set specialized parameters for the Signature Kernel."""
-        self._config_dict["num_discretization_points"] = num_discretization_points
-        self._config_dict["embedding_type"] = embedding_type
-        self._config_dict["dyadic_order"] = dyadic_order
+        self._num_discretization_points = num_discretization_points
+        self._embedding_type = embedding_type
+        self._dyadic_order = dyadic_order
         return self
 
-    def set_num_classes(self, num_classes: int) -> Self:
-        """Set the number of event types (classes) needed to instantiate the kernels."""
-        self._config_dict["num_classes"] = num_classes
+    def from_dict(self, d: Dict[str, Any]) -> Self:
+        for key, value in d.items():
+            attr = f"_{key}"
+            if hasattr(self, attr):
+                setattr(self, attr, value)
         return self
+
+    # --- validation ---
+
+    def _get_unset_required_fields(self) -> List[str]:
+        required: Dict[str, Any] = {
+            "test_type": self._test_type,
+            "point_process_kernel_type": self._point_process_kernel_type,
+            "space_kernel_type": self._space_kernel_type,
+            "num_classes": self._num_classes,
+        }
+        if self._test_type == "mmd":
+            required["n_permutations"] = self._n_permutations
+        elif self._test_type == "ksd":
+            required["n_samples"] = self._n_samples
+
+        return [k for k, v in required.items() if v is None]
+
+    # --- build : produit une config sans None ---
+
+    def build_config(self) -> StatisticalTestConfig:
+        """Valide et retourne une StatisticalTestConfig entièrement résolue."""
+        missing = self._get_unset_required_fields()
+        if missing:
+            raise ValueError(f"Champs requis non renseignés : {missing}")
+
+        defaults = StatisticalTestConfig(
+            test_type=cast(Literal["mmd", "ksd"], self._test_type),
+            point_process_kernel_type=cast(
+                Literal["m_kernel", "sig_kernel"], self._point_process_kernel_type
+            ),
+            space_kernel_type=cast(Literal["rbf", "linear"], self._space_kernel_type),
+            num_classes=cast(int, self._num_classes),
+        )
+
+        return StatisticalTestConfig(
+            test_type=defaults.test_type,
+            point_process_kernel_type=defaults.point_process_kernel_type,
+            space_kernel_type=defaults.space_kernel_type,
+            num_classes=defaults.num_classes,
+            n_permutations=self._n_permutations if self._n_permutations is not None else defaults.n_permutations,
+            n_samples=self._n_samples if self._n_samples is not None else defaults.n_samples,
+            embedding_dim=self._embedding_dim if self._embedding_dim is not None else defaults.embedding_dim,
+            sigma=self._sigma if self._sigma is not None else defaults.sigma,
+            scaling=self._scaling if self._scaling is not None else defaults.scaling,
+            num_discretization_points=self._num_discretization_points if self._num_discretization_points is not None else defaults.num_discretization_points,
+            embedding_type=self._embedding_type if self._embedding_type is not None else defaults.embedding_type,
+            dyadic_order=self._dyadic_order if self._dyadic_order is not None else defaults.dyadic_order,
+        )
+
+    def build(self) -> ITest:
+        """Build la config puis instancie le test."""
+        config = self.build_config()
+        logger.info("Building StatisticalTest with: %s", config)
+
+        pp_config = PointProcessKernelConfig(
+            point_process_kernel_type=config.point_process_kernel_type,
+            space_kernel_type=config.space_kernel_type,
+            embedding_dim=config.embedding_dim,
+            sigma=config.sigma,
+            scaling=config.scaling,
+            num_discretization_points=config.num_discretization_points,
+            embedding_type=config.embedding_type,
+            dyadic_order=config.dyadic_order,
+        )
+        kernel = pp_config.create_instance(num_classes=config.num_classes)
+
+        match config.test_type:
+            case "mmd":
+                return MMDTwoSampleTest(kernel=kernel, n_permutations=config.n_permutations)
+            case "ksd":
+                raise NotImplementedError("KSDTest non implémenté.")
+            case _:
+                raise ValueError(f"test_type inconnu : {config.test_type}")

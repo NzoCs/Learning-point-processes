@@ -80,7 +80,7 @@ class SIGKernel(PointProcessKernel):
 
         return phi_emb, psi_emb
 
-    @torch.compile
+    
     def compute_gram_matrix(
         self,
         X: Batch | SimulationResult,

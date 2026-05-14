@@ -370,4 +370,3 @@ statistical_test_configs:
     embedding_dim: 8
     sigma: 1.0
     scaling: 1.0
-    num_classes: 2

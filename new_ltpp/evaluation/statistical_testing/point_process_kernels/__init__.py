@@ -3,13 +3,7 @@ from .sig_kernel import SIGKernel
 from .kernel_protocol import IPointProcessKernel
 from .space_kernels import (
     TimeKernelType,
-    RBFTimeKernel,
-    IMQTimeKernel,
-    MaternTimeKernel,
-    LaplacianTimeKernel,
-    RationalQuadraticTimeKernel,
-    BSplineTimeKernel,
-    PoissonTimeKernel,
+    RBFKernel,
     EmbeddingKernel,
 )
 from .config import PointProcessKernelConfig
@@ -22,12 +16,6 @@ __all__ = [
     "IPointProcessKernel",
     "TimeKernelType",
     "RBFTimeKernel",
-    "IMQTimeKernel",
-    "MaternTimeKernel",
-    "LaplacianTimeKernel",
-    "RationalQuadraticTimeKernel",
-    "BSplineTimeKernel",
-    "PoissonTimeKernel",
     "EmbeddingKernel",
     "PointProcessKernelConfig",
 ]

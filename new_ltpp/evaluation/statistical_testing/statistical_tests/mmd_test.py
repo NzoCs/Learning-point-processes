@@ -38,7 +38,7 @@ class MMDTwoSampleTest:
         self.n_permutations = n_permutations
         self.mmd = MMD(kernel=kernel)
 
-        self.total_observed_mmd: torch.Tensor = torch.tensor(0.0)
+        self.total_observed_mmd: torch.Tensor | None = None
         self.total_perm_mmds: torch.Tensor | None = None  # (n_permutations,)
         self.total_count_ge: int = 0
         self.total_n_permutations: int = 0
@@ -50,24 +50,30 @@ class MMDTwoSampleTest:
         return self.__class__.__name__
 
     def reset_accumulators(self) -> None:
-        self.total_observed_mmd: torch.Tensor = torch.tensor(0.0)
+        self.total_observed_mmd: torch.Tensor | None = None
         self.total_perm_mmds: torch.Tensor | None = None  # (n_permutations,)
         self.total_count_ge: int = 0
         self.total_n_permutations: int = 0
         self.n_batches: int = 0
 
     def _accumulate(self, observed_mmd: torch.Tensor, perm_mmds: torch.Tensor) -> None:
-        self.total_observed_mmd += observed_mmd
+        if self.total_observed_mmd is None:
+            self.total_observed_mmd = observed_mmd.detach().clone()
+        else:
+            self.total_observed_mmd += observed_mmd.detach().to(self.total_observed_mmd.device)
+
         if self.total_perm_mmds is None:
             self.total_perm_mmds = perm_mmds.detach().clone()
         else:
-            self.total_perm_mmds += perm_mmds.detach()
+            self.total_perm_mmds += perm_mmds.detach().to(self.total_perm_mmds.device)
         self.n_batches += 1
 
     def get_final_p_value(self) -> torch.Tensor:
-        if self.n_batches == 0 or self.total_perm_mmds is None:
+        if self.n_batches == 0 or self.total_perm_mmds is None or self.total_observed_mmd is None:
             return torch.tensor(1.0)  # No data, p-value is 1
-        count_ge = (self.total_perm_mmds >= self.total_observed_mmd).sum()
+        
+        perm_mmds = self.total_perm_mmds.to(self.total_observed_mmd.device)
+        count_ge = (perm_mmds >= self.total_observed_mmd).sum()
         return (count_ge + 1) / (self.n_permutations + 1)
 
     def _concat_batches(self, batch_x: Batch, batch_y: Batch) -> Batch:
@@ -232,10 +238,7 @@ class MMDTwoSampleTest:
 
             all_p_values.append(test_stats["p_value"].item())
             all_mmds.append(test_stats["observed_statistic"].item())
-            all_perm_mmds.extend(test_stats["permuted_statistics"])
-            self._accumulate(
-                test_stats["observed_statistic"], test_stats["permuted_statistics"]
-            )
+            all_perm_mmds.extend(test_stats["permuted_statistics"].tolist())
 
         p_val = self.get_final_p_value().item()
 
@@ -270,10 +273,7 @@ class MMDTwoSampleTest:
 
             all_p_values.append(test_stats["p_value"].item())
             all_mmds.append(test_stats["observed_statistic"].item())
-            all_perm_mmds.extend(test_stats["permuted_statistics"])
-            self._accumulate(
-                test_stats["observed_statistic"], test_stats["permuted_statistics"]
-            )
+            all_perm_mmds.extend(test_stats["permuted_statistics"].tolist())
 
         return FinalTestResult(
             p_value=self.get_final_p_value().item(),

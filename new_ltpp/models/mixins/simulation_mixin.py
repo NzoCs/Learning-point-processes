@@ -2,20 +2,19 @@
 """Mixin for simulation functionality."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Tuple, TypedDict
+from typing import TYPE_CHECKING, Optional, Tuple, TypedDict, Dict, Any
 
 import torch
 from tqdm import tqdm
 
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
+from new_ltpp.evaluation.accumulators.acc_types import FinalResult
 
 from .base_mixin import BaseMixin
 
 if TYPE_CHECKING:
-    from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-        StatisticalTestConfig,
-    )
+    from new_ltpp.evaluation import BatchStatisticsCollector
 
 
 class Buffers(TypedDict):
@@ -48,7 +47,7 @@ class SimulationMixin(BaseMixin):
         simulation_end_time: float,
         simulation_batch_size: int,
         initial_buffer_size: int,
-        statistical_test_config: Optional["StatisticalTestConfig"] = None,
+        statistical_test_config: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -58,6 +57,7 @@ class SimulationMixin(BaseMixin):
         self.simulation_batch_size = simulation_batch_size
         self.initial_buffer_size = initial_buffer_size
         self.statistical_test_config = statistical_test_config
+        self._statistics_collector: Optional["BatchStatisticsCollector"] = None
 
     def init_statistics_collector(self, output_dir: Path | str) -> None:
         """Initialize the batch statistics collector for distribution analysis.
@@ -84,6 +84,9 @@ class SimulationMixin(BaseMixin):
             "device": str(self.device) if hasattr(self, "device") else "unknown",
         }
 
+        if self.statistical_test_config is not None :
+            self.statistical_test_config["num_classes"] = self.num_event_types
+
         self._statistics_collector = BatchStatisticsCollector(
             num_event_types=self.num_event_types,
             output_dir=output_dir,
@@ -103,10 +106,11 @@ class SimulationMixin(BaseMixin):
     #     Returns:
     #         Dictionary containing statistics, metrics, and batch count
     #     """
-    #     if self._statistics_collector is None:
-    #         raise NotImplementedError(
-    #             "No statistics collector to finalize. Initialize it first with 'init_statistics_collector'."
-    #         )
+        
+        if self._statistics_collector is None:
+            raise NotImplementedError(
+                "No statistics collector to finalize. Initialize it first with 'init_statistics_collector'."
+            )
 
         logger.info("Finalizing batch statistics collection...")
         results = self._statistics_collector.finalize_and_save(output_dir)

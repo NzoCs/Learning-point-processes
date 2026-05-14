@@ -220,6 +220,7 @@ class ModelConfig(Config):
         compute_simulation: bool = False,
         **kwargs,
     ):
+        
         self.num_mc_samples = num_mc_samples
         self.device = device
         self.gpu = gpu if gpu is not None else get_available_gpu()

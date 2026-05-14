@@ -1,11 +1,11 @@
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-    StatisticalTestConfig,
     StatisticalTestBuilder,
 )
 from .base_accumulator import Accumulator
 from .acc_types import StatisticalTestData
 
+from typing import Dict, Any
 
 class StatisticalTestAccumulator(Accumulator):
     """A class to collect and accumulate simulation statistical metrics like
@@ -15,7 +15,7 @@ class StatisticalTestAccumulator(Accumulator):
 
     def __init__(
         self,
-        statistical_test_config: StatisticalTestConfig,
+        statistical_test_config: Dict[str, Any],
         min_sim_events: int = 1,
     ):
         super().__init__(min_sim_events)

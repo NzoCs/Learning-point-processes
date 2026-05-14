@@ -6,7 +6,7 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels
 from .linear_kernel import (
     LinearKernel,
 )
-from .rbf import RBFTimeKernel
+from .rbf import RBFKernel
 
 
 class SpaceKernelConfig:
@@ -57,8 +57,8 @@ class SpaceKernelConfig:
     def create_instance(
         self,
     ) -> (
-        tuple[RBFTimeKernel | LinearKernel, EmbeddingKernel]
-        | RBFTimeKernel
+        tuple[RBFKernel | LinearKernel, EmbeddingKernel]
+        | RBFKernel
         | LinearKernel
     ):
         """Create an instance of the kernel based on the configuration.
@@ -74,7 +74,7 @@ class SpaceKernelConfig:
         if self.kernel_type == "rbf":
             if self.sigma is None:
                 raise ValueError("Sigma must be specified for RBF kernel")
-            time_kernel = RBFTimeKernel(sigma=self.sigma, scaling=self.scaling)
+            time_kernel = RBFKernel(sigma=self.sigma, scaling=self.scaling)
 
         elif self.kernel_type == "linear":
             time_kernel = LinearKernel(scaling=self.scaling)

@@ -12,7 +12,7 @@ Usage:
 """
 
 import sys
-from typing import List, Optional
+from typing import List, Optional, Literal, cast
 
 import typer
 from rich.console import Console
@@ -23,6 +23,7 @@ from new_ltpp.globals import CONFIGS_FILE, OUTPUT_DIR
 # Import runners
 from .cli_runners import (
     BenchmarkRunner,
+    DataGenerator,
     DataInspector,
     ExperimentRunner,
     InteractiveSetup,
@@ -159,6 +160,7 @@ def inspect_data(
 ):
     """Inspect and visualize TPP data with DataInspector."""
     runner = DataInspector(debug=debug)
+    data_format = cast(Literal["json", "pkl", "hf"], data_format.lower())
     success = runner.inspect_data(
         data_dir=data_dir,
         num_event_types=num_event_types,
@@ -205,144 +207,68 @@ def generate_data(
         False, "--private", help="Make Hugging Face dataset private"
     ),
     seed: Optional[int] = typer.Option(None, "--seed", help="Seed for reproducibility"),
+    mu: Optional[str] = typer.Option(None, "--mu", help="Baseline intensity (JSON list)"),
+    alpha: Optional[str] = typer.Option(
+        None, "--alpha", help="Excitation matrix (JSON list of lists)"
+    ),
+    beta: Optional[str] = typer.Option(
+        None, "--beta", help="Decay matrix (JSON list of lists)"
+    ),
+    save_local: bool = typer.Option(
+        True, "--save-local/--no-local", help="Whether to save the dataset locally"
+    ),
     debug: bool = typer.Option(False, "--debug", help="Debug mode"),
 ):
     """
     Generate synthetic TPP data with DataGenerator.
 
     Examples:
-        # Generate Hawkes process data
+        # Generate Hawkes process data (saved locally)
         new-ltpp generate --method hawkes --num-sim 1000 --dim 2
 
-        # Generate self-correcting process data
-        new-ltpp generate --method self_correcting --num-sim 500 --dim 3
+        # Generate with custom parameters (mu, alpha, beta)
+        new-ltpp generate --mu "[0.2, 0.2]" --alpha "[[0.4, 0], [0, 0.8]]" --num-sim 500
 
-        # Generate and push to Hugging Face
+        # Generate and push to Hugging Face (also saves locally)
         new-ltpp generate --method hawkes --push --repo-id username/my-dataset
     """
-    # Prepare splits
+    import json
+
     splits = {"train": train_ratio, "test": test_ratio, "dev": dev_ratio}
 
-    # Validate splits
     if abs(sum(splits.values()) - 1.0) > 1e-10:
         console.print("[red]Error: Split ratios must sum to 1.0[/red]")
         raise typer.Exit(1)
 
-    # If push to hub is requested, check repo_id
     if push_to_hub and not repo_id:
         console.print("[red]Error: --repo-id is required when using --push[/red]")
         raise typer.Exit(1)
 
-    try:
-        # Create simulator based on method
-        import numpy as np
-        from new_ltpp.data.generation import (
-            HawkesSimulator,
-            IOSimulator,
-            SelfCorrecting,
-            SimulationManager,
-        )
+    # Parse JSON parameters
+    mu_list = json.loads(mu) if mu else None
+    alpha_list = json.loads(alpha) if alpha else None
+    beta_list = json.loads(beta) if beta else None
 
-        if method.lower() == "hawkes":
-            simulator = HawkesSimulator(
-                mu=np.array([0.2] * dim_process),
-                alpha=np.array(
-                    [
-                        [0.3 if i == j else 0.1 for j in range(dim_process)]
-                        for i in range(dim_process)
-                    ]
-                ),
-                beta=np.array(
-                    [
-                        [2.0 if i == j else 1.0 for j in range(dim_process)]
-                        for i in range(dim_process)
-                    ]
-                ),
-                dim_process=dim_process,
-                start_time=start_time,
-                end_time=end_time,
-                seed=seed,
-            )
-        elif method.lower() == "self_correcting":
-            simulator = SelfCorrecting(
-                dim_process=dim_process,
-                mu=np.array([0.2] * dim_process),
-                alpha=np.array(
-                    [
-                        [0.3 if i == j else 0.1 for j in range(dim_process)]
-                        for i in range(dim_process)
-                    ]
-                ),
-                start_time=start_time,
-                end_time=end_time,
-                seed=seed,
-            )
-        else:
-            console.print(f"[red]Unknown method: {method}[/red]")
-            console.print("[yellow]Available methods: hawkes, self_correcting[/yellow]")
-            raise typer.Exit(1)
+    runner = DataGenerator(debug=debug)
+    success = runner.generate_data(
+        output_dir=output_dir,
+        num_simulations=num_simulations,
+        generation_method=method,
+        splits=splits,
+        start_time=start_time,
+        end_time=end_time,
+        dim_process=dim_process,
+        mu=mu_list,
+        alpha=alpha_list,
+        beta=beta_list,
+        save_local=save_local,
+        push_to_hub=push_to_hub,
+        repo_id=repo_id,
+        private=private,
+        seed=seed,
+    )
 
-        # Create simulation manager
-        console.print(
-            f"[bold blue]Generating {num_simulations} simulations with {method} method[/bold blue]"
-        )
-        sim_manager = SimulationManager(
-            simulation_func=simulator.simulate,
-            dim_process=dim_process,
-            start_time=start_time,
-            end_time=end_time,
-        )
-
-        # Generate and format simulations
-        formatted_data = sim_manager.bulk_simulate(num_simulations)
-        metadata = simulator.get_metadata(num_simulations)
-
-        # Create IO handler
-        io_handler = IOSimulator()
-
-        # Push to Hugging Face Hub or save locally
-        if push_to_hub and repo_id:
-            console.print(
-                f"[bold blue]Pushing dataset to Hugging Face Hub: {repo_id}[/bold blue]"
-            )
-            io_handler.push_to_hub(
-                formatted_data=formatted_data,
-                repo_id=repo_id,
-                splits=splits,
-                metadata=metadata,
-                private=private,
-            )
-            console.print(
-                f"[green]✓ Dataset successfully pushed to https://huggingface.co/datasets/{repo_id}[/green]"
-            )
-        else:
-            # Use output_dir or create default
-            if output_dir is None:
-                from datetime import datetime
-                from pathlib import Path
-
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_dir = str(
-                    Path("artifacts") / "generated_data" / f"generated_{timestamp}"
-                )
-                console.print(f"Output directory: {output_dir}")
-
-            io_handler.save_to_json(
-                formatted_data=formatted_data,
-                output_dir=output_dir,
-                splits=splits,
-                metadata=metadata,
-            )
-            console.print(
-                f"[green]✓ Dataset successfully generated in {output_dir}[/green]"
-            )
-
-    except Exception as e:
-        console.print(f"[red]Error during generation: {e}[/red]")
-        if debug:
-            import traceback
-
-            traceback.print_exc()
+    if not success:
         raise typer.Exit(1)
 
 

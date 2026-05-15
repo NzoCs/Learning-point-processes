@@ -15,7 +15,7 @@ Usage:
 """
 
 from abc import ABCMeta
-from typing import Dict, Optional, Type
+from typing import Dict, Optional, Type, cast
 
 from new_ltpp.utils import logger
 from .model_protocol import ITPPModel
@@ -81,7 +81,9 @@ class RegistryMeta(ABCMeta):
     """
 
     def __new__(mcls, name: str, bases, namespace) -> Type[ITPPModel]:
-        cls: Type[ITPPModel] = super().__new__(mcls, name, bases, namespace)  # type: ignore
+        cls = super().__new__(mcls, name, bases, namespace)
+
+        cls = cast(Type[ITPPModel], cls)  # Type hint for static analysis
 
         # Automatically register new model classes
         # Register everything except the Model base itself and plain Python base classes

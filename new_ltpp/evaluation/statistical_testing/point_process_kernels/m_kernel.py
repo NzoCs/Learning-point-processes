@@ -107,7 +107,6 @@ class MKernel(PointProcessKernel):
         else:
             raise ValueError(f"Unknown transform: {self.transform}")
 
-    
     def compute_gram_matrix(
         self,
         X: Batch | SimulationResult,

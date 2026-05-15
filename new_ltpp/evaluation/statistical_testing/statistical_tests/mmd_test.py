@@ -1,12 +1,14 @@
+from new_ltpp.configs import StatisticalTestConfig
 import torch
 
-from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
 from new_ltpp.evaluation.statistical_testing.point_process_metric import MMD
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protocol import (
     IPointProcessKernel,
 )
+from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.shared_types import Batch
+from new_ltpp.simulation.simulator import Simulator
 
 from .base_test import ITest, FinalTestResult, TestStatistics
 
@@ -26,16 +28,16 @@ class MMDTwoSampleTest:
     def __init__(
         self,
         kernel: IPointProcessKernel,
-        n_permutations: int,
+        n_samples: int,
     ):
         """Initialize the MMD two-sample permutation test.
 
         Args:
             kernel: Kernel to use for MMD computation.
-            n_permutations: Number of permutations for the permutation test.
+            n_samples: Number of samples for the permutation test.
         """
         self.kernel = kernel
-        self.n_permutations = n_permutations
+        self.n_samples = n_samples
         self.mmd = MMD(kernel=kernel)
 
         self.total_observed_mmd: torch.Tensor | None = None
@@ -60,7 +62,9 @@ class MMDTwoSampleTest:
         if self.total_observed_mmd is None:
             self.total_observed_mmd = observed_mmd.detach().clone()
         else:
-            self.total_observed_mmd += observed_mmd.detach().to(self.total_observed_mmd.device)
+            self.total_observed_mmd += observed_mmd.detach().to(
+                self.total_observed_mmd.device
+            )
 
         if self.total_perm_mmds is None:
             self.total_perm_mmds = perm_mmds.detach().clone()
@@ -69,12 +73,16 @@ class MMDTwoSampleTest:
         self.n_batches += 1
 
     def get_final_p_value(self) -> torch.Tensor:
-        if self.n_batches == 0 or self.total_perm_mmds is None or self.total_observed_mmd is None:
+        if (
+            self.n_batches == 0
+            or self.total_perm_mmds is None
+            or self.total_observed_mmd is None
+        ):
             return torch.tensor(1.0)  # No data, p-value is 1
-        
+
         perm_mmds = self.total_perm_mmds.to(self.total_observed_mmd.device)
         count_ge = (perm_mmds >= self.total_observed_mmd).sum()
-        return (count_ge + 1) / (self.n_permutations + 1)
+        return (count_ge + 1) / (self.n_samples + 1)
 
     def _concat_batches(self, batch_x: Batch, batch_y: Batch) -> Batch:
         """Concatenate two batches along the batch dimension.
@@ -166,7 +174,7 @@ class MMDTwoSampleTest:
         pooled = self._concat_batches(batch_x, batch_y)
 
         perm_mmds: list[torch.Tensor] = []
-        for _ in range(self.n_permutations):
+        for _ in range(self.n_samples):
             perm = torch.randperm(total, device=observed_mmd.device)
             perm_x = self._select_batch(pooled, perm[:n])
             perm_y = self._select_batch(pooled, perm[n:])
@@ -198,7 +206,7 @@ class MMDTwoSampleTest:
     ) -> TestStatistics:
         observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
         count_ge = (perm_mmds >= observed_mmd).sum()
-        p_value = (count_ge + 1.0) / (self.n_permutations + 1.0)
+        p_value = (count_ge + 1.0) / (self.n_samples + 1.0)
 
         if accumulate:
             self._accumulate(observed_mmd, perm_mmds)
@@ -211,8 +219,9 @@ class MMDTwoSampleTest:
 
     def test_model(
         self,
-        model: NeuralModel,
+        model: ISimulableModel,
         data_loader: TypedDataLoader,
+        statistical_test_config: StatisticalTestConfig,
     ) -> FinalTestResult:
         """Compute the p-value of the MMD two-sample permutation test for a trained model.
 
@@ -231,9 +240,13 @@ class MMDTwoSampleTest:
         all_p_values = []
         all_mmds = []
         all_perm_mmds = []
+        simulator = Simulator(
+            model=model,
+            statistical_test_config=statistical_test_config,
+        )
 
         for batch in data_loader:
-            simulated = model.simulate(batch=batch)
+            simulated = simulator.simulate(batch=batch)
             test_stats = self.compute_statistics(batch_x=batch, batch_y=simulated)
 
             all_p_values.append(test_stats["p_value"].item())
@@ -300,4 +313,4 @@ if __name__ == "__main__":
         num_event_types=10,
     )
 
-    test: ITest = MMDTwoSampleTest(kernel=kernel, n_permutations=10)
+    test: ITest = MMDTwoSampleTest(kernel=kernel, n_samples=10)

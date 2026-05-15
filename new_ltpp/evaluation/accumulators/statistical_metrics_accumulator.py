@@ -1,11 +1,9 @@
+from new_ltpp.evaluation.statistical_testing.statistical_tests import create_statistical_test
 from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-    StatisticalTestBuilder,
-)
+from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
 from .base_accumulator import Accumulator
 from .acc_types import StatisticalTestData
 
-from typing import Dict, Any
 
 class StatisticalTestAccumulator(Accumulator):
     """A class to collect and accumulate simulation statistical metrics like
@@ -15,13 +13,12 @@ class StatisticalTestAccumulator(Accumulator):
 
     def __init__(
         self,
-        statistical_test_config: Dict[str, Any],
+        statistical_test_config: StatisticalTestConfig,
         min_sim_events: int = 1,
     ):
         super().__init__(min_sim_events)
-        self.statistical_test = (
-            StatisticalTestBuilder().from_dict(statistical_test_config).build()
-        )
+
+        self.test = create_statistical_test(statistical_test_config)
         self.p_values: list[float] = []
         self.observed_statistic: list[float] = []
         self.perm_statistics: list[float] = []
@@ -36,7 +33,7 @@ class StatisticalTestAccumulator(Accumulator):
         """
 
         # Compute MMD and p-value using the provided MMDTwoSampleTest instance
-        stats = self.statistical_test.compute_statistics(batch, simulation)
+        stats = self.test.compute_statistics(batch, simulation)
 
         self.p_values.append(stats["p_value"].item())
         self.observed_statistic.append(stats["observed_statistic"].item())

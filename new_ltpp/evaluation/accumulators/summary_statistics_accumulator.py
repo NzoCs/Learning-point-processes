@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, cast, Any, TypedDict
 import numpy as np
 
-from new_ltpp.globals import OUTPUT_DIR
+from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
 
@@ -64,21 +64,21 @@ class BatchStatisticsCollector(Accumulator):
         # After prediction loop (generate results)
         collector.finalize_and_save()
     """
+
     def __init__(
         self,
         num_event_types: int,
         dtime_max: float,
-        output_dir: Path | str,
-        statistical_test_config: Optional[Dict[str, Any]] = None,
+        base_dir: Path | str,
+        statistical_test_config: Optional["StatisticalTestConfig"] = None,
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         metadata: Optional[Dict[str, Any]] = None,
     ):
-
         self.num_event_types = num_event_types
-        self.output_dir = Path(output_dir)
+        self.base_dir = Path(base_dir)
         self.min_sim_events = int(min_sim_events)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.base_dir.mkdir(parents=True, exist_ok=True)
 
         base_accumulators = AccumulatorContainer(
             time=InterEventTimeAccumulator(
@@ -95,7 +95,8 @@ class BatchStatisticsCollector(Accumulator):
         resolved_config = None
         if statistical_test_config is not None:
             base_accumulators["statistical_tests"] = StatisticalTestAccumulator(
-                statistical_test_config=statistical_test_config, min_sim_events=min_sim_events
+                statistical_test_config=statistical_test_config,
+                min_sim_events=min_sim_events,
             )
 
         self._accumulators: AccumulatorContainer = base_accumulators
@@ -116,7 +117,10 @@ class BatchStatisticsCollector(Accumulator):
         self.metadata = metadata or {}
         if self.metadata:
             import json
-            logger.info(f"Initialized Evaluation Phase with Metadata:\n{json.dumps(self.metadata, indent=2)}")
+
+            logger.info(
+                f"Initialized Evaluation Phase with Metadata:\n{json.dumps(self.metadata, indent=2)}"
+            )
 
         self._batch_count: int = 0
         self._is_finalized: bool = False
@@ -222,7 +226,9 @@ class BatchStatisticsCollector(Accumulator):
 
         test_type = "stat"
         if self.metadata and "statistical_test_config" in self.metadata:
-            test_type = self.metadata["statistical_test_config"].get("test_type", "stat")
+            test_type = self.metadata["statistical_test_config"].get(
+                "test_type", "stat"
+            )
 
         # Generate plots
         plot_filenames: List[str] = [
@@ -236,15 +242,15 @@ class BatchStatisticsCollector(Accumulator):
         for i, (generator, filename) in enumerate(
             zip(self._plot_generators, plot_filenames)
         ):
-            output_path: str = str(self.output_dir / filename)
+            output_path = self.base_dir / "distributions" / filename
+            output_path.parent.mkdir(parents=True, exist_ok=True)
 
             generator.generate_plot(plot_data, output_path)
             logger.info(f"Generated plot: {filename}")
 
     def finalize_and_save(
-        self, 
-        output_dir: Optional[Path | str] = "simulation_results",
-        generate_plots: bool = True
+        self,
+        generate_plots: bool = True,
     ) -> FinalResult:
         """Finalize collection, compute statistics, generate plots, and save results.
 
@@ -264,12 +270,6 @@ class BatchStatisticsCollector(Accumulator):
             - Saves plots to output_dir
         """
 
-        if output_dir is not None:
-            output_dir = OUTPUT_DIR / output_dir
-            output_dir.mkdir(parents=True, exist_ok=True)
-        else:
-            output_dir = self.output_dir
-
         import json
 
         if self._is_finalized:
@@ -286,7 +286,9 @@ class BatchStatisticsCollector(Accumulator):
         metrics_dict: dict[str, float] = {}
         if getattr(self, "enable_metrics", True):
             if self._summary_stats_helper is not None:
-                metrics_dict.update(self._summary_stats_helper.compute_metrics(statistics))
+                metrics_dict.update(
+                    self._summary_stats_helper.compute_metrics(statistics)
+                )
 
             # Add statistical test metrics using metadata to name the keys
             if statistics.get("statistical_tests") is not None:
@@ -294,20 +296,24 @@ class BatchStatisticsCollector(Accumulator):
                 test_type = "stat"
                 if self.metadata and "statistical_test_config" in self.metadata:
                     # Fallback to "stat" if test_type isn't explicitly defined
-                    test_type = self.metadata["statistical_test_config"].get("test_type", "stat")
-                
+                    test_type = self.metadata["statistical_test_config"].get(
+                        "test_type", "stat"
+                    )
+
                 if stat_tests and stat_tests.get("observed_statistic"):
                     obs_stats = stat_tests["observed_statistic"]
                     metrics_dict[f"mean_{test_type}_value"] = float(np.mean(obs_stats))
                     metrics_dict[f"std_{test_type}_value"] = float(np.std(obs_stats))
-                
+
                 if stat_tests and stat_tests.get("p_values"):
                     p_vals = stat_tests["p_values"]
                     metrics_dict[f"mean_{test_type}_p_value"] = float(np.mean(p_vals))
                     metrics_dict[f"std_{test_type}_p_value"] = float(np.std(p_vals))
-            
+
             # Save metrics to JSON
-            metrics_path = output_dir / "metrics.json"
+            metrics_path = self.base_dir / "simulation_results" / "metrics.json"
+            metrics_path.parent.mkdir(parents=True, exist_ok=True)
+
             try:
                 with open(metrics_path, "w") as f:
                     json.dump(metrics_dict, f, indent=4)
@@ -321,7 +327,7 @@ class BatchStatisticsCollector(Accumulator):
 
         # Save metadata to JSON
         if self.metadata:
-            metadata_path = output_dir / "metadata.json"
+            metadata_path = self.base_dir / "simulation_results" / "metadata.json"
             try:
                 with open(metadata_path, "w") as f:
                     json.dump(self.metadata, f, indent=4)

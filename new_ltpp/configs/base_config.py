@@ -9,10 +9,11 @@ type safety across the configuration system.
 - IConfig: Protocol for IDE type checking + isinstance()
 """
 
-from abc import ABC, abstractmethod
-from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, List, Protocol, Self, Union, runtime_checkable
+from typing import Any, Dict, Optional, Protocol, Self, Union
+
+import yaml
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from new_ltpp.utils import logger
 
@@ -39,17 +40,10 @@ class ConfigSerializationError(Exception):
         return f"ConfigSerializationError: {self.args[0]}"
 
 
-@runtime_checkable
 class IConfig(Protocol):
     """Protocol for config - IDE type checking + isinstance() support."""
 
-    def get_required_fields(self) -> List[str]: ...
-
     def get_yaml_config(self) -> Dict[str, Any]: ...
-
-    def validate(self) -> None: ...
-
-    def copy(self) -> Self: ...
 
     def update(self, **kwargs) -> None: ...
 
@@ -58,49 +52,56 @@ class IConfig(Protocol):
     def save_to_yaml_file(self, file_path: Union[str, Path]) -> None: ...
 
 
-class Config(ABC):
+class Config(BaseModel):
     """
-    Abstract base configuration class - runtime enforcement via @abstractmethod.
+    Base configuration class backed by Pydantic.
 
     Provides the foundation for all configuration classes with built-in
     validation, serialization, and type safety features.
     """
 
-    def __post_init__(self):
-        self.validate()
+    model_config = ConfigDict(
+        validate_assignment=True,
+        extra="ignore",
+        protected_namespaces=(),
+        frozen=True,
+    )
 
     @classmethod
-    @abstractmethod
-    def get_required_fields(cls) -> List[str]:
-        """Return list of required fields for this config."""
-        pass
+    def from_yaml(
+        cls, yaml_path: Union[str, Path], path_in_yaml: Optional[str] = None
+    ) -> Self:
+        """
+        Load configuration from a YAML file.
+        If `path_in_yaml` is provided (e.g., 'training_configs.e500_b1'),
+        it will extract that specific nested dictionary before instantiating.
+        """
+        path = Path(yaml_path)
+        if not path.is_file():
+            raise FileNotFoundError(f"YAML file not found: {yaml_path}")
 
-    @abstractmethod
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+        except UnicodeDecodeError:
+            with open(path, "r", encoding="latin-1") as f:
+                data = yaml.safe_load(f)
+
+        if path_in_yaml:
+            keys = path_in_yaml.split(".")
+            for k in keys:
+                if not isinstance(data, dict) or k not in data:
+                    raise KeyError(f"Path '{path_in_yaml}' not found in {yaml_path}")
+                data = data[k]
+
+        try:
+            return cls(**data)
+        except ValidationError as e:
+            raise ConfigValidationError(f"Pydantic Validation failed:\n{str(e)}")
+
     def get_yaml_config(self) -> Dict[str, Any]:
         """Return config as YAML-compatible dictionary."""
-        pass
-
-    def validate(self) -> None:
-        """Validate the configuration."""
-        # Import ici pour éviter les imports circulaires
-        from new_ltpp.configs.config_utils import ConfigValidator
-
-        validator = ConfigValidator()
-        validator.add_rule(
-            lambda cfg: validator.validate_required_fields(
-                cfg, self.get_required_fields()
-            )
-        )
-
-        errors = validator.validate(self)
-        if errors:
-            raise ConfigValidationError(
-                f"Configuration validation failed: {'; '.join(errors)}"
-            )
-
-    def copy(self) -> Self:
-        """Create a deep copy of the configuration."""
-        return deepcopy(self)
+        return self.model_dump(mode="json")
 
     def update(self, **kwargs) -> None:
         """Update configuration fields."""
@@ -114,7 +115,7 @@ class Config(ABC):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
-        return self.get_yaml_config()
+        return self.model_dump(mode="json")
 
     def save_to_yaml_file(self, file_path: Union[str, Path]) -> None:
         """Save configuration to YAML file."""

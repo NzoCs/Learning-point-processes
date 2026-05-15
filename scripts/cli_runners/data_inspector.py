@@ -5,9 +5,8 @@ Runner for inspection and visualization of TPP data.
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 
-from new_ltpp.configs import DataConfigBuilder
 from new_ltpp.data.preprocess import Visualizer
 
 from .cli_base import CLIRunnerBase
@@ -26,7 +25,7 @@ class DataInspector(CLIRunnerBase):
         self,
         data_dir: str,
         num_event_types: int,
-        data_format: str = "json",
+        data_format: Literal["json", "pkl", "hf"],
         output_dir: Optional[str] = None,
         save_graphs: bool = True,
         show_graphs: bool = False,
@@ -54,26 +53,19 @@ class DataInspector(CLIRunnerBase):
         try:
             self.print_info(f"Inspecting data: {data_dir}")
 
-            # Configure data via builder
-            builder = DataConfigBuilder()
-            (builder
-                .set_src_dir(
-                    data_dir
-                )  # Uses set_src_dir which sets train/valid/test
-                .set_dataset_id("test")
-                .set_data_format(data_format)
-                # Default data loading specs
-                .set_data_loading_specs(
-                    batch_size=32,
-                    num_workers=4,
-                    shuffle=False,
-                )
-                # Default tokenizer specs (may be updated after reading data)
-                .set_tokenizer_specs()
-                .set_num_event_types(num_event_types)
-            )
+            from new_ltpp.configs.data_config import DataConfig, DataLoadingSpecsConfig
 
-            data_config = builder.build()
+            data_config = DataConfig(
+                num_event_types=num_event_types,
+                dataset_id="test",
+                data_format=data_format,
+                train_dir=data_dir,
+                valid_dir=data_dir,
+                test_dir=data_dir,
+                data_loading_specs=DataLoadingSpecsConfig(
+                    batch_size=32, num_workers=4, shuffle=False
+                ),
+            )
 
             # Create the data module (as in the example)
             from new_ltpp.data.preprocess import TPPDataModule
@@ -93,15 +85,9 @@ class DataInspector(CLIRunnerBase):
             self.print_info("Generating visualizations with Visualizer...")
 
             # Generate individual visualizations as well
-            visualizer.plot_inter_event_times(
-                show=show_graphs, save=save_graphs
-            )
-            visualizer.plot_event_types(
-                show=show_graphs, save=save_graphs
-            )
-            visualizer.plot_sequence_lengths(
-                show=show_graphs, save=save_graphs
-            )
+            visualizer.plot_inter_event_times(show=show_graphs, save=save_graphs)
+            visualizer.plot_event_types(show=show_graphs, save=save_graphs)
+            visualizer.plot_sequence_lengths(show=show_graphs, save=save_graphs)
 
             results = {
                 "show_all_distributions": True,
@@ -110,7 +96,6 @@ class DataInspector(CLIRunnerBase):
                 "sequence_length_distribution": True,
             }
             self.print_success("✓ All visualizations generated")
-
 
             # Save metadata
             if save_graphs and output_dir:
@@ -206,7 +191,9 @@ class DataInspector(CLIRunnerBase):
                 table.add_row("Total events", str(summary["total_events"]))
                 table.add_row("Unique event types", str(summary["unique_event_types"]))
                 table.add_row("Average length", f"{summary['avg_sequence_length']:.2f}")
-                table.add_row("Median length", f"{summary['median_sequence_length']:.2f}")
+                table.add_row(
+                    "Median length", f"{summary['median_sequence_length']:.2f}"
+                )
 
                 self.console.print(table)
 

@@ -39,15 +39,6 @@ class Accumulator(ABC):
         """
         pass
 
-    @abstractmethod
-    def compute(self) -> dict:
-        """Compute and return final statistics from accumulated data.
-
-        Returns:
-            Dictionary containing computed statistics
-        """
-        pass
-
     def reset(self) -> None:
         """Reset accumulator to initial state."""
         self._sample_count = 0

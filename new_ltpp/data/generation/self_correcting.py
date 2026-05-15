@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, List
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -93,6 +93,132 @@ class SelfCorrecting(Simulator):
 
         # Convert to numpy arrays (already sorted by time due to simulation logic)
         return np.array(all_times), np.array(all_marks)
+
+    def batch_simulate(
+        self, num_simulations: int, batch_size: Optional[int] = None
+    ) -> List[Tuple[np.ndarray, np.ndarray]]:
+        """
+        Simulate multiple independent Self-Correcting processes in parallel.
+
+        Unlike Hawkes, this simulator uses exact inversion (no thinning/rejection):
+        for each dimension, the next event time is computed analytically, then the
+        minimum over dimensions is selected. The batch version vectorizes this over
+        B independent paths simultaneously.
+
+        Args:
+            num_simulations: Total number of paths to generate.
+            batch_size: Number of paths to process in parallel (defaults to all at once).
+
+        Returns:
+            List of (times, marks) tuples, one per path.
+        """
+        if batch_size is None:
+            batch_size = num_simulations
+
+        results: List[Tuple[np.ndarray, np.ndarray]] = []
+        remaining = num_simulations
+
+        while remaining > 0:
+            B = min(batch_size, remaining)
+            results.extend(self._simulate_batch(B))
+            remaining -= B
+
+        return results
+
+    def _simulate_batch(
+        self, B: int
+    ) -> List[Tuple[np.ndarray, np.ndarray]]:
+        """
+        Core vectorized exact-sampling loop for a batch of B independent paths.
+
+        State tensors:
+            x                (B, dim)  — compensator state per path and dimension
+            t                (B,)      — current time per path
+            next_event_times (B, dim)  — next scheduled event per path and dimension
+            active           (B,)      — True while path has not yet reached end_time
+
+        At each step:
+          1. Find the next event (argmin over dim axis) — vectorized over (B, dim)
+          2. Advance x for ALL dimensions — vectorized
+          3. Record the winning (path, dim) pairs
+          4. Apply alpha correction — vectorized scatter via np.add.at
+          5. Recompute tau for the winning dimension only — vectorized
+
+        Args:
+            B: Number of paths in this batch.
+
+        Returns:
+            List of (times, marks) tuples of length B.
+        """
+        dim = self.dim_process
+
+        # State variables
+        x = np.zeros((B, dim), dtype=np.float64)                  # (B, dim)
+        t = np.full(B, self.start_time, dtype=np.float64)         # (B,)
+        next_event_times = np.full((B, dim), np.inf, dtype=np.float64)  # (B, dim)
+        active = np.ones(B, dtype=bool)                            # (B,)
+
+        # Event storage
+        times_list: List[List[float]] = [[] for _ in range(B)]
+        marks_list: List[List[int]] = [[] for _ in range(B)]
+
+        # ── Initialise first next-event times for each (path, dim) ────────────
+        # tau = log(E * mu[d] / exp(x[:, d]) + 1) / mu[d]   with E ~ Exp(1)
+        E = np.random.exponential(size=(B, dim))  # (B, dim)
+        tau_init = np.log(
+            E * self.mu[np.newaxis, :] / np.exp(x) + 1
+        ) / self.mu[np.newaxis, :]                # (B, dim)
+        next_event_times = t[:, np.newaxis] + tau_init  # (B, dim)
+
+        while np.any(active):
+            # ── Find next event per path ──────────────────────────────────────
+            next_dim = np.argmin(next_event_times, axis=1)   # (B,) — winning dimension
+            next_time = next_event_times[np.arange(B), next_dim]  # (B,)
+
+            # Paths whose next event overshoots end_time become inactive
+            will_end = next_time >= self.end_time
+            active &= ~will_end
+
+            if not np.any(active):
+                break
+
+            # ── Advance compensator state x for active paths ──────────────────
+            # x[b, :] += mu * (next_time[b] - t[b])
+            delta_t = np.where(active, next_time - t, 0.0)   # (B,)
+            x += self.mu[np.newaxis, :] * delta_t[:, np.newaxis]  # (B, dim)
+
+            # ── Record events for active paths ────────────────────────────────
+            active_idx = np.where(active)[0]
+            for b in active_idx:
+                times_list[b].append(float(next_time[b]))
+                marks_list[b].append(int(next_dim[b]))
+
+            # ── Apply alpha correction: x[b, :] -= alpha_matrix[:, next_dim[b]] ──
+            # Flatten: for each active path b, subtract alpha_matrix[:, d]
+            # alpha_matrix[:, next_dim[active_idx]] has shape (dim, n_active)
+            # We want x[active_idx, :] -= alpha_matrix[:, next_dim[active_idx]].T
+            winning_dims = next_dim[active_idx]              # (n_active,)
+            x[active_idx] -= self.alpha_matrix[:, winning_dims].T  # (n_active, dim)
+
+            # ── Update current time ───────────────────────────────────────────
+            t = np.where(active, next_time, t)
+
+            # ── Recompute next-event time ONLY for the winning dimension ──────
+            # Only active paths need a new tau for their winning dimension
+            E_new = np.random.exponential(size=len(active_idx))  # (n_active,)
+            x_d = x[active_idx, winning_dims]                    # (n_active,)
+            mu_d = self.mu[winning_dims]                          # (n_active,)
+            tau_new = np.log(E_new * mu_d / np.exp(x_d) + 1) / mu_d  # (n_active,)
+            next_event_times[active_idx, winning_dims] = t[active_idx] + tau_new
+
+            # Inactive paths: push their next_event_times to inf so they're never selected
+            if not np.all(active):
+                next_event_times[~active] = np.inf
+
+        return [
+            (np.array(times_list[b]), np.array(marks_list[b]))
+            for b in range(B)
+        ]
 
     def get_simulator_metadata(self) -> Dict:
         """

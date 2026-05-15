@@ -15,4 +15,3 @@ class SummaryStatsMetric(StrEnum):
     SEQUENCE_LENGTH_HIST_KL = "sequence_length_hist_kl"
     ACF_HIST_L1 = "acf_hist_l1"
     ACF_HIST_L2 = "acf_hist_l2"
-    ACF_HIST_KL = "acf_hist_kl"

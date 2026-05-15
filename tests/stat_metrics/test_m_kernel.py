@@ -8,13 +8,9 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.m_kernel impo
     MKernelTransform,
 )
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
-    TimeKernelType,
+    LinearKernel,
     EmbeddingKernel,
-    RBFTimeKernel,
-    IMQTimeKernel,
-    MaternTimeKernel,
-    LaplacianTimeKernel,
-    RationalQuadraticTimeKernel,
+    RBFKernel,
 )
 from new_ltpp.evaluation.statistical_testing.point_process_metric import MMD
 from new_ltpp.shared_types import Batch

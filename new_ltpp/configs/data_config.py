@@ -1,81 +1,33 @@
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Union, cast
+from typing import List, Literal, Optional, Union
+from pathlib import Path
+from pydantic import model_validator
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils.const import PaddingStrategy, TruncationStrategy
+from new_ltpp.configs.config_utils import load_yaml, extract
 
 
-@dataclass
 class TokenizerConfig(Config):
-    """Configuration for event tokenizer with strategy-based processing.
-
-    This config enforces a clean separation: either use padding OR truncation, never both.
-    Sequences are processed dynamically without fixed max_length.
-    The strategy is determined from padding_strategy and truncation_strategy parameters,
-    with defaults applied automatically.
-
-    Args:
-        num_event_types: Number of event types in the dataset
-        padding_strategy: Padding strategy to use. Defaults to LONGEST (dynamic padding).
-                         Options: 'longest', 'do_not_pad'
-        truncation_strategy: Truncation strategy to use. Defaults to None (no truncation).
-                            Options: 'longest_first', 'do_not_truncate', None
-        padding_side: Side for padding ('left' or 'right'). Defaults to 'left'.
-        truncation_side: Side for truncation ('left' or 'right'). Defaults to 'left'.
-        pad_token_id: ID of the padding token (auto-set to num_event_types)
-        num_event_types_pad: Number of event types including padding (auto-set)
-        model_input_names: Names of model inputs, if applicable
-
-    The final `strategy` attribute is created automatically:
-        - If truncation_strategy is provided and not DO_NOT_TRUNCATE, use it
-        - Otherwise, use padding_strategy
-        - Cannot specify both padding and truncation simultaneously
-
-    Example:
-        # Dynamic padding (default)
-        config = TokenizerConfig(num_event_types=10)
-        # -> strategy = PaddingStrategy.LONGEST
-
-        # Explicit padding
-        config = TokenizerConfig(
-            num_event_types=10,
-            padding_strategy='longest',
-            padding_side='right'
-        )
-
-        # Truncation (no padding)
-        config = TokenizerConfig(
-            num_event_types=10,
-            truncation_strategy='longest_first',
-            truncation_side='left'
-        )
-    """
+    """Configuration for event tokenizer with strategy-based processing."""
 
     num_event_types: int
-    num_event_types_pad: Optional[int] = None
-    pad_token_id: Optional[int] = None
+    num_event_types_pad: int = 0  # Will be computed as num_event_types + 1
+    pad_token_id: int = 0  # Will be computed as num_event_types
     padding_strategy: Literal["longest", "do_not_pad"] = "longest"
     truncation_strategy: Literal["longest_first", "do_not_truncate"] = "do_not_truncate"
     padding_side: Literal["left", "right"] = "left"
     truncation_side: Literal["left", "right"] = "left"
     model_input_names: Optional[List[str]] = None
 
-    # This will be set in __post_init__
-    strategy: Union[PaddingStrategy, TruncationStrategy] = field(
-        default=PaddingStrategy.LONGEST, init=False
-    )
+    @model_validator(mode="before")
+    @classmethod
+    def compute_derived(cls, values: dict) -> dict:
+        values["num_event_types_pad"] = values["num_event_types"] + 1
+        values["pad_token_id"] = values["num_event_types"]
+        return values
 
-    def __post_init__(self):
-        """Validate and normalize configuration."""
-        super().__post_init__()
-
-        # Set pad_token_id if not provided
-        if self.pad_token_id is None:
-            self.pad_token_id = self.num_event_types
-
-        self.num_event_types_pad = self.num_event_types + 1  # +1 for padding token
-
-        # Determine the final strategy: truncation takes precedence if specified
+    @model_validator(mode="after")
+    def validate_strategy(self) -> "TokenizerConfig":
         has_truncation = (
             self.truncation_strategy is not None
             and self.truncation_strategy != "do_not_truncate"
@@ -84,165 +36,132 @@ class TokenizerConfig(Config):
             self.padding_strategy is not None and self.padding_strategy != "do_not_pad"
         )
 
-        # Validate: cannot have both active strategies
         if has_truncation and has_padding:
             raise ConfigValidationError(
                 "Cannot specify both an active padding strategy and an active truncation strategy. "
-                "Use either padding OR truncation, not both.",
-                "strategy",
+                "Use either padding OR truncation, not both."
             )
 
-        # Convert to enum and set the final strategy
+        return self
+
+    @property
+    def strategy(self) -> Union[PaddingStrategy, TruncationStrategy]:
+        has_truncation = (
+            self.truncation_strategy is not None
+            and self.truncation_strategy != "do_not_truncate"
+        )
+        has_padding = (
+            self.padding_strategy is not None and self.padding_strategy != "do_not_pad"
+        )
         if has_truncation:
-            self.strategy = TruncationStrategy(self.truncation_strategy)
+            return TruncationStrategy(self.truncation_strategy)
         elif has_padding:
-            self.strategy = PaddingStrategy(self.padding_strategy)
-        else:
-            # Default to dynamic padding if nothing specified
-            self.strategy = PaddingStrategy.LONGEST
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        """Export configuration to YAML-compatible dict."""
-        config_dict = {
-            "num_event_types": self.num_event_types,
-            "padding_side": self.padding_side,
-            "truncation_side": self.truncation_side,
-            "pad_token_id": self.pad_token_id,
-        }
-
-        # Add strategy info (these are already strings/literals)
-        if self.padding_strategy is not None:
-            config_dict["padding_strategy"] = self.padding_strategy
-        if self.truncation_strategy is not None:
-            config_dict["truncation_strategy"] = self.truncation_strategy
-
-        return config_dict
-
-    @classmethod
-    def get_required_fields(cls) -> list[str]:
-        return ["num_event_types"]
+            return PaddingStrategy(self.padding_strategy)
+        return PaddingStrategy.LONGEST
 
     @property
     def is_padding_strategy(self) -> bool:
-        """Check if this config uses a padding strategy."""
         return isinstance(self.strategy, PaddingStrategy)
 
     @property
     def is_truncation_strategy(self) -> bool:
-        """Check if this config uses a truncation strategy."""
         return isinstance(self.strategy, TruncationStrategy)
 
 
-@dataclass
 class DataLoadingSpecsConfig(Config):
-    """
-    Configuration for data loading specifications.
-    Args:
-        batch_size (int): Number of samples per batch.
-        num_workers (int): Number of subprocesses to use for data loading.
-        shuffle (Optional[bool]): Whether to shuffle the dataset.
-        padding (Optional[bool]): Whether to apply padding to sequences.
-        truncation (Optional[bool]): Whether to truncate sequences to a maximum length.
-        max_len (Optional[int]): Maximum length of sequences after padding/truncation.
-    """
+    """Configuration for data loading specifications."""
 
     batch_size: int
     num_workers: int = 1
     shuffle: bool = False
     padding: bool = True
     truncation: bool = False
-    max_len: int | None = None
+    max_len: Optional[int] = None
 
-    def get_yaml_config(self) -> Dict[str, Any]:
-        cfg: Dict[str, Any] = {
-            "batch_size": self.batch_size,
-            "num_workers": self.num_workers,
-        }
-        if self.shuffle is not None:
-            cfg["shuffle"] = self.shuffle
-        if self.padding is not None:
-            cfg["padding"] = self.padding
-        if self.truncation is not None:
-            cfg["truncation"] = self.truncation
-        if self.max_len is not None:
-            cfg["max_len"] = self.max_len
-        return cfg
+
+class DataConfig(Config):
+    """Configuration for dataset and data processing."""
+
+    num_event_types: int
+    data_format: Literal["json", "pkl", "hf"]
+    data_loading_specs: DataLoadingSpecsConfig
+    tokenizer_specs: TokenizerConfig = TokenizerConfig(
+        num_event_types=0
+    )  # Will be overridden by validator
+
+    # Internal variables, to be populated through src_dir or explicitly
+    dataset_id: str = ""
+    train_dir: str = ""
+    valid_dir: str = ""
+    test_dir: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def compute_derived(cls, values: dict) -> dict:
+        # Compute tokenizer_specs if not provided
+        if "tokenizer_specs" not in values or values["tokenizer_specs"] is None:
+            values["tokenizer_specs"] = TokenizerConfig(
+                num_event_types=values["num_event_types"]
+            )
+        return values
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_dirs_and_tokenizer(cls, data: dict) -> dict:
+        # Resolve src_dir → train/valid/test
+        src_dir = data.pop("src_dir", None)
+        if src_dir is not None:
+            data.setdefault("train_dir", src_dir)
+            data.setdefault("valid_dir", src_dir)
+            data.setdefault("test_dir", src_dir)
+        else:
+            data.setdefault("train_dir", "")
+            data.setdefault("valid_dir", "")
+            data.setdefault("test_dir", "")
+
+        # Default tokenizer_specs
+        if data.get("tokenizer_specs") is None:
+            data["tokenizer_specs"] = TokenizerConfig(
+                num_event_types=data["num_event_types"]
+            )
+
+        return data
 
     @classmethod
-    def get_required_fields(cls) -> list[str]:
-        return []
-
-
-@dataclass
-class DataConfig(Config):
-    """
-    Configuration for dataset and data processing.
-    Args:
-        train_dir (str): Path to training data directory.
-        valid_dir (str): Path to validation data directory.
-        test_dir (str): Path to test data directory.
-        data_format (Optional[str]): Format of the dataset files (e.g., 'csv', 'json').
-        dataset_id (Optional[str]): Identifier for the dataset.
-        data_loading_specs (Union[DataLoadingSpecsConfig, dict]): Specifications for loading the data.
-        tokenizer_specs (Union[TokenizerConfig, dict]): Specifications for tokenization and event types.
-    """
-
-    def __init__(
-        self,
-        num_event_types: int,
-        train_dir: str,
-        valid_dir: str,
-        test_dir: str,
+    def from_yaml_components(
+        cls,
+        yaml_path: Union[str, Path],
         dataset_id: str,
-        data_loading_specs: Union[DataLoadingSpecsConfig, Dict[str, Any]],
-        data_format: Literal["json", "pkl", "hf"],
-        tokenizer_specs: Optional[Union[TokenizerConfig, Dict[str, Any]]] = None,
-        **kwargs,
-    ):
-        self.train_dir = train_dir
-        self.valid_dir = valid_dir
-        self.test_dir = test_dir
-        self.num_event_types = num_event_types
-        self.data_format: Literal["json", "pkl", "hf"] = data_format
+        data_config_path: str,
+        data_loading_config_path: str,
+        tokenizer_config_path: Optional[str] = None,
+    ) -> "DataConfig":
+        data = load_yaml(yaml_path)
 
-        self.dataset_id = dataset_id
+        data_info = extract(data, data_config_path)
+        loading_info = extract(data, data_loading_config_path)
 
-        # Instancie si dict, sinon laisse tel quel
-        if isinstance(data_loading_specs, dict):
-            data_loading_specs = cast(Dict[str, Any], data_loading_specs)
-            if "batch_size" not in data_loading_specs:
-                raise ConfigValidationError(
-                    "data_loading_specs must include 'batch_size' field.",
-                    "data_loading_specs.batch_size",
-                )
-            self.data_loading_specs = DataLoadingSpecsConfig(
-                batch_size=data_loading_specs.pop("batch_size"), **data_loading_specs
-            )
-        else:
-            self.data_loading_specs = cast(DataLoadingSpecsConfig, data_loading_specs)
+        src_dir = data_info.pop("src_dir", "")
+        train_dir = data_info.pop("train_dir", src_dir)
+        valid_dir = data_info.pop("valid_dir", src_dir)
+        test_dir = data_info.pop("test_dir", src_dir)
 
-        if isinstance(tokenizer_specs, dict):
-            tokenizer_specs = cast(Dict[str, Any], tokenizer_specs)
-            self.tokenizer_specs = TokenizerConfig(
-                num_event_types=num_event_types, **tokenizer_specs
-            )
-        elif tokenizer_specs is None:
-            # Default to LONGEST padding strategy (will be set in __post_init__)
-            self.tokenizer_specs = TokenizerConfig(num_event_types=num_event_types)
-        else:
-            self.tokenizer_specs = cast(TokenizerConfig, tokenizer_specs)
+        tokenizer_kwargs = (
+            extract(data, tokenizer_config_path) if tokenizer_config_path else {}
+        )
+        tokenizer_specs = TokenizerConfig(
+            num_event_types=data_info["num_event_types"], **tokenizer_kwargs
+        )
 
-    def get_yaml_config(self) -> Dict[str, Any]:
-        config = {
-            "train_dir": self.train_dir,
-            "valid_dir": self.valid_dir,
-            "test_dir": self.test_dir,
-            "data_format": self.data_format,
-            "dataset_id": self.dataset_id,
-            "data_loading_specs": (self.data_loading_specs.get_yaml_config()),
-            "tokenizer_specs": (self.tokenizer_specs.get_yaml_config()),
-        }
-        return config
+        return cls(
+            dataset_id=dataset_id,
+            data_loading_specs=DataLoadingSpecsConfig(**loading_info),
+            train_dir=train_dir,
+            valid_dir=valid_dir,
+            test_dir=test_dir,
+            tokenizer_specs=tokenizer_specs,
+            **data_info,
+        )
 
     def get_data_dir(self, split: str) -> str:
         if split in ["train", "dev", "valid", "test"]:
@@ -256,7 +175,3 @@ class DataConfig(Config):
         raise ValueError(
             f"Unknown split: {split}. Valid splits are: train, valid, test."
         )
-
-    @classmethod
-    def get_required_fields(cls) -> list[str]:
-        return []

@@ -35,7 +35,7 @@ class Runner:
         # Use the ModelFactory to create the model
         self.model = ModelFactory.create_model_by_name(
             model_name=config.model_id,
-            model_config=config.model_config,
+            model_config=config.model_cfg,
             data_info=data_info,
             output_dir=config.base_dir,
         )
@@ -44,10 +44,6 @@ class Runner:
 
         self.dirpath = config.checkpoints_dir
         self.logger_config = config.logger_config
-        config.logger_config.save_dir = str(
-            self.dirpath / config.logger_config.save_dir
-        )
-
         self.checkpoint_path = CheckpointManager(str(self.dirpath)).latest_best()
 
         self.dataset_id = config.data_config.dataset_id
@@ -55,7 +51,7 @@ class Runner:
         self._lightning_logger = self._build_lightning_logger(enable_logging)
         self.config = config  # Store config for access in save method
 
-    def set_logging(self, enable_logging: bool):
+    def set_logging(self, enable_logging: bool) -> None:
         """Toggle logging, causing trainer recreation if needed."""
         if self.enable_logging == enable_logging:
             return
@@ -63,10 +59,14 @@ class Runner:
         self.enable_logging = enable_logging
         self._lightning_logger = self._build_lightning_logger(enable_logging)
 
-    def _build_lightning_logger(self, enable_logging: bool) -> Any | None:
+    def _build_lightning_logger(self, enable_logging: bool) -> Any | bool:
         if not enable_logging:
             return False
-        return LoggerFactory.create_logger(self.logger_config)
+        if self.logger_config is None:
+            logger_config = {"save_dir": self.config.base_dir}
+        else:
+            logger_config = self.logger_config
+        return LoggerFactory.create_logger(logger_config)
 
     @property
     def trainer(self) -> pl.Trainer:
@@ -77,9 +77,11 @@ class Runner:
             checkpoints_dir=self.dirpath,
             extra_callbacks=[
                 PredictionStatsCallback(
-                    output_dir=str(self.config.base_dir / "distribution_comparison")
+                    base_dir=self.config.base_dir,
+                    statistical_test_config=self.config.statistical_test_config,
+                    simulation_config=self.config.simulation_config,
                 ),
-                TestCallback(output_dir=str(self.config.base_dir / "test_results")),
+                TestCallback(output_dir=self.config.base_dir / "test_results"),
             ],
         )
         return trainer

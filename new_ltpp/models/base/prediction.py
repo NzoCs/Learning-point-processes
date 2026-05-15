@@ -1,0 +1,84 @@
+# new_ltpp/models/mixins/prediction_mixin.py
+"""Mixin for prediction methods (one-step and multi-step)."""
+
+import torch
+
+from new_ltpp.shared_types import OneStepPred
+
+from .base_model import NeuralModel
+
+
+class PredictionMixin(NeuralModel):
+    """Mixin providing prediction functionality.
+
+    Requires: self.event_sampler, self.num_sample,
+              self.compute_intensities_at_sample_times, self.num_event_types
+    """
+
+    def __init__(self, num_samples: int, **kwargs):
+        """Initialize the PredictionMixin.
+
+        Args:
+            num_sample: Number of samples for one-step prediction
+        """
+        super().__init__(**kwargs)
+        self.num_sample = num_samples
+
+    def predict_one_step_at_every_event(
+        self,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        valid_event_mask: torch.Tensor,
+    ) -> OneStepPred:
+        """One-step prediction for every event in the sequence.
+
+        Args:
+            time_seqs: Tensor of event times, shape [batch_size, seq_len]
+            time_delta_seqs: Tensor of time deltas, shape [batch_size, seq_len]
+            type_seqs: Tensor of event types, shape [batch_size, seq_len]
+            valid_event_mask: Mask tensor indicating non-padding positions, shape [batch_size, seq_len]
+
+        Returns:
+            OneStepPred: Predicted time deltas and event types, [batch_size, seq_len].
+        """
+
+        time_delta_seqs = time_delta_seqs[:, :-1]
+        type_seqs = type_seqs[:, :-1]
+        time_seqs = time_seqs[:, :-1]
+        valid_event_mask = valid_event_mask[:, :-1]
+
+        # Draw next time samples
+        accepted_dtimes, weights = self.get_event_sampler().draw_next_time_one_step(
+            time_seqs,
+            time_delta_seqs,
+            type_seqs,
+            valid_event_mask,
+            self.compute_intensities_at_sample_dtimes,
+            self.num_sample,
+            compute_last_step_only=False,
+        )
+
+        # Compute intensities at sampled times
+        intensities_at_times = self.compute_intensities_at_sample_dtimes(
+            time_seqs=time_seqs,
+            time_delta_seqs=time_delta_seqs,
+            type_seqs=type_seqs,
+            valid_event_mask=valid_event_mask,
+            sample_dtimes=accepted_dtimes,
+        )
+
+        # Normalize intensities and compute weighted sum
+        intensities_normalized = intensities_at_times / intensities_at_times.sum(
+            dim=-1, keepdim=True
+        )
+
+        intensities_weighted = torch.einsum(
+            "...s,...sm->...m", weights, intensities_normalized
+        )
+
+        # Get predictions
+        types_pred = torch.argmax(intensities_weighted, dim=-1)
+        dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)
+
+        return OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)

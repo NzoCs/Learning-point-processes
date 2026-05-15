@@ -1,4 +1,5 @@
-from typing import Callable, Dict, List, Tuple
+import sys
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from tqdm import tqdm
@@ -16,6 +17,7 @@ class SimulationManager:
         dim_process: int,
         start_time: float,
         end_time: float,
+        simulator: Optional[Any] = None,
     ):
         """
         Initialize the simulation manager.
@@ -25,15 +27,22 @@ class SimulationManager:
             dim_process: Dimension of the process
             start_time: Simulation start time
             end_time: Simulation end time
+            simulator: Optional reference to the underlying simulator object.
+                       If provided and it exposes a `batch_simulate` method,
+                       bulk_simulate will use it for vectorized batch generation.
         """
         self.simulation_func = simulation_func
         self.dim_process = dim_process
         self.start_time = start_time
         self.end_time = end_time
+        self.simulator = simulator
 
     def bulk_simulate(self, num_simulations: int) -> List[Dict]:
         """
         Generate multiple simulations and format them.
+
+        Uses `simulator.batch_simulate` (vectorized) when available,
+        otherwise falls back to sequential calls to `simulation_func`.
 
         Args:
             num_simulations: Number of simulations to generate
@@ -41,13 +50,20 @@ class SimulationManager:
         Returns:
             A list of formatted simulations
         """
-        simulations = []
-
-        for _ in tqdm(
-            range(num_simulations), desc=f"Simulating {num_simulations} processes"
-        ):
-            times, marks = self.simulation_func()
-            simulations.append((times, marks))
+        if self.simulator is not None and hasattr(self.simulator, "batch_simulate"):
+            print(f"Simulating {num_simulations} processes (vectorized batch)...")
+            simulations = self.simulator.batch_simulate(num_simulations)
+        else:
+            simulations = []
+            for _ in tqdm(
+                range(num_simulations),
+                desc=f"Simulating {num_simulations} processes",
+                ascii=True,
+                dynamic_ncols=True,
+                file=sys.stderr,
+            ):
+                times, marks = self.simulation_func()
+                simulations.append((times, marks))
 
         # Format simulations for dataset
         formatted_data = self.format_simulations(simulations)

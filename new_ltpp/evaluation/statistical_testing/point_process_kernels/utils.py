@@ -39,7 +39,7 @@ def _get_embedding(
     time_seqs_inf = time_seqs.masked_fill(~mask, float("inf"))
 
     # idx is the number of valid events <= t
-    idx = torch.searchsorted(time_seqs_inf, time_grid_exp, side="right")
+    idx = torch.searchsorted(time_seqs_inf, time_grid_exp.contiguous(), side="right")
 
     # 3) Compute cumulative counts per event type
     one_hot = torch.nn.functional.one_hot(

@@ -4,11 +4,6 @@ from new_ltpp.configs.base_config import (
     ConfigSerializationError,
     ConfigValidationError,
 )
-from new_ltpp.configs.config_builders import (
-    DataConfigBuilder,
-    ModelConfigBuilder,
-    RunnerConfigBuilder,
-)
 
 # New Configuration Factory System
 from new_ltpp.configs.config_factory import (
@@ -26,10 +21,16 @@ from new_ltpp.configs.data_config import (
 from new_ltpp.configs.model_config import (
     ModelConfig,
     ModelSpecsConfig,
-    SimulationConfig,
     ThinningConfig,
 )
-from new_ltpp.configs.runner_config import RunnerConfig, TrainingConfig
+from new_ltpp.configs.runner_config import (
+    RunnerConfig,
+    TrainingConfig,
+)
+from new_ltpp.configs.statistical_test_config import (
+    StatisticalTestConfig,
+    SimulationConfig,
+)
 
 __all__ = [
     # New Configuration Factory System
@@ -47,11 +48,9 @@ __all__ = [
     "ConfigValidationError",
     "ConfigSerializationError",
     "ThinningConfig",
-    "SimulationConfig",
     "TrainingConfig",
     "ModelSpecsConfig",
-    # Config builders
-    "DataConfigBuilder",
-    "RunnerConfigBuilder",
-    "ModelConfigBuilder",
+    # stat test
+    "StatisticalTestConfig",
+    "SimulationConfig",
 ]

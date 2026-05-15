@@ -364,7 +364,7 @@ training_configs:
 statistical_test_configs:
   quick_test:
     test_type: "mmd"
-    n_permutations: 30
+    n_samples: 30
     point_process_kernel_type: "sig_kernel"  # was: m_kernel
     space_kernel_type: "rbf"
     embedding_dim: 8

@@ -2,6 +2,8 @@
 Plot Generators for Temporal Point Process Analysis
 """
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -13,7 +15,7 @@ from new_ltpp.utils import logger
 class InterEventTimePlotGenerator:
     """Generates inter-event time distribution plots (OCP)."""
 
-    def generate_plot(self, data: PlotData, output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str | Path) -> None:
         label_hist = data["label_time_deltas"]  # Histogram counts
         simulation_hist = data["simulated_time_deltas"]  # Histogram counts
         bin_edges = data["time_bin_edges"]
@@ -56,7 +58,7 @@ class InterEventTimePlotGenerator:
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        hist_output_path = output_path.replace(".png", "_histogram.png")
+        hist_output_path = str(output_path).replace(".png", "_histogram.png")
         plt.savefig(hist_output_path, dpi=300, bbox_inches="tight")
         plt.close()
         logger.info(f"Inter-event time histogram saved to {hist_output_path}")
@@ -95,7 +97,7 @@ class InterEventTimePlotGenerator:
         plt.legend()
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        qq_output_path = output_path.replace(".png", "_qq_plot.png")
+        qq_output_path = str(output_path).replace(".png", "_qq_plot.png")
         plt.savefig(qq_output_path, dpi=300, bbox_inches="tight")
         plt.close()
         logger.info(f"Inter-event time Q-Q plot saved to {qq_output_path}")
@@ -107,7 +109,7 @@ class EventTypePlotGenerator:
     def __init__(self, num_event_types: int):
         self.num_event_types = num_event_types
 
-    def generate_plot(self, data: PlotData, output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str | Path) -> None:
         label_types = data["label_event_types"]
         simulated_types = data["simulated_event_types"]
 
@@ -170,7 +172,7 @@ class EventTypePlotGenerator:
 class SequenceLengthPlotGenerator:
     """Generates sequence length distribution plots (OCP)."""
 
-    def generate_plot(self, data: PlotData, output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str | Path) -> None:
         label_lengths = np.asarray(data["label_sequence_lengths"])
         simulated_lengths = np.asarray(data["simulated_sequence_lengths"])
 
@@ -222,7 +224,7 @@ class SequenceLengthPlotGenerator:
 class AutocorrelationPlotGenerator:
     """Generates autocorrelation function (ACF) plots similar to statsmodels."""
 
-    def generate_plot(self, data: PlotData, output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str | Path) -> None:
         acf_gt = data["acf_gt_mean"]
         acf_sim = data["acf_sim_mean"]
 
@@ -312,7 +314,7 @@ class StatTestPlotGenerator:
     def __init__(self, test_name: str = "Test Statistic"):
         self.test_name = test_name
 
-    def generate_plot(self, data: PlotData, output_path: str) -> None:
+    def generate_plot(self, data: PlotData, output_path: str | Path) -> None:
         # Tries to find common keys for observed statistics vs null distribution
         obs_values = data["observed_statistic"]
 

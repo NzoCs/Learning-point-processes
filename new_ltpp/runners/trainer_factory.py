@@ -1,8 +1,7 @@
-from Cython import cast
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Any
 
 import pytorch_lightning as pl
 import torch
@@ -11,7 +10,6 @@ from pytorch_lightning.loggers.logger import Logger as LightningLogger
 from pytorch_lightning.strategies import DDPStrategy
 
 from new_ltpp.configs.runner_config import TrainingConfig
-from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.utils import logger as console_logger
 
 
@@ -55,6 +53,7 @@ class CheckpointManager:
             return str(path)
         console_logger.warning(f"Checkpoint not found: {path}")
         return None
+
 
 class TrainerFactory:
     """
@@ -152,7 +151,7 @@ class TrainerFactory:
         training_config: TrainingConfig,
         checkpoints_dir: Path | str,
         trainer_logger: LightningLogger | bool | None = None,
-        extra_callbacks: List[pl.Callback] | None = None,
+        extra_callbacks: List[Any] | None = None,
     ) -> pl.Trainer:
         """
         Create a full trainer from RunnerConfig.

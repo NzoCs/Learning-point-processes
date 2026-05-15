@@ -1,189 +1,178 @@
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional, Union
 
-import torch
+from pydantic import Field, PositiveInt, model_validator, ConfigDict
 
-from new_ltpp.configs.base_config import Config, ConfigValidationError
+from new_ltpp.configs.base_config import Config
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.configs.logger_config import LoggerConfig, LoggerType
 from new_ltpp.configs.model_config import ModelConfig
+from new_ltpp.configs.statistical_test_config import (
+    StatisticalTestConfig,
+    SimulationConfig,
+)
 from new_ltpp.globals import OUTPUT_DIR
 
 
-@dataclass
-class TrainingConfig(Config):
-    """
-    Configuration for the Training, encapsulating training parameters and settings.
-    Args:
-        dataset_id (str): Identifier for the dataset.
-        model_id (str): Identifier for the model.
-        batch_size (int, optional): Batch size for training. Defaults to 32.
-        max_epochs (int, optional): Maximum number of training epochs. Defaults to None.
-        val_freq (int, optional): Frequency of validation checks. Defaults to 10.
-        patience (int, optional): Patience for early stopping. Defaults to 20.
-        log_freq (int, optional): Frequency of logging. Defaults to 5.
-        checkpoints_freq (int, optional): Frequency of saving checkpoints. Defaults to 5.
-        accumulate_grad_batches (int, optional): Number of batches to accumulate gradients. Defaults to 1.
-        use_precision_16 (bool, optional): Whether to use 16-bit precision. Defaults to False. (untested)
-        activate_logging (bool, optional): Whether to activate logging. Defaults to False.
-    """
+def detect_available_devices() -> int:
+    try:
+        import torch
 
-    max_epochs: int
+        if torch.cuda.is_available():
+            return torch.cuda.device_count()
+    except Exception:
+        pass
+    return -1
+
+
+class TrainingConfig(Config):
+    """Configuration for the Training."""
+
+    max_epochs: PositiveInt
     lr: float = 1e-3
     lr_scheduler: bool = True
-    dropout: float = 0.0
-    val_freq: int = 10
-    patience: int = 20
-    log_freq: int = 5
-    checkpoints_freq: int = 5
-    accumulate_grad_batches: int = 1
+    dropout: float = Field(default=0.0, ge=0.0, le=1.0)
+    val_freq: PositiveInt = 10
+    patience: PositiveInt = 20
+    log_freq: PositiveInt = 5
+    checkpoints_freq: PositiveInt = 5
+    accumulate_grad_batches: PositiveInt = 1
     use_precision_16: bool = False
-    devices: Optional[int] = None
-
-    def __post_init__(self):
-        # Devices
-        if self.devices is None:
-            self.devices = self.detect_available_devices()
-        # Dropout validation (optional)
-        if self.dropout is not None:
-            if not (0.0 <= self.dropout <= 1.0):
-                raise ConfigValidationError(
-                    "dropout must be between 0 and 1", "dropout"
-                )
-        super().__post_init__()
-
-    @staticmethod
-    def detect_available_devices() -> int:
-        try:
-            if torch.cuda.is_available():
-                return torch.cuda.device_count()
-        except Exception:
-            pass
-        return -1
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        config = {
-            "max_epochs": self.max_epochs,
-            "val_freq": self.val_freq,
-            "patience": self.patience,
-            "log_freq": self.log_freq,
-            "checkpoints_freq": self.checkpoints_freq,
-            "devices": self.devices,
-            "accumulate_grad_batches": self.accumulate_grad_batches,
-            "use_precision_16": self.use_precision_16,
-        }
-
-        return config
-
-    @classmethod
-    def get_required_fields(cls) -> list[str]:
-        return ["max_epochs"]
+    devices: int = Field(default_factory=detect_available_devices)
 
 
-@dataclass
 class RunnerConfig(Config):
-    """
-    Configuration for the Runner, encapsulating trainer, model, and data configurations.
-    Args:
-        training_config (dict): Dictionnaire de configuration pour le training.
-        model_config (dict): Dictionnaire de configuration pour le modèle.
-        data_config (dict): Dictionnaire de configuration pour les données.
-    """
+    """Configuration for the Runner."""
 
-    def __init__(
-        self,
-        model_id: str,
-        training_config: TrainingConfig | dict,
-        model_config: ModelConfig | dict,
-        data_config: DataConfig | dict,
-        logger_config: LoggerConfig | dict | None = None,
-        save_dir: str | None = None,
-        enable_logging: bool = True,
-        **kwargs,
-    ):
-        # assign simple attributes first so they are available during setup
+    model_id: str
 
-        # Instancie les configs intermédiaires à partir des dicts
-        self.training_config = (
-            training_config
-            if isinstance(training_config, TrainingConfig)
-            else TrainingConfig(**training_config)
-        )
-        self.model_config = (
-            model_config
-            if isinstance(model_config, ModelConfig)
-            else ModelConfig(**model_config)
-        )
-        self.data_config = (
-            data_config
-            if isinstance(data_config, DataConfig)
-            else DataConfig(**data_config)
-        )
+    training_config: TrainingConfig
+    model_cfg: ModelConfig = Field(alias="model_config")
+    data_config: DataConfig
+    simulation_config: SimulationConfig
+    statistical_test_config: StatisticalTestConfig
+    logger_config: Optional[LoggerConfig] = None
 
-        # dataset id from data config
-        self.dataset_id = self.data_config.dataset_id
-        self.model_id = model_id
+    enable_logging: bool = True
 
-        model_spec = self.model_config.specs
+    # Computed fields
+    save_dir: Union[str, Path] = OUTPUT_DIR
+    dataset_id: str = ""
+    base_dir: Path = Field(default_factory=Path)
+    checkpoints_dir: Path = Field(default_factory=Path)
+    model_dir: str = ""
 
-        # Build a string from all model specs for directory naming
+    model_config = ConfigDict(populate_by_name=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def setup_directories(cls, values: dict) -> dict:
+        data_config = values.get("data_config")
+        model_cfg = values.get("model_config") or values.get("model_cfg")  # alias !
+
+        if not data_config or not model_cfg:
+            return values
+
+        values["dataset_id"] = data_config.dataset_id
+
         specs_str = "_".join(
-            f"{k}_{v}" for k, v in vars(model_spec).items() if not k.startswith("_")
+            f"{k}_{v}"
+            for k, v in model_cfg.specs.model_dump(exclude={"model_config"}).items()
+            if not k.startswith("_") and v is not None
         )
 
-        # Base directory for all outputs
-        root_dir = Path(save_dir) if save_dir else OUTPUT_DIR
-        self.base_dir = root_dir / self.dataset_id / f"{self.model_id}_{specs_str}"
+        root_dir = Path(values["save_dir"]) if values.get("save_dir") else OUTPUT_DIR
+        base_dir = root_dir / values["dataset_id"] / f"{values['model_id']}_{specs_str}"
+        checkpoints_dir = base_dir / "checkpoints"
+        checkpoints_dir.mkdir(parents=True, exist_ok=True)
 
-        # Directory setup
-        # Checkpoints directory
-        self.checkpoints_dir = self.base_dir / "checkpoints"
-        self.checkpoints_dir.mkdir(parents=True, exist_ok=True)
+        values["base_dir"] = base_dir
+        values["checkpoints_dir"] = checkpoints_dir
+        values["model_dir"] = str(checkpoints_dir)
+        values["save_dir"] = str(base_dir / "logs")
 
-        # Logger save directory (separate from checkpoints)
-        self.save_dir = str(self.base_dir / "logs")
-
-        # Model directory alias for compatibility
-        self.model_dir = str(self.checkpoints_dir)
-
-        # Process the incoming `logger_config` parameter (could be None, dict or LoggerConfig)
-        # Force the logger's save_dir to the runner's dirpath for consistency across artifacts
+        # Défaut dérivé du save_dir calculé
+        logger_config = values.get("logger_config")
         if logger_config is None:
-            # Create default logger config if none provided
-            self.logger_config = LoggerConfig(
-                save_dir=self.save_dir, type=LoggerType.TENSORBOARD
+            values["logger_config"] = LoggerConfig(
+                save_dir=values["save_dir"], type=LoggerType.TENSORBOARD
             )
         else:
-            # If a dict was passed, extract config and type
-            if isinstance(logger_config, dict):
-                logger_config = cast(Dict[str, Any], logger_config)
-                config_dict = logger_config.get("config", logger_config)
-                type_ = logger_config.get("type", LoggerType.TENSORBOARD)
-                self.logger_config = LoggerConfig(
-                    save_dir=self.save_dir, type=type_, config=config_dict
-                )
-            elif isinstance(logger_config, LoggerConfig):
-                # Always ensure logger_config uses the runner save_dir; recreate to be safe
-                self.logger_config = LoggerConfig(
-                    save_dir=self.save_dir,
-                    type=getattr(logger_config, "type", LoggerType.TENSORBOARD),
-                    config=getattr(logger_config, "config", {}),
-                )
-            else:
-                raise TypeError(
-                    "logger_config must be None, a dict or a LoggerConfig instance"
-                )
+            values["logger_config"] = logger_config.model_validate(
+                {**logger_config.model_dump(), "save_dir": values["save_dir"]}
+            )
 
-        self.enable_logging = enable_logging
+        return values
+
+    @classmethod
+    def from_yaml_presets(
+        cls,
+        yaml_path: Union[str, Path],
+        config_paths: Dict[str, str],
+        model_id: str,
+        **overrides,
+    ) -> "RunnerConfig":
+        data_cfg_path = config_paths["data_config_path"]
+        dataset_id = data_cfg_path.split(".")[-1]
+
+        data_config = DataConfig.from_yaml_components(
+            yaml_path,
+            dataset_id=dataset_id,
+            data_config_path=data_cfg_path,
+            data_loading_config_path=config_paths["data_loading_config_path"],
+        )
+
+        training_config = TrainingConfig.from_yaml(
+            yaml_path, config_paths["training_config_path"]
+        )
+
+        if model_config_path := config_paths.get("model_config_path"):
+            model_config = ModelConfig.from_yaml(yaml_path, model_config_path)
+        else:
+            model_config = ModelConfig.from_yaml_components(
+                yaml_path,
+                model_id=model_id,
+                model_specs_path=config_paths.get("model_specs_config_path"),
+                general_specs_path=config_paths.get("general_specs_config_path"),
+                scheduler_config_path=config_paths.get("training_config_path"),
+                thinning_config_path=config_paths.get("thinning_config_path"),
+            )
+
+        simulation_config = SimulationConfig.from_yaml(
+            yaml_path, config_paths["simulation_config_path"]
+        )
+
+        statistical_test_config = StatisticalTestConfig.from_yaml_components(
+            yaml_path,
+            num_event_types=data_config.num_event_types,
+            config_path=config_paths["statistical_test_config_path"],
+        )
+
+        # Apply max_epochs override
+        if "max_epochs" in overrides:
+            training_config = TrainingConfig(
+                **{
+                    **training_config.model_dump(),
+                    "max_epochs": overrides.pop("max_epochs"),
+                }
+            )
+
+        return cls(
+            model_id=model_id,
+            model_config=model_config,
+            data_config=data_config,
+            training_config=training_config,
+            simulation_config=simulation_config,
+            statistical_test_config=statistical_test_config,
+            **overrides,
+        )
 
     def get_yaml_config(self) -> Dict[str, Any]:
         return {
-            "training_config": self.training_config.get_yaml_config(),
-            "model_config": self.model_config.get_yaml_config(),
-            "data_config": self.data_config.get_yaml_config(),
+            "training_config": self.training_config.model_dump(mode="json"),
+            "model_config": self.model_cfg.model_dump(mode="json"),
+            "data_config": self.data_config.model_dump(mode="json"),
+            "statistical_test_config": self.statistical_test_config.model_dump(
+                mode="json"
+            ),
         }
-
-    @classmethod
-    def get_required_fields(cls) -> list[str]:
-        return ["training_config", "model_config", "data_config"]

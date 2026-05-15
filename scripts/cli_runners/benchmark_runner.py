@@ -4,10 +4,9 @@ Benchmark Runner
 Runner for performance tests and benchmarking of TPP.
 """
 
-from typing import List, Optional, Union
+from typing import List, Optional, Union, cast
 
-from new_ltpp.configs.config_loaders.data_config_loader import DataConfigYamlLoader
-from new_ltpp.configs import DataConfigBuilder
+from new_ltpp.configs.config_factory import config_factory, ConfigType, DataConfig
 from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
 )
@@ -62,9 +61,7 @@ class BenchmarkRunner(CLIRunnerBase):
         # Default configuration file if none provided
         if config_path is None:
             config_path = str(self.get_config_path())
-            self.print_info(
-                f"Using default configuration: {config_path}"
-            )
+            self.print_info(f"Using default configuration: {config_path}")
 
         # If run_all_configs, retrieve all configurations from the YAML
         if run_all_configs:
@@ -105,23 +102,17 @@ class BenchmarkRunner(CLIRunnerBase):
                     f"Data configuration path: {config_paths.get('data_config_path')}"
                 )
 
-                # Use Loader to get dictionary
-                loader = DataConfigYamlLoader()
-                config_dict = loader.load(
-                    yaml_path=config_path,
-                    data_config_path=config_paths.get("data_config_path"),  # type: ignore
-                    data_loading_config_path=config_paths.get(
-                        "data_loading_config_path"
-                    ),
+                # Use ConfigFactory with Pydantic from_yaml
+                config_dict = config_factory.create_from_yaml(
+                    ConfigType.DATA,
+                    config_path,
+                    path_in_yaml=config_paths["data_config_path"].replace("_", "s."),
                 )
+                config_dict = cast(DataConfig, config_dict)  # Type hinting for clarity
 
-                # Use Builder to create object
-                builder = DataConfigBuilder()
-                builder.from_dict(config_dict)
-                built_config = builder.build()
-                all_data_configs.append(built_config)
+                all_data_configs.append(config_dict)
 
-                self.print_info(f"Configuration loaded: {built_config.dataset_id}")
+                self.print_info(f"Configuration loaded: {config_dict.dataset_id}")
 
             except Exception as e:
                 self.print_error(f"Error loading {data_cfg}: {e}")
@@ -140,9 +131,7 @@ class BenchmarkRunner(CLIRunnerBase):
 
         try:
             self.print_info("Benchmark setup...")
-            self.print_info(
-                f"Running on {len(all_data_configs)} configuration(s)..."
-            )
+            self.print_info(f"Running on {len(all_data_configs)} configuration(s)...")
             dataset_ids = [cfg.dataset_id for cfg in all_data_configs]
             self.print_info(f"Datasets: {', '.join(dataset_ids)}")
 

@@ -137,7 +137,7 @@ class EventSampler(nn.Module):
         # [B,L,K, 1]
         res = torch.where(
             none_accepted[..., None],
-            torch.tensor(0.0, device=self.device),
+            gathered.new_zeros(()),
             gathered,
         )
 

@@ -36,21 +36,19 @@ class ModelFactory:
         output_dir: Path | str,
         **kwargs,
     ) -> ITPPModel:
-        """
-        Créer une instance de modèle par nom.
+        """Create a model instance by name.
 
         Args:
-            model_name: Nom du modèle
-            model_config: Configuration du modèle
-            **kwargs: Arguments additionnels pour le constructeur
+            model_name: Registered model name.
+            model_config: Model configuration.
+            data_info: Dataset statistics.
+            output_dir: Artefact output directory.
+            **kwargs: Extra args forwarded to the model constructor.
 
         Returns:
-            Instance du modèle
+            Instantiated model.
         """
-
         logger.info(f"Creating model: {model_name}")
-
-        # Récupérer la classe du modèle via le registry
         model_class = ModelRegistry.get_model(model_name)
 
         if model_class is None:

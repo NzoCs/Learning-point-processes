@@ -8,13 +8,10 @@ Inspired by run_all_phase.py for loading full configuration from YAML.
 from pathlib import Path
 from typing import Optional, Union
 
-from new_ltpp.configs.config_builders import RunnerConfigBuilder
+
 from new_ltpp.runners.runner_manager import RunnerManager
 
 from .cli_base import CONFIG_MAP, CLIRunnerBase
-
-
-from new_ltpp.configs.config_loaders.runner_config_loader import RunnerConfigYamlLoader
 
 
 class ExperimentRunner(CLIRunnerBase):
@@ -122,9 +119,6 @@ class ExperimentRunner(CLIRunnerBase):
             self.print_error(f"Configuration file not found: {config_path}")
             return False
 
-        # Build runner configuration from YAML (comme dans run_all_phase.py)
-        config_builder = RunnerConfigBuilder()
-
         # Construire les chemins de configuration avec la fonction utilitaire
         # Build configuration paths with the helper function
         config_paths = self._build_config_paths(
@@ -144,43 +138,23 @@ class ExperimentRunner(CLIRunnerBase):
             config_type = path_key.replace("_config_path", "").replace("_", " ").title()
             self.print_info(f"  • {config_type}: {path_value}")
 
-        # Charger la configuration complète depuis le YAML via le Loader
-        # Load full configuration from YAML via the Loader
-        loader = RunnerConfigYamlLoader()
-        config_dict = loader.load(
-            yaml_path=config_path,
-            training_config_path=config_paths.get("training_config_path"),  # type: ignore
-            data_config_path=config_paths.get("data_config_path"),  # type: ignore
-            model_config_path=config_paths.get("model_config_path"),  # type: ignore
-            data_loading_config_path=config_paths.get("data_loading_config_path"),  # type: ignore
-            simulation_config_path=config_paths.get("simulation_config_path"),
-            thinning_config_path=config_paths.get("thinning_config_path"),
-            logger_config_path=config_paths.get("logger_config_path"),
-            statistical_test_config_path=config_paths.get(
-                "statistical_test_config_path"
-            ),
-            general_specs_config_path=config_paths.get("general_specs_config_path"),
-            model_specs_config_path=config_paths.get("model_specs_config_path"),
-        )
+        from new_ltpp.configs.runner_config import RunnerConfig
 
-        config_builder.from_dict(config_dict)
-
-        self.print_info("YAML configuration loaded successfully")
-
-        # Appliquer les overrides de paramètres CLI en utilisant les méthodes du builder
+        overrides = {}
         if max_epochs is not None:
-            config_builder.set_max_epochs(max_epochs)
+            overrides["max_epochs"] = max_epochs
             self.print_info(f"Override: max_epochs = {max_epochs}")
-
-        # Ne passer save_dir que s'il est explicitement fourni par l'utilisateur
         if save_dir:
-            config_builder.set_save_dir(save_dir)
+            overrides["save_dir"] = str(save_dir)
             self.print_info(f"Override: save_dir = {save_dir}")
-        # Sinon, laisser les sous-couches générer leur propre save_dir par défaut
-        # qui sera plus intelligent (model_id/dataset_id/etc.)
 
-        # Créer la configuration finale avec la factory
-        config = config_builder.build(model_id=model_id)
+        config = RunnerConfig.from_yaml_presets(
+            yaml_path=config_path,
+            config_paths=config_paths,
+            model_id=model_id,
+            **overrides,
+        )
+        self.print_info("YAML configuration loaded successfully")
 
         # Validate phase
         valid_phases = ["train", "test", "predict", "all"]

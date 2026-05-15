@@ -5,14 +5,16 @@ Provides:
 - Protocol for IDE type checking and isinstance() checks
 """
 
+from new_ltpp.configs import StatisticalTestConfig
+
 from typing import Protocol, TypedDict, runtime_checkable
 import torch
 
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protocol import (
     IPointProcessKernel,
 )
-from new_ltpp.models.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
+from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.shared_types import Batch
 
 
@@ -61,14 +63,15 @@ class ITest(Protocol):
 
     def test_model(
         self,
-        model: NeuralModel,
+        model: ISimulableModel,
         data_loader: TypedDataLoader,
+        statistical_test_config: StatisticalTestConfig,
     ) -> FinalTestResult:
         """Compute the p-value of the MMD two-sample permutation test for a model and a data loader, e.g. ground truth.
         It is recommended to use test_simulation when possible, as it allows to not simulate every time, rather use the pre-simulated batches.
 
         Args:
-            model: NeuralModel to simulate batches from.
+            model: ISimulableModel to simulate batches from.
             data_loader: Data loader for ground truth batches.
             accumulate: Whether to accumulate statistics.
         Returns:

@@ -1,284 +1,97 @@
-"""
-Unified model configuration with comprehensive validation and type safety.
-
-This module provides a refactored ModelConfig implementation that follows
-best practices for configuration management with proper validation,
-error handling, and maintainable architecture.
-"""
-
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import Optional, Union
+from pydantic import ConfigDict, Field, PositiveInt, PositiveFloat, model_validator
+from pathlib import Path
 
 from new_ltpp.utils import logger
-
-from .base_config import Config, ConfigValidationError
-
-if TYPE_CHECKING:
-    from new_ltpp.evaluation.statistical_testing.statistical_tests.builder import (
-        StatisticalTestConfig,
-    )
+from .base_config import Config
+from .config_utils import load_yaml, extract
 
 
 def get_available_gpu() -> int:
-    """Get the available GPU device ID or -1 for CPU."""
     try:
         import torch
 
         if torch.cuda.is_available():
-            return 0  # Return first available GPU
+            return 0
         return -1
     except ImportError:
         logger.warning("PyTorch not available, defaulting to CPU")
         return -1
 
 
-@dataclass
 class SchedulerConfig(Config):
-    """Configuration for the learning rate scheduler and training hyperparameters.
-    Args:
-        lr (float): Learning rate.
-        lr_scheduler (bool): Whether to use a learning rate scheduler.
-        max_epochs (int): Maximum number of training epochs.
-    """
-
-    def __init__(self, max_epochs: int, lr_scheduler: bool, lr: float, **kwargs):
-        self.lr = lr or 1e-3
-        self.lr_scheduler = lr_scheduler or True
-        self.max_epochs = max_epochs
-
-    def get_yaml_config(self):
-        return {
-            "lr": self.lr,
-            "lr_scheduler": self.lr_scheduler,
-            "max_epochs": self.max_epochs,
-        }
-
-    @classmethod
-    def get_required_fields(cls) -> List[str]:
-        return ["max_epochs"]
+    max_epochs: PositiveInt
+    lr: PositiveFloat = 1e-3
+    lr_scheduler: bool = True
 
 
-@dataclass
 class ThinningConfig(Config):
-    """Configuration for thinning process in temporal point processes."""
+    num_sample: PositiveInt
+    num_exp: PositiveInt
+    num_samples_boundary: PositiveInt = 200
+    over_sample_rate: float = Field(default=2.0, gt=1.0)
 
-    num_sample: int
-    num_exp: int
-    num_samples_boundary: int
-    over_sample_rate: float = 2.0
-
-    def __init__(
-        self, num_sample: int, num_exp: int, over_sample_rate: float = 2.0, **kwargs
-    ):
-        self.num_sample = num_sample
-        self.num_exp = num_exp
-        self.num_samples_boundary = num_sample
-        self.over_sample_rate = over_sample_rate
-
+    @model_validator(mode="before")
     @classmethod
-    def get_required_fields(cls) -> List[str]:
-        """Return list of required field names."""
-        return []  # All fields have defaults
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        """Get configuration as YAML-compatible dictionary."""
-        return {
-            "num_sample": self.num_sample,
-            "num_exp": self.num_exp,
-            "over_sample_rate": self.over_sample_rate,
-            "num_samples_boundary": self.num_samples_boundary,
-        }
-
-    def validate(self) -> None:
-        """Validate thinning configuration."""
-        super().validate()
-
-        if self.num_sample <= 0:
-            raise ConfigValidationError("num_sample must be positive", "num_sample")
-
-        if self.num_exp <= 0:
-            raise ConfigValidationError("num_exp must be positive", "num_exp")
-
-        if self.over_sample_rate <= 1.0:
-            raise ConfigValidationError(
-                "over_sample_rate must be greater than 1.0", "over_sample_rate"
-            )
+    def setup_boundary(cls, values: dict) -> dict:
+        if values.get("num_samples_boundary") is None:
+            values["num_samples_boundary"] = values.get("num_sample")
+        return values
 
 
-@dataclass
-class SimulationConfig(Config):
-    """Configuration for event sequence simulation.
-
-    The start_time for simulation is dynamically computed from the dataset (end_time_max).
-    time_window specifies the additional time duration beyond the last observed event.
-    """
-
-    time_window: float  # Additional time duration for simulation beyond last event
-    batch_size: int
-    initial_buffer_size: int
-    seed: int = 42
-
-    @classmethod
-    def get_required_fields(cls) -> List[str]:
-        """Return list of required field names."""
-        return []  # All fields have defaults
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        """Get configuration as YAML-compatible dictionary."""
-        return {
-            "time_window": self.time_window,
-            "batch_size": self.batch_size,
-            "initial_buffer_size": self.initial_buffer_size,
-            "seed": self.seed,
-        }
-
-    def validate(self) -> None:
-        """Validate simulation configuration."""
-        super().validate()
-
-        if self.time_window <= 0:
-            raise ConfigValidationError("time_window must be positive", "time_window")
-
-        if self.batch_size <= 0:
-            raise ConfigValidationError("batch_size must be positive", "batch_size")
-
-        if self.initial_buffer_size <= 0:
-            raise ConfigValidationError(
-                "initial_buffer_size must be positive", "initial_buffer_size"
-            )
-
-
-@dataclass
 class ModelSpecsConfig(Config):
-    """Dataclass for model specs with required fields and extra kwargs support.
+    hidden_size: Optional[int] = None
+    dropout: float = Field(default=0.0, ge=0.0, le=1.0)
 
-    Required fields:
-        hidden_size: number of hidden units
-        dropout: dropout probability
-    """
-
-    def __init__(
-        self,
-        hidden_size: Optional[int] = None,
-        dropout: Optional[float] = 0.0,
-        **kwargs,
-    ):
-        self.hidden_size = hidden_size
-        self.dropout = dropout
-
-        # Store extra kwargs as attributes
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    @classmethod
-    def get_required_fields(cls) -> List[str]:
-        return []
-
-    def get_yaml_config(self) -> Dict[str, Any]:
-        config = {"hidden_size": self.hidden_size, "dropout": self.dropout}
-        # Add any extra attributes
-        for attr in dir(self):
-            if not attr.startswith("_") and attr not in [
-                "hidden_size",
-                "dropout",
-                "get_yaml_config",
-            ]:
-                config[attr] = getattr(self, attr)
-        return config
+    model_config = ConfigDict(extra="allow")
 
 
-@dataclass
 class ModelConfig(Config):
-    """
-    Configuration for the model architecture and specifications.
-    Cette classe prend des dictionnaires pour les sous-configs et instancie les classes intermédiaires.
-    Args:
-        model_id (str): Identifier for the model type (e.g., 'NHP', 'RMTPP').
-        device (str): Device to run the model on ('cpu', 'cuda', or 'auto').
-        gpu (int): GPU device ID, -1 for CPU.
-        is_training (bool): Whether the model is in training mode.
-        compute_simulation (bool): Whether to compute simulations during training.
-        base_config (dict): Dictionnaire de config pour TrainingConfig.
-        model_specs (dict): Dictionnaire de config pour ModelSpecsConfig.
-        thinning_config (dict): Dictionnaire de config pour ThinningConfig.
-        simulation_config (dict): Dictionnaire de config pour SimulationConfig.
-        statistical_test_config (dict): Configuration for statistical testing.
-    """
+    model_id: str
+    is_training: bool = True
+    compute_simulation: bool = False
+    compute_metrics: bool = True
+    device: str = "cpu"
+    gpu: int = Field(default_factory=get_available_gpu)
 
-    def __init__(
-        self,
-        simulation_config: dict | SimulationConfig,
-        scheduler_config: dict | SchedulerConfig,
-        general_specs: dict | ModelSpecsConfig,
-        model_specs: dict,
-        num_mc_samples: int,
-        thinning_config: dict | ThinningConfig | None = None,
-        statistical_test_config: Optional[Union[dict, "StatisticalTestConfig"]] = None,
-        device: str = "auto",
-        gpu: int | None = None,
-        is_training: bool = False,
-        compute_simulation: bool = False,
-        **kwargs,
-    ):
-        
-        self.num_mc_samples = num_mc_samples
-        self.device = device
-        self.gpu = gpu if gpu is not None else get_available_gpu()
-        self.is_training = is_training
-        self.compute_simulation = compute_simulation
-        self.statistical_test_config = statistical_test_config
+    specs: ModelSpecsConfig
 
-        # Specs: accept dict or ModelSpecsConfig, instantiate if dict
-        if isinstance(general_specs, ModelSpecsConfig):
-            general_specs = general_specs.get_yaml_config()
-            self.specs = ModelSpecsConfig(**general_specs, **model_specs)
-        elif isinstance(general_specs, dict):
-            self.specs = ModelSpecsConfig(**general_specs, **model_specs)
-        else:
-            raise TypeError("specs must be a dict or ModelSpecsConfig instance")
-
-        self.thinning_config = (
-            thinning_config
-            if isinstance(thinning_config, ThinningConfig)
-            else ThinningConfig(**(thinning_config or {}))
-        )
-        self.simulation_config = (
-            simulation_config
-            if isinstance(simulation_config, SimulationConfig)
-            else SimulationConfig(**(simulation_config))
-        )
-
-        self.scheduler_config = (
-            scheduler_config
-            if isinstance(scheduler_config, SchedulerConfig)
-            else SchedulerConfig(**(scheduler_config))
-        )
-
-        # Set device if auto
-        if self.device == "auto":
-            self.device = "cuda" if self.gpu >= 0 else "cpu"
+    scheduler_config: SchedulerConfig
+    thinning_config: ThinningConfig
 
     @classmethod
-    def get_required_fields(cls) -> List[str]:
-        return []
+    def from_yaml_components(
+        cls,
+        yaml_path: Union[str, Path],
+        model_id: str,
+        model_specs_path: Optional[str] = None,
+        general_specs_path: Optional[str] = None,
+        scheduler_config_path: Optional[str] = None,
+        thinning_config_path: Optional[str] = None,
+    ) -> "ModelConfig":
+        data = load_yaml(yaml_path)
 
-    def get_yaml_config(self) -> Dict[str, Any]:
-        return {
-            "device": self.device,
-            "gpu": self.gpu,
-            "is_training": self.is_training,
-            "compute_simulation": self.compute_simulation,
-            "thinning": self.thinning_config.get_yaml_config(),
-            "simulation_config": self.simulation_config.get_yaml_config(),
-            "statistical_test_config": self.statistical_test_config,
-        }
+        specs_dict = {}
+        for path in filter(None, [model_specs_path, general_specs_path]):
+            try:
+                specs_dict.update(extract(data, path))
+            except KeyError:
+                pass
 
-    def validate(self) -> None:
-        super().validate()
-        valid_devices = ["cpu", "cuda", "auto"]
-        if self.device not in valid_devices and not self.device.startswith("cuda:"):
-            raise ConfigValidationError(
-                f"device must be one of {valid_devices} or 'cuda:N'", "device"
-            )
-        self.thinning_config.validate()
-        self.simulation_config.validate()
+        extra: dict = {}
+        if scheduler_config_path:
+            try:
+                extra["scheduler_config"] = SchedulerConfig(
+                    **extract(data, scheduler_config_path)
+                )
+            except KeyError:
+                pass
+        if thinning_config_path:
+            try:
+                extra["thinning_config"] = ThinningConfig(
+                    **extract(data, thinning_config_path)
+                )
+            except KeyError:
+                pass
+
+        return cls(model_id=model_id, specs=ModelSpecsConfig(**specs_dict), **extra)

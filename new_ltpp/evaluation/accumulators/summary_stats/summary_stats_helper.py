@@ -185,9 +185,4 @@ class SummaryStatsHelper(MetricsHelper):
                 gt_acf,
                 sim_acf,
             ),
-            SummaryStatsMetric.ACF_HIST_KL.value: (
-                self._kl_divergence,
-                gt_acf,
-                sim_acf,
-            ),
         }

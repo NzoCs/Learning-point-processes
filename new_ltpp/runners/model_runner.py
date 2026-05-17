@@ -6,6 +6,7 @@ from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.data.preprocess import TPPDataModule
 from new_ltpp.models.model_factory import ModelFactory
 from new_ltpp.runners.callbacks import PredictionStatsCallback, TestCallback
+from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 from new_ltpp.runners.trainer_factory import (
     CheckpointManager,
     TrainerFactory,
@@ -71,6 +72,10 @@ class Runner:
     @property
     def trainer(self) -> pl.Trainer:
         """Create trainer with all necessary callbacks for the current phase."""
+        # Extract metadata for results aggregation
+        metadata = ResultsAggregator.extract_metadata_from_config(self.config)
+        experiment_id = self.dataset_id
+
         trainer = TrainerFactory.create(
             training_config=self.config.training_config,
             trainer_logger=self._lightning_logger,
@@ -80,8 +85,14 @@ class Runner:
                     base_dir=self.config.base_dir,
                     statistical_test_config=self.config.statistical_test_config,
                     simulation_config=self.config.simulation_config,
+                    metadata=metadata,
+                    experiment_id=experiment_id,
                 ),
-                TestCallback(output_dir=self.config.base_dir / "test_results"),
+                TestCallback(
+                    output_dir=self.config.base_dir / "test_results",
+                    metadata=metadata,
+                    experiment_id=experiment_id,
+                ),
             ],
         )
         return trainer

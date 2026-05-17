@@ -5,7 +5,12 @@ from typing import List, Optional, Any
 
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint,
+    RichProgressBar,
+)
+from pytorch_lightning.callbacks.progress.rich_progress import RichProgressBarTheme
 from pytorch_lightning.loggers.logger import Logger as LightningLogger
 from pytorch_lightning.strategies import DDPStrategy
 
@@ -136,10 +141,21 @@ class TrainerFactory:
             monitor="val_loss",
             mode="min",
             patience=training_config.patience,
-            verbose=True,
+            verbose=False,
         )
 
-        return [ckpt_callback, early_stop_callback]
+        rich_progress_bar = RichProgressBar(
+            leave=False,
+            theme=RichProgressBarTheme(
+                description="green",
+                progress_bar="cyan",
+                progress_bar_finished="green",
+                batch_progress="cyan",
+                metrics="yellow",
+            ),
+        )
+
+        return [ckpt_callback, early_stop_callback, rich_progress_bar]
 
     # ============================================================
     #  FACTORY ENTRYPOINT

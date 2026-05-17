@@ -1,237 +1,336 @@
-# from typing import Tuple, Optional
+"""
+PyTorch implementation of the multivariate Self-Correcting (Epidemic) process model.
 
-# import torch
-# import torch.nn.functional as F
-# from torch import nn
+Intensity :
+    λ_k(t) = exp(μ_k * t - Σ_{t_i < t} α[k, m_i])
+"""
 
-# from new_ltpp.shared_types import Batch, SimulationResult
+from typing import Optional
 
-# from ..implementations.base_model import Model
-# from ..model_protocol import ITPPModel
+from new_ltpp.models.base import TrainingMixin
+from new_ltpp.shared_types import Batch, SimulationResult
 
-
-# class SelfCorrecting(Model):
-#     """
-#     PyTorch implementation of the Self-Correcting Point Process model.
-#     Intensity for type i: lambda_i(t) = exp(mu_i + alpha_i * (t - N_i(t)))
-#     where N_i(t) is the number of events of type i occurred strictly before time t.
-#     """
-
-#     def __init__(
-#         self,
-#         *,
-#         mu: list[float] | torch.Tensor,
-#         alpha: list[float] | torch.Tensor,
-#         **kwargs,
-#     ):
-#         super(SelfCorrecting, self).__init__(**kwargs)
-
-#         # Validate and convert parameters
-#         mu = torch.as_tensor(mu, dtype=torch.float32, device=self.device)
-#         alpha = torch.as_tensor(alpha, dtype=torch.float32, device=self.device)
-
-#         if (
-#             mu.shape[0] != self.num_event_types
-#             or alpha.shape[0] != self.num_event_types
-#         ):
-#             raise ValueError(
-#                 f"Dimension mismatch. Expected ({self.num_event_types},). "
-#                 f"Got mu: {mu.shape}, alpha: {alpha.shape}"
-#             )
-
-#         self.mu = nn.Parameter(mu.view(self.num_event_types))
-#         self.alpha = nn.Parameter(alpha.view(self.num_event_types))
-
-#     def _get_cumulative_counts(self, type_seq: torch.Tensor) -> torch.Tensor:
-#         """
-#         Efficiently compute N_i(t) for each time step.
-
-#         Returns:
-#             torch.Tensor: [Batch, Seq_Len, Num_Types]
-#             counts[b, k, i] = number of events of type i in type_seq[b, :k+1]
-#         """
-#         # [Batch, Seq, Num_Types]
-#         type_one_hot = F.one_hot(
-#             type_seq.long(), num_classes=self.num_event_types
-#         ).float()
-
-#         # Cumsum along the time dimension
-#         cumulative_counts = torch.cumsum(type_one_hot, dim=1)
-#         return cumulative_counts
-
-#     def compute_intensities_at_sample_dtimes(
-#         self,
-#         *,
-#         time_seq: torch.Tensor,
-#         type_seq: torch.Tensor,
-#         sample_dtimes: torch.Tensor,
-#         valid_event_mask: Optional[
-#             torch.Tensor
-#         ] = None,  # Not used in SelfCorrecting but kept for compatibility
-#         compute_last_step_only: bool = False,
-#         **kwargs,
-#     ) -> torch.Tensor:
-#         """
-#         Compute lambda(t + delta) in a vectorized way.
-#         """
-#         # 1. Retrieve historical counts N_i(t)
-#         # counts_history[b, k] contains the count INCLUDING event k.
-#         counts_at_events = self._get_cumulative_counts(type_seq)  # [B, L, D]
-
-#         if compute_last_step_only:
-#             # Take the time of the last event and the associated counts
-#             base_time = time_seq[:, -1:].unsqueeze(-1)  # [B, 1, 1]
-#             base_counts = counts_at_events[:, -1:, :].unsqueeze(2)  # [B, 1, 1, D]
-
-#             # If sample_dtimes is [B, 1, N_samples] or [B, L, N_samples], adapt accordingly
-#             if sample_dtimes.dim() == 3 and sample_dtimes.shape[1] != 1:
-#                 sample_dtimes = sample_dtimes[:, -1:, :]
-
-#             # Absolute time t = t_last + delta
-#             # [B, 1, N_samples] -> [B, 1, N_samples, 1]
-#             current_times = (base_time + sample_dtimes).unsqueeze(-1)
-
-#         else:
-#             # For the whole sequence
-#             base_time = time_seq.unsqueeze(-1)  # [B, L, 1]
-#             base_counts = counts_at_events.unsqueeze(2)  # [B, L, 1, D]
-
-#             # Absolute time t = t_k + delta
-#             # [B, L, N_samples, 1]
-#             current_times = (base_time + sample_dtimes).unsqueeze(-1)
-
-#         # 2. Compute intensity
-#         # Formula: exp(mu + alpha * (t - N(t)))
-#         # N(t) here is the number of events *strictly before* t.
-#         # Since t > t_k (because delta > 0), N(t) includes event k.
-#         # Therefore base_counts (which is the cumsum including k) is correct.
-
-#         # [1, 1, 1, D]
-#         mu = self.mu.view(1, 1, 1, -1)
-#         alpha = self.alpha.view(1, 1, 1, -1)
-
-#         # exponent: [B, L, N_samples, D]
-#         # Broadcasting: t (..., 1) - N (..., D)
-#         exponent = mu + alpha * (current_times - base_counts)
-
-#         intensities = torch.exp(exponent)
-
-#         # Optional numerical safety
-#         # intensities = torch.clamp(intensities, min=1e-9)
-
-#         return intensities
-
-#     def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
-#         """
-#         Compute the exact (analytical) log-likelihood.
-#         LL = sum(log(lambda(t_i))) - int(lambda(t) dt)
-#         """
-#         time_seq = batch.time_seqs
-#         type_seq = batch.type_seqs
-
-#         # Mask (ignore padding and the first event which is just an anchor t0)
-#         # [Batch, L-1]
-#         seq_mask = batch.valid_event_mask[:, 1:]
-
-#         # --- Data Preparation ---
-
-#         # 1. Counters N(t)
-#         # [Batch, L, D]
-#         all_counts = self._get_cumulative_counts(type_seq)
-
-#         # To predict event k (at time t_k), use history up to k-1.
-#         # Therefore N(t_k) = counts[k-1]
-#         # [Batch, L-1, D]
-#         N_prev = all_counts[:, :-1, :]
-
-#         # Target event times t_1 ... t_N
-#         # [Batch, L-1, 1]
-#         t_target = time_seq[:, 1:].unsqueeze(-1)
-
-#         # Paramètres reshaped [1, 1, D]
-#         mu = self.mu.view(1, 1, -1)
-#         alpha = self.alpha.view(1, 1, -1)
-
-#         # --- A. Event Log-Likelihood ---
-
-#         # lambda(t_k) = exp(mu + alpha * (t_k - N(t_k)))
-#         # [Batch, L-1, D]
-#         exponent_at_event = mu + alpha * (t_target - N_prev)
-#         lambda_at_event = torch.exp(exponent_at_event)
-
-#         # Select the intensity of the type that actually occurred
-#         target_types = type_seq[:, 1:].long().unsqueeze(-1)  # [Batch, L-1, 1]
-
-#         # [Batch, L-1]
-#         lambda_target = torch.gather(
-#             lambda_at_event, dim=-1, index=target_types
-#         ).squeeze(-1)
-
-#         # Log(lambda)
-#         event_ll = torch.log(lambda_target + 1e-9)
-
-#         # --- B. Integral (Non-Event Log-Likelihood) ---
-
-#         # Integrate over intervals [t_{k-1}, t_k].
-#         # Interval duration: t_k - t_{k-1} (we use absolute times in the formula)
-#         # In the interval (t_{k-1}, t_k), the count N(t) is constant and equals N_prev (counts up to k-1).
-
-#         t_start = time_seq[:, :-1].unsqueeze(-1)  # t_{k-1}
-
-#         # Analytical calculation of the integral over [t_start, t_end]
-#         # Int = (1/alpha) * [ lambda(t_end) - lambda(t_start) ]
-#         # Note: lambda here is computed with the current N (N_prev)
-
-#         # Lambda at the start of the interval (just after the previous event)
-#         lambda_start = torch.exp(mu + alpha * (t_start - N_prev))
-
-#         # Lambda at the end of the interval (just before the current event)
-#         # This is exactly `lambda_at_event` computed above.
-#         lambda_end = lambda_at_event
-
-#         # Integral per type: [Batch, L-1, D]
-#         # Handle division by zero if alpha ~ 0 (optional, here we assume alpha != 0)
-#         # For stability: alpha + epsilon
-#         alpha_safe = alpha + 1e-9 * torch.sign(alpha)
-
-#         integral_per_type = (lambda_end - lambda_start) / alpha_safe
-
-#         # Sum over all types D
-#         # [Batch, L-1]
-#         non_event_ll = integral_per_type.sum(dim=-1)
-
-#         # --- C. Total Loss ---
-
-#         # Masked sum
-#         loss_event = (event_ll * seq_mask).sum()
-#         loss_non_event = (non_event_ll * seq_mask).sum()
-
-#         num_events = seq_mask.sum()
-
-#         # NLL
-#         loss = -(loss_event - loss_non_event)
-
-#         return loss, num_events
-
-#     def simulate(
-#         self,
-#         batch: Optional[Batch] = None,
-#         start_time: Optional[float] = None,
-#         end_time: Optional[float] = None,
-#         batch_size: Optional[int] = None,
-#         initial_buffer_size: Optional[int] = None,
-#     ) -> SimulationResult:
-#         """
-#         Simulate sequences of event types.
-#         """
-#         raise NotImplementedError(
-#             "Simulation not implemented for Self-Correcting model, there is a custom implementation in the data generation class. This class serves as a benchmark for the other models in prediction phase for the loglike loss."
-#         )
+import torch
+import torch.nn.functional as F
+from torch import nn
 
 
-# if __name__ == "__main__":
-#     model: ITPPModel = SelfCorrecting(
-#         num_event_types=3,
-#         mu=[-2.0, -1.0, -0.5],
-#         alpha=[0.5, 0.3, 0.1],
-#     )
+class SelfCorrecting(TrainingMixin):
+    """
+    Multivariate Self-Correcting process with matrix-valued α parameters.
+
+    Parameters are learnable (nn.Parameter), making this class compatible with
+    gradient-based fitting via exact NLL minimisation.
+
+    Args:
+        mu   : Baseline growth rates.           Shape (K,)  or list of length K.
+               μ_k > 0 (enforced with clamp to ensure valid integrals).
+        alpha: Correction magnitudes.           Shape (K, K) or list of lists.
+               α[k, m] = decrease in type-k log-intensity after a type-m event.
+    """
+
+    mu: nn.Parameter
+    alpha: nn.Parameter
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Initialisation
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def __init__(
+        self,
+        mu: Optional[list[float] | torch.Tensor] = None,
+        alpha: Optional[list[list[float]] | torch.Tensor] = None,
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
+
+        if mu is None:
+            mu = torch.zeros(self.num_event_types)
+        if alpha is None:
+            alpha = torch.zeros((self.num_event_types, self.num_event_types))
+
+        # On infère K (nombre de dimensions) à partir de la matrice
+        if hasattr(self, "num_event_types"):
+            K = self.num_event_types
+        else:
+            K = len(mu) if isinstance(mu, list) else mu.shape[0]
+            self.num_event_types = K
+
+        self.eps = 1e-5  # Protection contre la division par zéro dans l'intégrale
+
+        def _to_param(x, shape, name):
+            dev = getattr(self, "device", torch.device("cpu"))
+            t = torch.tensor(x, dtype=torch.float32, device=dev).view(shape)
+            if t.shape != torch.Size(shape):
+                raise ValueError(
+                    f"SelfCorrecting: expected {name} of shape {shape}, got {list(t.shape)}"
+                )
+            return t
+
+        mu_t = _to_param(mu, (K,), "mu")
+        alpha_t = _to_param(alpha, (K, K), "alpha")
+
+        self.mu = nn.Parameter(mu_t)
+        self.alpha = nn.Parameter(alpha_t)
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Internal helpers
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _get_history(
+        self,
+        type_seqs: torch.Tensor,  # [B, L]
+        valid_mask: torch.Tensor,  # [B, L] bool
+    ) -> torch.Tensor:
+        """
+        Calcule la somme cumulée des corrections H(t) = Σ_{t_i < t} α[:, m_i].
+        Retourne un tenseur H_past de shape [B, L, K] représentant la pénalité
+        pour chaque type d'événement STRICTEMENT avant l'événement j.
+        """
+        B, L = type_seqs.shape
+        K = self.num_event_types
+
+        safe_types = type_seqs.long().clone()
+        safe_types[~valid_mask.bool()] = 0
+
+        # [B, L, K]
+        alpha_emb = F.embedding(safe_types, self.alpha.t())
+        alpha_emb = alpha_emb * valid_mask.float().unsqueeze(-1)
+
+        # Somme cumulée sur la séquence temporelle
+        H = torch.cumsum(alpha_emb, dim=1)
+
+        # Décalage pour obtenir l'historique strict (avant t_j)
+        zeros = torch.zeros(B, 1, K, device=H.device, dtype=H.dtype)
+        H_past = torch.cat([zeros, H[:, :-1, :]], dim=1)
+
+        return H_past
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Core intensity computation
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def compute_intensities_at_sample_dtimes(
+        self,
+        *,
+        time_seqs: torch.Tensor,
+        time_delta_seqs: torch.Tensor,
+        type_seqs: torch.Tensor,
+        valid_event_mask: torch.Tensor,
+        sample_dtimes: torch.Tensor,
+        compute_last_step_only: bool = False,
+        **kwargs,
+    ) -> torch.Tensor:
+        """
+        Vectorised multivariate Self-Correcting intensity.
+
+        λ_k(t) = exp(μ_k * t - Σ_{t_i < t} α[k, m_i])
+        """
+        H_past = self._get_history(type_seqs, valid_event_mask)  # [B, L, K]
+
+        if compute_last_step_only:
+            H_past = H_past[:, -1:, :]
+            time_seqs = time_seqs[:, -1:]
+
+        # Absolute time: [B, L, S, 1]
+        T = (time_seqs.unsqueeze(-1) + sample_dtimes).unsqueeze(-1)
+        H = H_past.unsqueeze(2)  # [B, L, 1, K]
+
+        mu = torch.clamp(self.mu, min=self.eps)  # [K]
+
+        # État du compensateur: x(t) = μ*t - H
+        x = T * mu - H
+
+        return torch.exp(x)
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Log-likelihood loss
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, int]:
+        """
+        Exact NLL for the multivariate Self-Correcting process.
+
+        LL = Σ_i log λ_{k_i}(t_i)  −  Σ_j ∫_{t_j}^{t_{j+1}} Σ_k λ_k(t) dt
+        """
+        time_seq = batch.time_seqs  # [B, L]
+        type_seq = batch.type_seqs  # [B, L]
+        time_delta_seq = batch.time_delta_seqs  # [B, L]
+        mask = batch.valid_event_mask  # [B, L] bool
+
+        safe_types = type_seq.long().clone()
+        safe_types[~mask.bool()] = 0
+
+        # Historique strict pour toute la séquence
+        H_past = self._get_history(type_seq, mask)  # [B, L, K]
+        mu = torch.clamp(self.mu, min=self.eps)  # [K]
+
+        # ── 1. Log-intensity at each observed event ───────────────────────────
+        # Événements 1..N
+        T_obs = time_seq[:, 1:]  # [B, L-1]
+        H_obs = H_past[:, 1:, :]  # [B, L-1, K]
+
+        x_obs = T_obs.unsqueeze(-1) * mu - H_obs  # [B, L-1, K]
+
+        target_types = safe_types[:, 1:].unsqueeze(-1)  # [B, L-1, 1]
+        x_target = torch.gather(x_obs, dim=-1, index=target_types).squeeze(-1)
+
+        # Puisque λ = exp(x), log(λ) = x, ce qui est numériquement parfait
+        event_ll = x_target  # [B, L-1]
+
+        # ── 2. Analytical integral over each inter-event interval ─────────────
+        # Intervales de t_0..t_{L-2}
+        T_start = time_seq[:, :-1]  # [B, L-1]
+        H_start = H_past[:, :-1, :]  # [B, L-1, K]
+        dt = time_delta_seq[:, 1:].unsqueeze(-1)  # [B, L-1, 1]
+
+        x_start = T_start.unsqueeze(-1) * mu - H_start  # [B, L-1, K]
+
+        # ∫ exp(x_start + μ*s) ds = exp(x_start) * (exp(μ*Δt) - 1) / μ
+        integral_k = torch.exp(x_start) * (torch.exp(mu * dt) - 1.0) / mu
+        integral = integral_k.sum(dim=-1)  # [B, L-1]
+
+        # ── 3. Masked reduction ───────────────────────────────────────────────
+        pad_mask = mask[:, 1:]  # [B, L-1]
+
+        event_ll = (event_ll * pad_mask).sum()
+        non_event_ll = (integral * pad_mask).sum()
+
+        num_events = int(pad_mask.sum().item())
+        loss = -(event_ll - non_event_ll)
+
+        return loss, num_events
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # State Synchronization & Simulation
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def sync_state(
+        self, batch: Batch
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Synchronise l'état interne (H, t_current, t_end) à partir d'un batch d'historique.
+        Reproduit la logique de fenêtre de simulation du Simulator générique.
+
+        Returns:
+            H: Tenseur [B, K] de la somme des pénalités alpha pour les événements passés.
+            t_current: Tenseur [B] du temps actuel (end_times du batch).
+            t_end: Tenseur [B] de la fin de simulation cible.
+        """
+        mask = batch.valid_event_mask
+        time_seqs = batch.time_seqs
+        type_seqs = batch.type_seqs
+
+        # ── 1. Calcul de H (Somme des pénalités passées) ──
+        safe_types = type_seqs.long().clone()
+        safe_types[~mask] = 0
+
+        # [B, L, K]
+        alpha_emb = F.embedding(safe_types, self.alpha.t())
+        alpha_emb = alpha_emb * mask.float().unsqueeze(-1)
+
+        # On somme sur l'axe temporel (L) -> [B, K]
+        H = alpha_emb.sum(dim=1)
+
+        # ── 2. Calcul des temps (start, current, horizon) ──
+        time_clone_min = time_seqs.clone()
+        time_clone_min[~mask] = float("inf")
+        start_times = time_clone_min.min(dim=1).values
+        start_times[torch.isinf(start_times)] = 0.0  # Fallback si la séquence est vide
+
+        time_clone_max = time_seqs.clone()
+        time_clone_max[~mask] = 0.0
+        end_times = time_clone_max.max(dim=1).values
+
+        # La durée à simuler est égale à la durée de l'historique fourni
+        sim_window = end_times - start_times
+
+        # Protection si le batch est complètement vide (simulate_from_scratch)
+        # On garantit une fenêtre minimale strictement positive (ex: 10.0)
+        sim_window = torch.clamp(sim_window, min=1e-3)
+
+        t_end = end_times + sim_window
+
+        return H, end_times, t_end
+
+    def simulate(
+        self,
+        batch: Batch,
+        max_events: int = 10_000,
+        start_time: Optional[float] = None,
+        end_time: Optional[float] = None,
+    ) -> Batch:
+        """
+        Simulate the multivariate Self-Correcting process conditionné sur un batch.
+        Utilise l'inversion exacte vectorisée sur tout le batch.
+        """
+        dev = getattr(self, "device", torch.device("cpu"))
+        K = self.num_event_types
+        batch_size = batch.time_seqs.size(0)
+
+        mu = torch.clamp(self.mu.detach(), min=self.eps)  # [K]
+        alpha_t = self.alpha.detach().t()  # [K_source, K_target]
+
+        # ── 1. Synchronisation de l'état avec le batch conditionnel ──
+        H, t, t_end = self.sync_state(batch)
+        H = H.detach()
+        t = t.detach()
+        t_end = t_end.detach()
+
+        active = torch.ones(batch_size, dtype=torch.bool, device=dev)  # [B]
+
+        # Pré-allocation
+        all_times = torch.zeros(
+            (batch_size, max_events), dtype=torch.float32, device=dev
+        )
+        all_deltas = torch.zeros(
+            (batch_size, max_events), dtype=torch.float32, device=dev
+        )
+        all_types = torch.zeros((batch_size, max_events), dtype=torch.long, device=dev)
+        lens = torch.zeros(batch_size, dtype=torch.long, device=dev)
+
+        # ── 2. Boucle de simulation vectorisée ──
+        while active.any():
+            x = mu * t.unsqueeze(1) - H  # [B, K]
+
+            E = torch.empty((batch_size, K), device=dev).exponential_(1.0)
+            tau = torch.log(E * mu / torch.exp(x) + 1.0) / mu  # [B, K]
+
+            dt, next_dim = torch.min(tau, dim=1)  # dt: [B], next_dim: [B]
+            t_next = t + dt
+
+            # Vectorized condition: t_next doit être inférieur au t_end de SA séquence
+            valid_step = active & (t_next < t_end) & (lens < max_events)
+            active = valid_step
+
+            if not active.any():
+                break
+
+            t = torch.where(valid_step, t_next, t)
+            H[valid_step] = H[valid_step] + alpha_t[next_dim[valid_step]]
+
+            b_idx = torch.arange(batch_size, device=dev)[valid_step]
+            curr_lens = lens[valid_step]
+
+            all_times[b_idx, curr_lens] = t_next[valid_step]
+            all_deltas[b_idx, curr_lens] = dt[valid_step]
+            all_types[b_idx, curr_lens] = next_dim[valid_step]
+
+            lens[valid_step] += 1
+
+        # ── 3. Post-traitement et renvoi du Batch généré ──
+        max_len = max(lens.max().item(), 1)
+
+        time_seqs = all_times[:, :max_len]
+        time_delta_seqs = all_deltas[:, :max_len]
+        type_seqs = all_types[:, :max_len]
+
+        seq_idx = torch.arange(max_len, device=dev).unsqueeze(0).expand(batch_size, -1)
+        valid_event_mask = seq_idx < lens.unsqueeze(1)
+
+        return SimulationResult(
+            time_seqs=time_seqs,
+            time_delta_seqs=time_delta_seqs,
+            type_seqs=type_seqs,
+            valid_event_mask=valid_event_mask,
+        )

@@ -146,7 +146,7 @@ class MarkDistributionBenchmark(TypeBenchmark):
                     -torch.sum(
                         self.mark_probabilities
                         * torch.log(self.mark_probabilities + 1e-10)
-                    )
+                    ).item()
                     if self.mark_probabilities is not None
                     else 0.0
                 )

@@ -48,7 +48,7 @@ def run_experiment(
     ),
     data_config: str = typer.Option(
         "test",
-        "--data-config",
+        "--dataset-id",
         help="Data configuration (taxi, taobao, amazon, retweet, volcano, earthquake, stackoverflow, test, hawkes1, hawkes2, H2expi, H2expc) [default: test]",
     ),
     general_specs_config: str = typer.Option(
@@ -186,8 +186,8 @@ def generate_data(
     num_simulations: int = typer.Option(
         1000, "--num-sim", "-n", help="Number of simulations to generate"
     ),
-    method: str = typer.Option(
-        "hawkes", "--method", "-m", help="Generation method (hawkes, self_correcting)"
+    model: str = typer.Option(
+        "hawkes", "--model", "-m", help="Generation method (hawkes, self_correcting)"
     ),
     dim_process: int = typer.Option(
         2, "--dim", "-d", help="Number of event types/dimensions"
@@ -207,7 +207,9 @@ def generate_data(
         False, "--private", help="Make Hugging Face dataset private"
     ),
     seed: Optional[int] = typer.Option(None, "--seed", help="Seed for reproducibility"),
-    mu: Optional[str] = typer.Option(None, "--mu", help="Baseline intensity (JSON list)"),
+    mu: Optional[str] = typer.Option(
+        None, "--mu", help="Baseline intensity (JSON list)"
+    ),
     alpha: Optional[str] = typer.Option(
         None, "--alpha", help="Excitation matrix (JSON list of lists)"
     ),
@@ -224,13 +226,13 @@ def generate_data(
 
     Examples:
         # Generate Hawkes process data (saved locally)
-        new-ltpp generate --method hawkes --num-sim 1000 --dim 2
+        new-ltpp generate --model hawkes --num-sim 1000 --dim 2
 
         # Generate with custom parameters (mu, alpha, beta)
         new-ltpp generate --mu "[0.2, 0.2]" --alpha "[[0.4, 0], [0, 0.8]]" --num-sim 500
 
         # Generate and push to Hugging Face (also saves locally)
-        new-ltpp generate --method hawkes --push --repo-id username/my-dataset
+        new-ltpp generate --model hawkes --push --repo-id username/my-dataset
     """
     import json
 
@@ -253,7 +255,7 @@ def generate_data(
     success = runner.generate_data(
         output_dir=output_dir,
         num_simulations=num_simulations,
-        generation_method=method,
+        generation_method=model,
         splits=splits,
         start_time=start_time,
         end_time=end_time,
@@ -317,25 +319,24 @@ def interactive_setup(
 
 
 @app.command("benchmark")
-def benchmark_performance(
+def benchmark(
+    dataset_ids: Optional[List[str]] = typer.Argument(
+        None,
+        help="List of Dataset IDs to run benchmarks on (e.g., test hawkes1 hawkes2).",
+    ),
     config_path: str = typer.Option(
         CONFIGS_FILE, "--config", "-c", help="YAML configuration file"
-    ),
-    data_config: Optional[List[str]] = typer.Option(
-        None,
-        "--data-config",
-        help="Data configuration(s) (e.g., test, large). Can be repeated for multiple configs",
     ),
     data_loading_config: str = typer.Option(
         "quick_test",
         "--data-loading-config",
-        help="Data loading configuration",
+        help="Data loading configuration (batch_size, etc.)",
     ),
     benchmarks: Optional[List[str]] = typer.Option(
         None, "--benchmarks", "-b", help="List of benchmarks to run"
     ),
     output_dir: Optional[str] = typer.Option(
-        None, "--output", "-o", help="Output directory"
+        str(OUTPUT_DIR), "--output", "-o", help="Output directory"
     ),
     run_all: bool = typer.Option(False, "--all", help="Run all benchmarks"),
     run_all_configs: bool = typer.Option(
@@ -351,13 +352,13 @@ def benchmark_performance(
 
     Examples:
         # Simple benchmark
-        benchmark --data-config test --all
+        benchmark --dataset-id test --all
 
         # Multiple configurations
-        benchmark --data-config test --data-config large --all
+        benchmark --dataset-id test --dataset-id large --all
 
         # All benchmarks on all configs
-        benchmark --data-config test --data-config large --all --all-configs
+        benchmark --dataset-id test --dataset-id large --all --all-configs
     """
     runner = BenchmarkRunner(debug=debug)
 
@@ -367,7 +368,7 @@ def benchmark_performance(
 
     success = runner.run_benchmark(
         config_path=config_path,
-        data_config=data_config,
+        dataset_id=dataset_ids,
         data_loading_config=data_loading_config,
         benchmarks=benchmarks,
         output_dir=output_dir,
@@ -392,7 +393,7 @@ def show_version():
         "DataGenerator - Generate synthetic data",
         "SystemInfo - System information",
         "InteractiveSetup - Guided setup",
-        "BenchmarkRunner - Performance benchmarks",
+        "BenchmarkRunner - Naive benchmarks",
     ]
 
     for runner in runners:

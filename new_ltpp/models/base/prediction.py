@@ -2,8 +2,11 @@
 """Mixin for prediction methods (one-step and multi-step)."""
 
 import torch
+from typing import Optional
 
-from new_ltpp.shared_types import OneStepPred
+from new_ltpp.models.simulation.simulator import Simulator
+from new_ltpp.models.simulation.tpp_io import SimulationIOManager
+from new_ltpp.shared_types import SimulationResult, Batch, OneStepPred
 
 from .base_model import NeuralModel
 
@@ -23,6 +26,13 @@ class PredictionMixin(NeuralModel):
         """
         super().__init__(**kwargs)
         self.num_sample = num_samples
+
+        self._simulator: Optional[Simulator] = (
+            None  # Optional[Simulator] - Injecté par PredictionStatsCallback
+        )
+        self._io_manager: Optional[SimulationIOManager] = (
+            None  # Optional[SimulationIOManager] - Injecté par PredictionStatsCallback
+        )
 
     def predict_one_step_at_every_event(
         self,
@@ -82,3 +92,64 @@ class PredictionMixin(NeuralModel):
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)
 
         return OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)
+
+    def simulate(
+        self,
+        batch: Batch,
+        max_events: int = 10_000,
+        start_time: Optional[float] = None,
+        end_time: Optional[float] = None,
+    ) -> SimulationResult:
+        if self._simulator is None:
+            raise RuntimeError(
+                "Simulator not initialized. Should be initialized in a callback."
+            )
+
+        simulator: "Simulator" = self._simulator
+        sim = simulator.simulate(
+            batch=batch, max_events=max_events, start_time=start_time, end_time=end_time
+        )
+
+        return sim
+
+    def _create_empty_batch(
+        self, batch_size: int, initial_buffer_size: int = 100
+    ) -> Batch:
+        device = self.device
+        return Batch(
+            time_seqs=torch.zeros(
+                batch_size, initial_buffer_size, device=device, dtype=torch.float32
+            ),
+            time_delta_seqs=torch.zeros(
+                batch_size, initial_buffer_size, device=device, dtype=torch.float32
+            ),
+            type_seqs=torch.zeros(
+                batch_size, initial_buffer_size, device=device, dtype=torch.long
+            ),
+            valid_event_mask=torch.ones(
+                batch_size, initial_buffer_size, device=device, dtype=torch.bool
+            ),
+        )
+
+    def simulate_from_scratch(
+        self,
+        num_sequences: int,
+        initial_buffer_size: int = 100,
+        max_events: int = 10_000,
+        start_time: Optional[float] = 0.0,
+        end_time: Optional[float] = 100.0,
+    ) -> SimulationResult:
+        """Simulate event sequences from scratch (no conditioning).
+
+        Args:
+            num_sequences: Number of sequences to simulate (defaults to self.batch_size).
+            start_time: Optional start time for the simulation.
+            end_time: Optional end time for the simulation.
+
+        Returns:
+            SimulationResult (Batch alias) with generated sequences.
+        """
+        empty_batch = self._create_empty_batch(num_sequences, initial_buffer_size)
+        return self.simulate(
+            empty_batch, max_events, start_time=start_time, end_time=end_time
+        )

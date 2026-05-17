@@ -61,13 +61,15 @@ class MultiHeadAttention(nn.Module):
         value: torch.Tensor,
         attn_mask: torch.Tensor,
         output_weight: bool = False,
+        kv_cache: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
-
         q = self.input_proj(query)
         k = self.input_proj(key)
         v = self.input_proj(value)
 
-        attn_out, attn_weights = self.mha(q, k, v, attn_mask=attn_mask)
+        attn_out, attn_weights = self.mha(
+            q, k, v, attn_mask=attn_mask, key_value_cache=kv_cache
+        )
 
         out = self.out_proj(attn_out)
 
@@ -118,25 +120,30 @@ class EncoderLayer(nn.Module):
         self,
         x: torch.Tensor,
         attn_mask: torch.Tensor,
-    ) -> torch.Tensor:
+        kv_cache: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         if self.use_residual:
-            x = self.sublayers[0](
-                x, lambda x: self.self_attn(x, x, x, attn_mask=attn_mask)
+            x, kv_cache = self.sublayers[0](
+                x,
+                lambda x: self.self_attn(
+                    x, x, x, attn_mask=attn_mask, kv_cache=kv_cache
+                ),
             )
             if self.feed_forward is not None:
                 x = self.sublayers[1](x, self.feed_forward)
-            return x
+            return x, kv_cache
 
         # Sans résiduel
-        x = self.self_attn(x, x, x, attn_mask=attn_mask)
-        return self.feed_forward(x) if self.feed_forward is not None else x
+        x, kv_cache = self.self_attn(x, x, x, attn_mask=attn_mask, kv_cache=kv_cache)
+        if self.feed_forward is not None:
+            x = self.feed_forward(x)
+        return x, kv_cache
 
 
 # -------------------------------------------------------------------------
 # ENCODAGE TEMPOREL THP / SAHP
 # -------------------------------------------------------------------------
 class TimePositionalEncoding(nn.Module):
-
     div_term: torch.Tensor
 
     def __init__(
@@ -158,7 +165,6 @@ class TimePositionalEncoding(nn.Module):
 
 
 class TimeShiftedPositionalEncoding(nn.Module):
-
     position: torch.Tensor
     div_term: torch.Tensor
 

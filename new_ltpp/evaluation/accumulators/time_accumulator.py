@@ -72,7 +72,7 @@ class InterEventTimeAccumulator(Accumulator):
 
         # Prepare bin edges as torch tensor on same device
         device = valid_gt.device if valid_gt.numel() > 0 else valid_sim.device
-        bin_edges_t = torch.tensor(self.bin_edges, device=device, dtype=valid_gt.dtype)
+        bin_edges_t = torch.from_numpy(self.bin_edges).to(device=device, dtype=valid_gt.dtype)
 
         # Compute bin indices and counts for ground truth using torch
         if valid_gt.numel() > 0:

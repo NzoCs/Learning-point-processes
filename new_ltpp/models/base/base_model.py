@@ -99,6 +99,7 @@ class BaseModel(
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        valid_event_mask: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
         **kwargs,

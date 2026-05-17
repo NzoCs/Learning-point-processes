@@ -16,12 +16,7 @@ class MMD(StatMetric):
         returns:
             The MMD value as a torch.Tensor.
         """
-
-        B1, L = X.time_seqs.shape
-        B2, K = Y.time_seqs.shape
-
-        mmd_value = self.compute_mmd(X, Y)
-        return mmd_value
+        return self.compute_mmd(X, Y)
 
 
 # type checks

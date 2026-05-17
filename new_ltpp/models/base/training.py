@@ -1,7 +1,7 @@
 # new_ltpp/models/mixins/training_mixin.py
 """Mixin for PyTorch Lightning training, validation, test, and predict steps."""
 
-from typing import Optional, Tuple, cast
+from typing import Tuple, cast
 
 import torch
 import torch.nn.functional as F
@@ -10,7 +10,7 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT
 from new_ltpp.evaluation.metrics_helper import MetricsManager
 from new_ltpp.shared_types import Batch, OneStepPred
 
-from new_ltpp.simulation.simulator import Simulator
+from new_ltpp.models.simulation.simulator import Simulator
 from new_ltpp.configs.model_config import ModelConfig
 
 from .prediction import PredictionMixin
@@ -35,11 +35,6 @@ class TrainingMixin(PredictionMixin):
         )  # For type checking; not used at runtime
         num_samples = model_config.thinning_config.num_sample
         super().__init__(num_samples=num_samples, **kwargs)
-
-        # --- Simulator (for prediction and statistics) ---
-        self._simulator: Optional[Simulator] = (
-            None  # Optional[Simulator] - Injecté par PredictionStatsCallback
-        )
 
     # ------------------------------------------------------------------
     # Lightning steps
@@ -103,7 +98,6 @@ class TrainingMixin(PredictionMixin):
         batch.valid_event_mask = batch.valid_event_mask[:, 1:]
 
         self._compute_and_log_metrics(batch, pred, prefix="")
-        # self._handle_test_simulation(batch)
         return avg_loss
 
     def predict_step(self, batch: Batch, batch_idx, **kwargs) -> STEP_OUTPUT:
@@ -118,7 +112,14 @@ class TrainingMixin(PredictionMixin):
             raise RuntimeError(
                 "No statistics collector. Call simulator.init_statistics_collector() first."
             )
+        
+        # Update statistics
         simulator._statistics_collector.update(batch, sim)
+        
+        # Accumulate results for saving (via SimulationIOManager)
+        if self._io_manager is not None:
+            self._io_manager.update(sim)
+        
         return None
 
     # ------------------------------------------------------------------

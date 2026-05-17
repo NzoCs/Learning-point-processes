@@ -75,9 +75,7 @@ class MKernel(PointProcessKernel):
         # Robust median heuristic: filter out zeros and NaNs
         valid_dist = dist_sq[torch.isfinite(dist_sq) & (dist_sq > 1e-10)]
         sigma = valid_dist.median()
-        sigma = torch.max(
-            sigma, torch.tensor(1e-6, device=dist_sq.device)
-        )  # Ensure positive
+        sigma = torch.clamp_min(sigma, 1e-6)  # Ensure positive
 
         if self.transform == MKernelTransform.EXPONENTIAL:
             # RBF-like: exp(-d²/(2σ²))

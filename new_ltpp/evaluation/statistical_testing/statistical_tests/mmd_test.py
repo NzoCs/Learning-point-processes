@@ -8,7 +8,7 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protoc
 )
 from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.shared_types import Batch
-from new_ltpp.simulation.simulator import Simulator
+from new_ltpp.models.simulation.simulator import Simulator
 
 from .base_test import ITest, FinalTestResult, TestStatistics
 
@@ -78,7 +78,7 @@ class MMDTwoSampleTest:
             or self.total_perm_mmds is None
             or self.total_observed_mmd is None
         ):
-            return torch.tensor(1.0)  # No data, p-value is 1
+            return torch.tensor(1.0, dtype=torch.float32)  # No data, p-value is 1
 
         perm_mmds = self.total_perm_mmds.to(self.total_observed_mmd.device)
         count_ge = (perm_mmds >= self.total_observed_mmd).sum()

@@ -24,6 +24,8 @@ class ANHNOutput(TypedDict):
     base_elapsed_times: (
         torch.Tensor
     )  # Temps écoulés entre événements (sans échantillons)
+    rnn_cache: Optional[torch.Tensor]  # Cache de la couche RNN (optionnel)
+    att_cache: Optional[torch.Tensor]  # Cache de la couche d'attention (optionnel)
 
 
 class ANHN(TrainingMixin):
@@ -89,6 +91,8 @@ class ANHN(TrainingMixin):
         type_seqs: torch.Tensor,
         sample_dtimes: torch.Tensor,
         attention_mask: torch.Tensor,
+        rnn_cache: Optional[torch.Tensor] = None,
+        att_cache: Optional[torch.Tensor] = None,
     ) -> ANHNOutput:
         """Call the model."""
 
@@ -98,7 +102,9 @@ class ANHN(TrainingMixin):
 
         # [batch_size, seq_len, hidden_size]
         rnn_output: torch.Tensor
-        rnn_output, _ = self.layer_rnn(event_emb)
+        rnn_output = self.layer_rnn(
+            event_emb,
+        )
 
         # --- 1. Calcul des paramètres du Hawkes (Mu, Alpha, Delta) ---
 
@@ -154,6 +160,8 @@ class ANHN(TrainingMixin):
             intensity_delta=intensity_delta,
             sample_elapsed_times=sample_elapsed_times,
             base_elapsed_times=base_elapsed_times,
+            rnn_cache=rnn_cache,
+            att_cache=att_weight,
         )
 
     def compute_elapsed_times(

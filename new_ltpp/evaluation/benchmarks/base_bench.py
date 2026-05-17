@@ -5,6 +5,7 @@ This module provides a base class for implementing benchmarks for TPP models.
 It defines the common interface and shared functionality that all benchmarks should implement.
 """
 
+import csv
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -101,20 +102,71 @@ class Benchmark(ABC):
 
     def _save_results(self, results: Dict[str, Any]) -> None:
         """
-        Save benchmark results to JSON file.
+        Save benchmark results to a global CSV file.
 
         Args:
             results: Results dictionary to save
         """
-        # Create save directory
-        dataset_dir = self.base_dir / self.data_config.dataset_id / "benchmarks"
-        dataset_dir.mkdir(parents=True, exist_ok=True)
+        # Global CSV file in base_dir (usually artifacts directory)
+        csv_file = self.base_dir / "benchmarks_results.csv"
+        
+        flat_results = {}
+        flat_results["dataset_id"] = self.data_config.dataset_id
+        flat_results["benchmark_name"] = results.get("benchmark_name", self.benchmark_name)
+        flat_results["num_event_types"] = results.get("num_event_types", self.num_event_types)
+        flat_results["num_batches_evaluated"] = results.get("num_batches_evaluated", 0)
+        
+        # Extract metrics
+        metrics = results.get("metrics", {})
+        for k, v in metrics.items():
+            flat_results[k] = v
+            
+        # Extract any custom info
+        for k, v in results.items():
+            if k not in ["benchmark_name", "num_event_types", "metrics", "num_batches_evaluated"]:
+                if isinstance(v, dict):
+                    for sub_k, sub_v in v.items():
+                        flat_results[f"{k}_{sub_k}"] = sub_v
+                else:
+                    flat_results[k] = v
 
-        # Save results
-        results_file = dataset_dir / f"{self.benchmark_name}_results.json"
-        results_file.write_text(json.dumps(results, indent=2), encoding="utf-8")
+        # Read existing data if file exists
+        existing_data = []
+        fieldnames = list(flat_results.keys())
+        
+        if csv_file.exists():
+            try:
+                with open(csv_file, 'r', newline='', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    if reader.fieldnames:
+                        for field in reader.fieldnames:
+                            if field not in fieldnames:
+                                fieldnames.append(field)
+                    for row in reader:
+                        existing_data.append(row)
+            except Exception as e:
+                logger.error(f"Error reading existing CSV {csv_file}: {e}")
+                
+        # Append new row
+        existing_data.append(flat_results)
+        
+        # Rewrite the entire CSV with updated fieldnames
+        ordered_fieldnames = []
+        for primary_field in ["dataset_id", "benchmark_name"]:
+            if primary_field in fieldnames:
+                ordered_fieldnames.append(primary_field)
+                fieldnames.remove(primary_field)
+        ordered_fieldnames.extend(sorted(fieldnames))
+        
+        # Ensure directory exists just in case
+        csv_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=ordered_fieldnames)
+            writer.writeheader()
+            writer.writerows(existing_data)
 
-        logger.info(f"Results saved to: {results_file}")
+        logger.info(f"Results appended to: {csv_file}")
 
     def _log_summary(self, results: Dict[str, Any]) -> None:
         """

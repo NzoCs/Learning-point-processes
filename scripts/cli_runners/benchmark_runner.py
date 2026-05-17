@@ -4,9 +4,9 @@ Benchmark Runner
 Runner for performance tests and benchmarking of TPP.
 """
 
-from typing import List, Optional, Union, cast
+from typing import List, Optional, Union
 
-from new_ltpp.configs.config_factory import config_factory, ConfigType, DataConfig
+from new_ltpp.configs.config_factory import DataConfig
 from new_ltpp.evaluation.benchmarks.benchmark_manager import (
     BenchmarkManager,
 )
@@ -28,7 +28,7 @@ class BenchmarkRunner(CLIRunnerBase):
 
     def run_benchmark(
         self,
-        data_config: Optional[Union[str, List[str]]],
+        dataset_id: Optional[Union[str, List[str]]],
         data_loading_config: str,
         config_path: Optional[str] = None,
         benchmarks: Optional[List[str]] = None,
@@ -42,7 +42,7 @@ class BenchmarkRunner(CLIRunnerBase):
 
         Args:
             config_path: Path to the YAML configuration file
-            data_config: Data configuration(s) (e.g. 'test' or ['test','large'])
+            dataset_id: Dataset ID(s) (e.g. 'test' or ['test','large'])
             data_loading_config: Data loading configuration
             benchmarks: List of benchmark names to run
             output_dir: Output directory
@@ -85,8 +85,10 @@ class BenchmarkRunner(CLIRunnerBase):
             data_configs_list = available_data_configs
         else:
             # Support multiple specified configurations
+            if not dataset_id:
+                dataset_id = ["test"]
             data_configs_list = (
-                data_config if isinstance(data_config, list) else [data_config]
+                dataset_id if isinstance(dataset_id, list) else [dataset_id]
             )
 
         # Build all configurations
@@ -103,12 +105,12 @@ class BenchmarkRunner(CLIRunnerBase):
                 )
 
                 # Use ConfigFactory with Pydantic from_yaml
-                config_dict = config_factory.create_from_yaml(
-                    ConfigType.DATA,
-                    config_path,
-                    path_in_yaml=config_paths["data_config_path"].replace("_", "s."),
+                config_dict = DataConfig.from_yaml_components(
+                    yaml_path=config_path,
+                    dataset_id=data_cfg,
+                    data_config_path=config_paths["data_config_path"],
+                    data_loading_config_path=config_paths["data_loading_config_path"],
                 )
-                config_dict = cast(DataConfig, config_dict)  # Type hinting for clarity
 
                 all_data_configs.append(config_dict)
 
@@ -138,27 +140,40 @@ class BenchmarkRunner(CLIRunnerBase):
             # Determine which benchmarks to run
             if run_all:
                 self.print_info("Running all available benchmarks...")
-                benchmark_manager.run_all_benchmarks(
-                    all_data_configs, **benchmark_params
-                )
-
+                target_benchmarks = list(Benchmarks)
             elif benchmarks:
                 self.print_info(f"Running benchmarks: {benchmarks}")
-                benchmark_manager.run_by_names(
-                    benchmarks, all_data_configs, **benchmark_params
-                )
-
+                target_benchmarks = []
+                for name in benchmarks:
+                    try:
+                        target_benchmarks.append(
+                            next(b for b in Benchmarks if b.get_name() == name)
+                        )
+                    except StopIteration:
+                        self.print_error(f"Benchmark '{name}' not found. Skipping.")
             else:
-                # By default, run a few essential benchmarks
                 self.print_info("Running default benchmarks...")
-                default_benchmarks = [
+                target_benchmarks = [
                     Benchmarks.MEAN_INTER_TIME,
                     Benchmarks.MARK_DISTRIBUTION,
                     Benchmarks.INTERTIME_DISTRIBUTION,
                 ]
-                benchmark_manager.run(
-                    default_benchmarks, all_data_configs, **benchmark_params
-                )
+
+            for config in all_data_configs:
+                self.print_info(f"--- Benchmarking Dataset: {config.dataset_id} ---")
+                for bm in target_benchmarks:
+                    try:
+                        benchmark_manager.run(
+                            benchmarks=[bm], data_configs=[config], **benchmark_params
+                        )
+                    except Exception as e:
+                        self.print_error(
+                            f"Benchmark {bm.benchmark_name} failed on {config.dataset_id}: {e}"
+                        )
+                        if self.debug:
+                            self.logger.exception(
+                                f"Detailed error for {bm.benchmark_name}:"
+                            )
 
             self.print_info(f"Results saved at: {benchmark_manager.base_dir}")
 

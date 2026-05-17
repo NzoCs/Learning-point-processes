@@ -6,7 +6,7 @@ INeuralTPPModel  — extension for neural architectures.
 """
 
 from pathlib import Path
-from typing import Protocol, Union, Any
+from typing import Protocol, Union, Any, TYPE_CHECKING
 
 import torch
 import torch.optim as optim
@@ -15,8 +15,11 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT
 from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.configs.runner_config import SimulationConfig
 from new_ltpp.models.event_sampler import EventSampler
-from new_ltpp.shared_types import Batch, DataInfo, OneStepPred
-from new_ltpp.simulation.simulator import Simulator
+from new_ltpp.shared_types import Batch, DataInfo, OneStepPred, SimulationResult
+
+if TYPE_CHECKING:
+    from new_ltpp.models.simulation.simulator import Simulator
+    from new_ltpp.models.simulation.tpp_io import SimulationIOManager
 
 
 # ---------------------------------------------------------------------------
@@ -36,6 +39,7 @@ class ISimulableModel(Protocol):
     dtime_max: float
     simulation_config: SimulationConfig
     _simulator: "Simulator"  # Injecté par PredictionStatsCallback
+    _io_manager: "SimulationIOManager"  # Injecté par PredictionStatsCallback
 
     @property
     def device(self) -> torch.device: ...
@@ -48,10 +52,24 @@ class ISimulableModel(Protocol):
         time_seqs: torch.Tensor,
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
+        valid_event_mask: torch.Tensor,
         sample_dtimes: torch.Tensor,
         compute_last_step_only: bool = False,
         **kwargs,
     ) -> torch.Tensor: ...
+
+    def simulate_from_scratch(
+        self,
+        num_sequences: int,
+        initial_buffer_size: int = 100,
+        max_events: int = 10_000,
+    ) -> SimulationResult: ...
+
+    def simulate(
+        self,
+        batch: Batch,
+        max_events: int = 10_000,
+    ) -> SimulationResult: ...
 
 
 # ---------------------------------------------------------------------------

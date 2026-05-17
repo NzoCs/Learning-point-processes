@@ -40,10 +40,10 @@ type-check: ## Type check with mypy
 
 # Demo run target (defaults to demo/test configs)
 run-demo: ## Run demo pipeline via CLI (fixed demo args)
-	@$(CLI) run --data-config test --general-specs-config quick_test \
+	@$(CLI) run --dataset-id test --general-specs-config quick_test \
 		--training-config quick_test --data-loading-config quick_test \
 		--simulation-config quick_test --thinning-config quick_test \
-		--logger-config tensorboard --model NHP --phase all --epochs 100
+		--logger-config tensorboard --model Hawkes --phase all --epochs 5
 
 # Generic run target with defaults for real runs
 run: ## Run full pipeline via CLI with real run defaults (pass variables to override)
@@ -55,7 +55,7 @@ ifndef DATA
 endif
 	@$(CLI) run \
 		$(if $(CONFIG),--config $(CONFIG),) \
-		--data-config $(DATA) \
+		--dataset-id $(DATA) \
 		$(if $(GENERAL_SPECS),--general-specs-config $(GENERAL_SPECS),--general-specs-config h64) \
 		$(if $(MODEL_SPECS),--model-specs-config $(MODEL_SPECS),) \
 		$(if $(TRAINING),--training-config $(TRAINING),--training-config e1000_b4) \
@@ -75,7 +75,6 @@ benchmark-list: ## [BENCH-LIST] List available benchmarks
 all-benchmarks: ## [BENCH-MULTI] Run benchmarks on multiple configs
 	@echo ">> Benchmarks multi-configurations..."
 	@$(CLI) benchmark \
-		--data-config test --data-config large \
 		--all --all-configs
 
 # ---------- SYSTEM INFO ----------

@@ -37,17 +37,12 @@ class PointProcessKernel(ABC):
 
         B, _ = K_XY.shape
 
-        XX_reg = torch.max(
-            torch.tensor(B * (B - 1), device=X.time_seqs.device),
-            torch.tensor(1.0, device=X.time_seqs.device),
-        )
-        YY_reg = torch.max(
-            torch.tensor(B * (B - 1), device=Y.time_seqs.device),
-            torch.tensor(1.0, device=Y.time_seqs.device),
-        )
+        # Denominator for the unbiased estimator: max(B*(B-1), 1)
+        # Computed in Python to avoid creating unnecessary tensor constants in the graph
+        denom = float(max(B * (B - 1), 1))
 
         # Compute the MMD distance using the kernel values
-        mmd_distance = K_XX.sum() / XX_reg + K_YY.sum() / YY_reg - 2 * K_XY.mean()
+        mmd_distance = K_XX.sum() / denom + K_YY.sum() / denom - 2 * K_XY.mean()
         return mmd_distance
 
 

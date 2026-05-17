@@ -66,10 +66,10 @@ You can run experiments directly using the `new-ltpp` command (or `scripts/cli.p
 
 ```bash
 # Using the installed script entry point
-new-ltpp run --model THP --data-config taxi --phase train --epochs 50
+new-ltpp run --model THP --dataset-id taxi --phase train --epochs 50
 
 # OR using the python script directly
-python scripts/cli.py run --model THP --data-config taxi --phase train --epochs 50
+python scripts/cli.py run --model THP --dataset-id taxi --phase train --epochs 50
 ```
 
 ### 3. Interactive Setup
@@ -91,8 +91,8 @@ The framework provides a unified CLI `new-ltpp` (or `python scripts/cli.py`).
 | :--- | :--- | :--- |
 | **`run`** | Run a TPP experiment (train/test/predict). | `new-ltpp run --model NHP --phase all` |
 | **`inspect`** | Inspect and visualize dataset statistics. | `new-ltpp inspect data/taxi --save` |
-| **`generate`** | Generate synthetic TPP data (Hawkes, etc.). | `new-ltpp generate --method hawkes --num-sim 1000` |
-| **`benchmark`** | Run performance benchmarks. | `new-ltpp benchmark --data-config test` |
+| **`generate`** | Generate synthetic TPP data (Hawkes, etc.). | `new-ltpp generate --model hawkes --num-sim 1000` |
+| **`benchmark`** | Run naïve benchmarks. | `new-ltpp benchmark --dataset-id test` |
 | **`setup`** | Launch interactive configuration wizard. | `new-ltpp setup` |
 | **`info`** | Display system and environment info. | `new-ltpp info` |
 
@@ -112,7 +112,6 @@ Implemented models in `new_ltpp/models/`:
 | **IntFree** | [ICLR'20](https://arxiv.org/abs/1909.12127) | `intensity_free.py` |
 | **ODETPP** | [ICLR'21](https://arxiv.org/abs/2011.04583) | `ode_tpp.py` |
 | **AttNHP** | [ICLR'22](https://arxiv.org/abs/2201.00044) | `attnhp.py` |
-| **Hawkes** | Classical | `hawkes.py` |
 
 ---
 
@@ -140,9 +139,6 @@ All results are saved in the `artifacts/` directory by default (configurable via
 
 ---
 
-## 🤝 Contributing
-
-Feel free to open issues or submit PRs for new models or features.
 
 ## 📄 License
 

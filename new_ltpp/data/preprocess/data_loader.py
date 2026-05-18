@@ -227,7 +227,7 @@ class TPPDataModule(pl.LightningDataModule):
         """
         from datasets import load_dataset
 
-        split_mapped = "validation" if split == "dev" else split
+        split_mapped = "validation" #if split == "dev" else split
         data = load_dataset(source_dir, split=split_mapped)
 
         py_assert(

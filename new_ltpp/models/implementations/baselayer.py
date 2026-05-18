@@ -61,14 +61,13 @@ class MultiHeadAttention(nn.Module):
         value: torch.Tensor,
         attn_mask: torch.Tensor,
         output_weight: bool = False,
-        kv_cache: Optional[torch.Tensor] = None,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         q = self.input_proj(query)
         k = self.input_proj(key)
         v = self.input_proj(value)
 
         attn_out, attn_weights = self.mha(
-            q, k, v, attn_mask=attn_mask, key_value_cache=kv_cache
+            q, k, v, attn_mask=attn_mask
         )
 
         out = self.out_proj(attn_out)
@@ -121,23 +120,23 @@ class EncoderLayer(nn.Module):
         x: torch.Tensor,
         attn_mask: torch.Tensor,
         kv_cache: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> torch.Tensor:
         if self.use_residual:
-            x, kv_cache = self.sublayers[0](
+            x = self.sublayers[0](
                 x,
                 lambda x: self.self_attn(
-                    x, x, x, attn_mask=attn_mask, kv_cache=kv_cache
+                    x, x, x, attn_mask=attn_mask
                 ),
             )
             if self.feed_forward is not None:
                 x = self.sublayers[1](x, self.feed_forward)
-            return x, kv_cache
+            return x
 
         # Sans résiduel
-        x, kv_cache = self.self_attn(x, x, x, attn_mask=attn_mask, kv_cache=kv_cache)
+        x = self.self_attn(x, x, x, attn_mask=attn_mask)
         if self.feed_forward is not None:
             x = self.feed_forward(x)
-        return x, kv_cache
+        return x
 
 
 # -------------------------------------------------------------------------

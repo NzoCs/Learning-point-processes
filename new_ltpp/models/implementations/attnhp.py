@@ -103,7 +103,7 @@ class ANHP(TrainingMixin):
         event_emb: torch.Tensor,
         attention_mask: torch.Tensor,
         cache: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> torch.Tensor:
         """
         Architecture simplifiée et fonctionnelle.
         """
@@ -112,7 +112,7 @@ class ANHP(TrainingMixin):
 
         # 1. Encodage de l'historique
         for enc_layer in self.encoder_layers:
-            cur_layer_, cache = enc_layer(cur_layer_, attention_mask, cache)
+            cur_layer_ = enc_layer(cur_layer_, attention_mask)
 
         # 2. Concaténation avec le temps cible pour prédire l'intensité MAINTENANT
         # cur_layer_ : [Batch, Seq, Hidden] (Contexte historique)
@@ -120,7 +120,7 @@ class ANHP(TrainingMixin):
 
         final_state = torch.cat([cur_layer_, sample_time_emb], dim=-1)
 
-        return final_state, cache
+        return final_state
 
     def seq_encoding(
         self, time_seqs: torch.Tensor, event_seqs: torch.Tensor
@@ -151,7 +151,7 @@ class ANHP(TrainingMixin):
         attention_mask: torch.Tensor,
         sample_times: Optional[torch.Tensor] = None,
         cache: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> torch.Tensor:
         """Call the model.
 
         Args:
@@ -168,11 +168,11 @@ class ANHP(TrainingMixin):
             sample_time_emb = time_emb
         else:
             sample_time_emb = self.compute_temporal_embedding(sample_times)
-        cur_layer_, cache = self.forward_pass(
-            sample_time_emb, event_emb, attention_mask, cache
+        cur_layer_ = self.forward_pass(
+            sample_time_emb, event_emb, attention_mask
         )
 
-        return cur_layer_, cache
+        return cur_layer_
 
     def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the log-likelihood loss.

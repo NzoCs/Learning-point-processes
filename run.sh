@@ -27,4 +27,4 @@ source .venv/bin/activate
 
 ## Lancer le script
 export PYTHONUNBUFFERED=1
-new-ltpp run --model THP --data-config taxi --phase all --epochs 50
+new-ltpp run --model NHP --dataset-id hawkes1 --phase all --epochs 100

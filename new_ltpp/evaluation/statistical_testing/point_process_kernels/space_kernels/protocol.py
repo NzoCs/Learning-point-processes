@@ -1,11 +1,9 @@
 import torch
-from typing import Protocol, runtime_checkable
-from abc import abstractmethod
+from typing import runtime_checkable
+from abc import abstractmethod, ABC
 
 
-@runtime_checkable
-class ISpaceKernel(Protocol):
-    @torch.compile
+class ISpaceKernel(ABC, torch.nn.Module):
     @abstractmethod
     def Gram_matrix(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """Compute the kernel matrix between two batches of sequences. This is used for the MMD mean term, where we need k(X^i_s,Y^j_t).
@@ -18,7 +16,6 @@ class ISpaceKernel(Protocol):
         """
         ...
 
-    @torch.compile
     @abstractmethod
     def batch_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """Compute the kernel matrix within a batch. Returns (B, L, L). This is used for the MMD variance term, where we need k(X^i_s,X^i_t) and k(Y^j_s,Y^j_t).

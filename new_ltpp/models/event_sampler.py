@@ -72,7 +72,7 @@ class EventSampler(nn.Module):
         # [B,L]
         bound = intens_total.max(-1).values * self.over_sample_rate
 
-        return bound
+        return bound.clamp(min=1e-7)
 
     # ----------------------------------------------------------------------
     # 2. Sample exponential jumps
@@ -132,12 +132,12 @@ class EventSampler(nn.Module):
         # Gather the delta
         gathered = torch.gather(exp_jumps, dim=3, index=idx[..., None])  # [B,L,K,1]
 
-        # if none accepted, return 0.0 (no time jump) ??? Have to check what is best here, maybe dtime_max is better
-        # We could also filter these later on by masking 0.0 dts an exactly 0.0 dt should happen with prb 0 ??? idk
+        # if none accepted, return the maximum evaluated jump time
+        # This prevents infinite loops if intensity is completely zero or all samples are rejected
         # [B,L,K, 1]
         res = torch.where(
             none_accepted[..., None],
-            gathered.new_zeros(()),
+            exp_jumps[..., -1:],
             gathered,
         )
 

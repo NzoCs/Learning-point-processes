@@ -134,17 +134,17 @@ class PredictionMixin(NeuralModel):
     def simulate_from_scratch(
         self,
         num_sequences: int,
+        start_time: float = 0.0,
+        end_time: float = 100.0,
         initial_buffer_size: int = 100,
         max_events: int = 10_000,
-        start_time: Optional[float] = 0.0,
-        end_time: Optional[float] = 100.0,
     ) -> SimulationResult:
         """Simulate event sequences from scratch (no conditioning).
 
         Args:
             num_sequences: Number of sequences to simulate (defaults to self.batch_size).
-            start_time: Optional start time for the simulation.
-            end_time: Optional end time for the simulation.
+            start_time: Start time for the simulation.
+            end_time: End time for the simulation.
 
         Returns:
             SimulationResult (Batch alias) with generated sequences.

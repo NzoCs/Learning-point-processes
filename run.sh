@@ -1,17 +1,17 @@
 #!/bin/bash
 #
 #SBATCH --job-name=hawkes_analysis
-#SBATCH --output=/raid/home/students/regna_enz/Learning-point-processes/out.out
-#SBATCH --error=/raid/home/students/regna_enz/Learning-point-processes/out.out
+#SBATCH --output=/raid/home/students/regna_enz/Learning-point-processes/out1.out
+#SBATCH --error=/raid/home/students/regna_enz/Learning-point-processes/out1.out
 
 ## Mails
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=%VOTRE_EMAIL%
 
-#SBATCH --partition=prod10
+#SBATCH --partition=prod80
 
-## 1g.10gb:1 pour prod10
-#SBATCH --gres=gpu:nvidia_a100_1g.10gb:1
+## 1g.10gb:1 pour prod80
+#SBATCH --gres=gpu:nvidia_a100-sxm4-80gb:1
 
 ## total requested cpus (ntasks * cpus-per-task) must be in [1: 4 * nb_1g.10gb]
 #SBATCH --ntasks=1
@@ -27,4 +27,4 @@ source .venv/bin/activate
 
 ## Lancer le script
 export PYTHONUNBUFFERED=1
-new-ltpp run --model NHP --dataset-id hawkes1 --phase all --epochs 100
+new-ltpp run --phase all --general-specs-config h64 --training-config e500_b1 --thinning-config e200_s60 --model ANHP --data-loading-config b64_w4 --dataset-id hawkes1

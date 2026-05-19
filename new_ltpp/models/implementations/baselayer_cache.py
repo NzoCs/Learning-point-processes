@@ -101,7 +101,7 @@ class MultiHeadAttention(nn.Module):
         attn_mask: Optional[torch.Tensor] = None,  # [L_q, L_total] ou [B, L_q, L_total]
         kv_cache: LayerCache = None,  # (K_past, V_past) | None
         output_weight: bool = False,
-    ) -> Tuple[torch.Tensor, KVCache]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, KVCache]:
         """
         Returns
         -------
@@ -148,9 +148,7 @@ class MultiHeadAttention(nn.Module):
         out = self.W_o(out)
         out = self.out_proj(out)
 
-        if output_weight:
-            return out, new_kv_cache, attn_w
-        return out, new_kv_cache
+        return out, attn_w, new_kv_cache
 
 
 # ─────────────────────────────────────────────────────────────────────────────

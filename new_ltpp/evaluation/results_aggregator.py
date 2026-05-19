@@ -59,29 +59,9 @@ class ResultsAggregator:
                 row[f"sim_{k}"] = v
 
         new_df = pd.DataFrame([row])
-
-        if self.csv_path.exists():
-            try:
-                existing_df = pd.read_csv(self.csv_path)
-                # If experiment already exists, update it, otherwise append
-                if experiment_id in existing_df["experiment_id"].values:
-                    # Update: Merge with existing row to preserve columns from other phases
-                    idx = existing_df[
-                        existing_df["experiment_id"] == experiment_id
-                    ].index[0]
-                    for col in new_df.columns:
-                        existing_df.at[idx, col] = new_df.at[0, col]
-                    final_df = existing_df
-                else:
-                    final_df = pd.concat([existing_df, new_df], ignore_index=True)
-            except Exception as e:
-                logger.error(f"Error reading existing results CSV: {e}")
-                final_df = new_df
-        else:
-            final_df = new_df
-
-        # Save back to CSV
-        final_df.to_csv(self.csv_path, index=False)
+        
+        header = not self.csv_path.exists()
+        new_df.to_csv(self.csv_path, mode='a', index=True, header=header)
         logger.info(f"✓ Results aggregated in {self.csv_path}")
 
     @staticmethod

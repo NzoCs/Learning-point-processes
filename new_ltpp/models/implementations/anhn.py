@@ -102,7 +102,7 @@ class ANHN(TrainingMixin):
 
         # [batch_size, seq_len, hidden_size]
         rnn_output: torch.Tensor
-        rnn_output = self.layer_rnn(
+        rnn_output, _ = self.layer_rnn(
             event_emb,
         )
 

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Literal
 from pydantic import PositiveFloat, PositiveInt
+import torch
 
 from new_ltpp.configs.base_config import Config
 from new_ltpp.configs.config_utils import load_yaml, extract

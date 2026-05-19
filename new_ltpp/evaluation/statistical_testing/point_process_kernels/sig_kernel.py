@@ -1,11 +1,12 @@
 import torch
-from sigkernel import LinearKernel, SigKernel
+from sigkernel import SigKernel
 from typing import TypedDict, Literal
 
 from .kernel_protocol import IPointProcessKernel, PointProcessKernel
 from .utils import _get_embedding
 from .space_kernels import ISpaceKernel
 from new_ltpp.shared_types import Batch, SimulationResult
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import LinearKernel
 
 
 class Embedding(TypedDict):

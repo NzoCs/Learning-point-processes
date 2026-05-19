@@ -6,6 +6,7 @@ class LinearKernel(ISpaceKernel):
     """Linear kernel k: R^d x R^d -> R"""
 
     def __init__(self, scaling: float = 1.0) -> None:
+        super().__init__()
         self.scaling = scaling
 
     def batch_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:

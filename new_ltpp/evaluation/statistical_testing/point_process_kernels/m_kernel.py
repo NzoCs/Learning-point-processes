@@ -144,18 +144,21 @@ class MKernel(PointProcessKernel):
         B1, L = phi_delta_time_seqs.shape
         B2, K = psi_delta_time_seqs.shape
 
+        phi_delta_time_seqs = phi_delta_time_seqs.unsqueeze(-1)  # (B, L, 1)
+        psi_delta_time_seqs = psi_delta_time_seqs.unsqueeze(-1)  # (B, K, 1)
+
         Kt_XX_matrix = self.time_kernel.batch_kernel(
             phi_delta_time_seqs, phi_delta_time_seqs
         )  # (B, L, L)
 
         Kt_XY_matrix = self.time_kernel.Gram_matrix(
-            phi_delta_time_seqs,
-            psi_delta_time_seqs,
+            phi_delta_time_seqs,  # (B, L, 1)
+            psi_delta_time_seqs,  # (B, K, 1)
         )  # (B, B, L, K)
 
         marks_kernel_matrix: torch.Tensor = self.type_kernel.Gram_matrix(
-            phi_type_seqs,
-            psi_type_seqs,
+            phi_type_seqs,  # (B, L, 1)
+            psi_type_seqs,  # (B, K, 1)
         )  # (B, B, L, K)
 
         Kt_YY_matrix = self.time_kernel.batch_kernel(

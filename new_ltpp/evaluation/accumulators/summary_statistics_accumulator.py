@@ -310,30 +310,32 @@ class BatchStatisticsCollector(Accumulator):
                     metrics_dict[f"mean_{test_type}_p_value"] = float(np.mean(p_vals))
                     metrics_dict[f"std_{test_type}_p_value"] = float(np.std(p_vals))
 
-            # Save metrics to JSON
-            metrics_path = self.base_dir / "simulation_results" / "metrics.json"
-            metrics_path.parent.mkdir(parents=True, exist_ok=True)
+                # Save metrics to JSON
+                
+                metrics_path = self.base_dir / "simulation_results" / f"{test_type}_metrics.json"
+                metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
-            try:
-                with open(metrics_path, "w") as f:
-                    json.dump(metrics_dict, f, indent=4)
-                logger.info(f"Saved metrics to {metrics_path}")
-            except Exception as e:
-                logger.error(f"Failed to save metrics to {metrics_path}: {e}")
+                try:
+                    with open(metrics_path, "w") as f:
+                        json.dump(metrics_dict, f, indent=4)
+                    logger.info(f"Saved metrics to {metrics_path}")
+                except Exception as e:
+                    logger.error(f"Failed to save metrics to {metrics_path}: {e}")
+                
+                # Save metadata to JSON
+                if self.metadata:
+                    metadata_path = self.base_dir / "simulation_results" / f"{test_type}_metadata.json"
+                    try:
+                        with open(metadata_path, "w") as f:
+                            json.dump(self.metadata, f, indent=4)
+                        logger.info(f"Saved execution metadata to {metadata_path}")
+                    except Exception as e:
+                        logger.error(f"Failed to save metadata to {metadata_path}: {e}")
 
         # Generate plots
         if generate_plots:
             self.generate_plots(statistics)
 
-        # Save metadata to JSON
-        if self.metadata:
-            metadata_path = self.base_dir / "simulation_results" / "metadata.json"
-            try:
-                with open(metadata_path, "w") as f:
-                    json.dump(self.metadata, f, indent=4)
-                logger.info(f"Saved execution metadata to {metadata_path}")
-            except Exception as e:
-                logger.error(f"Failed to save metadata to {metadata_path}: {e}")
 
         self._is_finalized = True
 

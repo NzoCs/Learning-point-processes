@@ -61,6 +61,8 @@ class ISimulableModel(Protocol):
     def simulate_from_scratch(
         self,
         num_sequences: int,
+        start_time: float = 0.0,
+        end_time: float = 100.0,
         initial_buffer_size: int = 100,
         max_events: int = 10_000,
     ) -> SimulationResult: ...

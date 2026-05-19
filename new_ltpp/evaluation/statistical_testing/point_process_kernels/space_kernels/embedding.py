@@ -8,6 +8,7 @@ class EmbeddingKernel(ISpaceKernel):
         num_classes: int,
         embedding_dim: int = 8,
     ):
+        super().__init__()
         self.emb = torch.nn.Embedding(num_classes + 1, embedding_dim)
 
     def _emb_on_device(self, x: torch.Tensor) -> torch.Tensor:
@@ -26,7 +27,6 @@ class EmbeddingKernel(ISpaceKernel):
             x = x.clamp(0, num_emb - 1)
         return self.emb(x)
 
-    @torch.compile
     def Gram_matrix(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         e_X = self._emb_on_device(X)  # (B1, L, D)
         e_Y = self._emb_on_device(Y)  # (B2, K, D)
@@ -34,7 +34,6 @@ class EmbeddingKernel(ISpaceKernel):
         dist_sq = dist.pow(2).view(X.shape[0], Y.shape[0], X.shape[1], Y.shape[1])
         return torch.exp(-dist_sq / 2)
 
-    @torch.compile
     def batch_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         e_X = self._emb_on_device(X)  # (B, L, D)
         e_Y = self._emb_on_device(Y)  # (B, K, D)

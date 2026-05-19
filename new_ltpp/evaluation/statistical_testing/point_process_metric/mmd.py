@@ -5,7 +5,8 @@ from .base_stat_metric import StatMetric, IStatMetric
 
 
 class MMD(StatMetric):
-    @torch.compile
+
+    # @torch.compile
     def __call__(
         self, X: Batch | SimulationResult, Y: Batch | SimulationResult
     ) -> torch.Tensor:

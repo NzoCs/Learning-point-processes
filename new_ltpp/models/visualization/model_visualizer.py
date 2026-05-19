@@ -55,9 +55,7 @@ class ModelVisualizer:
         """
         model = self._model
 
-        time_seq, time_delta_seq, type_seq, seq_non_pad_mask = (
-            self._get_simulation_data()
-        )
+        time_seq, time_delta_seq, type_seq, seq_non_pad_mask = self._get_simulation_data()
 
         time_points, time_deltas_sample = self._generate_intensity_time_points(
             time_seq, time_delta_seq, precision
@@ -121,8 +119,10 @@ class ModelVisualizer:
 
     def _get_simulation_data(
         self,
+        start_time: float = 0.0,
+        end_time: float = 100.0,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        simul_result = self._model.simulate_from_scratch(num_sequences=1)
+        simul_result = self._model.simulate_from_scratch(num_sequences=1, start_time=start_time, end_time=end_time)
         return (
             simul_result.time_seqs,
             simul_result.time_delta_seqs,
@@ -158,10 +158,6 @@ class ModelVisualizer:
         time_deltas_sample: torch.Tensor,
     ) -> torch.Tensor:
         model = self._model
-        # DEBUG
-        print("time_seqs shape:", time_seqs.shape)
-        print("time_delta_seqs shape:", time_delta_seqs.shape)
-        print("type_seqs shape:", type_seqs.shape)
         with torch.no_grad():
             intensities = model.compute_intensities_at_sample_dtimes(
                 time_seqs=time_seqs,

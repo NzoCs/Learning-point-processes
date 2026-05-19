@@ -173,13 +173,17 @@ class Simulator:
         self, time_seqs: torch.Tensor, valid_event_mask: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         device = self._model.device
-        time_seqs = time_seqs.to(device)
+        time_seqs = time_seqs.clone().to(device)
         valid_event_mask = valid_event_mask.to(device)
         time_seqs[~valid_event_mask] = float("inf")
         start_times = time_seqs.min(dim=1).values
         time_seqs[~valid_event_mask] = 0.0
         end_times = time_seqs.max(dim=1).values
-        return start_times, end_times
+
+        # times for simulation will be set to [end_time, end_time + (end_time - start_time)]
+        sim_start_times = end_times
+        sim_end_times = end_times + (end_times - start_times)
+        return sim_start_times, sim_end_times
 
     def _allocate_simulation_buffers(
         self, batch: Batch, initial_buffer_size: int
@@ -221,7 +225,7 @@ class Simulator:
             step_count=0,
         )
 
-    @torch.compile
+    # @torch.compile
     def _simulate_one_step(
         self,
         time_seqs: torch.Tensor,
@@ -287,22 +291,16 @@ class Simulator:
         max_seq_len = buffers["time"].size(1)
         pad_token_id = self._model.pad_token_id
 
-        sim_window = end_times - start_times
-        sim_end_times = end_times + sim_window
-        max_sim_end_time = sim_end_times.max()
+        max_sim_end_time = end_times.max()
 
         if sim_state["step_count"] == 0:
-            if initial_len > 0:
-                buffers["time"][:, :initial_len] += start_times.unsqueeze(1)
-                sim_state["current_time"] = end_times.min()
-            else:
                 sim_state["current_time"] = start_times.min()
 
         with (
             torch.no_grad(),
             tqdm(total=max_sim_end_time.item(), desc="Simulation", leave=False) as pbar,
         ):
-            pbar.n = min(sim_state["current_time"].item(), max_sim_end_time.item())
+            pbar.n = sim_state["current_time"].item()
             pbar.refresh()
 
             while sim_state["batch_active"].any():
@@ -334,6 +332,7 @@ class Simulator:
 
                 new_times = active_time_seq[:, -1:] + dtimes_pred
 
+
                 buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
                 buffers["time_delta"][active_indices, current_len] = (
                     dtimes_pred.squeeze(-1)
@@ -342,7 +341,7 @@ class Simulator:
 
                 sim_state["current_time"] = new_times.min()
 
-                active_end_times = sim_end_times[active_indices].unsqueeze(-1)
+                active_end_times = end_times[active_indices].unsqueeze(-1)
                 exceed_time_mask = new_times >= active_end_times
                 if exceed_time_mask.any():
                     exceed_indices = active_indices[exceed_time_mask.squeeze(-1)]
@@ -352,7 +351,7 @@ class Simulator:
 
                 if sim_state["step_count"] % 50 == 0:
                     pbar.n = min(
-                        sim_state["current_time"].item(), sim_end_times.max().item()
+                        sim_state["current_time"].item(), end_times.max().item()
                     )
                     pbar.refresh()
 
@@ -371,14 +370,10 @@ class Simulator:
         final_time_delta = buffers["time_delta"][:, initial_len:current_len]
         final_event_seq = buffers["event"][:, initial_len:current_len]
 
-        # compute sim window and end times
-        sim_window = end_times - start_times
-        sim_end_times = end_times + sim_window
-        sim_start_times = end_times
 
         simul_mask = torch.logical_and(
-            final_time_seq > sim_start_times.unsqueeze(-1),
-            final_time_seq <= sim_end_times.unsqueeze(-1),
+            final_time_seq > start_times.unsqueeze(-1),
+            final_time_seq <= end_times.unsqueeze(-1),
         )
 
         final_event_seq[~simul_mask] = pad_token_id

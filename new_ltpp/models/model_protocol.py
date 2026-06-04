@@ -6,7 +6,7 @@ INeuralTPPModel  — extension for neural architectures.
 """
 
 from pathlib import Path
-from typing import Protocol, Union, Any, TYPE_CHECKING
+from typing import Protocol, Union, Any, TYPE_CHECKING, Optional
 
 import torch
 import torch.optim as optim
@@ -61,16 +61,13 @@ class ISimulableModel(Protocol):
     def simulate_from_scratch(
         self,
         num_sequences: int,
-        start_time: float = 0.0,
-        end_time: float = 100.0,
-        initial_buffer_size: int = 100,
-        max_events: int = 10_000,
+        num_events: int = 100,
     ) -> SimulationResult: ...
 
     def simulate(
         self,
         batch: Batch,
-        max_events: int = 10_000,
+        num_events_to_simulate: Optional[int] = None,
     ) -> SimulationResult: ...
 
 

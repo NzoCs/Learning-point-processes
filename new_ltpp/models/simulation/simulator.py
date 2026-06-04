@@ -31,8 +31,6 @@ class Buffers(TypedDict):
 
 
 class SimulationState(TypedDict):
-    current_time: torch.Tensor
-    batch_active: torch.Tensor
     step_count: int
 
 
@@ -44,10 +42,6 @@ class Simulator:
 
     Args:
         model: A model implementing ISimulableModel.
-        start_time: Default simulation start time.
-        end_time: Default simulation end time.
-        batch_size: Default number of sequences to simulate.
-        initial_buffer_size: Initial pre-allocated buffer length per sequence.
         statistical_test_config: Optional config dict forwarded to BatchStatisticsCollector.
     """
 
@@ -59,6 +53,7 @@ class Simulator:
         self._model = model
         self.statistical_test_config = statistical_test_config
         self._statistics_collector: Optional["BatchStatisticsCollector"] = None
+        self._intensity_fn = model.compute_intensities_at_sample_dtimes
 
     # ------------------------------------------------------------------
     # Public API
@@ -67,73 +62,25 @@ class Simulator:
     def simulate(
         self,
         batch: Batch,
-        max_events: Optional[int | str] = "2x",
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
+        num_events_to_simulate: Optional[int] = None,
     ) -> SimulationResult:
         """Simulate event sequences using the model.
 
         Args:
-            batch: Optional initial batch to condition on.
-            max_events: Maximum number of events to simulate. Can be an integer, or a string ending in "x" 
-                        (e.g., "2x") for a multiplier of the longest sequence in the batch. Defaults to "2x".
+            batch: Initial batch to condition on. Can be empty (length 0) for unconditional generation.
+            num_events_to_simulate: Number of events to generate. If None, defaults to the sequence length in the batch.
 
         Returns:
             SimulationResult (Batch alias) with generated sequences.
         """
-        # Determine maximum sequence length in the batch (excluding padding)
-        max_len = int(batch.valid_event_mask.sum(dim=1).max().item()) if batch.valid_event_mask is not None else batch.time_seqs.size(1)
-        if max_len == 0:
-            max_len = batch.time_seqs.size(1)
+        if num_events_to_simulate is None:
+            # We simulate exactly as many events as the sequence length in the batch by default.
+            num_events_to_simulate = batch.time_seqs.size(1)
 
-        if max_events is None or max_events == "2x":
-            resolved_max_events = int(2 * max_len)
-        elif isinstance(max_events, str):
-            if max_events.endswith("x"):
-                try:
-                    multiplier = float(max_events[:-1])
-                    resolved_max_events = int(multiplier * max_len)
-                except ValueError:
-                    raise ValueError(f"Invalid format for max_events: {max_events}")
-            else:
-                try:
-                    resolved_max_events = int(max_events)
-                except ValueError:
-                    raise ValueError(f"Invalid format for max_events: {max_events}")
-        else:
-            resolved_max_events = int(max_events)
-
-        batch_size = batch.time_seqs.size(0)
-
-        if start_time is not None:
-            start_times = torch.full(
-                (batch_size,), start_time, device=batch.time_seqs.device
-            )
-        else:
-            start_times = None
-
-        if end_time is not None:
-            end_times = torch.full(
-                (batch_size,), end_time, device=batch.time_seqs.device
-            )
-        else:
-            end_times = None
-
-        if start_times is None or end_times is None:
-            start_times, end_times = self._compute_start_end_time(
-                batch.time_seqs, batch.valid_event_mask
-            )
-
-        initial_buffer_size = batch.time_seqs.size(1)
-
-        buffers = self._allocate_simulation_buffers(batch, initial_buffer_size)
-        sim_state = self._initialize_simulation_state(batch, batch_size)
-        self._run_simulation_loop(
-            buffers, sim_state, start_times, end_times, resolved_max_events
-        )
-        return self._extract_simulation_results(
-            buffers, sim_state, start_times, end_times
-        )
+        buffers = self._allocate_simulation_buffers(batch, num_events_to_simulate)
+        sim_state = self._initialize_simulation_state()
+        self._run_simulation_loop(buffers, sim_state, num_events_to_simulate)
+        return self._extract_simulation_results(buffers, sim_state)
 
     def init_statistics_collector(self, base_dir: Path | str) -> None:
         """Initialize the BatchStatisticsCollector.
@@ -193,29 +140,13 @@ class Simulator:
     # Internal helpers (previously private methods of SimulationMixin)
     # ------------------------------------------------------------------
 
-    def _compute_start_end_time(
-        self, time_seqs: torch.Tensor, valid_event_mask: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        device = self._model.device
-        time_seqs = time_seqs.clone().to(device)
-        valid_event_mask = valid_event_mask.to(device)
-        time_seqs[~valid_event_mask] = float("inf")
-        start_times = time_seqs.min(dim=1).values
-        time_seqs[~valid_event_mask] = 0.0
-        end_times = time_seqs.max(dim=1).values
-
-        # times for simulation will be set to [end_time, end_time + (end_time - start_time)]
-        sim_start_times = end_times
-        sim_end_times = end_times + (end_times - start_times)
-        return sim_start_times, sim_end_times
-
     def _allocate_simulation_buffers(
-        self, batch: Batch, initial_buffer_size: int
+        self, batch: Batch, num_events_to_simulate: int
     ) -> Buffers:
         device = self._model.device
         batch_size = batch.time_seqs.size(0)
         initial_len = batch.time_seqs.size(1)
-        max_seq_len = initial_buffer_size + initial_len
+        max_seq_len = initial_len + num_events_to_simulate
 
         time_buffer = torch.zeros(
             batch_size, max_seq_len, device=device, dtype=torch.float32
@@ -238,16 +169,8 @@ class Simulator:
             initial_len=initial_len,
         )
 
-    def _initialize_simulation_state(
-        self, batch: Batch, batch_size: int
-    ) -> SimulationState:
-        device = self._model.device
-
-        return SimulationState(
-            current_time=batch.time_seqs[:, -1].min(),
-            batch_active=torch.ones(batch_size, dtype=torch.bool, device=device),
-            step_count=0,
-        )
+    def _initialize_simulation_state(self) -> SimulationState:
+        return SimulationState(step_count=0)
 
     @torch.compile
     def _simulate_one_step(
@@ -263,7 +186,7 @@ class Simulator:
             time_delta_seqs,
             type_seqs,
             valid_event_mask,
-            model.compute_intensities_at_sample_dtimes,
+            self._intensity_fn,
             num_sample=1,
             compute_last_step_only=True,
         )
@@ -271,7 +194,7 @@ class Simulator:
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)
         batch_size, num_mark = time_seqs.size(0), model.num_event_types
 
-        intensities_at_times = model.compute_intensities_at_sample_dtimes(
+        intensities_at_times = self._intensity_fn(
             time_seqs=time_seqs,
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
@@ -288,63 +211,26 @@ class Simulator:
         type_pred = torch.multinomial(probs, num_samples=1)
         return dtimes_pred, type_pred
 
-    def _reallocate_buffers(self, buffers: Buffers, current_max_len: int) -> int:
-        """
-        Double la capacité des buffers en utilisant F.pad pour une réallocation rapide.
-        """
-        pad_size = current_max_len
-        new_max_seq_len = current_max_len + pad_size
-
-        buffers["time"] = F.pad(buffers["time"], (0, pad_size))
-        buffers["time_delta"] = F.pad(buffers["time_delta"], (0, pad_size))
-
-        pad_token = self._model.pad_token_id
-        buffers["event"] = F.pad(buffers["event"], (0, pad_size), value=pad_token)
-
-        return new_max_seq_len
-
     def _run_simulation_loop(
         self,
         buffers: Buffers,
         sim_state: SimulationState,
-        start_times: torch.Tensor,
-        end_times: torch.Tensor,
-        max_events: int,
+        num_events_to_simulate: int,
     ) -> None:
         initial_len = buffers["initial_len"]
-        max_seq_len = buffers["time"].size(1)
         pad_token_id = self._model.pad_token_id
-
-        max_sim_end_time = end_times.max()
-
-        if sim_state["step_count"] == 0:
-                sim_state["current_time"] = start_times.min()
 
         with (
             torch.no_grad(),
-            tqdm(total=max_sim_end_time.item(), desc="Simulation", leave=False) as pbar,
+            tqdm(total=num_events_to_simulate, desc="Simulation", leave=False, disable=True) as pbar,
         ):
-            pbar.n = sim_state["current_time"].item()
-            pbar.refresh()
-
-            while sim_state["batch_active"].any():
-                active_indices = sim_state["batch_active"].nonzero(as_tuple=True)[0]
-
+            for step in range(num_events_to_simulate):
                 current_len = initial_len + sim_state["step_count"]
 
-                if current_len >= max_seq_len - 1:
-                    max_seq_len = self._reallocate_buffers(buffers, max_seq_len)
-
-                if sim_state["step_count"] >= max_events:
-                    break
-
-
-                active_time_seq = buffers["time"][active_indices, :current_len]
-                active_time_delta = buffers["time_delta"][active_indices, :current_len]
-                active_event_seq = buffers["event"][active_indices, :current_len]
+                active_time_seq = buffers["time"][:, :current_len]
+                active_time_delta = buffers["time_delta"][:, :current_len]
+                active_event_seq = buffers["event"][:, :current_len]
                 active_valid_event_mask = active_event_seq != pad_token_id
-
-
 
                 try:
                     dtimes_pred, type_pred = self._simulate_one_step(
@@ -357,53 +243,37 @@ class Simulator:
                     logger.warning(e)
                     break
 
-                new_times = active_time_seq[:, -1:] + dtimes_pred
+                if current_len > 0:
+                    new_times = active_time_seq[:, -1:] + dtimes_pred
+                else:
+                    new_times = dtimes_pred
 
-
-                buffers["time"][active_indices, current_len] = new_times.squeeze(-1)
-                buffers["time_delta"][active_indices, current_len] = (
-                    dtimes_pred.squeeze(-1)
-                )
-                buffers["event"][active_indices, current_len] = type_pred.squeeze(-1)
-
-                sim_state["current_time"] = new_times.min()
-
-                active_end_times = end_times[active_indices].unsqueeze(-1)
-                exceed_time_mask = new_times >= active_end_times
-                if exceed_time_mask.any():
-                    exceed_indices = active_indices[exceed_time_mask.squeeze(-1)]
-                    sim_state["batch_active"][exceed_indices] = False
+                buffers["time"][:, current_len] = new_times.squeeze(-1)
+                buffers["time_delta"][:, current_len] = dtimes_pred.squeeze(-1)
+                buffers["event"][:, current_len] = type_pred.squeeze(-1)
 
                 sim_state["step_count"] += 1
-
-                if sim_state["step_count"] % 50 == 0:
-                    pbar.n = min(
-                        sim_state["current_time"].item(), end_times.max().item()
-                    )
-                    pbar.refresh()
+                pbar.update(1)
 
     def _extract_simulation_results(
         self,
         buffers: Buffers,
         sim_state: SimulationState,
-        start_times: torch.Tensor,
-        end_times: torch.Tensor,
     ) -> SimulationResult:
-        pad_token_id = self._model.pad_token_id
         initial_len = buffers["initial_len"]
         current_len = initial_len + sim_state["step_count"]
 
-        final_time_seq = buffers["time"][:, initial_len:current_len]
-        final_time_delta = buffers["time_delta"][:, initial_len:current_len]
-        final_event_seq = buffers["event"][:, initial_len:current_len]
+        final_time_seq = buffers["time"][:, initial_len:current_len].clone()
+        final_time_delta = buffers["time_delta"][:, initial_len:current_len].clone()
+        final_event_seq = buffers["event"][:, initial_len:current_len].clone()
 
+        # Shift times so that the simulation conceptually starts at t=0
+        if initial_len > 0:
+            offset = buffers["time"][:, initial_len - 1].unsqueeze(-1)
+            final_time_seq = final_time_seq - offset
 
-        simul_mask = torch.logical_and(
-            final_time_seq > start_times.unsqueeze(-1),
-            final_time_seq <= end_times.unsqueeze(-1),
-        )
-
-        final_event_seq[~simul_mask] = pad_token_id
+        # Valid mask is True for all generated events
+        simul_mask = torch.ones_like(final_time_seq, dtype=torch.bool)
 
         return SimulationResult(
             time_seqs=final_time_seq,

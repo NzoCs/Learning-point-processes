@@ -42,13 +42,13 @@ class CorrAccumulator(Accumulator):
             return
 
         # Compute ACF for ground truth
-        acf_gt = self.compute_acf_from_batch(batch, self.nb_bins, self.max_lag)
+        acf_gt, bin_width = self.compute_acf_from_batch(batch, self.nb_bins, self.max_lag)
         acf_gt_np = acf_gt.cpu().numpy()  # (B, max_lag+1)
         acf_gt_batch_mean = np.mean(acf_gt_np, axis=0)  # (max_lag+1,)
 
         # Compute ACF for simulation
         acf_sim = self.compute_acf_from_simulation(
-            simulation, self.nb_bins, self.max_lag
+            simulation, self.nb_bins, self.max_lag, bin_width
         )
         acf_sim_np = acf_sim.cpu().numpy()  # (B, max_lag+1)
         acf_sim_batch_mean = np.mean(acf_sim_np, axis=0)  # (max_lag+1,)
@@ -58,8 +58,7 @@ class CorrAccumulator(Accumulator):
         n = self.batch_count
         self.acf_gt_mean = ((n - 1) * self.acf_gt_mean + acf_gt_batch_mean) / n
         self.acf_sim_mean = ((n - 1) * self.acf_sim_mean + acf_sim_batch_mean) / n
-
-        self._sample_count += batch.time_seqs.shape[0]
+        self._sample_count += int(batch.time_seqs.size(0))
 
     def compute(self) -> CorrelationStatistics:  # type: ignore[override]
         """Compute final autocorrelation statistics.
@@ -84,7 +83,8 @@ class CorrAccumulator(Accumulator):
         times: torch.Tensor,
         mask: torch.Tensor,
         nb_bins: int,
-    ) -> torch.Tensor:
+        bin_width: float | None = None,
+    ) -> tuple[torch.Tensor, float]:
         """
         Create histogram of binned counts for a single sequence.
 
@@ -92,18 +92,19 @@ class CorrAccumulator(Accumulator):
             times: Tensor of shape (B, L,) with event times
             mask: Tensor of shape (B, L,) with 1 for valid events, 0 for padding
             nb_bins: number of bins for discretization
+            bin_width: if provided, use this bin width instead of computing from max time
         Returns:
-            Tensor of shape (B, nb_bins) with binned counts
+            Tuple of Tensor of shape (B, nb_bins) with binned counts, and the bin_width used.
         """
 
         B = times.shape[0]
 
-        # Max time per sequence
-        max_times = torch.max(times * mask, dim=1).values  # (B,)
-        max_time_global = torch.max(max_times)
-
-        # Calculate bin_width based on nb_bins
-        bin_width = max_time_global / nb_bins if max_time_global > 0 else 1.0
+        # Calculate bin_width based on nb_bins if not provided
+        if bin_width is None:
+            # Max time per sequence
+            max_times = torch.max(times * mask, dim=1).values  # (B,)
+            max_time_global = float(torch.max(max_times).item())
+            bin_width = max_time_global / nb_bins if max_time_global > 0 else 1.0
 
         # Compute bin indices for all times: (B, L)
         bin_indices = (times / bin_width).long()  # (B, L)
@@ -125,14 +126,14 @@ class CorrAccumulator(Accumulator):
 
         hist = hist[:, :nb_bins]  # Discard last bin used for padding
 
-        return hist
+        return hist, bin_width
 
     @staticmethod
     def compute_acf_from_batch(
         batch: Batch,
         nb_bins: int,
         max_lag: int,
-    ) -> torch.Tensor:
+    ) -> tuple[torch.Tensor, float]:
         """
         Compute ACF of binned counts for each sequence in the batch using FFT.
         Uses scatter_add for efficient histogram computation per sequence.
@@ -143,11 +144,11 @@ class CorrAccumulator(Accumulator):
             max_lag: maximum integer lag to compute ACF
 
         Returns:
-            Tensor of shape (batch_size, max_lag + 1)
+            Tuple of Tensor of shape (batch_size, max_lag + 1) and the bin_width used
         """
 
         # (B, nb_bins)
-        hist = CorrAccumulator.create_hist(
+        hist, bin_width = CorrAccumulator.create_hist(
             times=batch.time_seqs,
             mask=batch.valid_event_mask,
             nb_bins=nb_bins,
@@ -169,13 +170,14 @@ class CorrAccumulator(Accumulator):
         acf = acf_full[:, : max_lag + 1] / denom_safe.unsqueeze(1)
         acf = torch.where((denom == 0).unsqueeze(1), torch.zeros_like(acf), acf)
 
-        return acf
+        return acf, bin_width
 
     @staticmethod
     def compute_acf_from_simulation(
         sim: SimulationResult,
         nb_bins: int,
         max_lag: int,
+        bin_width: float,
     ) -> torch.Tensor:
         """
         Compute ACF of binned counts for each simulated sequence using FFT.
@@ -184,15 +186,17 @@ class CorrAccumulator(Accumulator):
             sim: SimulationResult with (time_seqs, dtime_seqs, type_seqs, mask)
             nb_bins: number of bins for discretization
             max_lag: max lag for the ACF
+            bin_width: bin width determined from ground truth to align time scales
 
         Returns:
             Tensor of shape (batch_size, max_lag + 1)
         """
 
-        hist = CorrAccumulator.create_hist(
+        hist, _ = CorrAccumulator.create_hist(
             times=sim.time_seqs,
             mask=sim.valid_event_mask,
             nb_bins=nb_bins,
+            bin_width=bin_width,
         )  # (B, nb_bins)
         # Mean-center
 

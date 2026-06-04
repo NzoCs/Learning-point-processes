@@ -102,49 +102,7 @@ class EventSampler(nn.Module):
         return u
 
     # ----------------------------------------------------------------------
-    # 4. Vectorized accept step
-    # ----------------------------------------------------------------------
-    def sample_accept(
-        self,
-        u: torch.Tensor,
-        rate: torch.Tensor,
-        intens: torch.Tensor,
-        exp_jumps: torch.Tensor,
-    ) -> torch.Tensor:
-        """
-        u:      [B,L,K,E]
-        rate:   [B,L]
-        intens: [B,L,K,E]
-        exp_jumps: [B,L,K,E]
-        """
-        # criterion = U * λ / λ(t)
-        crit = u * rate[..., None, None] / intens
-
-        # accepted where crit < 1
-        mask = crit < 1
-
-        # If no position accepted, fallback = dtime_max
-        none_accepted = (~mask).all(dim=-1)  # [B,L,K]
-
-        # First accepted along exp dimension E
-        idx = mask.float().argmax(dim=-1)  # [B,L,K]
-
-        # Gather the delta
-        gathered = torch.gather(exp_jumps, dim=3, index=idx[..., None])  # [B,L,K,1]
-
-        # if none accepted, return the maximum evaluated jump time
-        # This prevents infinite loops if intensity is completely zero or all samples are rejected
-        # [B,L,K, 1]
-        res = torch.where(
-            none_accepted[..., None],
-            exp_jumps[..., -1:],
-            gathered,
-        )
-
-        return res.squeeze(-1)  # [B,L,K]
-
-    # ----------------------------------------------------------------------
-    # 5. One thinning step
+    # 4. One thinning step (Rejection Sampling Loop)
     # ----------------------------------------------------------------------
     def draw_next_time_one_step(
         self,
@@ -156,8 +114,7 @@ class EventSampler(nn.Module):
         num_sample: int,
         compute_last_step_only: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Vectorized thinning step
-
+        """Vectorized thinning step with Rejection Sampling loop
         Args:
             time_seqs: [B,L]
             time_delta_seqs: [B,L]
@@ -179,46 +136,64 @@ class EventSampler(nn.Module):
             valid_event_mask,
             intensity_fn,
             compute_last_step_only,
-        )  # [B,L]
+        )  # [B, L_out]
 
-        # 2. exp samples
-        exp_j = self.sample_exp_distribution(
-            upper_bound
-        )  # [B,L,E] or [B,1,E] if compute_last_step_only is True
-        exp_j = torch.cumsum(exp_j, dim=-1)
+        B, L_out = upper_bound.shape
 
-        if compute_last_step_only:
-            pass  # for debugging
+        unaccepted_mask = torch.ones(B, L_out, num_sample, dtype=torch.bool, device=self.device)
+        accepted_dtimes = torch.zeros(B, L_out, num_sample, device=self.device)
+        current_offset = torch.zeros(B, L_out, device=self.device)
 
-        # 3. evaluate intensity at sampled times
-        intens = intensity_fn(
-            time_seqs=time_seqs,
-            time_delta_seqs=time_delta_seqs,
-            type_seqs=type_seqs,
-            valid_event_mask=valid_event_mask,
-            sample_dtimes=exp_j,
-            compute_last_step_only=compute_last_step_only,
-        )
+        max_iters = 10
+        iters = 0
 
-        intens_total = intens.sum(-1)  # [B,L,E] or [B,1,E]
+        while unaccepted_mask.any() and iters < max_iters:
+            # 2. exp samples
+            exp_j = self.sample_exp_distribution(upper_bound)  # [B, L_out, E]
+            exp_j_cum = torch.cumsum(exp_j, dim=-1) + current_offset.unsqueeze(-1)  # [B, L_out, E]
 
-        # 4. tile for num_sample (like in thinning.py)
-        intens_total = intens_total[:, :, None, :].expand(
-            -1, -1, num_sample, -1
-        )  # [B,L,num_sample,E]
-        exp_j_tiled = exp_j[:, :, None, :].expand(
-            -1, -1, num_sample, -1
-        )  # [B,L,num_sample,E]
+            # 3. evaluate intensity at sampled times
+            intens = intensity_fn(
+                time_seqs=time_seqs,
+                time_delta_seqs=time_delta_seqs,
+                type_seqs=type_seqs,
+                valid_event_mask=valid_event_mask,
+                sample_dtimes=exp_j_cum,
+                compute_last_step_only=compute_last_step_only,
+            )
 
-        # 5. uniform
-        u = self.sample_uniform(upper_bound, num_sample)  # [B,L,num_sample,E]
+            intens_total = intens.sum(-1)  # [B, L_out, E]
 
-        # 6. accept
-        res = self.sample_accept(
-            u, upper_bound, intens_total, exp_j_tiled
-        )  # [B,L,num_sample]
+            # 4. Tile for uniform evaluation
+            intens_total_tiled = intens_total.unsqueeze(2).expand(-1, -1, num_sample, -1)  # [B, L_out, num_sample, E]
+            exp_j_tiled = exp_j_cum.unsqueeze(2).expand(-1, -1, num_sample, -1)  # [B, L_out, num_sample, E]
+
+            # 5. uniform
+            u = self.sample_uniform(upper_bound, num_sample)  # [B, L_out, num_sample, E]
+
+            # criterion = U * λ / λ(t)
+            crit = u * upper_bound.unsqueeze(-1).unsqueeze(-1) / intens_total_tiled  # [B, L_out, num_sample, E]
+            mask = crit < 1  # [B, L_out, num_sample, E]
+
+            # 6. Check acceptance
+            idx = mask.float().argmax(dim=-1)  # [B, L_out, num_sample]
+            accepted_in_this_batch = mask.any(dim=-1)  # [B, L_out, num_sample]
+
+            newly_accepted = unaccepted_mask & accepted_in_this_batch
+            gathered_times = torch.gather(exp_j_tiled, dim=-1, index=idx.unsqueeze(-1)).squeeze(-1)  # [B, L_out, num_sample]
+
+            accepted_dtimes = torch.where(newly_accepted, gathered_times, accepted_dtimes)
+            unaccepted_mask = unaccepted_mask & ~newly_accepted
+
+            # Advance the offset for the unaccepted paths to the last evaluated proposal
+            current_offset = exp_j_cum[..., -1]
+            iters += 1
+
+        # Fallback for paths that never accepted after max_iters
+        if unaccepted_mask.any():
+            accepted_dtimes = torch.where(unaccepted_mask, current_offset.unsqueeze(-1), accepted_dtimes)
 
         # uniform weights
-        weights = torch.ones_like(res) / num_sample
+        weights = torch.ones_like(accepted_dtimes) / num_sample
 
-        return res.clamp(max=1e5), weights
+        return accepted_dtimes.clamp(max=self.dtime_max), weights

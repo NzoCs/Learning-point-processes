@@ -96,9 +96,7 @@ class PredictionMixin(NeuralModel):
     def simulate(
         self,
         batch: Batch,
-        max_events: Optional[int | str] = "2x",
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
+        num_events_to_simulate: Optional[int] = None,
     ) -> SimulationResult:
         if self._simulator is None:
             raise RuntimeError(
@@ -106,50 +104,43 @@ class PredictionMixin(NeuralModel):
             )
 
         simulator: "Simulator" = self._simulator
-        sim = simulator.simulate(
-            batch=batch, max_events=max_events, start_time=start_time, end_time=end_time
-        )
+        sim = simulator.simulate(batch=batch, num_events_to_simulate=num_events_to_simulate)
 
         return sim
 
     def _create_empty_batch(
-        self, batch_size: int, initial_buffer_size: int = 100
+        self, batch_size: int, num_events: int = 100
     ) -> Batch:
         device = self.device
         return Batch(
             time_seqs=torch.zeros(
-                batch_size, initial_buffer_size, device=device, dtype=torch.float32
+                batch_size, num_events, device=device, dtype=torch.float32
             ),
             time_delta_seqs=torch.zeros(
-                batch_size, initial_buffer_size, device=device, dtype=torch.float32
+                batch_size, num_events, device=device, dtype=torch.float32
             ),
             type_seqs=torch.zeros(
-                batch_size, initial_buffer_size, device=device, dtype=torch.long
+                batch_size, num_events, device=device, dtype=torch.long
             ),
             valid_event_mask=torch.ones(
-                batch_size, initial_buffer_size, device=device, dtype=torch.bool
+                batch_size, num_events, device=device, dtype=torch.bool
             ),
         )
 
     def simulate_from_scratch(
         self,
         num_sequences: int,
-        start_time: float = 0.0,
-        end_time: float = 100.0,
-        initial_buffer_size: int = 100,
-        max_events: Optional[int | str] = "2x",
+        num_events: int = 100,
     ) -> SimulationResult:
         """Simulate event sequences from scratch (no conditioning).
 
         Args:
-            num_sequences: Number of sequences to simulate (defaults to self.batch_size).
-            start_time: Start time for the simulation.
-            end_time: End time for the simulation.
+            num_sequences: Number of sequences to simulate.
+            num_events: Number of events to simulate per sequence.
 
         Returns:
             SimulationResult (Batch alias) with generated sequences.
         """
-        empty_batch = self._create_empty_batch(num_sequences, initial_buffer_size)
-        return self.simulate(
-            empty_batch, max_events, start_time=start_time, end_time=end_time
-        )
+        # Create a completely empty batch (length 0) as history
+        empty_batch = self._create_empty_batch(num_sequences, 0)
+        return self.simulate(empty_batch, num_events_to_simulate=num_events)

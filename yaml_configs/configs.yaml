@@ -148,6 +148,7 @@ general_specs:
     hidden_size: 128
 
   hawkes1:
+    hidden_size: 4
     mu : 0.2
     alpha : 0.8
     beta : 1.0
@@ -303,6 +304,11 @@ data_loading_configs:
   b16_w1:
     batch_size: 16
     num_workers: 1
+
+  
+  b16_w4:
+    batch_size: 16
+    num_workers: 4
 
   b128_w6:
     batch_size: 128

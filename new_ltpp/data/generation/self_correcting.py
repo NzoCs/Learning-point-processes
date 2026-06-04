@@ -52,10 +52,11 @@ class SelfCorrecting(Simulator):
         """
         # Initialize state variables for each dimension
         x = np.zeros(self.dim_process)
-        t = self.start_time
+        t = 0.0
         next_event_times = np.full(self.dim_process, np.inf)
         all_times = []
         all_marks = []
+        event_count = 0
 
         # Generate initial next event times for each dimension
         for dim in range(self.dim_process):
@@ -64,7 +65,7 @@ class SelfCorrecting(Simulator):
             next_event_times[dim] = t + tau
 
         # Main simulation loop
-        while np.min(next_event_times) < self.end_time:
+        while event_count < self.num_events:
             # Find the next event dimension and time
             next_dim = np.argmin(next_event_times)
             next_time = next_event_times[next_dim]
@@ -76,6 +77,7 @@ class SelfCorrecting(Simulator):
             # Record the event
             all_times.append(next_time)
             all_marks.append(next_dim)
+            event_count += 1
 
             # Apply the influence of the event on all dimensions
             x -= self.alpha_matrix[:, next_dim]
@@ -92,7 +94,15 @@ class SelfCorrecting(Simulator):
             t = next_time
 
         # Convert to numpy arrays (already sorted by time due to simulation logic)
-        return np.array(all_times), np.array(all_marks)
+        times_arr = np.array(all_times)
+        marks_arr = np.array(all_marks)
+
+        if self.burn_in > 0 and len(times_arr) > self.burn_in:
+            t_shift = times_arr[self.burn_in - 1]
+            times_arr = times_arr[self.burn_in:] - t_shift
+            marks_arr = marks_arr[self.burn_in:]
+
+        return times_arr, marks_arr
 
     def batch_simulate(
         self, num_simulations: int, batch_size: Optional[int] = None
@@ -135,7 +145,7 @@ class SelfCorrecting(Simulator):
             x                (B, dim)  — compensator state per path and dimension
             t                (B,)      — current time per path
             next_event_times (B, dim)  — next scheduled event per path and dimension
-            active           (B,)      — True while path has not yet reached end_time
+            active           (B,)      — True while path has not yet generated num_events
 
         At each step:
           1. Find the next event (argmin over dim axis) — vectorized over (B, dim)
@@ -154,9 +164,10 @@ class SelfCorrecting(Simulator):
 
         # State variables
         x = np.zeros((B, dim), dtype=np.float64)                  # (B, dim)
-        t = np.full(B, self.start_time, dtype=np.float64)         # (B,)
+        t = np.zeros(B, dtype=np.float64)                         # (B,)
         next_event_times = np.full((B, dim), np.inf, dtype=np.float64)  # (B, dim)
         active = np.ones(B, dtype=bool)                            # (B,)
+        event_counts = np.zeros(B, dtype=int)
 
         # Event storage
         times_list: List[List[float]] = [[] for _ in range(B)]
@@ -175,13 +186,6 @@ class SelfCorrecting(Simulator):
             next_dim = np.argmin(next_event_times, axis=1)   # (B,) — winning dimension
             next_time = next_event_times[np.arange(B), next_dim]  # (B,)
 
-            # Paths whose next event overshoots end_time become inactive
-            will_end = next_time >= self.end_time
-            active &= ~will_end
-
-            if not np.any(active):
-                break
-
             # ── Advance compensator state x for active paths ──────────────────
             # x[b, :] += mu * (next_time[b] - t[b])
             delta_t = np.where(active, next_time - t, 0.0)   # (B,)
@@ -192,6 +196,12 @@ class SelfCorrecting(Simulator):
             for b in active_idx:
                 times_list[b].append(float(next_time[b]))
                 marks_list[b].append(int(next_dim[b]))
+                event_counts[b] += 1
+                if event_counts[b] >= self.num_events + self.burn_in:
+                    active[b] = False
+
+            if not np.any(active):
+                break
 
             # ── Apply alpha correction: x[b, :] -= alpha_matrix[:, next_dim[b]] ──
             # Flatten: for each active path b, subtract alpha_matrix[:, d]
@@ -215,10 +225,19 @@ class SelfCorrecting(Simulator):
             if not np.all(active):
                 next_event_times[~active] = np.inf
 
-        return [
-            (np.array(times_list[b]), np.array(marks_list[b]))
-            for b in range(B)
-        ]
+        results = []
+        for b in range(B):
+            times_arr = np.array(times_list[b])
+            marks_arr = np.array(marks_list[b])
+
+            if self.burn_in > 0 and len(times_arr) > self.burn_in:
+                t_shift = times_arr[self.burn_in - 1]
+                times_arr = times_arr[self.burn_in:] - t_shift
+                marks_arr = marks_arr[self.burn_in:]
+
+            results.append((times_arr, marks_arr))
+
+        return results
 
     def get_simulator_metadata(self) -> Dict:
         """
@@ -269,7 +288,7 @@ class SelfCorrecting(Simulator):
                         x_i -= self.alpha_matrix[i, j] * len(past_events)
                     else:
                         # Pas d'événements dans cette dimension
-                        x_i += self.mu[i] * (t - self.start_time)
+                        x_i += self.mu[i] * t
 
                 # Intensité
                 intensity = self.mu[i] * np.exp(x_i)

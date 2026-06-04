@@ -46,19 +46,21 @@ new-ltpp run --gpu 0
 
 **Options:**
 
-- `--config, -c`: YAML configuration file
-- `--data-config`: Data configuration (test, large, synthetic)
-- `--model-config`: Model configuration (neural_small, neural_large)
-- `--training-config`: Training configuration (quick_test, full_training)
-- `--data-loading-config`: Data loading configuration
-- `--simulation-config`: Simulation configuration
-- `--thinning-config`: Thinning configuration
-- `--logger-config`: Logger configuration (tensorboard, mlflow, csv)
-- `--model, -m`: Model ID (NHP, RMTPP, etc.)
-- `--phase, -p`: Execution phase (train/test/predict/all)
-- `--epochs, -e`: Maximum number of epochs
-- `--save-dir, -s`: Save directory
-- `--gpu, -g`: GPU id to use
+- `--config, -c`: YAML configuration file [default: yaml_configs/configs.yaml]
+- `--dataset-id`: Data configuration ID (e.g. taxi, taobao, amazon, retweet, test, hawkes1, etc.) [default: test]
+- `--general-specs-config`: General model specs configuration (quick_test, debug, h16, h32, etc.) [default: quick_test]
+- `--model-specs-config`: Model-specific specs configuration (optional, depends on model)
+- `--training-config`: Training configuration (quick_test, debug, e500_b1, etc.) [default: quick_test]
+- `--data-loading-config`: Data loading configuration (quick_test, b32_w1, b64_w2, etc.) [default: quick_test]
+- `--simulation-config`: Simulation configuration (quick_test, debug, tw30_b5000_b16, etc.) [default: quick_test]
+- `--thinning-config`: Thinning configuration (quick_test, debug, e50_s15, etc.) [default: quick_test]
+- `--statistical-test-config`: Statistical test configuration [default: quick_test]
+- `--logger-config`: Logger configuration (tensorboard, csv, wandb) [default: tensorboard]
+- `--model, -m`: Model ID (NHP, RMTPP, etc.) [default: NHP]
+- `--phase, -p`: Execution phase (train/test/predict/all) [default: all]
+- `--epochs, -e`: Maximum number of epochs overrides [default: 100]
+- `--save-dir, -s`: Save directory [default: artifacts]
+- `--debug`: Enable verbose debug mode
 
 ### `new-ltpp inspect` - Data Inspection and Visualization
 
@@ -79,12 +81,14 @@ new-ltpp inspect ./data/my_dataset \
 
 **Options:**
 
-- `data_dir`: Directory containing the data (required)
-- `--format, -f`: Data format (json, csv, etc.)
-- `--output, -o`: Output directory for results
-- `--save/--no-save`: Save analysis plots
-- `--show/--no-show`: Display plots
+- `data_dir`: Directory containing the data to inspect (required)
+- `--format, -f`: Data format (json, csv, hf if saved on Hugging Face) [default: json]
+- `--output, -o`: Output directory for analysis results
+- `--save / --no-save`: Save analysis plots [default: True]
+- `--show / --no-show`: Display plots interactively [default: False]
 - `--max-seq`: Maximum number of sequences to analyze
+- `--num-event-types`: Explicitly specify the number of event types
+- `--debug`: Enable verbose debug mode
 
 ### `new-ltpp generate` - Synthetic Data Generation
 
@@ -97,22 +101,33 @@ new-ltpp generate
 # Generate with custom parameters
 new-ltpp generate \
   --output ./synthetic_data \
-  --num-seq 5000 \
-  --max-len 200 \
-  --event-types 5 \
-  --method nhp \
+  --num-sim 5000 \
+  --num-events-per-seq 200 \
+  --dim 5 \
+  --model hawkes \
   --seed 42
 ```
 
 **Options:**
 
-- `--output, -o`: Output directory
-- `--num-seq, -n`: Number of sequences
-- `--max-len, -l`: Maximum sequence length
-- `--event-types, -t`: Number of event types
-- `--method, -m`: Generation method
-- `--config, -c`: Configuration file
-- `--seed`: Random seed
+- `--output, -o`: Output directory [default: artifacts/generated_data/TIMESTAMP]
+- `--num-sim, -n`: Number of sequences to generate [default: 1000]
+- `--model, -m`: Generation method (hawkes, self_correcting) [default: hawkes]
+- `--dim, -d`: Number of event types/dimensions [default: 2]
+- `--burn-in`: Number of events to discard for warmup to reach stationary state [default: 100]
+- `--num-events-per-seq`: Number of events to keep per sequence [default: 100]
+- `--train-ratio`: Train split ratio [default: 0.6]
+- `--test-ratio`: Test split ratio [default: 0.2]
+- `--dev-ratio`: Dev split ratio [default: 0.2]
+- `--push`: Push the generated dataset directly to Hugging Face Hub
+- `--repo-id`: Hugging Face repo ID (e.g., `username/my-dataset`). Required if `--push` is used
+- `--private`: Make the Hugging Face dataset private
+- `--seed`: Random seed for reproducible generation
+- `--mu`: Baseline intensity (JSON list string, e.g. `"[0.2, 0.2]"`)
+- `--alpha`: Excitation matrix (JSON list of lists, e.g. `"[[0.4, 0], [0, 0.8]]"`)
+- `--beta`: Decay matrix (JSON list of lists)
+- `--save-local / --no-local`: Whether to save the dataset locally [default: True]
+- `--debug`: Enable verbose debug mode
 
 ### `new-ltpp info` - System Information
 
@@ -200,11 +215,11 @@ new-ltpp inspect ./data/my_experiment --save
 # 2. Run a quick test experiment
 new-ltpp run --data-config test --training-config quick_test --phase all
 
-# 3. Generate synthetic data for testing
-new-ltpp generate --output ./synthetic --num-seq 1000
+# 3. Generate synthetic data for testing and push directly to Hugging Face
+new-ltpp generate --output ./synthetic --num-sim 1000 --num-events-per-seq 100 --burn-in 100 --push --repo-id username/my-dataset
 
 # 4. Run benchmarks
-new-ltpp benchmark --config benchmark.yaml --data-config test --all
+new-ltpp benchmark --config benchmark.yaml --dataset-id test --all
 
 # 5. Check system information
 new-ltpp info --output system_check.txt

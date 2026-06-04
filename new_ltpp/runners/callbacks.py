@@ -62,8 +62,14 @@ class PredictionStatsCallback(pl.Callback):
         self.metadata = metadata or {}
         self.experiment_id = experiment_id or base_dir.name
         self.aggregator = ResultsAggregator(csv_path=OUTPUT_DIR / "global_results.csv")
+        self.pbar = None
 
     def on_predict_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+        from tqdm import tqdm
+        dl = trainer.predict_dataloaders
+        total_batches = len(dl[0]) if isinstance(dl, list) and len(dl) > 0 else (len(dl) if dl else None)
+        self.pbar = tqdm(total=total_batches, desc="Simulating Batches", leave=True)
+
         model = cast("ISimulableModel", pl_module)
         simulator = Simulator(
             model=model,
@@ -78,7 +84,14 @@ class PredictionStatsCallback(pl.Callback):
 
         simulator.init_statistics_collector(base_dir=self.base_dir)
 
+    def on_predict_batch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule, outputs, batch, batch_idx, dataloader_idx=0):
+        if self.pbar is not None:
+            self.pbar.update(1)
+
     def on_predict_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+        if self.pbar is not None:
+            self.pbar.close()
+
         model = cast("ISimulableModel", pl_module)
         simulator = model._simulator
         if simulator._statistics_collector is None:

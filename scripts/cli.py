@@ -192,8 +192,8 @@ def generate_data(
     dim_process: int = typer.Option(
         2, "--dim", "-d", help="Number of event types/dimensions"
     ),
-    start_time: float = typer.Option(0.0, "--start", help="Start time for simulation"),
-    end_time: float = typer.Option(100.0, "--end", help="End time for simulation"),
+    burn_in: int = typer.Option(100, "--burn-in", help="Number of events to discard for warmup"),
+    num_events_per_seq: int = typer.Option(100, "--num-events-per-seq", help="Number of events per sequence"),
     train_ratio: float = typer.Option(0.6, "--train-ratio", help="Train split ratio"),
     test_ratio: float = typer.Option(0.2, "--test-ratio", help="Test split ratio"),
     dev_ratio: float = typer.Option(0.2, "--dev-ratio", help="Dev split ratio"),
@@ -257,8 +257,8 @@ def generate_data(
         num_simulations=num_simulations,
         generation_method=model,
         splits=splits,
-        start_time=start_time,
-        end_time=end_time,
+        burn_in=burn_in,
+        num_events=num_events_per_seq,
         dim_process=dim_process,
         mu=mu_list,
         alpha=alpha_list,

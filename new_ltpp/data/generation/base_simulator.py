@@ -13,8 +13,8 @@ class Simulator(ABC):
     def __init__(
         self,
         dim_process: int,
-        start_time: float = 100,
-        end_time: float = 200,
+        num_events: int = 100,
+        burn_in: int = 100,
         seed: Optional[int] = None,
     ):
         """
@@ -22,13 +22,13 @@ class Simulator(ABC):
 
         Args:
             dim_process (int): Dimension du processus (nombre de types d'événements)
-            start_time (float): Temps de début de la simulation
-            end_time (float): Temps de fin de la simulation
+            num_events (int): Nombre d'événements à simuler
+            burn_in (int): Nombre d'événements à générer puis rejeter (phase de chauffe)
             seed (int, optional): Graine pour la reproductibilité
         """
         self.dim_process = dim_process
-        self.start_time = start_time
-        self.end_time = end_time
+        self.num_events = num_events
+        self.burn_in = burn_in
         self.seed = seed
 
         if seed is not None:
@@ -63,7 +63,8 @@ class Simulator(ABC):
             "simulation_info": {
                 "num_simulations": num_simulations,
                 "dimension": self.dim_process,
-                "time_interval": [self.start_time, self.end_time],
+                "num_events": self.num_events,
+                "burn_in": self.burn_in,
                 "simulator_type": self.__class__.__name__,
             }
         }
@@ -166,8 +167,8 @@ class ISimulator(Protocol):
     """Protocol for IDE type checking + isinstance() support."""
 
     dim_process: int
-    start_time: float
-    end_time: float
+    num_events: int
+    burn_in: int
 
     def simulate(self) -> Tuple[np.ndarray, np.ndarray]:
         """Simulate a temporal point process.

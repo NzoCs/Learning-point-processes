@@ -60,7 +60,7 @@ class SelfCorrecting(TrainingMixin):
 
         def _to_param(x, shape, name):
             dev = getattr(self, "device", torch.device("cpu"))
-            t = torch.tensor(x, dtype=torch.float32, device=dev).view(shape)
+            t = torch.as_tensor(x, dtype=torch.float32, device=dev).view(shape)
             if t.shape != torch.Size(shape):
                 raise ValueError(
                     f"SelfCorrecting: expected {name} of shape {shape}, got {list(t.shape)}"
@@ -207,19 +207,23 @@ class SelfCorrecting(TrainingMixin):
 
     def sync_state(
         self, batch: Batch
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Synchronise l'état interne (H, t_current, t_end) à partir d'un batch d'historique.
-        Reproduit la logique de fenêtre de simulation du Simulator générique.
+        Synchronise l'état interne (H, t_current) à partir d'un batch d'historique.
 
         Returns:
             H: Tenseur [B, K] de la somme des pénalités alpha pour les événements passés.
             t_current: Tenseur [B] du temps actuel (end_times du batch).
-            t_end: Tenseur [B] de la fin de simulation cible.
         """
         mask = batch.valid_event_mask
         time_seqs = batch.time_seqs
         type_seqs = batch.type_seqs
+        B = time_seqs.size(0)
+        K = self.num_event_types
+        dev = time_seqs.device
+
+        if time_seqs.size(1) == 0:
+            return torch.zeros((B, K), dtype=torch.float32, device=dev), torch.zeros(B, dtype=torch.float32, device=dev)
 
         # ── 1. Calcul de H (Somme des pénalités passées) ──
         safe_types = type_seqs.long().clone()
@@ -232,34 +236,18 @@ class SelfCorrecting(TrainingMixin):
         # On somme sur l'axe temporel (L) -> [B, K]
         H = alpha_emb.sum(dim=1)
 
-        # ── 2. Calcul des temps (start, current, horizon) ──
-        time_clone_min = time_seqs.clone()
-        time_clone_min[~mask] = float("inf")
-        start_times = time_clone_min.min(dim=1).values
-        start_times[torch.isinf(start_times)] = 0.0  # Fallback si la séquence est vide
-
+        # ── 2. Calcul des temps (current) ──
         time_clone_max = time_seqs.clone()
         time_clone_max[~mask] = 0.0
         end_times = time_clone_max.max(dim=1).values
 
-        # La durée à simuler est égale à la durée de l'historique fourni
-        sim_window = end_times - start_times
-
-        # Protection si le batch est complètement vide (simulate_from_scratch)
-        # On garantit une fenêtre minimale strictement positive (ex: 10.0)
-        sim_window = torch.clamp(sim_window, min=1e-3)
-
-        t_end = end_times + sim_window
-
-        return H, end_times, t_end
+        return H, end_times
 
     def simulate(
         self,
         batch: Batch,
-        max_events: int = 10_000,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
-    ) -> Batch:
+        num_events_to_simulate: Optional[int] = None,
+    ) -> SimulationResult:
         """
         Simulate the multivariate Self-Correcting process conditionné sur un batch.
         Utilise l'inversion exacte vectorisée sur tout le batch.
@@ -267,30 +255,34 @@ class SelfCorrecting(TrainingMixin):
         dev = getattr(self, "device", torch.device("cpu"))
         K = self.num_event_types
         batch_size = batch.time_seqs.size(0)
+        
+        if num_events_to_simulate is None:
+            num_events_to_simulate = batch.time_seqs.size(1)
+            if num_events_to_simulate == 0:
+                num_events_to_simulate = 100
 
         mu = torch.clamp(self.mu.detach(), min=self.eps)  # [K]
         alpha_t = self.alpha.detach().t()  # [K_source, K_target]
 
         # ── 1. Synchronisation de l'état avec le batch conditionnel ──
-        H, t, t_end = self.sync_state(batch)
+        H, t = self.sync_state(batch)
         H = H.detach()
         t = t.detach()
-        t_end = t_end.detach()
-
-        active = torch.ones(batch_size, dtype=torch.bool, device=dev)  # [B]
+        start_times = t.clone()
 
         # Pré-allocation
         all_times = torch.zeros(
-            (batch_size, max_events), dtype=torch.float32, device=dev
+            (batch_size, num_events_to_simulate), dtype=torch.float32, device=dev
         )
         all_deltas = torch.zeros(
-            (batch_size, max_events), dtype=torch.float32, device=dev
+            (batch_size, num_events_to_simulate), dtype=torch.float32, device=dev
         )
-        all_types = torch.zeros((batch_size, max_events), dtype=torch.long, device=dev)
-        lens = torch.zeros(batch_size, dtype=torch.long, device=dev)
+        all_types = torch.zeros(
+            (batch_size, num_events_to_simulate), dtype=torch.long, device=dev
+        )
 
         # ── 2. Boucle de simulation vectorisée ──
-        while active.any():
+        for step in range(num_events_to_simulate):
             x = mu * t.unsqueeze(1) - H  # [B, K]
 
             E = torch.empty((batch_size, K), device=dev).exponential_(1.0)
@@ -299,38 +291,22 @@ class SelfCorrecting(TrainingMixin):
             dt, next_dim = torch.min(tau, dim=1)  # dt: [B], next_dim: [B]
             t_next = t + dt
 
-            # Vectorized condition: t_next doit être inférieur au t_end de SA séquence
-            valid_step = active & (t_next < t_end) & (lens < max_events)
-            active = valid_step
+            t = t_next
+            H = H + alpha_t[next_dim]
 
-            if not active.any():
-                break
-
-            t = torch.where(valid_step, t_next, t)
-            H[valid_step] = H[valid_step] + alpha_t[next_dim[valid_step]]
-
-            b_idx = torch.arange(batch_size, device=dev)[valid_step]
-            curr_lens = lens[valid_step]
-
-            all_times[b_idx, curr_lens] = t_next[valid_step]
-            all_deltas[b_idx, curr_lens] = dt[valid_step]
-            all_types[b_idx, curr_lens] = next_dim[valid_step]
-
-            lens[valid_step] += 1
+            all_times[:, step] = t_next
+            all_deltas[:, step] = dt
+            all_types[:, step] = next_dim
 
         # ── 3. Post-traitement et renvoi du Batch généré ──
-        max_len = max(lens.max().item(), 1)
+        if batch.time_seqs.size(1) > 0:
+            all_times = all_times - start_times.unsqueeze(1)
 
-        time_seqs = all_times[:, :max_len]
-        time_delta_seqs = all_deltas[:, :max_len]
-        type_seqs = all_types[:, :max_len]
-
-        seq_idx = torch.arange(max_len, device=dev).unsqueeze(0).expand(batch_size, -1)
-        valid_event_mask = seq_idx < lens.unsqueeze(1)
+        valid_event_mask = torch.ones_like(all_times, dtype=torch.bool)
 
         return SimulationResult(
-            time_seqs=time_seqs,
-            time_delta_seqs=time_delta_seqs,
-            type_seqs=type_seqs,
+            time_seqs=all_times,
+            time_delta_seqs=all_deltas,
+            type_seqs=all_types,
             valid_event_mask=valid_event_mask,
         )

@@ -5,7 +5,8 @@ Used as a parametric benchmark against neural TPP models — supports exact
 log-likelihood computation and simulation via Ogata's thinning algorithm.
 
 Intensity:
-    λ_k(t) = softplus(μ_k + Σ_{t_i < t} α[k, m_i] · β[k, m_i] · exp(−β[k, m_i] · (t − t_i)))
+    λ_k(t) = μ_k + Σ_{t_i < t} α[k, m_i] · β[k, m_i] · exp(−β[k, m_i] · (t − t_i))
+    (where μ_k, α, β are constrained to be positive via squaring)
 """
 
 from new_ltpp.models.base import TrainingMixin
@@ -65,18 +66,22 @@ class Hawkes(TrainingMixin):
         dev = getattr(self, "device", torch.device("cpu"))
 
         def _to_param(x, default, shape, name):
-            if x is None:
+            is_user_provided = x is not None
+            if not is_user_provided:
                 x = default
-            t = torch.tensor(x, dtype=torch.float32, device=dev).view(shape)
+            t = torch.as_tensor(x, dtype=torch.float32, device=dev).view(shape)
             if t.shape != torch.Size(shape):
                 raise ValueError(
                     f"Hawkes: expected {name} of shape {shape}, got {list(t.shape)}"
                 )
+            # Apply inverse square so the effective parameter is exactly what was requested (or default)
+            t = torch.clamp(t, min=1e-7)
+            t = torch.sqrt(t)
             return t
 
-        self.mu = nn.Parameter(_to_param(mu, torch.zeros(K), (K,), "mu"))
+        self.mu = nn.Parameter(_to_param(mu, torch.full((K,), 0.01), (K,), "mu"))
         self.alpha = nn.Parameter(
-            _to_param(alpha, torch.zeros((K, K)), (K, K), "alpha")
+            _to_param(alpha, torch.full((K, K), 0.01), (K, K), "alpha")
         )
         self.beta = nn.Parameter(_to_param(beta, torch.ones((K, K)), (K, K), "beta"))
 
@@ -86,15 +91,15 @@ class Hawkes(TrainingMixin):
 
     @property
     def mu_pos(self) -> torch.Tensor:
-        return F.softplus(self.mu)
+        return torch.square(self.mu)
 
     @property
     def alpha_pos(self) -> torch.Tensor:
-        return F.softplus(self.alpha)
+        return torch.square(self.alpha)
 
     @property
     def beta_pos(self) -> torch.Tensor:
-        return F.softplus(self.beta)
+        return torch.square(self.beta)
 
     # ──────────────────────────────────────────────────────────────────────────
     # Internal helpers
@@ -112,23 +117,7 @@ class Hawkes(TrainingMixin):
         out = F.embedding(safe, weight)  # [B, L, K]
         return out * valid_mask.float().unsqueeze(-1)
 
-    def _compute_start_end_time(
-        self,
-        time_seqs: torch.Tensor,
-        valid_mask: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Default simulation window: [t_last, t_last + (t_last - t_first)]."""
-        t_min = time_seqs.clone()
-        t_min[~valid_mask] = float("inf")
-        t_first = t_min.min(dim=1).values
-        t_first[torch.isinf(t_first)] = 0.0
 
-        t_max = time_seqs.clone()
-        t_max[~valid_mask] = 0.0
-        t_last = t_max.max(dim=1).values
-
-        sim_window = (t_last - t_first).clamp(min=1e-3)
-        return t_last, t_last + sim_window
 
     # ──────────────────────────────────────────────────────────────────────────
     # Core intensity computation
@@ -195,53 +184,43 @@ class Hawkes(TrainingMixin):
     # Analytical integral of the intensity
     # ──────────────────────────────────────────────────────────────────────────
 
-    def _compute_integral_analytical(
+    def _compute_total_integral(
         self,
         time_seq: torch.Tensor,  # [B, L]
-        time_delta_seq: torch.Tensor,  # [B, L]
-        type_seq: torch.Tensor,  # [B, L]  (already safe)
+        type_seq: torch.Tensor,  # [B, L]
+        mask: torch.Tensor,      # [B, L]
     ) -> torch.Tensor:
+        """Computes the total integral of the intensity over the observation window [0, T]."""
         B, L = time_seq.shape
-
         mu = self.mu_pos
         alpha = self.alpha_pos
         beta = self.beta_pos
 
-        dt = time_delta_seq[:, 1:]  # [B, L-1]
+        # Observation window ends at the last valid event time for each sequence
+        lengths = mask.sum(dim=1).long()  # [B]
+        last_indices = (lengths - 1).clamp(min=0)
+        T = time_seq[torch.arange(B, device=time_seq.device), last_indices]  # [B]
 
-        # Baseline contribution — Σ_k μ_k · dt_i
-        integral_base = mu.sum() * dt  # [B, L-1]
+        # Baseline integral: Σ_k μ_k * T
+        integral_base = mu.sum() * T  # [B]
 
-        # Excitation contribution
-        # tau_start[b, i, j] = time elapsed from event j to the start of interval i
-        # We use cumulative deltas: tau_start[b, i, j] = Σ_{n=j+1}^{i} dt_n
-        alpha_src = F.embedding(type_seq.long(), alpha.t()).unsqueeze(1)  # [B, 1, L, K]
-        beta_src = F.embedding(type_seq.long(), beta.t()).unsqueeze(1)  # [B, 1, L, K]
+        # Excitation integral
+        tau = T.unsqueeze(1) - time_seq  # [B, L]
+        tau = tau.clamp(min=0.0)
 
-        # Rebuild elapsed time from time_delta_seq for the integral bounds
-        tau_cumsum = torch.cumsum(time_delta_seq, dim=1)  # [B, L]
-        tau_start_full = (
-            (
-                tau_cumsum[:, 1:].unsqueeze(2) - tau_cumsum.unsqueeze(1)  # [B, L-1, L]
-            )
-            .unsqueeze(-1)
-            .abs()
-        )  # [B, L-1, L, 1]
+        alpha_src = F.embedding(type_seq.long(), alpha.t())  # [B, L, K]
+        beta_src = F.embedding(type_seq.long(), beta.t())  # [B, L, K]
 
-        dt_4d = dt.unsqueeze(-1).unsqueeze(-1)  # [B, L-1, 1, 1]
-        time_factor = 1.0 - torch.exp(-beta_src * dt_4d)  # [B, L-1, L, K]
-        decay_start = torch.exp(-beta_src * tau_start_full)  # [B, L-1, L, K]
+        # term = α * (1 - exp(-β * (T - t_i)))
+        tau_3d = tau.unsqueeze(-1)  # [B, L, 1]
+        excitation = alpha_src * (1.0 - torch.exp(-beta_src * tau_3d))  # [B, L, K]
+        
+        # Only valid events contribute to the excitation integral
+        excitation = excitation * mask.float().unsqueeze(-1)  # [B, L, K]
 
-        term = alpha_src * time_factor * decay_start  # [B, L-1, L, K]
+        integral_excitation = excitation.sum(dim=[1, 2])  # [B]
 
-        # Causal mask — event j contributes to interval i only if j ≤ i
-        causal = torch.tril(
-            torch.ones(L - 1, L, device=time_seq.device), diagonal=0
-        ).view(1, L - 1, L, 1)
-
-        excitation_integral = (term * causal).sum(dim=-1).sum(dim=-1)  # [B, L-1]
-
-        return integral_base + excitation_integral
+        return integral_base + integral_excitation
 
     # ──────────────────────────────────────────────────────────────────────────
     # NLL loss
@@ -250,7 +229,6 @@ class Hawkes(TrainingMixin):
     def loglike_loss(self, batch: Batch) -> tuple[torch.Tensor, int]:
         time_seq = batch.time_seqs
         type_seq = batch.type_seqs
-        time_delta_seq = batch.time_delta_seqs
         mask = batch.valid_event_mask
 
         safe_types = type_seq.long().clone()
@@ -264,21 +242,17 @@ class Hawkes(TrainingMixin):
             compute_last_step_only=False,
         ).squeeze(-2)  # [B, L, K]
 
-        # Target: events 1..L-1 (event 0 has no history)
-        intensities_target = intensities_full[:, 1:, :]  # [B, L-1, K]
-        target_types = safe_types[:, 1:].unsqueeze(-1)  # [B, L-1, 1]
-
-        lambda_target = torch.gather(intensities_target, -1, target_types).squeeze(-1)
+        # Target ALL valid events
+        target_types = safe_types.unsqueeze(-1)  # [B, L, 1]
+        lambda_target = torch.gather(intensities_full, -1, target_types).squeeze(-1) # [B, L]
+        
         event_ll = torch.log(lambda_target + 1e-9)
+        event_ll = (event_ll * mask).sum()
 
-        integral = self._compute_integral_analytical(
-            time_seq, time_delta_seq, safe_types
-        )
+        integral = self._compute_total_integral(time_seq, safe_types, mask)
+        non_event_ll = integral.sum()
 
-        pad_mask = mask[:, 1:]
-        event_ll = (event_ll * pad_mask).sum()
-        non_event_ll = (integral * pad_mask).sum()
-        num_events = int(pad_mask.sum().item())
+        num_events = int(mask.sum().item())
 
         return -(event_ll - non_event_ll), num_events
 
@@ -330,9 +304,7 @@ class Hawkes(TrainingMixin):
     def simulate(
         self,
         batch: Batch,
-        max_events: int = 10,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
+        num_events_to_simulate: Optional[int] = None,
     ) -> SimulationResult:
         """
         Simulate via Ogata's thinning algorithm.
@@ -341,12 +313,16 @@ class Hawkes(TrainingMixin):
         -----------------
         - All tensor ops stay on `device` (GPU-compatible).
         - mu/alpha/beta softplus computed ONCE before the loop.
-        - Variable-length storage uses Python lists + a single pad at the end.
-        - No F.pad, no tqdm sync, no redundant .item() inside the hot loop.
+        - Exactly num_events_to_simulate events are generated for each sequence.
         """
         dev = getattr(self, "device", torch.device("cpu"))
         K = self.num_event_types
         B = batch.time_seqs.size(0)
+        
+        if num_events_to_simulate is None:
+            num_events_to_simulate = batch.time_seqs.size(1)
+            if num_events_to_simulate == 0:
+                num_events_to_simulate = 100
 
         with torch.no_grad():
             # ── Precompute positive params (outside the loop) ──
@@ -356,18 +332,12 @@ class Hawkes(TrainingMixin):
             alpha_beta = alpha * beta  # [K, K]
 
             # ── Simulation window ──
-            if start_time is None or end_time is None:
-                st, et = self._compute_start_end_time(
-                    batch.time_seqs, batch.valid_event_mask
-                )
-            start_times = (
-                torch.full((B,), start_time, device=dev)
-                if start_time is not None
-                else st
-            )
-            end_times = (
-                torch.full((B,), end_time, device=dev) if end_time is not None else et
-            )
+            if batch.time_seqs.size(1) == 0:
+                start_times = torch.zeros(B, dtype=torch.float32, device=dev)
+            else:
+                time_clone = batch.time_seqs.clone()
+                time_clone[~batch.valid_event_mask] = 0.0
+                start_times = time_clone.max(dim=1).values
 
             # ── Initial excitation state ──
             R = self.sync_state(batch, t_current=start_times)  # [B, K, K]
@@ -375,27 +345,22 @@ class Hawkes(TrainingMixin):
             last_event_t = start_times.clone()
             active = torch.ones(B, dtype=torch.bool, device=dev)
 
-            # Variable-length event storage (CPU lists — avoids dynamic realloc on GPU)
-            times_list: list[list[float]] = [[] for _ in range(B)]
-            deltas_list: list[list[float]] = [[] for _ in range(B)]
-            types_list: list[list[int]] = [[] for _ in range(B)]
+            # ── Pre-allocate tensors ──
+            all_times = torch.zeros((B, num_events_to_simulate), dtype=torch.float32, device=dev)
+            all_deltas = torch.zeros((B, num_events_to_simulate), dtype=torch.float32, device=dev)
+            all_types = torch.zeros((B, num_events_to_simulate), dtype=torch.long, device=dev)
+            lens = torch.zeros(B, dtype=torch.long, device=dev)
 
             # ── Ogata thinning loop ──
             while active.any():
                 # A. Upper-bound intensity  M[b] = Σ_k λ_k^{UB}(t)
-                M = (
-                    (mu + (alpha_beta * R).sum(dim=2)).sum(dim=1).clamp(min=self.eps)
-                )  # [B]
+                M = ((mu + (alpha_beta * R).sum(dim=2)).sum(dim=1).clamp(min=self.eps))  # [B]
 
                 # B. Sample candidate arrival
                 dt_prop = torch.empty(B, device=dev).exponential_(1.0) / M  # [B]
                 t_cand = current_time + dt_prop
 
-                active &= t_cand < end_times
-                if not active.any():
-                    break
-
-                # C. Decay R to candidate time (all paths, active or not — no branching)
+                # C. Decay R to candidate time
                 R = R * torch.exp(-beta * dt_prop.view(B, 1, 1))
 
                 # D. True intensity at t_cand
@@ -416,42 +381,30 @@ class Hawkes(TrainingMixin):
                 k = torch.multinomial(probs, num_samples=1).squeeze(1)  # [n_acc]
 
                 # G. Update excitation state R[b, :, k] += 1 for accepted paths
-                R[acc_idx] += (
-                    F.one_hot(k, K).float().unsqueeze(1)
-                )  # broadcast over K rows
+                R[acc_idx] += F.one_hot(k, K).float().unsqueeze(1)
 
-                # H. Record (transfer to CPU once per accepted batch, not per event)
-                t_acc = t_cand[acc_idx].cpu().tolist()
-                lt_acc = last_event_t[acc_idx].cpu().tolist()
-                k_cpu = k.cpu().tolist()
-                b_list = acc_idx.cpu().tolist()
-
-                for n, b in enumerate(b_list):
-                    if len(times_list[b]) >= max_events:
-                        active[b] = False
-                        continue
-                    times_list[b].append(t_acc[n])
-                    deltas_list[b].append(t_acc[n] - lt_acc[n])
-                    types_list[b].append(k_cpu[n])
+                # H. Record accepted events
+                curr_lens = lens[acc_idx]
+                dt_acc = t_cand[acc_idx] - last_event_t[acc_idx]
+                
+                all_times[acc_idx, curr_lens] = t_cand[acc_idx]
+                all_deltas[acc_idx, curr_lens] = dt_acc
+                all_types[acc_idx, curr_lens] = k
 
                 last_event_t[acc_idx] = t_cand[acc_idx]
+                lens[acc_idx] += 1
 
-        # ── Pack variable-length lists into padded tensors ──
-        max_len = max((len(ts) for ts in times_list), default=1)
+                # Deactivate paths that have reached the required number of events
+                active[acc_idx] = lens[acc_idx] < num_events_to_simulate
 
-        def _pad(lists: list[list], dtype: torch.dtype) -> torch.Tensor:
-            out = torch.zeros(B, max_len, dtype=dtype, device=dev)
-            for b, lst in enumerate(lists):
-                if lst:
-                    out[b, : len(lst)] = torch.tensor(lst, dtype=dtype, device=dev)
-            return out
+        if batch.time_seqs.size(1) > 0:
+            all_times = all_times - start_times.unsqueeze(1)
 
-        lens = torch.tensor([len(ts) for ts in times_list], device=dev)
-        valid_event_mask = torch.arange(max_len, device=dev)[None] < lens[:, None]
+        valid_event_mask = torch.ones_like(all_times, dtype=torch.bool)
 
         return SimulationResult(
-            time_seqs=_pad(times_list, torch.float32),
-            time_delta_seqs=_pad(deltas_list, torch.float32),
-            type_seqs=_pad(types_list, torch.long),
+            time_seqs=all_times,
+            time_delta_seqs=all_deltas,
+            type_seqs=all_types,
             valid_event_mask=valid_event_mask,
         )

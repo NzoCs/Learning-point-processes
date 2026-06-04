@@ -119,10 +119,8 @@ class ModelVisualizer:
 
     def _get_simulation_data(
         self,
-        start_time: float = 0.0,
-        end_time: float = 100.0,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        simul_result = self._model.simulate_from_scratch(num_sequences=1, start_time=start_time, end_time=end_time)
+        simul_result = self._model.simulate_from_scratch(num_sequences=1)
         return (
             simul_result.time_seqs,
             simul_result.time_delta_seqs,

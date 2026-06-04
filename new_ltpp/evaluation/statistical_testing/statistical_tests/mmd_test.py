@@ -199,6 +199,39 @@ class MMDTwoSampleTest:
         """
         return self.mmd(batch_x, batch_y)
 
+    def _truncate_to_min_time(self, batch_x: Batch, batch_y: Batch) -> tuple[Batch, Batch]:
+        """Truncate sequences to the minimum time horizon between paired sequences.
+        
+        This ensures that when comparing sequences that have generated the same
+        number of events, they are evaluated over the exact same time window.
+        """
+        # Calculate max time for each sequence in both batches
+        T_max_x = batch_x.time_seqs.masked_fill(~batch_x.valid_event_mask, 0.0).max(dim=1).values
+        T_max_y = batch_y.time_seqs.masked_fill(~batch_y.valid_event_mask, 0.0).max(dim=1).values
+        
+        # Element-wise minimum across the batch
+        T_min = torch.min(T_max_x, T_max_y)
+
+        # Update masks to only include events up to T_min
+        mask_x = batch_x.valid_event_mask & (batch_x.time_seqs <= T_min.unsqueeze(1))
+        mask_y = batch_y.valid_event_mask & (batch_y.time_seqs <= T_min.unsqueeze(1))
+
+        trunc_x = Batch(
+            time_seqs=batch_x.time_seqs,
+            time_delta_seqs=batch_x.time_delta_seqs,
+            type_seqs=batch_x.type_seqs,
+            valid_event_mask=mask_x,
+        )
+        
+        trunc_y = Batch(
+            time_seqs=batch_y.time_seqs,
+            time_delta_seqs=batch_y.time_delta_seqs,
+            type_seqs=batch_y.type_seqs,
+            valid_event_mask=mask_y,
+        )
+        
+        return trunc_x, trunc_y
+
     def compute_statistics(
         self,
         batch_x: Batch,
@@ -207,13 +240,17 @@ class MMDTwoSampleTest:
         accumulate: bool = True,
     ) -> TestStatistics:
         if simulations is not None and len(simulations) > 1:
-            observed_mmd = self.mmd(batch_x, simulations[0])
+            trunc_X, trunc_Y1 = self._truncate_to_min_time(batch_x, simulations[0])
+            observed_mmd = self.mmd(trunc_X, trunc_Y1)
+            
             perm_mmds_list = []
             for Y_i in simulations[1:]:
-                perm_mmds_list.append(self.mmd(simulations[0], Y_i))
+                trunc_Y1_i, trunc_Yi = self._truncate_to_min_time(simulations[0], Y_i)
+                perm_mmds_list.append(self.mmd(trunc_Y1_i, trunc_Yi))
             perm_mmds = torch.stack(perm_mmds_list, dim=-1)
         else:
-            observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
+            trunc_X, trunc_Y = self._truncate_to_min_time(batch_x, batch_y)
+            observed_mmd, perm_mmds = self._permutation_test(trunc_X, trunc_Y)
 
         count_ge = (perm_mmds >= observed_mmd).sum()
         p_value = (count_ge + 1.0) / (self.n_samples + 1.0)

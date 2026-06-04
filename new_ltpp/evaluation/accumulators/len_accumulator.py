@@ -1,7 +1,7 @@
 """
-Sequence Length Accumulator
+Event Density Accumulator (formerly Sequence Length Accumulator)
 
-Accumulates sequence length statistics from batches during prediction.
+Accumulates event density statistics (events per time unit) from batches during prediction.
 """
 
 import numpy as np
@@ -15,7 +15,7 @@ from .base_accumulator import Accumulator
 
 
 class SequenceLengthAccumulator(Accumulator):
-    """Accumulates sequence length statistics."""
+    """Accumulates event density (sequence length normalized by time) statistics."""
 
     def __init__(self, min_sim_events: int = 1):
         super().__init__(min_sim_events)
@@ -24,7 +24,7 @@ class SequenceLengthAccumulator(Accumulator):
         self._sim_mean: list[float] = []
 
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
-        """Accumulate sequence lengths from batch.
+        """Accumulate event density from batch.
 
         Args:
             batch: Ground truth batch
@@ -62,6 +62,7 @@ class SequenceLengthAccumulator(Accumulator):
         gt_event_count_normalized = gt_seq_lengths / gt_time_windows
 
         self._gt_mean.extend(gt_event_count_normalized.view(-1).cpu().tolist())
+        self._sample_count += len(gt_event_count_normalized)
 
         # Extract simulated sequence lengths (vectorized)
         sim_time_seqs = simulation.time_seqs.clone()
@@ -92,7 +93,7 @@ class SequenceLengthAccumulator(Accumulator):
         # Handle cases with no data gracefully
         if len(self._gt_mean) == 0:
             logger.warning(
-                "SequenceLengthAccumulator: No ground truth sequence lengths collected, returning empty statistics"
+                "SequenceLengthAccumulator: No ground truth event densities collected, returning empty statistics"
             )
             gt_lengths = np.array([], dtype=float)
         else:
@@ -100,7 +101,7 @@ class SequenceLengthAccumulator(Accumulator):
 
         if len(self._sim_mean) == 0:
             logger.warning(
-                "SequenceLengthAccumulator: No simulated sequence lengths collected, returning empty statistics"
+                "SequenceLengthAccumulator: No simulated event densities collected, returning empty statistics"
             )
             sim_lengths = np.array([], dtype=float)
         else:
@@ -118,7 +119,7 @@ class SequenceLengthAccumulator(Accumulator):
         )
 
         logger.info(
-            f"SequenceLengthAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated sequence lengths"
+            f"SequenceLengthAccumulator: Collected {result['gt_count']} GT and {result['sim_count']} simulated event densities"
         )
         return result
 

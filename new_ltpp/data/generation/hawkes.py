@@ -27,8 +27,7 @@ class HawkesSimulator(Simulator):
             alpha (np.ndarray | List[List[float]]): Matrice d'excitation des intensités [dim, dim]
             beta (np.ndarray | List[List[float]]): Matrice des taux de décroissance exponentielle [dim, dim]
             dim_process (int): Dimension du processus (nombre de types d'événements)
-            start_time (float): Temps de début de la simulation
-            end_time (float): Temps de fin de la simulation
+            num_events (int): Nombre d'événements à simuler
             seed (int, optional): Graine pour la reproductibilité
         """
         # Initialisation de la classe parente
@@ -45,7 +44,7 @@ class HawkesSimulator(Simulator):
 
     def simulate(self) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Simule un processus de Hawkes multivarié jusqu'au temps end_time.
+        Simule un processus de Hawkes multivarié pour un nombre défini d'événements.
 
         Returns:
             tuple: (times, marks) où:
@@ -57,13 +56,13 @@ class HawkesSimulator(Simulator):
         marks = []
 
         # Temps actuel
-        t = self.start_time
+        t = 0.0
         event_count = 0
 
         # Matrice de contribution d'intensité initiale [to_process][from_process]
-        lambda_trg = np.ones((dim, dim))
+        lambda_trg = np.zeros((dim, dim))
 
-        while t < self.end_time:
+        while event_count < self.num_events + self.burn_in:
             # Intensité totale pour chaque dimension
             lambda_total = np.array(
                 [self.mu[i] + np.sum(lambda_trg[i]) for i in range(dim)]
@@ -77,9 +76,6 @@ class HawkesSimulator(Simulator):
                 else float("inf")
             )
             t = t + dt
-
-            if t >= self.end_time:
-                break
 
             # Mise à jour des contributions d'intensité basée sur la décroissance exponentielle
             lambda_trg *= np.exp(
@@ -103,13 +99,21 @@ class HawkesSimulator(Simulator):
                 times.append(t)
                 marks.append(event_dim)
 
-                # Mise à jour des contributions d'intensité
-                lambda_trg[:, event_dim] += self.alpha[:, event_dim]
+                # Mise à jour des contributions d'intensité (saut de taille alpha * beta)
+                lambda_trg[:, event_dim] += self.alpha[:, event_dim] * self.beta[:, event_dim]
 
                 event_count += 1
 
         # Conversion en tableaux numpy
-        return np.array(times), np.array(marks)
+        times_arr = np.array(times)
+        marks_arr = np.array(marks)
+
+        if self.burn_in > 0 and len(times_arr) > self.burn_in:
+            t_shift = times_arr[self.burn_in - 1]
+            times_arr = times_arr[self.burn_in:] - t_shift
+            marks_arr = marks_arr[self.burn_in:]
+
+        return times_arr, marks_arr
 
     def batch_simulate(
         self, num_simulations: int, batch_size: Optional[int] = None
@@ -164,10 +168,11 @@ class HawkesSimulator(Simulator):
         dim = self.dim_process
 
         # Current time for each path  (B,)
-        t = np.full(B, self.start_time, dtype=np.float64)
+        t = np.zeros(B, dtype=np.float64)
 
-        # active[b] = True while path b has not yet reached end_time
+        # active[b] = True while path b has not yet generated num_events
         active = np.ones(B, dtype=bool)
+        event_counts = np.zeros(B, dtype=int)
 
         # lambda_trg[b, i, j] = excitation contribution to dim i from dim j in path b
         # Initialised to 1 (same as scalar simulate)
@@ -191,13 +196,6 @@ class HawkesSimulator(Simulator):
             dt = np.where(lambda_sum > 0, dt, np.inf)
 
             t_new = t + dt
-
-            # Paths that overshoot end_time become inactive
-            will_end = t_new >= self.end_time
-            active &= ~will_end
-
-            if not np.any(active):
-                break
 
             t = np.where(active, t_new, t)
 
@@ -234,6 +232,12 @@ class HawkesSimulator(Simulator):
             for k, b in enumerate(accepted_idx):
                 times_list[b].append(float(t[b]))
                 marks_list[b].append(int(event_dims[k]))
+                event_counts[b] += 1
+                if event_counts[b] >= self.num_events + self.burn_in:
+                    active[b] = False
+
+            if not np.any(active):
+                break
 
             # ── Update lambda_trg via np.add.at ───────────────────────────────
             # For each accepted event (b, d): lambda_trg[b, :, d] += alpha[:, d]
@@ -243,10 +247,19 @@ class HawkesSimulator(Simulator):
             d_rep = np.repeat(event_dims, dim)          # (n_acc * dim,)
             np.add.at(lambda_trg, (b_rep, i_rep, d_rep), self.alpha[i_rep, d_rep])
 
-        return [
-            (np.array(times_list[b]), np.array(marks_list[b]))
-            for b in range(B)
-        ]
+        results = []
+        for b in range(B):
+            times_arr = np.array(times_list[b])
+            marks_arr = np.array(marks_list[b])
+
+            if self.burn_in > 0 and len(times_arr) > self.burn_in:
+                t_shift = times_arr[self.burn_in - 1]
+                times_arr = times_arr[self.burn_in:] - t_shift
+                marks_arr = marks_arr[self.burn_in:]
+
+            results.append((times_arr, marks_arr))
+
+        return results
 
     def get_simulator_metadata(self) -> Dict:
         """

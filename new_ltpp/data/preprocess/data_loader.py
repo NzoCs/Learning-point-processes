@@ -227,8 +227,18 @@ class TPPDataModule(pl.LightningDataModule):
         """
         from datasets import load_dataset
 
-        split_mapped = "validation" if split == "dev" else split
-        data = load_dataset(source_dir, split=split_mapped)
+        try:
+            # Try exact split name first (e.g., 'dev')
+            data = load_dataset(source_dir, split=split)
+        except ValueError as e:
+            # Fallback to 'validation' if 'dev' is not found
+            if split == "dev":
+                try:
+                    data = load_dataset(source_dir, split="validation")
+                except ValueError:
+                    raise e
+            else:
+                raise e
 
         py_assert(
             data["dim_process"][0] == self.num_event_types,  # type: ignore
@@ -280,8 +290,8 @@ class TPPDataModule(pl.LightningDataModule):
         """
         from datasets import load_dataset
 
-        split_mapped = "validation" if split == "dev" else split
-        data = load_dataset("json", data_files={split: source_dir}, split=split_mapped)
+        # The split name in the loaded dataset will match the key in data_files
+        data = load_dataset("json", data_files={split: source_dir}, split=split)
 
         py_assert(
             data["dim_process"][0] == self.num_event_types,  # type: ignore

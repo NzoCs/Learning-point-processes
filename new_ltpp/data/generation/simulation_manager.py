@@ -15,8 +15,8 @@ class SimulationManager:
         self,
         simulation_func: Callable[[], Tuple[np.ndarray, np.ndarray]],
         dim_process: int,
-        start_time: float,
-        end_time: float,
+        num_events: int,
+        burn_in: int,
         simulator: Optional[Any] = None,
     ):
         """
@@ -25,7 +25,6 @@ class SimulationManager:
         Args:
             simulation_func: Function that simulates a process and returns (times, marks)
             dim_process: Dimension of the process
-            start_time: Simulation start time
             end_time: Simulation end time
             simulator: Optional reference to the underlying simulator object.
                        If provided and it exposes a `batch_simulate` method,
@@ -33,8 +32,8 @@ class SimulationManager:
         """
         self.simulation_func = simulation_func
         self.dim_process = dim_process
-        self.start_time = start_time
-        self.end_time = end_time
+        self.num_events = num_events
+        self.burn_in = burn_in
         self.simulator = simulator
 
     def bulk_simulate(self, num_simulations: int) -> List[Dict]:
@@ -85,8 +84,8 @@ class SimulationManager:
         formatted_data = []
 
         for seq_idx, (times, marks) in enumerate(simulations):
-            # Filter timestamps greater than start_time
-            mask = times > self.start_time
+            # Filter timestamps greater than or equal to 0
+            mask = times >= 0.0
             valid_times = times[mask]
             valid_marks = marks[mask]
 

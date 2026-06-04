@@ -30,8 +30,8 @@ class DataGenerator(CLIRunnerBase):
         self,
         generation_method: str,
         dim_process: int,
-        start_time: float,
-        end_time: float,
+        num_events: int,
+        burn_in: int,
         mu: Optional[List[float]],
         alpha: Optional[List[List[float]]],
         beta: Optional[List[List[float]]],
@@ -64,8 +64,8 @@ class DataGenerator(CLIRunnerBase):
                 alpha=np.array(alpha),
                 beta=np.array(beta),
                 dim_process=dim_process,
-                start_time=start_time,
-                end_time=end_time,
+                num_events=num_events,
+                burn_in=burn_in,
                 seed=seed,
             )
 
@@ -81,8 +81,8 @@ class DataGenerator(CLIRunnerBase):
                 mu=np.array(mu),
                 alpha=np.array(alpha),
                 dim_process=dim_process,
-                start_time=start_time,
-                end_time=end_time,
+                num_events=num_events,
+                burn_in=burn_in,
                 seed=seed,
             )
 
@@ -98,8 +98,8 @@ class DataGenerator(CLIRunnerBase):
         num_simulations: int = 50,
         generation_method: str = "hawkes",
         splits: Optional[Dict[str, float]] = None,
-        start_time: float = 0,
-        end_time: float = 100,
+        num_events: int = 100,
+        burn_in: int = 100,
         dim_process: int = 2,
         mu: Optional[List[float]] = None,
         alpha: Optional[List[List[float]]] = None,
@@ -119,8 +119,8 @@ class DataGenerator(CLIRunnerBase):
             num_simulations: Number of simulations to generate
             generation_method: Generation method (hawkes, self_correcting)
             splits: Data splits ratios (must sum to 1.0)
-            start_time: Simulation start time
-            end_time: Simulation end time
+            num_events: Number of events to simulate
+            burn_in: Number of events to discard for warmup
             dim_process: Number of event types/dimensions
             mu: Baseline intensity parameters
             alpha: Excitation matrix (Hawkes only)
@@ -162,8 +162,8 @@ class DataGenerator(CLIRunnerBase):
                 simulator = self._build_simulator(
                     generation_method=generation_method,
                     dim_process=dim_process,
-                    start_time=start_time,
-                    end_time=end_time,
+                    num_events=num_events,
+                    burn_in=burn_in,
                     mu=mu,
                     alpha=alpha,
                     beta=beta,
@@ -177,8 +177,8 @@ class DataGenerator(CLIRunnerBase):
             sim_manager = SimulationManager(
                 simulation_func=simulator.simulate,
                 dim_process=dim_process,
-                start_time=start_time,
-                end_time=end_time,
+                num_events=num_events,
+                burn_in=burn_in,
                 simulator=simulator,
             )
 
@@ -229,7 +229,8 @@ class DataGenerator(CLIRunnerBase):
                     "method": generation_method,
                     "num_simulations": num_simulations,
                     "dim_process": dim_process,
-                    "time_range": f"{start_time} → {end_time}",
+                    "num_events": num_events,
+                    "burn_in": burn_in,
                     "splits": str(splits),
                     "output_dir": output_dir,
                     "pushed_to_hub": str(push_to_hub and bool(repo_id)),

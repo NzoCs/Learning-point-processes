@@ -96,7 +96,7 @@ class PredictionMixin(NeuralModel):
     def simulate(
         self,
         batch: Batch,
-        max_events: int = 10_000,
+        max_events: Optional[int | str] = "2x",
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
     ) -> SimulationResult:
@@ -137,7 +137,7 @@ class PredictionMixin(NeuralModel):
         start_time: float = 0.0,
         end_time: float = 100.0,
         initial_buffer_size: int = 100,
-        max_events: int = 10_000,
+        max_events: Optional[int | str] = "2x",
     ) -> SimulationResult:
         """Simulate event sequences from scratch (no conditioning).
 

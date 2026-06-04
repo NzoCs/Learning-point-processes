@@ -164,7 +164,10 @@ class CorrAccumulator(Accumulator):
         power_spectrum = fft_hist * torch.conj(fft_hist)
         acf_full = torch.fft.irfft(power_spectrum, n=n_fft, dim=1)
 
-        acf = acf_full[:, : max_lag + 1] / denom.unsqueeze(1)
+        # Avoid division by zero/NaN for sequences with zero variance binned counts (e.g. empty)
+        denom_safe = torch.where(denom == 0, torch.ones_like(denom), denom)
+        acf = acf_full[:, : max_lag + 1] / denom_safe.unsqueeze(1)
+        acf = torch.where((denom == 0).unsqueeze(1), torch.zeros_like(acf), acf)
 
         return acf
 
@@ -210,7 +213,10 @@ class CorrAccumulator(Accumulator):
         acf_full = torch.fft.irfft(power_spectrum, n=n_fft, dim=1)
 
         # Extract and normalize
-        acf = acf_full[:, : max_lag + 1] / denom.unsqueeze(1)
+        # Avoid division by zero/NaN for sequences with zero variance binned counts (e.g. empty)
+        denom_safe = torch.where(denom == 0, torch.ones_like(denom), denom)
+        acf = acf_full[:, : max_lag + 1] / denom_safe.unsqueeze(1)
+        acf = torch.where((denom == 0).unsqueeze(1), torch.zeros_like(acf), acf)
 
         return acf
 

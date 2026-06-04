@@ -309,6 +309,12 @@ class TimeShiftedPositionalEncoding(nn.Module):
     def forward(self, x: torch.Tensor, interval: torch.Tensor) -> torch.Tensor:
         phi = self.layer_time_delta(interval.unsqueeze(-1))
         L = x.size(1)
+        if L > self.position.size(0):
+            new_max_len = max(L, self.position.size(0) * 2)
+            self.register_buffer(
+                "position",
+                torch.arange(new_max_len, device=self.position.device, dtype=self.position.dtype).unsqueeze(1)
+            )
         arc = (self.position[:L] * self.div_term).unsqueeze(0)
         pe_sin = torch.sin(arc + phi)
         pe_cos = torch.cos(arc + phi)

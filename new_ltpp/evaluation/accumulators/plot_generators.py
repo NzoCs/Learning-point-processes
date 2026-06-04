@@ -359,20 +359,37 @@ class StatTestPlotGenerator:
         )
 
         # Plot individual batch statistics as thin ticks at the bottom if not too many
-        if len(obs_values) < 50:
+        if len(obs_values) < 100:
             for val in obs_values:
-                plt.axvline(x=val, color="red", alpha=0.2, linewidth=0.5, ymax=0.05)
+                plt.axvline(x=val, color="red", alpha=0.7, linewidth=1.5, ymax=0.08)
 
-        plt.title(f"{self.test_name} Distribution: H0 vs H1", fontsize=14)
+        # Add text box indicating the number of batches and sequences
+        num_seq = data.get("num_sequences")
+        info_text = f"Batches: {len(obs_values)}"
+        if num_seq is not None:
+            info_text += f"\nTotal sequences: {num_seq}"
+        
+        plt.text(
+            0.05, 0.95,
+            info_text,
+            transform=plt.gca().transAxes,
+            verticalalignment='top',
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8)
+        )
+
+        kernel_name = data.get("kernel_name", "")
+        kernel_prefix = f"[{kernel_name}] " if kernel_name else ""
+
+        plt.title(f"{kernel_prefix}{self.test_name} Distribution: H0 vs H1", fontsize=14)
         plt.xlabel(f"{self.test_name} Value", fontsize=12)
         plt.ylabel("Density", fontsize=12)
-        plt.legend()
+        plt.legend(loc="upper right")
         plt.tight_layout()
 
         plt.savefig(output_path, dpi=300, bbox_inches="tight")
         plt.close()
         logger.info(
-            f"{self.test_name} distribution plot (H0 vs H1) saved to {output_path}"
+            f"{kernel_name} {self.test_name} distribution plot (H0 vs H1) saved to {output_path}"
         )
 
         p_values = data.get("p_values")
@@ -393,7 +410,7 @@ class StatTestPlotGenerator:
                 linewidth=2,
                 label="Significance level (\u03b1=0.05)",
             )
-            plt.title(f"{self.test_name} P-values Distribution", fontsize=14)
+            plt.title(f"{kernel_prefix}{self.test_name} P-values Distribution", fontsize=14)
             plt.xlabel("P-value", fontsize=12)
             plt.ylabel("Count (Batches)", fontsize=12)
             plt.legend()

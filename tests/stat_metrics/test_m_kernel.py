@@ -42,26 +42,23 @@ def _make_batch(
     )
 
 
+from enum import Enum
+
+class TimeKernelType(Enum):
+    RBF = "rbf"
+    IMQ = "imq"
+    MATERN_3_2 = "matern_3_2"
+    MATERN_5_2 = "matern_5_2"
+    LAPLACIAN = "laplacian"
+    RATIONAL_QUADRATIC = "rq"
+
+
 def _make_kernel(
     kernel_type: TimeKernelType = TimeKernelType.RBF,
     transform: MKernelTransform = MKernelTransform.EXPONENTIAL,
 ) -> MKernel:
     """Instantiate an MKernel for a given time-kernel type and transform."""
-    if kernel_type == TimeKernelType.RBF:
-        time_kernel = RBFTimeKernel(sigma=1.0)
-    elif kernel_type == TimeKernelType.IMQ:
-        time_kernel = IMQTimeKernel(c=1.0, beta=0.5)
-    elif kernel_type == TimeKernelType.MATERN_3_2:
-        time_kernel = MaternTimeKernel(nu=1.5)
-    elif kernel_type == TimeKernelType.MATERN_5_2:
-        time_kernel = MaternTimeKernel(nu=2.5)
-    elif kernel_type == TimeKernelType.LAPLACIAN:
-        time_kernel = LaplacianTimeKernel(scaling=1.0)
-    elif kernel_type == TimeKernelType.RATIONAL_QUADRATIC:
-        time_kernel = RationalQuadraticTimeKernel(sigma=1.0, alpha=1.0)
-    else:
-        time_kernel = RBFTimeKernel(sigma=1.0)
-
+    time_kernel = RBFKernel(sigma=1.0)
     type_kernel = EmbeddingKernel(num_classes=NUM_TYPES, embedding_dim=8)
     return MKernel(
         time_kernel=time_kernel,

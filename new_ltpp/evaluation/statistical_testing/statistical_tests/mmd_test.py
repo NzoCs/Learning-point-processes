@@ -1,3 +1,4 @@
+from typing import Optional
 from new_ltpp.configs import StatisticalTestConfig
 import torch
 
@@ -202,9 +203,18 @@ class MMDTwoSampleTest:
         self,
         batch_x: Batch,
         batch_y: Batch,
+        simulations: Optional[list[Batch]] = None,
         accumulate: bool = True,
     ) -> TestStatistics:
-        observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
+        if simulations is not None and len(simulations) > 1:
+            observed_mmd = self.mmd(batch_x, simulations[0])
+            perm_mmds_list = []
+            for Y_i in simulations[1:]:
+                perm_mmds_list.append(self.mmd(simulations[0], Y_i))
+            perm_mmds = torch.stack(perm_mmds_list, dim=-1)
+        else:
+            observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
+
         count_ge = (perm_mmds >= observed_mmd).sum()
         p_value = (count_ge + 1.0) / (self.n_samples + 1.0)
 

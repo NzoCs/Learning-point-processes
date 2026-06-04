@@ -42,8 +42,11 @@ def _get_embedding(
     idx = torch.searchsorted(time_seqs_inf, time_grid_exp.contiguous(), side="right")
 
     # 3) Compute cumulative counts per event type
+    # Clamp to [0, num_event_types - 1] to prevent one_hot out-of-bound crashes on padding tokens.
+    # The padded elements will be zeroed out when multiplying by the mask.
+    type_seqs_clamped = torch.clamp(type_seqs.long(), min=0, max=num_event_types - 1)
     one_hot = torch.nn.functional.one_hot(
-        type_seqs.long(), num_classes=num_event_types
+        type_seqs_clamped, num_classes=num_event_types
     ).to(dtype)
     one_hot = one_hot * mask.unsqueeze(-1).to(dtype)
     cum_counts = torch.cumsum(one_hot, dim=1)  # (B, L, num_event_types)

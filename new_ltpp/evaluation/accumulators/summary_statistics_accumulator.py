@@ -74,6 +74,7 @@ class BatchStatisticsCollector(Accumulator):
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         metadata: Optional[Dict[str, Any]] = None,
+        simulator: Optional[Any] = None,
     ):
         self.num_event_types = num_event_types
         self.base_dir = Path(base_dir)
@@ -97,6 +98,7 @@ class BatchStatisticsCollector(Accumulator):
             base_accumulators["statistical_tests"] = StatisticalTestAccumulator(
                 statistical_test_config=statistical_test_config,
                 min_sim_events=min_sim_events,
+                simulator=simulator,
             )
 
         self._accumulators: AccumulatorContainer = base_accumulators
@@ -209,6 +211,12 @@ class BatchStatisticsCollector(Accumulator):
             else None
         )
 
+        num_sequences = (
+            statistics["statistical_tests"]["num_sequences"]
+            if statistics["statistical_tests"] is not None
+            else None
+        )
+
         plot_data = PlotData(
             label_time_deltas=statistics["time"]["gt_time_deltas"],
             simulated_time_deltas=statistics["time"]["sim_time_deltas"],
@@ -222,13 +230,22 @@ class BatchStatisticsCollector(Accumulator):
             observed_statistic=observed_statistic,
             permuted_statistic=permuted_statistic,
             p_values=p_values,
+            num_sequences=num_sequences,
+            kernel_name=kernel_name if 'kernel_name' in locals() else "unknown",
         )
 
         test_type = "stat"
+        kernel_name = "unknown"
         if self.metadata and "statistical_test_config" in self.metadata:
             test_type = self.metadata["statistical_test_config"].get(
                 "test_type", "stat"
             )
+            kernel_name = self.metadata["statistical_test_config"].get(
+                "point_process_kernel_type", "unknown"
+            )
+
+        # Update plot_data kernel_name in case it was created after
+        plot_data["kernel_name"] = kernel_name
 
         # Generate plots
         plot_filenames: List[str] = [
@@ -236,7 +253,7 @@ class BatchStatisticsCollector(Accumulator):
             "comparison_event_type_dist.png",
             "comparison_sequence_length_dist.png",
             "comparison_autocorrelation.png",
-            f"{test_type}_test_distribution.png",
+            f"{kernel_name}_{test_type}_test_distribution.png",
         ]
 
         for i, (generator, filename) in enumerate(
@@ -310,14 +327,72 @@ class BatchStatisticsCollector(Accumulator):
                     metrics_dict[f"mean_{test_type}_p_value"] = float(np.mean(p_vals))
                     metrics_dict[f"std_{test_type}_p_value"] = float(np.std(p_vals))
 
-                # Save metrics to JSON
-                
-                metrics_path = self.base_dir / "simulation_results" / f"{test_type}_metrics.json"
+                if stat_tests and stat_tests.get("pooled_p_value") is not None:
+                    metrics_dict[f"pooled_{test_type}_p_value"] = float(stat_tests["pooled_p_value"])
+
+                if stat_tests and stat_tests.get("num_sequences") is not None:
+                    metrics_dict[f"{test_type}_num_sequences"] = int(stat_tests["num_sequences"])
+
+                # Add kernel name and flatten metadata directly into the metrics dict before writing to CSV
+                kernel_name = "unknown"
+                if self.metadata and "statistical_test_config" in self.metadata:
+                    kernel_name = self.metadata["statistical_test_config"].get("point_process_kernel_type", "unknown")
+                metrics_dict["kernel_name"] = kernel_name
+
+                if self.metadata:
+                    def flatten_dict(d: dict, parent_key: str = '', sep: str = '_') -> dict:
+                        items = []
+                        for k, v in d.items():
+                            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+                            if isinstance(v, dict):
+                                items.extend(flatten_dict(v, new_key, sep=sep).items())
+                            else:
+                                items.append((new_key, v))
+                        return dict(items)
+                    
+                    flat_metadata = flatten_dict(self.metadata)
+                    for k, v in flat_metadata.items():
+                        if k not in metrics_dict:
+                            metrics_dict[k] = v
+
+                # Save metrics to CSV instead of JSON, appending if the file exists
+                import csv
+                metrics_path = self.base_dir / "simulation_results" / f"{test_type}_metrics.csv"
                 metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
                 try:
-                    with open(metrics_path, "w") as f:
-                        json.dump(metrics_dict, f, indent=4)
+                    file_exists = metrics_path.exists()
+                    rows = []
+                    if file_exists:
+                        try:
+                            with open(metrics_path, "r", newline="", encoding="utf-8") as r_file:
+                                reader = csv.DictReader(r_file)
+                                rows = list(reader)
+                        except Exception:
+                            file_exists = False
+
+                    new_row = {k: str(v) for k, v in metrics_dict.items()}
+
+                    if file_exists:
+                        rows.append(new_row)
+                        all_fieldnames = []
+                        seen = set()
+                        for row in rows:
+                            for k in row.keys():
+                                if k not in seen:
+                                    seen.add(k)
+                                    all_fieldnames.append(k)
+                        
+                        with open(metrics_path, "w", newline="", encoding="utf-8") as w_file:
+                            writer = csv.DictWriter(w_file, fieldnames=all_fieldnames)
+                            writer.writeheader()
+                            writer.writerows(rows)
+                    else:
+                        fieldnames = list(metrics_dict.keys())
+                        with open(metrics_path, "w", newline="", encoding="utf-8") as w_file:
+                            writer = csv.DictWriter(w_file, fieldnames=fieldnames)
+                            writer.writeheader()
+                            writer.writerow(new_row)
                     logger.info(f"Saved metrics to {metrics_path}")
                 except Exception as e:
                     logger.error(f"Failed to save metrics to {metrics_path}: {e}")

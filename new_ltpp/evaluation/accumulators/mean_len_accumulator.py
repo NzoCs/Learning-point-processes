@@ -5,6 +5,7 @@ Accumulates sequence length statistics from batches during prediction.
 """
 
 import numpy as np
+import torch
 
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
@@ -43,26 +44,11 @@ class SequenceLengthAccumulator(Accumulator):
             )
             return
 
-        # Extract simulated sequence lengths (vectorized)
-
-        time_seqs = simulation.time_seqs
-
-        time_seqs[~sim_mask] = float("inf")
-        time_starts = time_seqs.min(dim=1).values
-
-        time_seqs[~sim_mask] = 0.0
-        time_ends = time_seqs.max(dim=1).values
-
-        sim_time_windows = time_ends - time_starts
-        sim_event_count_normalized = sim_event_count / sim_time_windows
-
-        self._sim_mean.extend(sim_event_count_normalized.view(-1).cpu().tolist())
-
         # Extract ground truth sequence lengths (vectorized)
         mask = batch.valid_event_mask.bool()
         gt_seq_lengths = mask.sum(dim=1)
 
-        gt_time_seqs = batch.time_seqs
+        gt_time_seqs = batch.time_seqs.clone()
 
         gt_time_seqs[~mask] = float("inf")
         gt_time_starts = gt_time_seqs.min(dim=1).values
@@ -71,9 +57,30 @@ class SequenceLengthAccumulator(Accumulator):
         gt_time_ends = gt_time_seqs.max(dim=1).values
 
         gt_time_windows = gt_time_ends - gt_time_starts
-        gt_event_count_normalized = gt_seq_lengths.sum() / gt_time_windows
+        gt_time_windows = torch.clamp(gt_time_windows, min=1e-8)
+
+        gt_event_count_normalized = gt_seq_lengths / gt_time_windows
 
         self._gt_mean.extend(gt_event_count_normalized.view(-1).cpu().tolist())
+
+        # Extract simulated sequence lengths (vectorized)
+        sim_time_seqs = simulation.time_seqs.clone()
+
+        sim_time_seqs[~sim_mask] = float("inf")
+        sim_time_starts = sim_time_seqs.min(dim=1).values
+
+        sim_time_seqs[~sim_mask] = 0.0
+        sim_time_ends = sim_time_seqs.max(dim=1).values
+
+        sim_time_windows = sim_time_ends - sim_time_starts
+        
+        # Check for sequences with <= 1 simulated events or non-finite windows to avoid division by zero/inf
+        invalid_sim_window = (sim_seq_lengths <= 1) | ~torch.isfinite(sim_time_windows) | (sim_time_windows <= 1e-8)
+        sim_time_windows = torch.where(invalid_sim_window, gt_time_windows, sim_time_windows)
+
+        sim_event_count_normalized = sim_seq_lengths / sim_time_windows
+
+        self._sim_mean.extend(sim_event_count_normalized.view(-1).cpu().tolist())
 
     def compute(self) -> SequenceLengthStatistics:  # type: ignore[override]
         """Compute sequence length statistics.

@@ -67,7 +67,7 @@ class Simulator:
     def simulate(
         self,
         batch: Batch,
-        max_events: int = 10_000,
+        max_events: Optional[int | str] = "2x",
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
     ) -> SimulationResult:
@@ -75,10 +75,33 @@ class Simulator:
 
         Args:
             batch: Optional initial batch to condition on.
+            max_events: Maximum number of events to simulate. Can be an integer, or a string ending in "x" 
+                        (e.g., "2x") for a multiplier of the longest sequence in the batch. Defaults to "2x".
 
         Returns:
             SimulationResult (Batch alias) with generated sequences.
         """
+        # Determine maximum sequence length in the batch (excluding padding)
+        max_len = int(batch.valid_event_mask.sum(dim=1).max().item()) if batch.valid_event_mask is not None else batch.time_seqs.size(1)
+        if max_len == 0:
+            max_len = batch.time_seqs.size(1)
+
+        if max_events is None or max_events == "2x":
+            resolved_max_events = int(2 * max_len)
+        elif isinstance(max_events, str):
+            if max_events.endswith("x"):
+                try:
+                    multiplier = float(max_events[:-1])
+                    resolved_max_events = int(multiplier * max_len)
+                except ValueError:
+                    raise ValueError(f"Invalid format for max_events: {max_events}")
+            else:
+                try:
+                    resolved_max_events = int(max_events)
+                except ValueError:
+                    raise ValueError(f"Invalid format for max_events: {max_events}")
+        else:
+            resolved_max_events = int(max_events)
 
         batch_size = batch.time_seqs.size(0)
 
@@ -106,7 +129,7 @@ class Simulator:
         buffers = self._allocate_simulation_buffers(batch, initial_buffer_size)
         sim_state = self._initialize_simulation_state(batch, batch_size)
         self._run_simulation_loop(
-            buffers, sim_state, start_times, end_times, max_events
+            buffers, sim_state, start_times, end_times, resolved_max_events
         )
         return self._extract_simulation_results(
             buffers, sim_state, start_times, end_times
@@ -145,6 +168,7 @@ class Simulator:
             dtime_min=0.0,
             statistical_test_config=stat_cfg,
             metadata=metadata,
+            simulator=self,
         )
         logger.info(f"Simulator: BatchStatisticsCollector initialized at {base_dir}")
 
@@ -225,7 +249,7 @@ class Simulator:
             step_count=0,
         )
 
-    # @torch.compile
+    @torch.compile
     def _simulate_one_step(
         self,
         time_seqs: torch.Tensor,
@@ -314,10 +338,13 @@ class Simulator:
                 if sim_state["step_count"] >= max_events:
                     break
 
+
                 active_time_seq = buffers["time"][active_indices, :current_len]
                 active_time_delta = buffers["time_delta"][active_indices, :current_len]
                 active_event_seq = buffers["event"][active_indices, :current_len]
                 active_valid_event_mask = active_event_seq != pad_token_id
+
+
 
                 try:
                     dtimes_pred, type_pred = self._simulate_one_step(

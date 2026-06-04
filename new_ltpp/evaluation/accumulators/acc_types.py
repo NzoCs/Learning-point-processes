@@ -18,6 +18,8 @@ class StatisticalTestData(TypedDict):
     p_values: list[float]
     observed_statistic: list[float]
     permuted_statistic: list[float]
+    pooled_p_value: Optional[float]
+    num_sequences: Optional[int]
 
 
 class PlotData(TypedDict):
@@ -35,6 +37,8 @@ class PlotData(TypedDict):
     observed_statistic: Optional[npt.NDArray[np.float64]]  # For stat test plots
     permuted_statistic: Optional[npt.NDArray[np.float64]]  # For stat test plots
     p_values: Optional[npt.NDArray[np.float64]]  # For stat test plots
+    num_sequences: Optional[int]
+    kernel_name: Optional[str]
 
 
 class MetricsData(TypedDict):

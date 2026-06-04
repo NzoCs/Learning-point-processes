@@ -22,7 +22,7 @@ from .acc_types import (
 )
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
-from .mean_len_accumulator import SequenceLengthAccumulator
+from .len_accumulator import SequenceLengthAccumulator
 from .summary_stats.summary_stats_helper import SummaryStatsHelper
 from .plot_generators import (
     AutocorrelationPlotGenerator,

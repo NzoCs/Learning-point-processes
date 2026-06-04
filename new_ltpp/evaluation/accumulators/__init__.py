@@ -46,7 +46,7 @@ from .base_accumulator import Accumulator
 from .summary_statistics_accumulator import BatchStatisticsCollector
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
-from .mean_len_accumulator import SequenceLengthAccumulator
+from .len_accumulator import SequenceLengthAccumulator
 from .metrics_calculator import MetricsCalculatorImpl
 from .plot_generators import (
     AutocorrelationPlotGenerator,

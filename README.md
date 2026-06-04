@@ -139,7 +139,6 @@ All results are saved in the `artifacts/` directory by default (configurable via
 
 ---
 
-
 ## 📄 License
 
 MIT License

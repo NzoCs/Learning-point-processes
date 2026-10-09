@@ -1,22 +1,45 @@
 # Tester un clone neuf sur Ruche
 
 Cette procédure prépare la validation d'installation et d'exécution. Elle ne
-certifie pas encore la reproductibilité scientifique. Le backend actuel reste
-`sigkernel` ; la migration pySigLib sera validée séparément.
+certifie pas encore la reproductibilité scientifique. La branche de migration
+utilise pySigLib 4.0.0 ; le profil GPU exige son plugin CUDA 4.0.0.
+
+## Espaces de stockage
+
+Ruche fournit deux espaces de stockage personnels, pas deux environnements
+Python prédéfinis. Selon la [documentation officielle](https://mesocentre.pages.centralesupelec.fr/user_doc/ruche/03_connection_and_file_transfer/),
+consultée le 9 octobre 2026 :
+
+| Espace | Chemins équivalents | Quota annoncé | Usage de cette procédure |
+| --- | --- | --- | --- |
+| `$HOME` | `/home/<login>` ou `/gpfs/users/<login>` | 50 Go | Clone Git, scripts et environnement Python. |
+| `$WORKDIR` | `/workdir/<login>` ou `/gpfs/workdir/<login>` | 500 Go | Caches volumineux, données, logs, checkpoints et résultats. |
+
+Les deux espaces sont accessibles depuis les nœuds de calcul. Vérifier les
+quotas effectifs du compte avec `ruche-quota`. Les chemins ci-dessous sont une
+organisation proposée ; ils ne réutilisent aucun ancien environnement personnel.
 
 ## 1. Télécharger et installer
 
 Se connecter avec son propre compte SSH et choisir un espace de travail autorisé.
-Créer un nouveau répertoire, sans réutiliser de `.venv` ou checkpoint existant :
+Créer un nouveau clone et un environnement identifié hors du clone. Exporter
+les mêmes variables pour l'installation et la soumission :
 
 ```bash
-git clone https://github.com/NzoCs/Learning-point-processes.git
-cd Learning-point-processes
+export UV_PROJECT_ENVIRONMENT="$HOME/envs/ltpp-pysiglib"
+export UV_CACHE_DIR="$WORKDIR/cache/uv"
+export HF_HOME="$WORKDIR/cache/huggingface"
+export LTPP_OUTPUT_ROOT="$WORKDIR/ltpp-artifacts"
+mkdir -p "$HOME/src" "$HOME/envs" "$WORKDIR/ltpp-logs"
+cd "$HOME/src"
+git clone --branch codex/pysiglib-migration https://github.com/NzoCs/Learning-point-processes.git Learning-point-processes-pysiglib
+cd Learning-point-processes-pysiglib
 git rev-parse HEAD
 git status --porcelain
 sha256sum pyproject.toml uv.lock
 uv --version
-uv sync --frozen --python 3.11
+uv sync --frozen --python 3.11 --no-default-groups --extra ruche \
+  --no-build-package pysiglib --no-build-package pysiglib-cuda
 uv pip check
 uv run --frozen --no-sync new-ltpp run --help
 ```
@@ -27,10 +50,13 @@ Pour valider une branche de développement publiée, cloner cette branche avec
 
 Python **3.11** est requis. `uv` doit être installé dans l'espace utilisateur ou
 fourni par un module du cluster. Noter les modules chargés avec `module list`.
-Les dépendances natives, dont `sigkernel` et `fastdtw`, peuvent nécessiter une
-compilation et une toolchain compatible. L'installation Linux/Ruche reste à
-valider ; le problème de compilation Windows de `sigkernel` n'est pas résolu
-par ces corrections. Ne pas installer des dépendances au début de chaque job.
+La procédure impose des wheels pour pySigLib et le plugin CUDA. Le wheel CPU
+Linux de pySigLib 4.0.0 exige au moins glibc 2.27 ; vérifier `ldd --version`,
+l'architecture x86_64 et le pilote GPU avant de déclarer le profil compatible.
+En cas d'incompatibilité, préparer une recette de conteneur versionnée plutôt
+qu'un retour CPU silencieux. D'autres dépendances, notamment `fastdtw`, peuvent
+encore nécessiter une compilation selon la plateforme. L'installation Linux/Ruche
+reste à valider. Ne pas installer des dépendances au début de chaque job.
 
 ## 2. Préparer les données
 
@@ -63,8 +89,9 @@ bash scripts/bash/train_ruche_cpu.sh --dry-run
 
 Les dry-runs affichent respectivement 1, 3 et 28 commandes et ne réservent aucune
 ressource. Les indices hors grille sont rejetés. Les scripts n'activent aucun
-environnement personnel et utilisent exclusivement le `.venv` du clone avec le
-lock figé. Ils conservent les modules choisis pour cette installation.
+environnement personnel prédéfini : ils utilisent `UV_PROJECT_ENVIRONMENT`, ou
+le `.venv` du clone si cette variable est absente, avec le lock figé. Ils
+conservent les modules choisis pour cette installation.
 
 ## 4. Petit job GPU
 
@@ -74,7 +101,8 @@ avant l'exécution du script :
 
 ```bash
 mkdir -p err_logs
-sbatch scripts/bash/smoke_ruche_gpu.sh
+sbatch --output="$WORKDIR/ltpp-logs/smoke_gpu_%j.out" \
+  --error="$WORKDIR/ltpp-logs/smoke_gpu_%j.err" scripts/bash/smoke_ruche_gpu.sh
 ```
 
 Le job demande un GPU, deux CPU, 8 Go de RAM hôte et 15 minutes au maximum.
@@ -111,7 +139,7 @@ squeue -u "$USER"
 sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed,MaxRSS
 ```
 
-Inspecter le log `err_logs/smoke_gpu_JOB_ID.out`, son fichier d'erreurs, la matrice
+Inspecter le log `$WORKDIR/ltpp-logs/smoke_gpu_JOB_ID.out`, son fichier d'erreurs, la matrice
 Gram, le GPU identifié, les métriques et le checkpoint produit. Conserver la
 commande, le SHA, les hashes du lock et des données, les versions Python/PyTorch,
 les modules et les ressources demandées. Un exit code nul seul ne prouve pas

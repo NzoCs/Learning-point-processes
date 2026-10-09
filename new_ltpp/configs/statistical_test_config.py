@@ -35,6 +35,8 @@ class StatisticalTestConfig(Config):
     num_discretization_points: int = 100
     embedding_type: Literal["linear", "constant"] = "linear"
     dyadic_order: int = 0
+    signature_backend: Literal["pysiglib", "sigkernel"] = "pysiglib"
+    signature_max_batch: PositiveInt = 64
 
     @classmethod
     def from_yaml_components(

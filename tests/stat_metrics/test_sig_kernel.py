@@ -2,6 +2,7 @@
 
 import pytest
 import torch
+import pysiglib
 
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.sig_kernel import (
     SIGKernel,
@@ -144,7 +145,7 @@ class TestEmbeddingShape:
         assert torch.all(time_channel <= 1.0 + 1e-6)
 
     def test_counting_channel_normalized(self, batch1):
-        """Second channel (normalized counting) should be in [0, 1]."""
+        """Preserve the historical scaling by L-1, including its endpoint."""
         t = batch1.time_seqs.double()
         t = t / (t.max() + 1e-8)
         emb = _get_embedding(
@@ -157,7 +158,11 @@ class TestEmbeddingShape:
         )
         counting = emb[:, :, 1]
         assert torch.all(counting >= 0.0)
-        assert torch.all(counting <= 1.0 + 1e-6)
+        expected_end = batch1.valid_event_mask.sum(dim=1).double() / (
+            SEQ_LEN - 1 + 1e-8
+        )
+        torch.testing.assert_close(counting[:, -1], expected_end)
+        assert torch.all(counting <= expected_end[:, None] + 1e-6)
 
 
 # ---------------------------------------------------------------------------
@@ -215,48 +220,37 @@ class TestGramMatrix:
 class TestMMDWithSIGKernel:
     """MMD metric via SIG kernel."""
 
-    def test_self_mmd_near_zero(self, batch1):
-        kernel = _linear_kernel()
-        mmd = MMD(kernel=kernel)
-        value = mmd(batch1, batch1)
-        assert not torch.isnan(torch.tensor(value))
-        assert abs(value) < 1e-5, f"Self-MMD should be ~0, got {value}"
+    @pytest.mark.parametrize("embedding", ["linear", "constant"])
+    @pytest.mark.parametrize("same_sample", [True, False])
+    def test_matches_native_unbiased_mmd(self, batch1, batch2, embedding, same_sample):
+        # Unbiased MMD² is not constrained to be non-negative and does not
+        # vanish when the very same finite sample is used on both sides.
+        kernel = _linear_kernel() if embedding == "linear" else _constant_kernel()
+        other = batch1 if same_sample else batch2
+        x, y = kernel._prepare_kernel(batch1, other)
+        reference = pysiglib.sig_mmd(
+            x,
+            y,
+            method="finite_difference",
+            dyadic_order=kernel.dyadic_order,
+            static_kernel=kernel.kernel.static_kernel,
+        )
+        actual = MMD(kernel=kernel)(batch1, other)
+        assert torch.isfinite(actual)
+        torch.testing.assert_close(actual, reference, rtol=1e-9, atol=1e-8)
 
-    def test_mmd_non_negative(self, batch1, batch2):
-        kernel = _linear_kernel()
-        mmd = MMD(kernel=kernel)
-        value = mmd(batch1, batch2)
-        assert not torch.isnan(torch.tensor(value))
-        assert value >= 0.0
-
-    def test_mmd_constant_interpolant_self(self, batch1):
-        kernel = _constant_kernel()
-        mmd = MMD(kernel=kernel)
-        value = mmd(batch1, batch1)
-        assert abs(value) < 1e-5
-
-    def test_mmd_constant_interpolant_different(self, batch1, batch2):
-        kernel = _constant_kernel()
-        mmd = MMD(kernel=kernel)
-        value = mmd(batch1, batch2)
-        assert value >= 0.0
-
-    def test_mmd_increases_with_noise(self, batch1):
-        kernel = _linear_kernel()
-        mmd = MMD(kernel=kernel)
-        mmd_values = []
-        for noise in [0.01, 0.05, 0.1]:
-            noisy_times = (
-                batch1.time_seqs + torch.randn_like(batch1.time_seqs) * noise
-            ).clamp(min=0.0)
-            noisy_batch = Batch(
-                time_seqs=noisy_times,
-                time_delta_seqs=batch1.time_delta_seqs,
-                type_seqs=batch1.type_seqs,
-                valid_event_mask=batch1.valid_event_mask,
-            )
-            mmd_values.append(mmd(batch1, noisy_batch))
-        assert mmd_values[-1] > 1e-6, "MMD should grow with noise"
+    def test_mmd_invariant_to_sample_order(self, batch1, batch2):
+        indices = torch.arange(BATCH_SIZE - 1, -1, -1)
+        reordered = Batch(
+            time_seqs=batch2.time_seqs[indices],
+            time_delta_seqs=batch2.time_delta_seqs[indices],
+            type_seqs=batch2.type_seqs[indices],
+            valid_event_mask=batch2.valid_event_mask[indices],
+        )
+        metric = MMD(kernel=_linear_kernel())
+        torch.testing.assert_close(
+            metric(batch1, batch2), metric(batch1, reordered), rtol=1e-9, atol=1e-8
+        )
 
 
 if __name__ == "__main__":

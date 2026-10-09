@@ -37,7 +37,7 @@ This project uses `uv` for dependency management.
 # Download into a fresh directory, then install the committed lock
 git clone https://github.com/NzoCs/Learning-point-processes.git
 cd Learning-point-processes
-uv sync --frozen --python 3.11
+uv sync --frozen --python 3.11 --no-default-groups --no-build-package pysiglib
 uv run --frozen --no-sync new-ltpp --help
 ```
 
@@ -48,11 +48,14 @@ uv sync --frozen --group dev
 uv run --frozen --no-sync python -m pytest tests
 ```
 
-The current `sigkernel` backend comes from a Git revision pinned by `uv.lock`.
-Native dependencies may need a compatible compiler; Windows installation is not
-yet validated. Plain `pip install -e .` does not apply the project's `uv` Git
-source or lock. For HPC installation and a small GPU job, follow the
-[Ruche procedure](docs/RUCHE.md).
+This branch uses **pySigLib 4.0.0** for signature kernels, with the historical
+finite-difference solver and unbiased MMD² estimator. The Ruche GPU profile
+requires the locked CUDA plugin: `uv sync --frozen --no-default-groups --extra ruche
+--no-build-package pysiglib --no-build-package pysiglib-cuda`.
+There is no automatic CPU or legacy fallback. The old `sigkernel` dependency is
+isolated in the `legacy-reference` group for explicit comparisons; it still needs
+a compatible compiler. Read the [migration validation](docs/PYSIGLIB_MIGRATION.md)
+and the [Ruche storage and installation procedure](docs/RUCHE.md).
 
 ---
 

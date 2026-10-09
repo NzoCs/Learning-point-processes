@@ -2,11 +2,30 @@ name: Test pipeline
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, codex/pysiglib-migration]
   pull_request:
     branches: [main, master]
 
 jobs:
+  signature-migration:
+    runs-on: ubuntu-latest
+    env:
+      TORCH_COMPILE_DISABLE: "1"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install locked native reference and target
+        run: |
+          pip install uv
+          uv sync --frozen --no-default-groups --group dev --group legacy-reference --no-build-package pysiglib
+          uv run --frozen --no-sync python -c 'import sigkernel, pysiglib; print(pysiglib.__version__)'
+      - name: Check CPU signature equivalence and gradients
+        run: >-
+          uv run --frozen --no-sync python -m pytest -o addopts=
+          tests/stat_metrics/test_signature_migration.py tests/stat_metrics/test_sig_kernel.py -q
+
   packaging-and-launchers:
     runs-on: ubuntu-latest
     steps:

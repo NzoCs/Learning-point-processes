@@ -51,8 +51,9 @@ ltpp_launch() {
             continue
         fi
         cd -- "$repo_dir"
-        if [[ ! -f uv.lock || ! -d .venv ]]; then
-            echo "Missing uv.lock or .venv. Install with uv sync --frozen before submission." >&2; return 2
+        local environment=${UV_PROJECT_ENVIRONMENT:-$repo_dir/.venv}
+        if [[ ! -f uv.lock || ! -d $environment ]]; then
+            echo "Missing uv.lock or Python environment at $environment. Install with uv sync --frozen before submission." >&2; return 2
         fi
         if [[ $device == cpu ]]; then
             export CUDA_VISIBLE_DEVICES=""

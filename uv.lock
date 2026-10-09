@@ -1733,6 +1733,12 @@ wheels = [
 ]
 
 [[package]]
+name = "kauri"
+version = "2.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/ea/c8ddeb111c993c664a356d8550a290f999f620394cc4028c352d6130d0da/kauri-2.3.0.tar.gz", hash = "sha256:fad55b33622998c5341cbc4c1d75686501948e2358d6153a7c5e132e7405f7da", size = 83353, upload-time = "2026-06-04T13:30:07.665Z" }
+
+[[package]]
 name = "kiwisolver"
 version = "1.4.9"
 source = { registry = "https://pypi.org/simple" }
@@ -2365,19 +2371,24 @@ dependencies = [
     { name = "pip" },
     { name = "polars" },
     { name = "pydantic" },
+    { name = "pysiglib" },
     { name = "pytest" },
     { name = "pyyaml" },
     { name = "rich" },
     { name = "ruff" },
     { name = "scipy" },
     { name = "seaborn" },
-    { name = "sigkernel" },
     { name = "tensorboard" },
     { name = "torch" },
     { name = "torchmetrics" },
     { name = "tqdm" },
     { name = "typer" },
     { name = "wandb" },
+]
+
+[package.optional-dependencies]
+ruche = [
+    { name = "pysiglib-cuda" },
 ]
 
 [package.dev-dependencies]
@@ -2421,6 +2432,9 @@ docs = [
     { name = "sphinx-markdown-tables" },
     { name = "sphinx-rtd-theme" },
 ]
+legacy-reference = [
+    { name = "sigkernel" },
+]
 logging = [
     { name = "comet-ml" },
     { name = "mlflow" },
@@ -2447,13 +2461,14 @@ requires-dist = [
     { name = "pip", specifier = ">=25.3" },
     { name = "polars", specifier = ">=1.33.1" },
     { name = "pydantic", specifier = ">=2.11.7,<3" },
+    { name = "pysiglib", specifier = "==4.0.0" },
+    { name = "pysiglib-cuda", marker = "extra == 'ruche'", specifier = "==4.0.0" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "rich", specifier = ">=14.1.0" },
     { name = "ruff", specifier = ">=0.14.11" },
     { name = "scipy", specifier = ">=1.16.2" },
     { name = "seaborn", specifier = ">=0.12.0" },
-    { name = "sigkernel", git = "https://github.com/crispitagorico/sigkernel.git" },
     { name = "tensorboard", specifier = ">=2.15.0" },
     { name = "torch", specifier = ">=2.0.0" },
     { name = "torchmetrics", specifier = ">=1.0.0" },
@@ -2461,6 +2476,7 @@ requires-dist = [
     { name = "typer", specifier = ">=0.19.2" },
     { name = "wandb", specifier = ">=0.22.0" },
 ]
+provides-extras = ["ruche"]
 
 [package.metadata.requires-dev]
 cli = [
@@ -2504,6 +2520,7 @@ docs = [
     { name = "sphinx-markdown-tables", specifier = ">=0.0.17" },
     { name = "sphinx-rtd-theme", specifier = ">=3.0.2" },
 ]
+legacy-reference = [{ name = "sigkernel", git = "https://github.com/crispitagorico/sigkernel.git?rev=40a583155ea8d2194af0e90dddab37e2659cfcfd" }]
 logging = [
     { name = "comet-ml", specifier = ">=3.53.0" },
     { name = "mlflow", specifier = ">=3.4.0" },
@@ -3324,6 +3341,33 @@ wheels = [
 ]
 
 [[package]]
+name = "pysiglib"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "kauri" },
+    { name = "numpy" },
+    { name = "torch" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/64/cf/665b391d8ec963daee93193e672474a5449b972ebddfb47bc9015c0cb4a5/pysiglib-4.0.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:d04ff11ced25632263dfd67fae9afa6dffcf29ab05726b413c5ceb458e5c954c", size = 1986159, upload-time = "2026-09-27T13:46:39.955Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/64/771649118bb411ca4284fd0b042e0067f24d220fe9fb33b9c20e6a8c01b7/pysiglib-4.0.0-py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1ba47d5c58bde18bb0164267840a39b9dda319957fc3de886f8528b9576738ee", size = 2723049, upload-time = "2026-09-27T13:46:41.925Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/bb/abd4236b19df1bac12ee263711dbb9b352e155097d124409bbea25155326/pysiglib-4.0.0-py3-none-win_amd64.whl", hash = "sha256:2614ad1e7576e60f9a478d5bdb3e096ee232828fc3ff565644b3845d9bbd8d81", size = 2317002, upload-time = "2026-09-27T13:46:43.674Z" },
+]
+
+[[package]]
+name = "pysiglib-cuda"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pysiglib" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3c/91/b2133aaa5dd1e663dff9e54659261db5eb217b0e55a5a22a8170a83b7d0f/pysiglib_cuda-4.0.0-py3-none-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5bf82c1a0d3fc6ad06c870fb2626e119e4dc5a6c427e0df2ddbe2dda4b230363", size = 26807495, upload-time = "2026-09-27T13:47:15.885Z" },
+    { url = "https://files.pythonhosted.org/packages/42/a0/8d10ec56d225cae66a43f3d0d08dc6df7a450fc61d1c3759784cf2f410c5/pysiglib_cuda-4.0.0-py3-none-win_amd64.whl", hash = "sha256:8e471f96f60fc55476304bada7dafb44e9da4a8157eadeb713f6d66e5f034f1a", size = 26446136, upload-time = "2026-09-27T13:47:18.919Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3837,7 +3881,7 @@ wheels = [
 [[package]]
 name = "sigkernel"
 version = "0.0.1"
-source = { git = "https://github.com/crispitagorico/sigkernel.git#40a583155ea8d2194af0e90dddab37e2659cfcfd" }
+source = { git = "https://github.com/crispitagorico/sigkernel.git?rev=40a583155ea8d2194af0e90dddab37e2659cfcfd#40a583155ea8d2194af0e90dddab37e2659cfcfd" }
 dependencies = [
     { name = "cython" },
     { name = "numba" },

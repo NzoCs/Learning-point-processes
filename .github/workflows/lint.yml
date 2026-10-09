@@ -7,195 +7,39 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
-env:
-  PYTHON_VERSION: "3.12"
+permissions:
+  contents: read
 
 jobs:
   lint:
-    name: Code Quality Checks
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
-            
-      - name: Install Poetry
+          python-version: "3.11"
+      - name: Install locked development tools
         run: |
-          pip install poetry
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-          
-      - name: Install dependencies
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Check formatting and import order
         run: |
-          poetry install
-          # Install linting tools if not in pyproject.toml
-          poetry add --group dev black flake8 isort mypy bandit pylint pre-commit
-          
-      - name: Run Black (Code Formatting)
-        run: |
-          poetry run black --check --diff .
-          
-      - name: Run isort (Import Sorting)
-        run: |
-          poetry run isort --check-only --diff .
-          
-      - name: Run flake8 (Style Guide)
-        run: |
-          poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
-          
-      - name: Run mypy (Type Checking)
-        run: |
-          poetry run mypy new_ltpp --ignore-missing-imports --no-strict-optional
-        continue-on-error: true  # Type checking can be strict for research code
-        
-      - name: Run bandit (Security Check)
-        run: |
-          poetry run bandit -r new_ltpp -f json -o bandit-report.json || true
-          poetry run bandit -r new_ltpp
+          uv run --frozen --no-sync black --check new_ltpp scripts tests
+          uv run --frozen --no-sync isort --check-only new_ltpp scripts tests
+      - name: Check syntax and undefined names
+        run: uv run --frozen --no-sync ruff check --select E9,F63,F7,F82 new_ltpp scripts tests
+      - name: Report type diagnostics
         continue-on-error: true
-        
-      - name: Run pylint (Code Analysis)
-        run: |
-          poetry run pylint new_ltpp --output-format=text --reports=no --score=no
+        run: uv run --frozen --no-sync mypy new_ltpp --ignore-missing-imports --no-strict-optional
+      - name: Report Bandit diagnostics
         continue-on-error: true
-        
-      - name: Upload bandit results
-        uses: actions/upload-artifact@v3
+        run: uv run --frozen --no-sync bandit -r new_ltpp -f json -o bandit-report.json
+      - name: Preserve diagnostics
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: bandit-report
           path: bandit-report.json
-
-  notebook-lint:
-    name: Jupyter Notebook Quality
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
-      - name: Install Poetry and tools
+      - name: Validate checked-in notebook documents
         run: |
-          pip install poetry
-          poetry install
-          poetry add --group dev nbqa black isort flake8
-          
-      - name: Check notebook formatting with black
-        run: |
-          poetry run nbqa black --check notebooks/ || true
-          
-      - name: Check notebook imports with isort
-        run: |
-          poetry run nbqa isort --check-only notebooks/ || true
-          
-      - name: Check notebook style with flake8
-        run: |
-          poetry run nbqa flake8 notebooks/ --ignore=E501,W503 || true
-
-  documentation-lint:
-    name: Documentation Quality
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
-      - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
-          poetry add --group dev pydocstyle doc8 sphinx
-          
-      - name: Check docstring style
-        run: |
-          poetry run pydocstyle new_ltpp --convention=numpy
-        continue-on-error: true
-        
-      - name: Check documentation syntax
-        run: |
-          poetry run doc8 docs/ --ignore-path docs/_build
-        continue-on-error: true
-        
-      - name: Test documentation build
-        run: |
-          cd docs
-          poetry run sphinx-build -W -b html . _build/html
-        continue-on-error: true
-
-  security-scan:
-    name: Security & Dependency Check
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
-      - name: Install Poetry
-        run: pip install poetry
-        
-      - name: Check for known security vulnerabilities
-        run: |
-          poetry install
-          poetry add --group dev safety
-          poetry run safety check --json --output safety-report.json || true
-          poetry run safety check
-        continue-on-error: true
-        
-      - name: Upload safety results
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: safety-report
-          path: safety-report.json
-
-  lint-summary:
-    name: Linting Summary
-    runs-on: ubuntu-latest
-    needs: [lint, notebook-lint, documentation-lint, security-scan]
-    if: always()
-    
-    steps:
-      - name: Check results
-        run: |
-          echo "## 🧹 Code Quality Summary" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Code Formatting | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Notebook Quality | ${{ needs.notebook-lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Documentation | ${{ needs.documentation-lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          
-      - name: Fail if critical checks failed
-        if: needs.lint.result == 'failure'
-        run: |
-          echo "❌ Critical linting checks failed!"
-          exit 1
+          uv run --frozen --no-sync python -c "from pathlib import Path; import nbformat; [nbformat.validate(nbformat.read(p, as_version=4)) for p in Path('notebooks').rglob('*.ipynb')]"

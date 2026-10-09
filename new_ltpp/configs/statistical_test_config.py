@@ -1,17 +1,38 @@
 from pathlib import Path
 from typing import Literal
-from pydantic import PositiveFloat, PositiveInt
+
 import torch
+from pydantic import Field, PositiveFloat, PositiveInt
 
 from new_ltpp.configs.base_config import Config
-from new_ltpp.configs.config_utils import load_yaml, extract
+from new_ltpp.configs.config_utils import extract, load_yaml
 
 
 class SimulationConfig(Config):
-    time_window: PositiveFloat
-    batch_size: PositiveInt
-    initial_buffer_size: PositiveInt
-    seed: int = 42
+    """Seed for fixed-event-count prediction; old horizon controls are inactive.
+
+    Legacy fields remain readable/serializable so saved configurations replay,
+    but they do not control the simulator introduced in fdb6c9f.
+    """
+
+    time_window: PositiveFloat | None = Field(default=None, deprecated=True)
+    batch_size: PositiveInt | None = Field(default=None, deprecated=True)
+    initial_buffer_size: PositiveInt | None = Field(default=None, deprecated=True)
+    seed: int = Field(default=42, ge=0, le=2**32 - 1)
+
+    def execution_contract(self) -> dict:
+        legacy = self.model_dump(
+            include={"time_window", "batch_size", "initial_buffer_size"},
+            exclude_none=True,
+        )
+        return {
+            "mode": "fixed_event_count",
+            "event_count_source": "input_batch_width",
+            "batch_size_source": "data_config.data_loading_specs.batch_size",
+            "buffer_size": "input_batch_width + generated_event_count",
+            "seed": self.seed,
+            "ignored_legacy_parameters": legacy,
+        }
 
 
 class StatisticalTestConfig(Config):
@@ -33,7 +54,8 @@ class StatisticalTestConfig(Config):
     sigma: float = 1.0
     scaling: float = 1.0
     num_discretization_points: int = 100
-    embedding_type: Literal["linear", "constant"] = "linear"
+    # Historical labels are aliases of the same discretized counting path.
+    embedding_type: Literal["counting_grid", "linear", "constant"] = "counting_grid"
     dyadic_order: int = 0
     signature_backend: Literal["pysiglib"] = "pysiglib"
     signature_max_batch: PositiveInt = 64

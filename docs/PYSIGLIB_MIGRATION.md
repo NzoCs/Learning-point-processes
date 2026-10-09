@@ -130,8 +130,10 @@ moins deux événements, la convention historique est conservée.
 Cette correction change les anciens résultats dépendant de la largeur paddée
 du lot. La normalisation temporelle commune aux deux échantillons reste appliquée :
 l'invariance concerne le padding, pas un changement du maximum temporel réel.
-Les options `linear` et `constant` restent actuellement des alias du même chemin
-de comptage sur grille ; cette correction ne leur attribue pas de nouvelle sémantique.
+Le nom explicite `counting_grid` est utilisé par défaut. Les options historiques
+`linear` et `constant` restent des alias du même chemin de comptage sur grille.
+Le [contrat des configurations](CONFIGURATION_CONTRACTS.md) détaille l'audit
+historique et les paramètres de simulation désormais dépréciés.
 Les tests indépendants contrôlent les comptages aux frontières et aux temps liés,
 le padding gauche/droite/intercalé, l'absence de mutation, les tailles de lots,
 et les gradients du solveur par rapport aux chemins. La discrétisation du comptage

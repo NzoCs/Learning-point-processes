@@ -1,14 +1,16 @@
-import torch
-from typing import TypedDict, Literal
+from typing import Literal, TypedDict
 
-from .kernel_protocol import IPointProcessKernel, PointProcessKernel
-from .utils import _get_embedding
-from .space_kernels import ISpaceKernel
-from .signature_backend import PySigLibKernel
-from new_ltpp.shared_types import Batch, SimulationResult
+import torch
+
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
     LinearKernel,
 )
+from new_ltpp.shared_types import Batch, SimulationResult
+
+from .kernel_protocol import IPointProcessKernel, PointProcessKernel
+from .signature_backend import PySigLibKernel
+from .space_kernels import ISpaceKernel
+from .utils import _get_embedding
 
 
 class Embedding(TypedDict):
@@ -20,7 +22,7 @@ class SIGKernel(PointProcessKernel):
     def __init__(
         self,
         static_kernel: ISpaceKernel,
-        embedding_type: Literal["linear", "constant"],
+        embedding_type: Literal["counting_grid", "linear", "constant"],
         num_discretization_points: int,
         dyadic_order: int,
         num_event_types: int,

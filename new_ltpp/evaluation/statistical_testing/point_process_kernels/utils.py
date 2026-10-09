@@ -1,7 +1,7 @@
 import torch
 
-
 SIGNATURE_PATH_PREPARATION = "masked_valid_count_v2"
+SIGNATURE_PATH_REPRESENTATION = "counting_grid"
 
 
 def _get_embedding(
@@ -17,7 +17,7 @@ def _get_embedding(
        Returns the multi-dimensional counting process (t, N(t), N_1(t), ..., N_k(t)).
     Args:
         num_discretization_points: Number of points for the time grid
-        embedding_type: Kept for signature compatibility but essentially ignored
+        embedding_type: counting_grid; linear/constant are legacy aliases.
         num_event_types: Number of event types
         time_seqs: Batch of sequences of shape (B, L) normalized to [0, 1]
         type_seqs: Batch of type sequences of shape (B, L) with integer type indices
@@ -25,6 +25,8 @@ def _get_embedding(
     Returns:
         torch.Tensor: (B, num_discretization_points, 2 + num_event_types).
     """
+    if embedding_type not in ("counting_grid", "linear", "constant"):
+        raise ValueError(f"Unsupported signature path representation: {embedding_type}")
     B, L = time_seqs.shape
     device = time_seqs.device
     dtype = time_seqs.dtype

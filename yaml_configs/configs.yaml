@@ -219,62 +219,22 @@ thinning_configs:
 # ===== SIMULATION CONFIGURATIONS =====
 simulation_configs:
 
-  quick_test:
-    time_window: 10
-    initial_buffer_size: 1000
-    batch_size: 4
-  
-  debug:
-    time_window: 20
-    initial_buffer_size: 2000
-    batch_size: 8
+  # Prediction generates input_batch_width events, using the data-loader batch
+  # size and exactly allocated buffers. Only the RNG seed is controlled here.
+  fixed_events: &fixed_event_simulation
+    seed: 42
+  quick_test: *fixed_event_simulation
+  debug: *fixed_event_simulation
 
-  # Fast simulation configuration (tests)
-  tw30_b5000_b16:
-    time_window: 30
-    initial_buffer_size: 5000
-    batch_size: 16
-
-  # Development simulation configuration
-  tw70_b15000_b32:
-    time_window: 70
-    initial_buffer_size: 15000
-    batch_size: 32
-
-  tw100_b50000_b128:
-    time_window: 100
-    initial_buffer_size: 50000
-    batch_size: 128
-
-  # Standard simulation configuration
-  tw100_b50000_b64:
-    time_window: 100
-    initial_buffer_size: 50000
-    batch_size: 64
-
-  # Extended simulation configuration
-  tw200_b100000_b128:
-    time_window: 200
-    initial_buffer_size: 100000
-    batch_size: 128
-
-  # Simulation configuration for large datasets
-  tw300_b150000_b256:
-    time_window: 300
-    initial_buffer_size: 150000
-    batch_size: 256
-
-  # Simulation configuration for cross-validation
-  tw80_b30000_b64:
-    time_window: 80
-    initial_buffer_size: 30000
-    batch_size: 64
-
-  # Simulation configuration for experiments
-  tw70_b15000_b32:
-    time_window: 70
-    initial_buffer_size: 15000
-    batch_size: 32
+  # Legacy preset names retained for scripts/saved command compatibility.
+  # Their former horizon/buffer/batch controls have been inactive since fdb6c9f.
+  tw30_b5000_b16: *fixed_event_simulation
+  tw70_b15000_b32: *fixed_event_simulation
+  tw100_b50000_b128: *fixed_event_simulation
+  tw100_b50000_b64: *fixed_event_simulation
+  tw200_b100000_b128: *fixed_event_simulation
+  tw300_b150000_b256: *fixed_event_simulation
+  tw80_b30000_b64: *fixed_event_simulation
 
 # ===== DATA LOADING CONFIGURATIONS =====
 # These configurations contain only DataLoader parameters

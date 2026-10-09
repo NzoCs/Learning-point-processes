@@ -9,8 +9,10 @@ from importlib.metadata import distributions
 from pathlib import Path
 
 import torch
+
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import (
     SIGNATURE_PATH_PREPARATION,
+    SIGNATURE_PATH_REPRESENTATION,
 )
 
 
@@ -47,6 +49,15 @@ class RunManifest:
                 raise ValueError(
                     "Existing run has a different configuration; use a new run_id"
                 )
+            # Enrich compatible older manifests without replacing their phases,
+            # recorded configuration or historical code/checkpoint provenance.
+            self.value.setdefault(
+                "simulation_contract", config.simulation_config.execution_contract()
+            )
+            self.value["numerics"].setdefault(
+                "signature_path_representation", SIGNATURE_PATH_REPRESENTATION
+            )
+            self.save()
             return
         root = Path(__file__).resolve().parents[2]
         dataset = config.data_config
@@ -68,9 +79,9 @@ class RunManifest:
                 "commit": _git_value(root, ["rev-parse", "HEAD"]),
                 "dirty": _git_value(root, ["status", "--porcelain"]) not in (None, ""),
             },
-            "lock_sha256": sha256_file(root / "uv.lock")
-            if (root / "uv.lock").is_file()
-            else None,
+            "lock_sha256": (
+                sha256_file(root / "uv.lock") if (root / "uv.lock").is_file() else None
+            ),
             "environment": {
                 "python": platform.python_version(),
                 "platform": platform.platform(),
@@ -86,7 +97,9 @@ class RunManifest:
                 "float32_matmul_precision": torch.get_float32_matmul_precision(),
                 "mmd_estimator": "unbiased_off_diagonal_v2",
                 "signature_path_preparation": SIGNATURE_PATH_PREPARATION,
+                "signature_path_representation": SIGNATURE_PATH_REPRESENTATION,
             },
+            "simulation_contract": config.simulation_config.execution_contract(),
             "data": {
                 "format": dataset.data_format,
                 "revision": dataset.revision,
@@ -116,7 +129,7 @@ class RunManifest:
                 "sha256": sha256_file(checkpoint),
             }
         self.value["phases"][phase] = result
-        self.value["numerics"]["float32_matmul_precision"] = (
-            torch.get_float32_matmul_precision()
-        )
+        self.value["numerics"][
+            "float32_matmul_precision"
+        ] = torch.get_float32_matmul_precision()
         self.save()

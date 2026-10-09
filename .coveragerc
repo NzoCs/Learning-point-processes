@@ -1,9 +1,9 @@
 # Coverage configuration - INI format
 # editorconfig: language=ini
 [run]
-source = easy_tpp
+source = new_ltpp
 omit = 
-    easy_tpp/*/test*.py
+    new_ltpp/*/test*.py
     tests/*
     setup.py
     */venv/*

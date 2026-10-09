@@ -14,12 +14,12 @@ help: ## Display available simplified commands
 
 install: ## Basic installation (main dependencies only)
 	@echo "Installing new_ltpp basic..."
-	@$(UV) sync
+	@$(UV) sync --frozen
 	@echo "Basic installation completed!"
 
 install-dev: ## Installation with development tools
 	@echo "Installing with development tools..."
-	@$(UV) sync --group dev
+	@$(UV) sync --frozen --group dev
 	@echo "Dev installation completed!"
 
 lint: ## Run linting (flake8)
@@ -43,7 +43,7 @@ run-demo: ## Run demo pipeline via CLI (fixed demo args)
 	@$(CLI) run --dataset-id test --general-specs-config quick_test \
 		--training-config quick_test --data-loading-config quick_test \
 		--simulation-config quick_test --thinning-config quick_test \
-		--logger-config tensorboard --model Hawkes --phase all --epochs 5
+		--logger-config tensorboard --model NHP --phase all --epochs 5
 
 # Generic run target with defaults for real runs
 run: ## Run full pipeline via CLI with real run defaults (pass variables to override)

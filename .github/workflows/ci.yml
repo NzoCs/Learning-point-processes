@@ -7,6 +7,24 @@ on:
     branches: [main, master]
 
 jobs:
+  packaging-and-launchers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install build tool
+        run: pip install uv
+      - name: Build distribution
+        run: uv build --wheel --no-sources
+      - name: Check wheel and Ruche launch plans
+        run: >-
+          uv run --no-project --python 3.11
+          --with pytest==8.4.2 --with pyyaml==6.0.2
+          python -m pytest -o addopts=
+          tests/scripts/test_ruche_launcher.py tests/scripts/test_wheel_contents.py -q
+
   test:
     runs-on: ubuntu-latest
 
@@ -21,8 +39,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install uv
-          uv sync
+          uv sync --frozen --group dev
 
       - name: Run tests
         run: |
-          uv run tests
+          uv run --frozen --no-sync python -m pytest tests

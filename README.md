@@ -27,22 +27,32 @@ New-LTPP is designed to be a comprehensive toolkit for TPP research, covering th
 
 ## 🛠️ Installation
 
-**Prerequisites:** Python 3.11+
+**Prerequisites:** Python **3.11** and `uv`.
 
 ### 1. Using `uv` (Recommended)
 
 This project uses `uv` for dependency management.
 
 ```bash
-# Install dependencies
-uv sync
+# Download into a fresh directory, then install the committed lock
+git clone https://github.com/NzoCs/Learning-point-processes.git
+cd Learning-point-processes
+uv sync --frozen --python 3.11
+uv run --frozen --no-sync new-ltpp --help
 ```
 
-### 2. Using `pip`
+### 2. Development and native dependencies
 
 ```bash
-pip install -e .
+uv sync --frozen --group dev
+uv run --frozen --no-sync python -m pytest tests
 ```
+
+The current `sigkernel` backend comes from a Git revision pinned by `uv.lock`.
+Native dependencies may need a compatible compiler; Windows installation is not
+yet validated. Plain `pip install -e .` does not apply the project's `uv` Git
+source or lock. For HPC installation and a small GPU job, follow the
+[Ruche procedure](docs/RUCHE.md).
 
 ---
 
@@ -56,7 +66,10 @@ To verify everything is working, use the Makefile target that runs a quick end-t
 make run-demo
 ```
 
-*Creates artifacts in `artifacts/test/NHP_.../`*
+Run this after installation with `uv run --frozen --no-sync make run-demo`.
+The `test` dataset is downloaded from Hugging Face (`NzoCs/test_dataset`).
+This demo requires network access or a populated dataset cache.
+Outputs are written beneath `artifacts/test/NHP_.../` in the current working directory.
 
 ### 2. Run an Experiment via CLI
 
@@ -69,7 +82,7 @@ You can run experiments directly using the `new-ltpp` command (or `scripts/cli.p
 new-ltpp run --model THP --dataset-id taxi --phase train --epochs 50
 
 # OR using the python script directly
-python scripts/cli.py run --model THP --dataset-id taxi --phase train --epochs 50
+uv run --frozen --no-sync python -m scripts.cli run --model THP --dataset-id taxi --phase train --epochs 50
 ```
 
 ### 3. Interactive Setup

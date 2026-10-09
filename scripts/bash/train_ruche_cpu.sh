@@ -1,28 +1,18 @@
 #!/bin/bash
 #SBATCH --job-name=train_cpu
-#SBATCH --output=err_logs/train_gpu_%A_%a.out
-#SBATCH --error=err_logs/train_gpu_%A_%a.err
+#SBATCH --output=err_logs/train_cpu_%A_%a.out
+#SBATCH --error=err_logs/train_cpu_%A_%a.err
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --mem=80G
 #SBATCH --partition=cpu_long
-#SBATCH --array=0-31%5
+#SBATCH --array=0-27%5
 
-# Nettoie l'environnement module pour éviter les conflits
-module purge
-
-# Active l'environnement virtuel Python (créé avec python -m venv)
-source /gpfs/workdir/regnaguen/LTPP/bin/activate
-
-# Définition des combinaisons exp/dataset
+set -euo pipefail
+repo_dir=${LTPP_REPO_DIR:-${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}}
+source "$repo_dir/scripts/bash/ruche_common.sh"
 experiments=(NHP THP IntensityFree SAHP)
-datasets=(hawkes1 H2expc H2expi self_correcting hawkes2 taxi taobao amazon)
-
-# Mapping index → combinaison
-idx=$SLURM_ARRAY_TASK_ID
-exp=${experiments[$(( idx / ${#datasets[@]} ))]}
-data=${datasets[$(( idx % ${#datasets[@]} ))]}
-
-# Lancement avec srun utilisant le nouveau CLI new-ltpp
-srun new-ltpp run --model "${exp}" --data-config "${data}" --phase all --gpu -1
+# self_correcting has no dataset preset in the delivered configuration.
+datasets=(hawkes1 H2expc H2expi hawkes2 taxi taobao amazon)
+ltpp_launch cpu "$@"

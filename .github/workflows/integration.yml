@@ -1,0 +1,52 @@
+name: Complete integration regression
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model name, or all for the complete catalogue
+        required: true
+        default: all
+        type: choice
+        options: [all, ANHN, ANHP, FullyNN, Hawkes, IntensityFree, NHP, ODETPP, RMTPP, SAHP, SelfCorrecting, THP]
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Verify all phases and numerical references
+        env:
+          INTEGRATION_MODEL: ${{ inputs.model }}
+        run: >-
+          uv run --frozen --no-sync python -m scripts.integration_suite
+          --output artifacts/integration-ci
+      - name: Preserve logs, snapshots, checkpoints and plots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-${{ matrix.os }}
+          path: artifacts/integration-ci
+          retention-days: 14

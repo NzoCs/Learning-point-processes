@@ -84,7 +84,18 @@ OMP_NUM_THREADS=1 MPLBACKEND=Agg uv run --frozen --no-sync python -m pytest \
 
 `deterministic: true` in the training YAML enables strict PyTorch determinism.
 CPU repeatability and epoch-boundary resume are verified on the small NHP case
-with zero loader workers; CUDA, DDP and other models still need validation.
+with zero loader workers; CUDA, DDP and multi-worker resume still need validation.
+
+An opt-in integration regression suite covers every public model using fixed,
+small offline data and versioned numerical references. It is separate from the
+regular tests and runs manually through GitHub Actions or locally:
+
+```bash
+uv run --frozen --no-sync python -m scripts.integration_suite
+```
+
+See [integration tests](docs/INTEGRATION_TESTS.md) for the checked outputs,
+tolerances, artefacts and the explicit reference-update policy.
 The current global coverage is 62.86%, below the retained 80% gate, so the normal
 coverage command is expected to fail until coverage improves. See the
 [reproducibility report](rapports/REPRODUCTIBILITE_RUCHE.md) for remaining limits

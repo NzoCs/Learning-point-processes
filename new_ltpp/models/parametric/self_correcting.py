@@ -131,6 +131,7 @@ class SelfCorrecting(TrainingMixin):
         if compute_last_step_only:
             H_past = H_past[:, -1:, :]
             time_seqs = time_seqs[:, -1:]
+            sample_dtimes = sample_dtimes[:, -1:, :]
 
         # Absolute time: [B, L, S, 1]
         T = (time_seqs.unsqueeze(-1) + sample_dtimes).unsqueeze(-1)

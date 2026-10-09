@@ -125,6 +125,8 @@ class IntensityFree(TrainingMixin):
     reference: https://github.com/shchur/ifl-tpp
     """
 
+    supports_intensity = False
+
     def __init__(
         self,
         *,
@@ -269,6 +271,7 @@ class IntensityFree(TrainingMixin):
         time_delta_seqs: torch.Tensor,
         type_seqs: torch.Tensor,
         valid_event_mask: torch.Tensor,
+        num_samples: int | None = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Utility method to predict the next time delta and type using intensity-free approach.
@@ -307,7 +310,9 @@ class IntensityFree(TrainingMixin):
         )
 
         # [num_samples, batch_size, 1]
-        accepted_dtimes: torch.Tensor = inter_time_dist.sample((self.num_sample,))  # type: ignore[assignment]
+        accepted_dtimes: torch.Tensor = inter_time_dist.sample(
+            (self.num_sample if num_samples is None else num_samples,)
+        )  # type: ignore[assignment]
         dtimes_pred = accepted_dtimes.mean(dim=0)
 
         batch_size = context.size(0)
@@ -320,6 +325,10 @@ class IntensityFree(TrainingMixin):
         types_pred = torch.multinomial(mark_logits, num_samples=1)  # [batch_size, 1]
 
         return dtimes_pred, types_pred
+
+    def sample_next_event(self, **kwargs) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Draw one event from the conditional density, without intensity thinning."""
+        return self._simulate_one_step(**kwargs, num_samples=1)
 
     def predict_one_step_at_every_event(
         self,

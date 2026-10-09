@@ -1,0 +1,102 @@
+{
+  "model_id": "NHP",
+  "run_id": "integration",
+  "training_config": {
+    "max_epochs": 1,
+    "seed": 123,
+    "deterministic": true,
+    "lr": 0.001,
+    "lr_scheduler": false,
+    "dropout": 0.0,
+    "val_freq": 1,
+    "patience": 3,
+    "log_freq": 5,
+    "checkpoints_freq": 1,
+    "accumulate_grad_batches": 1,
+    "use_precision_16": false,
+    "devices": -1
+  },
+  "model_config": {
+    "model_id": "NHP",
+    "is_training": true,
+    "compute_simulation": false,
+    "compute_metrics": true,
+    "device": "cpu",
+    "gpu": -1,
+    "specs": {
+      "hidden_size": 4,
+      "dropout": 0.0,
+      "num_layers": 1,
+      "num_heads": 2,
+      "time_emb_size": 4,
+      "num_mix_components": 2,
+      "ode_num_sample_per_step": 2
+    },
+    "scheduler_config": {
+      "max_epochs": 1,
+      "lr": 0.001,
+      "lr_scheduler": false
+    },
+    "thinning_config": {
+      "num_sample": 5,
+      "num_exp": 10,
+      "num_samples_boundary": 5,
+      "over_sample_rate": 1.1
+    }
+  },
+  "data_config": {
+    "num_event_types": 2,
+    "data_format": "json",
+    "data_loading_specs": {
+      "batch_size": 4,
+      "num_workers": 0,
+      "shuffle": false,
+      "padding": true,
+      "truncation": false,
+      "max_len": null
+    },
+    "tokenizer_specs": {
+      "num_event_types": 2,
+      "num_event_types_pad": 3,
+      "pad_token_id": 2,
+      "padding_strategy": "longest",
+      "truncation_strategy": "do_not_truncate",
+      "padding_side": "left",
+      "truncation_side": "left",
+      "model_input_names": null
+    },
+    "dataset_id": "test",
+    "revision": "1ca2a24f16f377555175c99e5cc1704dc44b92db",
+    "train_dir": "${FIXTURE}",
+    "valid_dir": "${FIXTURE}",
+    "test_dir": "${FIXTURE}"
+  },
+  "simulation_config": {
+    "time_window": 10.0,
+    "batch_size": 4,
+    "initial_buffer_size": 1000,
+    "seed": 321
+  },
+  "statistical_test_config": {
+    "test_type": "mmd",
+    "point_process_kernel_type": "sig_kernel",
+    "space_kernel_type": "rbf",
+    "num_event_types": 2,
+    "n_samples": 3,
+    "embedding_dim": 8,
+    "sigma": 1.0,
+    "scaling": 1.0,
+    "num_discretization_points": 8,
+    "embedding_type": "linear",
+    "dyadic_order": 0,
+    "signature_backend": "pysiglib",
+    "signature_max_batch": 64
+  },
+  "logger_config": {
+    "save_dir": "${OUTPUT}",
+    "type": "tensorboard",
+    "config": {}
+  },
+  "enable_logging": true,
+  "save_dir": "${OUTPUT}"
+}

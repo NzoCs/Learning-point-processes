@@ -182,6 +182,14 @@ class Simulator:
         valid_event_mask: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         model = self._model
+        direct_sampler = getattr(model, "sample_next_event", None)
+        if callable(direct_sampler):
+            return direct_sampler(
+                time_seqs=time_seqs,
+                time_delta_seqs=time_delta_seqs,
+                type_seqs=type_seqs,
+                valid_event_mask=valid_event_mask,
+            )
         accepted_dtimes, weights = model.get_event_sampler().draw_next_time_one_step(
             time_seqs,
             time_delta_seqs,

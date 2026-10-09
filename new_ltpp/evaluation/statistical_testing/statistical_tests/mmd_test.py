@@ -9,7 +9,6 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protoc
 )
 from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.shared_types import Batch
-from new_ltpp.models.simulation.simulator import Simulator
 
 from .base_test import ITest, FinalTestResult, TestStatistics
 
@@ -308,6 +307,9 @@ class MMDTwoSampleTest:
         all_p_values = []
         all_mmds = []
         all_perm_mmds = []
+        # Avoid an import cycle when users import new_ltpp.models first.
+        from new_ltpp.models.simulation.simulator import Simulator
+
         simulator = Simulator(
             model=model,
             statistical_test_config=statistical_test_config,

@@ -119,7 +119,9 @@ class SimulationIOManager:
         else:
             self._accumulated_data.extend(formatted)
 
-        self._total_sequences += len(formatted)
+        # Each formatted row is an event, not a sequence. Advance the sequence
+        # offset by batch size so IDs remain contiguous across saved batches.
+        self._total_sequences += result.time_seqs.size(0)
 
     @staticmethod
     def format_simulation_result(

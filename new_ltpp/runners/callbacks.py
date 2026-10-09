@@ -126,14 +126,15 @@ class PredictionStatsCallback(pl.Callback):
         if model._io_manager is not None:
             model._io_manager.finalize()
 
-        visualizer = ModelVisualizer(model)
-        visualizer.intensity_graph(
-            save_dir=self.base_dir / "intensities",
-            batch=simulator.last_result,
-            save_plot=True,
-            save_data=True,
-            plot=False,
-        )
+        if getattr(model, "supports_intensity", True):
+            visualizer = ModelVisualizer(model)
+            visualizer.intensity_graph(
+                save_dir=self.base_dir / "intensities",
+                batch=simulator.last_result,
+                save_plot=True,
+                save_data=True,
+                plot=False,
+            )
 
 
 class TestCallback(pl.Callback):

@@ -63,8 +63,14 @@ class ResultsAggregator:
 
         new_df = pd.DataFrame([row])
 
-        header = not self.csv_path.exists()
-        new_df.to_csv(self.csv_path, mode="a", index=True, header=header)
+        # Test and simulation rows have different columns. Appending their
+        # raw values under the first header produces a malformed CSV.
+        if self.csv_path.exists():
+            previous = pd.read_csv(self.csv_path)
+            new_df = pd.concat([previous, new_df], ignore_index=True, sort=False)
+        temporary = self.csv_path.with_suffix(".csv.tmp")
+        new_df.to_csv(temporary, index=False)
+        temporary.replace(self.csv_path)
         logger.info(f"✓ Results aggregated in {self.csv_path}")
 
     @staticmethod

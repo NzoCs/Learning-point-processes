@@ -1,0 +1,22 @@
+{
+  "validated_code_commit": "596b169522e8c3f563e98b95b71b22057213c07d",
+  "test_workflow_run": "https://github.com/NzoCs/Learning-point-processes/actions/runs/37953907105",
+  "quality_workflow_run": "https://github.com/NzoCs/Learning-point-processes/actions/runs/37953907160",
+  "test_job_id": 113899420222,
+  "jobs": {
+    "packaging-and-launchers": "success",
+    "signature-migration": "success",
+    "test": "success",
+    "lint": "success"
+  },
+  "passed": 197,
+  "skipped": 3,
+  "deselected": 2,
+  "coverage_percent": 80.79,
+  "coverage_threshold": 80,
+  "covered_statements": 4915,
+  "total_statements": 6084,
+  "full_scientific_workflow_linux_executed": false,
+  "full_integration_workflow_linux_executed": false,
+  "note": "Full scientific notebooks and eleven-model integration were executed locally on Windows CPU; Linux CI runs numerical oracles and ordinary tests. Mypy and Bandit diagnostics are advisory."
+}

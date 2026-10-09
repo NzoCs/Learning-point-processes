@@ -18,6 +18,15 @@ du job général était le seuil de couverture : **63,57 % / 80 %**.
 Le présent lot fixe `uv==0.11.29` dans tous les jobs de `ci.yml`, utilise les
 actions checkout v4 / setup-python v5 et conserve les diagnostics de couverture.
 
+**CI Linux validee sur le code `596b169` : 197 tests reussis, 3 ignores,
+2 deselectionnes ; couverture 80,79 %.** Les jobs packaging/lanceurs,
+migration pySigLib et tests ont tous reussi dans
+[Test pipeline](https://github.com/NzoCs/Learning-point-processes/actions/runs/37953907105).
+Le workflow
+[Code Quality & Linting](https://github.com/NzoCs/Learning-point-processes/actions/runs/37953907160)
+a aussi reussi (formatage, imports, noms indefinis et structure des notebooks ;
+mypy et Bandit restent des diagnostics consultatifs).
+
 **Validation locale finale : 190 tests reussis, 10 ignores, 2 deselectionnes ; couverture 80,79 %.**
 Les omissions correspondent a Make indisponible (8), CUDA absent (1) et a
 l'absence d'API intensite sur IntensityFree (1).
@@ -62,7 +71,9 @@ du guide Getting Started dans trois processus séparés ; les journaux et
 empreintes sont sauvegardés dans `artifacts/notebook-validation`.
 **Les trois notebooks ont termine toutes leurs cellules de code sur CPU.**
 Le nouveau workflow `scientific.yml` permet cette validation Linux à la demande.
-La pipeline complète des onze modèles reste elle aussi déclenchée à la demande.
+La pipeline complete des onze modeles a aussi ete reexecutee sur CPU :
+les onze parcours et leurs comparaisons numeriques historiques passent sans
+modifier les references. Elle reste declenchee a la demande.
 
 Restent hors validation : Ruche, CUDA, DDP, p-values agrégées entre batches,
 modèles ajustés et comparaisons de simulations conditionnelles. Les résultats

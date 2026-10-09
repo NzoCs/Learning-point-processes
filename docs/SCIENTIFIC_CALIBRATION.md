@@ -88,6 +88,10 @@ Chaque notebook est execute integralement dans un nouveau processus Python.
 Les journaux, nombres de cellules et empreintes vont dans
 `artifacts/notebook-validation`. Le workflow manuel `scientific.yml` execute
 les notebooks et l'experience complete sur Linux; il n'est pas lance a chaque push.
+Comme le workflow d'integration, il doit etre present sur la branche par defaut
+pour apparaitre dans l'interface GitHub. L'execution complete mesuree ici est
+locale sur Windows CPU; l'execution Linux de ce workflow manuel reste a lancer
+apres son enregistrement. La CI Linux ordinaire controle les oracles rapides.
 
 ## Correction des benchmarks
 

@@ -82,13 +82,15 @@ remplacer les références numériques de la suite d'intégration.
 Sous Windows, Python 3.11.15, Torch CPU et pySigLib 4.0, les 11 modèles
 passent la pipeline complète et la comparaison aux références existantes,
 sans régénérer ces références. La suite ordinaire hors tests lents compte
-148 tests réussis, 9 ignorés et 2 exclus. Black, isort, les contrôles critiques
+190 tests réussis, 10 ignorés et 2 exclus. Black, isort, les contrôles critiques
 Ruff, les huit documents notebook et la cohérence du verrou uv passent.
 
-La dernière mesure de couverture, avant suppression des anciennes options,
-était de 63,58 % contre 80 % requis. Le seuil reste inchangé. Cette validation locale ne prouve ni la réussite des workflows
-distants ni celle des exécutions Ruche/CUDA/DDP. La calibration scientifique
-et la couverture des chemins non exercés restent à compléter.
+La validation locale complete du 9 octobre 2026 atteint **80,79 %**, pour un
+seuil maintenu a **80 %**, sans elargir les exclusions. Les dix omissions sont
+les huit tests Make indisponibles sur Windows, CUDA absent et l'API intensite
+inapplicable au modele IntensityFree. Cette validation CPU ne certifie pas
+Ruche/CUDA/DDP. La calibration sur processus connus et ses limites sont
+detaillees dans [SCIENTIFIC_CALIBRATION.md](SCIENTIFIC_CALIBRATION.md).
 
 La configuration d'intégration est adaptée sans régénérer les snapshots : sa
 transition exacte est enregistrée dans `tests/integration/config_migration.json`.
@@ -103,14 +105,14 @@ sa documentation affichent seulement les trois presets actuels. Le notebook
 séquences locales, sans téléchargement. Toutes ses cellules de code ont été
 exécutées sur CPU : chargement des presets, construction, sauvegarde/relecture
 YAML, train/test/predict et vérification des trois phases dans le manifeste.
-La suite ordinaire passe toujours avec 148 tests réussis, 9 ignorés et 2 exclus.
+La suite ordinaire passe toujours avec 190 tests réussis, 10 ignorés et 2 exclus.
 
-Les exemples de signature des deux notebooks expérimentaux utilisent les
-constructeurs actuels et `counting_grid`. Leurs anciennes sorties ont été
-retirées pour éviter de présenter des résultats d'une ancienne représentation
-comme ceux de la grille actuelle. Ces constructeurs ont été vérifiés, mais
-les autres API historiques et les longues analyses scientifiques de ces deux
-notebooks n'ont pas été validées intégralement.
+Les deux notebooks experimentaux ont maintenant toutes leurs cellules
+executees sur des jeux locaux graines. Ils utilisent les API actuelles,
+pySigLib et `counting_grid`, avec controle de la formule MMD, des noyaux
+et des experiences H0/H1. Leurs sorties historiques restent effacees.
+`python -m scripts.validate_notebooks` reexecute ces deux notebooks et le
+guide Getting Started dans trois processus separes avec journaux et empreintes.
 
 Les anciens builders se trouvent dans `origin/master`. `main` les a supprimés
 au commit `f69fd98`, avant cette branche. Les exemples suivent l'API Pydantic

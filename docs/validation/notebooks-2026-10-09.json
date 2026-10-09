@@ -1,0 +1,29 @@
+[
+  {
+    "notebook": "Hawkes_MMD_Test.ipynb",
+    "sha256": "ae8e89bd0954afabc008ad47848a2a8ea3a0031bbf8d5c2d4d1cead0a075e5fc",
+    "executed_code_cells": 4,
+    "duration_seconds": 38.686999999918044,
+    "python": "3.11.15 (main, Jun 23 2026, 15:20:37) [MSC v.1944 64 bit (AMD64)]",
+    "status": "passed",
+    "execution": "all Python cells, shared namespace, fresh subprocess"
+  },
+  {
+    "notebook": "NewLTPP_Getting_Started.ipynb",
+    "sha256": "b9749cd83d833a5b39588a331087bf45f374f74ebab1783b69de4044fc24fb5f",
+    "executed_code_cells": 6,
+    "duration_seconds": 28.890999999945052,
+    "python": "3.11.15 (main, Jun 23 2026, 15:20:37) [MSC v.1944 64 bit (AMD64)]",
+    "status": "passed",
+    "execution": "all Python cells, shared namespace, fresh subprocess"
+  },
+  {
+    "notebook": "Test_MMD_Metric.ipynb",
+    "sha256": "2558f25ca07a6e20e49ca273a5b3adaf857856d3ce3375f40a20d0200d083d88",
+    "executed_code_cells": 4,
+    "duration_seconds": 22.234000000054948,
+    "python": "3.11.15 (main, Jun 23 2026, 15:20:37) [MSC v.1944 64 bit (AMD64)]",
+    "status": "passed",
+    "execution": "all Python cells, shared namespace, fresh subprocess"
+  }
+]

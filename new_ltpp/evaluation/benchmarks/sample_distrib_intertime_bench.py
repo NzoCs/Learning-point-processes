@@ -48,12 +48,13 @@ class InterTimeDistributionBenchmark(TimeBenchmark):
         """
         Build the empirical distribution of inter-times from training data.
         """
-        test_loader = self.data_module.test_dataloader()
+        self.data_module.setup("fit")
+        train_loader = self.data_module.train_dataloader()
         all_inter_times = []
 
-        logger.info("Collecting inter-times from test data...")
+        logger.info("Collecting inter-times from training data...")
 
-        for batch in test_loader:
+        for batch in train_loader:
             # Extract inter-event times from batch
             time_delta_seqs = batch.time_delta_seqs  # Inter-times
             batch_non_pad_mask = batch.valid_event_mask

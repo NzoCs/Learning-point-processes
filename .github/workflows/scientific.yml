@@ -1,0 +1,37 @@
+name: Scientific calibration and notebooks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scientific:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Execute maintained notebooks
+        run: uv run --frozen --no-sync python -m scripts.validate_notebooks
+      - name: Measure null rejection rates and power
+        run: uv run --frozen --no-sync python -m scripts.scientific_calibration --trials 200 --permutations 99
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scientific-validation
+          path: |
+            artifacts/notebook-validation/
+            artifacts/scientific-calibration/

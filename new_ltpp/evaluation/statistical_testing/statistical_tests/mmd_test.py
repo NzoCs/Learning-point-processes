@@ -255,18 +255,31 @@ class MMDTwoSampleTest:
         batch_y: Batch,
         simulations: Optional[list[Batch]] = None,
         accumulate: bool = True,
+        *,
+        paired_truncation: bool = True,
     ) -> TestStatistics:
+        """Compare samples, preserving the historical paired truncation by default.
+
+        For independent samples observed under the same sampling rule, use
+        ``paired_truncation=False``: preprocessing must not depend on labels to
+        justify permutation calibration. Paired truncation remains available
+        for diagnostics of the historical simulation protocol; its calibration
+        is not implied by the Monte Carlo p-value correction.
+        """
+        prepare = (
+            self._truncate_to_min_time if paired_truncation else lambda x, y: (x, y)
+        )
         if simulations is not None and len(simulations) > 1:
-            trunc_X, trunc_Y1 = self._truncate_to_min_time(batch_x, simulations[0])
+            trunc_X, trunc_Y1 = prepare(batch_x, simulations[0])
             observed_mmd = self.mmd(trunc_X, trunc_Y1)
 
             perm_mmds_list = []
             for Y_i in simulations[1:]:
-                trunc_Y1_i, trunc_Yi = self._truncate_to_min_time(simulations[0], Y_i)
+                trunc_Y1_i, trunc_Yi = prepare(simulations[0], Y_i)
                 perm_mmds_list.append(self.mmd(trunc_Y1_i, trunc_Yi))
             perm_mmds = torch.stack(perm_mmds_list, dim=-1)
         else:
-            trunc_X, trunc_Y = self._truncate_to_min_time(batch_x, batch_y)
+            trunc_X, trunc_Y = prepare(batch_x, batch_y)
             observed_mmd, perm_mmds = self._permutation_test(trunc_X, trunc_Y)
 
         count_ge = (perm_mmds >= observed_mmd).sum()

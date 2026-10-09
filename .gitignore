@@ -61,3 +61,4 @@ log
 # Versioned offline integration inputs and numerical regression references.
 !tests/integration/*.json
 !tests/integration/baselines/*.json
+!docs/validation/*.json

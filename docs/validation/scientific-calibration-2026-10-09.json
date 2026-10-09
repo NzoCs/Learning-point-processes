@@ -1,0 +1,120 @@
+{
+  "seed": 20261009,
+  "permutations": 99,
+  "alpha": 0.05,
+  "reject_rule": "p <= alpha",
+  "minimum_p": 0.01,
+  "samples_per_group": 8,
+  "events_per_sequence": 5,
+  "kernel": "pysiglib / RBF / counting_grid / grid8 / dyadic0",
+  "torch_version": "2.8.0+cpu",
+  "numpy_version": "2.3.3",
+  "scope": "CPU, independent fixed-count samples; historical protocol diagnostic only; not trained-model or pooled-batch calibration",
+  "results": [
+    {
+      "process": "poisson",
+      "hypothesis": "null_rate_2_vs_2",
+      "protocol": "independent_samples",
+      "rejections": 12,
+      "trials": 200,
+      "rejection_rate": 0.06,
+      "wilson_95": [
+        0.03465219425433187,
+        0.1019316929576627
+      ],
+      "p_values_sha256": "d6a4dfcc561233f0374b1d85de0a1941948dc7fdc07a5e7616e9c6043543d324"
+    },
+    {
+      "process": "poisson",
+      "hypothesis": "null_rate_2_vs_2",
+      "protocol": "historical_paired_truncation",
+      "rejections": 12,
+      "trials": 200,
+      "rejection_rate": 0.06,
+      "wilson_95": [
+        0.03465219425433187,
+        0.1019316929576627
+      ],
+      "p_values_sha256": "b5a41ee7024c5ca1c151aa6604d9fc1e8623a71342d49a6a9d4a60f54d72673f"
+    },
+    {
+      "process": "poisson",
+      "hypothesis": "alternative_rate_8_vs_2",
+      "protocol": "independent_samples",
+      "rejections": 195,
+      "trials": 200,
+      "rejection_rate": 0.975,
+      "wilson_95": [
+        0.942821659593358,
+        0.9892752803482386
+      ],
+      "p_values_sha256": "5368e13e5e0ea13661a7820b1bd68b74731afd935c8a7c7e141f6b8af2742a13"
+    },
+    {
+      "process": "poisson",
+      "hypothesis": "alternative_rate_8_vs_2",
+      "protocol": "historical_paired_truncation",
+      "rejections": 196,
+      "trials": 200,
+      "rejection_rate": 0.98,
+      "wilson_95": [
+        0.9497129130941735,
+        0.9921955735836505
+      ],
+      "p_values_sha256": "4e8b2c9891802bc42fd513e5fe26a1e362878832fe2e3be30450697a794aed11"
+    },
+    {
+      "process": "hawkes",
+      "hypothesis": "null_rate_2_vs_2",
+      "protocol": "independent_samples",
+      "rejections": 8,
+      "trials": 200,
+      "rejection_rate": 0.04,
+      "wilson_95": [
+        0.020405632066152306,
+        0.07693206820093293
+      ],
+      "p_values_sha256": "e01c1f7dd31d066153a1daa0ad5ebb5c4e03b95edc0f820435c7b7b6bb35eec3"
+    },
+    {
+      "process": "hawkes",
+      "hypothesis": "null_rate_2_vs_2",
+      "protocol": "historical_paired_truncation",
+      "rejections": 19,
+      "trials": 200,
+      "rejection_rate": 0.095,
+      "wilson_95": [
+        0.06166310271738653,
+        0.1436016116481994
+      ],
+      "p_values_sha256": "c21f0eb819c7f8e653d2793741258cb63880a42b8c687b55b00eb526edfdbaf0"
+    },
+    {
+      "process": "hawkes",
+      "hypothesis": "alternative_rate_8_vs_2",
+      "protocol": "independent_samples",
+      "rejections": 193,
+      "trials": 200,
+      "rejection_rate": 0.965,
+      "wilson_95": [
+        0.9295293884777092,
+        0.9829444579914328
+      ],
+      "p_values_sha256": "ce8371e0ede459b5c5431926497b085925f5851d60b19584642366369c52e4d4"
+    },
+    {
+      "process": "hawkes",
+      "hypothesis": "alternative_rate_8_vs_2",
+      "protocol": "historical_paired_truncation",
+      "rejections": 193,
+      "trials": 200,
+      "rejection_rate": 0.965,
+      "wilson_95": [
+        0.9295293884777092,
+        0.9829444579914328
+      ],
+      "p_values_sha256": "23cb3bde97093f85a88f44607e7d39d07bb1b66123ce32bfc218ec0d1bc7028e"
+    }
+  ],
+  "full_report_sha256": "3bfeb04fe666b34d45fae646b05d23178cd03c072b681df778f550a649c00396"
+}

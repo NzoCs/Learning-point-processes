@@ -253,6 +253,10 @@ class Visualizer:
             self.seq_lengths,
             stat="density",
             binwidth=binwidth,
+            binrange=(
+                float(self.seq_lengths.min()) - 0.5,
+                float(self.seq_lengths.max()) + 0.5,
+            ),
             color="royalblue",
             alpha=0.6,
             label=f"Data ({self.split})",

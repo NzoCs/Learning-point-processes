@@ -2,7 +2,7 @@ name: Code Quality & Linting
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, codex/pysiglib-migration]
   pull_request:
     branches: [main, master]
   workflow_dispatch:

@@ -2,10 +2,73 @@
 
 Date : 9 octobre 2026. Dépôt : `NzoCs/Learning-point-processes`.
 Référence examinée : `fdb6c9fb7d1116dc1f4311259c349fa383480612`.
-Statut : plan proposé, pas des garanties déjà acquises.
+Le diagnostic initial ci-dessous est historique. Le bilan le plus récent figure
+dans la section suivante ; les validations CPU ne certifient pas Ruche/CUDA/DDP.
 Rapport complémentaire : [Architecture et SOLID](ARCHITECTURE_SOLID.md).
 
-### Corrections et seconde validation — 9 octobre 2026
+### Bilan actuel — tests, calibration et notebooks (9 octobre 2026)
+
+Branche : `codex/pysiglib-migration`. pySigLib reste le seul moteur de signature.
+Les anciens builders étaient déjà supprimés de `main` avant cette migration ;
+les exemples maintenus utilisent les schémas Pydantic actuels.
+
+La CI Linux du commit `f58d440` a exécuté **155 tests réussis, 2 ignorés,
+2 désélectionnés**. Packaging et migration pySigLib ont réussi. Le seul échec
+du job général était le seuil de couverture : **63,57 % / 80 %**.
+Le présent lot fixe `uv==0.11.29` dans tous les jobs de `ci.yml`, utilise les
+actions checkout v4 / setup-python v5 et conserve les diagnostics de couverture.
+
+**Validation locale finale : 190 tests reussis, 10 ignores, 2 deselectionnes ; couverture 80,79 %.**
+Les omissions correspondent a Make indisponible (8), CUDA absent (1) et a
+l'absence d'API intensite sur IntensityFree (1).
+
+Les nouveaux tests couvrent les onze modèles : perte finie, gradients utiles
+et finis, mise à jour Adam, intensités avec axes corrects, prédictions temporelles
+et marques valides, répétabilité avec graine fixe. La reprise d'entraînement
+reste contrôlée par comparaison à un entraînement continu. Le seuil de 80 %
+et les exclusions de couverture sont conservés.
+
+Deux problèmes concrets ont été corrigés :
+
+- Trois benchmarks apprenaient leurs statistiques sur le jeu de test malgré
+  leur contrat d'apprentissage sur l'entraînement. Des jeux disjoints aux valeurs
+  contrastées contrôlent maintenant l'absence de cette fuite. Leurs anciens
+  scores peuvent changer du fait de cette correction de calcul.
+- Le graphique de distribution des longueurs plantait quand toutes les
+  séquences avaient la même longueur ; sa plage de classes inclut ce cas.
+
+La calibration scientifique dispose d'un oracle scalaire à tailles inégales,
+d'une énumération exacte des partitions avec ex aequo et d'un contrôle du calcul
+accéléré contre l'API réelle de pySigLib avec les mêmes permutations.
+Sur 200 répétitions et 99 permutations, le protocole indépendant rejette H0
+dans **6 % des cas Poisson et 4 % des cas Hawkes**, compatibles avec 5 % dans
+les intervalles mesurés. Sa puissance contre les intensités 2 et 8 vaut 97,5 %
+et 96,5 % respectivement. La troncature historique par paires atteint **9,5 %
+sur Hawkes** (IC 95 % : 6,17–14,36 %) : **ce protocole n'est pas validé**.
+
+L'API `compute_statistics(..., paired_truncation=False)` permet le protocole
+indépendant. Le défaut historique est conservé pour préserver explicitement les
+références existantes ; leur stabilité n'est pas une preuve de validité statistique.
+La bascule des pipelines de simulation requiert encore de définir le protocole
+d'observation voulu et de revoir les références scientifiques correspondantes.
+Voir [la calibration, ses sources et ses limites](../docs/SCIENTIFIC_CALIBRATION.md)
+et [les mesures versionnées](../docs/validation/scientific-calibration-2026-10-09.json).
+
+Les deux notebooks expérimentaux ont été réécrits avec les API actuelles et des
+données locales graînées. Ils conservent les expériences H0/H1, les sweeps et
+la comparaison des noyaux actuels, sans recommandations scientifiques non
+vérifiées. `scripts.validate_notebooks` exécute toutes leurs cellules et celles
+du guide Getting Started dans trois processus séparés ; les journaux et
+empreintes sont sauvegardés dans `artifacts/notebook-validation`.
+**Les trois notebooks ont termine toutes leurs cellules de code sur CPU.**
+Le nouveau workflow `scientific.yml` permet cette validation Linux à la demande.
+La pipeline complète des onze modèles reste elle aussi déclenchée à la demande.
+
+Restent hors validation : Ruche, CUDA, DDP, p-values agrégées entre batches,
+modèles ajustés et comparaisons de simulations conditionnelles. Les résultats
+CPU et la couverture ne lèvent pas ces limites.
+
+### Historique — corrections et seconde validation du 9 octobre 2026
 
 Cette section décrit les corrections ultérieures au diagnostic ci-dessous.
 La branche reste `codex/pysiglib-migration`, avec pySigLib comme seule bibliothèque

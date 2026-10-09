@@ -9,6 +9,9 @@ from importlib.metadata import distributions
 from pathlib import Path
 
 import torch
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import (
+    SIGNATURE_PATH_PREPARATION,
+)
 
 
 def sha256_file(path):
@@ -82,6 +85,7 @@ class RunManifest:
                 "deterministic": config.training_config.deterministic,
                 "float32_matmul_precision": torch.get_float32_matmul_precision(),
                 "mmd_estimator": "unbiased_off_diagonal_v2",
+                "signature_path_preparation": SIGNATURE_PATH_PREPARATION,
             },
             "data": {
                 "format": dataset.data_format,

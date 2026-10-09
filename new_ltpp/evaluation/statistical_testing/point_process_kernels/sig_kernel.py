@@ -62,7 +62,7 @@ class SIGKernel(PointProcessKernel):
         phi_time_seqs = phi_time_seqs / global_max
         psi_time_seqs = psi_time_seqs / global_max
 
-        # 1) Compute embeddings (stays in original dtype, float32 is converted by the pySigLib adapter)
+        # 1) Construct float64 paths from locally sorted, masked events.
         # ---------------------
         # phi : (B, D, C)
         # psi : (B, D, C)

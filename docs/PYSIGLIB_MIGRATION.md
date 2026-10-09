@@ -116,6 +116,27 @@ chargé, gradients GPU si utilisés, mini entraînement, évaluation et simulati
 performances/mémoire représentatives. Le protocole de p-values et sa calibration
 ne sont pas modifiés ni validés par ce lot.
 
+### Préparation des chemins indépendante du padding
+
+La version `masked_valid_count_v2`, inscrite dans le manifeste et les résultats
+CSV, trie une représentation locale des événements avec leurs marques et masques.
+Les temps masqués sont remplacés par `+∞` uniquement pour `searchsorted` ; les
+chemins transmis à pySigLib restent finis. Les lots d'origine ne sont pas modifiés.
+Le comptage total est divisé par `max(nombre_evenements_valides - 1, 1) + 1e-8`
+pour chaque séquence ; les comptages par marque restent bruts. Les séquences vides
+et à un événement sont ainsi finies. Pour les séquences sans padding avec au
+moins deux événements, la convention historique est conservée.
+
+Cette correction change les anciens résultats dépendant de la largeur paddée
+du lot. La normalisation temporelle commune aux deux échantillons reste appliquée :
+l'invariance concerne le padding, pas un changement du maximum temporel réel.
+Les options `linear` et `constant` restent actuellement des alias du même chemin
+de comptage sur grille ; cette correction ne leur attribue pas de nouvelle sémantique.
+Les tests indépendants contrôlent les comptages aux frontières et aux temps liés,
+le padding gauche/droite/intercalé, l'absence de mutation, les tailles de lots,
+et les gradients du solveur par rapport aux chemins. La discrétisation du comptage
+ne fournit pas de gradient différentiable par rapport aux temps d'événements.
+
 Sources API consultées le 9 octobre 2026 :
 [installation](https://pysiglib.readthedocs.io/en/latest/pages/installation.html),
 [Gram](https://pysiglib.readthedocs.io/en/latest/pages/signature_kernels/sig_kernel_gram.html),

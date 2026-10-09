@@ -3,6 +3,9 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict, Any, Optional
 from new_ltpp.utils import logger
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import (
+    SIGNATURE_PATH_PREPARATION,
+)
 
 
 class ResultsAggregator:
@@ -75,6 +78,7 @@ class ResultsAggregator:
             "dataset_revision": config.data_config.revision,
             "mmd_estimator": "unbiased_off_diagonal_v2",
             "signature_backend": "pysiglib",
+            "signature_path_preparation": SIGNATURE_PATH_PREPARATION,
             "manifest": str(config.base_dir / "manifest.json"),
         }
 

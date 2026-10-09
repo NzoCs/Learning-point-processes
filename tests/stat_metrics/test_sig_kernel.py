@@ -145,7 +145,7 @@ class TestEmbeddingShape:
         assert torch.all(time_channel <= 1.0 + 1e-6)
 
     def test_counting_channel_normalized(self, batch1):
-        """Preserve the historical scaling by L-1, including its endpoint."""
+        """Scale by valid event count, independently of padded batch width."""
         t = batch1.time_seqs.double()
         t = t / (t.max() + 1e-8)
         emb = _get_embedding(
@@ -158,9 +158,8 @@ class TestEmbeddingShape:
         )
         counting = emb[:, :, 1]
         assert torch.all(counting >= 0.0)
-        expected_end = batch1.valid_event_mask.sum(dim=1).double() / (
-            SEQ_LEN - 1 + 1e-8
-        )
+        valid_count = batch1.valid_event_mask.sum(dim=1).double()
+        expected_end = valid_count / ((valid_count - 1).clamp_min(1) + 1e-8)
         torch.testing.assert_close(counting[:, -1], expected_end)
         assert torch.all(counting <= expected_end[:, None] + 1e-6)
 

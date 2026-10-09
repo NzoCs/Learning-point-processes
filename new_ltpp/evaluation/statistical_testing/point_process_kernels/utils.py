@@ -1,6 +1,9 @@
 import torch
 
 
+SIGNATURE_PATH_PREPARATION = "masked_valid_count_v2"
+
+
 def _get_embedding(
     num_discretization_points: int,
     embedding_type: str,
@@ -35,8 +38,14 @@ def _get_embedding(
     )
     time_grid_exp = time_grid.unsqueeze(0).expand(B, -1)  # (B, D)
 
-    # 2) Mask out padded times with inf so searchsorted disregards them
-    time_seqs_inf = time_seqs.masked_fill(~mask, float("inf"))
+    # Sort a local representation only. Keeping marks and masks aligned also
+    # handles left/interspersed padding and preserves the order of tied events.
+    # No input tensor is mutated; infinity is used only for searchsorted.
+    time_seqs_inf, order = time_seqs.masked_fill(~mask, float("inf")).sort(
+        dim=1, stable=True
+    )
+    sorted_types = type_seqs.gather(1, order)
+    sorted_mask = mask.gather(1, order)
 
     # idx is the number of valid events <= t
     idx = torch.searchsorted(time_seqs_inf, time_grid_exp.contiguous(), side="right")
@@ -44,11 +53,11 @@ def _get_embedding(
     # 3) Compute cumulative counts per event type
     # Clamp to [0, num_event_types - 1] to prevent one_hot out-of-bound crashes on padding tokens.
     # The padded elements will be zeroed out when multiplying by the mask.
-    type_seqs_clamped = torch.clamp(type_seqs.long(), min=0, max=num_event_types - 1)
+    type_seqs_clamped = torch.clamp(sorted_types.long(), min=0, max=num_event_types - 1)
     one_hot = torch.nn.functional.one_hot(
         type_seqs_clamped, num_classes=num_event_types
     ).to(dtype)
-    one_hot = one_hot * mask.unsqueeze(-1).to(dtype)
+    one_hot = one_hot * sorted_mask.unsqueeze(-1).to(dtype)
     cum_counts = torch.cumsum(one_hot, dim=1)  # (B, L, num_event_types)
 
     # Prepend zeros because idx=0 means 0 events have occurred
@@ -66,11 +75,11 @@ def _get_embedding(
     # Overall counting sequence is just idx
     counting_seqs = idx.to(dtype)
 
-    # We normalized counting sequences before by max steps, let's normalize by overall steps if needed,
-    # but using raw counts for a step process is standard. Since previous code used max possible length `L`:
-    # But usually not normalizing counts is fine for the signature kernel, since space kernel applies scaling.
-    # Previous code: normalized_counting_seqs = counting_seqs / (time_seqs.shape[1] - 1 + 1e-8)
-    normalized_counting_seqs = counting_seqs / (L - 1 + 1e-8)
+    # Preserve the historical n-1 scaling for unpadded paths with n >= 2,
+    # using each path's actual event count rather than the padded batch width.
+    # Empty/single-event paths use a unit denominator and remain finite.
+    denominator = (mask.sum(dim=1) - 1).clamp_min(1).to(dtype) + 1e-8
+    normalized_counting_seqs = counting_seqs / denominator.unsqueeze(1)
 
     # Concatenate time_grid, counting sequence and type counting sequences
     return torch.cat(

@@ -5,17 +5,24 @@ and asserts that it exits successfully (or with an expected non-zero code for
 targets that require user input / external resources).
 """
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.skipif(
+    shutil.which("make") is None, reason="make is unavailable"
+)
+
 # Project root = 2 levels up from this file (tests/scripts/ → tests/ → project/)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 
-def _make(*targets: str, env: dict | None = None, timeout: int = 120) -> subprocess.CompletedProcess:
+def _make(
+    *targets: str, env: dict | None = None, timeout: int = 120
+) -> subprocess.CompletedProcess:
     """Run `make <target>` in the project root and return the CompletedProcess."""
     cmd = ["make", *targets]
     return subprocess.run(
@@ -31,6 +38,7 @@ def _make(*targets: str, env: dict | None = None, timeout: int = 120) -> subproc
 # ---------------------------------------------------------------------------
 # Targets that should always succeed
 # ---------------------------------------------------------------------------
+
 
 def test_make_help():
     """`make help` lists all available commands."""
@@ -68,10 +76,13 @@ def test_make_benchmark_list():
 # Targets that need mandatory variables → expected to fail with a clear error
 # ---------------------------------------------------------------------------
 
+
 def test_make_run_without_args():
     """`make run` without MODEL_ID / DATA should exit non-zero with a hint."""
     result = _make("run")
-    assert result.returncode != 0, "make run should fail when MODEL_ID / DATA are missing"
+    assert result.returncode != 0, (
+        "make run should fail when MODEL_ID / DATA are missing"
+    )
     combined = result.stdout + result.stderr
     assert "MODEL_ID" in combined or "required" in combined.lower(), (
         f"Expected a 'MODEL_ID required' message, got:\n{combined}"
@@ -81,6 +92,7 @@ def test_make_run_without_args():
 # ---------------------------------------------------------------------------
 # Code-quality targets (lint / format / type-check) – allowed to report issues
 # ---------------------------------------------------------------------------
+
 
 def test_make_lint():
     """`make lint` runs flake8 – may report issues but must not crash."""
@@ -102,6 +114,7 @@ def test_make_type_check():
 # ---------------------------------------------------------------------------
 # Slow / resource-heavy targets – skipped in CI by default
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.slow
 def test_make_run_demo():

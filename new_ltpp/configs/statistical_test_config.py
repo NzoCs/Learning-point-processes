@@ -22,11 +22,11 @@ class StatisticalTestConfig(Config):
     """
 
     # Requis
-    test_type: Literal["mmd", "ksd"]
+    test_type: Literal["mmd"]
     point_process_kernel_type: Literal["m_kernel", "sig_kernel"]
     space_kernel_type: Literal["rbf", "linear"]
     num_event_types: int
-    n_samples: int
+    n_samples: PositiveInt
 
     # Optionnels avec defaults
     embedding_dim: int = 8

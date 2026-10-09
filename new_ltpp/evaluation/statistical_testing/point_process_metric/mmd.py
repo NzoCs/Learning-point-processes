@@ -5,12 +5,10 @@ from .base_stat_metric import StatMetric, IStatMetric
 
 
 class MMD(StatMetric):
-
-    @torch.compile
     def __call__(
         self, X: Batch | SimulationResult, Y: Batch | SimulationResult
     ) -> torch.Tensor:
-        """Compute the Maximum Mean Discrepancy (MMD) between two batches of sequences.
+        """Compute off-diagonal unbiased MMD squared; finite estimates may be negative.
         args:
             X: Batch of sequences of shape (B1, L)
             Y: Batch of sequences of shape (B2, K)

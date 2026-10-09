@@ -74,7 +74,7 @@ class MKernel(PointProcessKernel):
 
         # Robust median heuristic: filter out zeros and NaNs
         valid_dist = dist_sq[torch.isfinite(dist_sq) & (dist_sq > 1e-10)]
-        sigma = valid_dist.median()
+        sigma = valid_dist.median() if valid_dist.numel() else dist_sq.new_tensor(1.0)
         sigma = torch.clamp_min(sigma, 1e-6)  # Ensure positive
 
         if self.transform == MKernelTransform.EXPONENTIAL:
@@ -105,7 +105,7 @@ class MKernel(PointProcessKernel):
         else:
             raise ValueError(f"Unknown transform: {self.transform}")
 
-    def compute_gram_matrix(
+    def _compute_distance_matrix(
         self,
         X: Batch | SimulationResult,
         Y: Batch | SimulationResult,
@@ -149,7 +149,7 @@ class MKernel(PointProcessKernel):
 
         Kt_XX_matrix = self.time_kernel.batch_kernel(
             phi_delta_time_seqs, phi_delta_time_seqs
-        )  # (B, L, L)
+        ) * self.type_kernel.batch_kernel(phi_type_seqs, phi_type_seqs)  # (B, L, L)
 
         Kt_XY_matrix = self.time_kernel.Gram_matrix(
             phi_delta_time_seqs,  # (B, L, 1)
@@ -163,7 +163,7 @@ class MKernel(PointProcessKernel):
 
         Kt_YY_matrix = self.time_kernel.batch_kernel(
             psi_delta_time_seqs, psi_delta_time_seqs
-        )  # (B, K, K)
+        ) * self.type_kernel.batch_kernel(psi_type_seqs, psi_type_seqs)  # (B, K, K)
 
         # --- Mask out padded positions before summing ---
 
@@ -201,8 +201,34 @@ class MKernel(PointProcessKernel):
             Kt_XX_hat.unsqueeze(-1) + Kt_YY_hat.unsqueeze(0) - 2 * Kt_XY_matrix
         )  # (B, B)
 
-        # Applique la transformation choisie pour convertir la distance en kernel
-        return self._apply_transform(dist_sq)  # (B, B)
+        return dist_sq
+
+    def compute_gram_matrix(self, X, Y):
+        return self._apply_transform(self._compute_distance_matrix(X, Y))
+
+    def compute_mmd(self, X, Y):
+        """Use one pooled scale and bandwidth for all three MMD blocks."""
+        n, m = X.time_seqs.shape[0], Y.time_seqs.shape[0]
+        if n < 2 or m < 2:
+            raise ValueError("Unbiased MMD requires at least two samples in each batch")
+        length = max(X.time_seqs.shape[1], Y.time_seqs.shape[1])
+        fields = {}
+        for field in ("time_seqs", "time_delta_seqs", "type_seqs", "valid_event_mask"):
+            x, y = getattr(X, field), getattr(Y, field)
+            fields[field] = torch.cat(
+                (
+                    torch.nn.functional.pad(x, (0, length - x.shape[1])),
+                    torch.nn.functional.pad(y, (0, length - y.shape[1])),
+                )
+            )
+        pooled = Batch(**fields)
+        gram = self.compute_gram_matrix(pooled, pooled)
+        xx, yy, xy = gram[:n, :n], gram[n:, n:], gram[:n, n:]
+        return (
+            (xx.sum() - xx.trace()) / (n * (n - 1))
+            + (yy.sum() - yy.trace()) / (m * (m - 1))
+            - 2 * xy.mean()
+        )
 
 
 if __name__ == "__main__":

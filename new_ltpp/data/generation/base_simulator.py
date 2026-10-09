@@ -65,6 +65,7 @@ class Simulator(ABC):
                 "dimension": self.dim_process,
                 "num_events": self.num_events,
                 "burn_in": self.burn_in,
+                "seed": self.seed,
                 "simulator_type": self.__class__.__name__,
             }
         }

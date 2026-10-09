@@ -91,6 +91,7 @@ class DataConfig(Config):
 
     # Internal variables, to be populated through src_dir or explicitly
     dataset_id: str = ""
+    revision: Optional[str] = None
     train_dir: str = ""
     valid_dir: str = ""
     test_dir: str = ""

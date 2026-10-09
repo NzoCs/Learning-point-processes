@@ -1,8 +1,31 @@
+import hashlib
+import math
 import json
 import os
 from typing import Dict, List, Optional
 
 from datasets import Dataset, DatasetDict
+
+
+def split_records(records, splits):
+    """Allocate every record once using stable largest-remainder rounding."""
+    if not splits or any(not math.isfinite(r) or r < 0 for r in splits.values()):
+        raise ValueError("Split ratios must be finite and non-negative")
+    if not math.isclose(sum(splits.values()), 1.0, abs_tol=1e-10, rel_tol=0):
+        raise ValueError("Split ratios must sum to 1")
+    names = list(splits)
+    exact = [len(records) * splits[name] for name in names]
+    counts = [math.floor(value) for value in exact]
+    remaining = len(records) - sum(counts)
+    order = sorted(range(len(names)), key=lambda i: exact[i] - counts[i], reverse=True)
+    for i in order[:remaining]:
+        counts[i] += 1
+    result = {}
+    start = 0
+    for name, count in zip(names, counts):
+        result[name] = records[start : start + count]
+        start += count
+    return result
 
 
 class IOSimulator:
@@ -39,14 +62,7 @@ class IOSimulator:
 
         # Division des données
         print("Division des données en ensembles train/test/dev...")
-        n = len(formatted_data)
-
-        data_splits = {}
-        start_idx = 0
-        for split_name, ratio in splits.items():
-            split_size = int(n * ratio)
-            data_splits[split_name] = formatted_data[start_idx : start_idx + split_size]
-            start_idx += split_size
+        data_splits = split_records(formatted_data, splits)
 
         # Sauvegarde des données
         print("Sauvegarde des données...")
@@ -69,6 +85,14 @@ class IOSimulator:
             }
             metadata["total_events"] = sum(item["seq_len"] for item in formatted_data)
 
+            metadata["split_sha256"] = {}
+            for split_name in data_splits:
+                with open(
+                    os.path.join(output_dir, f"{split_name}.json"), "rb"
+                ) as split_file:
+                    metadata["split_sha256"][split_name] = hashlib.sha256(
+                        split_file.read()
+                    ).hexdigest()
             metadata_path = os.path.join(output_dir, "metadata.json")
             with open(metadata_path, "w") as f:
                 json.dump(metadata, f, indent=2)
@@ -100,14 +124,7 @@ class IOSimulator:
 
         # Division des données
         print("Division des données en ensembles train/test/dev...")
-        n = len(formatted_data)
-
-        data_splits = {}
-        start_idx = 0
-        for split_name, ratio in splits.items():
-            split_size = int(n * ratio)
-            data_splits[split_name] = formatted_data[start_idx : start_idx + split_size]
-            start_idx += split_size
+        data_splits = split_records(formatted_data, splits)
 
         # Création du DatasetDict pour Hugging Face
         print("Création du DatasetDict...")
@@ -156,11 +173,11 @@ class IOSimulator:
             metadata (dict): Métadonnées du dataset
             splits (dict): Ratios des splits
         """
-        readme_content = f"""# {repo_id.split('/')[-1]}
+        readme_content = f"""# {repo_id.split("/")[-1]}
 
 ## Dataset Description
 
-This dataset contains temporal point process simulations generated using the {metadata.get('simulation_info', {}).get('simulator_type', 'Unknown')} simulator.
+This dataset contains temporal point process simulations generated using the {metadata.get("simulation_info", {}).get("simulator_type", "Unknown")} simulator.
 
 ## Metadata
 
@@ -181,9 +198,9 @@ Each sequence in the dataset has the following fields:
 ## Splits
 
 The dataset is split into:
-- Train: {splits.get('train', 0) * 100}%
-- Test: {splits.get('test', 0) * 100}%
-- Dev: {splits.get('dev', 0) * 100}%
+- Train: {splits.get("train", 0) * 100}%
+- Test: {splits.get("test", 0) * 100}%
+- Dev: {splits.get("dev", 0) * 100}%
 
 ## Usage
 

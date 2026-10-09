@@ -5,6 +5,100 @@ Référence examinée : `fdb6c9fb7d1116dc1f4311259c349fa383480612`.
 Statut : plan proposé, pas des garanties déjà acquises.
 Rapport complémentaire : [Architecture et SOLID](ARCHITECTURE_SOLID.md).
 
+### Corrections et seconde validation — 9 octobre 2026
+
+Cette section décrit les corrections ultérieures au diagnostic ci-dessous.
+La branche reste `codex/pysiglib-migration`, avec pySigLib comme seule bibliothèque
+pour les noyaux de signature.
+
+**Bilan local : 110 tests réussis, 9 ignorés, 2 tests lourds désélectionnés.**
+Les 9 omissions correspondent à CUDA absent (1) et à `make` absent sur Windows (8).
+Les deux tests lourds Makefile dépendent du parcours distant et des benchmarks ;
+la CI générale les exclut explicitement avec `-m "not slow"`.
+Aucune désactivation globale de `torch.compile` n'est nécessaire : les deux
+compilations automatiques du dispatcher MMD et du moteur de simulation ont été
+retirées. Le calcul natif pySigLib reste réellement exécuté.
+
+La commande avec couverture termine néanmoins en échec : **62,86 %**, sous le
+seuil maintenu de **80 %**. Les tests fonctionnels ne présentent plus les erreurs
+identifiées lors du premier diagnostic ; la CI globale n'est pas déclarée verte.
+Le wheel est reconstruit et contrôlé ; le lock et l'environnement sont cohérents.
+Les scripts Bash passent `bash -n` et les dry-runs testés.
+
+Corrections vérifiées :
+
+- Import d'accumulateur corrigé ; génération CLI compatible avec `--method`
+  et `--model`, et tests alignés sur le véritable `metadata.json`.
+- Gram des marques : les axes séquence/événement sont conservés. Des contrôles
+  scalaires indépendants vérifient chaque entrée, y compris des tailles inégales.
+- MKernel : même noyau temps×marques dans XX/XY/YY ; normalisation et bandwidth
+  calculées sur le pool commun lors de la MMD ; transformation finie même si
+  toutes les distances sont nulles. La MMD générique exclut les diagonales,
+  utilise les deux tailles séparément et rejette les batches de moins de deux.
+- Les tests ne supposent plus qu'une MMD² non biaisée est non négative ou nulle
+  sur un même échantillon fini. Les anciens sweeps qui répétaient le même RBF
+  sous plusieurs noms de noyaux inexistants ont été supprimés.
+- Le dénominateur des p-values utilise le nombre de tirages effectivement
+  calculés, aussi pour l'agrégation. Les sorties précisent leur nombre et
+  distinguent comparaison de simulations et permutation. KSD, non implémenté,
+  est rejeté dès la configuration.
+- Seed d'entraînement appliquée avant modèle/loaders ; validation isolée des
+  streams RNG d'entraînement ; RNG sauvegardés/restaurés avec le checkpoint
+  pour la reprise en entraînement. Le mode déterministe est configurable.
+  Un choix CPU explicite est respecté et une demande GPU sans CUDA échoue.
+- Deux entraînements NHP courts sur CPU produisent exactement les mêmes poids.
+  Avec zéro worker et un learning rate fixe, entraînement continu de deux
+  époques et reprise depuis `last.ckpt` après une époque produisent aussi
+  exactement les mêmes poids. Ce résultat ne certifie ni une reprise en milieu
+  de minibatch, ni la reprise avec workers persistants, ni CUDA/DDP.
+- Configuration finale complète sauvegardée, incluant simulation, logger,
+  identité et seed ; relecture sans dépendre des presets courants. Le logger
+  ne modifie plus la configuration et le chemin de sortie ne s'imbrique plus
+  à chaque round-trip. Le budget du scheduler suit l'override des époques.
+- Répertoires distincts par `run_id`, commun aux processus d'un lancement
+  Slurm ; résultats CSV locaux à chaque run. Le manifeste enregistre config,
+  hash de config/lock/données locales/checkpoints, versions, commit/dirty,
+  numérics et statuts `running/completed/failed`. La reprise est explicite via
+  `--checkpoint`, avec source et hash consignés.
+- Les 12 presets Hugging Face sont figés sur des SHA de dataset obtenus auprès
+  de l'API publique du Hub ; le loader transmet la révision y compris pour le
+  fallback `dev`→`validation`.
+- Génération : seed consignée, empreintes des splits sauvegardées, arrondis de
+  split sans perte de séquences, conservation des séquences vides et des IDs,
+  ordre stable des marques à temps identiques.
+- Petit parcours **CLI → entraînement → test → simulation → statistiques,
+  fichiers Parquet et graphiques** exécuté entièrement sur fixture locale avec
+  pySigLib réel. L'évaluation charge le checkpoint produit par ce fit.
+  Le graphique d'intensité utilise la simulation enregistrée, au lieu de
+  relancer une simulation supplémentaire. La simulation NHP non conditionnée
+  est aussi testée : intensité initiale issue de l'état caché nul, sans faux
+  événement, puis génération de trois événements valides.
+
+**Compatibilité scientifique :** les corrections MKernel/MMD générique et du
+comptage des p-values changent certains résultats historiques. Les nouveaux
+manifests portent `unbiased_off_diagonal_v2`. Ne pas fusionner ces résultats
+avec l'ancienne implémentation sans identifier le protocole. Les conventions
+numériques de l'adaptateur pySigLib lui-même restent inchangées. La calibration
+scientifique des p-values, les horizons/normalisations et le cas de simulations
+conditionnelles restent à valider ; le succès du pipeline ne les certifie pas.
+
+Commandes finales exécutées :
+
+```bash
+uv build --wheel --no-sources
+OMP_NUM_THREADS=1 MPLBACKEND=Agg PYTHONUTF8=1 uv run --frozen --no-sync python -m pytest tests \
+  -m "not slow" -o addopts= -q --tb=short --cov=new_ltpp \
+  --cov-report=term:skip-covered --cov-report=json:artifacts/validation-coverage.json \
+  --cov-fail-under=80
+```
+
+Restent ouverts : couverture globale 80 %, workflow de lint historique
+Poetry/Python 3.12, validation Linux/Ruche après ces nouveaux changements,
+CUDA/DDP et reprise avec workers, précision/mémoire/performance représentatives,
+calibration du test statistique et prise en compte effective de tous les paramètres
+de fenêtre de simulation.
+Le test complet validé porte sur NHP CPU et une fixture bornée, pas tous les modèles.
+
 ### Validation réelle de la branche pySigLib — 9 octobre 2026
 
 Code vérifié : `98be5371cd14f9b891a4fac6cee64e60b237ac0a`.

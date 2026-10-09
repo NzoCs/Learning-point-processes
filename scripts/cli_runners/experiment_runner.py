@@ -5,6 +5,8 @@ Runner to execute TPP experiments using configuration builders.
 Inspired by run_all_phase.py for loading full configuration from YAML.
 """
 
+import os
+from uuid import uuid4
 from pathlib import Path
 from typing import Optional, Union
 
@@ -58,6 +60,8 @@ class ExperimentRunner(CLIRunnerBase):
         config_path: Optional[Union[str, Path]] = None,
         phase: str = "train",
         max_epochs: Optional[int] = None,
+        seed: Optional[int] = None,
+        checkpoint_path: Optional[str] = None,
         data_config: Optional[str] = None,
         general_specs_config: Optional[str] = None,
         training_config: Optional[str] = None,
@@ -140,7 +144,8 @@ class ExperimentRunner(CLIRunnerBase):
 
         from new_ltpp.configs.runner_config import RunnerConfig
 
-        overrides = {}
+        overrides = {"run_id": os.environ.get("LTPP_RUN_ID") or uuid4().hex}
+        os.environ["LTPP_RUN_ID"] = overrides["run_id"]
         if max_epochs is not None:
             overrides["max_epochs"] = max_epochs
             self.print_info(f"Override: max_epochs = {max_epochs}")
@@ -148,12 +153,29 @@ class ExperimentRunner(CLIRunnerBase):
             overrides["save_dir"] = str(save_dir)
             self.print_info(f"Override: save_dir = {save_dir}")
 
-        config = RunnerConfig.from_yaml_presets(
-            yaml_path=config_path,
-            config_paths=config_paths,
-            model_id=model_id,
-            **overrides,
-        )
+        from new_ltpp.configs.config_utils import load_yaml
+
+        raw = load_yaml(config_path)
+        if "data_config" in raw and "training_config" in raw:
+            # A saved effective configuration can be replayed without current presets.
+            raw.update(
+                {key: value for key, value in overrides.items() if key != "max_epochs"}
+            )
+            if max_epochs is not None:
+                raw["training_config"]["max_epochs"] = max_epochs
+                raw["model_config"]["scheduler_config"]["max_epochs"] = max_epochs
+            config = RunnerConfig.model_validate(raw)
+        else:
+            config = RunnerConfig.from_yaml_presets(
+                yaml_path=config_path,
+                config_paths=config_paths,
+                model_id=model_id,
+                **overrides,
+            )
+        if seed is not None:
+            raw = config.get_yaml_config()
+            raw["training_config"]["seed"] = seed
+            config = RunnerConfig.model_validate(raw)
         self.print_info("YAML configuration loaded successfully")
 
         # Validate phase
@@ -163,7 +185,7 @@ class ExperimentRunner(CLIRunnerBase):
             return False
 
         # Créer et lancer le runner
-        runner_manager = RunnerManager(config=config)
+        runner_manager = RunnerManager(config=config, checkpoint_path=checkpoint_path)
 
         if phase == "all":
             self.print_info("Full run: train → test → predict")

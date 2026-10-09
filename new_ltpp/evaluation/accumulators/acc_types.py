@@ -13,6 +13,8 @@ import numpy.typing as npt
 
 
 class StatisticalTestData(TypedDict):
+    null_sample_counts: list[int]
+    null_methods: list[str]
     """Type definition for statistical metrics collected from batches."""
 
     p_values: list[float]

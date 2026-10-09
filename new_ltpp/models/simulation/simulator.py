@@ -50,6 +50,7 @@ class Simulator:
         model: "ISimulableModel",
         statistical_test_config: Optional["StatisticalTestConfig"] = None,
     ) -> None:
+        self.last_result: Optional[SimulationResult] = None
         self._model = model
         self.statistical_test_config = statistical_test_config
         self._statistics_collector: Optional["BatchStatisticsCollector"] = None
@@ -80,7 +81,8 @@ class Simulator:
         buffers = self._allocate_simulation_buffers(batch, num_events_to_simulate)
         sim_state = self._initialize_simulation_state()
         self._run_simulation_loop(buffers, sim_state, num_events_to_simulate)
-        return self._extract_simulation_results(buffers, sim_state)
+        self.last_result = self._extract_simulation_results(buffers, sim_state)
+        return self.last_result
 
     def init_statistics_collector(self, base_dir: Path | str) -> None:
         """Initialize the BatchStatisticsCollector.
@@ -172,7 +174,6 @@ class Simulator:
     def _initialize_simulation_state(self) -> SimulationState:
         return SimulationState(step_count=0)
 
-    @torch.compile
     def _simulate_one_step(
         self,
         time_seqs: torch.Tensor,
@@ -222,7 +223,12 @@ class Simulator:
 
         with (
             torch.no_grad(),
-            tqdm(total=num_events_to_simulate, desc="Simulation", leave=False, disable=True) as pbar,
+            tqdm(
+                total=num_events_to_simulate,
+                desc="Simulation",
+                leave=False,
+                disable=True,
+            ) as pbar,
         ):
             for step in range(num_events_to_simulate):
                 current_len = initial_len + sim_state["step_count"]

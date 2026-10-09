@@ -47,6 +47,8 @@ class EventSampler(nn.Module):
             bound: [B,L]
         """
         batch_size, seq_len = time_seqs.size()
+        if compute_last_step_only and seq_len == 0:
+            seq_len = 1  # One initial interval before the first event.
 
         tnorm = torch.linspace(
             0.0, self.dtime_max, self.num_samples_boundary, device=self.device
@@ -140,7 +142,9 @@ class EventSampler(nn.Module):
 
         B, L_out = upper_bound.shape
 
-        unaccepted_mask = torch.ones(B, L_out, num_sample, dtype=torch.bool, device=self.device)
+        unaccepted_mask = torch.ones(
+            B, L_out, num_sample, dtype=torch.bool, device=self.device
+        )
         accepted_dtimes = torch.zeros(B, L_out, num_sample, device=self.device)
         current_offset = torch.zeros(B, L_out, device=self.device)
 
@@ -150,7 +154,9 @@ class EventSampler(nn.Module):
         while unaccepted_mask.any() and iters < max_iters:
             # 2. exp samples
             exp_j = self.sample_exp_distribution(upper_bound)  # [B, L_out, E]
-            exp_j_cum = torch.cumsum(exp_j, dim=-1) + current_offset.unsqueeze(-1)  # [B, L_out, E]
+            exp_j_cum = torch.cumsum(exp_j, dim=-1) + current_offset.unsqueeze(
+                -1
+            )  # [B, L_out, E]
 
             # 3. evaluate intensity at sampled times
             intens = intensity_fn(
@@ -165,14 +171,22 @@ class EventSampler(nn.Module):
             intens_total = intens.sum(-1)  # [B, L_out, E]
 
             # 4. Tile for uniform evaluation
-            intens_total_tiled = intens_total.unsqueeze(2).expand(-1, -1, num_sample, -1)  # [B, L_out, num_sample, E]
-            exp_j_tiled = exp_j_cum.unsqueeze(2).expand(-1, -1, num_sample, -1)  # [B, L_out, num_sample, E]
+            intens_total_tiled = intens_total.unsqueeze(2).expand(
+                -1, -1, num_sample, -1
+            )  # [B, L_out, num_sample, E]
+            exp_j_tiled = exp_j_cum.unsqueeze(2).expand(
+                -1, -1, num_sample, -1
+            )  # [B, L_out, num_sample, E]
 
             # 5. uniform
-            u = self.sample_uniform(upper_bound, num_sample)  # [B, L_out, num_sample, E]
+            u = self.sample_uniform(
+                upper_bound, num_sample
+            )  # [B, L_out, num_sample, E]
 
             # criterion = U * λ / λ(t)
-            crit = u * upper_bound.unsqueeze(-1).unsqueeze(-1) / intens_total_tiled  # [B, L_out, num_sample, E]
+            crit = (
+                u * upper_bound.unsqueeze(-1).unsqueeze(-1) / intens_total_tiled
+            )  # [B, L_out, num_sample, E]
             mask = crit < 1  # [B, L_out, num_sample, E]
 
             # 6. Check acceptance
@@ -180,9 +194,13 @@ class EventSampler(nn.Module):
             accepted_in_this_batch = mask.any(dim=-1)  # [B, L_out, num_sample]
 
             newly_accepted = unaccepted_mask & accepted_in_this_batch
-            gathered_times = torch.gather(exp_j_tiled, dim=-1, index=idx.unsqueeze(-1)).squeeze(-1)  # [B, L_out, num_sample]
+            gathered_times = torch.gather(
+                exp_j_tiled, dim=-1, index=idx.unsqueeze(-1)
+            ).squeeze(-1)  # [B, L_out, num_sample]
 
-            accepted_dtimes = torch.where(newly_accepted, gathered_times, accepted_dtimes)
+            accepted_dtimes = torch.where(
+                newly_accepted, gathered_times, accepted_dtimes
+            )
             unaccepted_mask = unaccepted_mask & ~newly_accepted
 
             # Advance the offset for the unaccepted paths to the last evaluated proposal
@@ -191,7 +209,9 @@ class EventSampler(nn.Module):
 
         # Fallback for paths that never accepted after max_iters
         if unaccepted_mask.any():
-            accepted_dtimes = torch.where(unaccepted_mask, current_offset.unsqueeze(-1), accepted_dtimes)
+            accepted_dtimes = torch.where(
+                unaccepted_mask, current_offset.unsqueeze(-1), accepted_dtimes
+            )
 
         # uniform weights
         weights = torch.ones_like(accepted_dtimes) / num_sample

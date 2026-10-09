@@ -37,6 +37,7 @@ class ModelVisualizer:
         save_dir: str | Path,
         *,
         precision: int = 100,
+        batch=None,
         plot: bool = False,
         save_plot: bool = True,
         save_data: bool = True,
@@ -55,7 +56,20 @@ class ModelVisualizer:
         """
         model = self._model
 
-        time_seq, time_delta_seq, type_seq, seq_non_pad_mask = self._get_simulation_data()
+        if batch is None:
+            time_seq, time_delta_seq, type_seq, seq_non_pad_mask = (
+                self._get_simulation_data()
+            )
+        else:
+            valid = batch.valid_event_mask[0].bool()
+            time_seq = batch.time_seqs[:1, valid]
+            time_delta_seq = batch.time_delta_seqs[:1, valid]
+            type_seq = batch.type_seqs[:1, valid]
+            seq_non_pad_mask = batch.valid_event_mask[:1, valid]
+        if time_seq.shape[1] < 2:
+            raise ValueError(
+                "Intensity visualization requires at least two valid events"
+            )
 
         time_points, time_deltas_sample = self._generate_intensity_time_points(
             time_seq, time_delta_seq, precision

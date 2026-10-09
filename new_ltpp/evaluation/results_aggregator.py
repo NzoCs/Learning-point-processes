@@ -59,9 +59,9 @@ class ResultsAggregator:
                 row[f"sim_{k}"] = v
 
         new_df = pd.DataFrame([row])
-        
+
         header = not self.csv_path.exists()
-        new_df.to_csv(self.csv_path, mode='a', index=True, header=header)
+        new_df.to_csv(self.csv_path, mode="a", index=True, header=header)
         logger.info(f"✓ Results aggregated in {self.csv_path}")
 
     @staticmethod
@@ -70,6 +70,12 @@ class ResultsAggregator:
         meta = {
             "model_id": config.model_id,
             "dataset_id": config.data_config.dataset_id,
+            "run_id": config.run_id,
+            "training_seed": config.training_config.seed,
+            "dataset_revision": config.data_config.revision,
+            "mmd_estimator": "unbiased_off_diagonal_v2",
+            "signature_backend": "pysiglib",
+            "manifest": str(config.base_dir / "manifest.json"),
         }
 
         # Extract model specs if available

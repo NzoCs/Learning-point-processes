@@ -38,6 +38,8 @@ class MMDTwoSampleTest:
             n_samples: Number of samples for the permutation test.
         """
         self.kernel = kernel
+        if n_samples < 1:
+            raise ValueError("n_samples must be positive")
         self.n_samples = n_samples
         self.mmd = MMD(kernel=kernel)
 
@@ -60,6 +62,11 @@ class MMDTwoSampleTest:
         self.n_batches: int = 0
 
     def _accumulate(self, observed_mmd: torch.Tensor, perm_mmds: torch.Tensor) -> None:
+        if (
+            self.total_perm_mmds is not None
+            and self.total_perm_mmds.shape != perm_mmds.shape
+        ):
+            raise ValueError("Cannot pool batches with different null sample counts")
         if self.total_observed_mmd is None:
             self.total_observed_mmd = observed_mmd.detach().clone()
         else:
@@ -83,7 +90,7 @@ class MMDTwoSampleTest:
 
         perm_mmds = self.total_perm_mmds.to(self.total_observed_mmd.device)
         count_ge = (perm_mmds >= self.total_observed_mmd).sum()
-        return (count_ge + 1) / (self.n_samples + 1)
+        return (count_ge + 1) / (perm_mmds.numel() + 1)
 
     def _concat_batches(self, batch_x: Batch, batch_y: Batch) -> Batch:
         """Concatenate two batches along the batch dimension.
@@ -199,16 +206,26 @@ class MMDTwoSampleTest:
         """
         return self.mmd(batch_x, batch_y)
 
-    def _truncate_to_min_time(self, batch_x: Batch, batch_y: Batch) -> tuple[Batch, Batch]:
+    def _truncate_to_min_time(
+        self, batch_x: Batch, batch_y: Batch
+    ) -> tuple[Batch, Batch]:
         """Truncate sequences to the minimum time horizon between paired sequences.
-        
+
         This ensures that when comparing sequences that have generated the same
         number of events, they are evaluated over the exact same time window.
         """
         # Calculate max time for each sequence in both batches
-        T_max_x = batch_x.time_seqs.masked_fill(~batch_x.valid_event_mask, 0.0).max(dim=1).values
-        T_max_y = batch_y.time_seqs.masked_fill(~batch_y.valid_event_mask, 0.0).max(dim=1).values
-        
+        T_max_x = (
+            batch_x.time_seqs.masked_fill(~batch_x.valid_event_mask, 0.0)
+            .max(dim=1)
+            .values
+        )
+        T_max_y = (
+            batch_y.time_seqs.masked_fill(~batch_y.valid_event_mask, 0.0)
+            .max(dim=1)
+            .values
+        )
+
         # Element-wise minimum across the batch
         T_min = torch.min(T_max_x, T_max_y)
 
@@ -222,14 +239,14 @@ class MMDTwoSampleTest:
             type_seqs=batch_x.type_seqs,
             valid_event_mask=mask_x,
         )
-        
+
         trunc_y = Batch(
             time_seqs=batch_y.time_seqs,
             time_delta_seqs=batch_y.time_delta_seqs,
             type_seqs=batch_y.type_seqs,
             valid_event_mask=mask_y,
         )
-        
+
         return trunc_x, trunc_y
 
     def compute_statistics(
@@ -242,7 +259,7 @@ class MMDTwoSampleTest:
         if simulations is not None and len(simulations) > 1:
             trunc_X, trunc_Y1 = self._truncate_to_min_time(batch_x, simulations[0])
             observed_mmd = self.mmd(trunc_X, trunc_Y1)
-            
+
             perm_mmds_list = []
             for Y_i in simulations[1:]:
                 trunc_Y1_i, trunc_Yi = self._truncate_to_min_time(simulations[0], Y_i)
@@ -253,7 +270,7 @@ class MMDTwoSampleTest:
             observed_mmd, perm_mmds = self._permutation_test(trunc_X, trunc_Y)
 
         count_ge = (perm_mmds >= observed_mmd).sum()
-        p_value = (count_ge + 1.0) / (self.n_samples + 1.0)
+        p_value = (count_ge + 1.0) / (perm_mmds.numel() + 1.0)
 
         if accumulate:
             self._accumulate(observed_mmd, perm_mmds)
@@ -262,6 +279,10 @@ class MMDTwoSampleTest:
             p_value=p_value,
             observed_statistic=observed_mmd,
             permuted_statistics=perm_mmds,
+            num_null_samples=perm_mmds.numel(),
+            null_method="simulation_comparison"
+            if simulations is not None and len(simulations) > 1
+            else "permutation",
         )
 
     def test_model(

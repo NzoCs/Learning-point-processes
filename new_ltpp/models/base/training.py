@@ -120,6 +120,7 @@ class TrainingMixin(PredictionMixin):
         if self._io_manager is not None:
             self._io_manager.update(sim)
         
+        simulator.last_result = sim
         return None
 
     # ------------------------------------------------------------------

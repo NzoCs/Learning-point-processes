@@ -60,6 +60,7 @@ ltpp_launch() {
         fi
         export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
         export MPLBACKEND=Agg
+        export LTPP_RUN_ID="job-${SLURM_JOB_ID}-task-${index}"
         srun uv run --frozen --no-sync python -m scripts.check_backend --device "$device"
         uv run --frozen --no-sync new-ltpp run --help >/dev/null
         srun "${command[@]}"

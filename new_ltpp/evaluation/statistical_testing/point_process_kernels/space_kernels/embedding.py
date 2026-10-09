@@ -18,6 +18,7 @@ class EmbeddingKernel(ISpaceKernel):
         num_emb = self.emb.num_embeddings
         if (x < 0).any() or (x >= num_emb).any():
             import warnings
+
             warnings.warn(
                 f"EmbeddingKernel received out-of-range indices "
                 f"(min={x.min().item()}, max={x.max().item()}, num_classes={num_emb}). "
@@ -31,7 +32,11 @@ class EmbeddingKernel(ISpaceKernel):
         e_X = self._emb_on_device(X)  # (B1, L, D)
         e_Y = self._emb_on_device(Y)  # (B2, K, D)
         dist = torch.cdist(e_X.view(-1, e_X.shape[-1]), e_Y.view(-1, e_Y.shape[-1]))
-        dist_sq = dist.pow(2).view(X.shape[0], Y.shape[0], X.shape[1], Y.shape[1])
+        dist_sq = (
+            dist.pow(2)
+            .reshape(X.shape[0], X.shape[1], Y.shape[0], Y.shape[1])
+            .permute(0, 2, 1, 3)
+        )
         return torch.exp(-dist_sq / 2)
 
     def batch_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:

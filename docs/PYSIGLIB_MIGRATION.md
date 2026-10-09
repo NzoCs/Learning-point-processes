@@ -5,6 +5,12 @@ au commit `19aa258`. Cette branche utilise exclusivement pySigLib ; son acceptat
 sur Ruche reste conditionnée aux contrôles ci-dessous. Elle ne modifie ni
 l'embedding, ni la normalisation historique des temps, ni le protocole MMD.
 
+Les corrections ultérieures de reproductibilité et le parcours CPU complet sont
+consignés dans le [rapport actualisé](../rapports/REPRODUCTIBILITE_RUCHE.md).
+La compilation automatique du dispatcher MMD et du moteur de simulation a été
+retirée ; le parcours fonctionne désormais sans `TORCH_COMPILE_DISABLE`.
+Les résultats ciblés ci-dessous décrivent la validation initiale de migration.
+
 ## Environnements
 
 - Production CPU : `pysiglib==4.0.0`, obligatoire dans les dépendances runtime.

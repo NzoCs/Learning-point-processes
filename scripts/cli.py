@@ -106,6 +106,12 @@ def run_experiment(
     save_dir: str = typer.Option(
         str(OUTPUT_DIR), "--save-dir", "-s", help="Save directory [default: artifacts]"
     ),
+    seed: Optional[int] = typer.Option(
+        None, "--seed", help="Training seed (overrides YAML)"
+    ),
+    checkpoint: Optional[str] = typer.Option(
+        None, "--checkpoint", help="Explicit checkpoint to resume or evaluate"
+    ),
     debug: bool = typer.Option(False, "--debug", help="Debug mode"),
 ):
     """Run a TPP experiment with ExperimentRunner."""
@@ -124,6 +130,8 @@ def run_experiment(
         model_id=model_id,
         phase=phase,
         max_epochs=max_epochs,
+        seed=seed,
+        checkpoint_path=checkpoint,
         save_dir=save_dir,
         debug=debug,
     )
@@ -187,13 +195,21 @@ def generate_data(
         1000, "--num-sim", "-n", help="Number of simulations to generate"
     ),
     model: str = typer.Option(
-        "hawkes", "--model", "-m", help="Generation method (hawkes, self_correcting)"
+        "hawkes",
+        "--model",
+        "--method",
+        "-m",
+        help="Generation method (hawkes, self_correcting)",
     ),
     dim_process: int = typer.Option(
         2, "--dim", "-d", help="Number of event types/dimensions"
     ),
-    burn_in: int = typer.Option(100, "--burn-in", help="Number of events to discard for warmup"),
-    num_events_per_seq: int = typer.Option(100, "--num-events-per-seq", help="Number of events per sequence"),
+    burn_in: int = typer.Option(
+        100, "--burn-in", help="Number of events to discard for warmup"
+    ),
+    num_events_per_seq: int = typer.Option(
+        100, "--num-events-per-seq", help="Number of events per sequence"
+    ),
     train_ratio: float = typer.Option(0.6, "--train-ratio", help="Train split ratio"),
     test_ratio: float = typer.Option(0.2, "--test-ratio", help="Test split ratio"),
     dev_ratio: float = typer.Option(0.2, "--dev-ratio", help="Dev split ratio"),

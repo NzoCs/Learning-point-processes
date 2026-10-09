@@ -24,6 +24,8 @@ class TestStatistics(TypedDict):
     p_value: torch.Tensor
     observed_statistic: torch.Tensor
     permuted_statistics: torch.Tensor
+    num_null_samples: int
+    null_method: str
 
 
 class FinalTestResult(TypedDict):

@@ -45,7 +45,7 @@ uv run --frozen --no-sync new-ltpp --help
 
 ```bash
 uv sync --frozen --group dev
-uv run --frozen --no-sync python -m pytest tests
+uv run --frozen --no-sync python -m pytest tests -m "not slow"
 ```
 
 This branch uses **pySigLib 4.0.0** for signature kernels, with the historical
@@ -58,6 +58,37 @@ backend supported by this branch. The historical implementation is preserved on
 and the [Ruche storage and installation procedure](docs/RUCHE.md).
 
 ---
+
+## Reproducible runs
+
+Training accepts `--seed` and an explicit `--checkpoint`. Each attempt writes to
+its own run directory, containing `effective_config.yaml`, `manifest.json`,
+checkpoints and results. The manifest records versions, configuration, dataset
+revision, local data hashes and the checkpoint used by each completed phase.
+The saved effective configuration can be passed directly to `run --config`:
+
+```bash
+uv run --frozen --no-sync new-ltpp run --config /path/to/effective_config.yaml \
+  --seed 42 --phase all --save-dir artifacts/replayed
+# Resume at an epoch boundary from the last training checkpoint:
+uv run --frozen --no-sync new-ltpp run --config /path/to/effective_config.yaml \
+  --checkpoint /path/to/last.ckpt --epochs 10 --phase train --save-dir artifacts/resumed
+```
+
+The small complete CPU pipeline is tested offline with local fixture data:
+
+```bash
+OMP_NUM_THREADS=1 MPLBACKEND=Agg uv run --frozen --no-sync python -m pytest \
+  -o addopts= tests/test_reproducibility.py -q
+```
+
+`deterministic: true` in the training YAML enables strict PyTorch determinism.
+CPU repeatability and epoch-boundary resume are verified on the small NHP case
+with zero loader workers; CUDA, DDP and other models still need validation.
+The current global coverage is 62.86%, below the retained 80% gate, so the normal
+coverage command is expected to fail until coverage improves. See the
+[reproducibility report](rapports/REPRODUCTIBILITE_RUCHE.md) for remaining limits
+and the numerical changes to MKernel and p-values.
 
 ## ⚡ Quick Start
 

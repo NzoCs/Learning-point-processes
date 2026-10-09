@@ -152,8 +152,8 @@ class LoggerConfig(Config):
             raise ConfigValidationError(
                 f"No adapter available for logger type: {self.type}"
             )
-        self.config["save_dir"] = self.save_dir
-        return adapter.configure(self.config.copy())
+        resolved = {**self.config, "save_dir": self.save_dir}
+        return adapter.configure(resolved)
 
 
 class LoggerFactory:

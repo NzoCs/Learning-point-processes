@@ -279,6 +279,12 @@ class NHP(TrainingMixin):
                     intensity at each timestamp for each event type.
         """
 
+        if time_delta_seqs.shape[1] == 0:
+            # The continuous-time LSTM starts from its zero hidden state.
+            # Evaluate the initial intensity without inserting a fictitious event.
+            shape = (*sample_dtimes.shape, self.hidden_size)
+            return self.layer_intensity(sample_dtimes.new_zeros(shape))
+
         # We will need the right limit at the last given event to decay from and get the left limits for sampling
         _, right_hiddens = self.forward(time_delta_seqs, type_seqs)
 

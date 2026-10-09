@@ -8,7 +8,6 @@ from new_ltpp.models.model_factory import ModelFactory
 from new_ltpp.runners.callbacks import PredictionStatsCallback, TestCallback
 from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 from new_ltpp.runners.trainer_factory import (
-    CheckpointManager,
     TrainerFactory,
 )
 from new_ltpp.utils import logger
@@ -19,6 +18,7 @@ class Runner:
         self,
         config: RunnerConfig,
         enable_logging: bool = True,
+        checkpoint_path: str | None = None,
     ):
         """_summary__.
         Args:
@@ -26,7 +26,9 @@ class Runner:
             checkpoint_path (str, optional): Path to a checkpoint file to resume training from. Defaults to None.
             **kwargs: Additional keyword arguments that can be used to override specific configurations.
         """
-        # Initialize your configs
+        self.config = config
+        pl.seed_everything(config.training_config.seed, workers=True)
+        # Seed before constructing the data loaders and model parameters.
 
         # Initialize your datamodule
         self.datamodule = TPPDataModule(config.data_config)
@@ -45,7 +47,7 @@ class Runner:
 
         self.dirpath = config.checkpoints_dir
         self.logger_config = config.logger_config
-        self.checkpoint_path = CheckpointManager(str(self.dirpath)).latest_best()
+        self.checkpoint_path = checkpoint_path
 
         self.dataset_id = config.data_config.dataset_id
         self.enable_logging = enable_logging
@@ -117,6 +119,8 @@ class Runner:
             val_dataloaders=val_dataloader,
             ckpt_path=self.checkpoint_path,
         )
+        # Evaluate the best checkpoint produced by this fit, not the pre-fit value.
+        self.checkpoint_path = trainer.checkpoint_callback.best_model_path or None
 
     def test(self) -> None:
         """
@@ -169,6 +173,7 @@ class Runner:
         predict_dataloader = self.datamodule.test_dataloader()
 
         # The callback will handle finalize_statistics() and intensity_graph()
+        pl.seed_everything(self.config.simulation_config.seed, workers=True)
         trainer.predict(
             model=cast(pl.LightningModule, self.model),
             dataloaders=predict_dataloader,

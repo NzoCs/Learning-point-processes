@@ -7,61 +7,73 @@ data_configs:
   taxi:
     data_format: hf
     src_dir: easytpp/taxi
+    revision: 31af59ee1ae184b5b7abbf0094099b1172d66e2a
     num_event_types: 10
   
   taobao:
     data_format: hf
     src_dir: easytpp/taobao
+    revision: a96ec6dc7ef311ca45993af9c8a80f78ed08ae47
     num_event_types: 17
 
   amazon:
     data_format: hf
     src_dir: easytpp/amazon
+    revision: 508e882349ce246c12e0cb288b456a11fb741b52
     num_event_types: 16
 
   retweet:
     data_format: hf
     src_dir: easytpp/retweet
+    revision: d2960029b7c5f6b154c9f1437140d49c3f8c0f0b
     num_event_types: 3
   
   volcano:
     data_format: hf
     src_dir: easytpp/volcano
+    revision: bff8dc1fc888e85fd2e5288199c4c9b1d9b4e5d7
     num_event_types: 1
   
   earthquake:
     data_format: hf
     src_dir: easytpp/earthquake
+    revision: 1c16ceff43689ab725fc95d69c58cba4d88af247
     num_event_types: 7
   
   stackoverflow:
     data_format: hf
     src_dir: easytpp/stackoverflow
+    revision: d356ab0d8bc4dd65f5e1f1f2ca9c0759bcfa7344
     num_event_types: 22
 
   test:
     data_format: hf
     src_dir: NzoCs/test_dataset
+    revision: 1ca2a24f16f377555175c99e5cc1704dc44b92db
     num_event_types: 2
       
   hawkes1:
     data_format: hf
     src_dir: NzoCs/hawkes1
+    revision: 6845adc4862eb756dfc756a17df41bd8a1fc26a3
     num_event_types: 1
 
   hawkes2:
     data_format: hf
     src_dir: NzoCs/hawkes2
+    revision: fc6bbcbc2b5071db1a3fd462674b629807eb7ff8
     num_event_types: 2
   
   H2expi:
     data_format: hf
     src_dir: NzoCs/H2expi
+    revision: e1ef9de1467ed3cb67e87c585c6a6b1a8a33d365
     num_event_types: 2
   
   H2expc:
     data_format: hf
     src_dir: NzoCs/H2expc
+    revision: 2fec1c44d538e66a8d604295b753c4e88f785dd3
     num_event_types: 2
 
 # ==== LOGGER CONFIGS =====

@@ -3,7 +3,7 @@ import torch
 import pytest
 
 from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.evaluation.accumulators.mean_len_accumulator import SequenceLengthAccumulator
+from new_ltpp.evaluation.accumulators.len_accumulator import SequenceLengthAccumulator
 from new_ltpp.evaluation.accumulators.corr_accumulator import CorrAccumulator
 
 

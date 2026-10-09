@@ -10,7 +10,8 @@ jobs:
   signature-migration:
     runs-on: ubuntu-latest
     env:
-      TORCH_COMPILE_DISABLE: "1"
+      OMP_NUM_THREADS: "1"
+      MPLBACKEND: Agg
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -62,4 +63,4 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run --frozen --no-sync python -m pytest tests
+          uv run --frozen --no-sync python -m pytest tests -m "not slow"

@@ -229,12 +229,18 @@ class TPPDataModule(pl.LightningDataModule):
 
         try:
             # Try exact split name first (e.g., 'dev')
-            data = load_dataset(source_dir, split=split)
+            data = load_dataset(
+                source_dir, split=split, revision=self.data_config.revision
+            )
         except ValueError as e:
             # Fallback to 'validation' if 'dev' is not found
             if split == "dev":
                 try:
-                    data = load_dataset(source_dir, split="validation")
+                    data = load_dataset(
+                        source_dir,
+                        split="validation",
+                        revision=self.data_config.revision,
+                    )
                 except ValueError:
                     raise e
             else:
@@ -380,7 +386,7 @@ class TPPDataModule(pl.LightningDataModule):
                 shuffle=True,
                 collate_fn=collate_fn,
                 num_workers=self.num_workers,
-                persistent_workers=True,
+                persistent_workers=self.num_workers > 0,
             )
         )
 
@@ -403,7 +409,7 @@ class TPPDataModule(pl.LightningDataModule):
                 shuffle=False,
                 collate_fn=collate_fn,
                 num_workers=self.num_workers,
-                persistent_workers=True,
+                persistent_workers=self.num_workers > 0,
             )
         )
 
@@ -426,7 +432,7 @@ class TPPDataModule(pl.LightningDataModule):
                 shuffle=False,
                 collate_fn=collate_fn,
                 num_workers=self.num_workers,
-                persistent_workers=True,
+                persistent_workers=self.num_workers > 0,
             )
         )
 

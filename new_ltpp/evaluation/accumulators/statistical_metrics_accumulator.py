@@ -1,5 +1,7 @@
 from typing import Optional, Any
-from new_ltpp.evaluation.statistical_testing.statistical_tests import create_statistical_test
+from new_ltpp.evaluation.statistical_testing.statistical_tests import (
+    create_statistical_test,
+)
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
 from .base_accumulator import Accumulator
@@ -26,6 +28,8 @@ class StatisticalTestAccumulator(Accumulator):
         self.observed_statistic: list[float] = []
         self.perm_statistics: list[float] = []
         self.num_sequences: int = 0
+        self.null_sample_counts: list[int] = []
+        self.null_methods: list[str] = []
 
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
         """Accumulate statistical metrics from batch.
@@ -36,13 +40,14 @@ class StatisticalTestAccumulator(Accumulator):
 
         """
         from typing import Any
+
         simulations = [simulation]
         if self.simulator is not None and hasattr(self.test, "n_samples"):
             n_samples = self.test.n_samples
             if n_samples > 1:
                 N = n_samples - 1
                 B = batch.time_seqs.shape[0]
-                
+
                 # Stack the input batch N times along the batch dimension
                 batch_stacked = Batch(
                     time_seqs=batch.time_seqs.repeat(N, 1),
@@ -50,16 +55,16 @@ class StatisticalTestAccumulator(Accumulator):
                     type_seqs=batch.type_seqs.repeat(N, 1),
                     valid_event_mask=batch.valid_event_mask.repeat(N, 1),
                 )
-                
+
                 # Run the simulator in parallel on the GPU
                 sim_stacked = self.simulator.simulate(batch_stacked)
-                
+
                 # Split the stacked simulation results back into N individual batches
                 time_seqs_list = sim_stacked.time_seqs.split(B, dim=0)
                 time_delta_seqs_list = sim_stacked.time_delta_seqs.split(B, dim=0)
                 type_seqs_list = sim_stacked.type_seqs.split(B, dim=0)
                 valid_event_mask_list = sim_stacked.valid_event_mask.split(B, dim=0)
-                
+
                 for i in range(N):
                     simulations.append(
                         Batch(
@@ -73,6 +78,8 @@ class StatisticalTestAccumulator(Accumulator):
         # Compute MMD and p-value using the provided simulations
         stats = self.test.compute_statistics(batch, simulation, simulations=simulations)
 
+        self.null_sample_counts.append(stats["num_null_samples"])
+        self.null_methods.append(stats["null_method"])
         self.p_values.append(stats["p_value"].item())
         self.observed_statistic.append(stats["observed_statistic"].item())
         self.perm_statistics.extend(stats["permuted_statistics"].tolist())
@@ -85,6 +92,8 @@ class StatisticalTestAccumulator(Accumulator):
         self.observed_statistic = []
         self.perm_statistics = []
         self.num_sequences = 0
+        self.null_sample_counts = []
+        self.null_methods = []
         if hasattr(self.test, "reset_accumulators"):
             self.test.reset_accumulators()
 
@@ -107,4 +116,6 @@ class StatisticalTestAccumulator(Accumulator):
             permuted_statistic=self.perm_statistics,
             pooled_p_value=pooled_p_val,
             num_sequences=self.num_sequences,
+            null_sample_counts=self.null_sample_counts,
+            null_methods=self.null_methods,
         )

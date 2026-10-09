@@ -15,6 +15,7 @@ from pytorch_lightning.loggers.logger import Logger as LightningLogger
 from pytorch_lightning.strategies import DDPStrategy
 
 from new_ltpp.configs.runner_config import TrainingConfig
+from .rng_callback import ValidationRNGCallback
 from new_ltpp.utils import logger as console_logger
 
 
@@ -106,8 +107,9 @@ class TrainerFactory:
         if isinstance(devices, int) and devices > 0:
             if torch.cuda.is_available():
                 return devices, "gpu"
-            else:
-                return "auto", "auto"
+            raise RuntimeError("GPU requested but CUDA is unavailable")
+        if devices in (-1, 0):
+            return 1, "cpu"
         return "auto", "auto"
 
     @staticmethod
@@ -155,7 +157,12 @@ class TrainerFactory:
             ),
         )
 
-        return [ckpt_callback, early_stop_callback, rich_progress_bar]
+        return [
+            ValidationRNGCallback(),
+            ckpt_callback,
+            early_stop_callback,
+            rich_progress_bar,
+        ]
 
     # ============================================================
     #  FACTORY ENTRYPOINT
@@ -211,6 +218,7 @@ class TrainerFactory:
             precision=precision,
             accumulate_grad_batches=training_config.accumulate_grad_batches,
             inference_mode=False,
+            deterministic=training_config.deterministic,
         )
 
         return trainer

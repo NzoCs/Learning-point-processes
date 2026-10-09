@@ -1,3 +1,6 @@
+import os
+import re
+from uuid import uuid4
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -29,6 +32,8 @@ class TrainingConfig(Config):
     """Configuration for the Training."""
 
     max_epochs: PositiveInt
+    seed: int = Field(default=42, ge=0, le=2**32 - 1)
+    deterministic: bool = False
     lr: float = 1e-3
     lr_scheduler: bool = True
     dropout: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -45,6 +50,9 @@ class RunnerConfig(Config):
     """Configuration for the Runner."""
 
     model_id: str
+    run_id: str = Field(
+        default_factory=lambda: uuid4().hex, pattern=r"^[A-Za-z0-9_-]+$"
+    )
 
     training_config: TrainingConfig
     model_cfg: ModelConfig = Field(alias="model_config")
@@ -68,7 +76,13 @@ class RunnerConfig(Config):
     @classmethod
     def setup_directories(cls, values: dict) -> dict:
         data_config = values.get("data_config")
-        model_cfg = values.get("model_config") or values.get("model_cfg")  # alias !
+        model_cfg = values.get("model_config") or values.get("model_cfg")
+        if isinstance(data_config, dict):
+            data_config = DataConfig.model_validate(data_config)
+            values["data_config"] = data_config
+        if isinstance(model_cfg, dict):
+            model_cfg = ModelConfig.model_validate(model_cfg)
+            values["model_config"] = model_cfg
 
         if not data_config or not model_cfg:
             return values
@@ -82,24 +96,37 @@ class RunnerConfig(Config):
         )
 
         root_dir = Path(values["save_dir"]) if values.get("save_dir") else OUTPUT_DIR
-        base_dir = root_dir / values["dataset_id"] / f"{values['model_id']}_{specs_str}"
+        run_id = values.get("run_id") or os.environ.get("LTPP_RUN_ID") or uuid4().hex
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", str(run_id)):
+            raise ValueError(
+                "run_id must contain only letters, digits, underscores or hyphens"
+            )
+        values["run_id"] = run_id
+        base_dir = (
+            root_dir
+            / values["dataset_id"]
+            / f"{values['model_id']}_{specs_str}"
+            / run_id
+        )
         checkpoints_dir = base_dir / "checkpoints"
         checkpoints_dir.mkdir(parents=True, exist_ok=True)
 
         values["base_dir"] = base_dir
         values["checkpoints_dir"] = checkpoints_dir
         values["model_dir"] = str(checkpoints_dir)
-        values["save_dir"] = str(base_dir / "logs")
+        values["save_dir"] = str(root_dir)
 
         # Défaut dérivé du save_dir calculé
         logger_config = values.get("logger_config")
         if logger_config is None:
             values["logger_config"] = LoggerConfig(
-                save_dir=values["save_dir"], type=LoggerType.TENSORBOARD
+                save_dir=str(base_dir / "logs"), type=LoggerType.TENSORBOARD
             )
         else:
-            values["logger_config"] = logger_config.model_validate(
-                {**logger_config.model_dump(), "save_dir": values["save_dir"]}
+            if isinstance(logger_config, dict):
+                logger_config = LoggerConfig.model_validate(logger_config)
+            values["logger_config"] = LoggerConfig.model_validate(
+                {**logger_config.model_dump(), "save_dir": str(base_dir / "logs")}
             )
 
         return values
@@ -157,6 +184,11 @@ class RunnerConfig(Config):
                 }
             )
 
+        # The optimizer scheduler must use the same final epoch budget as the trainer.
+        scheduler = model_config.scheduler_config.model_copy(
+            update={"max_epochs": training_config.max_epochs}
+        )
+        model_config = model_config.model_copy(update={"scheduler_config": scheduler})
         return cls(
             model_id=model_id,
             model_config=model_config,
@@ -168,11 +200,5 @@ class RunnerConfig(Config):
         )
 
     def get_yaml_config(self) -> Dict[str, Any]:
-        return {
-            "training_config": self.training_config.model_dump(mode="json"),
-            "model_config": self.model_cfg.model_dump(mode="json"),
-            "data_config": self.data_config.model_dump(mode="json"),
-            "statistical_test_config": self.statistical_test_config.model_dump(
-                mode="json"
-            ),
-        }
+        """Serialize the complete effective configuration, including simulation."""
+        return self.model_dump(mode="json", by_alias=True)

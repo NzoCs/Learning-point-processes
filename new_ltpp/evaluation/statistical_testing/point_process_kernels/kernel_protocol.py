@@ -35,15 +35,14 @@ class PointProcessKernel(ABC):
         K_XX = self.compute_gram_matrix(X, X)
         K_YY = self.compute_gram_matrix(Y, Y)
 
-        B, _ = K_XY.shape
-
-        # Denominator for the unbiased estimator: max(B*(B-1), 1)
-        # Computed in Python to avoid creating unnecessary tensor constants in the graph
-        denom = float(max(B * (B - 1), 1))
-
-        # Compute the MMD distance using the kernel values
-        mmd_distance = K_XX.sum() / denom + K_YY.sum() / denom - 2 * K_XY.mean()
-        return mmd_distance
+        n, m = K_XY.shape
+        if n < 2 or m < 2:
+            raise ValueError("Unbiased MMD requires at least two samples in each batch")
+        return (
+            (K_XX.sum() - K_XX.trace()) / (n * (n - 1))
+            + (K_YY.sum() - K_YY.trace()) / (m * (m - 1))
+            - 2 * K_XY.mean()
+        )
 
 
 @runtime_checkable

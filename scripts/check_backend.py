@@ -28,7 +28,7 @@ def check_backend(device: str) -> dict:
     )
     kernel = SIGKernel(
         static_kernel=LinearKernel(),
-        embedding_type="linear",
+        embedding_type="counting_grid",
         num_discretization_points=8,
         dyadic_order=0,
         num_event_types=2,

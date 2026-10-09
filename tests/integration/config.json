@@ -72,9 +72,6 @@
     "test_dir": "${FIXTURE}"
   },
   "simulation_config": {
-    "time_window": 10.0,
-    "batch_size": 4,
-    "initial_buffer_size": 1000,
     "seed": 321
   },
   "statistical_test_config": {
@@ -87,7 +84,7 @@
     "sigma": 1.0,
     "scaling": 1.0,
     "num_discretization_points": 8,
-    "embedding_type": "linear",
+    "embedding_type": "counting_grid",
     "dyadic_order": 0,
     "signature_backend": "pysiglib",
     "signature_max_batch": 64

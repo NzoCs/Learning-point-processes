@@ -1,0 +1,17 @@
+{
+  "from_sha256": "7adc6e2718b6ffd58edd572d728283c4b756c4812427fe9ad433124f67aa9162",
+  "to_sha256": "58bc3241a9813dab282f9abf1936774819dc436c551260be2bee9f1051b49ce9",
+  "source_commit": "1229692",
+  "reason": "Remove inactive simulation controls and signature aliases without changing calculations.",
+  "removed": {
+    "simulation_config.time_window": 10.0,
+    "simulation_config.batch_size": 4,
+    "simulation_config.initial_buffer_size": 1000
+  },
+  "replaced": {
+    "statistical_test_config.embedding_type": {
+      "from": "linear",
+      "to": "counting_grid"
+    }
+  }
+}

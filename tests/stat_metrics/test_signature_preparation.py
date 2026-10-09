@@ -33,7 +33,7 @@ def sample(padding=None):
 
 def embedding(batch):
     return _get_embedding(
-        5, "linear", 2, batch.time_seqs, batch.type_seqs, batch.valid_event_mask
+        5, "counting_grid", 2, batch.time_seqs, batch.type_seqs, batch.valid_event_mask
     )
 
 
@@ -79,7 +79,7 @@ def test_embedding_is_invariant_to_masked_padding(padding):
 
 @pytest.mark.parametrize("padding", ["left", "right"])
 def test_signature_gram_is_invariant_to_masked_padding(padding):
-    kernel = SIGKernel(LinearKernel(), "linear", 5, 0, 2)
+    kernel = SIGKernel(LinearKernel(), "counting_grid", 5, 0, 2)
     reference = sample()
     expected = kernel.compute_gram_matrix(reference, reference)
     actual = kernel.compute_gram_matrix(sample(padding), reference)
@@ -90,7 +90,7 @@ def test_signature_gram_is_invariant_to_masked_padding(padding):
 def test_preparation_and_gram_do_not_mutate_input_batches(padding):
     batch = sample(padding)
     before = {name: tensor.clone() for name, tensor in batch.to_mapping().items()}
-    kernel = SIGKernel(LinearKernel(), "linear", 5, 0, 2)
+    kernel = SIGKernel(LinearKernel(), "counting_grid", 5, 0, 2)
     x, y = kernel._prepare_kernel(batch, batch)
     assert torch.isfinite(x).all() and torch.isfinite(y).all()
     kernel.compute_gram_matrix(batch, batch)
@@ -138,7 +138,7 @@ def test_longer_batch_companion_does_not_change_short_path():
         torch.tensor([[0, 1, -1, -1], [1, 0, 1, 0]]),
         torch.tensor([[True, True, False, False], [True, True, True, True]]),
     )
-    kernel = SIGKernel(LinearKernel(), "linear", 5, 0, 2)
+    kernel = SIGKernel(LinearKernel(), "counting_grid", 5, 0, 2)
     expected_path, _ = kernel._prepare_kernel(sample(), sample())
     actual_path, _ = kernel._prepare_kernel(batch, sample())
     torch.testing.assert_close(actual_path[:1], expected_path)
@@ -150,7 +150,7 @@ def test_longer_batch_companion_does_not_change_short_path():
 
 @pytest.mark.parametrize("padding", ["left", "right"])
 def test_native_signature_path_gradients_are_padding_invariant(padding):
-    kernel = SIGKernel(LinearKernel(), "linear", 5, 0, 2)
+    kernel = SIGKernel(LinearKernel(), "counting_grid", 5, 0, 2)
 
     def calculate(batch):
         x, y = kernel._prepare_kernel(batch, sample())
@@ -176,7 +176,7 @@ def test_signature_mmd_with_unequal_samples_is_padding_invariant(padding):
             *(tensor.repeat(count, 1) for tensor in batch.to_mapping().values())
         )
 
-    kernel = SIGKernel(LinearKernel(), "linear", 5, 0, 2)
+    kernel = SIGKernel(LinearKernel(), "counting_grid", 5, 0, 2)
     other = repeat(sample(), 3)
     expected = kernel.compute_mmd(repeat(sample(), 2), other)
     actual = kernel.compute_mmd(repeat(sample(padding), 2), other)

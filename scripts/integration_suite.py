@@ -220,6 +220,23 @@ def run_model(model_name, output):
     return snapshot
 
 
+def compare_reference(actual, expected):
+    """Allow only the reviewed config cleanup; compare all numerical fields."""
+    if actual["config_sha256"] != expected["config_sha256"]:
+        migration = json.loads(
+            (FIXTURES / "config_migration.json").read_text(encoding="utf-8")
+        )
+        if (
+            expected["config_sha256"] != migration["from_sha256"]
+            or actual["config_sha256"] != migration["to_sha256"]
+            or digest_json(FIXTURES / "config.json") != migration["to_sha256"]
+        ):
+            raise AssertionError("Unreviewed integration configuration change")
+        # Baseline files and actual capture retain their original fingerprints.
+        actual = dict(actual, config_sha256=expected["config_sha256"])
+    compare(actual, expected)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -283,7 +300,7 @@ def main():
                     f"Pipeline failed (exit {completed.returncode}); see {target / 'run.log'}"
                 )
             if not args.record:
-                compare(
+                compare_reference(
                     json.loads((target / "snapshot.json").read_text()),
                     json.loads((FIXTURES / "baselines" / f"{model}.json").read_text()),
                 )

@@ -12,11 +12,10 @@ nombre d'événements générés est la largeur du lot d'entrée. Les buffers so
 alloués exactement pour l'historique et les événements à produire. Le nombre de
 séquences du lot provient du data loader.
 
-Les anciennes valeurs `SimulationConfig.time_window`, `.initial_buffer_size`
-et `.batch_size` ne sont donc pas des commandes à reconnecter au moteur actuel.
-Elles restent acceptées et sérialisées pour rejouer les configurations anciennes,
-mais deviennent optionnelles et dépréciées dans le schéma. Une nouvelle
-configuration suffit :
+Les champs `SimulationConfig.time_window`, `.initial_buffer_size` et
+`.batch_size` sont supprimés. SimulationConfig ne contient que la graine ;
+les champs inconnus sont rejetés. Les presets trompeurs `tw...` sont également
+supprimés ; `fixed_events`, `quick_test` et `debug` ne contiennent que `seed: 42`.
 
 ```yaml
 simulation_config:
@@ -24,32 +23,38 @@ simulation_config:
 ```
 
 Le manifeste ajoute `simulation_contract`, avec le mode réellement exécuté,
-les sources du nombre d'événements/de la taille du lot, la graine et les anciens
-paramètres ignorés. Le preset `fixed_events` est le nom actuel ; `quick_test`,
-`debug` et les anciens noms `tw...` restent des alias de compatibilité avec la
-même graine historique 42. Aucun horizon temporel n'est réintroduit. La limite
-de génération dépend toujours de la largeur paddée du lot, pas du nombre valide
-de chaque séquence : c'est le contrat conservé, à distinguer de l'invariance au
-padding des chemins de signature. Un autre protocole de génération doit faire
-l'objet d'un changement scientifique explicite.
+les sources du nombre d'événements/de la taille du lot et la graine. Aucun
+horizon temporel n'est réintroduit. La limite de génération dépend toujours
+de la largeur paddée du lot, pas du nombre valide de chaque séquence : c'est
+le contrat conservé, à distinguer de l'invariance au padding des chemins de
+signature. Un autre protocole de génération doit faire l'objet d'un changement
+scientifique explicite.
+
+Cette suppression rompt la lecture des anciennes configurations contenant ces
+champs. Pour les utiliser dans un nouveau run, retirer les trois champs et
+sélectionner un preset actuel. Conserver les configurations et manifests
+historiques dans leurs archives ; le rejeu strict d'un ancien run nécessite
+son ancienne version du code. Ne pas réécrire un manifeste pour contourner
+le contrôle d'identité de configuration.
 
 Les graines hors de `[0, 2**32 - 1]` étaient acceptées par SimulationConfig mais
 rejetées par Lightning lors de `predict`. Elles sont désormais rejetées dès le
 chargement, comme les graines d'entraînement. Les graines 0 et `2**32 - 1`
 restent valides.
 
-## Signature : une représentation commune, avec des alias historiques
+## Signature : une seule représentation
 
-Depuis `6e5e75e`, `_get_embedding` documente que `embedding_type` est conservé
-pour compatibilité. L'implémentation construit une grille régulière contenant
-le temps, le comptage total normalisé et les comptages par marque. Elle ne choisit
-pas une interpolation différente selon les étiquettes `linear`/`constant`.
+Depuis `6e5e75e`, `_get_embedding` documentait que `embedding_type` était
+conservé pour compatibilité. L'implémentation construit une grille régulière
+contenant le temps, le comptage total normalisé et les comptages par marque.
+Elle ne choisissait pas une interpolation différente selon `linear`/`constant`.
 
-`counting_grid` devient le nom explicite et la valeur par défaut. Les anciennes
-étiquettes restent acceptées et produisent exactement le même chemin. Le
-manifeste indique `signature_path_representation: counting_grid`, indépendamment
-de l'alias utilisé. Aucune formule de noyau, MMD ou p-value n'est changée par
-cette clarification. Les étiquettes inconnues sont rejetées dans la préparation.
+`counting_grid` est désormais la seule valeur acceptée, dans la configuration,
+le constructeur SIGKernel et la préparation. Pour les configurations anciennes,
+remplacer `embedding_type: linear` ou `constant` par `counting_grid`.
+Le noyau spatial `space_kernel_type: linear` reste une option distincte et valide.
+Le manifeste indique `signature_path_representation: counting_grid`. Aucune
+formule de noyau, MMD ou p-value n'est changée par cette suppression des alias.
 
 ## CI : incompatibilités confirmées
 
@@ -77,10 +82,15 @@ remplacer les références numériques de la suite d'intégration.
 Sous Windows, Python 3.11.15, Torch CPU et pySigLib 4.0, les 11 modèles
 passent la pipeline complète et la comparaison aux références existantes,
 sans régénérer ces références. La suite ordinaire hors tests lents compte
-145 tests réussis, 9 ignorés et 2 exclus. Black, isort, les contrôles critiques
+148 tests réussis, 9 ignorés et 2 exclus. Black, isort, les contrôles critiques
 Ruff, les huit documents notebook et la cohérence du verrou uv passent.
 
-La commande avec couverture échoue uniquement sur le seuil : 63,58 % contre
-80 % requis. Cette validation locale ne prouve ni la réussite des workflows
+La dernière mesure de couverture, avant suppression des anciennes options,
+était de 63,58 % contre 80 % requis. Le seuil reste inchangé. Cette validation locale ne prouve ni la réussite des workflows
 distants ni celle des exécutions Ruche/CUDA/DDP. La calibration scientifique
 et la couverture des chemins non exercés restent à compléter.
+
+La configuration d'intégration est adaptée sans régénérer les snapshots : sa
+transition exacte est enregistrée dans `tests/integration/config_migration.json`.
+Les tests du comparateur vérifient que cette transition n'accepte ni une autre
+configuration active ni une modification des valeurs numériques.

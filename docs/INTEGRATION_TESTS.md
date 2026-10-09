@@ -88,3 +88,15 @@ contrôlent aussi l'alignement CSV, les identifiants Parquet et la cohérence du
 dernier pas SelfCorrecting. Le workflow Linux/Windows est configuré, mais son
 exécution distante et la validation Ruche/CUDA ne sont pas certifiées par ce
 passage local. Le seuil global de couverture de 80 % reste à traiter séparément.
+
+## Suppression des anciennes options de configuration
+
+La fixture utilise uniquement `simulation_config.seed` et
+`embedding_type: counting_grid`. Les références numériques conservent leur
+empreinte et leur provenance d'origine. La seule transition de configuration
+admise est enregistrée dans `tests/integration/config_migration.json` ; elle
+supprime les contrôles inactifs et remplace l'alias par le nom réel du chemin.
+Le comparateur exige les deux empreintes exactes et celle de la fixture active,
+puis compare tous les champs numériques et structurels habituels. Ce mécanisme
+ne permet pas d'accepter automatiquement une autre configuration ou des
+résultats modifiés.

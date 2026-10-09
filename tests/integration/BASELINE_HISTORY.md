@@ -29,3 +29,19 @@ parcours commun. Les identifiants et la forme du CSV changent intentionnellement
 Cette référence ne prétend pas reproduire des résultats antérieurs absents du dépôt.
 Les futures restructurations du code doivent conserver les snapshots sans les
 mettre à jour ; un changement de calcul doit être expliqué ici et évalué séparément.
+
+## Nettoyage des configurations — 9 octobre 2026
+
+La fixture active utilise désormais uniquement `simulation_config.seed` et
+`embedding_type: counting_grid`. Les trois paramètres de simulation ignorés
+et les deux alias de représentation sont supprimés du code public. Les
+snapshots numériques et leur provenance d'origine restent inchangés : cette
+adaptation de configuration ne modifie aucun calcul.
+
+L'empreinte de configuration passe de
+`7adc6e2718b6ffd58edd572d728283c4b756c4812427fe9ad433124f67aa9162`
+à `58bc3241a9813dab282f9abf1936774819dc436c551260be2bee9f1051b49ce9`.
+`config_migration.json` enregistre exclusivement cette transition et les champs
+modifiés. Le comparateur accepte cette paire précise, contrôle l'empreinte de
+la fixture active, puis compare tous les autres champs sans exception. Toute
+modification future de graine/configuration ou de résultat continue à échouer.

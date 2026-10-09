@@ -2,15 +2,15 @@ import os
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Dict, List, Type, Union, Protocol, runtime_checkable
+from typing import Any, Dict, List, Protocol, Type, Union, runtime_checkable
 
+from pydantic import Field
 from pytorch_lightning.loggers import (
     CSVLogger,
     MLFlowLogger,
     TensorBoardLogger,
     WandbLogger,
 )
-from pydantic import Field
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils import logger

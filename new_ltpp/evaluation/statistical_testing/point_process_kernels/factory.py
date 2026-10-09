@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
+
+from .kernel_protocol import IPointProcessKernel
 from .m_kernel import MKernel
 from .sig_kernel import SIGKernel
-from .kernel_protocol import IPointProcessKernel
-from .space_kernels.factory import create_space_kernel
 from .space_kernels.embedding import EmbeddingKernel
+from .space_kernels.factory import create_space_kernel
 
 if TYPE_CHECKING:
     from new_ltpp.configs.statistical_test_config import StatisticalTestConfig

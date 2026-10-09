@@ -100,7 +100,9 @@ class HawkesSimulator(Simulator):
                 marks.append(event_dim)
 
                 # Mise à jour des contributions d'intensité (saut de taille alpha * beta)
-                lambda_trg[:, event_dim] += self.alpha[:, event_dim] * self.beta[:, event_dim]
+                lambda_trg[:, event_dim] += (
+                    self.alpha[:, event_dim] * self.beta[:, event_dim]
+                )
 
                 event_count += 1
 
@@ -110,8 +112,8 @@ class HawkesSimulator(Simulator):
 
         if self.burn_in > 0 and len(times_arr) > self.burn_in:
             t_shift = times_arr[self.burn_in - 1]
-            times_arr = times_arr[self.burn_in:] - t_shift
-            marks_arr = marks_arr[self.burn_in:]
+            times_arr = times_arr[self.burn_in :] - t_shift
+            marks_arr = marks_arr[self.burn_in :]
 
         return times_arr, marks_arr
 
@@ -153,9 +155,7 @@ class HawkesSimulator(Simulator):
 
         return results
 
-    def _simulate_batch(
-        self, B: int
-    ) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def _simulate_batch(self, B: int) -> List[Tuple[np.ndarray, np.ndarray]]:
         """
         Core vectorized thinning loop for a batch of B independent paths.
 
@@ -222,10 +222,12 @@ class HawkesSimulator(Simulator):
 
             # ── Vectorized multinomial: sample event dimension ────────────────
             # p[k, i] = prob that path accepted_idx[k] fires dimension i
-            p = lambda_total[accepted_idx] / lambda_sum[accepted_idx, np.newaxis]  # (n_acc, dim)
+            p = (
+                lambda_total[accepted_idx] / lambda_sum[accepted_idx, np.newaxis]
+            )  # (n_acc, dim)
             cumsum = np.cumsum(p, axis=1)  # (n_acc, dim)
             u_dim = np.random.rand(n_acc, 1)
-            event_dims = (u_dim > cumsum).sum(axis=1)              # (n_acc,)
+            event_dims = (u_dim > cumsum).sum(axis=1)  # (n_acc,)
             event_dims = np.minimum(event_dims, dim - 1).astype(int)  # numerical guard
 
             # ── Record events ─────────────────────────────────────────────────
@@ -242,9 +244,9 @@ class HawkesSimulator(Simulator):
             # ── Update lambda_trg via np.add.at ───────────────────────────────
             # For each accepted event (b, d): lambda_trg[b, :, d] += alpha[:, d]
             # Expand to flat index triplets: (b_rep, i_rep, d_rep)
-            b_rep = np.repeat(accepted_idx, dim)        # (n_acc * dim,)
-            i_rep = np.tile(np.arange(dim), n_acc)     # (n_acc * dim,)
-            d_rep = np.repeat(event_dims, dim)          # (n_acc * dim,)
+            b_rep = np.repeat(accepted_idx, dim)  # (n_acc * dim,)
+            i_rep = np.tile(np.arange(dim), n_acc)  # (n_acc * dim,)
+            d_rep = np.repeat(event_dims, dim)  # (n_acc * dim,)
             np.add.at(lambda_trg, (b_rep, i_rep, d_rep), self.alpha[i_rep, d_rep])
 
         results = []
@@ -254,8 +256,8 @@ class HawkesSimulator(Simulator):
 
             if self.burn_in > 0 and len(times_arr) > self.burn_in:
                 t_shift = times_arr[self.burn_in - 1]
-                times_arr = times_arr[self.burn_in:] - t_shift
-                marks_arr = marks_arr[self.burn_in:]
+                times_arr = times_arr[self.burn_in :] - t_shift
+                marks_arr = marks_arr[self.burn_in :]
 
             results.append((times_arr, marks_arr))
 

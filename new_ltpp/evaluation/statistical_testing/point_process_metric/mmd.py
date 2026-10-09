@@ -1,7 +1,8 @@
 import torch
+
 from new_ltpp.shared_types import Batch, SimulationResult
 
-from .base_stat_metric import StatMetric, IStatMetric
+from .base_stat_metric import IStatMetric, StatMetric
 
 
 class MMD(StatMetric):

@@ -5,15 +5,15 @@ Provides:
 - Protocol for IDE type checking and isinstance() checks
 """
 
-from new_ltpp.configs import StatisticalTestConfig
-
 from typing import Protocol, TypedDict, runtime_checkable
+
 import torch
 
+from new_ltpp.configs import StatisticalTestConfig
+from new_ltpp.data.preprocess.data_loader import TypedDataLoader
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protocol import (
     IPointProcessKernel,
 )
-from new_ltpp.data.preprocess.data_loader import TypedDataLoader
 from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.shared_types import Batch
 

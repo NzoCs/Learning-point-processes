@@ -1,11 +1,13 @@
-from new_ltpp.evaluation.accumulators import FinalResult
-import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, Optional
-from new_ltpp.utils import logger
+from typing import Any, Dict, Optional
+
+import pandas as pd
+
+from new_ltpp.evaluation.accumulators import FinalResult
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import (
     SIGNATURE_PATH_PREPARATION,
 )
+from new_ltpp.utils import logger
 
 
 class ResultsAggregator:

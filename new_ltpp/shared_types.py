@@ -43,13 +43,13 @@ class Batch:
         """Validate and normalize batch after initialization."""
         # Ensure all required tensors have the same batch size
         batch_size = self.time_seqs.shape[0]
-        assert self.time_delta_seqs.shape[0] == batch_size, (
-            "time_delta_seqs batch size mismatch"
-        )
+        assert (
+            self.time_delta_seqs.shape[0] == batch_size
+        ), "time_delta_seqs batch size mismatch"
         assert self.type_seqs.shape[0] == batch_size, "type_seqs batch size mismatch"
-        assert self.valid_event_mask.shape[0] == batch_size, (
-            "valid_event_mask batch size mismatch"
-        )
+        assert (
+            self.valid_event_mask.shape[0] == batch_size
+        ), "valid_event_mask batch size mismatch"
 
     @classmethod
     def from_mapping(cls, mapping: Dict[str, torch.Tensor]) -> "Batch":

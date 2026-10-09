@@ -1,10 +1,12 @@
-from typing import Optional, Union
-from pydantic import ConfigDict, Field, PositiveInt, PositiveFloat, model_validator
 from pathlib import Path
+from typing import Optional, Union
+
+from pydantic import ConfigDict, Field, PositiveFloat, PositiveInt, model_validator
 
 from new_ltpp.utils import logger
+
 from .base_config import Config
-from .config_utils import load_yaml, extract
+from .config_utils import extract, load_yaml
 
 
 def get_available_gpu() -> int:

@@ -7,9 +7,6 @@ import pytest
 import torch
 from typer.testing import CliRunner
 
-from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
-    EmbeddingKernel,
-)
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protocol import (
     PointProcessKernel,
 )
@@ -17,6 +14,7 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.m_kernel impo
     MKernel,
 )
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
+    EmbeddingKernel,
     RBFKernel,
 )
 from new_ltpp.shared_types import Batch
@@ -159,6 +157,7 @@ def test_effective_config_roundtrip_preserves_simulation_and_output_root(tmp_pat
 
 def test_dataset_revision_is_passed_to_remote_loader(tmp_path, monkeypatch):
     import datasets
+
     from new_ltpp.data.preprocess.data_loader import TPPDataModule
 
     config = make_config(tmp_path)
@@ -245,7 +244,9 @@ def test_two_short_cpu_trainings_repeat_and_select_generated_checkpoint(tmp_path
 
 def test_validation_restores_all_cpu_random_streams():
     import random
+
     import numpy as np
+
     from new_ltpp.runners.rng_callback import ValidationRNGCallback
 
     random.seed(9)
@@ -277,6 +278,7 @@ def test_dataset_split_keeps_all_ids_once(count):
 
 def test_generation_hashes_match_saved_split_files(tmp_path):
     import hashlib
+
     from new_ltpp.data.generation.io_simulator import IOSimulator
 
     records = [{"seq_idx": i, "seq_len": 0} for i in range(7)]
@@ -345,8 +347,8 @@ def test_marked_mmd_is_invariant_to_swapping_and_permuting_unequal_batches():
 
 
 def test_actual_model_simulation_repeats_with_seed(tmp_path):
-    from new_ltpp.runners.model_runner import Runner
     from new_ltpp.models.simulation.simulator import Simulator
+    from new_ltpp.runners.model_runner import Runner
 
     runner = Runner(offline_config(tmp_path, tmp_path / "model"), enable_logging=False)
     times = torch.tensor([[0.0, 0.2, 0.5], [0.0, 0.3, 0.7]])
@@ -445,6 +447,7 @@ def test_cli_replays_effective_configuration_with_complete_cpu_pipeline(
 
 def test_generation_preserves_empty_sequences_and_stable_tied_marks():
     import numpy as np
+
     from new_ltpp.data.generation.simulation_manager import SimulationManager
 
     manager = SimulationManager(lambda: None, 2, 3, 0)
@@ -489,6 +492,7 @@ def test_device_request_is_explicit_and_cpu_is_selectable(monkeypatch):
 
 def test_unsupported_ksd_is_rejected_before_execution():
     from pydantic import ValidationError
+
     from new_ltpp.configs import StatisticalTestConfig
 
     with pytest.raises(ValidationError):
@@ -502,8 +506,8 @@ def test_unsupported_ksd_is_rejected_before_execution():
 
 
 def test_nhp_simulates_without_fictitious_initial_event(tmp_path):
-    from new_ltpp.runners.model_runner import Runner
     from new_ltpp.models.simulation.simulator import Simulator
+    from new_ltpp.runners.model_runner import Runner
 
     runner = Runner(
         offline_config(tmp_path, tmp_path / "unconditional"), enable_logging=False

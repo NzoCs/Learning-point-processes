@@ -8,7 +8,7 @@ def is_master_process():
     Returns:
         bool
     """
-    rank = 0 if os.getenv("RANK") is None else int(os.getenv("RANK")) # type: ignore
+    rank = 0 if os.getenv("RANK") is None else int(os.getenv("RANK"))  # type: ignore
     if rank == 0:
         return True
     else:
@@ -21,11 +21,11 @@ def is_local_master_process():
     Returns:
         bool
     """
-    rank = 0 if os.getenv("RANK") is None else int(os.getenv("RANK")) # type: ignore
+    rank = 0 if os.getenv("RANK") is None else int(os.getenv("RANK"))  # type: ignore
     local_world_size = (
         1
         if os.getenv("LOCAL_WORLD_SIZE") is None
-        else int(os.getenv("LOCAL_WORLD_SIZE")) # type: ignore
+        else int(os.getenv("LOCAL_WORLD_SIZE"))  # type: ignore
     )
     if local_world_size == 0 or rank % local_world_size == 0:
         return True

@@ -5,7 +5,7 @@ Runner for inspection and visualization of TPP data.
 """
 
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal, Optional
 
 from new_ltpp.data.preprocess import Visualizer
 

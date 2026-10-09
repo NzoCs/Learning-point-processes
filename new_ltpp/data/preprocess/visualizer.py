@@ -3,15 +3,15 @@ Visualizer for Temporal Point Process Data.
 """
 
 import os
-from typing import Optional, List
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 from new_ltpp.data.preprocess.data_loader import TPPDataModule
-from new_ltpp.utils import logger
 from new_ltpp.globals import OUTPUT_DIR
+from new_ltpp.utils import logger
 
 
 class Visualizer:

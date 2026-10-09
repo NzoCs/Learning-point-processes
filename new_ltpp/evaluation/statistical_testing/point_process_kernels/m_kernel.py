@@ -1,11 +1,12 @@
-import torch
-from typing import Literal
 from enum import Enum
+from typing import Literal
 
+import torch
 
-from .kernel_protocol import PointProcessKernel, IPointProcessKernel
-from .space_kernels import ISpaceKernel
 from new_ltpp.shared_types import Batch, SimulationResult
+
+from .kernel_protocol import IPointProcessKernel, PointProcessKernel
+from .space_kernels import ISpaceKernel
 
 LossEnum = Literal["energy", "sinkhorn", "hausdorff", "gaussian", "laplacian"]
 
@@ -149,7 +150,9 @@ class MKernel(PointProcessKernel):
 
         Kt_XX_matrix = self.time_kernel.batch_kernel(
             phi_delta_time_seqs, phi_delta_time_seqs
-        ) * self.type_kernel.batch_kernel(phi_type_seqs, phi_type_seqs)  # (B, L, L)
+        ) * self.type_kernel.batch_kernel(
+            phi_type_seqs, phi_type_seqs
+        )  # (B, L, L)
 
         Kt_XY_matrix = self.time_kernel.Gram_matrix(
             phi_delta_time_seqs,  # (B, L, 1)
@@ -163,7 +166,9 @@ class MKernel(PointProcessKernel):
 
         Kt_YY_matrix = self.time_kernel.batch_kernel(
             psi_delta_time_seqs, psi_delta_time_seqs
-        ) * self.type_kernel.batch_kernel(psi_type_seqs, psi_type_seqs)  # (B, K, K)
+        ) * self.type_kernel.batch_kernel(
+            psi_type_seqs, psi_type_seqs
+        )  # (B, K, K)
 
         # --- Mask out padded positions before summing ---
 

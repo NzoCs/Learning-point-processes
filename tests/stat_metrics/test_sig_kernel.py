@@ -1,8 +1,8 @@
 """Tests for SIGKernel with synthetic data - normalization and embedding."""
 
+import pysiglib
 import pytest
 import torch
-import pysiglib
 
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.sig_kernel import (
     SIGKernel,

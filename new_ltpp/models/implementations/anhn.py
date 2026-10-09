@@ -1,13 +1,14 @@
 """Attentive Neural Hawkes Network (ANHN) implementation."""
 
-from typing import Tuple, TypedDict, Optional
+from typing import Optional, Tuple, TypedDict
 
 import torch
 from torch import nn
 
+from new_ltpp.models.base.training import TrainingMixin
+
 # Assurez-vous que ces imports correspondent à votre structure de projet
 from new_ltpp.models.implementations.baselayer import MultiHeadAttention
-from new_ltpp.models.base.training import TrainingMixin
 from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask

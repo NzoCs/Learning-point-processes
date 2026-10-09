@@ -8,8 +8,8 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.m_kernel impo
     MKernelTransform,
 )
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
-    LinearKernel,
     EmbeddingKernel,
+    LinearKernel,
     RBFKernel,
 )
 from new_ltpp.evaluation.statistical_testing.point_process_metric import MMD

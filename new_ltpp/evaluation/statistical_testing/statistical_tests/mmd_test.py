@@ -1,16 +1,17 @@
 from typing import Optional
-from new_ltpp.configs import StatisticalTestConfig
+
 import torch
 
+from new_ltpp.configs import StatisticalTestConfig
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
-from new_ltpp.evaluation.statistical_testing.point_process_metric import MMD
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protocol import (
     IPointProcessKernel,
 )
+from new_ltpp.evaluation.statistical_testing.point_process_metric import MMD
 from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.shared_types import Batch
 
-from .base_test import ITest, FinalTestResult, TestStatistics
+from .base_test import FinalTestResult, ITest, TestStatistics
 
 
 class MMDTwoSampleTest:
@@ -279,9 +280,11 @@ class MMDTwoSampleTest:
             observed_statistic=observed_mmd,
             permuted_statistics=perm_mmds,
             num_null_samples=perm_mmds.numel(),
-            null_method="simulation_comparison"
-            if simulations is not None and len(simulations) > 1
-            else "permutation",
+            null_method=(
+                "simulation_comparison"
+                if simulations is not None and len(simulations) > 1
+                else "permutation"
+            ),
         )
 
     def test_model(

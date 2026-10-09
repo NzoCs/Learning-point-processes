@@ -1,6 +1,7 @@
 """Ensure the integration gate detects numerical and structural regressions."""
 
 import pytest
+
 from scripts.integration_suite import compare
 
 
@@ -25,6 +26,7 @@ def test_comparison_accepts_small_floating_point_roundoff():
 
 def test_results_csv_aligns_different_phase_columns(tmp_path):
     import pandas as pd
+
     from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 
     target = tmp_path / "results.csv"
@@ -43,10 +45,12 @@ def test_results_csv_aligns_different_phase_columns(tmp_path):
 
 def test_self_correcting_last_step_matches_full_intensity_slice(tmp_path):
     import json
+
     import torch
-    from scripts.integration_suite import FIXTURES
+
     from new_ltpp.configs import RunnerConfig
     from new_ltpp.runners.model_runner import Runner
+    from scripts.integration_suite import FIXTURES
 
     raw = json.loads((FIXTURES / "config.json").read_text())
     raw["model_id"] = raw["model_config"]["model_id"] = "SelfCorrecting"
@@ -68,8 +72,9 @@ def test_self_correcting_last_step_matches_full_intensity_slice(tmp_path):
 
 
 def test_parquet_sequence_ids_count_sequences_instead_of_events(tmp_path):
-    import torch
     import pyarrow.parquet as pq
+    import torch
+
     from new_ltpp.models.simulation.tpp_io import SimulationIOManager
     from new_ltpp.shared_types import Batch
 

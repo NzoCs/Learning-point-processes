@@ -4,8 +4,8 @@ import random
 
 import numpy as np
 import pytorch_lightning as pl
-from pytorch_lightning.trainer.states import TrainerFn
 import torch
+from pytorch_lightning.trainer.states import TrainerFn
 
 
 class ValidationRNGCallback(pl.Callback):
@@ -30,9 +30,9 @@ class ValidationRNGCallback(pl.Callback):
             "python": random.getstate(),
             "numpy": np.random.get_state(),
             "torch": torch.get_rng_state(),
-            "cuda": torch.cuda.get_rng_state_all()
-            if torch.cuda.is_available()
-            else None,
+            "cuda": (
+                torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+            ),
         }
 
     def on_load_checkpoint(self, trainer, pl_module, checkpoint):

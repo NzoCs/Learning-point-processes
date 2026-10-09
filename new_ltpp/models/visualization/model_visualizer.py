@@ -6,13 +6,13 @@ Extracted from VisualizationMixin. Takes a model and a Simulator as dependencies
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, List, Tuple
 from pathlib import Path
+from typing import TYPE_CHECKING, List, Tuple
 
 import torch
 from matplotlib import pyplot as plt
 
-from new_ltpp.utils import save_json, logger
+from new_ltpp.utils import logger, save_json
 
 if TYPE_CHECKING:
     from new_ltpp.models.model_protocol import ISimulableModel

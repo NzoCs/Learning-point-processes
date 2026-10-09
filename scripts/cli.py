@@ -12,7 +12,7 @@ Usage:
 """
 
 import sys
-from typing import List, Optional, Literal, cast
+from typing import List, Literal, Optional, cast
 
 import typer
 from rich.console import Console

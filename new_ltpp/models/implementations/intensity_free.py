@@ -1,4 +1,4 @@
-from typing import Tuple, cast, Any
+from typing import Any, Tuple, cast
 
 import torch
 import torch.distributions as D

@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
-from .mmd_test import MMDTwoSampleTest
-from .base_test import ITest
+
 from ..point_process_kernels.factory import create_point_process_kernel
+from .base_test import ITest
+from .mmd_test import MMDTwoSampleTest
 
 if TYPE_CHECKING:
     from new_ltpp.configs.statistical_test_config import StatisticalTestConfig

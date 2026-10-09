@@ -3,13 +3,12 @@
 Run `uv build --wheel --no-sources` before this test.
 """
 
-from pathlib import Path
 import subprocess
 import sys
 import zipfile
+from pathlib import Path
 
 import pytest
-
 
 ROOT = Path(__file__).resolve().parents[2]
 

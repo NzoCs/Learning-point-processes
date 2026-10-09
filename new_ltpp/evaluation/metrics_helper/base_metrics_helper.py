@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Set, Union, Protocol, runtime_checkable
+from typing import Any, Dict, List, Optional, Protocol, Set, Union, runtime_checkable
 
 from new_ltpp.utils import logger
 

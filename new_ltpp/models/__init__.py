@@ -8,10 +8,10 @@ from new_ltpp.models.implementations.ode_tpp import ODETPP
 from new_ltpp.models.implementations.rmtpp import RMTPP
 from new_ltpp.models.implementations.sahp import SAHP
 from new_ltpp.models.implementations.thp import THP
+from new_ltpp.models.parametric.hawkes import Hawkes
 
 # Parametric models
 from new_ltpp.models.parametric.self_correcting import SelfCorrecting
-from new_ltpp.models.parametric.hawkes import Hawkes
 
 __all__ = [
     "RMTPP",

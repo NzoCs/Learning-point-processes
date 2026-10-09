@@ -34,9 +34,7 @@ class LastMarkBenchmark(TypeBenchmark):
         # Create predictions for marks using lag-1 strategy
         pred_types = torch.zeros_like(type_seqs)
         mask = batch.valid_event_mask
-        safe_type_seqs = type_seqs.masked_fill(
-            ~mask, 0
-        )  # Avoid pad token issues
+        safe_type_seqs = type_seqs.masked_fill(~mask, 0)  # Avoid pad token issues
 
         # For positions 1 to seq_len-1, use the previous mark (lag-1)
         if seq_len > 1:

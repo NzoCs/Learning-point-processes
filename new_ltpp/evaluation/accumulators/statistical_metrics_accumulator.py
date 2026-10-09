@@ -1,11 +1,13 @@
-from typing import Optional, Any
+from typing import Any, Optional
+
+from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
 from new_ltpp.evaluation.statistical_testing.statistical_tests import (
     create_statistical_test,
 )
 from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
-from .base_accumulator import Accumulator
+
 from .acc_types import StatisticalTestData
+from .base_accumulator import Accumulator
 
 
 class StatisticalTestAccumulator(Accumulator):

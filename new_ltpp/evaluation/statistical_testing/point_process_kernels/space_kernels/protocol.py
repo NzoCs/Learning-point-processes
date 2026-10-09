@@ -1,6 +1,7 @@
-import torch
+from abc import ABC, abstractmethod
 from typing import runtime_checkable
-from abc import abstractmethod, ABC
+
+import torch
 
 
 class ISpaceKernel(ABC, torch.nn.Module):

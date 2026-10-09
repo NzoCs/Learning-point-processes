@@ -13,14 +13,14 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
+from new_ltpp.evaluation.accumulators.acc_types import FinalResult
 from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.utils import logger
-from new_ltpp.evaluation.accumulators.acc_types import FinalResult
 
 if TYPE_CHECKING:
+    from new_ltpp.configs.runner_config import StatisticalTestConfig
     from new_ltpp.evaluation import BatchStatisticsCollector
     from new_ltpp.models.model_protocol import ISimulableModel
-    from new_ltpp.configs.runner_config import StatisticalTestConfig
 
 
 class Buffers(TypedDict):

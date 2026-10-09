@@ -7,12 +7,12 @@ Intensity :
 
 from typing import Optional
 
-from new_ltpp.models.base import TrainingMixin
-from new_ltpp.shared_types import Batch, SimulationResult
-
 import torch
 import torch.nn.functional as F
 from torch import nn
+
+from new_ltpp.models.base import TrainingMixin
+from new_ltpp.shared_types import Batch, SimulationResult
 
 
 class SelfCorrecting(TrainingMixin):
@@ -206,9 +206,7 @@ class SelfCorrecting(TrainingMixin):
     # State Synchronization & Simulation
     # ──────────────────────────────────────────────────────────────────────────
 
-    def sync_state(
-        self, batch: Batch
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def sync_state(self, batch: Batch) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Synchronise l'état interne (H, t_current) à partir d'un batch d'historique.
 
@@ -224,7 +222,9 @@ class SelfCorrecting(TrainingMixin):
         dev = time_seqs.device
 
         if time_seqs.size(1) == 0:
-            return torch.zeros((B, K), dtype=torch.float32, device=dev), torch.zeros(B, dtype=torch.float32, device=dev)
+            return torch.zeros((B, K), dtype=torch.float32, device=dev), torch.zeros(
+                B, dtype=torch.float32, device=dev
+            )
 
         # ── 1. Calcul de H (Somme des pénalités passées) ──
         safe_types = type_seqs.long().clone()
@@ -256,7 +256,7 @@ class SelfCorrecting(TrainingMixin):
         dev = getattr(self, "device", torch.device("cpu"))
         K = self.num_event_types
         batch_size = batch.time_seqs.size(0)
-        
+
         if num_events_to_simulate is None:
             num_events_to_simulate = batch.time_seqs.size(1)
             if num_events_to_simulate == 0:

@@ -6,10 +6,9 @@ Inspired by run_all_phase.py for loading full configuration from YAML.
 """
 
 import os
-from uuid import uuid4
 from pathlib import Path
 from typing import Optional, Union
-
+from uuid import uuid4
 
 from new_ltpp.runners.runner_manager import RunnerManager
 

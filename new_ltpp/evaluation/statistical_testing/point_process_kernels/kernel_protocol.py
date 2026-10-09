@@ -1,6 +1,7 @@
-import torch
 from abc import ABC, abstractmethod
 from typing import Protocol, runtime_checkable
+
+import torch
 
 from new_ltpp.shared_types import Batch, SimulationResult
 

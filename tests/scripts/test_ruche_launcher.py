@@ -1,14 +1,13 @@
 """Exercise launch plans without installing native dependencies or reserving GPUs."""
 
 import os
-from pathlib import Path
 import shlex
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 import yaml
-
 
 ROOT = Path(__file__).resolve().parents[2]
 BASH = shutil.which("bash")

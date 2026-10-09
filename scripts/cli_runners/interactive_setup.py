@@ -73,9 +73,7 @@ class InteractiveSetup(CLIRunnerBase):
             self.print_success(f"Configuration saved: {output_path_obj}")
 
             # Offer to launch the experiment directly
-            if setup_type == "experiment" and Confirm.ask(
-                "Launch the experiment now?"
-            ):
+            if setup_type == "experiment" and Confirm.ask("Launch the experiment now?"):
                 return self._launch_experiment(output_path_obj)
 
         return True
@@ -193,9 +191,7 @@ class InteractiveSetup(CLIRunnerBase):
     def _setup_runner_section(self, quick_mode: bool) -> Dict[str, Any]:
         """Runner section for experiment configuration."""
         if self.console:
-            self.console.print(
-                "[bold green]Training Configuration[/bold green]"
-            )
+            self.console.print("[bold green]Training Configuration[/bold green]")
 
         runner_config = {}
 

@@ -52,7 +52,9 @@ class EventSampler(nn.Module):
 
         tnorm = torch.linspace(
             0.0, self.dtime_max, self.num_samples_boundary, device=self.device
-        )[None, None, :]  # [1,1,K]
+        )[
+            None, None, :
+        ]  # [1,1,K]
 
         tnorm = tnorm.expand(batch_size, seq_len, self.num_samples_boundary)  # [B,L,K]
 
@@ -196,7 +198,9 @@ class EventSampler(nn.Module):
             newly_accepted = unaccepted_mask & accepted_in_this_batch
             gathered_times = torch.gather(
                 exp_j_tiled, dim=-1, index=idx.unsqueeze(-1)
-            ).squeeze(-1)  # [B, L_out, num_sample]
+            ).squeeze(
+                -1
+            )  # [B, L_out, num_sample]
 
             accepted_dtimes = torch.where(
                 newly_accepted, gathered_times, accepted_dtimes

@@ -7,11 +7,10 @@ import torch
 import torch.nn.functional as F
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 
-from new_ltpp.evaluation.metrics_helper import MetricsManager
-from new_ltpp.shared_types import Batch, OneStepPred
-
-from new_ltpp.models.simulation.simulator import Simulator
 from new_ltpp.configs.model_config import ModelConfig
+from new_ltpp.evaluation.metrics_helper import MetricsManager
+from new_ltpp.models.simulation.simulator import Simulator
+from new_ltpp.shared_types import Batch, OneStepPred
 
 from .prediction import PredictionMixin
 
@@ -112,14 +111,14 @@ class TrainingMixin(PredictionMixin):
             raise RuntimeError(
                 "No statistics collector. Call simulator.init_statistics_collector() first."
             )
-        
+
         # Update statistics
         simulator._statistics_collector.update(batch, sim)
-        
+
         # Accumulate results for saving (via SimulationIOManager)
         if self._io_manager is not None:
             self._io_manager.update(sim)
-        
+
         simulator.last_result = sim
         return None
 

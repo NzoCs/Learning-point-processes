@@ -5,9 +5,9 @@ from torch import nn
 from torch.autograd import grad
 from torch.nn import functional as F
 
+from new_ltpp.models.base.training import TrainingMixin
 from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
-from new_ltpp.models.base.training import TrainingMixin
 
 
 class CumulHazardFunctionNetwork(nn.Module):

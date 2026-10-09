@@ -313,7 +313,9 @@ class TimeShiftedPositionalEncoding(nn.Module):
             new_max_len = max(L, self.position.size(0) * 2)
             self.register_buffer(
                 "position",
-                torch.arange(new_max_len, device=self.position.device, dtype=self.position.dtype).unsqueeze(1)
+                torch.arange(
+                    new_max_len, device=self.position.device, dtype=self.position.dtype
+                ).unsqueeze(1),
             )
         arc = (self.position[:L] * self.div_term).unsqueeze(0)
         pe_sin = torch.sin(arc + phi)

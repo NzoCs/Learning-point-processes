@@ -3,21 +3,20 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Union, Any
+from typing import Any, Optional, Union
 
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from torch import optim
 
+from new_ltpp.configs import ModelConfig
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.event_sampler import EventSampler
-from new_ltpp.shared_types import Batch
 
 # Tu devras t'assurer que ces imports correspondent bien à ton architecture
 from new_ltpp.models.model_registry import RegistryMeta
-from new_ltpp.configs import ModelConfig
-from new_ltpp.shared_types import DataInfo
+from new_ltpp.shared_types import Batch, DataInfo
 
 
 class BaseModel(

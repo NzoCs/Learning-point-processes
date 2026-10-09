@@ -1,12 +1,13 @@
 # new_ltpp/models/mixins/prediction_mixin.py
 """Mixin for prediction methods (one-step and multi-step)."""
 
-import torch
 from typing import Optional
+
+import torch
 
 from new_ltpp.models.simulation.simulator import Simulator
 from new_ltpp.models.simulation.tpp_io import SimulationIOManager
-from new_ltpp.shared_types import SimulationResult, Batch, OneStepPred
+from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 
 from .base_model import NeuralModel
 
@@ -104,13 +105,13 @@ class PredictionMixin(NeuralModel):
             )
 
         simulator: "Simulator" = self._simulator
-        sim = simulator.simulate(batch=batch, num_events_to_simulate=num_events_to_simulate)
+        sim = simulator.simulate(
+            batch=batch, num_events_to_simulate=num_events_to_simulate
+        )
 
         return sim
 
-    def _create_empty_batch(
-        self, batch_size: int, num_events: int = 100
-    ) -> Batch:
+    def _create_empty_batch(self, batch_size: int, num_events: int = 100) -> Batch:
         device = self.device
         return Batch(
             time_seqs=torch.zeros(

@@ -1,10 +1,10 @@
-from new_ltpp.configs import TokenizerConfig
 from typing import Iterator, Literal
 
 import numpy as np
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
+from new_ltpp.configs import TokenizerConfig
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_collator import TPPDataCollator
 from new_ltpp.data.preprocess.dataset import TPPDataset

@@ -1,10 +1,10 @@
 import numpy as np
-import torch
 import pytest
+import torch
 
-from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.evaluation.accumulators.len_accumulator import SequenceLengthAccumulator
 from new_ltpp.evaluation.accumulators.corr_accumulator import CorrAccumulator
+from new_ltpp.evaluation.accumulators.len_accumulator import SequenceLengthAccumulator
+from new_ltpp.shared_types import Batch, SimulationResult
 
 
 def test_sequence_length_accumulator_edge_cases():
@@ -15,25 +15,33 @@ def test_sequence_length_accumulator_edge_cases():
 
     # Construct batch
     # Sequence lengths: 8, 5, 10, 2
-    valid_mask = torch.tensor([
-        [True] * 8 + [False] * 2,
-        [True] * 5 + [False] * 5,
-        [True] * 10,
-        [True] * 2 + [False] * 8
-    ], dtype=torch.bool, device=device)
+    valid_mask = torch.tensor(
+        [
+            [True] * 8 + [False] * 2,
+            [True] * 5 + [False] * 5,
+            [True] * 10,
+            [True] * 2 + [False] * 8,
+        ],
+        dtype=torch.bool,
+        device=device,
+    )
 
-    time_seqs = torch.tensor([
-        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 0.0, 0.0],
-        [2.0, 4.0, 6.0, 8.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5],
-        [5.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    ], dtype=torch.float32, device=device)
+    time_seqs = torch.tensor(
+        [
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 0.0, 0.0],
+            [2.0, 4.0, 6.0, 8.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5],
+            [5.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        ],
+        dtype=torch.float32,
+        device=device,
+    )
 
     batch = Batch(
         time_seqs=time_seqs,
         time_delta_seqs=torch.zeros_like(time_seqs),
         type_seqs=torch.zeros_like(time_seqs, dtype=torch.long),
-        valid_event_mask=valid_mask
+        valid_event_mask=valid_mask,
     )
 
     # SimulationResult with normal, 1, and 0 events
@@ -41,25 +49,33 @@ def test_sequence_length_accumulator_edge_cases():
     # Seq 1: 1 simulated event (critical edge case!)
     # Seq 2: 0 simulated events (critical edge case!)
     # Seq 3: 3 simulated events
-    sim_mask = torch.tensor([
-        [True] * 5 + [False] * 5,
-        [True] * 1 + [False] * 9,
-        [False] * 10,
-        [True] * 3 + [False] * 7
-    ], dtype=torch.bool, device=device)
+    sim_mask = torch.tensor(
+        [
+            [True] * 5 + [False] * 5,
+            [True] * 1 + [False] * 9,
+            [False] * 10,
+            [True] * 3 + [False] * 7,
+        ],
+        dtype=torch.bool,
+        device=device,
+    )
 
-    sim_time_seqs = torch.tensor([
-        [1.5, 2.5, 3.5, 4.5, 5.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [6.0, 7.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    ], dtype=torch.float32, device=device)
+    sim_time_seqs = torch.tensor(
+        [
+            [1.5, 2.5, 3.5, 4.5, 5.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [6.0, 7.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        ],
+        dtype=torch.float32,
+        device=device,
+    )
 
     simulation = SimulationResult(
         time_seqs=sim_time_seqs,
         time_delta_seqs=torch.zeros_like(sim_time_seqs),
         type_seqs=torch.zeros_like(sim_time_seqs, dtype=torch.long),
-        valid_event_mask=sim_mask
+        valid_event_mask=sim_mask,
     )
 
     # Initialize accumulator
@@ -86,47 +102,63 @@ def test_corr_accumulator_edge_cases():
     device = torch.device("cpu")
 
     # Construct batch
-    valid_mask = torch.tensor([
-        [True] * 8 + [False] * 2,
-        [True] * 5 + [False] * 5,
-        [True] * 10,
-        [True] * 2 + [False] * 8
-    ], dtype=torch.bool, device=device)
+    valid_mask = torch.tensor(
+        [
+            [True] * 8 + [False] * 2,
+            [True] * 5 + [False] * 5,
+            [True] * 10,
+            [True] * 2 + [False] * 8,
+        ],
+        dtype=torch.bool,
+        device=device,
+    )
 
-    time_seqs = torch.tensor([
-        [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 0.0, 0.0],
-        [2.0, 4.0, 6.0, 8.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5],
-        [5.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    ], dtype=torch.float32, device=device)
+    time_seqs = torch.tensor(
+        [
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 0.0, 0.0],
+            [2.0, 4.0, 6.0, 8.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5],
+            [5.0, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        ],
+        dtype=torch.float32,
+        device=device,
+    )
 
     batch = Batch(
         time_seqs=time_seqs,
         time_delta_seqs=torch.zeros_like(time_seqs),
         type_seqs=torch.zeros_like(time_seqs, dtype=torch.long),
-        valid_event_mask=valid_mask
+        valid_event_mask=valid_mask,
     )
 
     # SimulationResult with normal, 1, and 0 events
-    sim_mask = torch.tensor([
-        [True] * 5 + [False] * 5,
-        [True] * 1 + [False] * 9,
-        [False] * 10,
-        [True] * 3 + [False] * 7
-    ], dtype=torch.bool, device=device)
+    sim_mask = torch.tensor(
+        [
+            [True] * 5 + [False] * 5,
+            [True] * 1 + [False] * 9,
+            [False] * 10,
+            [True] * 3 + [False] * 7,
+        ],
+        dtype=torch.bool,
+        device=device,
+    )
 
-    sim_time_seqs = torch.tensor([
-        [1.5, 2.5, 3.5, 4.5, 5.5, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [6.0, 7.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    ], dtype=torch.float32, device=device)
+    sim_time_seqs = torch.tensor(
+        [
+            [1.5, 2.5, 3.5, 4.5, 5.5, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [6.0, 7.0, 8.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        ],
+        dtype=torch.float32,
+        device=device,
+    )
 
     simulation = SimulationResult(
         time_seqs=sim_time_seqs,
         time_delta_seqs=torch.zeros_like(sim_time_seqs),
         type_seqs=torch.zeros_like(sim_time_seqs, dtype=torch.long),
-        valid_event_mask=sim_mask
+        valid_event_mask=sim_mask,
     )
 
     accumulator = CorrAccumulator(min_sim_events=1, nb_bins=10, max_lag=5)

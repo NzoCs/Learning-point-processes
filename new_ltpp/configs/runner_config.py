@@ -1,18 +1,18 @@
 import os
 import re
-from uuid import uuid4
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
+from uuid import uuid4
 
-from pydantic import Field, PositiveInt, model_validator, ConfigDict
+from pydantic import ConfigDict, Field, PositiveInt, model_validator
 
 from new_ltpp.configs.base_config import Config
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.configs.logger_config import LoggerConfig, LoggerType
 from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.configs.statistical_test_config import (
-    StatisticalTestConfig,
     SimulationConfig,
+    StatisticalTestConfig,
 )
 from new_ltpp.globals import OUTPUT_DIR
 

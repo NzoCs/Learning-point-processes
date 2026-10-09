@@ -5,11 +5,11 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import platform
 import subprocess
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "integration"
@@ -69,6 +69,7 @@ def run_model(model_name, output):
     import numpy as np
     import pyarrow.parquet as pq
     import torch
+
     import new_ltpp.models as models
     from new_ltpp.configs import RunnerConfig
     from new_ltpp.runners.runner_manager import RunnerManager
@@ -91,6 +92,7 @@ def run_model(model_name, output):
     config_path = output / "effective.yaml"
     config.save_to_yaml_file(config_path)
     from typer.testing import CliRunner
+
     from scripts.cli import app
 
     os.environ["LTPP_RUN_ID"] = "integration"

@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
 import pytorch_lightning as pl
 import torch
@@ -15,8 +15,9 @@ from pytorch_lightning.loggers.logger import Logger as LightningLogger
 from pytorch_lightning.strategies import DDPStrategy
 
 from new_ltpp.configs.runner_config import TrainingConfig
-from .rng_callback import ValidationRNGCallback
 from new_ltpp.utils import logger as console_logger
+
+from .rng_callback import ValidationRNGCallback
 
 
 class CheckpointManager:

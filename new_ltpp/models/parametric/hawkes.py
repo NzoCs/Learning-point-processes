@@ -9,14 +9,13 @@ Intensity:
     (where μ_k, α, β are constrained to be positive via squaring)
 """
 
-from new_ltpp.models.base import TrainingMixin
-
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
+from new_ltpp.models.base import TrainingMixin
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
@@ -117,8 +116,6 @@ class Hawkes(TrainingMixin):
         out = F.embedding(safe, weight)  # [B, L, K]
         return out * valid_mask.float().unsqueeze(-1)
 
-
-
     # ──────────────────────────────────────────────────────────────────────────
     # Core intensity computation
     # ──────────────────────────────────────────────────────────────────────────
@@ -188,7 +185,7 @@ class Hawkes(TrainingMixin):
         self,
         time_seq: torch.Tensor,  # [B, L]
         type_seq: torch.Tensor,  # [B, L]
-        mask: torch.Tensor,      # [B, L]
+        mask: torch.Tensor,  # [B, L]
     ) -> torch.Tensor:
         """Computes the total integral of the intensity over the observation window [0, T]."""
         B, L = time_seq.shape
@@ -214,7 +211,7 @@ class Hawkes(TrainingMixin):
         # term = α * (1 - exp(-β * (T - t_i)))
         tau_3d = tau.unsqueeze(-1)  # [B, L, 1]
         excitation = alpha_src * (1.0 - torch.exp(-beta_src * tau_3d))  # [B, L, K]
-        
+
         # Only valid events contribute to the excitation integral
         excitation = excitation * mask.float().unsqueeze(-1)  # [B, L, K]
 
@@ -240,12 +237,16 @@ class Hawkes(TrainingMixin):
             type_seqs=safe_types,
             valid_event_mask=mask,
             compute_last_step_only=False,
-        ).squeeze(-2)  # [B, L, K]
+        ).squeeze(
+            -2
+        )  # [B, L, K]
 
         # Target ALL valid events
         target_types = safe_types.unsqueeze(-1)  # [B, L, 1]
-        lambda_target = torch.gather(intensities_full, -1, target_types).squeeze(-1) # [B, L]
-        
+        lambda_target = torch.gather(intensities_full, -1, target_types).squeeze(
+            -1
+        )  # [B, L]
+
         event_ll = torch.log(lambda_target + 1e-9)
         event_ll = (event_ll * mask).sum()
 
@@ -318,7 +319,7 @@ class Hawkes(TrainingMixin):
         dev = getattr(self, "device", torch.device("cpu"))
         K = self.num_event_types
         B = batch.time_seqs.size(0)
-        
+
         if num_events_to_simulate is None:
             num_events_to_simulate = batch.time_seqs.size(1)
             if num_events_to_simulate == 0:
@@ -346,15 +347,23 @@ class Hawkes(TrainingMixin):
             active = torch.ones(B, dtype=torch.bool, device=dev)
 
             # ── Pre-allocate tensors ──
-            all_times = torch.zeros((B, num_events_to_simulate), dtype=torch.float32, device=dev)
-            all_deltas = torch.zeros((B, num_events_to_simulate), dtype=torch.float32, device=dev)
-            all_types = torch.zeros((B, num_events_to_simulate), dtype=torch.long, device=dev)
+            all_times = torch.zeros(
+                (B, num_events_to_simulate), dtype=torch.float32, device=dev
+            )
+            all_deltas = torch.zeros(
+                (B, num_events_to_simulate), dtype=torch.float32, device=dev
+            )
+            all_types = torch.zeros(
+                (B, num_events_to_simulate), dtype=torch.long, device=dev
+            )
             lens = torch.zeros(B, dtype=torch.long, device=dev)
 
             # ── Ogata thinning loop ──
             while active.any():
                 # A. Upper-bound intensity  M[b] = Σ_k λ_k^{UB}(t)
-                M = ((mu + (alpha_beta * R).sum(dim=2)).sum(dim=1).clamp(min=self.eps))  # [B]
+                M = (
+                    (mu + (alpha_beta * R).sum(dim=2)).sum(dim=1).clamp(min=self.eps)
+                )  # [B]
 
                 # B. Sample candidate arrival
                 dt_prop = torch.empty(B, device=dev).exponential_(1.0) / M  # [B]
@@ -386,7 +395,7 @@ class Hawkes(TrainingMixin):
                 # H. Record accepted events
                 curr_lens = lens[acc_idx]
                 dt_acc = t_cand[acc_idx] - last_event_t[acc_idx]
-                
+
                 all_times[acc_idx, curr_lens] = t_cand[acc_idx]
                 all_deltas[acc_idx, curr_lens] = dt_acc
                 all_types[acc_idx, curr_lens] = k

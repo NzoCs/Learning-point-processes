@@ -1,10 +1,11 @@
-from typing import List, Literal, Optional, Union
 from pathlib import Path
+from typing import List, Literal, Optional, Union
+
 from pydantic import model_validator
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
+from new_ltpp.configs.config_utils import extract, load_yaml
 from new_ltpp.utils.const import PaddingStrategy, TruncationStrategy
-from new_ltpp.configs.config_utils import load_yaml, extract
 
 
 class TokenizerConfig(Config):

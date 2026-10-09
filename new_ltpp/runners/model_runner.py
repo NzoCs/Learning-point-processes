@@ -1,12 +1,13 @@
 from typing import Any, cast
+
 import pytorch_lightning as pl
 
 from new_ltpp.configs import RunnerConfig
 from new_ltpp.configs.logger_config import LoggerFactory
 from new_ltpp.data.preprocess import TPPDataModule
+from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 from new_ltpp.models.model_factory import ModelFactory
 from new_ltpp.runners.callbacks import PredictionStatsCallback, TestCallback
-from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 from new_ltpp.runners.trainer_factory import (
     TrainerFactory,
 )

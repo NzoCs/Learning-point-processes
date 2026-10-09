@@ -18,6 +18,7 @@ from abc import ABCMeta
 from typing import Dict, Optional, Type, cast
 
 from new_ltpp.utils import logger
+
 from .model_protocol import ITPPModel
 
 

@@ -6,6 +6,7 @@ import json
 
 def check_backend(device: str) -> dict:
     import torch
+
     from new_ltpp.evaluation.statistical_testing.point_process_kernels.sig_kernel import (
         SIGKernel,
     )

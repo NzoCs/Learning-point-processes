@@ -3,16 +3,16 @@
 import pytest
 import torch
 
-from new_ltpp.shared_types import Batch
-from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import (
-    _get_embedding,
-)
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.sig_kernel import (
     SIGKernel,
 )
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
     LinearKernel,
 )
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import (
+    _get_embedding,
+)
+from new_ltpp.shared_types import Batch
 
 
 def sample(padding=None):

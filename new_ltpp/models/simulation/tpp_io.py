@@ -1,13 +1,13 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
 
-import torch
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import torch
 
-from new_ltpp.utils import logger
 from new_ltpp.shared_types import SimulationResult
+from new_ltpp.utils import logger
 
 
 class IncrementalParquetWriter:
@@ -146,7 +146,7 @@ class SimulationIOManager:
                 continue
 
             t0 = seq_times[0].item()
-            
+
             # Compute relative times
             time_since_start = (seq_times - t0).tolist()
             time_since_last_event = torch.cat(

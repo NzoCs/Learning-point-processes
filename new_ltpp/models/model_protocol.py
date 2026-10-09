@@ -6,7 +6,7 @@ INeuralTPPModel  — extension for neural architectures.
 """
 
 from pathlib import Path
-from typing import Protocol, Union, Any, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional, Protocol, Union
 
 import torch
 import torch.optim as optim

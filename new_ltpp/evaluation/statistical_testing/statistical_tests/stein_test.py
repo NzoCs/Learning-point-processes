@@ -1,5 +1,5 @@
-from new_ltpp.models.base.base_model import NeuralModel
 from new_ltpp.data.preprocess.data_loader import TypedDataLoader
+from new_ltpp.models.base.base_model import NeuralModel
 
 
 class SteinTest:

@@ -99,8 +99,8 @@ class SelfCorrecting(Simulator):
 
         if self.burn_in > 0 and len(times_arr) > self.burn_in:
             t_shift = times_arr[self.burn_in - 1]
-            times_arr = times_arr[self.burn_in:] - t_shift
-            marks_arr = marks_arr[self.burn_in:]
+            times_arr = times_arr[self.burn_in :] - t_shift
+            marks_arr = marks_arr[self.burn_in :]
 
         return times_arr, marks_arr
 
@@ -135,9 +135,7 @@ class SelfCorrecting(Simulator):
 
         return results
 
-    def _simulate_batch(
-        self, B: int
-    ) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def _simulate_batch(self, B: int) -> List[Tuple[np.ndarray, np.ndarray]]:
         """
         Core vectorized exact-sampling loop for a batch of B independent paths.
 
@@ -163,10 +161,10 @@ class SelfCorrecting(Simulator):
         dim = self.dim_process
 
         # State variables
-        x = np.zeros((B, dim), dtype=np.float64)                  # (B, dim)
-        t = np.zeros(B, dtype=np.float64)                         # (B,)
+        x = np.zeros((B, dim), dtype=np.float64)  # (B, dim)
+        t = np.zeros(B, dtype=np.float64)  # (B,)
         next_event_times = np.full((B, dim), np.inf, dtype=np.float64)  # (B, dim)
-        active = np.ones(B, dtype=bool)                            # (B,)
+        active = np.ones(B, dtype=bool)  # (B,)
         event_counts = np.zeros(B, dtype=int)
 
         # Event storage
@@ -176,19 +174,19 @@ class SelfCorrecting(Simulator):
         # ── Initialise first next-event times for each (path, dim) ────────────
         # tau = log(E * mu[d] / exp(x[:, d]) + 1) / mu[d]   with E ~ Exp(1)
         E = np.random.exponential(size=(B, dim))  # (B, dim)
-        tau_init = np.log(
-            E * self.mu[np.newaxis, :] / np.exp(x) + 1
-        ) / self.mu[np.newaxis, :]                # (B, dim)
+        tau_init = (
+            np.log(E * self.mu[np.newaxis, :] / np.exp(x) + 1) / self.mu[np.newaxis, :]
+        )  # (B, dim)
         next_event_times = t[:, np.newaxis] + tau_init  # (B, dim)
 
         while np.any(active):
             # ── Find next event per path ──────────────────────────────────────
-            next_dim = np.argmin(next_event_times, axis=1)   # (B,) — winning dimension
+            next_dim = np.argmin(next_event_times, axis=1)  # (B,) — winning dimension
             next_time = next_event_times[np.arange(B), next_dim]  # (B,)
 
             # ── Advance compensator state x for active paths ──────────────────
             # x[b, :] += mu * (next_time[b] - t[b])
-            delta_t = np.where(active, next_time - t, 0.0)   # (B,)
+            delta_t = np.where(active, next_time - t, 0.0)  # (B,)
             x += self.mu[np.newaxis, :] * delta_t[:, np.newaxis]  # (B, dim)
 
             # ── Record events for active paths ────────────────────────────────
@@ -207,7 +205,7 @@ class SelfCorrecting(Simulator):
             # Flatten: for each active path b, subtract alpha_matrix[:, d]
             # alpha_matrix[:, next_dim[active_idx]] has shape (dim, n_active)
             # We want x[active_idx, :] -= alpha_matrix[:, next_dim[active_idx]].T
-            winning_dims = next_dim[active_idx]              # (n_active,)
+            winning_dims = next_dim[active_idx]  # (n_active,)
             x[active_idx] -= self.alpha_matrix[:, winning_dims].T  # (n_active, dim)
 
             # ── Update current time ───────────────────────────────────────────
@@ -216,8 +214,8 @@ class SelfCorrecting(Simulator):
             # ── Recompute next-event time ONLY for the winning dimension ──────
             # Only active paths need a new tau for their winning dimension
             E_new = np.random.exponential(size=len(active_idx))  # (n_active,)
-            x_d = x[active_idx, winning_dims]                    # (n_active,)
-            mu_d = self.mu[winning_dims]                          # (n_active,)
+            x_d = x[active_idx, winning_dims]  # (n_active,)
+            mu_d = self.mu[winning_dims]  # (n_active,)
             tau_new = np.log(E_new * mu_d / np.exp(x_d) + 1) / mu_d  # (n_active,)
             next_event_times[active_idx, winning_dims] = t[active_idx] + tau_new
 
@@ -232,8 +230,8 @@ class SelfCorrecting(Simulator):
 
             if self.burn_in > 0 and len(times_arr) > self.burn_in:
                 t_shift = times_arr[self.burn_in - 1]
-                times_arr = times_arr[self.burn_in:] - t_shift
-                marks_arr = marks_arr[self.burn_in:]
+                times_arr = times_arr[self.burn_in :] - t_shift
+                marks_arr = marks_arr[self.burn_in :]
 
             results.append((times_arr, marks_arr))
 

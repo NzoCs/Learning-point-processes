@@ -15,7 +15,7 @@ Usage:
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, Union, List
+from typing import Any, Dict, List, Optional, Type, Union
 
 from new_ltpp.configs import DataConfig
 from new_ltpp.globals import OUTPUT_DIR

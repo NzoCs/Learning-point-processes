@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
-from .mmd import MMD
-from .base_stat_metric import IStatMetric
+
 from ..point_process_kernels.factory import create_point_process_kernel
+from .base_stat_metric import IStatMetric
+from .mmd import MMD
 
 if TYPE_CHECKING:
     from new_ltpp.configs.statistical_test_config import StatisticalTestConfig

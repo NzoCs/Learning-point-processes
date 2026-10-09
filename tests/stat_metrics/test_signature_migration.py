@@ -111,6 +111,7 @@ def test_gradients_follow_solver_finite_differences(kernel):
 
 def test_legacy_backend_configuration_is_rejected():
     from pydantic import ValidationError
+
     from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
 
     with pytest.raises(ValidationError, match="signature_backend"):
@@ -125,10 +126,10 @@ def test_legacy_backend_configuration_is_rejected():
 
 
 def test_project_embedding_with_padding_and_empty_sequence():
-    from new_ltpp.shared_types import Batch
     from new_ltpp.evaluation.statistical_testing.point_process_kernels.sig_kernel import (
         SIGKernel,
     )
+    from new_ltpp.shared_types import Batch
 
     times = torch.tensor([[0.1, 0.5, 0.9], [0.2, 8.0, 8.0], [8.0, 8.0, 8.0]])
     mask = torch.tensor(

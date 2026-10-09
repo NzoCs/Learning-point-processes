@@ -80,13 +80,13 @@ def test_make_benchmark_list():
 def test_make_run_without_args():
     """`make run` without MODEL_ID / DATA should exit non-zero with a hint."""
     result = _make("run")
-    assert result.returncode != 0, (
-        "make run should fail when MODEL_ID / DATA are missing"
-    )
+    assert (
+        result.returncode != 0
+    ), "make run should fail when MODEL_ID / DATA are missing"
     combined = result.stdout + result.stderr
-    assert "MODEL_ID" in combined or "required" in combined.lower(), (
-        f"Expected a 'MODEL_ID required' message, got:\n{combined}"
-    )
+    assert (
+        "MODEL_ID" in combined or "required" in combined.lower()
+    ), f"Expected a 'MODEL_ID required' message, got:\n{combined}"
 
 
 # ---------------------------------------------------------------------------
@@ -98,17 +98,19 @@ def test_make_lint():
     """`make lint` runs flake8 – may report issues but must not crash."""
     result = _make("lint")
     # flake8 exits 0 when no issues, 1 when issues found; both are fine here.
-    assert result.returncode in (0, 1), (
-        f"make lint exited unexpectedly ({result.returncode}):\n{result.stderr}"
-    )
+    assert result.returncode in (
+        0,
+        1,
+    ), f"make lint exited unexpectedly ({result.returncode}):\n{result.stderr}"
 
 
 def test_make_type_check():
     """`make type-check` runs mypy – may report issues but must not crash."""
     result = _make("type-check")
-    assert result.returncode in (0, 1), (
-        f"make type-check exited unexpectedly ({result.returncode}):\n{result.stderr}"
-    )
+    assert result.returncode in (
+        0,
+        1,
+    ), f"make type-check exited unexpectedly ({result.returncode}):\n{result.stderr}"
 
 
 # ---------------------------------------------------------------------------

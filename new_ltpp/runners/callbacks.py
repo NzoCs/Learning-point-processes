@@ -1,19 +1,20 @@
 """Lightning callbacks for simulation and statistics collection."""
 
-import pytorch_lightning as pl
-from typing import cast
 from pathlib import Path
+from typing import cast
+
+import pytorch_lightning as pl
 
 from new_ltpp.configs.statistical_test_config import (
     SimulationConfig,
     StatisticalTestConfig,
 )
+from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.models.simulation.simulator import Simulator
 from new_ltpp.models.simulation.tpp_io import SimulationIOManager
 from new_ltpp.models.visualization.model_visualizer import ModelVisualizer
-from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 
 
 def _get_simulator(pl_module: pl.LightningModule) -> "Simulator":

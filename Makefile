@@ -60,7 +60,7 @@ endif
 		$(if $(MODEL_SPECS),--model-specs-config $(MODEL_SPECS),) \
 		$(if $(TRAINING),--training-config $(TRAINING),--training-config e1000_b4) \
 		$(if $(DATA_LOADING),--data-loading-config $(DATA_LOADING),--data-loading-config b32_w1) \
-		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config tw70_b15000_b32) \
+		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config fixed_events) \
 		$(if $(THINNING),--thinning-config $(THINNING),--thinning-config e200_s60) \
 		$(if $(LOGGER),--logger-config $(LOGGER),--logger-config tensorboard) \
 		--model $(MODEL_ID) \

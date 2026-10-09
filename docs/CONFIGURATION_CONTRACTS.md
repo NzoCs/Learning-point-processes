@@ -94,3 +94,24 @@ La configuration d'intégration est adaptée sans régénérer les snapshots : s
 transition exacte est enregistrée dans `tests/integration/config_migration.json`.
 Les tests du comparateur vérifient que cette transition n'accepte ni une autre
 configuration active ni une modification des valeurs numériques.
+
+## Exemples et commandes adaptés
+
+Le Makefile utilise `fixed_events` pour la simulation par défaut ; la CLI et
+sa documentation affichent seulement les trois presets actuels. Le notebook
+`NewLTPP_Getting_Started.ipynb` utilise les configurations Pydantic et huit
+séquences locales, sans téléchargement. Toutes ses cellules de code ont été
+exécutées sur CPU : chargement des presets, construction, sauvegarde/relecture
+YAML, train/test/predict et vérification des trois phases dans le manifeste.
+La suite ordinaire passe toujours avec 148 tests réussis, 9 ignorés et 2 exclus.
+
+Les exemples de signature des deux notebooks expérimentaux utilisent les
+constructeurs actuels et `counting_grid`. Leurs anciennes sorties ont été
+retirées pour éviter de présenter des résultats d'une ancienne représentation
+comme ceux de la grille actuelle. Ces constructeurs ont été vérifiés, mais
+les autres API historiques et les longues analyses scientifiques de ces deux
+notebooks n'ont pas été validées intégralement.
+
+Les anciens builders se trouvent dans `origin/master`. `main` les a supprimés
+au commit `f69fd98`, avant cette branche. Les exemples suivent l'API Pydantic
+actuelle ; une éventuelle réintroduction des builders sera un changement séparé.

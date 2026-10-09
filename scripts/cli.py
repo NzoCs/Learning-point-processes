@@ -74,7 +74,7 @@ def run_experiment(
     simulation_config: str = typer.Option(
         "quick_test",
         "--simulation-config",
-        help="Simulation configuration (quick_test, debug, tw30_b5000_b16, tw70_b15000_b32, tw100_b50000_b64, tw200_b100000_b128, tw300_b150000_b256, tw80_b30000_b64, tw70_b15000_b32) [default: quick_test]",
+        help="Simulation configuration (fixed_events, quick_test, debug); controls the RNG seed [default: quick_test]",
     ),
     thinning_config: str = typer.Option(
         "quick_test",

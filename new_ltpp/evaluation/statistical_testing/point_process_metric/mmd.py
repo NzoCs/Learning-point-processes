@@ -29,7 +29,7 @@ if __name__ == "__main__":
     mmd: IStatMetric = MMD(
         SIGKernel(
             static_kernel=LinearKernel(),
-            embedding_type="linear",
+            embedding_type="counting_grid",
             num_discretization_points=100,
             dyadic_order=3,
             num_event_types=10,

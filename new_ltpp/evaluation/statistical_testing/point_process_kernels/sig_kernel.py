@@ -22,12 +22,16 @@ class SIGKernel(PointProcessKernel):
     def __init__(
         self,
         static_kernel: ISpaceKernel,
-        embedding_type: Literal["counting_grid", "linear", "constant"],
+        embedding_type: Literal["counting_grid"],
         num_discretization_points: int,
         dyadic_order: int,
         num_event_types: int,
         max_batch: int = 64,
     ):
+        if embedding_type != "counting_grid":
+            raise ValueError(
+                f"Unsupported signature path representation: {embedding_type}"
+            )
         self.embedding_type = embedding_type
         self.num_discretization_points = num_discretization_points
         self.dyadic_order = dyadic_order
@@ -125,7 +129,7 @@ class SIGKernel(PointProcessKernel):
 if __name__ == "__main__":
     sig_kernel: IPointProcessKernel = SIGKernel(
         static_kernel=LinearKernel(),
-        embedding_type="linear",
+        embedding_type="counting_grid",
         num_discretization_points=100,
         dyadic_order=3,
         num_event_types=10,

@@ -226,15 +226,6 @@ simulation_configs:
   quick_test: *fixed_event_simulation
   debug: *fixed_event_simulation
 
-  # Legacy preset names retained for scripts/saved command compatibility.
-  # Their former horizon/buffer/batch controls have been inactive since fdb6c9f.
-  tw30_b5000_b16: *fixed_event_simulation
-  tw70_b15000_b32: *fixed_event_simulation
-  tw100_b50000_b128: *fixed_event_simulation
-  tw100_b50000_b64: *fixed_event_simulation
-  tw200_b100000_b128: *fixed_event_simulation
-  tw300_b150000_b256: *fixed_event_simulation
-  tw80_b30000_b64: *fixed_event_simulation
 
 # ===== DATA LOADING CONFIGURATIONS =====
 # These configurations contain only DataLoader parameters

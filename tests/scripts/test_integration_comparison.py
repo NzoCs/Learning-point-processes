@@ -5,6 +5,43 @@ import pytest
 from scripts.integration_suite import compare
 
 
+def test_reviewed_config_cleanup_preserves_numerical_regression_gate():
+    import json
+
+    from scripts.integration_suite import FIXTURES, compare_reference
+
+    migration = json.loads((FIXTURES / "config_migration.json").read_text())
+    expected = {"config_sha256": migration["from_sha256"], "loss": 1.0}
+    actual = {"config_sha256": migration["to_sha256"], "loss": 1.0}
+    compare_reference(actual, expected)
+    assert actual["config_sha256"] == migration["to_sha256"]
+    assert expected["config_sha256"] == migration["from_sha256"]
+    with pytest.raises(AssertionError, match="snapshot.loss"):
+        compare_reference(dict(actual, loss=1.1), expected)
+    with pytest.raises(AssertionError, match="Unreviewed"):
+        compare_reference(dict(actual, config_sha256="another-configuration"), expected)
+    with pytest.raises(AssertionError, match="Unreviewed"):
+        compare_reference(actual, dict(expected, config_sha256="another-reference"))
+
+
+def test_reviewed_config_cleanup_rejects_a_later_fixture_change(tmp_path, monkeypatch):
+    import json
+
+    import scripts.integration_suite as suite
+
+    migration = json.loads((suite.FIXTURES / "config_migration.json").read_text())
+    config = json.loads((suite.FIXTURES / "config.json").read_text())
+    config["simulation_config"]["seed"] += 1
+    (tmp_path / "config.json").write_text(json.dumps(config))
+    (tmp_path / "config_migration.json").write_text(json.dumps(migration))
+    monkeypatch.setattr(suite, "FIXTURES", tmp_path)
+    with pytest.raises(AssertionError, match="Unreviewed"):
+        suite.compare_reference(
+            {"config_sha256": migration["to_sha256"]},
+            {"config_sha256": migration["from_sha256"]},
+        )
+
+
 @pytest.mark.parametrize(
     "actual",
     [

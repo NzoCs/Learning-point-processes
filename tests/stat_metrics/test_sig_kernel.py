@@ -48,20 +48,10 @@ def _make_batch(
     )
 
 
-def _linear_kernel() -> SIGKernel:
+def _counting_grid_kernel() -> SIGKernel:
     return SIGKernel(
         static_kernel=LinearKernel(),
-        embedding_type="linear",
-        num_discretization_points=N_DISC,
-        dyadic_order=2,
-        num_event_types=NUM_TYPES,
-    )
-
-
-def _constant_kernel() -> SIGKernel:
-    return SIGKernel(
-        static_kernel=LinearKernel(),
-        embedding_type="constant",
+        embedding_type="counting_grid",
         num_discretization_points=N_DISC,
         dyadic_order=2,
         num_event_types=NUM_TYPES,
@@ -86,13 +76,13 @@ def batch2():
 class TestEmbeddingShape:
     """Shape and validity of the embedding produced by _get_embedding."""
 
-    def test_linear_embedding_shape(self, batch1):
+    def test_counting_grid_embedding_shape(self, batch1):
         # Normalize times to [0,1] as _prepare_kernel would do
         t = batch1.time_seqs.double()
         t = t / (t.max() + 1e-8)
         emb = _get_embedding(
             N_DISC,
-            "linear",
+            "counting_grid",
             NUM_TYPES,
             t,
             batch1.type_seqs.long(),
@@ -100,26 +90,12 @@ class TestEmbeddingShape:
         )
         assert emb.shape == (BATCH_SIZE, N_DISC, 2 + NUM_TYPES)
 
-    def test_constant_embedding_shape(self, batch1):
+    def test_no_nan_counting_grid(self, batch1):
         t = batch1.time_seqs.double()
         t = t / (t.max() + 1e-8)
         emb = _get_embedding(
             N_DISC,
-            "constant",
-            NUM_TYPES,
-            t,
-            batch1.type_seqs.long(),
-            batch1.valid_event_mask,
-        )
-        # constant mode still outputs N_DISC points (grid-based)
-        assert emb.shape == (BATCH_SIZE, N_DISC, 2 + NUM_TYPES)
-
-    def test_no_nan_linear(self, batch1):
-        t = batch1.time_seqs.double()
-        t = t / (t.max() + 1e-8)
-        emb = _get_embedding(
-            N_DISC,
-            "linear",
+            "counting_grid",
             NUM_TYPES,
             t,
             batch1.type_seqs.long(),
@@ -134,7 +110,7 @@ class TestEmbeddingShape:
         t = t / (t.max() + 1e-8)
         emb = _get_embedding(
             N_DISC,
-            "linear",
+            "counting_grid",
             NUM_TYPES,
             t,
             batch1.type_seqs.long(),
@@ -150,7 +126,7 @@ class TestEmbeddingShape:
         t = t / (t.max() + 1e-8)
         emb = _get_embedding(
             N_DISC,
-            "linear",
+            "counting_grid",
             NUM_TYPES,
             t,
             batch1.type_seqs.long(),
@@ -172,40 +148,29 @@ class TestEmbeddingShape:
 class TestGramMatrix:
     """Gram matrix shape, symmetry, and numerical validity."""
 
-    def test_gram_shape_linear_kernel(self, batch1, batch2):
-        kernel = _linear_kernel()
+    def test_gram_shape_counting_grid_kernel(self, batch1, batch2):
+        kernel = _counting_grid_kernel()
         gram = kernel.compute_gram_matrix(batch1, batch2)
         assert gram.shape == (BATCH_SIZE, BATCH_SIZE)
 
-    def test_gram_shape_constant_kernel(self, batch1, batch2):
-        kernel = _constant_kernel()
-        gram = kernel.compute_gram_matrix(batch1, batch2)
-        assert gram.shape == (BATCH_SIZE, BATCH_SIZE)
-
-    def test_no_nan_linear(self, batch1, batch2):
-        kernel = _linear_kernel()
+    def test_no_nan_counting_grid(self, batch1, batch2):
+        kernel = _counting_grid_kernel()
         gram = kernel.compute_gram_matrix(batch1, batch2)
         assert not torch.isnan(gram).any(), "Gram matrix contains NaN"
         assert not torch.isinf(gram).any(), "Gram matrix contains Inf"
 
-    def test_no_nan_constant(self, batch1, batch2):
-        kernel = _constant_kernel()
-        gram = kernel.compute_gram_matrix(batch1, batch2)
-        assert not torch.isnan(gram).any()
-        assert not torch.isinf(gram).any()
-
     def test_symmetry_same_batch(self, batch1):
-        kernel = _linear_kernel()
+        kernel = _counting_grid_kernel()
         gram = kernel.compute_gram_matrix(batch1, batch1)
         assert torch.allclose(gram, gram.t(), atol=1e-4), "Gram matrix is not symmetric"
 
     def test_positive_diagonal(self, batch1):
-        kernel = _linear_kernel()
+        kernel = _counting_grid_kernel()
         gram = kernel.compute_gram_matrix(batch1, batch1)
         assert torch.all(torch.diag(gram) > 0)
 
     def test_dtype_preserved(self, batch1, batch2):
-        kernel = _linear_kernel()
+        kernel = _counting_grid_kernel()
         gram = kernel.compute_gram_matrix(batch1, batch2)
         # SIGKernel internally uses double; output may be double or float
         assert gram.dtype in (torch.float32, torch.float64)
@@ -219,12 +184,11 @@ class TestGramMatrix:
 class TestMMDWithSIGKernel:
     """MMD metric via SIG kernel."""
 
-    @pytest.mark.parametrize("embedding", ["linear", "constant"])
     @pytest.mark.parametrize("same_sample", [True, False])
-    def test_matches_native_unbiased_mmd(self, batch1, batch2, embedding, same_sample):
+    def test_matches_native_unbiased_mmd(self, batch1, batch2, same_sample):
         # Unbiased MMD² is not constrained to be non-negative and does not
         # vanish when the very same finite sample is used on both sides.
-        kernel = _linear_kernel() if embedding == "linear" else _constant_kernel()
+        kernel = _counting_grid_kernel()
         other = batch1 if same_sample else batch2
         x, y = kernel._prepare_kernel(batch1, other)
         reference = pysiglib.sig_mmd(
@@ -246,7 +210,7 @@ class TestMMDWithSIGKernel:
             type_seqs=batch2.type_seqs[indices],
             valid_event_mask=batch2.valid_event_mask[indices],
         )
-        metric = MMD(kernel=_linear_kernel())
+        metric = MMD(kernel=_counting_grid_kernel())
         torch.testing.assert_close(
             metric(batch1, batch2), metric(batch1, reordered), rtol=1e-9, atol=1e-8
         )

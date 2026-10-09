@@ -145,7 +145,7 @@ def test_project_embedding_with_padding_and_empty_sequence():
         mask[:2],
     )
     static = RBFKernel(0.3, 2.5)
-    kernel = SIGKernel(static, "linear", 8, 1, 1)
+    kernel = SIGKernel(static, "counting_grid", 8, 1, 1)
     x, y = kernel._prepare_kernel(sample, other)
     expected = legacy_recurrence(x, y, static, 1)
     actual = kernel.compute_gram_matrix(sample, other)

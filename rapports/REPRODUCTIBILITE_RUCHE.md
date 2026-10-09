@@ -5,6 +5,58 @@ Référence examinée : `fdb6c9fb7d1116dc1f4311259c349fa383480612`.
 Statut : plan proposé, pas des garanties déjà acquises.
 Rapport complémentaire : [Architecture et SOLID](ARCHITECTURE_SOLID.md).
 
+### Validation réelle de la branche pySigLib — 9 octobre 2026
+
+Code vérifié : `98be5371cd14f9b891a4fac6cee64e60b237ac0a`.
+**Conclusion : migration CPU validée dans le périmètre testé ; reproductibilité
+complète et fonctionnement de bout en bout non validés.**
+
+| Contrôle | Résultat observé |
+| --- | --- |
+| pySigLib CPU, récurrence indépendante, MMD et gradients | Tests ciblés réussis avec `TORCH_COMPILE_DISABLE=1`. Cela ne valide pas `torch.compile`. |
+| Distribution et plans Slurm | Tests ciblés réussis ; les plans ne prouvent pas un job réel. |
+| CI Linux du commit vérifié | Jobs `signature-migration` et `packaging-and-launchers` réussis ; job général `test` en échec à l'étape `Run tests`. |
+| Suite complète locale avec dépendances dev | Collecte interrompue : `tests/test_accumulators.py` importe `mean_len_accumulator`, absent ; l'implémentation actuelle se trouve dans `len_accumulator.py`. |
+| Tests restants, hors accumulateurs et Makefile | **83 réussis, 5 échoués, 1 ignoré**. Les tests Makefile sont exclus de ce diagnostic car `make` est absent du poste Windows. |
+| Trois échecs CLI | Les tests de génération demandent `--method`, option non reconnue par la CLI actuelle ; le test des métadonnées échoue également faute de sortie. Cela révèle un contrat test/CLI désaligné, pas à lui seul l'échec de la commande actuelle avec ses options correctes. |
+| Deux échecs MKernel | Test de symétrie du Gram et assertion de MMD sur le même échantillon en échec. Le contrat numérique et les attentes des tests doivent être examinés avant correction. Ce noyau est distinct de l'adaptateur pySigLib. |
+| CUDA, clone neuf Ruche, entraînement/test/simulation et reprise | Non exécutés sur le cluster ; accès SSH différé pour le pare-feu. |
+
+[Exécution CI du commit vérifié](https://github.com/NzoCs/Learning-point-processes/actions/runs/37915233675).
+
+Commandes locales de validation après installation du groupe `dev` :
+
+```bash
+uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+TORCH_COMPILE_DISABLE=1 PYTHONUTF8=1 uv run --frozen --no-sync python -m pytest tests \
+  -o addopts= --tb=short -q --cov=new_ltpp --cov-report=term:skip-covered \
+  --cov-config=.coveragerc --cov-fail-under=80
+# La commande ci-dessus s'arrête pendant la collecte ; couverture non certifiée.
+TORCH_COMPILE_DISABLE=1 PYTHONUTF8=1 uv run --frozen --no-sync python -m pytest tests \
+  --ignore=tests/test_accumulators.py --ignore=tests/scripts/test_makefile.py \
+  -o addopts= --tb=short -q
+```
+
+Les lots suivants restent ouverts :
+
+- **R1 :** manifeste d'expérience complet (commit, environnement, config finale,
+  données, checkpoint et hashes), round-trip de configuration et isolation des
+  tentatives. `RunnerConfig.get_yaml_config()` n'inclut pas la configuration de
+  simulation ; les répertoires sont dérivés du dataset/modèle, sans identité
+  unique de tentative dans le runner général.
+- **R2 :** contrôle des RNG d'entraînement et des workers, double exécution avec
+  tolérances définies et comparaison entraînement continu/repris. Aucune seed
+  d'entraînement ne figure dans `TrainingConfig`.
+- **R3 :** révision/hash des données et provenance des simulations. Les appels
+  Hugging Face de `data_loader.py` ne fournissent pas de `revision`.
+- **R4 :** spécification et calibration du protocole statistique ; corriger ou
+  justifier les deux tests MKernel après examen du contrat scientifique.
+- **R0/R5/R6 :** installation propre Linux sur Ruche, plugin CUDA, jobs Slurm et
+  mini parcours complet, puis mémoire/performance sur les charges utilisées.
+- **R7 :** suite générale verte et couverture mesurée ; aligner tests et CLI.
+  Le workflow de lint historique utilise encore Poetry/Python 3.12, alors que
+  le projet courant utilise uv/Python 3.11.
+
 ### Migration implémentée dans une branche dérivée
 
 La branche `codex/pysiglib-migration`, issue du commit `19aa258`, utilise

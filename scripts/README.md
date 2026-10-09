@@ -31,8 +31,9 @@ new-ltpp run
 # Run with custom configurations
 new-ltpp run \
   --config path/to/config.yaml \
-  --data-config test \
-  --model-config neural_small \
+  --dataset-id test \
+  --general-specs-config h16 \
+  --simulation-config fixed_events \
   --training-config quick_test \
   --model NHP \
   --phase all
@@ -40,8 +41,8 @@ new-ltpp run \
 # Run only training phase
 new-ltpp run --phase train --epochs 100
 
-# Run with GPU
-new-ltpp run --gpu 0
+# CPU/GPU and Ruche setup
+# See ../docs/RUCHE.md for the locked environment and execution instructions.
 ```
 
 **Options:**
@@ -52,7 +53,7 @@ new-ltpp run --gpu 0
 - `--model-specs-config`: Model-specific specs configuration (optional, depends on model)
 - `--training-config`: Training configuration (quick_test, debug, e500_b1, etc.) [default: quick_test]
 - `--data-loading-config`: Data loading configuration (quick_test, b32_w1, b64_w2, etc.) [default: quick_test]
-- `--simulation-config`: Simulation configuration (quick_test, debug, tw30_b5000_b16, etc.) [default: quick_test]
+- `--simulation-config`: Simulation configuration (fixed_events, quick_test, debug; RNG seed only) [default: quick_test]
 - `--thinning-config`: Thinning configuration (quick_test, debug, e50_s15, etc.) [default: quick_test]
 - `--statistical-test-config`: Statistical test configuration [default: quick_test]
 - `--logger-config`: Logger configuration (tensorboard, csv, wandb) [default: tensorboard]
@@ -227,20 +228,28 @@ new-ltpp info --output system_check.txt
 
 ### Configuration Files
 
-The CLI supports YAML configuration files for complex setups:
-
-```yaml
-# config.yaml
-data_config: test
-model_config: neural_small
-training_config: standard
-simulation_config: simulation_fast
-logger_config: tensorboard
-```
+The CLI reads the preset catalogue in `yaml_configs/configs.yaml`:
 
 ```bash
-new-ltpp run --config config.yaml
+new-ltpp run --config yaml_configs/configs.yaml --dataset-id test \
+  --general-specs-config quick_test --training-config quick_test \
+  --data-loading-config quick_test --simulation-config fixed_events \
+  --thinning-config quick_test --statistical-test-config sig_kernel \
+  --model NHP --phase all --epochs 1
 ```
+
+It also accepts the complete effective YAML configuration saved by a run:
+
+```bash
+new-ltpp run --config path/to/effective_config.yaml --phase all
+```
+
+For older configurations used in a new run, remove `time_window`, `batch_size`
+and `initial_buffer_size` from `simulation_config`; retain its `seed`.
+Use `embedding_type: counting_grid` in `statistical_test_config`, and replace
+old `tw...` simulation presets with `fixed_events`. Data-loader `batch_size`
+remains active and must be retained. Preserve archived manifests and original
+configurations for provenance; strict replay of an old run needs its old code.
 
 ## Help and Documentation
 

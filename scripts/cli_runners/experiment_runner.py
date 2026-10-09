@@ -1,7 +1,7 @@
 """
 Experiment Runner
 
-Runner to execute TPP experiments using configuration builders.
+Runner to execute TPP experiments using validated Pydantic configurations.
 Inspired by run_all_phase.py for loading full configuration from YAML.
 """
 
@@ -18,7 +18,7 @@ from .cli_base import CONFIG_MAP, CLIRunnerBase
 class ExperimentRunner(CLIRunnerBase):
     """
     Runner for executing TPP experiments.
-    Uses RunnerConfigBuilder to load full configuration from YAML.
+    Uses RunnerConfig to load presets or an effective configuration from YAML.
     Allows specifying each configuration type individually.
     """
 

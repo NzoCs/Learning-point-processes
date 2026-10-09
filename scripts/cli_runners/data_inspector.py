@@ -15,7 +15,7 @@ from .cli_base import CLIRunnerBase
 class DataInspector(CLIRunnerBase):
     """
     Runner for inspecting and visualizing data.
-    Uses `DataConfigBuilder` and the Visualizer API.
+    Uses validated DataConfig objects and the Visualizer API.
     """
 
     def __init__(self, debug: bool = False):

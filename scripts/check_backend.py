@@ -4,7 +4,7 @@ import argparse
 import json
 
 
-def check_backend(device: str, backend: str = "pysiglib") -> dict:
+def check_backend(device: str) -> dict:
     import torch
     from new_ltpp.evaluation.statistical_testing.point_process_kernels.sig_kernel import (
         SIGKernel,
@@ -31,7 +31,6 @@ def check_backend(device: str, backend: str = "pysiglib") -> dict:
         num_discretization_points=8,
         dyadic_order=0,
         num_event_types=2,
-        backend=backend,
     )
     gram = kernel.compute_gram_matrix(batch, batch)
     if gram.shape != (2, 2) or not torch.isfinite(gram).all().item():
@@ -46,9 +45,7 @@ def check_backend(device: str, backend: str = "pysiglib") -> dict:
         torch.cuda.synchronize()
     return {
         "backend": kernel.backend_name,
-        "backend_details": kernel.kernel.metadata()
-        if backend == "pysiglib"
-        else {"reference_commit": "40a583155ea8d2194af0e90dddab37e2659cfcfd"},
+        "backend_details": kernel.kernel.metadata(),
         "torch": torch.__version__,
         "torch_cuda": torch.version.cuda,
         "device": str(gram.device),
@@ -61,11 +58,8 @@ def check_backend(device: str, backend: str = "pysiglib") -> dict:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=("cpu", "cuda"), required=True)
-    parser.add_argument(
-        "--backend", choices=("pysiglib", "sigkernel"), default="pysiglib"
-    )
     args = parser.parse_args()
-    print(json.dumps(check_backend(args.device, args.backend), indent=2))
+    print(json.dumps(check_backend(args.device), indent=2))
 
 
 if __name__ == "__main__":

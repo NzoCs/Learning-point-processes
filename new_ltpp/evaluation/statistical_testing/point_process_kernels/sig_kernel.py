@@ -4,9 +4,11 @@ from typing import TypedDict, Literal
 from .kernel_protocol import IPointProcessKernel, PointProcessKernel
 from .utils import _get_embedding
 from .space_kernels import ISpaceKernel
-from .signature_backend import make_signature_backend
+from .signature_backend import PySigLibKernel
 from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import LinearKernel
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
+    LinearKernel,
+)
 
 
 class Embedding(TypedDict):
@@ -22,16 +24,14 @@ class SIGKernel(PointProcessKernel):
         num_discretization_points: int,
         dyadic_order: int,
         num_event_types: int,
-        backend: Literal["pysiglib", "sigkernel"] = "pysiglib",
         max_batch: int = 64,
     ):
         self.embedding_type = embedding_type
         self.num_discretization_points = num_discretization_points
         self.dyadic_order = dyadic_order
 
-        # Initialize with a default kernel; will be set properly in compute_gram_matrix based on static_kernel_type
-        self.backend_name = backend
-        self.kernel = make_signature_backend(backend, static_kernel, dyadic_order, max_batch)
+        self.backend_name = "pysiglib"
+        self.kernel = PySigLibKernel(static_kernel, dyadic_order, max_batch)
 
         self.embedding_type = embedding_type
         self.num_event_types = num_event_types
@@ -47,7 +47,9 @@ class SIGKernel(PointProcessKernel):
         psi_type_seqs = psi_batch.type_seqs
 
         if phi_time_seqs.numel() == 0 or psi_time_seqs.numel() == 0:
-            raise ValueError("Use masked padding for empty sequences; empty batch tensors are unsupported.")
+            raise ValueError(
+                "Use masked padding for empty sequences; empty batch tensors are unsupported."
+            )
 
         phi_time_seqs = phi_time_seqs.double()
         psi_time_seqs = psi_time_seqs.double()
@@ -60,7 +62,7 @@ class SIGKernel(PointProcessKernel):
         phi_time_seqs = phi_time_seqs / global_max
         psi_time_seqs = psi_time_seqs / global_max
 
-        # 1) Compute embeddings (stays in original dtype, float32 is fine for sigkernel)
+        # 1) Compute embeddings (stays in original dtype, float32 is converted by the pySigLib adapter)
         # ---------------------
         # phi : (B, D, C)
         # psi : (B, D, C)
@@ -85,7 +87,6 @@ class SIGKernel(PointProcessKernel):
 
         return phi_emb, psi_emb
 
-    
     def compute_gram_matrix(
         self,
         X: Batch | SimulationResult,

@@ -35,7 +35,7 @@ This project uses `uv` for dependency management.
 
 ```bash
 # Download into a fresh directory, then install the committed lock
-git clone https://github.com/NzoCs/Learning-point-processes.git
+git clone --branch codex/pysiglib-migration https://github.com/NzoCs/Learning-point-processes.git
 cd Learning-point-processes
 uv sync --frozen --python 3.11 --no-default-groups --no-build-package pysiglib
 uv run --frozen --no-sync new-ltpp --help
@@ -52,9 +52,9 @@ This branch uses **pySigLib 4.0.0** for signature kernels, with the historical
 finite-difference solver and unbiased MMD² estimator. The Ruche GPU profile
 requires the locked CUDA plugin: `uv sync --frozen --no-default-groups --extra ruche
 --no-build-package pysiglib --no-build-package pysiglib-cuda`.
-There is no automatic CPU or legacy fallback. The old `sigkernel` dependency is
-isolated in the `legacy-reference` group for explicit comparisons; it still needs
-a compatible compiler. Read the [migration validation](docs/PYSIGLIB_MIGRATION.md)
+There is no automatic CPU or legacy fallback. pySigLib is the only signature
+backend supported by this branch. The historical implementation is preserved on
+`codex/reproductibilite-ruche`. Read the [migration validation](docs/PYSIGLIB_MIGRATION.md)
 and the [Ruche storage and installation procedure](docs/RUCHE.md).
 
 ---

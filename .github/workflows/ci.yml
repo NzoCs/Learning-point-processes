@@ -16,12 +16,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
-      - name: Install locked native reference and target
+      - name: Install locked pySigLib
         run: |
           pip install uv
-          uv sync --frozen --no-default-groups --group dev --group legacy-reference --no-build-package pysiglib
-          uv run --frozen --no-sync python -c 'import sigkernel, pysiglib; print(pysiglib.__version__)'
-      - name: Check CPU signature equivalence and gradients
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+          uv run --frozen --no-sync python -c 'import pysiglib; print(pysiglib.__version__)'
+      - name: Check CPU signature recurrence and gradients
         run: >-
           uv run --frozen --no-sync python -m pytest -o addopts=
           tests/stat_metrics/test_signature_migration.py tests/stat_metrics/test_sig_kernel.py -q

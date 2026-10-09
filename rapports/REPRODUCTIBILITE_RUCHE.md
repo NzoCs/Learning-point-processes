@@ -8,18 +8,25 @@ Rapport complémentaire : [Architecture et SOLID](ARCHITECTURE_SOLID.md).
 ### Migration implémentée dans une branche dérivée
 
 La branche `codex/pysiglib-migration`, issue du commit `19aa258`, utilise
-pySigLib 4.0.0 par défaut avec plugin CUDA 4.0.0 exigé par l'extra Ruche.
-La référence sigkernel est isolée dans un groupe d'installation explicite,
-toujours fixée au commit historique. L'adaptateur préserve le solveur, les
+exclusivement pySigLib 4.0.0 avec plugin CUDA 4.0.0 exigé par l'extra Ruche.
+La dépendance sigkernel, sa sélection et les outils qui l'importent ont été
+retirés de cette branche ; la référence reste dans `codex/reproductibilite-ruche`.
+L'adaptateur préserve le solveur, les
 embeddings, les noyaux spatiaux/scaling et la MMD² non biaisée.
 Voir le [compte rendu de migration](../docs/PYSIGLIB_MIGRATION.md) pour les
 commandes et tolérances. Les contrôles mathématiques et gradients CPU passent ;
-la comparaison native historique, CUDA et les jobs Ruche restent à exécuter.
+CUDA et les jobs Ruche restent à exécuter. Aucune comparaison native historique
+n’est revendiquée ; les tests utilisent une récurrence mathématique indépendante.
 La branche de migration est prête à ces validations, pas certifiée en production.
 
 La procédure Ruche distingue désormais `$HOME` (code/environnement) et
 `$WORKDIR` (caches, données et résultats), et les launchers acceptent un
 environnement extérieur au clone via `UV_PROJECT_ENVIRONMENT`.
+
+Les sections d'audit et le plan initial ci-dessous décrivent la référence avant
+migration. Leurs propositions de conserver ou installer l'ancien backend ne
+s'appliquent plus à `codex/pysiglib-migration` ; utiliser la procédure actuelle
+dans `docs/RUCHE.md` et `docs/PYSIGLIB_MIGRATION.md`.
 
 ### Premier lot implémenté dans le worktree
 

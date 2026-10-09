@@ -163,17 +163,3 @@ class PySigLibKernel:
             "static_kernel": self.kernel_parameters,
             "estimator": "unbiased_mmd_squared",
         }
-
-
-def make_signature_backend(name, static_kernel, dyadic_order, max_batch):
-    if name == "pysiglib":
-        return PySigLibKernel(static_kernel, dyadic_order, max_batch)
-    if name == "sigkernel":
-        try:
-            from sigkernel import SigKernel
-        except ImportError as exc:
-            raise RuntimeError(
-                "Legacy backend requested: install the legacy-reference group."
-            ) from exc
-        return SigKernel(static_kernel=static_kernel, dyadic_order=dyadic_order)
-    raise ValueError(f"Unknown signature backend: {name}")

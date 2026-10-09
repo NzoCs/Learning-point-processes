@@ -23,12 +23,23 @@ def test_wheel_includes_runtime_packages_and_presets(tmp_path):
         names = set(archive.namelist())
         for expected in (
             "new_ltpp/configs/runner_config.py",
+            "new_ltpp/evaluation/statistical_testing/point_process_kernels/signature_backend.py",
             "new_ltpp/models/implementations/nhp.py",
             "scripts/cli_runners/experiment_runner.py",
             "yaml_configs/__init__.py",
             "yaml_configs/configs.yaml",
         ):
             assert expected in names
+        assert "scripts/compare_signature_backends.py" not in names
+        metadata_name = next(
+            name for name in names if name.endswith(".dist-info/METADATA")
+        )
+        metadata = archive.read(metadata_name).decode("utf-8")
+        requirements = [
+            line for line in metadata.splitlines() if line.startswith("Requires-Dist:")
+        ]
+        assert "Requires-Dist: pysiglib==4.0.0" in requirements
+        assert not any("sigkernel" in line.lower() for line in requirements)
         archive.extractall(tmp_path / "installed")
     # -I excludes the checkout and any PYTHONPATH supplied by an editable install.
     code = (

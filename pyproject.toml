@@ -54,8 +54,6 @@ dependencies = [
 ruche = ["pysiglib-cuda==4.0.0"]
 
 [dependency-groups]
-legacy-reference = ["sigkernel"]
-
 cli = [
     # CLI-specific dependencies with proper version constraints
     "typer>=0.19.2",
@@ -109,14 +107,6 @@ logging = [
 
 [project.scripts]
 new-ltpp = "scripts.cli:main"
-
-[tool.uv.extra-build-dependencies]
-git = ["Cython"]
-sigkernel = ["Cython"]
-
-[tool.uv.sources]
-sigkernel = { git = "https://github.com/crispitagorico/sigkernel.git", rev = "40a583155ea8d2194af0e90dddab37e2659cfcfd" }
-
 
 [tool.setuptools]
 include-package-data = true

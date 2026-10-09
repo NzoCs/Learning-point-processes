@@ -68,7 +68,7 @@ def _get_embedding(
 
     # We normalized counting sequences before by max steps, let's normalize by overall steps if needed,
     # but using raw counts for a step process is standard. Since previous code used max possible length `L`:
-    # But usually not normalizing counts is fine for sigkernel, since space kernel applies scaling.
+    # But usually not normalizing counts is fine for the signature kernel, since space kernel applies scaling.
     # Previous code: normalized_counting_seqs = counting_seqs / (time_seqs.shape[1] - 1 + 1e-8)
     normalized_counting_seqs = counting_seqs / (L - 1 + 1e-8)
 

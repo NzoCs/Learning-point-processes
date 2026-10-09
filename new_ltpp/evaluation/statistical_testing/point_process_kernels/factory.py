@@ -38,7 +38,6 @@ def create_point_process_kernel(config: "StatisticalTestConfig") -> IPointProces
             num_discretization_points=config.num_discretization_points,
             dyadic_order=config.dyadic_order,
             num_event_types=config.num_event_types,
-            backend=config.signature_backend,
             max_batch=config.signature_max_batch,
         )
     else:

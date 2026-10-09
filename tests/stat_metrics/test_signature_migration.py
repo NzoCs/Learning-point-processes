@@ -1,18 +1,14 @@
 """Real pySigLib checks against the pinned legacy finite-difference recurrence.
 
 The recurrence oracle is independent Python math, not the legacy native library.
-Tests against that library are explicit and skipped if it is unavailable.
 Reference: sigkernel 40a5831, sigkernel/cython_backend.pyx, non-naive Gram solver.
 """
-
-import importlib.util
 
 import pytest
 import torch
 
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.signature_backend import (
     PySigLibKernel,
-    make_signature_backend,
     unbiased_mmd_squared,
 )
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
@@ -113,9 +109,19 @@ def test_gradients_follow_solver_finite_differences(kernel):
     )
 
 
-def test_invalid_backend_is_explicit():
-    with pytest.raises(ValueError, match="Unknown signature backend"):
-        make_signature_backend("unknown", LinearKernel(), 0, 64)
+def test_legacy_backend_configuration_is_rejected():
+    from pydantic import ValidationError
+    from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
+
+    with pytest.raises(ValidationError, match="signature_backend"):
+        StatisticalTestConfig(
+            test_type="mmd",
+            point_process_kernel_type="sig_kernel",
+            space_kernel_type="linear",
+            num_event_types=2,
+            n_samples=10,
+            signature_backend="sigkernel",
+        )
 
 
 def test_project_embedding_with_padding_and_empty_sequence():
@@ -169,24 +175,6 @@ def test_factory_uses_configured_signature_backend():
 def test_invalid_refinement_is_rejected(order):
     with pytest.raises(ValueError, match="dyadic_order"):
         PySigLibKernel(LinearKernel(), order)
-
-
-@pytest.mark.skipif(
-    importlib.util.find_spec("sigkernel") is None,
-    reason="Native legacy-reference group not installed",
-)
-@pytest.mark.parametrize("kernel", [LinearKernel(2.5), RBFKernel(0.3, 2.5)])
-@pytest.mark.parametrize("order", [0, 1, 2])
-def test_against_real_legacy_backend(paths, kernel, order):
-    x, y = paths
-    legacy = make_signature_backend("sigkernel", kernel, order, 64)
-    new = PySigLibKernel(kernel, order)
-    torch.testing.assert_close(
-        new.compute_Gram(x, y), legacy.compute_Gram(x, y), rtol=1e-10, atol=1e-10
-    )
-    torch.testing.assert_close(
-        new.compute_mmd(x, y), legacy.compute_mmd(x, y), rtol=1e-10, atol=1e-10
-    )
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA GPU unavailable")

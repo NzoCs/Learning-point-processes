@@ -304,6 +304,12 @@ def test_run_manifest_persists_configuration_data_hash_and_failure(tmp_path):
     manifest.finish("train", error=RuntimeError("fixture failure"))
     value = json.loads(manifest.path.read_text())
     assert value["phases"]["train"]["status"] == "failed"
+    manifest.start("predict")
+    manifest.finish("predict")
+    prediction = json.loads(manifest.path.read_text())["phases"]["predict"]
+    assert (
+        prediction["statistical_interpretation"]["conditional_gof_calibrated"] is False
+    )
     assert value["config"]["simulation_config"] == config.simulation_config.model_dump(
         mode="json"
     )

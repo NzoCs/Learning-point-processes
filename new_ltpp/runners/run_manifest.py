@@ -129,6 +129,12 @@ class RunManifest:
                 "rng": "independent_resampling_stream_v1",
             },
         }
+        if phase == "predict":
+            self.value["phases"][phase]["statistical_interpretation"] = {
+                "conditional_gof_calibrated": False,
+                "comparison": "history_vs_its_continuation_diagnostic",
+                "calibrated_api": "ConditionalMMDTwoSampleTest_with_heldout_future",
+            }
         self.save()
 
     def finish(self, phase, checkpoint=None, error=None):
@@ -138,6 +144,11 @@ class RunManifest:
             .get(phase, {})
             .get("statistical_protocol"),
         }
+        interpretation = (
+            self.value["phases"].get(phase, {}).get("statistical_interpretation")
+        )
+        if interpretation is not None:
+            result["statistical_interpretation"] = interpretation
         if error is not None:
             result["error"] = str(error)
         if checkpoint and Path(checkpoint).is_file():

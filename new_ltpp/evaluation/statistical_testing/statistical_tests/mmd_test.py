@@ -1,3 +1,5 @@
+from itertools import zip_longest
+
 import torch
 
 from new_ltpp.configs import StatisticalTestConfig
@@ -17,6 +19,12 @@ MMD_P_VALUE_PROTOCOL = "plus_one_float64_conservative_ties_v1"
 
 def monte_carlo_p_value(observed: torch.Tensor, null: torch.Tensor) -> torch.Tensor:
     """Plus-one p-value, preserving the alpha boundary and numerical ties."""
+    if observed.numel() != 1 or null.ndim != 1 or not null.numel():
+        raise ValueError(
+            "One observed statistic and a nonempty null vector are required"
+        )
+    if not torch.isfinite(observed).all() or not torch.isfinite(null).all():
+        raise ValueError("Cannot compute p-values from nonfinite statistics")
     count = (
         (null >= observed) | torch.isclose(null, observed, rtol=1e-10, atol=1e-12)
     ).sum()
@@ -34,6 +42,7 @@ class MMDTwoSampleTest:
     """
 
     kernel: IPointProcessKernel
+    null_method = "permutation"
 
     def __init__(
         self,
@@ -57,6 +66,9 @@ class MMDTwoSampleTest:
         self.total_count_ge: int = 0
         self.total_n_permutations: int = 0
         self.n_batches: int = 0
+        self._seen_pair_ids: set = set()
+        self._pair_id_mode: bool | None = None
+        self._aggregation_null_method: str | None = None
 
     @property
     def name(self) -> str:
@@ -69,8 +81,39 @@ class MMDTwoSampleTest:
         self.total_count_ge: int = 0
         self.total_n_permutations: int = 0
         self.n_batches: int = 0
+        self._seen_pair_ids.clear()
+        self._pair_id_mode = None
+        self._aggregation_null_method = None
+
+    def _check_pair_ids(self, pair_ids, n, accumulate):
+        if pair_ids is None:
+            if accumulate and self._pair_id_mode:
+                raise ValueError("All accumulated batches must supply pair_ids")
+            return None
+        ids = set(pair_ids)
+        if len(pair_ids) != n or len(ids) != n:
+            raise ValueError("pair_ids must identify distinct independent pairs")
+        if accumulate:
+            if self._pair_id_mode is False:
+                raise ValueError("All accumulated batches must supply pair_ids")
+            if ids & self._seen_pair_ids:
+                raise ValueError(
+                    "Overlapping pairs cannot use independent batch randomizations"
+                )
+        return ids
 
     def _accumulate(self, observed_mmd: torch.Tensor, perm_mmds: torch.Tensor) -> None:
+        if self.n_batches and self._aggregation_null_method != self.null_method:
+            raise ValueError("Cannot mix null schemes; reset accumulators first")
+        if observed_mmd.numel() != 1 or perm_mmds.ndim != 1 or not perm_mmds.numel():
+            raise ValueError(
+                "A scalar statistic and a nonempty null vector are required"
+            )
+        if (
+            not torch.isfinite(observed_mmd).all()
+            or not torch.isfinite(perm_mmds).all()
+        ):
+            raise ValueError("Cannot accumulate nonfinite statistics")
         if (
             self.total_perm_mmds is not None
             and self.total_perm_mmds.shape != perm_mmds.shape
@@ -88,6 +131,7 @@ class MMDTwoSampleTest:
         else:
             self.total_perm_mmds += perm_mmds.detach().to(self.total_perm_mmds.device)
         self.n_batches += 1
+        self._aggregation_null_method = self.null_method
 
     def get_final_p_value(self) -> torch.Tensor:
         if (
@@ -265,6 +309,8 @@ class MMDTwoSampleTest:
         batch_x: Batch,
         batch_y: Batch,
         accumulate: bool = True,
+        *,
+        pair_ids=None,
     ) -> TestStatistics:
         """Use the same pairwise observation rule for the observation and each null draw.
 
@@ -272,19 +318,23 @@ class MMDTwoSampleTest:
         preparation. Calibration requires exchangeability under H0; conditional
         model simulations and pooled batches need separate scientific validation.
         """
+        ids = self._check_pair_ids(pair_ids, len(batch_x.time_seqs), accumulate)
         observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
 
         p_value = monte_carlo_p_value(observed_mmd, perm_mmds)
 
         if accumulate:
             self._accumulate(observed_mmd, perm_mmds)
+            self._pair_id_mode = ids is not None
+            if ids is not None:
+                self._seen_pair_ids.update(ids)
 
         return TestStatistics(
             p_value=p_value,
             observed_statistic=observed_mmd,
             permuted_statistics=perm_mmds,
             num_null_samples=perm_mmds.numel(),
-            null_method="permutation",
+            null_method=self.null_method,
         )
 
     def test_model(
@@ -292,6 +342,9 @@ class MMDTwoSampleTest:
         model: ISimulableModel,
         data_loader: TypedDataLoader,
         statistical_test_config: StatisticalTestConfig,
+        *,
+        history_events: int | None = None,
+        future_events: int | None = None,
     ) -> FinalTestResult:
         """Compute the p-value of the MMD two-sample permutation test for a trained model.
 
@@ -307,33 +360,28 @@ class MMDTwoSampleTest:
             all_perm_mmds: list[float]
         """
 
-        all_p_values = []
-        all_mmds = []
-        all_perm_mmds = []
-        # Avoid an import cycle when users import new_ltpp.models first.
-        from new_ltpp.models.simulation.simulator import Simulator
+        # A history and its own continuation are not exchangeable observations.
+        # Require an explicit held-out future and the conditional swap protocol.
+        if history_events is None or future_events is None:
+            raise ValueError(
+                "Model calibration requires history_events and future_events"
+            )
+        from .conditional_mmd_test import ConditionalMMDTwoSampleTest
 
-        simulator = Simulator(
-            model=model,
-            statistical_test_config=statistical_test_config,
+        self.reset_accumulators()
+        conditional = ConditionalMMDTwoSampleTest(self.kernel, self.n_samples)
+        result = conditional.test_model(
+            model,
+            data_loader,
+            statistical_test_config,
+            history_events=history_events,
+            future_events=future_events,
         )
-
-        for batch in data_loader:
-            simulated = simulator.simulate(batch=batch)
-            test_stats = self.compute_statistics(batch_x=batch, batch_y=simulated)
-
-            all_p_values.append(test_stats["p_value"].item())
-            all_mmds.append(test_stats["observed_statistic"].item())
-            all_perm_mmds.extend(test_stats["permuted_statistics"].tolist())
-
-        p_val = self.get_final_p_value().item()
-
-        return FinalTestResult(
-            p_value=p_val,
-            all_p_values=all_p_values,
-            all_statistics=all_mmds,
-            all_permuted_statistics=all_perm_mmds,
-        )
+        self.total_observed_mmd = conditional.total_observed_mmd
+        self.total_perm_mmds = conditional.total_perm_mmds
+        self.n_batches = conditional.n_batches
+        self._aggregation_null_method = conditional.null_method
+        return result
 
     def test_simulation(
         self,
@@ -350,11 +398,15 @@ class MMDTwoSampleTest:
         Returns:
             p-value as a float.
         """
+        self.reset_accumulators()
         all_p_values = []
         all_mmds = []
         all_perm_mmds = []
 
-        for batch_x, batch_y in zip(simulation, ground_truth):
+        for batch_x, batch_y in zip_longest(simulation, ground_truth):
+            if batch_x is None or batch_y is None:
+                self.reset_accumulators()
+                raise ValueError("Data loaders must contain the same number of batches")
             test_stats = self.compute_statistics(batch_x=batch_x, batch_y=batch_y)
 
             all_p_values.append(test_stats["p_value"].item())

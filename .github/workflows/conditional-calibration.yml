@@ -1,0 +1,40 @@
+name: Conditional and batch calibration
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Check conditional histories and heterogeneous batches
+        run: >-
+          uv run --frozen --no-sync python -m scripts.conditional_calibration
+          --trials 500 --power-trials 200 --permutations 99 --steps 200
+      - name: Preserve scientific evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conditional-calibration-linux
+          path: artifacts/conditional-calibration
+          retention-days: 30

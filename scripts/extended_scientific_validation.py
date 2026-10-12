@@ -34,7 +34,7 @@ ALPHA = np.array([[0.20, 0.12], [0.08, 0.16]])
 BETA = np.array([[1.0, 1.5], [1.2, 0.8]])
 
 
-def code_provenance():
+def code_provenance(source_path=None):
     """Distinguish a clean commit from a local experiment on edited sources."""
     return dict(
         commit=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
@@ -44,7 +44,7 @@ def code_provenance():
             ).strip()
         ),
         script_lf_sha256=hashlib.sha256(
-            Path(__file__).read_text().encode()
+            Path(source_path or __file__).read_text().encode()
         ).hexdigest(),
         lock_sha256=hashlib.sha256(Path("uv.lock").read_bytes()).hexdigest(),
         numpy=np.__version__,

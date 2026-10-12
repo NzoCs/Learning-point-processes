@@ -22,10 +22,24 @@ class StatisticalTestAccumulator(Accumulator):
         self,
         statistical_test_config: StatisticalTestConfig,
         min_sim_events: int = 1,
+        *,
+        conditional: bool = False,
     ):
         super().__init__(min_sim_events)
 
         self.test = create_statistical_test(statistical_test_config)
+        self.conditional = conditional
+        if conditional:
+            from new_ltpp.evaluation.statistical_testing.statistical_tests import (
+                ConditionalMMDTwoSampleTest,
+                MMDTwoSampleTest,
+            )
+
+            if not isinstance(self.test, MMDTwoSampleTest):
+                raise ValueError("Conditional resampling is implemented for MMD only")
+            self.test = ConditionalMMDTwoSampleTest(
+                self.test.kernel, self.test.n_samples
+            )
         self.p_values: list[float] = []
         self.observed_statistic: list[float] = []
         self.perm_statistics: list[float] = []
@@ -34,7 +48,14 @@ class StatisticalTestAccumulator(Accumulator):
         self.null_methods: list[str] = []
         self._null_rng_states: dict[str, torch.Tensor] = {}
 
-    def update(self, batch: Batch, simulation: SimulationResult) -> None:
+    def update(
+        self,
+        batch: Batch,
+        simulation: SimulationResult,
+        *,
+        histories: Batch | None = None,
+        pair_ids=None,
+    ) -> None:
         """Accumulate statistical metrics from batch.
 
         Args:
@@ -43,6 +64,10 @@ class StatisticalTestAccumulator(Accumulator):
 
         """
         # Statistical resampling must not alter the generator used for trajectories.
+        if self.conditional != (histories is not None):
+            raise ValueError(
+                "Conditional mode requires shared histories; unconditional mode must not receive them"
+            )
         devices = [batch.time_seqs.device] if batch.time_seqs.is_cuda else []
         with torch.random.fork_rng(devices=devices):
             # Separate persistent streams avoid reusing the trajectory draws.
@@ -60,7 +85,17 @@ class StatisticalTestAccumulator(Accumulator):
                         torch.Generator(device=device).manual_seed(seed).get_state()
                     )
                 torch.cuda.set_rng_state(cuda_state, device)
-            stats = self.test.compute_statistics(batch, simulation)
+            if self.conditional:
+                stats = self.test.compute_statistics(
+                    batch, simulation, histories=histories, pair_ids=pair_ids
+                )
+            else:
+                if pair_ids is not None:
+                    stats = self.test.compute_statistics(
+                        batch, simulation, pair_ids=pair_ids
+                    )
+                else:
+                    stats = self.test.compute_statistics(batch, simulation)
             self._null_rng_states["cpu"] = torch.get_rng_state()
             if batch.time_seqs.is_cuda:
                 self._null_rng_states[str(batch.time_seqs.device)] = (

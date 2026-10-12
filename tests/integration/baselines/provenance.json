@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "reference_version": 1,
-  "created_at": "2026-10-09T12:05:07.362478+00:00",
-  "reason": "Initial corrected CPU integration reference; see BASELINE_HISTORY.md",
-  "source_tree_sha256": "55c2f8fee29f03e605acc4acaf0e619c4f564e4c0f6b6f2124cfead3b908fa42",
+  "reference_version": 2,
+  "created_at": "2026-10-12",
+  "reason": "Recomputed permutation truncation, float64 p-values, independent null RNG; protected training/test fields unchanged",
+  "source_tree_sha256": "ee530aedfc0b85180a07315f89f70f31beb3de3ecf0d76c17350e3eff6c36db1",
   "models": [
     "ANHN",
     "ANHP",
@@ -719,11 +719,20 @@
       ]
     ],
     "code": {
-      "commit": "4e7469ea6b4c8b0e14bdb8ef49382eb50039c865",
+      "commit": "47b781df879857dc837512ca17709a640deb0636",
       "dirty": true
     },
     "lock_sha256": "ef46ad32e1aae94637655626629ad509448e3b9bb252cbe3cbc77d298ad1d8db",
     "rtol": 1e-05,
     "atol": 1e-06
+  },
+  "previous_reference_commit": "5156aa2",
+  "previous_provenance_sha256": "fbaa312fd4c37989ef852a7e3b35dd34f9dcd79710672ff1733a132793069197",
+  "source_code_commit": "47b781df879857dc837512ca17709a640deb0636",
+  "statistical_protocol": {
+    "observation": "pairwise_truncation_recomputed_v1",
+    "p_value": "plus_one_float64_conservative_ties_v1",
+    "null_method": "permutation",
+    "rng": "independent_resampling_stream_v1"
   }
 }

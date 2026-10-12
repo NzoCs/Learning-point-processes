@@ -45,3 +45,38 @@ L'empreinte de configuration passe de
 modifiés. Le comparateur accepte cette paire précise, contrôle l'empreinte de
 la fixture active, puis compare tous les autres champs sans exception. Toute
 modification future de graine/configuration ou de résultat continue à échouer.
+
+## Référence v2 — troncature recalculée, 12 octobre 2026
+
+À la demande de l'utilisateur après comparaison de calibration, le seul
+protocole de production est désormais la permutation des séquences brutes,
+avec troncature par paires et préparation du noyau recalculées pour chaque
+tirage. Le nul construit par simulations supplémentaires a été supprimé.
+`n_samples` désigne exactement le nombre de permutations. Les p-values sont
+en float64, avec correction +1 et traitement conservateur des égalités proches.
+
+Le rééchantillonnage dispose de flux persistants CPU/CUDA séparés, dérivés de
+la graine initiale par addition de `0x4D4D44` modulo `2**63`. L'état des
+générateurs de trajectoires est restauré après chaque calcul statistique.
+Cette correction supprime le couplage historique entre le nombre de tirages
+du nul et les trajectoires du batch suivant. Les anciennes simulations
+suivantes et leurs histogrammes/statistiques changent donc intentionnellement.
+
+Les onze parcours train/test/predict ont été exécutés. Avant toute mise à jour,
+un contrôle complet a vérifié l'égalité exacte des poids entraînés, pertes,
+gradients, intensités, métriques de test et trajectoires du premier batch.
+Les changements des autres colonnes ont été limités aux statistiques dérivées
+des simulations et aux résultats MMD. L'audit et les empreintes des anciennes
+références figurent dans
+`docs/validation/truncation-reference-migration-2026-10-12.json`.
+
+La version précédente reste accessible dans Git au commit `5156aa2` ; elle
+n'est pas présentée comme une référence valable pour ce nouveau calcul.
+Les snapshots v2 ajoutent le protocole statistique et enregistrent l'empreinte
+de la configuration active. Le comparateur conserve ses tolérances d'origine
+et compare tous les champs ; aucune exception sur les résultats n'est ajoutée.
+Une nouvelle restructuration doit désormais conserver ces références v2.
+
+La calibration sur Poisson/Hawkes indépendants ne certifie pas à elle seule
+les p-values de modèles ajustés ou de simulations conditionnelles, ni leur
+agrégation entre batches. Ruche/CUDA/DDP restent à valider séparément.

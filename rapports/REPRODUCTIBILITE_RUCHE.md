@@ -1,5 +1,29 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Bascule de production du 12 octobre 2026
+
+La production utilise désormais uniquement le test de permutation avec
+troncature recalculée depuis les séquences brutes pour chaque tirage. Les
+anciennes options de changement de règle et de comparaison de simulations
+supplémentaires ont été supprimées. Les p-values utilisent le calcul float64
+et les égalités conservatrices validés dans la comparaison scientifique.
+Le rééchantillonnage possède un flux aléatoire indépendant et persistant ;
+il ne consomme plus celui des trajectoires. Le protocole est enregistré par
+phase dans les manifestes, y compris lors de la reprise d'un ancien run.
+
+La [CI Linux du code `47b781d`](https://github.com/NzoCs/Learning-point-processes/actions/runs/38232855289)
+passe avec **203 tests réussis**, 3 ignorés, 2 désélectionnés et **80,61 %** de
+couverture, pour un seuil maintenu de 80 %. Le workflow qualité passe également.
+La migration contrôlée des références est décrite dans
+`tests/integration/BASELINE_HISTORY.md`. Les poids entraînés et les métriques
+de test sont protégés ; les simulations ultérieures et leurs statistiques
+changent explicitement avec le nouveau nul et l'isolation aléatoire.
+
+Les bilans ci-dessous sont conservés comme historique. La comparaison sans
+troncature reste seulement un contrôle scientifique dans les scripts, pas
+une option de la pipeline. Ruche/CUDA/DDP et la validité des p-values sur
+simulations conditionnelles ou batches agrégés restent à vérifier séparément.
+
 ### Complément du 12 octobre 2026 — troncature recalculée
 
 Une comparaison appariée a été exécutée sur les mêmes séquences brutes et les

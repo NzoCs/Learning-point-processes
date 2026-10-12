@@ -2,8 +2,14 @@
   "schema": 1,
   "model": "Hawkes",
   "fixture_sha256": "c18d51d3db8a9fb2bd0edba8a9646540d94603a5f34554b7b0690bbd60f6b3b2",
-  "config_sha256": "7adc6e2718b6ffd58edd572d728283c4b756c4812427fe9ad433124f67aa9162",
+  "config_sha256": "58bc3241a9813dab282f9abf1936774819dc436c551260be2bee9f1051b49ce9",
   "path_preparation": "masked_valid_count_v2",
+  "statistical_protocol": {
+    "observation": "pairwise_truncation_recomputed_v1",
+    "p_value": "plus_one_float64_conservative_ties_v1",
+    "null_method": "permutation",
+    "rng": "independent_resampling_stream_v1"
+  },
   "trained_state": {
     "mu": {
       "shape": [
@@ -335,52 +341,12 @@
       "seq_idx": 4,
       "event_idx": 1,
       "dim_process": 2,
-      "time_since_start": 0.2869851589202881,
-      "time_since_last_event": 0.2869851589202881,
-      "type_event": 0
-    },
-    {
-      "seq_idx": 4,
-      "event_idx": 2,
-      "dim_process": 2,
-      "time_since_start": 0.7869851589202881,
-      "time_since_last_event": 0.5,
-      "type_event": 0
-    },
-    {
-      "seq_idx": 4,
-      "event_idx": 3,
-      "dim_process": 2,
-      "time_since_start": 1.286985158920288,
-      "time_since_last_event": 0.5,
-      "type_event": 0
-    },
-    {
-      "seq_idx": 4,
-      "event_idx": 4,
-      "dim_process": 2,
-      "time_since_start": 1.786985158920288,
-      "time_since_last_event": 0.5,
-      "type_event": 0
-    },
-    {
-      "seq_idx": 5,
-      "event_idx": 0,
-      "dim_process": 2,
-      "time_since_start": 0.0,
-      "time_since_last_event": 0.0,
-      "type_event": 0
-    },
-    {
-      "seq_idx": 5,
-      "event_idx": 1,
-      "dim_process": 2,
       "time_since_start": 0.5,
       "time_since_last_event": 0.5,
-      "type_event": 1
+      "type_event": 0
     },
     {
-      "seq_idx": 5,
+      "seq_idx": 4,
       "event_idx": 2,
       "dim_process": 2,
       "time_since_start": 1.0,
@@ -388,47 +354,7 @@
       "type_event": 1
     },
     {
-      "seq_idx": 5,
-      "event_idx": 3,
-      "dim_process": 2,
-      "time_since_start": 1.5,
-      "time_since_last_event": 0.5,
-      "type_event": 1
-    },
-    {
-      "seq_idx": 5,
-      "event_idx": 4,
-      "dim_process": 2,
-      "time_since_start": 2.0,
-      "time_since_last_event": 0.5,
-      "type_event": 0
-    },
-    {
-      "seq_idx": 6,
-      "event_idx": 0,
-      "dim_process": 2,
-      "time_since_start": 0.0,
-      "time_since_last_event": 0.0,
-      "type_event": 1
-    },
-    {
-      "seq_idx": 6,
-      "event_idx": 1,
-      "dim_process": 2,
-      "time_since_start": 0.5,
-      "time_since_last_event": 0.5,
-      "type_event": 1
-    },
-    {
-      "seq_idx": 6,
-      "event_idx": 2,
-      "dim_process": 2,
-      "time_since_start": 1.0,
-      "time_since_last_event": 0.5,
-      "type_event": 0
-    },
-    {
-      "seq_idx": 6,
+      "seq_idx": 4,
       "event_idx": 3,
       "dim_process": 2,
       "time_since_start": 1.5,
@@ -436,12 +362,92 @@
       "type_event": 0
     },
     {
-      "seq_idx": 6,
+      "seq_idx": 4,
       "event_idx": 4,
       "dim_process": 2,
       "time_since_start": 2.0,
       "time_since_last_event": 0.5,
       "type_event": 1
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.0,
+      "time_since_last_event": 0.0,
+      "type_event": 0
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 0.07450175285339355,
+      "time_since_last_event": 0.07450175285339355,
+      "type_event": 1
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 0.5745017528533936,
+      "time_since_last_event": 0.5,
+      "type_event": 0
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 3,
+      "dim_process": 2,
+      "time_since_start": 1.0745017528533936,
+      "time_since_last_event": 0.5,
+      "type_event": 0
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 4,
+      "dim_process": 2,
+      "time_since_start": 1.5745017528533936,
+      "time_since_last_event": 0.5,
+      "type_event": 0
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.0,
+      "time_since_last_event": 0.0,
+      "type_event": 0
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 0.5,
+      "time_since_last_event": 0.5,
+      "type_event": 0
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 1.0,
+      "time_since_last_event": 0.5,
+      "type_event": 1
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 3,
+      "dim_process": 2,
+      "time_since_start": 1.5,
+      "time_since_last_event": 0.5,
+      "type_event": 0
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 4,
+      "dim_process": 2,
+      "time_since_start": 2.0,
+      "time_since_last_event": 0.5,
+      "type_event": 0
     },
     {
       "seq_idx": 7,
@@ -465,7 +471,7 @@
       "dim_process": 2,
       "time_since_start": 1.0,
       "time_since_last_event": 0.5,
-      "type_event": 1
+      "type_event": 0
     },
     {
       "seq_idx": 7,
@@ -539,47 +545,47 @@
     ],
     "sim_event_type_hist_l1": [
       null,
-      0.3
+      0.1499999999999999
     ],
     "sim_event_type_hist_l2": [
       null,
-      0.2121320343559642
+      0.106066017177982
     ],
     "sim_event_type_hist_kl": [
       null,
-      0.0452277510236544
+      0.0113787328040497
     ],
     "sim_sequence_length_hist_l1": [
       null,
-      7.4929423332214355
+      7.115343332290649
     ],
     "sim_sequence_length_hist_l2": [
       null,
-      2.669579368950393
+      2.606228497562553
     ],
     "sim_sequence_length_hist_kl": [
       null,
-      0.0008827194060533
+      0.003673829474235
     ],
     "sim_acf_hist_l1": [
       null,
-      1.445751631284268
+      1.4208145044644334
     ],
     "sim_acf_hist_l2": [
       null,
-      0.5786495012749236
+      0.5746877786589991
     ],
     "sim_mean_mmd_value": [
       null,
-      16.3544229042936
+      16.321195141242697
     ],
     "sim_std_mmd_value": [
       null,
-      0.512589497949115
+      0.5458172610000194
     ],
     "sim_mean_mmd_p_value": [
       null,
-      0.3333333432674408
+      0.25
     ],
     "sim_std_mmd_p_value": [
       null,
@@ -587,7 +593,7 @@
     ],
     "sim_pooled_mmd_p_value": [
       null,
-      0.3333333432674408
+      0.25
     ],
     "sim_mmd_num_sequences": [
       null,

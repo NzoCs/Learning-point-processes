@@ -61,8 +61,10 @@ appariée avec les valeurs de cette nouvelle expérience.
 ## Portée
 
 Les contrôles sont dans `tests/stat_metrics/test_recomputed_truncation.py`.
-L'implémentation expérimentale est isolée dans `scripts/compare_truncation.py`.
-Les defaults de production et les références historiques restent inchangés.
+La comparaison et sa référence sans troncature sont dans
+`scripts/compare_truncation.py`. Le protocole recalculé est maintenant celui
+de `new_ltpp/evaluation/statistical_testing/statistical_tests/mmd_test.py`.
+La comparaison a précédé la bascule de production décrite ci-dessous.
 
 La calibration étudiée concerne des séquences indépendantes sous H0, avec le
 même mécanisme d'observation à nombre d'événements fixé. Elle ne certifie ni
@@ -125,8 +127,12 @@ réappliquer la même préparation à l'observation et au nul et contrôler les
 conditionnelles et l'agrégation de batches ont des hypothèses supplémentaires
 et ne doivent pas être déclarées calibrées sur la seule base de ce test.
 
-À ce stade, la comparaison est isolée dans un script expérimental. La pipeline
-de production et ses références numériques n'ont pas encore été basculées.
+La bascule demandée est réalisée : la production recalcule la troncature après
+chaque permutation, calcule les p-values en float64 et traite conservativement
+les égalités numériques. Le nul utilise les permutations dans un flux aléatoire
+séparé de celui des trajectoires. La référence sans troncature reste isolée
+dans le script de comparaison. La migration des références est expliquée
+dans `tests/integration/BASELINE_HISTORY.md`.
 Le workflow scientifique manuel rejoue aussi cette expérience et préserve son
 rapport. Il doit être enregistré sur la branche par défaut pour être lancé
 depuis l'interface GitHub.

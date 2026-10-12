@@ -54,20 +54,37 @@ avec les memes permutations, avec et sans troncature et avec tailles inegales.
 Cette equivalence est testee pour SIGKernel; elle n'est pas generalisee a
 n'importe quel noyau ou a une normalisation dependante des groupes.
 
-## API et compatibilite des resultats
-
-Pour comparer des echantillons independants soumis a la meme regle d'observation :
+## API de production depuis le 12 octobre 2026
 
 ```python
-result = test.compute_statistics(x, y, accumulate=False, paired_truncation=False)
+result = test.compute_statistics(x, y, accumulate=False)
 ```
 
-Le defaut `paired_truncation=True` est conserve pour expliciter la compatibilite
-avec les references historiques. Les pipelines existantes ne sont pas declarees
-scientifiquement calibrees par cette validation. Leur bascule exige un choix
-documente du protocole d'observation et une revision explicite des references.
-Une meme fenetre fixe pour toutes les observations peut aussi etre preparee
-avant d'appeler l'API sans troncature par paires.
+La production conserve uniquement la troncature par paires recalculee apres
+chaque permutation des sequences brutes, comme valide dans
+[TRUNCATION_COMPARISON.md](TRUNCATION_COMPARISON.md). Les deux groupes doivent
+avoir le meme nombre de sequences ; leurs longueurs peuvent etre differentes.
+Les anciennes options `paired_truncation` et `simulations` sont supprimees.
+La reference sans troncature est isolee dans le script de comparaison.
+
+La pipeline utilise exactement `n_samples` permutations, sans produire de
+simulations supplementaires pour construire le nul. Les p-values sont calculees
+en float64 avec la correction +1 et les memes tolerances d'egalite numerique
+que l'experience validee. Un flux aleatoire dedie au reechantillonnage, derive
+de la graine initiale par ajout de `0x4D4D44` modulo `2**63`, est conserve entre
+batches ; l'etat des generateurs de trajectoires est restaure apres le test.
+Le protocole est enregistre dans les manifestes, notamment par phase.
+
+Le changement de nul et l'isolation aleatoire changent les statistiques MMD
+et les trajectoires des batches suivants par rapport au programme historique.
+La migration des references verifie separement que les poids, pertes,
+gradients, intensites, metriques de test et trajectoires du premier batch
+restent inchanges. Voir `tests/integration/BASELINE_HISTORY.md`.
+
+Les mesures de la premiere exploration du 9 octobre ci-dessus sont historiques
+et liees au code `596b169`. La commande actuelle de calibration compare la
+reference brute au protocole recalcule ; elle ne reproduit plus la troncature
+figee retiree du code.
 
 Les comparaisons de simulations conditionnelles, les modeles ajustes sur les
 donnees de test, les p-values agregees entre batches, les marques multiples,

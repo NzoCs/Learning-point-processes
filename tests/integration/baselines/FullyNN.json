@@ -2,8 +2,14 @@
   "schema": 1,
   "model": "FullyNN",
   "fixture_sha256": "c18d51d3db8a9fb2bd0edba8a9646540d94603a5f34554b7b0690bbd60f6b3b2",
-  "config_sha256": "7adc6e2718b6ffd58edd572d728283c4b756c4812427fe9ad433124f67aa9162",
+  "config_sha256": "58bc3241a9813dab282f9abf1936774819dc436c551260be2bee9f1051b49ce9",
   "path_preparation": "masked_valid_count_v2",
+  "statistical_protocol": {
+    "observation": "pairwise_truncation_recomputed_v1",
+    "p_value": "plus_one_float64_conservative_ties_v1",
+    "null_method": "permutation",
+    "rng": "independent_resampling_stream_v1"
+  },
   "trained_state": {
     "layer_type_emb.weight": {
       "shape": [
@@ -1096,7 +1102,7 @@
       "dim_process": 2,
       "time_since_start": 1.5,
       "time_since_last_event": 0.5,
-      "type_event": 0
+      "type_event": 1
     },
     {
       "seq_idx": 5,
@@ -1104,7 +1110,7 @@
       "dim_process": 2,
       "time_since_start": 2.0,
       "time_since_last_event": 0.5,
-      "type_event": 1
+      "type_event": 0
     },
     {
       "seq_idx": 6,
@@ -1120,7 +1126,7 @@
       "dim_process": 2,
       "time_since_start": 0.5,
       "time_since_last_event": 0.5,
-      "type_event": 0
+      "type_event": 1
     },
     {
       "seq_idx": 6,
@@ -1144,7 +1150,7 @@
       "dim_process": 2,
       "time_since_start": 2.0,
       "time_since_last_event": 0.5,
-      "type_event": 0
+      "type_event": 1
     },
     {
       "seq_idx": 7,
@@ -1176,7 +1182,7 @@
       "dim_process": 2,
       "time_since_start": 1.5,
       "time_since_last_event": 0.5,
-      "type_event": 0
+      "type_event": 1
     },
     {
       "seq_idx": 7,
@@ -1242,15 +1248,15 @@
     ],
     "sim_event_type_hist_l1": [
       null,
-      0.55
+      0.7
     ],
     "sim_event_type_hist_l2": [
       null,
-      0.3889087296526011
+      0.4949747468305832
     ],
     "sim_event_type_hist_kl": [
       null,
-      0.1585634262260259
+      0.2738377786433897
     ],
     "sim_sequence_length_hist_l1": [
       null,
@@ -1274,15 +1280,15 @@
     ],
     "sim_mean_mmd_value": [
       null,
-      16.917492800815573
+      17.615367778009997
     ],
     "sim_std_mmd_value": [
       null,
-      0.821650487221488
+      0.1237755100270607
     ],
     "sim_mean_mmd_p_value": [
       null,
-      0.3333333432674408
+      0.25
     ],
     "sim_std_mmd_p_value": [
       null,
@@ -1290,7 +1296,7 @@
     ],
     "sim_pooled_mmd_p_value": [
       null,
-      0.3333333432674408
+      0.25
     ],
     "sim_mmd_num_sequences": [
       null,

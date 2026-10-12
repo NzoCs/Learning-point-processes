@@ -117,6 +117,12 @@ apres son enregistrement. La CI Linux ordinaire controle les oracles rapides.
 
 ## Correction des benchmarks
 
+Les historiques hétérogènes et la somme de batches disjoints sont étudiés dans
+[CONDITIONAL_CALIBRATION.md](CONDITIONAL_CALIBRATION.md). Le nouveau test utilise
+le couple histoire/futur et des échanges au sein de chaque paire. Les mesures
+incluent un contrôle montrant l'inflation du risque lorsque des trajectoires
+sont réutilisées dans des batches randomisés indépendamment.
+
 La validation complémentaire des processus à deux marques et de Hawkes/NHP
 réellement entraînés est décrite dans
 [EXTENDED_VALIDATION.md](scientific/EXTENDED_VALIDATION.md). Elle distingue

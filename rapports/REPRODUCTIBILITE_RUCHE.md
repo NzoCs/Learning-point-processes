@@ -1,5 +1,47 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Historiques conditionnels et batches — 12 octobre 2026
+
+L'[API conditionnelle et sa validation](../docs/CONDITIONAL_CALIBRATION.md)
+comparent un futur réservé et une simulation issue du même historique. Les
+échanges restent dans chaque paire ; le noyau porte sur le couple histoire/futur.
+La statistique appariée hors diagonale exclut les mêmes paires dans ses quatre
+termes. Les batches disjoints sont agrégés par somme de leurs statistiques et
+de leurs randomisations correspondantes. Les identifiants stables permettent
+de rejeter les recouvrements ; sans eux, l'indépendance doit être assurée par
+l'appelant. Les statistiques non finies, nombres de tirages incompatibles et
+loaders désalignés sont rejetés. Les appels redémarrent leur agrégation.
+
+Sur 500 essais H0 CPU Linux, les rejets agrégés sont **2.8 % sur Poisson
+contextuel**, **5.2 % sur Hawkes appris contre l'oracle** et **6.0 % sur NHP
+appris contre ses tirages indépendants**. Poisson reste conservateur, tandis
+que les deux autres intervalles contiennent 5 %. Le contrôle Hawkes avec
+historiques de longueurs 2/6 et padding gauche/droite donne **5.8 %** (IC
+4.07–8.21 %). Le modèle figé est ajusté sur des données indépendantes ; ces H0
+ne certifient pas un test composite tenant compte de l'erreur d'estimation.
+
+La première statistique portant sur les seuls futurs détectait très mal le
+changement conditionnel de marques : **0.5 %** après agrégation. Le noyau joint
+atteint **99.5 %**, sur des données et échanges strictement identiques, dont
+les empreintes ont été vérifiées. Cette modification mathématique concerne
+uniquement le nouveau test conditionnel ; les résultats inconditionnels
+historiques sont protégés. La réutilisation de trajectoires dans trois batches
+donne **14.4 %** de rejets : ce cas viole les hypothèses et n'est pas pris en
+charge par une randomisation indépendante.
+
+La [CI du code `83e2f76`](https://github.com/NzoCs/Learning-point-processes/actions/runs/38246520797)
+passe avec **225 tests**, **82.40 %** de couverture, le contrôle qualité et les
+onze intégrations Linux sans mise à jour de références. Les workflows scientifiques
+restent optionnels. Les résultats bruts et l'ancienne expérience sont archivés.
+
+La pipeline historique `predict` compare encore le batch entier à sa continuation.
+Son manifeste indique désormais explicitement qu'il s'agit d'un diagnostic,
+**pas d'un test conditionnel de bonne spécification certifié**. L'API calibrée
+exige un découpage histoire/futur explicite ; elle ne modifie pas silencieusement
+les simulations historiques. Restent Ruche/CUDA/DDP, les histoires partagées ou
+fenêtres glissantes, les historiques NHP de longueurs variables et le test
+composite d'un modèle estimé contre la véritable loi.
+
 ### Validation Linux complète du 12 octobre 2026
 
 Les onze modèles ont passé la régression d'intégration CPU Linux sur le code

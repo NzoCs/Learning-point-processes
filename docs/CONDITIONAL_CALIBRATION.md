@@ -219,3 +219,16 @@ les phases : il vérifie le câblage, pas la calibration scientifique.
 Sans `conditional_evaluation`, la configuration sérialisée, le mode de simulation
 et les calculs historiques restent identiques. Les références numériques des
 onze modèles ne sont pas réenregistrées pour ce changement.
+
+### Vérification du branchement
+
+Code `a5cab14`, [CI Linux 38250465654](https://github.com/NzoCs/Learning-point-processes/actions/runs/38250465654) :
+236 tests réussis, 3 ignorés, 2 désélectionnés, couverture 82.76 %.
+Les onze modèles historiques passent leur pipeline et les références inchangées.
+Le nouveau parcours CLI complet est testé sur NHP et Hawkes : préfixe seul fourni
+à la simulation, futur réservé transmis au test, identifiants contrôlés avant
+génération puis exportés, conservation du premier délai et vérification de la
+p-value agrégée sur deux batches. Les tests refusent également les entrées trop
+courtes, les batches d'une seule séquence et l'exécution conditionnelle distribuée.
+Ce contrôle du branchement complète les expériences scientifiques ci-dessus ;
+il ne constitue pas une nouvelle mesure de calibration.

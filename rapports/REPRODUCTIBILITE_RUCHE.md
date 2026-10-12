@@ -1,5 +1,33 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Pipeline conditionnelle et identifiants — 12 octobre 2026
+
+Le code `a5cab14` branche l'évaluation conditionnelle dans la CLI existante,
+avec un découpage explicite `simulation_config.conditional_evaluation` :
+`history_events` fixe le préfixe transmis au modèle figé, `future_events` fixe
+le futur réservé et le nombre de continuations simulées. Les identifiants des
+séquences sont transmis du loader au test et au Parquet. Les doublons et
+recouvrements entre batches sont rejetés avant génération. L'export conditionnel
+conserve le premier délai après l'historique.
+
+La [CI Linux](https://github.com/NzoCs/Learning-point-processes/actions/runs/38250465654)
+passe avec **236 tests**, 3 ignorés, 2 désélectionnés et **82.76 %** de couverture.
+Le [contrôle qualité](https://github.com/NzoCs/Learning-point-processes/actions/runs/38250465368)
+passe également. Les **onze modèles historiques** passent leur pipeline complète
+et la comparaison des snapshots avec les références existantes : aucune référence
+ni tolérance n'a été modifiée. Le nouveau parcours conditionnel est testé de
+bout en bout sur NHP et Hawkes, avec vérification des identifiants et de la p-value
+agrégée à partir des deux batches. La suite Windows donne 229 réussites,
+10 tests ignorés et 2 désélectionnés, avec la même couverture.
+
+Sans activation de cette option, les configurations sérialisées et les calculs
+historiques sont conservés. Voir la [configuration et les contraintes](../docs/CONDITIONAL_CALIBRATION.md#évaluation-conditionnelle-dans-la-cli).
+Les identifiants de lignes ne prouvent pas l'indépendance : les observations
+liées doivent porter un identifiant global commun. L'indépendance entre ajustement
+du checkpoint et futurs évalués reste une condition enregistrée comme non
+vérifiée. Le mode conditionnel exige au moins deux séquences par batch et
+s'exécute sur un seul processus. Ruche/CUDA/DDP restent à valider.
+
 ### Historiques conditionnels et batches — 12 octobre 2026
 
 L'[API conditionnelle et sa validation](../docs/CONDITIONAL_CALIBRATION.md)

@@ -1,6 +1,14 @@
 name: Complete integration regression
 
 on:
+  workflow_call:
+    inputs:
+      model:
+        type: string
+        default: all
+      linux_only:
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       model:
@@ -9,6 +17,10 @@ on:
         default: all
         type: choice
         options: [all, ANHN, ANHP, FullyNN, Hawkes, IntensityFree, NHP, ODETPP, RMTPP, SAHP, SelfCorrecting, THP]
+      linux_only:
+        description: Run Linux only
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -18,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ inputs.linux_only && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "windows-latest"]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     env:

@@ -7,6 +7,14 @@ on:
     branches: [main, master]
 
 jobs:
+  integration-linux:
+    # Explicit opt-in for a published development branch, without a main merge.
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[integration-linux]')
+    uses: ./.github/workflows/integration.yml
+    with:
+      model: all
+      linux_only: true
+
   signature-migration:
     runs-on: ubuntu-latest
     env:

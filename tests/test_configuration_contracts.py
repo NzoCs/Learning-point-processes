@@ -13,7 +13,10 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import 
 def test_simulation_has_only_active_seed_and_execution_contract():
     config = SimulationConfig(seed=42)
     assert config.model_dump() == {"seed": 42}
-    assert set(SimulationConfig.model_json_schema()["properties"]) == {"seed"}
+    assert set(SimulationConfig.model_json_schema()["properties"]) == {
+        "seed",
+        "conditional_evaluation",
+    }
     contract = config.execution_contract()
     assert contract["mode"] == "fixed_event_count"
     assert contract["event_count_source"] == "input_batch_width"

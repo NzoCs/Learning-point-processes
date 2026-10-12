@@ -49,10 +49,12 @@ class Simulator:
         self,
         model: "ISimulableModel",
         statistical_test_config: Optional["StatisticalTestConfig"] = None,
+        conditional_evaluation=None,
     ) -> None:
         self.last_result: Optional[SimulationResult] = None
         self._model = model
         self.statistical_test_config = statistical_test_config
+        self.conditional_evaluation = conditional_evaluation
         self._statistics_collector: Optional["BatchStatisticsCollector"] = None
         self._intensity_fn = model.compute_intensities_at_sample_dtimes
 
@@ -109,6 +111,13 @@ class Simulator:
             "statistical_test_config": stat_cfg.model_dump(),
             "device": str(model.device),
         }
+        if self.conditional_evaluation is not None:
+            metadata["conditional_evaluation"] = (
+                self.conditional_evaluation.model_dump()
+            )
+            metadata["statistical_protocol"] = (
+                "within_history_pair_swaps_joint_kernel_v1"
+            )
 
         self._statistics_collector = BatchStatisticsCollector(
             num_event_types=model.num_event_types,
@@ -117,6 +126,7 @@ class Simulator:
             dtime_min=0.0,
             statistical_test_config=stat_cfg,
             metadata=metadata,
+            conditional=self.conditional_evaluation is not None,
         )
         logger.info(f"Simulator: BatchStatisticsCollector initialized at {base_dir}")
 

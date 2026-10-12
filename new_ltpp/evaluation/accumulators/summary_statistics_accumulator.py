@@ -75,8 +75,14 @@ class BatchStatisticsCollector(Accumulator):
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         metadata: Optional[Dict[str, Any]] = None,
+        conditional: bool = False,
     ):
         self.num_event_types = num_event_types
+        self.conditional = conditional
+        if conditional and statistical_test_config is None:
+            raise ValueError(
+                "Conditional collection requires a statistical test configuration"
+            )
         self.base_dir = Path(base_dir)
         self.min_sim_events = int(min_sim_events)
         self.base_dir.mkdir(parents=True, exist_ok=True)
@@ -98,6 +104,7 @@ class BatchStatisticsCollector(Accumulator):
             base_accumulators["statistical_tests"] = StatisticalTestAccumulator(
                 statistical_test_config=statistical_test_config,
                 min_sim_events=min_sim_events,
+                conditional=conditional,
             )
 
         self._accumulators: AccumulatorContainer = base_accumulators
@@ -130,7 +137,27 @@ class BatchStatisticsCollector(Accumulator):
             f"BatchStatisticsCollector initialized with {len(self._accumulators)} accumulators"
         )
 
-    def update(self, batch: Batch, simulation: SimulationResult) -> None:
+    def validate_conditional_ids(self, pair_ids, size):
+        if not self.conditional or pair_ids is None:
+            raise ValueError(
+                "Conditional collection requires stable sequence identifiers"
+            )
+        if size < 2:
+            raise ValueError(
+                "Conditional MMD requires at least two sequences per batch"
+            )
+        self._accumulators["statistical_tests"].test._check_pair_ids(
+            pair_ids, size, True
+        )
+
+    def update(
+        self,
+        batch: Batch,
+        simulation: SimulationResult,
+        *,
+        histories: Batch | None = None,
+        pair_ids=None,
+    ) -> None:
         """Update all accumulators with new batch data.
 
         This method should be called in the predict_step for each batch.
@@ -143,9 +170,18 @@ class BatchStatisticsCollector(Accumulator):
         """
 
         # Update all accumulators (each validates simulation independently)
+        if self.conditional:
+            if histories is None:
+                raise ValueError("Conditional collection requires shared histories")
+            self.validate_conditional_ids(pair_ids, len(batch.time_seqs))
         for key, accumulator in self._accumulators.items():
             if accumulator is not None:
-                cast(IAccumulator, accumulator).update(batch, simulation)
+                if key == "statistical_tests" and histories is not None:
+                    accumulator.update(
+                        batch, simulation, histories=histories, pair_ids=pair_ids
+                    )
+                else:
+                    cast(IAccumulator, accumulator).update(batch, simulation)
 
         self._batch_count += 1
 

@@ -111,6 +111,12 @@ class RunManifest:
             },
             "phases": {},
         }
+        if config.simulation_config.conditional_evaluation is not None:
+            self.value["numerics"].update(
+                mmd_estimator="paired_joint_off_diagonal_v1",
+                mmd_observation_protocol="paired_joint_history_future_u_mmd_v1",
+                mmd_null_method="within_history_pair_swaps_joint_kernel_v1",
+            )
         config.save_to_yaml_file(config.base_dir / "effective_config.yaml")
         self.save()
 
@@ -135,6 +141,21 @@ class RunManifest:
                 "comparison": "history_vs_its_continuation_diagnostic",
                 "calibrated_api": "ConditionalMMDTwoSampleTest_with_heldout_future",
             }
+            conditional = self.config.simulation_config.conditional_evaluation
+            if conditional is not None:
+                self.value["phases"][phase]["statistical_protocol"].update(
+                    observation="paired_joint_history_future_u_mmd_v1",
+                    null_method="within_history_pair_swaps_joint_kernel_v1",
+                    aggregation="sum_statistics_product_randomization_v1",
+                )
+                self.value["phases"][phase]["statistical_interpretation"] = {
+                    "comparison": "heldout_future_vs_same_history_continuation",
+                    "calibration": "validated_protocol_under_conditional_H0",
+                    "requires_independent_fit_and_disjoint_sequences": True,
+                    "fit_independence": "not_verified_by_pipeline",
+                    "identity_guard": "stable_sequence_ids_no_reuse",
+                    **conditional.model_dump(),
+                }
         self.save()
 
     def finish(self, phase, checkpoint=None, error=None):

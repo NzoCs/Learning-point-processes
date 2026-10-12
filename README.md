@@ -185,13 +185,15 @@ You can override configurations via CLI arguments (e.g., `--training-config quic
 * **Model Config**: Hyperparameters for each model (`NHP`, `THP`).
 * **Training Config**: Epochs and learning rate (`quick_test`, `e500_b1`).
 * **Data Loading Config**: Batch size and workers (`quick_test`, `b32_w1`).
-* **Simulation Config**: RNG seed (`fixed_events`, `quick_test`, `debug`).
+* **Simulation Config**: RNG seed (`fixed_events`, `quick_test`, `debug`), with optional `conditional_evaluation` history/future counts.
 * **Signature representation**: `embedding_type: counting_grid`.
 
 For an offline CPU example using the current configuration API, open
 [the getting-started notebook](notebooks/NewLTPP_Getting_Started.ipynb).
 The [configuration contract](docs/CONFIGURATION_CONTRACTS.md) describes how to
 adapt a copy of an old configuration while preserving its archived provenance.
+For heldout conditional model evaluation, see the
+[conditional protocol and CLI configuration](docs/CONDITIONAL_CALIBRATION.md#évaluation-conditionnelle-dans-la-cli).
 
 ---
 

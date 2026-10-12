@@ -169,5 +169,53 @@ contre l'oracle avec 2 ou 6 événements historiques et du padding mixte gauche/
 La pipeline historique `predict` continue de simuler après le batch entier et
 de produire ses comparaisons descriptives avec ce batch. Elle n'utilise pas le
 holdout ci-dessus et ses p-values ne sont **pas certifiées comme test conditionnel
-de bonne spécification**. Ce lot fournit l'API correcte et sa validation sans
-modifier silencieusement les trajectoires ou les références historiques.
+de bonne spécification**. L'évaluation conditionnelle est désormais accessible
+dans cette même pipeline par activation explicite. Les références historiques
+continuent de tester le mode historique.
+
+## Évaluation conditionnelle dans la CLI
+
+Dans une configuration effective utilisée par `ltpp run --phase all` :
+
+```yaml
+simulation_config:
+  seed: 321
+  conditional_evaluation:
+    history_events: 2
+    future_events: 3
+```
+
+Pour chaque séquence, seuls les deux premiers événements valides sont transmis
+au modèle figé. Les trois événements suivants constituent le futur réservé.
+Le modèle simule trois événements depuis le même historique. Les deux futurs
+ont pour origine le dernier événement historique. La MMD utilise le noyau
+joint historique/futur et les échanges au sein des paires ; les statistiques
+et vecteurs de randomisation sont ensuite sommés entre batches indépendants.
+Les autres métriques portent également sur les futurs, dans ce mode.
+
+Le loader transporte les identifiants jusqu'au test et aux exports Parquet.
+Le champ source `sequence_id` est considéré comme un identifiant global : le
+même identifiant dans plusieurs batches est rejeté avant simulation. À défaut,
+`seq_idx` ou l'indice original de ligne est associé au SHA256 du contenu du
+snapshot, indépendamment du chemin local et de l'ordre du DataLoader.
+Les identifiants ne changent ni les tenseurs ni les générateurs aléatoires.
+Le Parquet conditionnel conserve le premier délai après l'historique, au lieu
+de ramener le premier événement simulé à zéro comme dans le mode historique.
+
+Les contrôles exigent au moins deux séquences par batch, chacune avec au moins
+`history_events + future_events` événements valides. Ils rejettent les identifiants
+manquants, répétés dans un batch ou réutilisés après un batch précédent.
+Choisir une taille de batch qui ne laisse pas une seule séquence dans le dernier
+batch. L'exécution conditionnelle est actuellement limitée à un seul processus.
+
+Un identifiant de ligne ne prouve pas l'indépendance des observations : pour
+des fenêtres qui se recouvrent ou plusieurs lignes issues du même individu,
+fournir un identifiant global commun pour détecter leur réutilisation.
+Le checkpoint doit être ajusté indépendamment des futurs évalués ; cette
+condition est explicitement enregistrée comme non vérifiée par la pipeline.
+Le test logiciel de bout en bout peut réutiliser une petite fixture pour toutes
+les phases : il vérifie le câblage, pas la calibration scientifique.
+
+Sans `conditional_evaluation`, la configuration sérialisée, le mode de simulation
+et les calculs historiques restent identiques. Les références numériques des
+onze modèles ne sont pas réenregistrées pour ce changement.

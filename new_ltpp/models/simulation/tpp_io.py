@@ -84,8 +84,10 @@ class SimulationIOManager:
         self,
         num_event_types: int,
         prefix: str = "sim_batch",
+        preserve_origin: bool = False,
     ):
         self.num_event_types = num_event_types
+        self.preserve_origin = preserve_origin
         self._accumulated_data: List[Dict] = []
         self._total_sequences = 0
         self.prefix = prefix
@@ -111,7 +113,10 @@ class SimulationIOManager:
     def append_batch(self, result: SimulationResult) -> None:
         """Format and accumulate/save a simulation batch."""
         formatted = self.format_simulation_result(
-            result, self.num_event_types, self._total_sequences
+            result,
+            self.num_event_types,
+            self._total_sequences,
+            preserve_origin=self.preserve_origin,
         )
 
         if self._writer:
@@ -125,7 +130,11 @@ class SimulationIOManager:
 
     @staticmethod
     def format_simulation_result(
-        result: SimulationResult, num_event_types: int, offset: int = 0
+        result: SimulationResult,
+        num_event_types: int,
+        offset: int = 0,
+        *,
+        preserve_origin: bool = False,
     ) -> List[Dict]:
         """Converts raw SimulationResult (Batch) tensors into a flattened list of events."""
         flattened_events = []
@@ -153,6 +162,13 @@ class SimulationIOManager:
                 [torch.tensor([0.0]), seq_times[1:] - seq_times[:-1]]
             ).tolist()
             event_types = seq_types.tolist()
+            if preserve_origin:
+                time_since_start = seq_times.tolist()
+                time_since_last_event = (
+                    result.time_delta_seqs[i][mask_i.to(result.time_delta_seqs.device)]
+                    .cpu()
+                    .tolist()
+                )
 
             # Create one row per event
             for j in range(len(event_types)):
@@ -166,6 +182,8 @@ class SimulationIOManager:
                         "type_event": event_types[j],
                     }
                 )
+                if preserve_origin and result.sequence_ids is not None:
+                    flattened_events[-1]["sequence_id"] = result.sequence_ids[i]
 
         return flattened_events
 

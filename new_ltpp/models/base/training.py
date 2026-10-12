@@ -105,15 +105,46 @@ class TrainingMixin(PredictionMixin):
                 "Simulator not initialized. PredictionStatsCallback should have injected a Simulator instance."
             )
         simulator: "Simulator" = self._simulator
-        sim = simulator.simulate(batch=batch)
-
         if simulator._statistics_collector is None:
             raise RuntimeError(
                 "No statistics collector. Call simulator.init_statistics_collector() first."
             )
+        conditional = simulator.conditional_evaluation
+        if conditional is None:
+            sim = simulator.simulate(batch=batch)
+            compared_batch = batch
+            histories = None
+        else:
+            from new_ltpp.evaluation.statistical_testing.statistical_tests import (
+                split_history_future,
+            )
+
+            if batch.sequence_ids is None:
+                raise ValueError(
+                    "Conditional prediction requires sequence identifiers from the loader"
+                )
+            if len(batch.sequence_ids) < 2:
+                raise ValueError(
+                    "Conditional MMD requires at least two sequences per batch"
+                )
+            histories, compared_batch = split_history_future(
+                batch, conditional.history_events, conditional.future_events
+            )
+            simulator._statistics_collector.validate_conditional_ids(
+                batch.sequence_ids, len(batch.time_seqs)
+            )
+            sim = self.simulate(
+                histories, num_events_to_simulate=conditional.future_events
+            )
+            sim.sequence_ids = list(batch.sequence_ids)
 
         # Update statistics
-        simulator._statistics_collector.update(batch, sim)
+        if histories is None:
+            simulator._statistics_collector.update(batch, sim)
+        else:
+            simulator._statistics_collector.update(
+                compared_batch, sim, histories=histories, pair_ids=batch.sequence_ids
+            )
 
         # Accumulate results for saving (via SimulationIOManager)
         if self._io_manager is not None:

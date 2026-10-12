@@ -47,6 +47,9 @@ def split_history_future(batch: Batch, history_events: int, future_events: int):
             torch.diff(t, dim=1, prepend=torch.zeros_like(t[:, :1])),
             m,
             torch.ones_like(t, dtype=torch.bool),
+            sequence_ids=(
+                None if batch.sequence_ids is None else list(batch.sequence_ids)
+            ),
         )
 
     return build(prefix_t, marks[:, :history_events]), build(
@@ -174,7 +177,9 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
                 batch, history_events, future_events
             )
             simulated = model.simulate(histories, num_events_to_simulate=future_events)
-            result = self.compute_statistics(future, simulated, histories=histories)
+            result = self.compute_statistics(
+                future, simulated, histories=histories, pair_ids=batch.sequence_ids
+            )
             values.append(float(result["p_value"]))
             statistics.append(float(result["observed_statistic"]))
             null.extend(result["permuted_statistics"].tolist())

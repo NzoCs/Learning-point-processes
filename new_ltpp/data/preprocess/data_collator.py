@@ -53,7 +53,15 @@ class TPPDataCollator:
             Batch with processed sequences (torch tensors)
         """
         batch = self.tokenizer.pad(
-            inputs=features,
+            inputs=[
+                {key: row[key] for key in ("time_seqs", "time_delta_seqs", "type_seqs")}
+                for row in features
+            ],
         )
+        identifiers = [row.get("sequence_id") for row in features]
+        if any(value is not None for value in identifiers):
+            if any(value is None for value in identifiers):
+                raise ValueError("Cannot mix identified and unidentified sequences")
+            batch.sequence_ids = identifiers
 
         return batch

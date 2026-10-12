@@ -5,6 +5,8 @@ from torch.utils.data import Dataset
 from new_ltpp.shared_types import TPPSequence
 from new_ltpp.utils import py_assert
 
+from .sequence_identity import sequence_ids
+
 
 class TPPDataset(Dataset):
 
@@ -13,6 +15,11 @@ class TPPDataset(Dataset):
         self.time_seqs = data["time_seqs"]
         self.time_delta_seqs = data["time_delta_seqs"]
         self.type_seqs = data["type_seqs"]
+        self.sequence_ids = data.get("sequence_ids")
+        if self.sequence_ids is None:
+            self.sequence_ids = sequence_ids(data)
+        if len(self.sequence_ids) != len(self.time_seqs):
+            raise ValueError("Sequence identifiers must match the dataset rows")
 
     def __len__(self):
         """
@@ -44,4 +51,5 @@ class TPPDataset(Dataset):
             time_seqs=self.time_seqs[index],
             time_delta_seqs=self.time_delta_seqs[index],
             type_seqs=self.type_seqs[index],
+            sequence_id=self.sequence_ids[index],
         )

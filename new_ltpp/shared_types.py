@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List, NotRequired, TypedDict
 
 import torch
 
@@ -18,6 +18,7 @@ class TPPSequence(TypedDict):
     time_seqs: List[float]
     time_delta_seqs: List[float]
     type_seqs: List[int]
+    sequence_id: NotRequired[str]
 
 
 @dataclass
@@ -38,11 +39,14 @@ class Batch:
     time_delta_seqs: torch.Tensor
     type_seqs: torch.Tensor
     valid_event_mask: torch.Tensor
+    sequence_ids: List[str] | None = None
 
     def __post_init__(self):
         """Validate and normalize batch after initialization."""
         # Ensure all required tensors have the same batch size
         batch_size = self.time_seqs.shape[0]
+        if self.sequence_ids is not None and len(self.sequence_ids) != batch_size:
+            raise ValueError("sequence_ids must match the batch rows")
         assert (
             self.time_delta_seqs.shape[0] == batch_size
         ), "time_delta_seqs batch size mismatch"

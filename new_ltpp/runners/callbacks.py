@@ -68,6 +68,13 @@ class PredictionStatsCallback(pl.Callback):
     def on_predict_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         from tqdm import tqdm
 
+        if (
+            self.simulation_config.conditional_evaluation is not None
+            and trainer.world_size != 1
+        ):
+            raise ValueError(
+                "Conditional aggregation currently requires a single process"
+            )
         dl = trainer.predict_dataloaders
         total_batches = (
             len(dl[0])
@@ -80,11 +87,15 @@ class PredictionStatsCallback(pl.Callback):
         simulator = Simulator(
             model=model,
             statistical_test_config=self.statistical_test_config,
+            conditional_evaluation=self.simulation_config.conditional_evaluation,
         )
         model._simulator = simulator
 
         # Initialize and inject SimulationIOManager
-        io_manager = SimulationIOManager(num_event_types=model.num_event_types)
+        io_manager = SimulationIOManager(
+            num_event_types=model.num_event_types,
+            preserve_origin=self.simulation_config.conditional_evaluation is not None,
+        )
         io_manager.setup_io(output_dir=self.base_dir / "simulations")
         model._io_manager = io_manager
 

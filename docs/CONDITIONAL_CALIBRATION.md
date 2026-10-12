@@ -232,3 +232,60 @@ p-value agrégée sur deux batches. Les tests refusent également les entrées t
 courtes, les batches d'une seule séquence et l'exécution conditionnelle distribuée.
 Ce contrôle du branchement complète les expériences scientifiques ci-dessus ;
 il ne constitue pas une nouvelle mesure de calibration.
+
+### Pipeline conditionnelle sur les onze modèles, avec entraînement indépendant
+
+Code `1fa68c0`, [run Linux 38251661306](https://github.com/NzoCs/Learning-point-processes/actions/runs/38251661306) :
+**les onze modèles passent** train/test/predict conditionnels. La CI ordinaire
+passe également : 237 tests, 3 ignorés, 2 désélectionnés, couverture 82.76 %.
+Le lint et le packaging passent. Aucune correction des modèles ni modification
+des références historiques n'a été nécessaire.
+
+Trois jeux Poisson marqués sont générés par des flux aléatoires distincts
+(graines 1701/1702/1703) pour train/dev/test : chacun contient huit séquences,
+cinq événements et deux marques. Les identifiants et les trajectoires sont
+disjoints ; les trois hashes de fichiers diffèrent. La validation utilisée pour
+choisir le checkpoint est également séparée du jeu évalué. Chaque modèle est
+entraîné une epoch, puis évalué avec deux événements historiques et trois futurs,
+sur deux batches de quatre séquences, avec 99 randomisations par batch.
+
+La suite vérifie le checkpoint utilisé dans les trois phases, le mode eval et
+l'absence de modification de ses poids pendant predict, le préfixe effectivement
+fourni à `simulate`, le futur réservé reçu par la MMD, huit identifiants uniques,
+24 événements simulés valides, leurs marques, temps et ordre, la correspondance
+des exports aux simulations et le recalcul de la p-value agrégée.
+Les [mesures brutes archivées](validation/conditional-eleven-2026-10-12.json)
+conservent les données, graines, environnement, hashes des checkpoints et fichiers,
+ainsi que les statistiques et vecteurs de randomisation de chaque modèle.
+
+| Modèle | Pipeline | P-value agrégée de ce petit essai |
+|---|---|---:|
+| ANHN | passe | 0.70 |
+| ANHP | passe | 0.63 |
+| FullyNN | passe | 0.05 |
+| Hawkes | passe | 0.05 |
+| IntensityFree | passe | 0.45 |
+| NHP | passe | 0.63 |
+| ODETPP | passe | 0.10 |
+| RMTPP | passe | 0.05 |
+| SAHP | passe | 0.40 |
+| SelfCorrecting | passe | 0.66 |
+| THP | passe | 0.86 |
+
+Ces p-values ne sont pas un critère de réussite de la suite : après une seule
+epoch, le modèle appris peut différer de la loi des données. Ce contrôle confirme
+le fonctionnement logiciel et la séparation des données ; il ne mesure pas la
+calibration H0 ou la convergence scientifique de chacun des onze modèles.
+
+Rejouer localement depuis le dépôt, dans un dossier de sortie neuf :
+
+```bash
+uv run --frozen --no-sync python -m scripts.conditional_integration_suite \
+  --model all --output artifacts/conditional-integration-new
+```
+
+Dans le workflow manuel **Complete integration regression**, sélectionner
+`conditional: true` et `model: all`. La suite complète reste optionnelle ; elle
+peut également être déclenchée sur la branche de développement par le marqueur
+de commit `[conditional-integration]`. Les logs, checkpoints, exports, figures
+et contrôles sont conservés dans l'artefact du run GitHub pendant 14 jours.

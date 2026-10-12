@@ -1,5 +1,26 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Validation conditionnelle complète — 12 octobre 2026
+
+Le code `1fa68c0` passe la pipeline conditionnelle sur **les onze modèles**,
+[run CPU Linux 38251661306](https://github.com/NzoCs/Learning-point-processes/actions/runs/38251661306).
+Trois petits jeux train/dev/test sont générés avec des flux indépendants, des
+identifiants disjoints et des hashes distincts. Le checkpoint est entraîné et
+sélectionné sans utiliser les futurs évalués. Deux événements historiques sont
+transmis au modèle figé ; trois événements réservés sont comparés à la simulation.
+Les deux batches de quatre séquences utilisent chacun 99 randomisations.
+
+Les contrôles du checkpoint figé, des préfixes, des futurs, des identifiants,
+des 24 événements simulés/exportés et de la p-value agrégée passent sur chaque
+modèle. Aucune correction du code des modèles ni modification des références
+historiques n'a été nécessaire. La CI passe avec **237 tests et 82.76 %** de
+couverture, ainsi que le lint et le packaging.
+Les [résultats et la commande de rejeu](../docs/CONDITIONAL_CALIBRATION.md#pipeline-conditionnelle-sur-les-onze-modèles-avec-entraînement-indépendant)
+et les [données et mesures brutes](../docs/validation/conditional-eleven-2026-10-12.json)
+sont archivés. Cette validation porte sur le fonctionnement logiciel CPU Linux,
+pas sur la calibration scientifique universelle des modèles après une epoch.
+Ruche/CUDA/DDP restent à valider.
+
 ### Pipeline conditionnelle et identifiants — 12 octobre 2026
 
 Le code `a5cab14` branche l'évaluation conditionnelle dans la CLI existante,

@@ -11,9 +11,12 @@ Monte Carlo utilisent `(1 + nombre de valeurs >= observation)/(B + 1)`.
 Ces controles reposent sur les hypotheses de la MMD et des permutations :
 [Gretton et al. (2012)](https://jmlr.org/beta/papers/v13/gretton12a.html) et
 [Hemerik et Goeman (2018)](https://doi.org/10.1007/s11749-017-0571-1).
-Les observations doivent etre echangeables sous H0 et la preparation doit etre
-independante des etiquettes de groupe. La correction Monte Carlo ne remplace
-pas cette condition.
+Les observations brutes doivent etre echangeables sous H0 et la meme statistique
+complete doit etre calculee sur chaque permutation. Une preparation commune
+figee doit preserver cette echangeabilite. Une preparation dependant des groupes
+peut en revanche etre integree a la statistique si elle est recalculee apres
+chaque permutation. La correction Monte Carlo ne remplace pas ces conditions.
+Voir la [comparaison appariee du 12 octobre](TRUNCATION_COMPARISON.md).
 
 ## Experience reproductible sur des processus connus
 
@@ -42,6 +45,8 @@ Elle ne constitue pas une preuve universelle de calibration ou de puissance.
 Le protocole historique montre une inflation des faux positifs sur ce Hawkes.
 Un test demontre aussi que ses masques changent selon les etiquettes initiales.
 Il ne doit donc pas etre presente comme un test de permutation calibre.
+Ce constat concerne la troncature figee avant permutation ; il ne condamne pas
+une troncature recalculee sur les donnees brutes apres chaque permutation.
 
 Le calcul accelere utilise une matrice de Gram preparee sur le pool complet.
 Sa statistique et ses p-values sont comparees a l'API reelle de pySigLib,

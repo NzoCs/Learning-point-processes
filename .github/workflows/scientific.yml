@@ -28,6 +28,10 @@ jobs:
         run: uv run --frozen --no-sync python -m scripts.validate_notebooks
       - name: Measure null rejection rates and power
         run: uv run --frozen --no-sync python -m scripts.scientific_calibration --trials 200 --permutations 99
+      - name: Compare observation rules with matched data and permutations
+        run: >-
+          uv run --frozen --no-sync python -m scripts.compare_truncation
+          --trials 500 --power-trials 200 --permutations 99 --seed 20261012
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -35,3 +39,4 @@ jobs:
           path: |
             artifacts/notebook-validation/
             artifacts/scientific-calibration/
+            artifacts/truncation-comparison/

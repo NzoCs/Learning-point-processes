@@ -1,5 +1,28 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Complément du 12 octobre 2026 — troncature recalculée
+
+Une comparaison appariée a été exécutée sur les mêmes séquences brutes et les
+mêmes permutations pour les protocoles sans troncature et avec troncature
+recalculée après chaque permutation. Sur 500 répétitions sous H0, les taux de
+rejet sont respectivement **5,4 % / 4,2 % sur Poisson** et **4,6 % / 5,2 % sur
+Hawkes**. Les quatre intervalles à 95 % contiennent le niveau attendu de 5 %.
+Les puissances sont du même ordre sur les deux alternatives testées, sans
+supériorité générale établie. Voir [le protocole, les résultats et leurs
+limites](../docs/TRUNCATION_COMPARISON.md).
+
+La recommandation pour l'objectif initial de durée commune est de conserver
+**la troncature recalculée**, en repartant des séquences brutes à chaque
+permutation. Le constat antérieur à 9,5 % concernait la préparation figée et
+ne condamne pas toute troncature. Les seuls résultats expérimentaux ne
+certifient pas les simulations conditionnelles ni l'agrégation de batches.
+L'expérience est isolée dans un script ; la production et ses références
+restent inchangées en attendant la décision de bascule.
+
+La suite locale passe avec **194 tests réussis** et **80,79 %** de couverture.
+La CI Linux du code expérimental `475b4b1` passe avec **201 tests réussis**,
+la même couverture, ainsi que les jobs signature, packaging et qualité.
+
 Date : 9 octobre 2026. Dépôt : `NzoCs/Learning-point-processes`.
 Référence examinée : `fdb6c9fb7d1116dc1f4311259c349fa383480612`.
 Le diagnostic initial ci-dessous est historique. Le bilan le plus récent figure

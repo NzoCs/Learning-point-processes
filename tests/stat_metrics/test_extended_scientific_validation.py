@@ -9,6 +9,7 @@ from scripts.extended_scientific_validation import (
     fit_model,
     marked_reference,
     model_pool,
+    nhp_first_arrival_check,
 )
 
 
@@ -75,6 +76,25 @@ def test_fitted_model_checkpoint_replays_simulations(name, tmp_path):
         torch.testing.assert_close(tensor, b.to_mapping()[key], rtol=0, atol=0)
     assert ((a.type_seqs >= 0) & (a.type_seqs < 2)).all()
     assert (a.time_delta_seqs > 0).all()
+    if name == "NHP":
+        checks = nhp_first_arrival_check(model, a)
+        intensity = (
+            model.compute_intensities_at_sample_dtimes(
+                time_delta_seqs=torch.empty(1, 0),
+                type_seqs=torch.empty(1, 0, dtype=torch.long),
+                sample_dtimes=torch.tensor([[[0.001, 10.0, 100.0]]]),
+            )
+            .detach()
+            .double()
+        )
+        for i in range(3):
+            torch.testing.assert_close(
+                intensity[0, 0, i],
+                torch.tensor(checks["initial_intensity"], dtype=torch.float64),
+            )
+        assert checks["expected_mean_wait"] == pytest.approx(
+            1 / float(intensity[0, 0, 0].sum())
+        )
 
 
 def test_batch_preserves_first_waiting_time():

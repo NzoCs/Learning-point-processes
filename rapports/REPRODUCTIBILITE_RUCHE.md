@@ -1,5 +1,33 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Validation Linux complète du 12 octobre 2026
+
+Les onze modèles ont passé la régression d'intégration CPU Linux sur le code
+`6388706`, [run GitHub 38237687152](https://github.com/NzoCs/Learning-point-processes/actions/runs/38237687152).
+Les onze pipelines train/test/predict, checkpoints, gradients, intensités,
+métriques, simulations et exports sont contrôlés. ANHN/ANHP/THP nécessitent
+un profil de poids Linux, à cause d'écarts numériques interplateformes mesurés ;
+leurs résultats observables restent comparés aux références Windows. Les
+tolérances restent `rtol=1e-5`, `atol=1e-6`. La capture Linux et sa répétition
+indépendante concordent sur tous les champs des onze snapshots.
+
+La CI courante passe avec **211 tests réussis**, 3 ignorés, 2 désélectionnés et
+**81,47 %** de couverture. Le workflow de qualité passe également. La régression
+complète reste optionnelle (`workflow_dispatch` ou marqueur `[integration-linux]`).
+Voir [les contrôles et références](../docs/INTEGRATION_TESTS.md).
+
+La [validation scientifique complémentaire](../docs/scientific/EXTENDED_VALIDATION.md)
+couvre deux marques et deux modèles effectivement appris, Hawkes et NHP.
+Les taux de rejet contre le processus cible sont distingués des contrôles H0
+conditionnels au modèle figé. Le contrôle analytique local NHP du premier
+événement est compatible avec ses lois exponentielle et catégorielle attendues.
+Les neuf expériences Linux ont terminé : les cinq contrôles H0 donnent
+3,33–6,33 % de rejets et leurs intervalles à 95 % contiennent tous 5 %.
+Les alternatives de marques sont détectées à 32 % sur Poisson et 28 % sur
+Hawkes ; la puissance demeure limitée avec ces petits échantillons.
+Ruche/CUDA/DDP, les historiques conditionnels hétérogènes et
+l'agrégation statistique de batches restent à valider.
+
 ### Bascule de production du 12 octobre 2026
 
 La production utilise désormais uniquement le test de permutation avec

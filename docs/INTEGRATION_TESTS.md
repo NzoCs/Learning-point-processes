@@ -2,11 +2,14 @@
 
 Cette suite est volontairement séparée de `pytest tests` et de la CI exécutée
 à chaque push. Le workflow `Complete integration regression` se déclenche
-uniquement avec `workflow_dispatch` (Actions → Run workflow, puis sélectionner
+avec `workflow_dispatch` (Actions → Run workflow, puis sélectionner
 la branche et `all`). Il vérifie CPU/Python 3.11 sur Linux et Windows avec
 l'environnement verrouillé et conserve les logs et artefacts même en cas d'échec.
 Le workflow doit être présent sur la branche par défaut pour apparaître dans
-l'interface GitHub ; sur cette branche de travail, la commande locale est utilisable.
+l'interface GitHub. Sur `codex/pysiglib-migration`, un commit contenant
+`[integration-linux]` déclenche explicitement les onze modèles sur Linux via
+le workflow réutilisable, sans fusion préalable. Le champ `linux_only` permet
+également une exécution manuelle limitée à Linux.
 
 ```bash
 uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
@@ -71,6 +74,16 @@ mathématique, les modèles concernés et l'effet observé. Vérifier ensuite le
 références sur un second passage et inclure les différences dans le commit/PR.
 Les changements d'environnement doivent eux aussi être identifiés et examinés.
 La CI ne produit ni n'approuve automatiquement une nouvelle référence.
+
+Le 12 octobre, les onze pipelines Linux ont terminé. Trois poids entraînés
+(ANHN, ANHP, THP) dépassaient les tolérances contre Windows ; tous les autres
+champs des onze modèles passaient. Ces trois modèles disposent de
+[profils de poids Linux documentés](../tests/integration/linux_trained_states/README.md).
+Les contrats observables restent ceux des références Windows et les tolérances
+restent identiques. La seconde exécution indépendante du code `6388706`
+([run 38237687152](https://github.com/NzoCs/Learning-point-processes/actions/runs/38237687152))
+a confirmé les onze modèles et reproduit tous les champs du premier passage
+Linux aux tolérances initiales.
 
 Les artefacts d'exécution sont sous `artifacts/integration/` (ou `--output`) :
 rapport, logs par modèle, snapshots, provenance, configurations, manifests,

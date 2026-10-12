@@ -782,7 +782,7 @@
         "rtol": 1e-05,
         "atol": 1e-06
       },
-      "status": "capture_pending_independent_linux_replay"
+      "status": "confirmed_by_independent_linux_replay"
     },
     "ANHP": {
       "environment": {
@@ -1558,7 +1558,7 @@
         "rtol": 1e-05,
         "atol": 1e-06
       },
-      "status": "capture_pending_independent_linux_replay"
+      "status": "confirmed_by_independent_linux_replay"
     },
     "THP": {
       "environment": {
@@ -2334,7 +2334,16 @@
         "rtol": 1e-05,
         "atol": 1e-06
       },
-      "status": "capture_pending_independent_linux_replay"
+      "status": "confirmed_by_independent_linux_replay"
     }
+  },
+  "independent_replay": {
+    "commit": "638870652371a300bf6827031687c6227579b392",
+    "github_run": 38237687152,
+    "job": 114772308263,
+    "artifact": 11741058783,
+    "artifact_sha256": "dc0fd16202ac1f140b0cff628e7d16c7316e36c64e26f8df749f65591ac0868a",
+    "status": "all_11_passed",
+    "all_snapshot_fields_match_first_linux_capture": true
   }
 }

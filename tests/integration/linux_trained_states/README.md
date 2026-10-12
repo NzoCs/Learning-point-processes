@@ -20,6 +20,8 @@ Windows historiques. Aucun seuil n'est élargi, aucun champ n'est exclu, aucun
 calcul de modèle n'est changé. Les profils sont liés au modèle et aux empreintes
 de configuration et de données. Les références Windows demeurent intactes.
 
-La promotion doit être confirmée par une seconde exécution Linux indépendante.
-Sa provenance et son résultat sont enregistrés dans `provenance.json`.
+La seconde exécution Linux indépendante du commit `6388706`, run `38237687152`,
+a confirmé les onze modèles. Tous les champs des snapshots reproduisent le
+premier passage Linux aux tolérances initiales, et les contrats observables
+passent également contre Windows. La provenance est dans `provenance.json`.
 Un futur changement de poids Linux sera toujours détecté aux tolérances initiales.

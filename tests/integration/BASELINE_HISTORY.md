@@ -80,3 +80,23 @@ Une nouvelle restructuration doit désormais conserver ces références v2.
 La calibration sur Poisson/Hawkes indépendants ne certifie pas à elle seule
 les p-values de modèles ajustés ou de simulations conditionnelles, ni leur
 agrégation entre batches. Ruche/CUDA/DDP restent à valider séparément.
+
+## 12 octobre 2026 — profils CPU Linux confirmés
+
+La première exécution complète Linux du code `883ae826` a terminé les onze
+pipelines. Huit snapshots passent les références Windows v2 ; pour ANHN, ANHP
+et THP, certains poids entraînés dépassent les tolérances initiales. Tous les
+autres champs des onze modèles passent les références historiques, notamment
+les pertes, gradients sondés, intensités, métriques et simulations.
+
+Les profils `linux_trained_states` ne contiennent que les poids capturés des
+trois modèles et leurs empreintes d'entrées. Le comparateur continue de
+vérifier tous les autres champs contre Windows, sans élargir les tolérances.
+Aucun calcul de modèle et aucune référence Windows n'est modifié. L'explication
+précise des écarts interplateformes n'est pas établie.
+
+La seconde exécution Linux indépendante du code `6388706`, run `38237687152`,
+confirme les onze modèles et la concordance de tous les champs des snapshots
+avec le premier passage Linux. L'archive a été téléchargée et son SHA256
+vérifié ; l'audit et la provenance sont dans
+`tests/integration/linux_trained_states/provenance.json`.

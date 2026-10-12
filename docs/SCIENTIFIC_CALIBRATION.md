@@ -117,6 +117,13 @@ apres son enregistrement. La CI Linux ordinaire controle les oracles rapides.
 
 ## Correction des benchmarks
 
+La validation complémentaire des processus à deux marques et de Hawkes/NHP
+réellement entraînés est décrite dans
+[EXTENDED_VALIDATION.md](scientific/EXTENDED_VALIDATION.md). Elle distingue
+les hypothèses nulles conditionnelles au modèle figé des diagnostics d'ajustement
+sur données cibles indépendantes. Le contrôle NHP du premier événement dispose
+d'une référence analytique exponentielle et catégorielle.
+
 Les baselines moyenne des intervalles, distribution des intervalles et
 distribution des marques apprenaient sur le jeu de test malgre leur contrat
 explicite d'apprentissage sur le jeu d'entrainement. Elles apprennent maintenant

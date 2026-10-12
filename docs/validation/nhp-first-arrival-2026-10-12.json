@@ -1,0 +1,79 @@
+{
+  "status": "completed",
+  "seed": 20261014,
+  "platform": "Windows-10-10.0.26200-SP0",
+  "python": "3.11.15",
+  "torch": "2.8.0+cpu",
+  "fit": {
+    "model": "NHP",
+    "seed": 20261015,
+    "steps": 200,
+    "learning_rate": 0.01,
+    "training_data_sha256": "71ae75db41ad9fc26d922b8eb86dac3acef55560d8ea89615804c9f7624c7776",
+    "training_sequences": 256,
+    "first_minibatch_nll": 0.9437320828437805,
+    "last_minibatch_nll": 0.7763890027999878,
+    "initial_training_nll_per_event": 0.968856692314148,
+    "final_training_nll_per_event": 0.807026743888855,
+    "checkpoint_sha256": "37e2dab83811ec60e4ad680fd240e2ba65ff69d5ec00234a391a28bd17f43b27",
+    "configuration": {
+      "model_id": "NHP",
+      "is_training": true,
+      "compute_simulation": false,
+      "compute_metrics": true,
+      "device": "cpu",
+      "gpu": -1,
+      "specs": {
+        "hidden_size": 8,
+        "dropout": 0.0,
+        "num_layers": 1,
+        "num_heads": 2,
+        "time_emb_size": 4,
+        "num_mix_components": 2,
+        "ode_num_sample_per_step": 2
+      },
+      "scheduler_config": {
+        "max_epochs": 1,
+        "lr": 0.001,
+        "lr_scheduler": false
+      },
+      "thinning_config": {
+        "num_sample": 1,
+        "num_exp": 20,
+        "num_samples_boundary": 32,
+        "over_sample_rate": 5.0
+      }
+    }
+  },
+  "code": {
+    "commit": "638870652371a300bf6827031687c6227579b392",
+    "tracked_working_tree_dirty": true,
+    "script_lf_sha256": "8dfafdefecf13e1a2f44c4297e824debfd212e3039fe00c8b41bfb3da857895e",
+    "lock_sha256": "ef46ad32e1aae94637655626629ad509448e3b9bb252cbe3cbc77d298ad1d8db",
+    "numpy": "2.3.3",
+    "pysiglib": "4.0.0",
+    "torch_threads": 1
+  },
+  "analytic_check": {
+    "sequences": 4096,
+    "initial_intensity": [
+      0.955197811126709,
+      0.7564193606376648
+    ],
+    "expected_mean_wait": 0.5842427947653606,
+    "empirical_mean_wait": 0.5784120016881413,
+    "expected_variance_wait": 0.3413396432352393,
+    "empirical_variance_wait": 0.3409642066185339,
+    "exponential_ks_statistic": 0.010795494741641432,
+    "exponential_ks_p_value": 0.7220350537729421,
+    "expected_probability_mark_0": 0.5580674387264235,
+    "empirical_probability_mark_0": 0.552978515625,
+    "mark_probability_wilson_95": [
+      0.5377099081892255,
+      0.5681478437163417
+    ],
+    "categorical_binomial_p_value": 0.5189408715333188,
+    "raw_data_sha256": "008c09d8fde03bfac369215d00ab68285a7b6849edc4e72bd190ff8ccf2b564f"
+  },
+  "independent_local_replay_identical": true
+}

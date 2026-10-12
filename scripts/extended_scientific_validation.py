@@ -6,6 +6,7 @@ Held-out target/model rejection measures fit, not a type-I error rate.
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import platform
 import subprocess
@@ -31,6 +32,25 @@ from scripts.scientific_calibration import wilson_interval
 MU = np.array([1.3, 0.7])
 ALPHA = np.array([[0.20, 0.12], [0.08, 0.16]])
 BETA = np.array([[1.0, 1.5], [1.2, 0.8]])
+
+
+def code_provenance():
+    """Distinguish a clean commit from a local experiment on edited sources."""
+    return dict(
+        commit=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        tracked_working_tree_dirty=bool(
+            subprocess.check_output(
+                ["git", "status", "--porcelain", "--untracked-files=no"], text=True
+            ).strip()
+        ),
+        script_lf_sha256=hashlib.sha256(
+            Path(__file__).read_text().encode()
+        ).hexdigest(),
+        lock_sha256=hashlib.sha256(Path("uv.lock").read_bytes()).hexdigest(),
+        numpy=np.__version__,
+        pysiglib=importlib.metadata.version("pysiglib"),
+        torch_threads=torch.get_num_threads(),
+    )
 
 
 def batch_from_arrays(times, marks):
@@ -203,6 +223,41 @@ def model_pool(model, size, events, seed):
     )
 
 
+def nhp_first_arrival_check(model, pool):
+    """Analytic empty-history oracle: exponential wait and categorical mark.
+
+    With the zero initial CT-LSTM state, the NHP intensity is constant until
+    the first event. This check is independent of comparing two sampler outputs.
+    P-values are diagnostics, not automatic pass/fail gates.
+    """
+    from scipy.stats import binomtest, kstest
+
+    with torch.no_grad():
+        intensity = model.layer_intensity(torch.zeros(1, model.hidden_size))[0].double()
+    waits = pool.time_delta_seqs[:, 0].double().numpy()
+    total_rate = float(intensity.sum())
+    probability = float(intensity[0] / intensity.sum())
+    ks = kstest(waits, "expon", args=(0, 1 / total_rate))
+    mark_count = int((pool.type_seqs[:, 0] == 0).sum())
+    return dict(
+        sequences=len(waits),
+        initial_intensity=intensity.tolist(),
+        expected_mean_wait=1 / total_rate,
+        empirical_mean_wait=float(waits.mean()),
+        expected_variance_wait=1 / total_rate**2,
+        empirical_variance_wait=float(waits.var(ddof=1)),
+        exponential_ks_statistic=float(ks.statistic),
+        exponential_ks_p_value=float(ks.pvalue),
+        expected_probability_mark_0=probability,
+        empirical_probability_mark_0=mark_count / len(waits),
+        mark_probability_wilson_95=wilson_interval(mark_count, len(waits)),
+        categorical_binomial_p_value=float(
+            binomtest(mark_count, len(waits), probability).pvalue
+        ),
+        raw_data_sha256=fingerprint(pool),
+    )
+
+
 def evaluate(label, hypothesis, x, y, trials, permutations, seed):
     """Raw observations permuted and pairwise truncation recomputed each time."""
     test = MMDTwoSampleTest(
@@ -266,7 +321,7 @@ def run(
         platform=platform.platform(),
         python=platform.python_version(),
         torch=torch.__version__,
-        commit=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        code=code_provenance(),
         results=results,
         fits=fits,
         status="in_progress",
@@ -307,6 +362,10 @@ def run(
         model, metadata = fit_model(name, train, output, seed + 10 + i, steps)
         fits.append(metadata)
         pool = model_pool(model, 16 * trials, 6, seed + 20 + i)
+        if name == "NHP":
+            metadata["first_arrival_analytic_check"] = nhp_first_arrival_check(
+                model, pool
+            )
         x, y = select(pool, slice(0, 8 * trials)), select(pool, slice(8 * trials, None))
         results.append(
             evaluate(
@@ -363,7 +422,31 @@ def main():
     parser.add_argument("--permutations", type=int, default=99)
     parser.add_argument("--steps", type=int, default=200)
     parser.add_argument("--seed", type=int, default=20261013)
-    run(**vars(parser.parse_args()))
+    parser.add_argument("--first-arrival-only", action="store_true")
+    args = vars(parser.parse_args())
+    if args.pop("first_arrival_only"):
+        torch.set_num_threads(1)
+        train = marked_reference(np.random.default_rng(args["seed"]), "hawkes", 256)
+        model, fit = fit_model(
+            "NHP", train, args["output"], args["seed"] + 1, args["steps"]
+        )
+        pool = model_pool(model, 4096, 1, args["seed"] + 2)
+        report = dict(
+            status="completed",
+            seed=args["seed"],
+            platform=platform.platform(),
+            python=platform.python_version(),
+            torch=torch.__version__,
+            fit=fit,
+            code=code_provenance(),
+            analytic_check=nhp_first_arrival_check(model, pool),
+        )
+        (args["output"] / "report.json").write_text(
+            json.dumps(report, indent=2, allow_nan=False) + "\n"
+        )
+        print(json.dumps(report["analytic_check"], indent=2))
+    else:
+        run(**args)
 
 
 if __name__ == "__main__":

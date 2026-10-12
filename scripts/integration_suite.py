@@ -236,8 +236,8 @@ def compare_reference(actual, expected, system=None):
         # Baseline files and actual capture retain their original fingerprints.
         actual = dict(actual, config_sha256=expected["config_sha256"])
     # Preserve the historical observable contract on every platform. Only the
-    # trained-state profile differs: Adam amplifies tiny attention gradients in
-    # native CPU kernels. These profiles are captured, audited and replayed on
+    # trained-state profile differs: native CPU kernels gave measured tiny
+    # attention-weight differences. Profiles are captured, audited and replayed on
     # Linux; no numeric tolerance is relaxed and no field is skipped.
     profile = FIXTURES / "linux_trained_states" / f"{expected.get('model', '')}.json"
     if (system or platform.system()) == "Linux" and profile.exists():

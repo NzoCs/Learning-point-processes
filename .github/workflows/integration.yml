@@ -9,6 +9,9 @@ on:
       linux_only:
         type: boolean
         default: false
+      conditional:
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       model:
@@ -19,6 +22,10 @@ on:
         options: [all, ANHN, ANHP, FullyNN, Hawkes, IntensityFree, NHP, ODETPP, RMTPP, SAHP, SelfCorrecting, THP]
       linux_only:
         description: Run Linux only
+        type: boolean
+        default: false
+      conditional:
+        description: Conditional holdout with independent training and evaluation datasets
         type: boolean
         default: false
 
@@ -52,13 +59,14 @@ jobs:
       - name: Verify all phases and numerical references
         env:
           INTEGRATION_MODEL: ${{ inputs.model }}
+          INTEGRATION_SUITE: ${{ inputs.conditional && 'scripts.conditional_integration_suite' || 'scripts.integration_suite' }}
         run: >-
-          uv run --frozen --no-sync python -m scripts.integration_suite
+          uv run --frozen --no-sync python -m ${{ env.INTEGRATION_SUITE }}
           --output artifacts/integration-ci
       - name: Preserve logs, snapshots, checkpoints and plots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: integration-${{ matrix.os }}
+          name: ${{ inputs.conditional && 'conditional-integration' || 'integration' }}-${{ matrix.os }}
           path: artifacts/integration-ci
           retention-days: 14

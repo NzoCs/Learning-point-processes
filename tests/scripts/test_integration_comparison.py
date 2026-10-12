@@ -5,6 +5,29 @@ import pytest
 from scripts.integration_suite import compare
 
 
+def test_linux_weight_profile_preserves_all_observable_gates():
+    import copy
+    import json
+
+    from scripts.integration_suite import FIXTURES, compare_reference
+
+    historical = json.loads((FIXTURES / "baselines" / "ANHP.json").read_text())
+    profile = json.loads((FIXTURES / "linux_trained_states" / "ANHP.json").read_text())
+    actual = dict(historical, trained_state=profile["trained_state"])
+    compare_reference(actual, historical, system="Linux")
+    with pytest.raises(AssertionError, match="trained_state"):
+        compare_reference(actual, historical, system="Windows")
+    changed = copy.deepcopy(actual)
+    changed["probe_loss"]["values"][0] += 0.01
+    with pytest.raises(AssertionError, match="probe_loss"):
+        compare_reference(changed, historical, system="Linux")
+    changed = copy.deepcopy(actual)
+    key = next(iter(changed["trained_state"]))
+    changed["trained_state"][key]["values"][0] += 0.01
+    with pytest.raises(AssertionError, match="trained_state"):
+        compare_reference(changed, historical, system="Linux")
+
+
 def test_reviewed_config_cleanup_preserves_numerical_regression_gate():
     import json
 

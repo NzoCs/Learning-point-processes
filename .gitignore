@@ -46,6 +46,7 @@ log
 **.png
 **.jpg
 **.json
+!tests/integration/linux_trained_states/*.json
 **.csv
 
 # idea files

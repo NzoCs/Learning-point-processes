@@ -7,6 +7,10 @@ on:
     branches: [main, master]
 
 jobs:
+  scientific-extended:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[scientific-extended]')
+    uses: ./.github/workflows/scientific-extended.yml
+
   integration-linux:
     # Explicit opt-in for a published development branch, without a main merge.
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[integration-linux]')

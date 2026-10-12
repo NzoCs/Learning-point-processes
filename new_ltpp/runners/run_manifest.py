@@ -96,6 +96,10 @@ class RunManifest:
                 "deterministic": config.training_config.deterministic,
                 "float32_matmul_precision": torch.get_float32_matmul_precision(),
                 "mmd_estimator": "unbiased_off_diagonal_v2",
+                "mmd_observation_protocol": "pairwise_truncation_recomputed_v1",
+                "mmd_p_value_protocol": "plus_one_float64_conservative_ties_v1",
+                "mmd_null_method": "permutation",
+                "mmd_rng_policy": "independent_resampling_stream_v1",
                 "signature_path_preparation": SIGNATURE_PATH_PREPARATION,
                 "signature_path_representation": SIGNATURE_PATH_REPRESENTATION,
             },
@@ -116,11 +120,24 @@ class RunManifest:
         temporary.replace(self.path)
 
     def start(self, phase):
-        self.value["phases"][phase] = {"status": "running"}
+        self.value["phases"][phase] = {
+            "status": "running",
+            "statistical_protocol": {
+                "observation": "pairwise_truncation_recomputed_v1",
+                "p_value": "plus_one_float64_conservative_ties_v1",
+                "null_method": "permutation",
+                "rng": "independent_resampling_stream_v1",
+            },
+        }
         self.save()
 
     def finish(self, phase, checkpoint=None, error=None):
-        result = {"status": "failed" if error is not None else "completed"}
+        result = {
+            "status": "failed" if error is not None else "completed",
+            "statistical_protocol": self.value["phases"]
+            .get(phase, {})
+            .get("statistical_protocol"),
+        }
         if error is not None:
             result["error"] = str(error)
         if checkpoint and Path(checkpoint).is_file():

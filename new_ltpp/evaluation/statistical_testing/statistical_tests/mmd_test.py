@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 
 from new_ltpp.configs import StatisticalTestConfig
@@ -12,6 +10,17 @@ from new_ltpp.models.model_protocol import ISimulableModel
 from new_ltpp.shared_types import Batch
 
 from .base_test import FinalTestResult, ITest, TestStatistics
+
+MMD_OBSERVATION_PROTOCOL = "pairwise_truncation_recomputed_v1"
+MMD_P_VALUE_PROTOCOL = "plus_one_float64_conservative_ties_v1"
+
+
+def monte_carlo_p_value(observed: torch.Tensor, null: torch.Tensor) -> torch.Tensor:
+    """Plus-one p-value, preserving the alpha boundary and numerical ties."""
+    count = (
+        (null >= observed) | torch.isclose(null, observed, rtol=1e-10, atol=1e-12)
+    ).sum()
+    return (count.to(dtype=torch.float64) + 1) / (null.numel() + 1)
 
 
 class MMDTwoSampleTest:
@@ -86,11 +95,10 @@ class MMDTwoSampleTest:
             or self.total_perm_mmds is None
             or self.total_observed_mmd is None
         ):
-            return torch.tensor(1.0, dtype=torch.float32)  # No data, p-value is 1
+            return torch.tensor(1.0, dtype=torch.float64)  # No data, p-value is 1
 
         perm_mmds = self.total_perm_mmds.to(self.total_observed_mmd.device)
-        count_ge = (perm_mmds >= self.total_observed_mmd).sum()
-        return (count_ge + 1) / (perm_mmds.numel() + 1)
+        return monte_carlo_p_value(self.total_observed_mmd, perm_mmds)
 
     def _concat_batches(self, batch_x: Batch, batch_y: Batch) -> Batch:
         """Concatenate two batches along the batch dimension.
@@ -178,7 +186,8 @@ class MMDTwoSampleTest:
         m = batch_y.time_seqs.shape[0]
         total = n + m
 
-        observed_mmd = self.mmd(batch_x, batch_y)
+        observed_mmd = self.mmd(*self._truncate_to_min_time(batch_x, batch_y))
+        # Pool RAW sequences: masks must be recomputed after every permutation.
         pooled = self._concat_batches(batch_x, batch_y)
 
         perm_mmds: list[torch.Tensor] = []
@@ -186,7 +195,7 @@ class MMDTwoSampleTest:
             perm = torch.randperm(total, device=observed_mmd.device)
             perm_x = self._select_batch(pooled, perm[:n])
             perm_y = self._select_batch(pooled, perm[n:])
-            perm_mmds.append(self.mmd(perm_x, perm_y))
+            perm_mmds.append(self.mmd(*self._truncate_to_min_time(perm_x, perm_y)))
 
         return observed_mmd, torch.stack(perm_mmds, dim=-1)
 
@@ -214,6 +223,8 @@ class MMDTwoSampleTest:
         This ensures that when comparing sequences that have generated the same
         number of events, they are evaluated over the exact same time window.
         """
+        if len(batch_x.time_seqs) != len(batch_y.time_seqs):
+            raise ValueError("Pairwise truncation requires equal group sizes")
         # Calculate max time for each sequence in both batches
         T_max_x = (
             batch_x.time_seqs.masked_fill(~batch_x.valid_event_mask, 0.0)
@@ -253,37 +264,17 @@ class MMDTwoSampleTest:
         self,
         batch_x: Batch,
         batch_y: Batch,
-        simulations: Optional[list[Batch]] = None,
         accumulate: bool = True,
-        *,
-        paired_truncation: bool = True,
     ) -> TestStatistics:
-        """Compare samples, preserving the historical paired truncation by default.
+        """Use the same pairwise observation rule for the observation and each null draw.
 
-        For independent samples observed under the same sampling rule, use
-        ``paired_truncation=False``: preprocessing must not depend on labels to
-        justify permutation calibration. Paired truncation remains available
-        for diagnostics of the historical simulation protocol; its calibration
-        is not implied by the Monte Carlo p-value correction.
+        Permutations start from raw sequences and recompute masks and kernel
+        preparation. Calibration requires exchangeability under H0; conditional
+        model simulations and pooled batches need separate scientific validation.
         """
-        prepare = (
-            self._truncate_to_min_time if paired_truncation else lambda x, y: (x, y)
-        )
-        if simulations is not None and len(simulations) > 1:
-            trunc_X, trunc_Y1 = prepare(batch_x, simulations[0])
-            observed_mmd = self.mmd(trunc_X, trunc_Y1)
+        observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
 
-            perm_mmds_list = []
-            for Y_i in simulations[1:]:
-                trunc_Y1_i, trunc_Yi = prepare(simulations[0], Y_i)
-                perm_mmds_list.append(self.mmd(trunc_Y1_i, trunc_Yi))
-            perm_mmds = torch.stack(perm_mmds_list, dim=-1)
-        else:
-            trunc_X, trunc_Y = prepare(batch_x, batch_y)
-            observed_mmd, perm_mmds = self._permutation_test(trunc_X, trunc_Y)
-
-        count_ge = (perm_mmds >= observed_mmd).sum()
-        p_value = (count_ge + 1.0) / (perm_mmds.numel() + 1.0)
+        p_value = monte_carlo_p_value(observed_mmd, perm_mmds)
 
         if accumulate:
             self._accumulate(observed_mmd, perm_mmds)
@@ -293,11 +284,7 @@ class MMDTwoSampleTest:
             observed_statistic=observed_mmd,
             permuted_statistics=perm_mmds,
             num_null_samples=perm_mmds.numel(),
-            null_method=(
-                "simulation_comparison"
-                if simulations is not None and len(simulations) > 1
-                else "permutation"
-            ),
+            null_method="permutation",
         )
 
     def test_model(

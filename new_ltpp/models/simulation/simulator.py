@@ -117,7 +117,6 @@ class Simulator:
             dtime_min=0.0,
             statistical_test_config=stat_cfg,
             metadata=metadata,
-            simulator=self,
         )
         logger.info(f"Simulator: BatchStatisticsCollector initialized at {base_dir}")
 

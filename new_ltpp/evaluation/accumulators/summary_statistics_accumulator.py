@@ -75,7 +75,6 @@ class BatchStatisticsCollector(Accumulator):
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         metadata: Optional[Dict[str, Any]] = None,
-        simulator: Optional[Any] = None,
     ):
         self.num_event_types = num_event_types
         self.base_dir = Path(base_dir)
@@ -99,7 +98,6 @@ class BatchStatisticsCollector(Accumulator):
             base_accumulators["statistical_tests"] = StatisticalTestAccumulator(
                 statistical_test_config=statistical_test_config,
                 min_sim_events=min_sim_events,
-                simulator=simulator,
             )
 
         self._accumulators: AccumulatorContainer = base_accumulators

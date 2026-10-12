@@ -1,4 +1,4 @@
-from typing import Any, Optional
+import torch
 
 from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
 from new_ltpp.evaluation.statistical_testing.statistical_tests import (
@@ -8,6 +8,8 @@ from new_ltpp.shared_types import Batch, SimulationResult
 
 from .acc_types import StatisticalTestData
 from .base_accumulator import Accumulator
+
+MMD_NULL_RNG_SALT = 0x4D4D44
 
 
 class StatisticalTestAccumulator(Accumulator):
@@ -20,18 +22,17 @@ class StatisticalTestAccumulator(Accumulator):
         self,
         statistical_test_config: StatisticalTestConfig,
         min_sim_events: int = 1,
-        simulator: Optional[Any] = None,
     ):
         super().__init__(min_sim_events)
 
         self.test = create_statistical_test(statistical_test_config)
-        self.simulator = simulator
         self.p_values: list[float] = []
         self.observed_statistic: list[float] = []
         self.perm_statistics: list[float] = []
         self.num_sequences: int = 0
         self.null_sample_counts: list[int] = []
         self.null_methods: list[str] = []
+        self._null_rng_states: dict[str, torch.Tensor] = {}
 
     def update(self, batch: Batch, simulation: SimulationResult) -> None:
         """Accumulate statistical metrics from batch.
@@ -41,44 +42,30 @@ class StatisticalTestAccumulator(Accumulator):
             simulation: Simulation result (required)
 
         """
-        from typing import Any
-
-        simulations = [simulation]
-        if self.simulator is not None and hasattr(self.test, "n_samples"):
-            n_samples = self.test.n_samples
-            if n_samples > 1:
-                N = n_samples - 1
-                B = batch.time_seqs.shape[0]
-
-                # Stack the input batch N times along the batch dimension
-                batch_stacked = Batch(
-                    time_seqs=batch.time_seqs.repeat(N, 1),
-                    time_delta_seqs=batch.time_delta_seqs.repeat(N, 1),
-                    type_seqs=batch.type_seqs.repeat(N, 1),
-                    valid_event_mask=batch.valid_event_mask.repeat(N, 1),
-                )
-
-                # Run the simulator in parallel on the GPU
-                sim_stacked = self.simulator.simulate(batch_stacked)
-
-                # Split the stacked simulation results back into N individual batches
-                time_seqs_list = sim_stacked.time_seqs.split(B, dim=0)
-                time_delta_seqs_list = sim_stacked.time_delta_seqs.split(B, dim=0)
-                type_seqs_list = sim_stacked.type_seqs.split(B, dim=0)
-                valid_event_mask_list = sim_stacked.valid_event_mask.split(B, dim=0)
-
-                for i in range(N):
-                    simulations.append(
-                        Batch(
-                            time_seqs=time_seqs_list[i],
-                            time_delta_seqs=time_delta_seqs_list[i],
-                            type_seqs=type_seqs_list[i],
-                            valid_event_mask=valid_event_mask_list[i],
-                        )
+        # Statistical resampling must not alter the generator used for trajectories.
+        devices = [batch.time_seqs.device] if batch.time_seqs.is_cuda else []
+        with torch.random.fork_rng(devices=devices):
+            # Separate persistent streams avoid reusing the trajectory draws.
+            seed = (torch.initial_seed() + MMD_NULL_RNG_SALT) % (2**63)
+            cpu_state = self._null_rng_states.get("cpu")
+            if cpu_state is None:
+                cpu_state = torch.Generator().manual_seed(seed).get_state()
+            torch.set_rng_state(cpu_state)
+            if batch.time_seqs.is_cuda:
+                device = batch.time_seqs.device
+                key = str(device)
+                cuda_state = self._null_rng_states.get(key)
+                if cuda_state is None:
+                    cuda_state = (
+                        torch.Generator(device=device).manual_seed(seed).get_state()
                     )
-
-        # Compute MMD and p-value using the provided simulations
-        stats = self.test.compute_statistics(batch, simulation, simulations=simulations)
+                torch.cuda.set_rng_state(cuda_state, device)
+            stats = self.test.compute_statistics(batch, simulation)
+            self._null_rng_states["cpu"] = torch.get_rng_state()
+            if batch.time_seqs.is_cuda:
+                self._null_rng_states[str(batch.time_seqs.device)] = (
+                    torch.cuda.get_rng_state(batch.time_seqs.device)
+                )
 
         self.null_sample_counts.append(stats["num_null_samples"])
         self.null_methods.append(stats["null_method"])
@@ -96,6 +83,7 @@ class StatisticalTestAccumulator(Accumulator):
         self.num_sequences = 0
         self.null_sample_counts = []
         self.null_methods = []
+        self._null_rng_states.clear()
         if hasattr(self.test, "reset_accumulators"):
             self.test.reset_accumulators()
 

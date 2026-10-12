@@ -95,60 +95,13 @@ def wilson_interval(successes, total):
     return [center - half, center + half]
 
 
-def run_calibration(
-    trials=200, permutations=99, seed=20261009, processes=("poisson", "hawkes")
-):
-    if trials < 1 or permutations < 1:
-        raise ValueError("Trials and permutations must be positive")
-    torch.set_num_threads(1)
-    torch.manual_seed(seed)
-    rng = np.random.default_rng(seed)
-    kernel = SIGKernel(RBFKernel(), "counting_grid", 8, 0, 1)
-    test = MMDTwoSampleTest(kernel, permutations)
-    results = []
-    for process in processes:
-        for alternative in (False, True):
-            p_values = {"independent_samples": [], "historical_paired_truncation": []}
-            for _ in range(trials):
-                x = sample_process(rng, process)
-                y = sample_process(rng, process, rate=8.0 if alternative else 2.0)
-                p_values["independent_samples"].append(fast_permutation(test, x, y))
-                tx, ty = test._truncate_to_min_time(x, y)
-                p_values["historical_paired_truncation"].append(
-                    fast_permutation(test, tx, ty)
-                )
-            for protocol, values in p_values.items():
-                rejects = sum(p <= 0.05 for p in values)
-                results.append(
-                    {
-                        "process": process,
-                        "hypothesis": (
-                            "alternative_rate_8_vs_2"
-                            if alternative
-                            else "null_rate_2_vs_2"
-                        ),
-                        "protocol": protocol,
-                        "rejections": rejects,
-                        "trials": trials,
-                        "rejection_rate": rejects / trials,
-                        "wilson_95": wilson_interval(rejects, trials),
-                        "p_values": values,
-                    }
-                )
-    return {
-        "seed": seed,
-        "permutations": permutations,
-        "alpha": 0.05,
-        "reject_rule": "p <= alpha",
-        "minimum_p": 1 / (permutations + 1),
-        "samples_per_group": 8,
-        "events_per_sequence": 5,
-        "kernel": "pysiglib / RBF / counting_grid / grid8 / dyadic0",
-        "torch_version": torch.__version__,
-        "numpy_version": np.__version__,
-        "scope": "CPU, independent fixed-count samples; historical protocol diagnostic only; not trained-model or pooled-batch calibration",
-        "results": results,
-    }
+def run_calibration(trials=200, permutations=99, seed=20261009):
+    """Compare the current production observation rule to the raw reference."""
+    from scripts.compare_truncation import run_comparison
+
+    return run_comparison(
+        trials=trials, power_trials=trials, permutations=permutations, seed=seed
+    )
 
 
 def main():
@@ -169,6 +122,7 @@ def main():
         print(
             row["process"],
             row["hypothesis"],
+            row["rate_y"],
             row["protocol"],
             row["rejection_rate"],
             row["wilson_95"],

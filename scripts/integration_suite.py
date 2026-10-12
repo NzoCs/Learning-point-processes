@@ -185,6 +185,7 @@ def run_model(model_name, output):
         "fixture_sha256": digest_json(FIXTURES / "fixture.json"),
         "config_sha256": digest_json(FIXTURES / "config.json"),
         "path_preparation": manifest["numerics"]["signature_path_preparation"],
+        "statistical_protocol": manifest["phases"]["predict"]["statistical_protocol"],
         "trained_state": {
             key: tensor_data(value) for key, value in checkpoint["state_dict"].items()
         },

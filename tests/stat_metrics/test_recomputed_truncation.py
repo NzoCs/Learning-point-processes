@@ -15,7 +15,7 @@ from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
 )
 from new_ltpp.shared_types import Batch
 from scripts.compare_truncation import (
-    RecomputedTruncationTest,
+    UntruncatedReferenceTest,
     count_ge,
     paired_statistics,
     permutation_p_value,
@@ -46,7 +46,7 @@ def test_each_permutation_restarts_from_raw_data_and_matches_scalar_oracle(monke
         rng, "poisson", size=2, rate=4.0
     )
     kernel = SIGKernel(RBFKernel(), "counting_grid", 8, 0, 1)
-    test = RecomputedTruncationTest(kernel, 24)
+    test = MMDTwoSampleTest(kernel, 24)
     permutations = [torch.tensor(p) for p in itertools.permutations(range(4))]
     iterator = iter(permutations)
     monkeypatch.setattr(torch, "randperm", lambda *a, **kw: next(iterator))
@@ -93,8 +93,8 @@ def test_pooled_gram_experiment_matches_actual_kernel_and_both_public_protocols(
             test.mmd(*truncate_oracle(px, py)),
         )
     for name, implementation in (
-        ("without_truncation", test),
-        ("recomputed_pairwise_truncation", RecomputedTruncationTest(kernel, 19)),
+        ("without_truncation", UntruncatedReferenceTest(kernel, 19)),
+        ("recomputed_pairwise_truncation", MMDTwoSampleTest(kernel, 19)),
     ):
         torch.manual_seed(83)
         if name == "without_truncation":
@@ -112,11 +112,11 @@ def test_experimental_truncation_does_not_silently_broadcast_unpaired_groups():
         rng, "poisson", size=3
     )
     kernel = SIGKernel(RBFKernel(), "counting_grid", 8, 0, 1)
-    test = RecomputedTruncationTest(kernel, 3)
+    test = MMDTwoSampleTest(kernel, 3)
     with pytest.raises(ValueError, match="equal group sizes"):
         test.compute_statistics(x, y)
-    with pytest.raises(ValueError, match="permutations only"):
-        test.compute_statistics(x, x, simulations=[x, x])
+    with pytest.raises(TypeError, match="simulations"):
+        test.compute_statistics(x, x, simulations=[y, y])
 
 
 def test_exact_alpha_boundary_and_numerical_ties_are_conservative():
@@ -132,3 +132,46 @@ def test_exact_alpha_boundary_and_numerical_ties_are_conservative():
     assert (
         count_ge(observed, torch.tensor([1.0 - 1e-14, 0.9], dtype=torch.float64)) == 1
     )
+
+
+def test_production_removes_optional_observation_rule_and_preserves_alpha():
+    kernel = SIGKernel(RBFKernel(), "counting_grid", 8, 0, 1)
+    test = MMDTwoSampleTest(kernel, 19)
+    with pytest.raises(TypeError, match="paired_truncation"):
+        test.compute_statistics(None, None, paired_truncation=False)
+    test._accumulate(torch.tensor(1.0), torch.zeros(19))
+    p = test.get_final_p_value()
+    assert p.dtype == torch.float64 and p.item() == 0.05
+    assert p <= 0.05
+
+
+def test_accumulator_uses_permutations_and_does_not_change_trajectory_rng():
+    from new_ltpp.configs import StatisticalTestConfig
+    from new_ltpp.evaluation.accumulators.statistical_metrics_accumulator import (
+        MMD_NULL_RNG_SALT,
+        StatisticalTestAccumulator,
+    )
+
+    rng = np.random.default_rng(14)
+    x, y = sample_process(rng, "poisson", size=3), sample_process(
+        rng, "poisson", size=3
+    )
+    config = StatisticalTestConfig(
+        test_type="mmd",
+        point_process_kernel_type="sig_kernel",
+        space_kernel_type="rbf",
+        num_event_types=1,
+        n_samples=19,
+        num_discretization_points=8,
+        dyadic_order=0,
+    )
+    accumulator = StatisticalTestAccumulator(config)
+    torch.manual_seed(42)
+    before = torch.get_rng_state().clone()
+    accumulator.update(x, y)
+    assert torch.equal(before, torch.get_rng_state())
+    assert accumulator.null_methods == ["permutation"]
+    assert accumulator.null_sample_counts == [19]
+    torch.manual_seed((42 + MMD_NULL_RNG_SALT) % (2**63))
+    expected = accumulator.test.compute_statistics(x, y, accumulate=False)
+    assert accumulator.p_values == [expected["p_value"].item()]

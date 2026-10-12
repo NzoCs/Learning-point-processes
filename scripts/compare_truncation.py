@@ -1,7 +1,7 @@
 """Paired experiment: same raw data and permutations for both observation rules.
 
-The experimental truncated statistic is recomputed from raw data after every
-permutation. Production defaults and historical references remain unchanged.
+The production truncated statistic is recomputed from raw data after every
+permutation. The untruncated reference is isolated here for scientific comparisons.
 """
 
 import argparse
@@ -19,6 +19,7 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels
 )
 from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
     MMDTwoSampleTest,
+    monte_carlo_p_value,
 )
 from scripts.scientific_calibration import (
     gram_statistic,
@@ -38,44 +39,14 @@ def count_ge(observed, null):
 
 def permutation_p_value(observed, null):
     # Divide integer counts in Python float64, so 1/20 is exactly the .05 threshold.
-    return (1 + count_ge(observed, null)) / (1 + len(null))
+    return float(monte_carlo_p_value(observed, null))
 
 
-class RecomputedTruncationTest(MMDTwoSampleTest):
-    """Experimental permutation test, never permute already truncated samples."""
+class UntruncatedReferenceTest(MMDTwoSampleTest):
+    """Untruncated reference restricted to scientific comparison scripts."""
 
-    def _permutation_test(self, batch_x, batch_y):
-        if len(batch_x.time_seqs) != len(batch_y.time_seqs):
-            raise ValueError("Pairwise truncation requires equal group sizes")
-        x, y = self._truncate_to_min_time(batch_x, batch_y)
-        observed = self.mmd(x, y)
-        pooled = self._concat_batches(batch_x, batch_y)
-        n = len(batch_x.time_seqs)
-        null = []
-        for _ in range(self.n_samples):
-            order = torch.randperm(2 * n)
-            x, y = self._truncate_to_min_time(
-                self._select_batch(pooled, order[:n]),
-                self._select_batch(pooled, order[n:]),
-            )
-            null.append(self.mmd(x, y))
-        return observed, torch.stack(null)
-
-    def compute_statistics(self, batch_x, batch_y, simulations=None, accumulate=True):
-        if simulations is not None:
-            raise ValueError("This experiment validates permutations only")
-        observed, null = self._permutation_test(batch_x, batch_y)
-        if accumulate:
-            self._accumulate(observed, null)
-        return {
-            "observed_statistic": observed,
-            "permuted_statistics": null,
-            "p_value": torch.tensor(
-                permutation_p_value(observed, null), dtype=torch.float64
-            ),
-            "num_null_samples": len(null),
-            "null_method": "permutation_recomputed_truncation",
-        }
+    def _truncate_to_min_time(self, batch_x, batch_y):
+        return batch_x, batch_y
 
 
 def paired_statistics(test, x, y, orders):

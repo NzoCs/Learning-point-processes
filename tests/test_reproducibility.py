@@ -463,7 +463,7 @@ def test_generation_preserves_empty_sequences_and_stable_tied_marks():
     assert records[1]["type_event"] == [1, 0, 1]
 
 
-def test_simulation_p_value_uses_effective_draw_count():
+def test_permutation_p_value_uses_configured_draw_count():
     from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
         MMDTwoSampleTest,
     )
@@ -474,9 +474,9 @@ def test_simulation_p_value_uses_effective_draw_count():
 
     batch = indexed_batch([0, 1])
     test = MMDTwoSampleTest(ConstantKernel(), n_samples=30)
-    result = test.compute_statistics(batch, batch, simulations=[batch, batch, batch])
-    assert result["num_null_samples"] == 2
-    assert result["null_method"] == "simulation_comparison"
+    result = test.compute_statistics(batch, batch)
+    assert result["num_null_samples"] == 30
+    assert result["null_method"] == "permutation"
     assert result["p_value"].item() == 1.0
     assert test.get_final_p_value().item() == 1.0
 

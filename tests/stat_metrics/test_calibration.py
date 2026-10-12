@@ -13,6 +13,7 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels
 from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
     MMDTwoSampleTest,
 )
+from scripts.compare_truncation import UntruncatedReferenceTest
 from scripts.scientific_calibration import (
     fast_permutation,
     gram_statistic,
@@ -49,17 +50,17 @@ def test_exact_permutation_ranks_control_false_positives_including_ties():
         assert (p_values <= alpha).double().mean() <= alpha + 1e-12
 
 
-@pytest.mark.parametrize("paired", [False, True])
-def test_fast_calibration_matches_real_pysiglib_permutations(paired):
+@pytest.mark.parametrize("size_y", [3, 4])
+def test_fast_calibration_matches_real_pysiglib_permutations(size_y):
     rng = np.random.default_rng(13)
     x, y = sample_process(rng, "poisson", size=3), sample_process(
-        rng, "poisson", size=4 if not paired else 3
+        rng, "poisson", size=size_y
     )
-    test = MMDTwoSampleTest(SIGKernel(RBFKernel(), "counting_grid", 8, 0, 1), 19)
+    test = UntruncatedReferenceTest(
+        SIGKernel(RBFKernel(), "counting_grid", 8, 0, 1), 19
+    )
     torch.manual_seed(41)
-    result = test.compute_statistics(x, y, accumulate=False, paired_truncation=paired)
-    if paired:
-        x, y = test._truncate_to_min_time(x, y)
+    result = test.compute_statistics(x, y, accumulate=False)
     torch.manual_seed(41)
     assert fast_permutation(test, x, y) == pytest.approx(result["p_value"].item())
     pooled = test._concat_batches(x, y)

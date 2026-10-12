@@ -30,7 +30,12 @@ jobs:
       - name: Check conditional histories and heterogeneous batches
         run: >-
           uv run --frozen --no-sync python -m scripts.conditional_calibration
-          --trials 500 --power-trials 200 --permutations 99 --steps 200
+          --conditional-only --trials 500 --power-trials 200 --permutations 99 --steps 200
+      - name: Validate variable history lengths with mixed padding
+        run: >-
+          uv run --frozen --no-sync python -m scripts.conditional_calibration
+          --ragged-hawkes-only --trials 500 --permutations 99 --steps 200
+          --seed 20261018 --output artifacts/conditional-calibration/ragged-hawkes
       - name: Preserve scientific evidence
         if: always()
         uses: actions/upload-artifact@v4

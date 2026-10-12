@@ -18,6 +18,7 @@ from new_ltpp.evaluation.statistical_testing.statistical_tests import (
 )
 from new_ltpp.evaluation.statistical_testing.statistical_tests.conditional_mmd_test import (
     pair_swap_indices,
+    paired_joint_statistic,
 )
 from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
     monte_carlo_p_value,
@@ -31,10 +32,38 @@ from scripts.extended_scientific_validation import (
     marked_reference,
     select,
 )
-from scripts.scientific_calibration import gram_statistic, wilson_interval
+from scripts.scientific_calibration import wilson_interval
 
 
-def heterogeneous_histories(size):
+def heterogeneous_histories(size, ragged=False):
+    if ragged:
+        times, marks, masks = [], [], []
+        for i in range(size):
+            t, m = (
+                ([0.05, 0.1, 0.15, 0.2, 0.25, 0.3], [0] * 6)
+                if i % 2 == 0
+                else ([0.2, 5.0], [1] * 2)
+            )
+            pad = 6 - len(t)
+            if i % 4 == 1:
+                times.append([0.0] * pad + t)
+                marks.append([2] * pad + m)
+                masks.append([False] * pad + [True] * len(t))
+            else:
+                times.append(t + [0.0] * pad)
+                marks.append(m + [2] * pad)
+                masks.append([True] * len(t) + [False] * pad)
+        batch = select(batch_from_arrays(times, marks), slice(None), torch.float32)
+        batch.valid_event_mask = torch.tensor(masks)
+        # Recompute gaps for valid events so left padding does not alter the history.
+        for row in range(size):
+            valid = batch.valid_event_mask[row]
+            t = batch.time_seqs[row][valid]
+            batch.time_delta_seqs[row] = 0
+            batch.time_delta_seqs[row][valid] = torch.diff(
+                t, prepend=torch.zeros_like(t[:1])
+            )
+        return batch
     rows_t, rows_m = [], []
     for i in range(size):
         rows_t.append([0.1, 0.2, 0.3] if i % 2 == 0 else [0.2, 2.0, 5.0])
@@ -98,23 +127,23 @@ def swap_orders(n, permutations, seed):
         )
 
 
-def cached_paired_statistics(test, x, y, orders):
+def cached_paired_statistics(test, h, x, y, orders):
     """SIG-only cache; pairwise min horizons commute with permitted swaps.
 
     Public-API equivalence is checked in unit tests and the first trial of each
     experiment/batch. This shortcut is not asserted for arbitrary kernels.
     """
     n = len(x.time_seqs)
-    x, y = test._truncate_to_min_time(x, y)
-    pool = test._concat_batches(x, y)
-    gram = test.kernel.compute_gram_matrix(pool, pool)
-    return torch.stack([gram_statistic(gram, order[:n], order[n:]) for order in orders])
+    gram = test.joint_kernel_matrix(h, x, y)
+    return torch.stack(
+        [paired_joint_statistic(gram, order[:n], order[n:]) for order in orders]
+    )
 
 
 def exact_product_group_statistics(test, batches):
     """Exhaustive independent swaps across batches: oracle for aggregated ranks."""
     block_values = []
-    for x, y in batches:
+    for h, x, y in batches:
         n = len(x.time_seqs)
         rows = torch.arange(n)
         orders = torch.stack(
@@ -125,7 +154,7 @@ def exact_product_group_statistics(test, batches):
                 for bits in itertools.product((0, 1), repeat=n)
             ]
         )
-        block_values.append(cached_paired_statistics(test, x, y, orders))
+        block_values.append(cached_paired_statistics(test, h, x, y, orders))
     return torch.tensor(
         [
             sum(float(block_values[i][j]) for i, j in enumerate(indices))
@@ -136,7 +165,13 @@ def exact_product_group_statistics(test, batches):
 
 
 def run(
-    output, trials=500, power_trials=200, permutations=99, steps=200, seed=20261017
+    output,
+    trials=500,
+    power_trials=200,
+    permutations=99,
+    steps=200,
+    seed=20261017,
+    conditional_only=False,
 ):
     if min(trials, power_trials, permutations, steps) < 1:
         raise ValueError("Counts must be positive")
@@ -159,7 +194,11 @@ def run(
         events_per_continuation=6,
         marks=2,
         aggregation="sum_statistics_product_randomization_v1",
+        conditional_statistic="paired_joint_history_future_u_mmd_v1",
+        conditional_null_method="within_history_pair_swaps_joint_kernel_v1",
+        history_similarity="gaussian_signature_RKHS_distance_unit_bandwidth_v1",
         results=[],
+        conditional_only=conditional_only,
         scope="Independent pairs/batches, fixed heterogeneous histories, independently fitted frozen checkpoints. Shared individuals, overlapping batches and rolling histories are excluded.",
     )
 
@@ -178,6 +217,11 @@ def run(
             "overlapping_batches_control",
         )
     ):
+        if conditional_only and case in (
+            "independent_batches_poisson",
+            "overlapping_batches_control",
+        ):
+            continue
         count = power_trials if "alternative" in case else trials
         rng = np.random.default_rng(np.random.SeedSequence([seed, 100, case_id]))
         conditional = case not in (
@@ -239,7 +283,7 @@ def run(
                 )
                 if conditional:
                     orders = swap_orders(n, permutations, order_seed)
-                    stats = cached_paired_statistics(test, x, y, orders)
+                    stats = cached_paired_statistics(test, h, x, y, orders)
                 else:
                     generator = torch.Generator().manual_seed(order_seed)
                     orders = torch.stack(
@@ -322,6 +366,11 @@ def run(
                         else "declared_H0_assumptions"
                     )
                 ),
+                statistic=(
+                    "future_only_unbiased_mmd"
+                    if method == "invalid_global_shuffle_control" or not conditional
+                    else "paired_joint_history_future_u_mmd_v1"
+                ),
                 public_api_all_draws_checked_for_first_trial=True,
             )
             report["results"].append(result)
@@ -345,7 +394,85 @@ def main():
     parser.add_argument("--permutations", type=int, default=99)
     parser.add_argument("--steps", type=int, default=200)
     parser.add_argument("--seed", type=int, default=20261017)
-    run(**vars(parser.parse_args()))
+    parser.add_argument("--ragged-hawkes-only", action="store_true")
+    parser.add_argument("--conditional-only", action="store_true")
+    args = vars(parser.parse_args())
+    if args.pop("ragged_hawkes_only"):
+        run_ragged_hawkes(
+            args["output"],
+            args["trials"],
+            args["permutations"],
+            args["steps"],
+            args["seed"],
+        )
+    else:
+        run(**args)
+
+
+def run_ragged_hawkes(output, trials=500, permutations=99, steps=200, seed=20261018):
+    """Separate conditional oracle experiment with 2/6 events and mixed padding."""
+    torch.set_num_threads(1)
+    train = marked_reference(np.random.default_rng(seed), "hawkes", 256)
+    model, fit = fit_model("Hawkes", train, output, seed + 1, steps)
+    test = ConditionalMMDTwoSampleTest(
+        SIGKernel(RBFKernel(), "counting_grid", 8, 0, 2), permutations
+    )
+    rng = np.random.default_rng(seed + 2)
+    values = []
+    import hashlib
+
+    raw, orders_digest = hashlib.sha256(), hashlib.sha256()
+    for trial in range(trials):
+        h = heterogeneous_histories(8, ragged=True)
+        x = conditional_hawkes_reference(rng, h, **fit["effective_parameters"])
+        torch.manual_seed(seed + 1000 + trial)
+        y = model.simulate(h, num_events_to_simulate=6)
+        orders = swap_orders(8, permutations, seed + 100000 + trial)
+        stats = cached_paired_statistics(test, h, x, y, orders)
+        if trial == 0:
+            with torch.random.fork_rng(devices=[]):
+                torch.manual_seed(seed + 100000)
+                actual = test.compute_statistics(x, y, histories=h, accumulate=False)
+            torch.testing.assert_close(stats[0], actual["observed_statistic"])
+            torch.testing.assert_close(stats[1:], actual["permuted_statistics"])
+        values.append(float(monte_carlo_p_value(stats[0], stats[1:])))
+        raw.update((fingerprint(h) + fingerprint(x) + fingerprint(y)).encode())
+        orders_digest.update(orders.numpy().tobytes())
+        if (trial + 1) % 50 == 0:
+            print(f"ragged Hawkes: {trial+1}/{trials}", flush=True)
+    rejected = sum(p <= 0.05 for p in values)
+    report = dict(
+        status="completed",
+        experiment="ragged_Hawkes_independent_oracle",
+        conditional_statistic="paired_joint_history_future_u_mmd_v1",
+        seed=seed,
+        code=code_provenance(__file__),
+        fit=fit,
+        history_valid_event_counts=[6, 2, 6, 2, 6, 2, 6, 2],
+        padding="mixed_left_right",
+        trials=trials,
+        permutations=permutations,
+        rejections=rejected,
+        rejection_rate=rejected / trials,
+        wilson_95=wilson_interval(rejected, trials),
+        p_values=values,
+        raw_data_sha256=raw.hexdigest(),
+        permutations_sha256=orders_digest.hexdigest(),
+    )
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, allow_nan=False) + "\n"
+    )
+    print(
+        json.dumps(
+            {
+                k: v
+                for k, v in report.items()
+                if k in ("rejections", "trials", "wilson_95")
+            }
+        ),
+        flush=True,
+    )
+    return report
 
 
 if __name__ == "__main__":

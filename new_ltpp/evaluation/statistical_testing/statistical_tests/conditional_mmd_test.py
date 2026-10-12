@@ -12,7 +12,7 @@ from new_ltpp.shared_types import Batch
 
 from .mmd_test import MMDTwoSampleTest
 
-CONDITIONAL_MMD_PROTOCOL = "within_history_pair_swaps_v1"
+CONDITIONAL_MMD_PROTOCOL = "within_history_pair_swaps_joint_kernel_v1"
 BATCH_AGGREGATION_PROTOCOL = "sum_statistics_product_randomization_v1"
 
 
@@ -61,6 +61,15 @@ def pair_swap_indices(n: int, device=None):
     return rows + n * swaps, rows + n * (1 - swaps)
 
 
+def paired_joint_statistic(gram, x, y):
+    """Off-diagonal paired U-statistic; exclude same-pair terms in all four blocks."""
+    n = len(x)
+    if n < 2:
+        raise ValueError("At least two independent pairs are required")
+    delta = gram[x][:, x] + gram[y][:, y] - gram[x][:, y] - gram[y][:, x]
+    return (delta.sum() - delta.diag().sum()) / (n * (n - 1))
+
+
 class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
     null_method = CONDITIONAL_MMD_PROTOCOL
 
@@ -96,21 +105,41 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
                     raise ValueError(
                         "Continuation gaps must use the shared history endpoint as origin"
                     )
-        return super().compute_statistics(
-            batch_x, batch_y, accumulate, pair_ids=pair_ids
+        ids = self._check_pair_ids(pair_ids, n, accumulate)
+        gram = self.joint_kernel_matrix(histories, batch_x, batch_y)
+        rows = torch.arange(n, device=gram.device)
+        observed = paired_joint_statistic(gram, rows, rows + n)
+        null = torch.stack(
+            [
+                paired_joint_statistic(gram, *pair_swap_indices(n, gram.device))
+                for _ in range(self.n_samples)
+            ]
         )
+        return self._finish_statistics(observed, null, accumulate, ids)
 
-    def _permutation_test(self, batch_x, batch_y):
-        n = len(batch_x.time_seqs)
-        pooled = self._concat_batches(batch_x, batch_y)
-        observed = self.mmd(*self._truncate_to_min_time(batch_x, batch_y))
-        null = []
-        for _ in range(self.n_samples):
-            x, y = pair_swap_indices(n, observed.device)
-            # The pairing is fixed; min(T_xi,T_yi) commutes with within-pair swaps.
-            px, py = self._select_batch(pooled, x), self._select_batch(pooled, y)
-            null.append(self.mmd(*self._truncate_to_min_time(px, py)))
-        return observed, torch.stack(null)
+    def joint_kernel_matrix(self, histories, batch_x, batch_y):
+        """Product kernel on history and future, prepared once on a fixed orbit.
+
+        History similarity is a unit-bandwidth Gaussian of the RKHS distance
+        from the supplied history kernel. This removes the signature kernel's
+        common level-zero component without dropping the marginal information.
+        No bandwidth is selected from labels or tuned against calibration results.
+        """
+        px, py = self._truncate_to_min_time(batch_x, batch_y)
+        pool = self._concat_batches(px, py)
+        future = self.kernel.compute_gram_matrix(pool, pool)
+        n = len(histories.time_seqs)
+        if histories.time_seqs.shape[1] == 0:
+            weight = torch.ones((n, n), dtype=future.dtype, device=future.device)
+        else:
+            history = self.kernel.compute_gram_matrix(histories, histories)
+            distance = (
+                history.diag()[:, None] + history.diag()[None, :] - 2 * history
+            ).clamp_min(0)
+            weight = torch.exp(-0.5 * distance)
+        # Each pair has the same history for its two continuations. Truncation,
+        # pooled normalization and this product commute with within-pair swaps.
+        return future * weight.repeat(2, 2)
 
     def test_simulation(self, simulation, ground_truth):
         raise ValueError(

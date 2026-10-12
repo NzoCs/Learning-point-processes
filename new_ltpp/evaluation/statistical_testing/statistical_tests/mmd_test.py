@@ -318,8 +318,18 @@ class MMDTwoSampleTest:
         preparation. Calibration requires exchangeability under H0; conditional
         model simulations and pooled batches need separate scientific validation.
         """
+        if (
+            accumulate
+            and self.n_batches
+            and self._aggregation_null_method != self.null_method
+        ):
+            raise ValueError("Cannot mix null schemes; reset accumulators first")
         ids = self._check_pair_ids(pair_ids, len(batch_x.time_seqs), accumulate)
         observed_mmd, perm_mmds = self._permutation_test(batch_x, batch_y)
+
+        return self._finish_statistics(observed_mmd, perm_mmds, accumulate, ids)
+
+    def _finish_statistics(self, observed_mmd, perm_mmds, accumulate, ids):
 
         p_value = monte_carlo_p_value(observed_mmd, perm_mmds)
 

@@ -71,12 +71,34 @@ def test_all_pair_swaps_match_public_mmd_and_commute_with_truncation(monkeypatch
         ]
     )
     test = make_test(len(orders) - 1)
-    stats = cached_paired_statistics(test, x, y, orders)
-    pool = test._concat_batches(x, y)
+    stats = cached_paired_statistics(test, h, x, y, orders)
+    pool = test._concat_batches(*test._truncate_to_min_time(x, y))
+    future = test.kernel.compute_gram_matrix(pool, pool)
+    history = test.kernel.compute_gram_matrix(h, h)
+    weights = torch.exp(
+        -0.5
+        * (history.diag()[:, None] + history.diag()[None, :] - 2 * history).clamp_min(0)
+    )
     for order, stat in zip(orders, stats):
         assert torch.equal(order[:3] % 3, rows) and torch.equal(order[3:] % 3, rows)
-        a, b = test._select_batch(pool, order[:3]), test._select_batch(pool, order[3:])
-        torch.testing.assert_close(stat, test.mmd(*test._truncate_to_min_time(a, b)))
+        ix, iy = order[:3], order[3:]
+        # Literal scalar oracle, independent of the production block summation.
+        expected = (
+            sum(
+                weights[i, j]
+                * (
+                    future[ix[i], ix[j]]
+                    + future[iy[i], iy[j]]
+                    - future[ix[i], iy[j]]
+                    - future[iy[i], ix[j]]
+                )
+                for i in range(3)
+                for j in range(3)
+                if i != j
+            )
+            / 6
+        )
+        torch.testing.assert_close(stat, expected)
     iterator = iter(orders[1:])
     import new_ltpp.evaluation.statistical_testing.statistical_tests.conditional_mmd_test as module
 
@@ -88,14 +110,14 @@ def test_all_pair_swaps_match_public_mmd_and_commute_with_truncation(monkeypatch
     actual = test.compute_statistics(x, y, histories=h)
     torch.testing.assert_close(actual["observed_statistic"], stats[0])
     torch.testing.assert_close(actual["permuted_statistics"], stats[1:])
-    assert actual["null_method"] == "within_history_pair_swaps_v1"
+    assert actual["null_method"] == "within_history_pair_swaps_joint_kernel_v1"
 
 
 def test_exact_product_group_controls_type_I_for_every_orientation():
     rng = np.random.default_rng(42)
     h = heterogeneous_histories(3)
     batches = [
-        (conditional_poisson(rng, h), conditional_poisson(rng, h)) for _ in range(2)
+        (h, conditional_poisson(rng, h), conditional_poisson(rng, h)) for _ in range(2)
     ]
     values = exact_product_group_statistics(make_test(), batches)
     assert values.numel() == 64
@@ -171,8 +193,11 @@ def test_model_api_conditions_on_prefix_only_and_restarts_aggregation():
 
     class Model:
         training = False
-        _simulator = object()
+        _simulator = None
         calls = 0
+
+        def compute_intensities_at_sample_dtimes(self, **kwargs):
+            raise AssertionError("Calibration must call the model's native simulator")
 
         def simulate(self, prefix, num_events_to_simulate):
             assert num_events_to_simulate == 2
@@ -186,10 +211,17 @@ def test_model_api_conditions_on_prefix_only_and_restarts_aggregation():
     assert first["p_value"] == 1 and test.n_batches == 1
     second = test.test_model(model, [full], None, history_events=3, future_events=2)
     assert second == first and test.n_batches == 1 and model.calls == 2
-    result = make_test(3, conditional=False).test_model(
+    delegated = make_test(3, conditional=False)
+    result = delegated.test_model(
         model, [full], None, history_events=3, future_events=2
     )
     assert result == first
+    assert (
+        delegated.n_batches == 1
+        and float(delegated.get_final_p_value()) == result["p_value"]
+    )
+    with pytest.raises(ValueError, match="null schemes"):
+        delegated.compute_statistics(future, future)
     model.training = True
     with pytest.raises(ValueError, match="frozen"):
         test.test_model(model, [full], None, history_events=3, future_events=2)
@@ -234,6 +266,25 @@ def test_oracle_initializes_excitation_from_actual_history():
     assert rng.scales[0] == pytest.approx(1 / expected)
 
 
+def test_ragged_hawkes_oracle_ignores_left_and_right_padding():
+    h = heterogeneous_histories(2, ragged=True)
+    alternative = Batch(*(v.clone() for v in h.to_mapping().values()))
+    alternative.time_seqs[1] = torch.tensor([0.2, 5.0, 0.0, 0.0, 0.0, 0.0])
+    alternative.type_seqs[1] = torch.tensor([1, 1, 2, 2, 2, 2])
+    alternative.valid_event_mask[1] = torch.tensor(
+        [True, True, False, False, False, False]
+    )
+    parameters = dict(
+        mu=[1.0, 1.0], alpha=[[0.2, 0.3], [0.1, 0.4]], beta=[[1.0, 2.0], [1.0, 2.0]]
+    )
+    a = conditional_hawkes_reference(np.random.default_rng(88), h, **parameters)
+    b = conditional_hawkes_reference(
+        np.random.default_rng(88), alternative, **parameters
+    )
+    for key, value in a.to_mapping().items():
+        torch.testing.assert_close(value, b.to_mapping()[key], rtol=0, atol=0)
+
+
 def test_conditional_accumulator_preserves_trajectory_rng_and_uses_product_sum():
     from new_ltpp.configs import StatisticalTestConfig
     from new_ltpp.evaluation.accumulators.statistical_metrics_accumulator import (
@@ -261,7 +312,10 @@ def test_conditional_accumulator_preserves_trajectory_rng_and_uses_product_sum()
     assert torch.equal(before, torch.get_rng_state()) and not torch.equal(
         state, acc._null_rng_states["cpu"]
     )
-    assert acc.compute()["null_methods"] == ["within_history_pair_swaps_v1"] * 2
+    assert (
+        acc.compute()["null_methods"]
+        == ["within_history_pair_swaps_joint_kernel_v1"] * 2
+    )
     assert acc.compute()["pooled_p_value"] == float(acc.test.get_final_p_value())
     with pytest.raises(ValueError, match="mode"):
         acc.update(x, y)

@@ -175,11 +175,13 @@ class RunManifest:
                 self.value["phases"][phase]["statistical_protocol"].update(
                     observation="paired_joint_history_future_u_mmd_v1",
                     null_method="within_history_pair_swaps_joint_kernel_v1",
-                    aggregation="sum_statistics_product_randomization_v1",
+                    aggregation="global_paired_u_mmd_pooled_signature_blocks_v1",
+                    normalization="all_history_paths_and_all_future_paths_separately_before_blocks",
+                    gram_block_size=self.config.statistical_test_config.signature_max_batch,
                 )
                 self.value["phases"][phase]["statistical_interpretation"] = {
                     "comparison": "heldout_future_vs_same_history_continuation",
-                    "calibration": "validated_protocol_under_conditional_H0",
+                    "calibration": "paired_exchangeability_requires_independent_fit_and_observation_design",
                     "requires_independent_fit_and_disjoint_sequences": True,
                     "fit_independence": "not_verified_by_pipeline",
                     "identity_guard": "stable_sequence_ids_no_reuse",

@@ -200,10 +200,6 @@ class TrainingStepsMixin:
                 raise ValueError(
                     "Conditional prediction requires sequence identifiers from the loader"
                 )
-            if len(batch.sequence_ids) < 2:
-                raise ValueError(
-                    "Conditional MMD requires at least two sequences per batch"
-                )
             histories, compared_batch = split_history_future(
                 batch,
                 conditional.history_events,

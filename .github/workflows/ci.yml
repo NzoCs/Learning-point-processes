@@ -7,6 +7,10 @@ on:
     branches: [main, master]
 
 jobs:
+  global-pipeline:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[global-pipeline]')
+    uses: ./.github/workflows/global-pipeline.yml
+
   global-signature-confirmation:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[global-signature-confirm]')
     uses: ./.github/workflows/global-signature-confirmation.yml

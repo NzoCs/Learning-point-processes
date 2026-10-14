@@ -263,9 +263,14 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None, terminal_fixture=
     assert stats["null_methods"] == ["within_history_pair_swaps_joint_kernel_v1"] * 2
     assert stats["null_sample_counts"] == [99, 99]
     assert all(math.isfinite(p) and 0 < p <= 1 for p in stats["p_values"])
-    observed = torch.tensor(stats["observed_statistic"], dtype=torch.float64).sum()
+    observed = torch.tensor(
+        stats.get("global_observed_statistic", sum(stats["observed_statistic"])),
+        dtype=torch.float64,
+    )
     null = (
-        torch.tensor(stats["permuted_statistic"], dtype=torch.float64)
+        torch.tensor(stats["global_permuted_statistic"], dtype=torch.float64)
+        if "global_permuted_statistic" in stats
+        else torch.tensor(stats["permuted_statistic"], dtype=torch.float64)
         .reshape(2, 99)
         .sum(0)
     )

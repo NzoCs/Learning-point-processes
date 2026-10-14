@@ -285,7 +285,7 @@ def test_ragged_hawkes_oracle_ignores_left_and_right_padding():
         torch.testing.assert_close(value, b.to_mapping()[key], rtol=0, atol=0)
 
 
-def test_conditional_accumulator_preserves_trajectory_rng_and_uses_product_sum():
+def test_conditional_accumulator_preserves_trajectory_rng_and_uses_global_mmd():
     from new_ltpp.configs import StatisticalTestConfig
     from new_ltpp.evaluation.accumulators.statistical_metrics_accumulator import (
         StatisticalTestAccumulator,
@@ -306,9 +306,9 @@ def test_conditional_accumulator_preserves_trajectory_rng_and_uses_product_sum()
     rng = np.random.default_rng(8)
     x, y = conditional_poisson(rng, h), conditional_poisson(rng, h)
     before = torch.get_rng_state().clone()
-    acc.update(x, y, histories=h)
+    acc.update(x, y, histories=h, pair_ids=["first-0", "first-1", "first-2"])
     state = acc._null_rng_states["cpu"].clone()
-    acc.update(x, y, histories=h)
+    acc.update(x, y, histories=h, pair_ids=["second-0", "second-1", "second-2"])
     assert torch.equal(before, torch.get_rng_state()) and not torch.equal(
         state, acc._null_rng_states["cpu"]
     )

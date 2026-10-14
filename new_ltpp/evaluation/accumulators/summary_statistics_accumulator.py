@@ -146,10 +146,8 @@ class BatchStatisticsCollector(Accumulator):
             raise ValueError(
                 "Conditional collection requires stable sequence identifiers"
             )
-        if size < 2:
-            raise ValueError(
-                "Conditional MMD requires at least two sequences per batch"
-            )
+        if size < 1:
+            raise ValueError("Conditional MMD requires a nonempty batch")
         self._accumulators["statistical_tests"].test._check_pair_ids(
             pair_ids, size, True
         )
@@ -376,6 +374,21 @@ class BatchStatisticsCollector(Accumulator):
                         stat_tests["num_sequences"]
                     )
 
+                if stat_tests and "global_observed_statistic" in stat_tests:
+                    metrics_dict[f"global_{test_type}_value"] = stat_tests[
+                        "global_observed_statistic"
+                    ]
+                    proof = (
+                        self.base_dir
+                        / "simulation_results"
+                        / f"{test_type}_global_statistics.json"
+                    )
+                    proof.parent.mkdir(parents=True, exist_ok=True)
+                    proof.write_text(
+                        json.dumps(stat_tests, indent=2, allow_nan=False),
+                        encoding="utf-8",
+                    )
+
                 # Add kernel name and flatten metadata directly into the metrics dict before writing to CSV
                 kernel_name = "unknown"
                 if self.metadata and "statistical_test_config" in self.metadata:
@@ -485,8 +498,9 @@ class BatchStatisticsCollector(Accumulator):
 
     def reset(self) -> None:
         """Reset all accumulators and state."""
-        for accumulator in self._accumulators:
-            cast(IAccumulator, accumulator).reset()
+        for accumulator in self._accumulators.values():
+            if accumulator is not None:
+                accumulator.reset()
         self._batch_count = 0
         self._is_finalized = False
         logger.info("BatchStatisticsCollector reset")

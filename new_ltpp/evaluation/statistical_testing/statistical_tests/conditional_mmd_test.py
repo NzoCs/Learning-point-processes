@@ -176,10 +176,30 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
     def compute_statistics(
         self, batch_x, batch_y, accumulate=True, *, histories=None, pair_ids=None
     ):
+        self.validate_pairs(batch_x, batch_y, histories)
+        n = len(batch_x.time_seqs)
+        if n < 2:
+            raise ValueError(
+                "At least two matched history/continuation pairs are required"
+            )
+        ids = self._check_pair_ids(pair_ids, n, accumulate)
+        gram = self.joint_kernel_matrix(histories, batch_x, batch_y)
+        rows = torch.arange(n, device=gram.device)
+        observed = paired_joint_statistic(gram, rows, rows + n)
+        null = torch.stack(
+            [
+                paired_joint_statistic(gram, *pair_swap_indices(n, gram.device))
+                for _ in range(self.n_samples)
+            ]
+        )
+        return self._finish_statistics(observed, null, accumulate, ids)
+
+    def validate_pairs(self, batch_x, batch_y, histories):
+        """Validate observations before buffering or computing their kernel."""
         if histories is None:
             raise ValueError("Conditional tests require the shared histories")
         n = len(batch_x.time_seqs)
-        if n < 2 or n != len(batch_y.time_seqs) or n != len(histories.time_seqs):
+        if n < 1 or n != len(batch_y.time_seqs) or n != len(histories.time_seqs):
             raise ValueError(
                 "At least two matched history/continuation pairs are required"
             )
@@ -216,17 +236,6 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
                     raise ValueError(
                         "Continuation gaps must use the shared history endpoint as origin"
                     )
-        ids = self._check_pair_ids(pair_ids, n, accumulate)
-        gram = self.joint_kernel_matrix(histories, batch_x, batch_y)
-        rows = torch.arange(n, device=gram.device)
-        observed = paired_joint_statistic(gram, rows, rows + n)
-        null = torch.stack(
-            [
-                paired_joint_statistic(gram, *pair_swap_indices(n, gram.device))
-                for _ in range(self.n_samples)
-            ]
-        )
-        return self._finish_statistics(observed, null, accumulate, ids)
 
     def joint_kernel_matrix(self, histories, batch_x, batch_y):
         """Product kernel on history and future, prepared once on a fixed orbit.

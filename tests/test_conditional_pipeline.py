@@ -137,7 +137,7 @@ def test_predict_holds_out_future_and_rejects_reuse_before_simulation(tmp_path):
     assert collector._batch_count == 1
 
 
-@pytest.mark.parametrize("invalid", ["missing", "duplicate", "short", "singleton"])
+@pytest.mark.parametrize("invalid", ["missing", "duplicate", "short"])
 def test_invalid_conditional_inputs_fail_before_generation(tmp_path, invalid):
     model = fake_model(tmp_path)
     batch = identified_batch()
@@ -257,12 +257,8 @@ def test_complete_cli_conditional_pipeline(tmp_path, monkeypatch, model_id):
         monte_carlo_p_value,
     )
 
-    observed = torch.tensor(stats["observed_statistic"], dtype=torch.float64).sum()
-    null = (
-        torch.tensor(stats["permuted_statistic"], dtype=torch.float64)
-        .reshape(2, 3)
-        .sum(0)
-    )
+    observed = torch.tensor(stats["global_observed_statistic"], dtype=torch.float64)
+    null = torch.tensor(stats["global_permuted_statistic"], dtype=torch.float64)
     assert stats["pooled_p_value"] == pytest.approx(
         monte_carlo_p_value(observed, null).item()
     )

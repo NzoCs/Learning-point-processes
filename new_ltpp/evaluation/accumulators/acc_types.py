@@ -6,13 +6,19 @@ This module contains TypedDict definitions for type-safe statistics handling.
 
 from __future__ import annotations
 
-from typing import Optional, TypedDict
+from typing import NotRequired, Optional, TypedDict
 
 import numpy as np
 import numpy.typing as npt
 
 
 class StatisticalTestData(TypedDict):
+    aggregation_method: NotRequired[str]
+    global_observed_statistic: NotRequired[Optional[float]]
+    global_permuted_statistic: NotRequired[list[float]]
+    global_pair_ids: NotRequired[list[str]]
+    global_null_seed: NotRequired[Optional[int]]
+    gram_block_size: NotRequired[int]
     null_sample_counts: list[int]
     null_methods: list[str]
     """Type definition for statistical metrics collected from batches."""

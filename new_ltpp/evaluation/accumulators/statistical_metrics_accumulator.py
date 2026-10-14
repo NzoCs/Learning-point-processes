@@ -37,16 +37,19 @@ class StatisticalTestAccumulator(Accumulator):
                     "Complete conditional collection requires an explicit stopped event budget"
                 )
             from new_ltpp.evaluation.statistical_testing.statistical_tests import (
-                ConditionalMMDTwoSampleTest,
                 MMDTwoSampleTest,
+            )
+            from new_ltpp.evaluation.statistical_testing.statistical_tests.global_conditional_mmd_test import (
+                GlobalConditionalMMDTwoSampleTest,
             )
 
             if not isinstance(self.test, MMDTwoSampleTest):
                 raise ValueError("Conditional resampling is implemented for MMD only")
-            self.test = ConditionalMMDTwoSampleTest(
+            self.test = GlobalConditionalMMDTwoSampleTest(
                 self.test.kernel,
                 self.test.n_samples,
                 stopped_event_budget=stopped_event_budget if complete_stopped else None,
+                block_size=statistical_test_config.signature_max_batch,
             )
         elif complete_stopped:
             from new_ltpp.evaluation.statistical_testing.statistical_tests.stopped_mmd_test import (
@@ -116,11 +119,12 @@ class StatisticalTestAccumulator(Accumulator):
                     torch.cuda.get_rng_state(batch.time_seqs.device)
                 )
 
-        self.null_sample_counts.append(stats["num_null_samples"])
-        self.null_methods.append(stats["null_method"])
-        self.p_values.append(stats["p_value"].item())
-        self.observed_statistic.append(stats["observed_statistic"].item())
-        self.perm_statistics.extend(stats["permuted_statistics"].tolist())
+        if stats is not None:
+            self.null_sample_counts.append(stats["num_null_samples"])
+            self.null_methods.append(stats["null_method"])
+            self.p_values.append(stats["p_value"].item())
+            self.observed_statistic.append(stats["observed_statistic"].item())
+            self.perm_statistics.extend(stats["permuted_statistics"].tolist())
         self.num_sequences += batch.time_seqs.shape[0]
 
     def reset(self) -> None:
@@ -144,10 +148,7 @@ class StatisticalTestAccumulator(Accumulator):
         """
         pooled_p_val = None
         if hasattr(self.test, "get_final_p_value"):
-            try:
-                pooled_p_val = self.test.get_final_p_value().item()
-            except Exception:
-                pass
+            pooled_p_val = self.test.get_final_p_value().item()
 
         return StatisticalTestData(
             p_values=self.p_values,
@@ -157,4 +158,5 @@ class StatisticalTestAccumulator(Accumulator):
             num_sequences=self.num_sequences,
             null_sample_counts=self.null_sample_counts,
             null_methods=self.null_methods,
+            **(self.test.global_results() if self.conditional else {}),
         )

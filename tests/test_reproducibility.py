@@ -296,6 +296,8 @@ def test_generation_hashes_match_saved_split_files(tmp_path):
 
 
 def test_run_manifest_persists_configuration_data_hash_and_failure(tmp_path):
+    import hashlib
+
     from new_ltpp.runners.run_manifest import RunManifest, sha256_file
 
     config = offline_config(tmp_path, tmp_path / "run")
@@ -303,6 +305,10 @@ def test_run_manifest_persists_configuration_data_hash_and_failure(tmp_path):
     manifest.start("train")
     manifest.finish("train", error=RuntimeError("fixture failure"))
     value = json.loads(manifest.path.read_text())
+    assert (
+        hashlib.sha256(json.dumps(value["config"], sort_keys=True).encode()).hexdigest()
+        == value["config_sha256"]
+    )
     assert value["phases"]["train"]["status"] == "failed"
     policy = value["numerics"]["neural_event_sampling"]
     assert policy["waiting_time_cap"] is None

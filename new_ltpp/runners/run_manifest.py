@@ -107,7 +107,7 @@ class RunManifest:
                     "algorithm": "windowed_thinning_unbounded_v1",
                     "waiting_time_cap": None,
                     "max_sampling_rounds": ThinningConfig.model_validate(
-                        raw_config["model_config"]["thinning_config"]
+                        dict(raw_config["model_config"]["thinning_config"])
                     ).max_sampling_rounds,
                     "envelope": "sampled_local_windows_checked_at_proposals",
                     "certified_envelope_for_arbitrary_models": False,

@@ -25,8 +25,15 @@ def invert_hazard(hazard, limit, num_samples, *, conditional=False, max_rounds=1
     low = torch.zeros_like(target)
     high = torch.ones_like(target)
     rounds = 0
+
+    def evaluate(times):
+        values = hazard(times)
+        if ((torch.isnan(values) | (values < 0)) & finite).any():
+            raise RuntimeError("Invalid integrated intensity during hazard inversion")
+        return values
+
     while True:
-        below = finite & (hazard(high) < target)
+        below = finite & (evaluate(high) < target)
         if not below.any():
             break
         if rounds >= max_rounds or not torch.isfinite(high[below] * 2).all():
@@ -38,7 +45,7 @@ def invert_hazard(hazard, limit, num_samples, *, conditional=False, max_rounds=1
     # Floating point bisection, without a waiting-time cap.
     for _ in range(64):
         mid = low + (high - low) / 2
-        below = hazard(mid) < target
+        below = evaluate(mid) < target
         low = torch.where(finite & below, mid, low)
         high = torch.where(finite & ~below, mid, high)
     return torch.where(finite, high, torch.full_like(high, torch.inf))

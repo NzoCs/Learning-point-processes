@@ -98,7 +98,7 @@ class EventSampler(nn.Module):
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
             valid_event_mask=valid_event_mask,
-            sample_dtimes=tnorm,
+            sample_dtimes=tnorm.to(time_delta_seqs.dtype),
             compute_last_step_only=compute_last_step_only,
         )
 
@@ -211,7 +211,9 @@ class EventSampler(nn.Module):
             B, L_out, num_sample, dtype=torch.bool, device=self.device
         )
         accepted_dtimes = torch.zeros(B, L_out, num_sample, device=self.device)
-        current_offset = torch.zeros(B, L_out, device=self.device)
+        # Many small rejected jumps can otherwise round back to the float32
+        # offset. Accumulate the clock in float64, evaluate the model in its dtype.
+        current_offset = torch.zeros(B, L_out, device=self.device, dtype=torch.float64)
         window_start = torch.zeros_like(current_offset)
         window_width = torch.full_like(current_offset, self.dtime_max or 1.0)
         iters = 0
@@ -244,7 +246,7 @@ class EventSampler(nn.Module):
                     "sampling window cannot advance in the current floating-point precision"
                 )
             # 2. exp samples
-            exp_j = self.sample_exp_distribution(upper_bound)  # [B, L_out, E]
+            exp_j = self.sample_exp_distribution(upper_bound).double()  # [B, L_out, E]
             exp_j_cum = torch.cumsum(exp_j, dim=-1) + current_offset.unsqueeze(
                 -1
             )  # [B, L_out, E]
@@ -261,7 +263,7 @@ class EventSampler(nn.Module):
                 time_delta_seqs=time_delta_seqs,
                 type_seqs=type_seqs,
                 valid_event_mask=valid_event_mask,
-                sample_dtimes=evaluation_times,
+                sample_dtimes=evaluation_times.to(time_delta_seqs.dtype),
                 compute_last_step_only=compute_last_step_only,
             )
 
@@ -338,6 +340,10 @@ class EventSampler(nn.Module):
                 ).detach()
 
         # uniform weights
+        converted = accepted_dtimes.to(time_delta_seqs.dtype)
+        if (~torch.isfinite(converted)).any():
+            stop("finite waiting time exceeds output floating-point range")
+        accepted_dtimes = converted
         weights = torch.ones_like(accepted_dtimes) / num_sample
 
         return accepted_dtimes, weights

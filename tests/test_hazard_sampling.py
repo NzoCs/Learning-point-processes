@@ -111,6 +111,13 @@ def test_hazard_bracket_failure_is_not_misreported_as_absence():
         )
 
 
+def test_invalid_hazard_cannot_be_returned_as_a_finite_event():
+    with pytest.raises(RuntimeError, match="Invalid integrated intensity"):
+        invert_hazard(
+            lambda t: torch.full_like(t, torch.nan), torch.full((1, 1), torch.inf), 1
+        )
+
+
 @pytest.mark.parametrize(
     "slope,log_rate", [(-1.0, 0.0), (0.0, 0.0), (1.0, 0.0), (-1.0, 12.0), (1.0, 12.0)]
 )

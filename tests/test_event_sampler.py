@@ -131,6 +131,27 @@ def test_complete_sampling_repeats_exactly_with_seed():
     torch.testing.assert_close(first, second, rtol=0, atol=0)
 
 
+def test_small_positive_rejected_jump_does_not_stagnate_float32_clock(monkeypatch):
+    engine = sampler(window=100, proposals=1)
+    monkeypatch.setattr(
+        engine, "compute_intensity_upper_bound", lambda *a, **kw: torch.ones(1, 1)
+    )
+    increments = iter([1.0, 1e-9, 1.0])
+    monkeypatch.setattr(
+        engine,
+        "sample_exp_distribution",
+        lambda rate: torch.full((1, 1, 1), next(increments)),
+    )
+    uniforms = iter([1.0, 1.0, 0.0])
+    monkeypatch.setattr(
+        engine,
+        "sample_uniform",
+        lambda rate, count: torch.full((1, 1, count, 1), next(uniforms)),
+    )
+    times, _ = draw(engine, constant(0.01))
+    torch.testing.assert_close(times, torch.tensor([[[2.0]]]))
+
+
 def test_rmtpp_negative_slopes_have_a_nonzero_probability_of_no_next_event(tmp_path):
     from scripts.independent_simulator_validation import constant_poisson_model
 

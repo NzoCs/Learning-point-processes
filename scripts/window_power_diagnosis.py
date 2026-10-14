@@ -74,7 +74,14 @@ def feature_gram(batch, horizon, kind):
     return torch.exp(-0.5 * torch.cdist(features, features).square() / bandwidth**2)
 
 
-def run(output, trials=100, permutations=99, seed=2026101407):
+def run(
+    output,
+    trials=100,
+    permutations=99,
+    seed=2026101407,
+    model_name=None,
+    epoch_number=None,
+):
     if min(trials, permutations) < 1:
         raise ValueError("Positive counts required")
     torch.set_num_threads(1)
@@ -94,6 +101,8 @@ def run(output, trials=100, permutations=99, seed=2026101407):
         h0_excess_threshold=0.01 / 32,
         scope="Exploratory diagnosis with predeclared comparisons, shared frozen encoder and NumPy/SciPy decoder. Independent trials, nested 32/128 samples; not a production kernel selection or general model ranking.",
         models=[],
+        selected_model=model_name,
+        selected_epoch=epoch_number,
     )
     write_json(output / "plan.json", report)
     sigs = {
@@ -102,7 +111,11 @@ def run(output, trials=100, permutations=99, seed=2026101407):
     }
     history = heterogeneous_histories(128)
     for name in ("FullyNN", "RMTPP"):
+        if model_name is not None and name != model_name:
+            continue
         for epoch in (1, 2):
+            if epoch_number is not None and epoch != epoch_number:
+                continue
             model, fit = load_frozen_model(
                 name,
                 output / f"{name}-{epoch}",
@@ -304,4 +317,6 @@ if __name__ == "__main__":
     parser.add_argument("--trials", type=int, default=100)
     parser.add_argument("--permutations", type=int, default=99)
     parser.add_argument("--seed", type=int, default=2026101407)
+    parser.add_argument("--model-name", choices=("FullyNN", "RMTPP"))
+    parser.add_argument("--epoch-number", type=int, choices=(1, 2))
     run(**vars(parser.parse_args()))

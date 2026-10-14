@@ -22,6 +22,7 @@ MODELS = [
     "SAHP",
     "SelfCorrecting",
     "THP",
+    "Poisson",
 ]
 
 

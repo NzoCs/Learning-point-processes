@@ -11,11 +11,11 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from new_ltpp.models.base import TrainingMixin
+from new_ltpp.models.base.parametric import ParametricModel
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
-class SelfCorrecting(TrainingMixin):
+class SelfCorrecting(ParametricModel):
     """
     Multivariate Self-Correcting process with matrix-valued α parameters.
 
@@ -127,15 +127,21 @@ class SelfCorrecting(TrainingMixin):
         λ_k(t) = exp(μ_k * t - Σ_{t_i < t} α[k, m_i])
         """
         H_past = self._get_history(type_seqs, valid_event_mask)  # [B, L, K]
+        correction = F.embedding(
+            type_seqs.masked_fill(~valid_event_mask.bool(), 0).long(), self.alpha.t()
+        ) * valid_event_mask.unsqueeze(-1)
 
         if compute_last_step_only:
             H_past = H_past[:, -1:, :]
+            correction = correction[:, -1:, :]
             time_seqs = time_seqs[:, -1:]
             sample_dtimes = sample_dtimes[:, -1:, :]
 
         # Absolute time: [B, L, S, 1]
         T = (time_seqs.unsqueeze(-1) + sample_dtimes).unsqueeze(-1)
-        H = H_past.unsqueeze(2)  # [B, L, 1, K]
+        H = H_past.unsqueeze(2) + correction.unsqueeze(2) * (
+            sample_dtimes.unsqueeze(-1) > 0
+        )
 
         mu = torch.clamp(self.mu, min=self.eps)  # [K]
 
@@ -182,13 +188,13 @@ class SelfCorrecting(TrainingMixin):
         # ── 2. Analytical integral over each inter-event interval ─────────────
         # Intervales de t_0..t_{L-2}
         T_start = time_seq[:, :-1]  # [B, L-1]
-        H_start = H_past[:, :-1, :]  # [B, L-1, K]
+        H_start = H_past[:, 1:, :]  # includes the event at the interval start
         dt = time_delta_seq[:, 1:].unsqueeze(-1)  # [B, L-1, 1]
 
         x_start = T_start.unsqueeze(-1) * mu - H_start  # [B, L-1, K]
 
         # ∫ exp(x_start + μ*s) ds = exp(x_start) * (exp(μ*Δt) - 1) / μ
-        integral_k = torch.exp(x_start) * (torch.exp(mu * dt) - 1.0) / mu
+        integral_k = torch.exp(x_start) * torch.expm1(mu * dt) / mu
         integral = integral_k.sum(dim=-1)  # [B, L-1]
 
         # ── 3. Masked reduction ───────────────────────────────────────────────
@@ -244,10 +250,19 @@ class SelfCorrecting(TrainingMixin):
 
         return H, end_times
 
+    def continuation_intensities(self, batch, deltas):
+        penalty, start = self.sync_state(batch)
+        return torch.exp(
+            self.mu.clamp(min=self.eps) * (start[:, None, None] + deltas[:, :, None])
+            - penalty[:, None]
+        )
+
     def simulate(
         self,
         batch: Batch,
         num_events_to_simulate: Optional[int] = None,
+        *,
+        horizon: Optional[float] = None,
     ) -> SimulationResult:
         """
         Simulate the multivariate Self-Correcting process conditionné sur un batch.
@@ -261,6 +276,10 @@ class SelfCorrecting(TrainingMixin):
             num_events_to_simulate = batch.time_seqs.size(1)
             if num_events_to_simulate == 0:
                 num_events_to_simulate = 100
+        if num_events_to_simulate < 0 or (horizon is not None and horizon < 0):
+            raise ValueError("Event count and horizon must be nonnegative")
+        if horizon is not None:
+            num_events_to_simulate = 128
 
         mu = torch.clamp(self.mu.detach(), min=self.eps)  # [K]
         alpha_t = self.alpha.detach().t()  # [K_source, K_target]
@@ -269,7 +288,6 @@ class SelfCorrecting(TrainingMixin):
         H, t = self.sync_state(batch)
         H = H.detach()
         t = t.detach()
-        start_times = t.clone()
 
         # Pré-allocation
         all_times = torch.zeros(
@@ -283,31 +301,59 @@ class SelfCorrecting(TrainingMixin):
         )
 
         # ── 2. Boucle de simulation vectorisée ──
-        for step in range(num_events_to_simulate):
+        step = 0
+        elapsed = torch.zeros_like(t)
+        lens = torch.zeros(batch_size, device=dev, dtype=torch.long)
+        active = torch.ones(batch_size, device=dev, dtype=torch.bool)
+        while (
+            (step < num_events_to_simulate) if horizon is None else bool(active.any())
+        ):
             x = mu * t.unsqueeze(1) - H  # [B, K]
 
             E = torch.empty((batch_size, K), device=dev).exponential_(1.0)
-            tau = torch.log(E * mu / torch.exp(x) + 1.0) / mu  # [B, K]
+            tau = (
+                torch.log1p(E * mu * torch.exp(-x)) / mu
+            )  # stable for small growth rates
 
             dt, next_dim = torch.min(tau, dim=1)  # dt: [B], next_dim: [B]
+            if horizon is not None:
+                active &= elapsed + dt < horizon
+                if not active.any():
+                    break
+                if step >= all_times.size(1):
+                    all_times = torch.cat((all_times, torch.zeros_like(all_times)), 1)
+                    all_deltas = torch.cat(
+                        (all_deltas, torch.zeros_like(all_deltas)), 1
+                    )
+                    all_types = torch.cat((all_types, torch.zeros_like(all_types)), 1)
             t_next = t + dt
 
             t = t_next
             H = H + alpha_t[next_dim]
 
-            all_times[:, step] = t_next
-            all_deltas[:, step] = dt
-            all_types[:, step] = next_dim
+            elapsed += dt
+            all_times[active, step] = elapsed[active]
+            all_deltas[active, step] = dt[active]
+            all_types[active, step] = next_dim[active]
+            lens += active.long()
+            step += 1
 
         # ── 3. Post-traitement et renvoi du Batch généré ──
-        if batch.time_seqs.size(1) > 0:
-            all_times = all_times - start_times.unsqueeze(1)
-
-        valid_event_mask = torch.ones_like(all_times, dtype=torch.bool)
+        if horizon is not None:
+            all_times, all_deltas, all_types = (
+                all_times[:, :step],
+                all_deltas[:, :step],
+                all_types[:, :step],
+            )
+        valid_event_mask = (
+            torch.arange(all_times.size(1), device=dev)[None, :] < lens[:, None]
+        )
+        all_types = all_types.masked_fill(~valid_event_mask, self.pad_token_id)
 
         return SimulationResult(
             time_seqs=all_times,
             time_delta_seqs=all_deltas,
             type_seqs=all_types,
             valid_event_mask=valid_event_mask,
+            sequence_ids=batch.sequence_ids,
         )

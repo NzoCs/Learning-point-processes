@@ -15,7 +15,7 @@ from new_ltpp.shared_types import Batch, OneStepPred
 from .prediction import PredictionMixin
 
 
-class TrainingMixin(PredictionMixin):
+class TrainingStepsMixin:
     """Mixin providing Lightning training/validation/test/predict step implementations.
 
     Requires:
@@ -26,14 +26,6 @@ class TrainingMixin(PredictionMixin):
     """
 
     eps: float = torch.finfo(torch.float32).eps
-
-    def __init__(self, **kwargs):
-        model_config = kwargs["model_config"]
-        model_config = cast(
-            ModelConfig, model_config
-        )  # For type checking; not used at runtime
-        num_samples = model_config.thinning_config.num_sample
-        super().__init__(num_samples=num_samples, **kwargs)
 
     # ------------------------------------------------------------------
     # Lightning steps
@@ -111,7 +103,9 @@ class TrainingMixin(PredictionMixin):
             )
         conditional = simulator.conditional_evaluation
         if conditional is None:
-            sim = simulator.simulate(batch=batch)
+            sim = self.simulate(
+                batch=batch, num_events_to_simulate=batch.time_seqs.size(1)
+            )
             compared_batch = batch
             histories = None
         else:
@@ -175,7 +169,7 @@ class TrainingMixin(PredictionMixin):
             )
 
         simulator: "Simulator" = self._simulator
-        sim = simulator.simulate(batch=batch)
+        sim = self.simulate(batch=batch, num_events_to_simulate=batch.time_seqs.size(1))
 
         if simulator._statistics_collector is None:
             raise RuntimeError(
@@ -222,3 +216,12 @@ class TrainingMixin(PredictionMixin):
         num_events = event_ll.ne(0.0).sum()
 
         return event_ll, non_event_ll, num_events
+
+
+class TrainingMixin(TrainingStepsMixin, PredictionMixin):
+    """Neural model adapter retaining the established prediction and training path."""
+
+    def __init__(self, **kwargs):
+        super().__init__(
+            num_samples=kwargs["model_config"].thinning_config.num_sample, **kwargs
+        )

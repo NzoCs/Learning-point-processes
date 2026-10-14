@@ -26,6 +26,7 @@ MODELS = (
     "SelfCorrecting",
     "THP",
 )
+CATALOGUE = (*MODELS, "Poisson")
 RTOL = 1e-5
 ATOL = 1e-6
 
@@ -75,7 +76,7 @@ def run_model(model_name, output):
     from new_ltpp.runners.runner_manager import RunnerManager
     from new_ltpp.shared_types import Batch
 
-    if set(models.__all__) != set(MODELS):
+    if set(models.__all__) != set(CATALOGUE):
         raise AssertionError(
             "Public model catalogue changed: extend fixtures and baselines"
         )

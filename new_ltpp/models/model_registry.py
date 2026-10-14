@@ -97,7 +97,7 @@ class RegistryMeta(ABCMeta):
                 for base in bases
             )
 
-            if is_model_class:
+            if is_model_class and not getattr(cls, "__abstractmethods__", None):
                 ModelRegistry.register_model(name, cls)
                 logger.debug(f"Model registered: {name}")
 

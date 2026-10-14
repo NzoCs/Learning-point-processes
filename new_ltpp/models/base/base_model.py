@@ -24,12 +24,9 @@ class BaseModel(
 ):  # Ajoute `metaclass=RegistryMeta` si nécessaire
     """Base model class for all TPP models.
 
-    Responsabilités fusionnées :
-        - Interface principale de modèle (loglike_loss, compute_intensities)
-        - Configuration des optimiseurs (configure_optimizers)
-        - Échantillonnage de Monte-Carlo (make_dtime_loss_samples)
-        - Initialisation et délégation au Simulator
-        - Instanciation paresseuse (device-aware) de l'EventSampler
+    Shares configuration, likelihood/intensity contracts and optimizer setup.
+    Neural sampling and representations belong to NeuralModel; parametric
+    generation belongs to each dedicated process implementation.
     """
 
     def __init__(
@@ -59,33 +56,6 @@ class BaseModel(
 
         self.scheduler_config = model_config.scheduler_config
         self.eps = torch.finfo(torch.float32).eps
-
-        # --- Thinning / Prediction config ---
-        thinning_config = model_config.thinning_config
-        self.num_exp: int = thinning_config.num_exp
-        self.num_samples_boundary: int = thinning_config.num_samples_boundary
-        self.over_sample_rate: float = thinning_config.over_sample_rate
-        self.num_mc_samples: int = thinning_config.num_sample
-
-        # EventSampler est créé de manière paresseuse pour garantir le bon device (géré par Lightning)
-        self._event_sampler: Optional[EventSampler] = None
-        self._init_device = model_config.device
-
-    # ------------------------------------------------------------------
-    # EventSampler — lazy, device-aware
-    # ------------------------------------------------------------------
-
-    def get_event_sampler(self) -> EventSampler:
-        """Return (or lazily create) the EventSampler on the current device."""
-        if self._event_sampler is None or self._event_sampler.device != self.device:
-            self._event_sampler = EventSampler(
-                num_exp=self.num_exp,
-                over_sample_rate=self.over_sample_rate,
-                num_samples_boundary=self.num_samples_boundary,
-                dtime_max=self.dtime_max,
-                device=self.device,
-            )
-        return self._event_sampler
 
     # ------------------------------------------------------------------
     # Abstract interface
@@ -152,6 +122,59 @@ class BaseModel(
 
         return optimizer
 
+
+class NeuralModel(BaseModel, ABC):
+    model_family = "neural"
+    """Neural Temporal Point Process model base class.
+
+    Adds hidden_size, dropout, and the type embedding shared by all neural models.
+    """
+
+    def __init__(
+        self,
+        *,
+        dropout: float,
+        hidden_size: int,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        # --- Thinning / Prediction config ---
+        thinning_config = kwargs["model_config"].thinning_config
+        self.num_exp: int = thinning_config.num_exp
+        self.num_samples_boundary: int = thinning_config.num_samples_boundary
+        self.over_sample_rate: float = thinning_config.over_sample_rate
+        self.num_mc_samples: int = thinning_config.num_sample
+
+        # EventSampler est créé de manière paresseuse pour garantir le bon device (géré par Lightning)
+        self._event_sampler: Optional[EventSampler] = None
+        self._init_device = kwargs["model_config"].device
+
+        self.dropout = dropout
+        self.hidden_size = hidden_size
+
+        self.layer_type_emb = nn.Embedding(
+            num_embeddings=self.num_event_types + 1,
+            embedding_dim=self.hidden_size,
+            padding_idx=self.pad_token_id,
+            device=self.device,
+        )
+
+    # ------------------------------------------------------------------
+    # EventSampler — lazy, device-aware
+    # ------------------------------------------------------------------
+
+    def get_event_sampler(self) -> EventSampler:
+        """Return (or lazily create) the EventSampler on the current device."""
+        if self._event_sampler is None or self._event_sampler.device != self.device:
+            self._event_sampler = EventSampler(
+                num_exp=self.num_exp,
+                over_sample_rate=self.over_sample_rate,
+                num_samples_boundary=self.num_samples_boundary,
+                dtime_max=self.dtime_max,
+                device=self.device,
+            )
+        return self._event_sampler
+
     # ------------------------------------------------------------------
     # Monte-Carlo sampling helper
     # ------------------------------------------------------------------
@@ -170,28 +193,3 @@ class BaseModel(
             1, seq_len, self.num_mc_samples, device=self.device
         )
         return time_delta_seqs[:, :, None] * dtimes_ratio_sampled
-
-
-class NeuralModel(BaseModel, ABC):
-    """Neural Temporal Point Process model base class.
-
-    Adds hidden_size, dropout, and the type embedding shared by all neural models.
-    """
-
-    def __init__(
-        self,
-        *,
-        dropout: float,
-        hidden_size: int,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.dropout = dropout
-        self.hidden_size = hidden_size
-
-        self.layer_type_emb = nn.Embedding(
-            num_embeddings=self.num_event_types + 1,
-            embedding_dim=self.hidden_size,
-            padding_idx=self.pad_token_id,
-            device=self.device,
-        )

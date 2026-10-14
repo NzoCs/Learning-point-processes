@@ -10,7 +10,14 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.integration_suite import FIXTURES, MODELS, ROOT, compare, write_json
+from scripts.integration_suite import (
+    CATALOGUE,
+    FIXTURES,
+    MODELS,
+    ROOT,
+    compare,
+    write_json,
+)
 
 
 def make_splits():
@@ -50,12 +57,12 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
     from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
         monte_carlo_p_value,
     )
-    from new_ltpp.models.base.training import TrainingMixin
+    from new_ltpp.models.base.training import TrainingStepsMixin
     from new_ltpp.models.simulation.tpp_io import SimulationIOManager
     from new_ltpp.runners.run_manifest import sha256_file
     from scripts.cli import app
 
-    assert set(models.__all__) == set(MODELS), "Update the tested model catalogue"
+    assert set(models.__all__) == set(CATALOGUE), "Update the tested model catalogue"
     torch.set_num_threads(1)
     splits = make_splits()
     raw = json.loads((FIXTURES / "config.json").read_text(encoding="utf-8"))
@@ -88,7 +95,7 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
     simulated_ids = []
     captured = []
     prediction_calls = []
-    predict = TrainingMixin.predict_step
+    predict = TrainingStepsMixin.predict_step
     update = BatchStatisticsCollector.update
     compute = BatchStatisticsCollector.compute
 
@@ -163,7 +170,7 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
     if checkpoint_path is not None:
         command.extend(["--checkpoint", str(checkpoint_path)])
     with (
-        patch.object(TrainingMixin, "predict_step", guarded_predict),
+        patch.object(TrainingStepsMixin, "predict_step", guarded_predict),
         patch.object(BatchStatisticsCollector, "update", checked_update),
         patch.object(BatchStatisticsCollector, "compute", capture_compute),
     ):
@@ -242,7 +249,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--model",
-        choices=("all", *MODELS),
+        choices=("all", *CATALOGUE),
         default=os.environ.get("INTEGRATION_MODEL", "all"),
     )
     parser.add_argument("--output", type=Path, required=True)

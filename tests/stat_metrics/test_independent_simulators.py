@@ -19,10 +19,6 @@ def test_neural_constant_head_is_actual_constant_intensity(tmp_path, name):
     constant_poisson_model(name, tmp_path)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="SelfCorrecting API excludes the last conditioning event while native simulate includes it",
-)
 def test_self_correcting_post_event_intensity_matches_analytic_law(tmp_path):
     model = create_model(
         "SelfCorrecting", tmp_path, mu=MU.tolist(), alpha=ALPHA.tolist()
@@ -40,10 +36,6 @@ def test_self_correcting_post_event_intensity_matches_analytic_law(tmp_path):
     np.testing.assert_allclose(actual.detach().numpy().ravel(), expected, rtol=1e-6)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="SelfCorrecting log(1+x) loses a nonzero float32 increment for small growth rates",
-)
 def test_self_correcting_small_growth_inverse_retains_nonzero_delay(
     tmp_path, monkeypatch
 ):

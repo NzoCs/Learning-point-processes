@@ -1,5 +1,24 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Séparation paramétrique/neuronale — 14 octobre 2026
+
+La branche `codex/parametric-simulators` sépare les représentations et le thinning
+neuronaux du contrat commun de pipeline. Hawkes et SelfCorrecting utilisent leurs
+simulateurs dédiés dans les phases de test et de prédiction. Poisson devient un
+modèle paramétrique public supplémentaire. Les onze modèles historiques restent
+couverts, et la suite conditionnelle inclut aussi Poisson.
+
+Les changements mathématiques et de consommation aléatoire sont explicités dans
+[le contrat paramétrique](../docs/PARAMETRIC_ARCHITECTURE.md). Les anciennes
+références neuronales ne sont pas remplacées. Les changements paramétriques sont
+archivés comme valeurs avant/après. Les anciens checkpoints paramétriques avec
+embedding neuronal inutilisé ne sont pas directement compatibles.
+
+La validation complète et ses preuves sont consignées dans ce document après
+exécution du workflow Linux dédié. Aucun résultat CPU ne vaut validation CUDA,
+DDP ou Ruche. FullyNN et le thinning générique neuronal conservent les limites
+d'exactitude signalées dans le contrat.
+
 ### Répétabilité conditionnelle et calibration étendue — 14 octobre 2026
 
 Le [run Linux 38538882377](https://github.com/NzoCs/Learning-point-processes/actions/runs/38538882377),

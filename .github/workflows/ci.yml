@@ -2,11 +2,15 @@ name: Test pipeline
 
 on:
   push:
-    branches: [main, master, codex/pysiglib-migration]
+    branches: [main, master, codex/pysiglib-migration, codex/parametric-simulators]
   pull_request:
     branches: [main, master]
 
 jobs:
+  parametric-refactor:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[parametric-refactor]')
+    uses: ./.github/workflows/parametric-refactor.yml
+
   independent-simulators:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[independent-simulators]')
     uses: ./.github/workflows/independent-simulators.yml

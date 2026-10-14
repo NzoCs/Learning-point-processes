@@ -194,6 +194,9 @@ The [configuration contract](docs/CONFIGURATION_CONTRACTS.md) describes how to
 adapt a copy of an old configuration while preserving its archived provenance.
 For heldout conditional model evaluation, see the
 [conditional protocol and CLI configuration](docs/CONDITIONAL_CALIBRATION.md#évaluation-conditionnelle-dans-la-cli).
+For parametric Hawkes, SelfCorrecting and Poisson models, their dedicated
+simulators and architecture validation, see
+[the parametric model contract](docs/PARAMETRIC_ARCHITECTURE.md).
 
 ---
 

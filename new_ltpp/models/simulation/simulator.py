@@ -34,16 +34,8 @@ class SimulationState(TypedDict):
     step_count: int
 
 
-class Simulator:
-    """Standalone simulation engine for TPP models.
-
-    Owns the full simulation loop, buffer management, and statistics collection.
-    Requires a model implementing ISimulableModel (compute_intensities, get_event_sampler).
-
-    Args:
-        model: A model implementing ISimulableModel.
-        statistical_test_config: Optional config dict forwarded to BatchStatisticsCollector.
-    """
+class PredictionSession:
+    """Prediction statistics and artefacts, independent of the sampling algorithm."""
 
     def __init__(
         self,
@@ -56,35 +48,6 @@ class Simulator:
         self.statistical_test_config = statistical_test_config
         self.conditional_evaluation = conditional_evaluation
         self._statistics_collector: Optional["BatchStatisticsCollector"] = None
-        self._intensity_fn = model.compute_intensities_at_sample_dtimes
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
-    def simulate(
-        self,
-        batch: Batch,
-        num_events_to_simulate: Optional[int] = None,
-    ) -> SimulationResult:
-        """Simulate event sequences using the model.
-
-        Args:
-            batch: Initial batch to condition on. Can be empty (length 0) for unconditional generation.
-            num_events_to_simulate: Number of events to generate. If None, defaults to the sequence length in the batch.
-
-        Returns:
-            SimulationResult (Batch alias) with generated sequences.
-        """
-        if num_events_to_simulate is None:
-            # We simulate exactly as many events as the sequence length in the batch by default.
-            num_events_to_simulate = batch.time_seqs.size(1)
-
-        buffers = self._allocate_simulation_buffers(batch, num_events_to_simulate)
-        sim_state = self._initialize_simulation_state()
-        self._run_simulation_loop(buffers, sim_state, num_events_to_simulate)
-        self.last_result = self._extract_simulation_results(buffers, sim_state)
-        return self.last_result
 
     def init_statistics_collector(self, base_dir: Path | str) -> None:
         """Initialize the BatchStatisticsCollector.
@@ -146,6 +109,43 @@ class Simulator:
             f"Simulator: statistics finalized ({results.get('batch_count', 0)} batches)"
         )
         return results
+
+
+class Simulator(PredictionSession):
+    """Neural simulation engine; parametric requests delegate to their native generator."""
+
+    def __init__(
+        self, model, statistical_test_config=None, conditional_evaluation=None
+    ):
+        super().__init__(model, statistical_test_config, conditional_evaluation)
+        self._intensity_fn = model.compute_intensities_at_sample_dtimes
+
+    def simulate(
+        self,
+        batch: Batch,
+        num_events_to_simulate: Optional[int] = None,
+    ) -> SimulationResult:
+        """Simulate event sequences using the model.
+
+        Args:
+            batch: Initial batch to condition on. Can be empty (length 0) for unconditional generation.
+            num_events_to_simulate: Number of events to generate. If None, defaults to the sequence length in the batch.
+
+        Returns:
+            SimulationResult (Batch alias) with generated sequences.
+        """
+        if getattr(self._model, "model_family", None) == "parametric":
+            self.last_result = self._model.simulate(batch, num_events_to_simulate)
+            return self.last_result
+        if num_events_to_simulate is None:
+            # We simulate exactly as many events as the sequence length in the batch by default.
+            num_events_to_simulate = batch.time_seqs.size(1)
+
+        buffers = self._allocate_simulation_buffers(batch, num_events_to_simulate)
+        sim_state = self._initialize_simulation_state()
+        self._run_simulation_loop(buffers, sim_state, num_events_to_simulate)
+        self.last_result = self._extract_simulation_results(buffers, sim_state)
+        return self.last_result
 
     # ------------------------------------------------------------------
     # Internal helpers (previously private methods of SimulationMixin)

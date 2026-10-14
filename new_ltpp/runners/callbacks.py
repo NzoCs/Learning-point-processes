@@ -12,7 +12,7 @@ from new_ltpp.configs.statistical_test_config import (
 from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.model_protocol import ISimulableModel
-from new_ltpp.models.simulation.simulator import Simulator
+from new_ltpp.models.simulation.simulator import PredictionSession, Simulator
 from new_ltpp.models.simulation.tpp_io import SimulationIOManager
 from new_ltpp.models.visualization.model_visualizer import ModelVisualizer
 
@@ -84,7 +84,12 @@ class PredictionStatsCallback(pl.Callback):
         self.pbar = tqdm(total=total_batches, desc="Simulating Batches", leave=True)
 
         model = cast("ISimulableModel", pl_module)
-        simulator = Simulator(
+        session_type = (
+            PredictionSession
+            if getattr(model, "model_family", None) == "parametric"
+            else Simulator
+        )
+        simulator = session_type(
             model=model,
             statistical_test_config=self.statistical_test_config,
             conditional_evaluation=self.simulation_config.conditional_evaluation,

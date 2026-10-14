@@ -123,6 +123,7 @@ def run(
     max_pairs=2048,
     hypothesis=None,
     seed=2026101427,
+    confirmation=False,
 ):
     if (
         min(trials, power_trials, permutations) < 1
@@ -130,12 +131,23 @@ def run(
         or hypothesis not in (None, "H0", "twice_speed")
     ):
         raise ValueError("Positive trial counts and supported sample size required")
+    if confirmation and (
+        model_name != "FullyNN"
+        or hypothesis != "H0"
+        or max_pairs != 2048
+        or seed == 2026101427
+    ):
+        raise ValueError(
+            "Confirmation requires FullyNN, H0, 2048 pairs and a fresh seed"
+        )
     if (output / "report.json").exists():
         raise FileExistsError("Use a fresh output folder to preserve existing evidence")
     torch.set_num_threads(1)
     output.mkdir(parents=True, exist_ok=True)
     horizon = 2.0
-    sizes = [n for n in SIZES if n <= max_pairs]
+    sizes = [max_pairs] if confirmation else [n for n in SIZES if n <= max_pairs]
+    variants = ("global",) if confirmation else VARIANTS
+    family_size = 2 if confirmation else 48
     report = dict(
         status="in_progress",
         code=code_provenance(__file__),
@@ -150,7 +162,8 @@ def run(
         model_input_dtype="float32; gaps computed before casting the observation clock",
         sample_sizes=sizes,
         selected_hypothesis=hypothesis,
-        variants=list(VARIANTS),
+        variants=list(variants),
+        independent_confirmation=confirmation,
         kernel=dict(
             type="signature",
             static="RBF",
@@ -160,9 +173,13 @@ def run(
             marks=2,
             backend="pysiglib",
         ),
-        h0_family_size=48,
-        h0_excess_threshold=0.01 / 48,
-        plan="Four archived frozen checkpoints; 300 H0 trials and 200 twice-speed H1 trials, 99 within-history paired swaps; 32/128/512/2048 independent pairs. Three prespecified statistics on identical full-window data and identical signs: global paired U-MMD, 16/11/5 block sum with global normalization, historical block sum with local normalization. Original signature8 kernel and product history weights. Exact duplicate-path compression only; no fitted-model or production change.",
+        h0_family_size=family_size,
+        h0_excess_threshold=0.01 / family_size,
+        plan=(
+            "Independent confirmation declared after FullyNN epoch 2 yielded 24/300 H0 rejections at 2048 pairs. Both archived FullyNN checkpoints, 1000 fresh H0 trials each, seed 2026101441, global signature8 only, 99 paired swaps, excess criterion 0.01/2. No parameter tuning, no replacing the initial 8% result, no retries until favorable."
+            if confirmation
+            else "Four archived frozen checkpoints; 300 H0 trials and 200 twice-speed H1 trials, 99 within-history paired swaps; 32/128/512/2048 independent pairs. Three prespecified statistics on identical full-window data and identical signs: global paired U-MMD, 16/11/5 block sum with global normalization, historical block sum with local normalization. Original signature8 kernel and product history weights. Exact duplicate-path compression only; no fitted-model or production change."
+        ),
         scope="Complete futures inside a fully observed fixed T=2 window, including empty windows; no inference of permanent termination. Production simulator versus independent NumPy/SciPy decoder/inversion/RNG, shared frozen Torch encoder. Two repeated heterogeneous histories, two checkpoints per model; no fitting uncertainty or CUDA/Ruche validation.",
         results=[],
         observations={},
@@ -180,7 +197,7 @@ def run(
     cases = (hypothesis,) if hypothesis else ("H0", "twice_speed")
     for case in cases:
         count = trials if case == "H0" else power_trials
-        values = {(variant, n): [] for variant in VARIANTS for n in sizes}
+        values = {(variant, n): [] for variant in variants for n in sizes}
         digest = hashlib.sha256()
         counts = {label: [] for label in ("x", "y")}
         unique_counts = {n: [] for n in sizes}
@@ -211,35 +228,42 @@ def run(
             signs = 1.0 - 2.0 * (orders[:, :max_pairs].numpy() // max_pairs)
             local_sum = np.zeros(permutations + 1)
             local_statistics = {}
-            for start, stop in blocks(max_pairs):
-                dh, dx, dy = (select(batch, start, stop) for batch in (h, x, y))
-                delta, _ = signature_delta(kernel, dh, dx, dy, horizon)
-                local_sum += delta_statistics(delta, signs[:, start:stop])
-                if stop in sizes:
-                    local_statistics[stop] = local_sum.copy()
+            if not confirmation:
+                for start, stop in blocks(max_pairs):
+                    dh, dx, dy = (select(batch, start, stop) for batch in (h, x, y))
+                    delta, _ = signature_delta(kernel, dh, dx, dy, horizon)
+                    local_sum += delta_statistics(delta, signs[:, start:stop])
+                    if stop in sizes:
+                        local_statistics[stop] = local_sum.copy()
+            elif trial == 0:
+                ph, px, py = (select(batch, 0, 32) for batch in (h, x, y))
+                pd, _ = signature_delta(kernel, ph, px, py, horizon)
+                verify_public_statistics(kernel, ph, px, py, pd, signs[:, :32], horizon)
             for n in sizes:
                 dh, dx, dy = (select(batch, 0, n) for batch in (h, x, y))
                 delta, meta = signature_delta(kernel, dh, dx, dy, horizon)
                 unique_counts[n].append(meta["unique_future_paths"])
                 global_stats = delta_statistics(delta, signs[:, :n])
-                normalized_blocks = sum(
-                    (
-                        delta_statistics(
-                            delta[start:stop, start:stop], signs[:, start:stop]
-                        )
-                        for start, stop in blocks(n)
-                    ),
-                    np.zeros(permutations + 1),
-                )
+                stats_by_variant = {"global": global_stats}
+                if not confirmation:
+                    normalized_blocks = sum(
+                        (
+                            delta_statistics(
+                                delta[start:stop, start:stop], signs[:, start:stop]
+                            )
+                            for start, stop in blocks(n)
+                        ),
+                        np.zeros(permutations + 1),
+                    )
+                    stats_by_variant.update(
+                        blocks_global_normalization=normalized_blocks,
+                        blocks_local_normalization=local_statistics[n],
+                    )
                 if trial == 0 and n == 32:
                     verify_public_statistics(
                         kernel, dh, dx, dy, delta, signs[:, :n], horizon
                     )
-                for variant, stats in (
-                    ("global", global_stats),
-                    ("blocks_global_normalization", normalized_blocks),
-                    ("blocks_local_normalization", local_statistics[n]),
-                ):
+                for variant, stats in stats_by_variant.items():
                     values[variant, n].append(p_value(stats))
             if (trial + 1) % 10 == 0:
                 print(
@@ -271,7 +295,9 @@ def run(
                     wilson_95=wilson_interval(rejected, count),
                     h0_excess_binomial_p=excess,
                     h0_excess_detected=(
-                        bool(excess < 0.01 / 48) if excess is not None else None
+                        bool(excess < 0.01 / family_size)
+                        if excess is not None
+                        else None
                     ),
                     p_values=pvalues,
                 )
@@ -317,4 +343,5 @@ if __name__ == "__main__":
     parser.add_argument("--max-pairs", type=int, choices=SIZES, default=2048)
     parser.add_argument("--hypothesis", choices=("H0", "twice_speed"))
     parser.add_argument("--seed", type=int, default=2026101427)
+    parser.add_argument("--confirmation", action="store_true")
     run(**vars(parser.parse_args()))

@@ -7,6 +7,10 @@ on:
     branches: [main, master]
 
 jobs:
+  conditional-validation:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[conditional-validation]')
+    uses: ./.github/workflows/conditional-validation.yml
+
   conditional-integration-linux:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[conditional-integration]')
     uses: ./.github/workflows/integration.yml

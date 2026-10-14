@@ -37,7 +37,7 @@ def make_splits():
     return splits
 
 
-def run_model(name, output):
+def run_model(name, output, *, epochs=1, checkpoint_path=None):
     import pyarrow.parquet as pq
     import torch
     from typer.testing import CliRunner
@@ -61,6 +61,7 @@ def run_model(name, output):
     raw = json.loads((FIXTURES / "config.json").read_text(encoding="utf-8"))
     raw["model_id"] = raw["model_config"]["model_id"] = name
     raw["save_dir"] = str(output / "runs")
+    raw["training_config"]["max_epochs"] = epochs
     for split, key in (
         ("train", "train_dir"),
         ("dev", "valid_dir"),
@@ -150,6 +151,17 @@ def run_model(name, output):
         return stats
 
     os.environ["LTPP_RUN_ID"] = config.run_id
+    command = [
+        "run",
+        "--config",
+        str(config_path),
+        "--phase",
+        "all",
+        "--save-dir",
+        str(output / "runs"),
+    ]
+    if checkpoint_path is not None:
+        command.extend(["--checkpoint", str(checkpoint_path)])
     with (
         patch.object(TrainingMixin, "predict_step", guarded_predict),
         patch.object(BatchStatisticsCollector, "update", checked_update),
@@ -157,15 +169,7 @@ def run_model(name, output):
     ):
         result = CliRunner().invoke(
             app,
-            [
-                "run",
-                "--config",
-                str(config_path),
-                "--phase",
-                "all",
-                "--save-dir",
-                str(output / "runs"),
-            ],
+            command,
         )
     print(result.output)
     if result.exit_code:

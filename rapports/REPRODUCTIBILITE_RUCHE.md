@@ -1,5 +1,45 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Protocole complet dans la pipeline — 14 octobre 2026
+
+Sur `codex/unbounded-neural-sampling`, FullyNN et RMTPP sélectionnent désormais
+automatiquement `complete_stopped_event_budget_v1` dans leurs statistiques de
+prédiction. Les futurs complets, même vides, et les statuts terminaux sont
+conservés. Le parcours conditionnel utilise les identifiants des séquences et
+des échanges au sein de chaque paire d'historique. Les autres modèles gardent
+leur protocole. Le [contrat et les résultats détaillés](../docs/STOPPED_PIPELINE.md)
+décrivent la configuration et les contrôles.
+
+Une source plus courte que le quota doit porter `no_next_event: true`, signifiant
+une fin connue du processus. Les données et le collator préservent ce booléen ;
+une source courte sans statut connu échoue explicitement. Un silence observé
+pendant une fenêtre finie ne permet pas de déduire une terminaison définitive.
+La perte d'entraînement n'est pas modifiée par cette métadonnée.
+
+Code validé `8295bd5` : [CI Linux réussie](https://github.com/NzoCs/Learning-point-processes/actions/runs/38589688373),
+[lint réussi](https://github.com/NzoCs/Learning-point-processes/actions/runs/38589688065),
+**305 tests**, **84,26 % de couverture**. Les onze modèles historiques et Poisson
+passent entraînement, test et prédiction, ainsi que le parcours conditionnel
+avec données d'apprentissage séparées. FullyNN/RMTPP passent aussi les futurs
+observés vides/partiels connus, la répétition exacte, la relecture du checkpoint
+et la reprise à la frontière d'epoch.
+
+La comparaison au parent `acd6f37`, réexécuté sur le même CPU Linux avec les mêmes
+dépendances verrouillées, conserve les résultats numériques des neuf autres
+modèles historiques et de Poisson aux tolérances existantes. Pour FullyNN/RMTPP,
+poids, pertes, gradients, prédictions et simulations sont également inchangés.
+Seules les observations statistiques changent. Sur les mêmes futurs et le même
+état initial des permutations, les p-values conditionnelles passent de **1,00 à
+0,05** pour FullyNN et de **0,52 à 0,38** pour RMTPP. Avec des futurs observés
+terminants connus, elles passent respectivement de **1,00 à 0,10** et de **0,42
+à 0,05**. Ces petites fixtures vérifient l'intégration, pas la qualité scientifique
+des modèles ni leurs taux de faux positifs.
+
+Le mode sans configuration conditionnelle reste un diagnostic historique/futur,
+sans garantie de calibration conditionnelle. Les [preuves brutes](../docs/validation/stopped-pipeline-20261014/provenance.json)
+sont archivées. Ruche/CUDA et le contrat d'observation à horizon temporel fixe
+restent à valider.
+
 ### Calibration des futurs terminants — 14 octobre 2026
 
 Le [protocole et les résultats détaillés](../docs/STOPPED_CALIBRATION.md) comparent
@@ -20,8 +60,9 @@ La troncature historique manque **100 % des alternatives d'arrêt immédiat**.
 Le mode complet détecte la suppression des arrêts FullyNN dans 100 % des essais
 et les arrêts forcés RMTPP dans 100 %. Sa puissance reste limitée : 27,5 % contre
 les arrêts forcés FullyNN et 7 % contre la suppression des arrêts RMTPP.
-Les défauts historiques et le loader de holdout à nombre fixe d'événements ne
-sont pas basculés automatiquement vers ce nouveau contrat explicite.
+Lors de cette calibration, le nouveau contrat était sélectionné explicitement.
+Le branchement automatique ultérieur pour FullyNN/RMTPP et la prise en charge
+des sources courtes à terminaison connue sont documentés dans la section précédente.
 
 Code validé `edc799a` : [CI Linux réussie](https://github.com/NzoCs/Learning-point-processes/actions/runs/38581548433),
 lint réussi, **301 tests**, **84,21 % de couverture**, paramètres figés vérifiés.

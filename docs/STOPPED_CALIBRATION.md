@@ -35,9 +35,12 @@ Two observation protocols are compared on exactly the same data and random swaps
 
 The model definitions, prior observation defaults, p-value formula, historical
 baselines and old nonterminating observation contracts are not replaced.
-The ordinary fixed-event holdout loader still requires enough observed events;
-the stopped mode accepts independently prepared histories and terminal futures
-through the public test API. It is not automatically selected by that loader.
+At the calibration commit, the fixed-event holdout loader required enough
+observed events and this mode was selected explicitly through the public test
+API. The subsequent [pipeline wiring](STOPPED_PIPELINE.md) automatically selects
+the complete protocol for FullyNN/RMTPP and accepts short observed futures only
+when source data explicitly record known termination. The calibration evidence
+below is retained unchanged.
 
 ```python
 test = ConditionalMMDTwoSampleTest(kernel, 99, stopped_event_budget=6)
@@ -122,4 +125,6 @@ This event-budget design requires a genuinely known terminal status. No events
 within a finite observation window alone cannot establish permanent termination.
 Data collected over a time window need a matched, predeclared horizon and a
 separate calibration of that observation design. The production fixed-event
-holdout loader is not silently converted to the stopped experiment's design.
+holdout loader now supports known terminal sources as documented in
+[the pipeline contract](STOPPED_PIPELINE.md); it does not infer permanent
+termination from a finite observation window.

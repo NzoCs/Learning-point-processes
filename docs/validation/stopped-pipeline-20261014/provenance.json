@@ -1,0 +1,46 @@
+{
+  "validated_code_commit": "8295bd55b15296a5d6b92b01e6fe4d3e20e2e468",
+  "before_code_commit": "acd6f374cedfad47081b65d7cbe082ba1dc007cb",
+  "same_runner_same_locked_runtime": true,
+  "ci_run": 38589688373,
+  "lint_run": 38589688065,
+  "conclusion": "success",
+  "artifact_id": 11907506326,
+  "artifact_zip_sha256": "7deb5ae710d0af9f6b5b83d92680f1841a1f37d502f84e96d585c2060cbf216f",
+  "unit_tests": {
+    "passed": 305,
+    "skipped": 7,
+    "deselected": 2,
+    "coverage_percent": 84.26
+  },
+  "historical_models": 11,
+  "catalogue_models": 12,
+  "rtol": 1e-05,
+  "atol": 1e-06,
+  "summary": {
+    "FullyNN": {
+      "conditional": {
+        "historical_p": 1.0,
+        "complete_p": 0.05,
+        "exported_events": 1
+      },
+      "known_terminal": {
+        "historical_p": 1.0,
+        "complete_p": 0.1,
+        "exported_events": 1
+      }
+    },
+    "RMTPP": {
+      "conditional": {
+        "historical_p": 0.52,
+        "complete_p": 0.38,
+        "exported_events": 24
+      },
+      "known_terminal": {
+        "historical_p": 0.42,
+        "complete_p": 0.05,
+        "exported_events": 24
+      }
+    }
+  }
+}

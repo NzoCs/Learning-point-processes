@@ -88,3 +88,47 @@ records all before/after null draws and p-values without changing the model or
 simulation streams. Additional CLI fixtures include explicitly terminal empty
 and partial observed futures. FullyNN/RMTPP conditional repetition, checkpoint
 replay and epoch-boundary resume are checked separately. No Ruche is required.
+
+## Validated Linux results — 14 October 2026
+
+Code `8295bd55b15296a5d6b92b01e6fe4d3e20e2e468` passes
+[the Linux workflow](https://github.com/NzoCs/Learning-point-processes/actions/runs/38589688373)
+and [lint](https://github.com/NzoCs/Learning-point-processes/actions/runs/38589688065).
+The unit suite reports **305 passed, 7 skipped, 2 deselected**, with **84.26%**
+coverage. All eleven historical models plus Poisson pass ordinary and conditional
+integration; FullyNN/RMTPP also pass the known-terminal fixtures, exact same-seed
+repetition, checkpoint prediction replay and epoch-boundary training resume.
+
+Against reviewed parent `acd6f374cedfad47081b65d7cbe082ba1dc007cb` rerun on the
+same Linux CPU and locked environment, all numerical fields of the other nine
+historical models and Poisson agree at the existing `rtol=1e-5`, `atol=1e-6`.
+FullyNN/RMTPP trained weights, losses, gradients, predictions, simulated events
+and termination statuses also agree. Their observation statistics change.
+
+The conditional comparison below uses the same observed/generated futures and
+the same starting permutation RNG state, with 99 permutations. Training data are
+separate from evaluated futures. The known-terminal fixture includes observed
+future lengths 0, 1, 0 and 2 with explicit terminal status, followed by four
+three-event futures.
+
+| Model / fixture | Historical truncation p-value | Complete protocol p-value |
+| --- | ---: | ---: |
+| FullyNN / ordinary held-out data | 1.00 | 0.05 |
+| RMTPP / ordinary held-out data | 0.52 | 0.38 |
+| FullyNN / known-terminal observed futures | 1.00 | 0.10 |
+| RMTPP / known-terminal observed futures | 0.42 | 0.05 |
+
+These are small integration fixtures, not estimates of scientific accuracy or
+false-positive rates. FullyNN generates one future event across eight histories;
+RMTPP generates 24. The complete protocol retains this difference instead of
+erasing finite events at a zero minimum horizon.
+
+In the ordinary history/continuation diagnostic, mean MMD changes from 3.317620
+to 16.372105 for FullyNN and from 10.746567 to 15.196381 for RMTPP. These values
+use different observation contracts and do not establish improved model fit or
+conditional calibration of that diagnostic.
+
+[Raw audit, before/after snapshots, replay results and provenance](validation/stopped-pipeline-20261014/provenance.json)
+are archived without replacing historical reference files. The downloaded Linux
+artifact SHA256 is `7deb5ae710d0af9f6b5b83d92680f1841a1f37d502f84e96d585c2060cbf216f`.
+This validation uses CPU Linux; Ruche/CUDA remains untested.

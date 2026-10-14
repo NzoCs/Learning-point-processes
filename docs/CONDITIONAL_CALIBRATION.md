@@ -1,5 +1,101 @@
 # Historiques hétérogènes et agrégation des batches
 
+## Répétabilité, reprise et modèles appris — 14 octobre 2026
+
+Code `de93f98`, [validation Linux des onze modèles](https://github.com/NzoCs/Learning-point-processes/actions/runs/38538882377).
+Les [preuves numériques archivées](validation/conditional-repeat-calibration-2026-10-14.json)
+contiennent les rapports de répétabilité, les paramètres ajustés, graines,
+hashes de checkpoints, environnements, toutes les p-values et les empreintes
+des données et randomisations. Les onze jobs ont terminé avec succès.
+
+### Répétabilité et reprise
+
+Pour chacun des onze modèles, la suite exécute deux pipelines train/test/predict
+dans des dossiers neufs avec les mêmes données et graines. Les poids entraînés,
+24 événements exportés, statistiques observées, 99 tirages nuls par batch et
+p-values individuelles et agrégées concordent **exactement**, sans tolérance.
+Une exécution séparée `predict --checkpoint` retrouve les mêmes événements et
+statistiques, sans réentraîner le modèle.
+
+La suite compare ensuite un entraînement continu de deux epochs avec une epoch
+suivie d'une reprise depuis `last.ckpt`. Les poids finaux, états Adam, étapes,
+poids du checkpoint sélectionné et résultats conditionnels concordent exactement
+sur les onze modèles. Ces petites configurations utilisent un taux d'apprentissage
+constant ; les états de scheduler y sont vides, explicitement indiqués dans
+l'archive. La garantie porte sur CPU, un processus, zéro worker et une reprise
+à la frontière d'epoch. Elle ne porte pas sur une reprise au milieu des batches
+de prédiction ni sur CUDA/DDP.
+
+Un contrôle supplémentaire NHP active le scheduler cosinus avec un budget total
+de deux epochs identique pour les parcours continu et repris. Les poids, états
+Adam/scheduler, événements et statistiques conditionnelles concordent exactement.
+Le taux final atteint le plancher existant de 1 % du taux initial ; l'assertion
+initiale qui attendait zéro a été corrigée, sans modification du scheduler.
+Ce test passe dans la [CI du code `94230c6`](https://github.com/NzoCs/Learning-point-processes/actions/runs/38541503999),
+avec le lint et le packaging. Il vérifie un scheduler actif sur NHP, sans étendre
+cette garantie aux onze modèles ou aux changements de budget total en cours de reprise.
+
+### Calibration et puissance
+
+Chaque modèle est ajusté par 200 mises à jour sur 256 séquences Hawkes à deux
+marques, puis figé. Les futurs évalués ne servent pas à cet ajustement.
+Le protocole fixe trois événements historiques hétérogènes, six événements par
+continuation et trois batches indépendants de tailles 8/5/3. Il utilise 99
+randomisations par batch, 500 essais H0 et 200 essais pour chacune des deux
+alternatives H1 définies avant les mesures : temps multipliés par quatre, ou
+marques futures imposées par le contexte historique. Les poids sont contrôlés
+inchangés après tous les essais. Le cache numérique est comparé à l'API publique,
+sur tous les tirages du premier essai de chaque cas et taille de batch.
+
+Pour **Hawkes**, les observations proviennent d'un oracle NumPy indépendant,
+initialisé avec les paramètres ajustés et l'historique de chaque ligne.
+Pour **les dix autres modèles**, H0 compare deux tirages indépendants du même
+simulateur figé : cela vérifie la calibration du test sous sa loi interne,
+sans valider le simulateur contre une loi externe ni l'incertitude d'un modèle
+réestimé à chaque essai.
+
+| Modèle | Rejets H0 agrégés | IC 95 % ponctuel | Puissance H1 temps | Puissance H1 marques |
+|---|---:|---:|---:|---:|
+| ANHN | 4.8 % | 3.25–7.04 % | 97.0 % | 91.0 % |
+| ANHP | 5.6 % | 3.90–7.97 % | 89.5 % | 64.0 % |
+| FullyNN | 6.4 % | 4.57–8.90 % | 100.0 % | 100.0 % |
+| Hawkes, oracle indépendant | 5.2 % | 3.57–7.51 % | 89.5 % | 70.0 % |
+| IntensityFree | 5.8 % | 4.07–8.21 % | 82.5 % | 72.0 % |
+| NHP | 5.4 % | 3.74–7.74 % | 85.5 % | 57.0 % |
+| ODETPP | 5.6 % | 3.90–7.97 % | 89.0 % | 50.0 % |
+| RMTPP | 6.8 % | 4.91–9.35 % | 87.5 % | 69.0 % |
+| SAHP | 5.0 % | 3.41–7.28 % | 92.0 % | 75.0 % |
+| SelfCorrecting | 3.2 % | 1.98–5.13 % | 96.5 % | 35.5 % |
+| THP | 6.0 % | 4.23–8.44 % | 86.0 % | 75.0 % |
+
+Tous les intervalles H0, sur le premier batch comme après agrégation, contiennent
+5 %. Ces mesures sont compatibles avec le niveau annoncé dans ce protocole ;
+elles ne prouvent pas une validité universelle ou l'uniformité exacte des p-values.
+Les intervalles sont ponctuels et ne constituent pas une certification simultanée
+avec correction pour onze modèles. La puissance sur les marques est limitée pour
+SelfCorrecting et ODETPP dans cette alternative : aucun paramètre du noyau,
+seuil de rejet ou calcul n'a été retouché après observation pour l'augmenter.
+
+Les calculs historiques et les modèles sont inchangés. Les modifications de ce
+lot ajoutent les suites optionnelles, leur CI et les tests de leurs contrôles.
+
+Rejouer un modèle dans un dossier neuf :
+
+```bash
+uv run --frozen --no-sync python -m scripts.conditional_reproducibility \
+  --model NHP --output artifacts/conditional-repeat-new
+uv run --frozen --no-sync python -m scripts.learned_conditional_calibration \
+  --model NHP --output artifacts/conditional-science-new \
+  --trials 500 --power-trials 200 --permutations 99 --steps 200
+```
+
+Le workflow manuel **Conditional repeat resume and learned calibration** exécute
+ces deux suites sur les onze modèles. Il reste optionnel et peut être déclenché
+sur la branche de développement par `[conditional-validation]`. Les logs,
+checkpoints et rapports complets sont conservés dans ses artefacts pendant 30 jours.
+
+## Protocole conditionnel
+
 Deux continuations peuvent être échangées sous H0 si elles proviennent du même
 historique et sont indépendantes conditionnellement à cet historique. Lorsque
 les historiques diffèrent entre lignes, une permutation globale ne bénéficie

@@ -1,5 +1,37 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Répétabilité conditionnelle et calibration étendue — 14 octobre 2026
+
+Le [run Linux 38538882377](https://github.com/NzoCs/Learning-point-processes/actions/runs/38538882377),
+code `de93f98`, termine les validations sur les onze modèles. Deux pipelines
+complets identiques, une prédiction relancée depuis le checkpoint sauvegardé
+et une reprise d'entraînement à la frontière d'epoch retrouvent exactement
+les poids, simulations, statistiques, tirages nuls et p-values. Les configurations
+de cette suite ont un taux d'apprentissage constant et zéro worker ; CUDA/DDP
+et la reprise au milieu d'une prédiction ne sont pas couverts.
+
+Un test supplémentaire NHP avec scheduler cosinus actif et budget total fixé
+à deux epochs confirme aussi l'égalité exacte des poids, états Adam/scheduler,
+simulations et p-values après reprise. Il passe dans la
+[CI `94230c6`](https://github.com/NzoCs/Learning-point-processes/actions/runs/38541503999).
+Le scheduler conserve son plancher prévu de 1 % du taux initial.
+Cette CI passe avec **240 tests**, 3 ignorés, 2 désélectionnés et **82.76 %** de
+couverture. Le lint, le packaging et les contrôles pySigLib passent également.
+
+Après ajustement indépendant puis gel de chaque modèle, 500 essais H0 et deux
+alternatives H1 de 200 essais chacune ont été exécutés, à deux marques et avec
+agrégation de batches 8/5/3. Les rejets H0 agrégés vont de **3.2 à 6.8 %** ; tous
+les intervalles ponctuels à 95 % contiennent 5 %. Hawkes contre l'oracle NumPy
+indépendant donne **5.2 %**, IC **3.57–7.51 %**. Les dix autres modèles contrôlent
+la loi interne de leur simulateur, ce qui ne certifie pas ce simulateur contre
+une loi externe. La puissance mesurée est **82.5–100 %** pour l'erreur temporelle
+et **35.5–100 %** pour l'erreur de marques, sans réglage après observation.
+
+Le [protocole, tableau par modèle et commandes](../docs/CONDITIONAL_CALIBRATION.md#répétabilité-reprise-et-modèles-appris--14-octobre-2026)
+et les [preuves numériques](../docs/validation/conditional-repeat-calibration-2026-10-14.json)
+sont archivés. Les calculs historiques et le code des modèles restent inchangés.
+L'accès Ruche est toujours reporté à cause du pare-feu.
+
 ### Validation conditionnelle complète — 12 octobre 2026
 
 Le code `1fa68c0` passe la pipeline conditionnelle sur **les onze modèles**,

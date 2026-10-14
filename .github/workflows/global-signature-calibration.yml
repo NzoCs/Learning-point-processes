@@ -1,0 +1,49 @@
+name: Complete-window global signature MMD calibration
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [FullyNN, RMTPP]
+        epoch: [1, 2]
+        hypothesis: [H0, twice_speed]
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Verify exact global statistic and duplicate compression
+        run: >-
+          uv run --frozen --no-sync python -m pytest -o addopts=
+          tests/stat_metrics/test_global_signature.py -q
+      - name: Frozen-checkpoint calibration or power on complete futures
+        run: >-
+          uv run --frozen --no-sync python -m scripts.global_signature_calibration
+          --model-name ${{ matrix.model }} --epoch-number ${{ matrix.epoch }}
+          --hypothesis ${{ matrix.hypothesis }}
+          --output artifacts/global-signature-${{ matrix.model }}-${{ matrix.epoch }}-${{ matrix.hypothesis }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: global-signature-${{ matrix.model }}-${{ matrix.epoch }}-${{ matrix.hypothesis }}
+          path: artifacts/global-signature-${{ matrix.model }}-${{ matrix.epoch }}-${{ matrix.hypothesis }}/
+          retention-days: 30

@@ -32,6 +32,11 @@ jobs:
         run: uv run --frozen --no-sync python -m scripts.architecture_regression --output artifacts/parametric-refactor/architecture
       - name: Independent distributions and execution times
         run: uv run --frozen --no-sync python -m scripts.parametric_benchmark --samples 4096 --repeats 7 --output artifacts/parametric-refactor/benchmark
+      - name: Exact parametric repeat, checkpoint replay and training resume
+        run: |
+          for model in Hawkes SelfCorrecting Poisson; do
+            uv run --frozen --no-sync python -m scripts.conditional_reproducibility --model "$model" --output "artifacts/parametric-refactor/repeat/$model"
+          done
       - name: Independent marked and neural simulator diagnostics
         run: uv run --frozen --no-sync python -m scripts.independent_simulator_validation --size 4096 --output artifacts/parametric-refactor/independent
       - uses: actions/upload-artifact@v4

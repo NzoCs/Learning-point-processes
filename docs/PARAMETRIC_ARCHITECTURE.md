@@ -70,7 +70,9 @@ Use a fresh output directory. The architecture suite runs train/test/predict on
 all eleven historical models, compares the nine neural snapshots to reviewed
 historical references, records parametric before/after values without replacing
 their historical baselines, and runs the independent-data conditional pipeline
-on all twelve catalogue models. Conditional controls check held-out futures,
+on all twelve catalogue models. The optional Linux workflow additionally checks
+exact pipeline repetition, prediction replay and epoch-boundary training resume
+for the three parametric models. Conditional controls check held-out futures,
 sequence identifiers, unchanged checkpoints, exports and pooled p-values.
 
 Independent distribution/timing comparisons are optional and require extra

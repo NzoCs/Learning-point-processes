@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts.conditional_integration_suite import run_model
-from scripts.integration_suite import MODELS, write_json
+from scripts.integration_suite import CATALOGUE, write_json
 
 
 def exact(left, right):
@@ -160,7 +160,7 @@ def run(name, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", choices=MODELS, required=True)
+    parser.add_argument("--model", choices=CATALOGUE, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     run(args.model, args.output.resolve())

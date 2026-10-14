@@ -1,5 +1,7 @@
 """Exactness controls for opt-in global signature calibration."""
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 import torch
@@ -10,6 +12,7 @@ from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels
 )
 from new_ltpp.shared_types import Batch
 from scripts.conditional_calibration import heterogeneous_histories, swap_orders
+from scripts.fixed_window_calibration import window_continuations
 from scripts.global_signature_calibration import (
     blocks,
     compressed_encoding,
@@ -78,3 +81,34 @@ def test_full_window_and_batch_contracts_are_enforced():
     with pytest.raises(ValueError, match="16/11/5"):
         list(blocks(33))
     assert list(blocks(32)) == [(0, 16), (16, 27), (27, 32)]
+
+
+def test_double_observation_clock_preserves_positive_sub_float32_delays():
+    class Sampler:
+        def __init__(self):
+            self.calls = []
+
+        def _simulate_one_step(self, **inputs):
+            self.calls.append(inputs)
+            n = len(inputs["time_seqs"])
+            return torch.full(
+                (n, 1), 1e-8 if len(self.calls) == 1 else float("inf")
+            ), torch.zeros(n, 1, dtype=torch.long)
+
+    h = heterogeneous_histories(2)
+    old = SimpleNamespace(pad_token_id=2, _simulator=Sampler())
+    with pytest.raises(RuntimeError, match="clock stagnation"):
+        window_continuations(old, h, 2e-8)
+    model = SimpleNamespace(pad_token_id=2, _simulator=Sampler())
+    actual = window_continuations(model, h, 2e-8, clock_dtype=torch.float64)
+    assert actual.time_seqs.dtype == torch.float64
+    assert actual.valid_event_mask.sum() == 2
+    np.testing.assert_allclose(
+        actual.time_seqs[:, 0].numpy(), 1e-8, rtol=1e-6, atol=1e-14
+    )
+    # Same float32 absolute-time representation, but the true positive gap survives.
+    second = model._simulator.calls[1]
+    assert second["time_seqs"].dtype == torch.float32
+    assert second["time_delta_seqs"].dtype == torch.float32
+    assert (second["time_delta_seqs"][:, -1] > 0).all()
+    assert actual.no_next_event_mask is None

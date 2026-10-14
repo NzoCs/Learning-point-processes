@@ -37,16 +37,28 @@ from scripts.stopped_conditional_calibration import (
 
 
 def window_continuations(
-    model, histories, horizon, *, rng=None, speed=1.0, max_events=1024
+    model,
+    histories,
+    horizon,
+    *,
+    rng=None,
+    speed=1.0,
+    max_events=1024,
+    clock_dtype=torch.float32,
 ):
     """Observe until the fixed time, not until an event quota.
 
     rng=None invokes the actual production one-step simulation. Otherwise the
     decoder/inversion/mark RNG are independently implemented in NumPy/SciPy.
     An exhausted computation budget raises; it never declares a completed window.
+    An optional float64 observation clock retains delays shorter than the float32
+    absolute-time spacing. Encoder inputs remain float32; gaps are computed before
+    casting. The default retains the earlier validation protocol for replay.
     """
     n, initial = histories.time_seqs.shape
-    times = torch.zeros(n, initial + max_events, dtype=torch.float32)
+    if clock_dtype not in (torch.float32, torch.float64):
+        raise ValueError("Observation clock must use float32 or float64")
+    times = torch.zeros(n, initial + max_events, dtype=clock_dtype)
     marks = torch.full(times.shape, model.pad_token_id, dtype=torch.long)
     times[:, :initial], marks[:, :initial] = histories.time_seqs, histories.type_seqs
     origin = histories.time_seqs[:, -1].double()
@@ -62,8 +74,10 @@ def window_continuations(
             marks[rows, : initial + step],
         )
         prefix = Batch(
-            prefix_t,
-            torch.diff(prefix_t, prepend=torch.zeros(len(rows), 1)),
+            prefix_t.float(),
+            torch.diff(
+                prefix_t, prepend=torch.zeros(len(rows), 1, dtype=clock_dtype)
+            ).float(),
             prefix_m,
             torch.ones_like(prefix_t, dtype=torch.bool),
         )
@@ -106,11 +120,12 @@ def window_continuations(
         alive[rows[~inside]] = False
         selected = rows[inside]
         if (
-            (proposed[inside].float() - times[selected, initial + step - 1]) <= 0
+            (proposed[inside].to(clock_dtype) - times[selected, initial + step - 1])
+            <= 0
         ).any():
             raise RuntimeError("Window clock stagnation")
         times[selected, initial + step], marks[selected, initial + step] = (
-            proposed[inside].float(),
+            proposed[inside].to(clock_dtype),
             mark[inside],
         )
         clock[selected] = proposed[inside]
@@ -123,7 +138,7 @@ def window_continuations(
     if alive.any():
         raise RuntimeError("Window simulation event safety budget exhausted")
     length = max(1, max(map(len, paths)))
-    t = torch.zeros(n, length)
+    t = torch.zeros(n, length, dtype=clock_dtype)
     m = torch.full((n, length), model.pad_token_id, dtype=torch.long)
     mask = torch.zeros(n, length, dtype=torch.bool)
     for row, path in enumerate(paths):

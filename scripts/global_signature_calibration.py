@@ -146,6 +146,8 @@ def run(
         trials_H1=power_trials,
         permutations=permutations,
         horizon=horizon,
+        observation_clock_dtype="float64",
+        model_input_dtype="float32; gaps computed before casting the observation clock",
         sample_sizes=sizes,
         selected_hypothesis=hypothesis,
         variants=list(VARIANTS),
@@ -192,13 +194,14 @@ def run(
                 + trial * 1000
             )
             torch.manual_seed(sample_seed)
-            y = window_continuations(model, h, horizon)
+            y = window_continuations(model, h, horizon, clock_dtype=torch.float64)
             x = window_continuations(
                 model,
                 h,
                 horizon,
                 rng=np.random.default_rng(sample_seed + 500000000),
                 speed=2.0 if case != "H0" else 1.0,
+                clock_dtype=torch.float64,
             )
             for label, batch in (("x", x), ("y", y)):
                 for key in ("time_seqs", "type_seqs", "valid_event_mask"):

@@ -1,0 +1,198 @@
+{
+  "FullyNN-1": {
+    "checkpoint": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/likelihood-calibration/FullyNN-epochs-1/fit/runs/test/FullyNN_hidden_size_4_dropout_0.0_num_layers_1_num_heads_2_time_emb_size_4_num_mix_components_2_ode_num_sample_per_step_2/conditional-integration/checkpoints/last.ckpt",
+    "checkpoint_sha256": "83a2d1916a05075435835e92b899223f4107178e0757a1cbe00e80618419abaf",
+    "model_state_sha256": "e3aae676842bff18ab8e3e2474a5e03473c4f6fa3cae32ad19d317290e79b1dd",
+    "h0": [
+      {
+        "design": "stopped",
+        "method": "single",
+        "rate": 0.03666666666666667,
+        "interval": [
+          0.02059530516285303,
+          0.06445384817189295
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "stopped",
+        "method": "aggregated",
+        "rate": 0.056666666666666664,
+        "interval": [
+          0.03567747646328951,
+          0.08886595802247463
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "single",
+        "rate": 0.023333333333333334,
+        "interval": [
+          0.011347660299125234,
+          0.04737197226827532
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "aggregated",
+        "rate": 0.043333333333333335,
+        "interval": [
+          0.025496448084407246,
+          0.07271746563401146
+        ],
+        "excess_detected": false
+      }
+    ],
+    "completed": true,
+    "no_h0_excess_detected": true
+  },
+  "FullyNN-2": {
+    "checkpoint": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/likelihood-calibration/FullyNN-epochs-2/fit/runs/test/FullyNN_hidden_size_4_dropout_0.0_num_layers_1_num_heads_2_time_emb_size_4_num_mix_components_2_ode_num_sample_per_step_2/conditional-integration/checkpoints/last.ckpt",
+    "checkpoint_sha256": "41ad7dd4e66329ad6b23ab6a8c88d7c7f29f9b20e9cdb2707f30e170d1924bcd",
+    "model_state_sha256": "016196ed04ae8ee9e2af819a628c49c758de786f3b21a4722294d3eca4ed07cc",
+    "h0": [
+      {
+        "design": "stopped",
+        "method": "single",
+        "rate": 0.03333333333333333,
+        "interval": [
+          0.01820494733885481,
+          0.06026182580405482
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "stopped",
+        "method": "aggregated",
+        "rate": 0.03333333333333333,
+        "interval": [
+          0.01820494733885481,
+          0.06026182580405482
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "single",
+        "rate": 0.02666666666666667,
+        "interval": [
+          0.01357306980864708,
+          0.05172894295058982
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "aggregated",
+        "rate": 0.023333333333333334,
+        "interval": [
+          0.011347660299125234,
+          0.04737197226827532
+        ],
+        "excess_detected": false
+      }
+    ],
+    "completed": true,
+    "no_h0_excess_detected": true
+  },
+  "RMTPP-1": {
+    "checkpoint": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/likelihood-calibration/RMTPP-epochs-1/fit/runs/test/RMTPP_hidden_size_4_dropout_0.0_num_layers_1_num_heads_2_time_emb_size_4_num_mix_components_2_ode_num_sample_per_step_2/conditional-integration/checkpoints/last.ckpt",
+    "checkpoint_sha256": "2c94675a677921ab55a3712323843b564e4d5759028c026d8d20eb986dc750cd",
+    "model_state_sha256": "c7fec988c1bb4ffcd57b7c7c313f345a1887e1c08a8ed4b98588adb50ba1340f",
+    "h0": [
+      {
+        "design": "stopped",
+        "method": "single",
+        "rate": 0.03,
+        "interval": [
+          0.01586185380943231,
+          0.05602253914164096
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "stopped",
+        "method": "aggregated",
+        "rate": 0.043333333333333335,
+        "interval": [
+          0.025496448084407246,
+          0.07271746563401146
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "single",
+        "rate": 0.04666666666666667,
+        "interval": [
+          0.027998933682334012,
+          0.07679736022792105
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "aggregated",
+        "rate": 0.03666666666666667,
+        "interval": [
+          0.02059530516285303,
+          0.06445384817189295
+        ],
+        "excess_detected": false
+      }
+    ],
+    "completed": true,
+    "no_h0_excess_detected": true
+  },
+  "RMTPP-2": {
+    "checkpoint": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/likelihood-calibration/RMTPP-epochs-2/fit/runs/test/RMTPP_hidden_size_4_dropout_0.0_num_layers_1_num_heads_2_time_emb_size_4_num_mix_components_2_ode_num_sample_per_step_2/conditional-integration/checkpoints/last.ckpt",
+    "checkpoint_sha256": "d846b00bdfbd7829295938d140530f19b075587287d5ca8b83a58802a154bcdb",
+    "model_state_sha256": "f50d2cba262add750683248a2bdfda43b17d50b1d4135023c7871184d44a892a",
+    "h0": [
+      {
+        "design": "stopped",
+        "method": "single",
+        "rate": 0.06333333333333334,
+        "interval": [
+          0.040916882383915276,
+          0.09679131248552161
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "stopped",
+        "method": "aggregated",
+        "rate": 0.043333333333333335,
+        "interval": [
+          0.025496448084407246,
+          0.07271746563401146
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "single",
+        "rate": 0.07,
+        "interval": [
+          0.046236944827176336,
+          0.10463601042593323
+        ],
+        "excess_detected": false
+      },
+      {
+        "design": "window",
+        "method": "aggregated",
+        "rate": 0.056666666666666664,
+        "interval": [
+          0.03567747646328951,
+          0.08886595802247463
+        ],
+        "excess_detected": false
+      }
+    ],
+    "completed": true,
+    "no_h0_excess_detected": true
+  }
+}

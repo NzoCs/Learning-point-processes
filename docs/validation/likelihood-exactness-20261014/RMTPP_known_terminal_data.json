@@ -1,0 +1,179 @@
+[
+  {
+    "sequence_id": "conditional-test-0",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.23420510269687755
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.23420510269687755
+    ],
+    "type_event": [
+      0,
+      1
+    ],
+    "no_next_event": true
+  },
+  {
+    "sequence_id": "conditional-test-1",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.13743394217854055,
+      0.36795201775020997
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.13743394217854055,
+      0.23051807557166942
+    ],
+    "type_event": [
+      0,
+      0,
+      0
+    ],
+    "no_next_event": true
+  },
+  {
+    "sequence_id": "conditional-test-2",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.7426127757696964
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.7426127757696964
+    ],
+    "type_event": [
+      1,
+      1
+    ],
+    "no_next_event": true
+  },
+  {
+    "sequence_id": "conditional-test-3",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.1549169857730805,
+      0.40817495873417986,
+      0.5264810912551829
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.1549169857730805,
+      0.25325797296109936,
+      0.1183061325210031
+    ],
+    "type_event": [
+      1,
+      1,
+      1,
+      0
+    ],
+    "no_next_event": true
+  },
+  {
+    "sequence_id": "conditional-test-4",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.16643325897353867,
+      0.22045516756543287,
+      1.4240189489296375,
+      1.5606310055230799
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.16643325897353867,
+      0.05402190859189421,
+      1.2035637813642046,
+      0.13661205659344228
+    ],
+    "type_event": [
+      0,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "sequence_id": "conditional-test-5",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.2722593168444749,
+      0.5353501997362669,
+      1.118114552827062,
+      1.4852349877677153
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.2722593168444749,
+      0.2630908828917919,
+      0.5827643530907951,
+      0.3671204349406533
+    ],
+    "type_event": [
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "sequence_id": "conditional-test-6",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.22000764252668337,
+      0.45517836933931854,
+      1.4042750456919908,
+      1.7056406711286058
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.22000764252668337,
+      0.23517072681263518,
+      0.9490966763526721,
+      0.30136562543661505
+    ],
+    "type_event": [
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "sequence_id": "conditional-test-7",
+    "dim_process": 2,
+    "time_since_start": [
+      0.0,
+      0.4294769890411967,
+      0.6523801679706045,
+      0.8526470652257743,
+      0.963897142982258
+    ],
+    "time_since_last_event": [
+      0.0,
+      0.4294769890411967,
+      0.22290317892940786,
+      0.20026689725516977,
+      0.11125007775648375
+    ],
+    "type_event": [
+      1,
+      0,
+      0,
+      1,
+      1
+    ]
+  }
+]

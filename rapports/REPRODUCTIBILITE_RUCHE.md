@@ -1,5 +1,64 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Exactitude des pertes et nouvelles validations CPU — 14 octobre 2026
+
+Sur `codex/unbounded-neural-sampling`, le [contrat détaillé](../docs/LIKELIHOOD_EXACTNESS.md)
+décrit les nouvelles corrections. FullyNN et la vraisemblance neuronale partagée
+comptent les événements depuis leur masque, même quand leur log-intensité vaut
+zéro. Les étapes d'entraînement/validation/test préparent les événements valides
+avant le padding ; les pertes FullyNN/RMTPP et leurs gradients sont identiques
+avec padding gauche ou droit. Le premier événement valide reste l'historique
+conditionnant la perte neuronale.
+
+RMTPP utilise désormais l'intégrale analytique de son intensité plafonnée
+existante, au lieu de l'approximation Monte Carlo dans sa perte. La dérivée à
+pente nulle est conservée et un débordement numérique reproduit avec
+`a=-1000, w=1, t=2000` est corrigé. Une formule inverse indépendante confirme
+des délais finis dans ce cas. La formule d'intensité et les pentes apprises ne
+sont pas contraintes arbitrairement. **La borne sur grille du sampler générique
+reste inchangée**, conformément à la décision de l'utilisateur.
+
+Pour FullyNN/RMTPP, une terminaison définitive explicitement connue ajoute
+`H(infini | dernier historique valide)` à la perte. Aucune terminaison n'est
+déduite d'une fin de fichier ou d'un silence observé. Une terminaison de
+probabilité mathématiquement nulle donne une perte infinie ; l'entraînement
+échoue explicitement, sans forcer les paramètres à changer.
+
+Code `5f37648` : [validation Linux complète réussie](https://github.com/NzoCs/Learning-point-processes/actions/runs/38604105572),
+[lint réussi](https://github.com/NzoCs/Learning-point-processes/actions/runs/38604105502),
+**327 tests**, **84,35 % de couverture**. Les onze modèles historiques et Poisson
+passent les parcours ordinaires et conditionnels. Les autres résultats numériques
+des fixtures sont conservés aux tolérances existantes ; RMTPP change volontairement.
+Sur huit séquences : perte de test **1,248142 → 1,246912**, MAE **0,377479 →
+0,366567**, RMSE **0,506855 → 0,507372**, précision des marques **50 % → 50 %**.
+La suppression des tirages d'intégration décale aussi les tirages des prévisions
+Monte Carlo en validation/test. Ces différences ne prouvent pas une amélioration
+scientifique du modèle. Les anciens résultats sont conservés pour comparaison.
+
+Deux checkpoints distincts par modèle, figés avant l'évaluation, passent chacun
+les deux contrats d'observation : quota de six événements avec arrêts connus,
+et fenêtre fixe de durée deux sans statut de terminaison. Au total : **2400 essais
+H0**, **1600 H1**, deux marques, 99 permutations, batches de 16/11/5. Au seuil de
+5 %, les faux positifs agrégés sont : FullyNN **5,67 % / 3,33 %** avec quota et
+**4,33 % / 2,33 %** avec fenêtre ; RMTPP **4,33 % / 4,33 %** avec quota et
+**3,67 % / 5,67 %** avec fenêtre. Aucun excès n'est détecté selon le critère
+familial fixé avant les essais. Le plus grand taux sur un seul batch est **7 %**
+pour RMTPP, avec IC 95 % **4,62–10,46 %** ; il reste dans les preuves.
+
+La puissance reste limitée : l'accélération temporelle de FullyNN n'est détectée
+que dans **3–5 %** des essais, celle de RMTPP dans **27–36 %**. L'absence de rejet
+ne certifie donc pas la justesse temporelle d'un modèle. Le contrat à fenêtre
+fixe est disponible dans l'API statistique explicite ; il ne transforme pas
+automatiquement des fichiers observés jusqu'à un quota en données à horizon fixe.
+
+Répétition, relecture du checkpoint, reprise à la frontière d'epoch et
+redémarrage complet après interruption de prédiction sont exacts pour les deux
+modèles sur le CPU validé. Une reprise en milieu d'epoch est désormais refusée
+explicitement : le curseur du loader mélangé n'est pas sauvegardé. Les
+[preuves brutes et paramètres figés rejouables](../docs/validation/likelihood-exactness-20261014/provenance.json)
+sont archivés. La généralisation de la calibration, l'incertitude d'estimation,
+la puissance et Ruche/CUDA/DDP restent des validations distinctes.
+
 ### Protocole complet dans la pipeline — 14 octobre 2026
 
 Sur `codex/unbounded-neural-sampling`, FullyNN et RMTPP sélectionnent désormais

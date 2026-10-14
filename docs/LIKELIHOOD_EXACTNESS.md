@@ -28,6 +28,9 @@ integration sampling no longer consumes random draws. The architecture/intensity
 are unchanged. The optional Linux audit reruns parent `27ac222` on the same CPU,
 compares all numerical fields of other models at existing tolerances and archives
 RMTPP's intentional differences without replacing historical references.
+The removed loss-sampling draws also shift the Monte Carlo one-step forecast
+stream during validation/test. Small forecast-metric differences therefore do
+not measure only the change in trained parameters.
 
 ## Explicit permanent ends in learning
 
@@ -85,3 +88,62 @@ The optional Linux workflow includes all eleven historical models plus Poisson,
 ordinary/conditional/known-terminal integrations, repeats/replay/resume and the
 two-checkpoint calibrations. Final measured evidence is archived after validation.
 Ruche/CUDA/DDP is outside this CPU validation.
+
+## Measured results — 14 October 2026
+
+Code `5f37648d46ba19ab7161b982d163929846f74b3e` passes
+[the full Linux workflow](https://github.com/NzoCs/Learning-point-processes/actions/runs/38604105572)
+and [lint](https://github.com/NzoCs/Learning-point-processes/actions/runs/38604105502):
+**327 passed, 7 skipped, 2 deselected; 84.35% coverage**. All eleven historical
+models plus Poisson pass ordinary/conditional integration. The other eleven
+catalogue entries, including FullyNN on nonterminal reference data, preserve
+all audited numerical fields at `rtol=1e-5`, `atol=1e-6`. RMTPP's intentional
+changes are retained in before/after snapshots. Both stopped models pass exact
+repeat, checkpoint replay, completed-epoch resume and complete prediction restart
+after an injected interruption; the partial prediction remains explicitly failed.
+
+Small ordinary integration fixture, same-runner before/after:
+
+| RMTPP metric | Monte Carlo loss parent | Analytic loss |
+| --- | ---: | ---: |
+| Test loss | 1.248142 | 1.246912 |
+| Time MAE | 0.377479 | 0.366567 |
+| Time RMSE | 0.506855 | 0.507372 |
+| Mark accuracy | 50% | 50% |
+
+These eight-sequence results are regression evidence, not a scientific model
+ranking. Known terminal sources and previously misinterpreted left padding can
+also intentionally change losses; the nonterminal equal-length fixture cannot
+establish unchanged results for those newly corrected cases.
+
+The four distinct fitted parameter states each pass two independent-oracle
+experiments: **300 H0 trials and 100 trials per H1 alternative**, two marks,
+99 permutations, batches 16/11/5, event budget 6 or time horizon 2. This totals
+2400 H0 trials and 1600 H1 trials across eight experiments. Aggregated H0 rates:
+
+| Model / training epochs | Stopped quota | Fixed window |
+| --- | ---: | ---: |
+| FullyNN / 1 | 5.67% (95% CI 3.57–8.89%) | 4.33% (2.55–7.27%) |
+| FullyNN / 2 | 3.33% (1.82–6.03%) | 2.33% (1.13–4.74%) |
+| RMTPP / 1 | 4.33% (2.55–7.27%) | 3.67% (2.06–6.45%) |
+| RMTPP / 2 | 4.33% (2.55–7.27%) | 5.67% (3.57–8.89%) |
+
+No H0 excess is detected under the predeclared family threshold `0.01/16`.
+The largest single-batch rate is RMTPP/2 window at **7.0%**, CI **4.62–10.46%**;
+it remains in the raw evidence. These finite-sample results do not guarantee an
+exact 5% rate or uniform p-values for every checkpoint. Some cases are conservative.
+
+Power remains limited. Window tests detect twice-speed FullyNN futures in only
+**5% / 3%** of trials for checkpoints 1/2, and twice-speed RMTPP in **27% / 36%**.
+Quiet-window alternatives give FullyNN **28% / 26%**, RMTPP **100% / 100%**.
+Stopped-quota tests detect suppression of all FullyNN stops in **100% / 100%**,
+but suppression of RMTPP stops in only **8% / 11%**; forced immediate stops give
+FullyNN **28% / 35%**, RMTPP **100% / 100%**. Non-rejection does not establish
+equivalence, especially for rare finite events or rare natural stops. Improving
+power needs a separately declared larger-sample or kernel experiment; thresholds
+and model laws were not tuned after these results.
+
+[Raw p-values, fitted parameter archives, before/after snapshots and provenance](validation/likelihood-exactness-20261014/provenance.json)
+are retained. Both calibration scripts accept these frozen parameter JSON files
+via `--checkpoint`, avoiding dependence on the expiration of CI checkpoint files.
+The artifact ZIP digest was verified before extracting evidence.

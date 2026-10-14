@@ -7,6 +7,10 @@ on:
     branches: [main, master]
 
 jobs:
+  window-first-event-power:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[window-first-event]')
+    uses: ./.github/workflows/window-first-event-power.yml
+
   window-power-diagnosis:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[window-power]')
     uses: ./.github/workflows/window-power-diagnosis.yml

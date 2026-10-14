@@ -1,5 +1,37 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### MMD global de signature sur les futurs complets — 14 octobre 2026
+
+Le [rapport détaillé](../docs/GLOBAL_SIGNATURE_CALIBRATION.md) compare les mêmes
+modèles figés, sans changer leurs poids ou leur architecture. Sur les futurs
+entiers observés dans une fenêtre `T=2`, avec deux marques, le kernel de signature
+à huit points donne **42,5–45,5 %** de détection de l'accélération ×2 pour FullyNN
+à 2 048 paires, contre **7–8,5 %** avec l'agrégation historique. RMTPP atteint
+**100 % des 200 essais dès 128 paires**, contre 48–49 % avec cette agrégation.
+La normalisation globale seule, sans comparaisons entre batches, ne suffit pas
+pour FullyNN. La puissance reste néanmoins modérée avec le kernel de signature.
+
+Chaque checkpoint a 300 essais H0 et 200 essais H1. Un résultat initial FullyNN
+à **8 % de rejets H0 sur 300** a déclenché une confirmation indépendante pour
+les deux checkpoints, sans tuning : **4,4 % et 4,6 % sur 1 000 nouveaux essais
+chacun**. Le résultat initial reste archivé. RMTPP donne 5–6 % de rejets H0
+aux tailles de 128 et 2 048 paires. Aucun excès n'est détecté aux critères
+familiaux déclarés ; cette validation ne certifie pas tous les modèles et contextes.
+
+L'outil d'observation conserve maintenant une horloge float64 dans cette nouvelle
+expérience : un vrai délai très court arrondi à zéro en temps absolu float32
+avait provoqué un échec. Tous les essais principaux ont été relancés avec les
+mêmes graines, sans élimination de données. Les entrées neuronales restent
+float32, avec gaps calculés avant conversion. Aucun délai n'est artificiellement
+déplacé ; la borne du sampler et le défaut de la pipeline restent inchangés.
+
+Expérience principale `47d5655` : [Linux réussi](https://github.com/NzoCs/Learning-point-processes/actions/runs/38628475313).
+Confirmation `2311860` : [Linux réussi](https://github.com/NzoCs/Learning-point-processes/actions/runs/38630581439),
+[lint réussi](https://github.com/NzoCs/Learning-point-processes/actions/runs/38630581694),
+**336 tests**, **84,35 % de couverture**. Plans, rapports, p-values et provenance
+conservés dans `docs/validation/global-signature-20261014`. Pas de nouvelle
+validation Ruche/CUDA/DDP ; ces diagnostics sont optionnels.
+
 ### Diagnostic de puissance FullyNN — 14 octobre 2026
 
 Le [diagnostic détaillé](../docs/WINDOW_POWER_DIAGNOSIS.md) compare les mêmes

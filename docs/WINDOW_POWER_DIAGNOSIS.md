@@ -1,5 +1,12 @@
 # Diagnostic de puissance pour FullyNN — 14 octobre 2026
 
+La suite de ce diagnostic est désormais réalisée sur les futurs complets avec
+le kernel de signature : voir [la calibration globale](GLOBAL_SIGNATURE_CALIBRATION.md).
+Elle retrouve un gain de puissance, avec 42,5–45,5 % pour FullyNN à 2 048 paires,
+et 100 % des essais d'accélération RMTPP dès 128 paires. Les taux H0 indépendants
+FullyNN sont de 4,4 % et 4,6 % sur 1 000 essais chacun. Le défaut de la pipeline
+reste inchangé ; les résultats de ce premier diagnostic sont conservés ci-dessous.
+
 Sur les deux petits checkpoints FullyNN utilisés pour les validations, le signal
 d'accélération est faible parce que les futurs contiennent peu d'événements.
 L'addition de MMD calculés dans des batches de 16, 11 et 5 paires réduit ensuite

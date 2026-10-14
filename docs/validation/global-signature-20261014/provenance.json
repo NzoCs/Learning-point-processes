@@ -1,0 +1,86 @@
+{
+  "main_code": "47d565543ddd94c967ae4747c0b8b854a8d75683",
+  "confirmation_code": "2311860f9d55d55e66a088c2e1ac17deeeb148ed",
+  "main_linux_run": 38628475313,
+  "main_lint_run": 38628475108,
+  "confirmation_linux_run": 38630581439,
+  "confirmation_lint_run": 38630581694,
+  "initial_float32_failure": {
+    "run": 38627368608,
+    "job": 116069833507,
+    "reason": "Short positive delay rounded away by the validation float32 observation clock; all cohorts rerun with float64, original seeds preserved, no sample discarded."
+  },
+  "artifacts": [
+    {
+      "name": "global-signature-RMTPP-1-twice_speed",
+      "artifact_id": 11926455524,
+      "size_in_bytes": 5487,
+      "zip_sha256": "920a0bda0f103a72a1d4d28ba3a50bf95c7dd8646ddc095704f9f5c19a3d78ed"
+    },
+    {
+      "name": "global-signature-RMTPP-2-H0",
+      "artifact_id": 11926245695,
+      "size_in_bytes": 9544,
+      "zip_sha256": "c342e8d54f499ee3ba42dbed8c88eca56b2c45aa7ab7953df1e2b337ed98745a"
+    },
+    {
+      "name": "global-signature-FullyNN-1-H0",
+      "artifact_id": 11926186005,
+      "size_in_bytes": 9485,
+      "zip_sha256": "49156d2e4858b40f1f74e14558a26282170b52f134e21c91c886a6e98300cb1b"
+    },
+    {
+      "name": "global-signature-FullyNN-2-twice_speed",
+      "artifact_id": 11926076384,
+      "size_in_bytes": 7529,
+      "zip_sha256": "94e153de137396e25ea22da05f61d12aa04636d3b197b71ee2ac021ae2fe9b9c"
+    },
+    {
+      "name": "global-signature-FullyNN-2-H0",
+      "artifact_id": 11925931830,
+      "size_in_bytes": 9573,
+      "zip_sha256": "4d54cdef2b75547d1a7b0494a8afdbe68ae3d381c985259ff17e367f2b7a70cd"
+    },
+    {
+      "name": "global-signature-RMTPP-1-H0",
+      "artifact_id": 11925478647,
+      "size_in_bytes": 9693,
+      "zip_sha256": "ee6ea3565559c6a458ecfd893ed687fadbdba262ecf55e541ec317131956405e"
+    },
+    {
+      "name": "global-signature-FullyNN-1-twice_speed",
+      "artifact_id": 11925251498,
+      "size_in_bytes": 7593,
+      "zip_sha256": "bb00325915429ae584a46fa80eb3c1e990c401c54951315b8877c8b0bd6c7264"
+    },
+    {
+      "name": "global-signature-RMTPP-2-twice_speed",
+      "artifact_id": 11925038058,
+      "size_in_bytes": 5402,
+      "zip_sha256": "060c2c166cff9931215be73f99833620e7274b5466ff49aa6d6fec6c99818eac"
+    },
+    {
+      "name": "global-signature-confirmation-1",
+      "artifact_id": 11926951079,
+      "size_in_bytes": 4664,
+      "zip_sha256": "2be052a5dff235ca4f7b6afe96656cc708cf1ea6e842a2eefb11b3b78537826f"
+    },
+    {
+      "name": "global-signature-confirmation-2",
+      "artifact_id": 11925614416,
+      "size_in_bytes": 4677,
+      "zip_sha256": "5e32af93591d09d75daedc02850df8cb1d6a9503eb2cbb4afae83622226ee13c"
+    }
+  ],
+  "core_tests": {
+    "passed": 336,
+    "skipped": 7,
+    "deselected": 2,
+    "coverage_percent": 84.35
+  },
+  "local_clock_and_kernel_controls_passed": 6,
+  "model_parameters_or_architecture_changed": false,
+  "production_test_default_changed": false,
+  "legacy_validation_clock_default_preserved": true,
+  "ruche_cuda_ddp_validated": false
+}

@@ -1,0 +1,48 @@
+{
+  "status": "in_progress",
+  "code": {
+    "commit": "47d565543ddd94c967ae4747c0b8b854a8d75683",
+    "tracked_working_tree_dirty": false,
+    "script_lf_sha256": "bf96b320a53f767f8621727c2276086497ec45c5956fe9561471df44af63e1ad",
+    "lock_sha256": "ef46ad32e1aae94637655626629ad509448e3b9bb252cbe3cbc77d298ad1d8db",
+    "numpy": "2.3.3",
+    "pysiglib": "4.0.0",
+    "torch_threads": 1
+  },
+  "model": "FullyNN",
+  "epoch": 1,
+  "seed": 2026101427,
+  "trials_H0": 300,
+  "trials_H1": 200,
+  "permutations": 99,
+  "horizon": 2.0,
+  "observation_clock_dtype": "float64",
+  "model_input_dtype": "float32; gaps computed before casting the observation clock",
+  "sample_sizes": [
+    32,
+    128,
+    512,
+    2048
+  ],
+  "selected_hypothesis": "H0",
+  "variants": [
+    "global",
+    "blocks_global_normalization",
+    "blocks_local_normalization"
+  ],
+  "kernel": {
+    "type": "signature",
+    "static": "RBF",
+    "sigma": 1.0,
+    "grid_points": 8,
+    "dyadic_order": 0,
+    "marks": 2,
+    "backend": "pysiglib"
+  },
+  "h0_family_size": 48,
+  "h0_excess_threshold": 0.00020833333333333335,
+  "plan": "Four archived frozen checkpoints; 300 H0 trials and 200 twice-speed H1 trials, 99 within-history paired swaps; 32/128/512/2048 independent pairs. Three prespecified statistics on identical full-window data and identical signs: global paired U-MMD, 16/11/5 block sum with global normalization, historical block sum with local normalization. Original signature8 kernel and product history weights. Exact duplicate-path compression only; no fitted-model or production change.",
+  "scope": "Complete futures inside a fully observed fixed T=2 window, including empty windows; no inference of permanent termination. Production simulator versus independent NumPy/SciPy decoder/inversion/RNG, shared frozen Torch encoder. Two repeated heterogeneous histories, two checkpoints per model; no fitting uncertainty or CUDA/Ruche validation.",
+  "results": [],
+  "observations": {}
+}

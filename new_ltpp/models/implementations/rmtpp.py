@@ -5,6 +5,10 @@ import torch
 from torch import nn
 
 from new_ltpp.models.base.training import TrainingMixin
+from new_ltpp.models.capped_exponential import (
+    capped_exponential_integral,
+    capped_exponential_limit,
+)
 from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 
@@ -110,41 +114,13 @@ class RMTPP(TrainingMixin):
             hidden = hidden[:, -1:, :]
         a = (self.hidden_to_intensity_logits(hidden) + self.b_t).double()
         w = self.w_t.double()
-        cap = math.log(1e5)
-        rate = a.clamp(max=cap).exp()
 
-        # Integrate exp(min(a + w*t, cap)) piecewise. No slope is altered.
         def hazard(dt):
-            t = dt.double().unsqueeze(-1)
-            slope = w.unsqueeze(-2)
-            start = a.unsqueeze(-2)
-            crossing = ((cap - start) / torch.where(slope == 0, 1, slope)).clamp_min(0)
-            growing = slope > 0
-            exponential_time = torch.where(
-                growing,
-                torch.minimum(t, crossing),
-                (t - torch.where(start > cap, crossing, 0)).clamp_min(0),
-            )
-            exponent_start = start.clamp(max=cap)
-            z = slope * exponential_time
-            integral = (
-                exponent_start.exp()
-                * torch.expm1(z.clamp(max=cap - exponent_start))
-                / torch.where(slope == 0, 1, slope)
-            )
-            integral = torch.where(slope == 0, exponent_start.exp() * t, integral)
-            plateau = torch.where(
-                growing,
-                (t - crossing).clamp_min(0),
-                torch.where(start > cap, torch.minimum(t, crossing), 0),
-            )
-            return (integral + 1e5 * plateau).sum(-1)
+            return capped_exponential_integral(
+                a.unsqueeze(-2), w.unsqueeze(-2), dt.double().unsqueeze(-1)
+            ).sum(-1)
 
-        # A nonnegative slope gives an infinite integral. Negative slopes may
-        # initially spend some time at the cap before decaying exponentially.
-        crossing = ((a - cap) / (-w)).clamp_min(0)
-        tails = rate / (-w) + 1e5 * torch.where(a > cap, crossing, 0)
-        limit = torch.where((w >= 0).any(-1), torch.inf, tails.sum(-1))
+        limit = capped_exponential_limit(a, w).sum(-1)
         return hazard, limit
 
     def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -169,21 +145,23 @@ class RMTPP(TrainingMixin):
             ..., :-1, :
         ]  # discard right limit at t_N for logL
 
-        dts_sample_B_Nm1_G = self.make_dtime_loss_samples(dts_BN[:, 1:])
-        intensity_dts_B_Nm1_G_M = self.evolve_and_get_intentsity(
-            right_hiddens_B_Nm1_H, dts_sample_B_Nm1_G
+        mask = batch_non_pad_mask[:, 1:]
+        event_ll = (left_intensity_B_Nm1_M + self.eps).log().gather(
+            -1, marks_BN[:, 1:].clamp(max=self.num_event_types - 1).unsqueeze(-1)
+        ).squeeze(-1) * mask
+        a = (self.hidden_to_intensity_logits(right_hiddens_B_Nm1_H) + self.b_t).double()
+        non_event_ll = (
+            capped_exponential_integral(
+                a, self.w_t.double(), dts_BN[:, 1:].double().unsqueeze(-1)
+            ).sum(-1)
+            * mask
         )
-
-        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
-            lambda_at_event=left_intensity_B_Nm1_M,
-            lambdas_loss_samples=intensity_dts_B_Nm1_G_M,
-            time_delta_seq=dts_BN[:, 1:],
-            seq_mask=batch_non_pad_mask[:, 1:],
-            type_seq=marks_BN[:, 1:],
-        )
+        num_events = mask.sum()
 
         # compute loss to minimize
-        loss = -(event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum() + self.terminal_loglikelihood_cost(
+            batch
+        )
         return loss, num_events
 
     def compute_intensities_at_sample_dtimes(

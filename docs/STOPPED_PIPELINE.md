@@ -4,8 +4,9 @@ FullyNN and RMTPP automatically select `complete_stopped_event_budget_v1` in
 their prediction statistics. The other models retain their existing observation
 protocol. The model architectures, loss functions, sampling laws, prediction
 methods, training seeds and historical reference files are unchanged by this
-wiring. The new terminal metadata is used for observation/statistics and does
-not add a terminal-survival term to the training objective.
+wiring. At that validated wiring commit, terminal metadata affected only
+observation/statistics. The subsequent [likelihood correction](LIKELIHOOD_EXACTNESS.md)
+adds a survival term for explicitly known ends and an analytic RMTPP compensator.
 
 ## Conditional held-out futures
 
@@ -72,7 +73,7 @@ uv run --frozen --no-sync python -m scripts.stopped_pipeline_validation \
 
 The optional Linux workflow runs train/test/predict for all eleven historical
 models plus Poisson, and their conditional pipelines on separately generated
-train/dev/test data. It first reruns the reviewed pre-wiring commit `acd6f37`
+train/dev/test data. The original wiring audit reran pre-wiring commit `acd6f37`
 on the same runner with the same locked runtime, independently loaded from its
 own checkout. This separates native-CPU refitting drift from the wiring change;
 old archived snapshots are not replaced and tolerances are not widened.
@@ -81,6 +82,9 @@ must match every numerical field of that same-runner reference. For FullyNN/RMTP
 fitted weights, losses, gradients, predictions,
 trajectories and sequence termination statuses must match their pre-wiring
 snapshots; only the observation protocol and prediction statistics change.
+The current workflow reruns the reviewed pre-likelihood parent `27ac222` and
+explicitly records the intentional RMTPP changes from analytic training
+integration, while keeping every numerical comparison for the other models.
 
 The conditional collector also evaluates a historical-truncation control on the
 same observed/simulated data with exactly the same starting null RNG state. It

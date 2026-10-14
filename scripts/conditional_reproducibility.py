@@ -130,6 +130,72 @@ def run(name, output):
         replay["phases"]["predict"]["checkpoint"]["sha256"]
         == first["phases"]["train"]["checkpoint"]["sha256"]
     )
+    # Interrupt after one exported batch. The partial run must remain failed;
+    # restart the whole prediction in a fresh output, from the same checkpoint.
+    from new_ltpp.models.base.training import TrainingStepsMixin
+
+    interrupted = output / "interrupted-prediction"
+    interrupted_raw = config.get_yaml_config()
+    interrupted_raw["save_dir"] = str(interrupted / "runs")
+    interrupted_config = RunnerConfig.model_validate(interrupted_raw)
+    interrupted_path = interrupted / "effective.yaml"
+    interrupted_path.parent.mkdir(parents=True)
+    interrupted_config.save_to_yaml_file(interrupted_path)
+    original_predict = TrainingStepsMixin.predict_step
+
+    def interrupt_prediction(model, batch, batch_idx, **kwargs):
+        if batch_idx == 1:
+            raise RuntimeError("injected mid-prediction interruption")
+        return original_predict(model, batch, batch_idx, **kwargs)
+
+    with patch.object(TrainingStepsMixin, "predict_step", interrupt_prediction):
+        interrupted_result = CliRunner().invoke(
+            app,
+            [
+                "run",
+                "--config",
+                str(interrupted_path),
+                "--phase",
+                "predict",
+                "--save-dir",
+                str(interrupted / "runs"),
+                "--checkpoint",
+                first["phases"]["train"]["checkpoint"]["path"],
+            ],
+        )
+    assert interrupted_result.exit_code != 0
+    interrupted_manifest = list(interrupted.rglob("manifest.json"))
+    assert len(interrupted_manifest) == 1
+    partial = json.loads(interrupted_manifest[0].read_text())
+    assert partial["phases"]["predict"]["status"] == "failed"
+    restart = output / "restarted-prediction"
+    restart_raw = config.get_yaml_config()
+    restart_raw["save_dir"] = str(restart / "runs")
+    restart_config = RunnerConfig.model_validate(restart_raw)
+    restart_path = restart / "effective.yaml"
+    restart_path.parent.mkdir(parents=True)
+    restart_config.save_to_yaml_file(restart_path)
+    captured.clear()
+    with patch.object(BatchStatisticsCollector, "compute", capture):
+        restarted_result = CliRunner().invoke(
+            app,
+            [
+                "run",
+                "--config",
+                str(restart_path),
+                "--phase",
+                "predict",
+                "--save-dir",
+                str(restart / "runs"),
+                "--checkpoint",
+                first["phases"]["train"]["checkpoint"]["path"],
+            ],
+        )
+    assert restarted_result.exit_code == 0, restarted_result.exception
+    restart_parquet = list(restart.rglob("*.parquet"))
+    assert len(restart_parquet) == 1
+    exact(events("first"), pq.read_table(restart_parquet[0]).to_pylist())
+    exact(stats("first"), captured[-1])
     report = dict(
         model=name,
         status="passed",
@@ -141,6 +207,8 @@ def run(name, output):
         epoch_boundary_resume="exact",
         selected_best_checkpoint="exact",
         optimizer_and_scheduler="exact",
+        interrupted_prediction_status="failed",
+        whole_prediction_restart_after_interruption="exact",
         completed_steps=4,
         compared_fields=[
             "trained_weights",

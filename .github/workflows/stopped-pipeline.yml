@@ -7,7 +7,7 @@ permissions:
 jobs:
   validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 60
     env:
       OMP_NUM_THREADS: "1"
       MKL_NUM_THREADS: "1"
@@ -20,7 +20,7 @@ jobs:
       - name: Check out the reviewed pre-wiring version for a same-runner comparison
         uses: actions/checkout@v4
         with:
-          ref: acd6f374cedfad47081b65d7cbe082ba1dc007cb
+          ref: 27ac22234a497d6a662c79e26ede3ee9ba237bd4
           path: artifacts/stopped-pipeline-before-code
       - uses: actions/setup-python@v5
         with:
@@ -48,6 +48,10 @@ jobs:
         run: >-
           uv run --frozen --no-sync python -m scripts.stopped_pipeline_validation
           --reference-dir artifacts/stopped-pipeline-before --output artifacts/stopped-pipeline
+          --allow-rmtpp-likelihood-change
+      - name: Independent calibration on two separately trained checkpoints per model
+        run: |
+          uv run --frozen --no-sync python -m scripts.likelihood_calibration_validation --output artifacts/likelihood-calibration
       - name: Exact stopped conditional repetition and checkpoint resume
         run: |
           for model in FullyNN RMTPP; do
@@ -60,4 +64,5 @@ jobs:
           path: |
             artifacts/stopped-pipeline
             artifacts/stopped-pipeline-before
+            artifacts/likelihood-calibration
           retention-days: 30

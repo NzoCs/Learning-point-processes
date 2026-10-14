@@ -101,6 +101,9 @@ class RunManifest:
                 "mmd_p_value_protocol": "plus_one_float64_conservative_ties_v1",
                 "mmd_null_method": "permutation",
                 "mmd_rng_policy": "independent_resampling_stream_v1",
+                "likelihood_observation": "conditional_transitions_plus_explicit_known_end_v1",
+                "rmtpp_compensator": "analytic_capped_exponential_zero_slope_gradients_v1",
+                "training_resume": "completed_epoch_v1; mid_epoch_without_loader_cursor_rejected",
                 "signature_path_preparation": SIGNATURE_PATH_PREPARATION,
                 "signature_path_representation": SIGNATURE_PATH_REPRESENTATION,
                 "neural_event_sampling": {

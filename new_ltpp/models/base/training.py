@@ -1,13 +1,12 @@
 # new_ltpp/models/mixins/training_mixin.py
 """Mixin for PyTorch Lightning training, validation, test, and predict steps."""
 
-from typing import Tuple, cast
+from typing import Tuple
 
 import torch
 import torch.nn.functional as F
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 
-from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.evaluation.metrics_helper import MetricsManager
 from new_ltpp.models.simulation.simulator import Simulator
 from new_ltpp.shared_types import Batch, OneStepPred, uses_stopped_event_budget
@@ -27,12 +26,59 @@ class TrainingStepsMixin:
 
     eps: float = torch.finfo(torch.float32).eps
 
+    def terminal_loglikelihood_cost(self, batch: Batch):
+        """Known permanent ends contribute -log P(no next event) = H(infinity).
+
+        Unknown status and quota/window censoring add no permanent-end term.
+        Like the transition likelihood, this conditions on the first event.
+        """
+        flags = batch.no_next_event_mask
+        if flags is None:
+            return batch.time_seqs.new_zeros(())
+        if flags.dtype != torch.bool or flags.shape != batch.time_seqs.shape[:1]:
+            raise ValueError(
+                "Terminal likelihood requires one boolean flag per sequence"
+            )
+        if not flags.any():
+            return batch.time_seqs.new_zeros(())
+        mask = batch.valid_event_mask
+        counts = mask.sum(-1)
+        expected = (
+            torch.arange(mask.size(1), device=mask.device)[None, :] < counts[:, None]
+        )
+        if not torch.equal(mask, expected) or (counts[flags] == 0).any():
+            raise ValueError(
+                "Terminal likelihood requires nonempty histories with right padding"
+            )
+        # Use each actual last event; padded states must never contribute.
+        rows = flags.nonzero(as_tuple=True)[0]
+        cost = batch.time_seqs.new_zeros(())
+        for length in counts[rows].unique().tolist():
+            selected = rows[counts[rows] == length]
+            _, limit = self.next_event_hazard(
+                time_seqs=batch.time_seqs[selected, :length],
+                time_delta_seqs=batch.time_delta_seqs[selected, :length],
+                type_seqs=batch.type_seqs[selected, :length],
+                compute_last_step_only=True,
+            )
+            cost = cost + limit.sum()
+        return cost
+
     # ------------------------------------------------------------------
     # Lightning steps
     # ------------------------------------------------------------------
 
     def training_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
         loss, num_events = self.loglike_loss(batch)
+        if num_events <= 0:
+            raise ValueError(
+                "Per-event training loss requires at least one valid scored event"
+            )
+        if not torch.isfinite(loss):
+            raise ValueError(
+                "Nonfinite training likelihood; known permanent termination may have "
+                "zero probability under the current model. No parameter is forced to change."
+            )
         avg_loss = loss / num_events
         self.log(
             "train_loss",
@@ -230,10 +276,11 @@ class TrainingStepsMixin:
             ignore_index=self.pad_token_id,
             reduction="none",
         )
+        event_ll = event_ll * seq_mask
 
         total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
         non_event_ll = total_sampled_lambdas.mean(dim=-1) * time_delta_seq * seq_mask
-        num_events = event_ll.ne(0.0).sum()
+        num_events = seq_mask.sum()
 
         return event_ll, non_event_ll, num_events
 

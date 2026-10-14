@@ -255,8 +255,10 @@ class FullyNN(TrainingMixin):
         # [batch_size, seq_len]
         # multiplied by sequence mask
         non_event_ll = integral_lambda.sum(-1) * batch_non_pad_mask[:, 1:]
-        num_events = event_ll.ne(0.0).sum()
-        loss = -(event_ll - non_event_ll).sum()
+        num_events = batch_non_pad_mask[:, 1:].sum()
+        loss = -(event_ll - non_event_ll).sum() + self.terminal_loglikelihood_cost(
+            batch
+        )
 
         return loss, num_events
 

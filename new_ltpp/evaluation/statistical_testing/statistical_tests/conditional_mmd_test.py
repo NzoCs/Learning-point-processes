@@ -6,6 +6,8 @@ may have different laws. Batches must contain disjoint pairs. Fixed observation
 design and matched time origins are the caller's responsibility.
 """
 
+import math
+
 import torch
 
 from new_ltpp.shared_types import Batch
@@ -116,16 +118,45 @@ def paired_joint_statistic(gram, x, y):
 class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
     null_method = CONDITIONAL_MMD_PROTOCOL
 
-    def __init__(self, kernel, n_samples, *, stopped_event_budget=None):
+    def __init__(
+        self, kernel, n_samples, *, stopped_event_budget=None, observation_horizon=None
+    ):
         super().__init__(kernel, n_samples)
+        if observation_horizon is not None:
+            if not math.isfinite(observation_horizon) or observation_horizon <= 0:
+                raise ValueError("Observation horizon must be finite and positive")
+            if stopped_event_budget is not None:
+                raise ValueError(
+                    "Choose one observation design: time window or stopped event budget"
+                )
+        self.observation_horizon = observation_horizon
         if stopped_event_budget is not None and stopped_event_budget < 1:
             raise ValueError("Stopped continuation event budget must be positive")
         self.stopped_event_budget = stopped_event_budget
         self.observation_protocol = (
-            "complete_stopped_event_budget_v1"
-            if stopped_event_budget is not None
-            else "pairwise_truncation_recomputed_v1"
+            "fixed_time_window_conditional_v1"
+            if observation_horizon is not None
+            else (
+                "complete_stopped_event_budget_v1"
+                if stopped_event_budget is not None
+                else "pairwise_truncation_recomputed_v1"
+            )
         )
+
+    def _validate_window_continuation(self, batch):
+        times = batch.time_seqs[batch.valid_event_mask]
+        if (
+            not torch.isfinite(times).all()
+            or (times < 0).any()
+            or (times > self.observation_horizon).any()
+        ):
+            raise ValueError(
+                "Window continuations must contain only events inside the fixed horizon"
+            )
+        if batch.no_next_event_mask is not None and batch.no_next_event_mask.any():
+            raise ValueError(
+                "Finite-window observations must not claim permanent termination"
+            )
 
     def _validate_stopped_continuation(self, batch):
         flag = batch.no_next_event_mask
@@ -155,6 +186,8 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
         for batch in (batch_x, batch_y):
             if self.stopped_event_budget is not None:
                 self._validate_stopped_continuation(batch)
+            if self.observation_horizon is not None:
+                self._validate_window_continuation(batch)
             if batch.time_seqs.shape != batch.valid_event_mask.shape:
                 raise ValueError(
                     "Continuation mask and event times must have the same shape"
@@ -164,6 +197,7 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
                 if (
                     (
                         not len(t)
+                        and self.observation_horizon is None
                         and (
                             batch.no_next_event_mask is None
                             or not batch.no_next_event_mask[row]
@@ -202,7 +236,11 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
         common level-zero component without dropping the marginal information.
         No bandwidth is selected from labels or tuned against calibration results.
         """
-        if self.stopped_event_budget is None:
+        if self.observation_horizon is not None:
+            self._validate_window_continuation(batch_x)
+            self._validate_window_continuation(batch_y)
+            px, py = batch_x, batch_y
+        elif self.stopped_event_budget is None:
             px, py = self._truncate_to_min_time(batch_x, batch_y)
         else:
             self._validate_stopped_continuation(batch_x)
@@ -250,6 +288,17 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
             raise ValueError(
                 "Model calibration requires history_events and future_events"
             )
+        if self.observation_horizon is not None:
+            raise ValueError(
+                "Time-window tests require explicitly window-observed futures via compute_statistics"
+            )
+        if (
+            self.stopped_event_budget is not None
+            and future_events != self.stopped_event_budget
+        ):
+            raise ValueError(
+                "Future event quota must match the stopped observation budget"
+            )
         from new_ltpp.models.simulation.simulator import Simulator
 
         if getattr(model, "training", False):
@@ -262,7 +311,11 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
         values, statistics, null = [], [], []
         for batch in data_loader:
             histories, future = split_history_future(
-                batch, history_events, future_events
+                batch,
+                history_events,
+                future_events,
+                allow_stopped=self.stopped_event_budget is not None,
+                pad_token_id=getattr(model, "pad_token_id", 0),
             )
             simulated = model.simulate(histories, num_events_to_simulate=future_events)
             result = self.compute_statistics(

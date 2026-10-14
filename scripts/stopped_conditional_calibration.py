@@ -35,15 +35,19 @@ from scripts.scientific_calibration import wilson_interval
 CHECKPOINTS = Path("docs/validation/unbounded-sampling-20261014")
 
 
-def load_frozen_model(name, output):
-    source = CHECKPOINTS / f"{name}_snapshot.json"
-    saved = json.loads(source.read_text())
+def load_frozen_model(name, output, checkpoint=None):
+    source = Path(checkpoint) if checkpoint else CHECKPOINTS / f"{name}_snapshot.json"
     model = create_model(name, output)
-    model.load_state_dict(
-        {
+    if checkpoint:
+        state = torch.load(source, map_location="cpu", weights_only=False)["state_dict"]
+    else:
+        saved = json.loads(source.read_text())
+        state = {
             k: torch.tensor(v["values"]).reshape(v["shape"])
             for k, v in saved["trained_state"].items()
-        },
+        }
+    model.load_state_dict(
+        state,
         strict=True,
     )
     model.eval()
@@ -240,14 +244,23 @@ def batch_fingerprint(batch):
     )
 
 
-def run(name, output, trials=500, power_trials=200, permutations=99, seed=20261022):
+def run(
+    name,
+    output,
+    trials=500,
+    power_trials=200,
+    permutations=99,
+    seed=20261022,
+    checkpoint=None,
+    h0_family_size=8,
+):
     if min(trials, power_trials, permutations) < 1:
         raise ValueError("Trial and permutation counts must be positive")
     torch.set_num_threads(1)
     output.mkdir(parents=True, exist_ok=True)
     if (output / "report.json").exists():
         raise FileExistsError("Use a fresh calibration output directory")
-    model, fit = load_frozen_model(name, output)
+    model, fit = load_frozen_model(name, output, checkpoint)
     frozen = {k: v.clone() for k, v in model.state_dict().items()}
     budget, sizes = 6, [16, 11, 5]
     tests = {
@@ -273,7 +286,7 @@ def run(name, output, trials=500, power_trials=200, permutations=99, seed=202610
         alpha=0.05,
         results=[],
         scope="Frozen separately fitted model; NumPy/SciPy elapsed-time decoder and simulator with shared frozen Torch history encoder. Independent histories/pairs/batches; internal training uncertainty and CUDA excluded.",
-        acceptance="H0 one-sided binomial excess test at Bonferroni 0.01/8; power reported separately, no post-hoc tuning",
+        acceptance=f"H0 one-sided binomial excess test at Bonferroni 0.01/{h0_family_size}; power reported separately, no post-hoc tuning",
     )
     write_json(output / "report.json", report)
     for case_id, case in enumerate(("H0", "never_stop", "always_stop")):
@@ -350,7 +363,7 @@ def run(name, output, trials=500, power_trials=200, permutations=99, seed=202610
             for protocol, test in tests.items():
                 values[protocol]["aggregated"].append(float(test.get_final_p_value()))
             if (trial + 1) % 50 == 0:
-                print(f"{name}/{case}: {trial+1}/{count}", flush=True)
+                print(f"{name}/{case}: {trial + 1}/{count}", flush=True)
         for protocol, methods in values.items():
             for method, pvalues in methods.items():
                 rejected = sum(p <= 0.05 for p in pvalues)
@@ -370,7 +383,9 @@ def run(name, output, trials=500, power_trials=200, permutations=99, seed=202610
                         wilson_95=wilson_interval(rejected, count),
                         excess_binomial_p=excess,
                         h0_excess_detected=(
-                            bool(excess < 0.01 / 8) if excess is not None else None
+                            bool(excess < 0.01 / h0_family_size)
+                            if excess is not None
+                            else None
                         ),
                         p_values=pvalues,
                         data_sha256=hashes.hexdigest(),
@@ -395,6 +410,9 @@ if __name__ == "__main__":
     parser.add_argument("--power-trials", type=int, default=200)
     parser.add_argument("--permutations", type=int, default=99)
     parser.add_argument("--seed", type=int, default=20261022)
+    parser.add_argument(
+        "--checkpoint", type=Path, help="Checkpoint fitted on independent training data"
+    )
     args = vars(parser.parse_args())
     args["name"] = args.pop("model")
     run(**args)

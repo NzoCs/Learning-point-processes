@@ -1,5 +1,21 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Branche de délais neuronaux non plafonnés — 14 octobre 2026
+
+La branche `codex/unbounded-neural-sampling` retire le plafonnement des délais et
+la proposition non acceptée utilisée après dix tours de rejets. Elle conserve une
+sécurité de calcul configurable, des contrôles numériques et des erreurs
+explicites. Les fenêtres de recherche s'élargissent et leurs enveloppes sont
+recalculées. Le [contrat détaillé](../docs/UNBOUNDED_NEURAL_SAMPLING.md) distingue
+ce budget d'un horizon d'observation et décrit les limites encore présentes.
+
+Les preuves paramétriques ci-dessous concernent leur commit validé et restent
+archivées. Les nouvelles simulations neuronales peuvent changer volontairement.
+FullyNN n'est pas corrigé dans cette branche : sa possibilité de ne pas produire
+d'événement fini est exposée par la sécurité, plutôt que masquée par un fallback.
+Les enveloppes sur grille ne constituent pas une certification pour tout modèle
+neuronal ; les violations observées interrompent la phase sans événement inventé.
+
 ### Séparation paramétrique/neuronale — 14 octobre 2026
 
 La branche `codex/parametric-simulators` sépare les représentations et le thinning

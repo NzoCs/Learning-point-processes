@@ -2,7 +2,7 @@ name: Code Quality & Linting
 
 on:
   push:
-    branches: [main, master, codex/pysiglib-migration, codex/parametric-simulators]
+    branches: [main, master, codex/pysiglib-migration, codex/parametric-simulators, codex/unbounded-neural-sampling]
   pull_request:
     branches: [main, master]
   workflow_dispatch:

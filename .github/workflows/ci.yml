@@ -2,11 +2,15 @@ name: Test pipeline
 
 on:
   push:
-    branches: [main, master, codex/pysiglib-migration, codex/parametric-simulators]
+    branches: [main, master, codex/pysiglib-migration, codex/parametric-simulators, codex/unbounded-neural-sampling]
   pull_request:
     branches: [main, master]
 
 jobs:
+  unbounded-sampling:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[unbounded-sampling]')
+    uses: ./.github/workflows/unbounded-sampling.yml
+
   parametric-refactor:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[parametric-refactor]')
     uses: ./.github/workflows/parametric-refactor.yml

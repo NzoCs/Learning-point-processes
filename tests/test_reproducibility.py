@@ -304,6 +304,13 @@ def test_run_manifest_persists_configuration_data_hash_and_failure(tmp_path):
     manifest.finish("train", error=RuntimeError("fixture failure"))
     value = json.loads(manifest.path.read_text())
     assert value["phases"]["train"]["status"] == "failed"
+    policy = value["numerics"]["neural_event_sampling"]
+    assert policy["waiting_time_cap"] is None
+    assert (
+        policy["max_sampling_rounds"]
+        == config.model_config.thinning_config.max_sampling_rounds
+    )
+    assert policy["certified_envelope_for_arbitrary_models"] is False
     manifest.start("predict")
     manifest.finish("predict")
     prediction = json.loads(manifest.path.read_text())["phases"]["predict"]

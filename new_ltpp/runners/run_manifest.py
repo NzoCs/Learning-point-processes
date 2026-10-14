@@ -102,6 +102,13 @@ class RunManifest:
                 "mmd_rng_policy": "independent_resampling_stream_v1",
                 "signature_path_preparation": SIGNATURE_PATH_PREPARATION,
                 "signature_path_representation": SIGNATURE_PATH_REPRESENTATION,
+                "neural_event_sampling": {
+                    "algorithm": "windowed_thinning_unbounded_v1",
+                    "waiting_time_cap": None,
+                    "max_sampling_rounds": config.model_config.thinning_config.max_sampling_rounds,
+                    "envelope": "sampled_local_windows_checked_at_proposals",
+                    "certified_envelope_for_arbitrary_models": False,
+                },
             },
             "simulation_contract": config.simulation_config.execution_contract(),
             "data": {

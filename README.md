@@ -197,6 +197,9 @@ For heldout conditional model evaluation, see the
 For parametric Hawkes, SelfCorrecting and Poisson models, their dedicated
 simulators and architecture validation, see
 [the parametric model contract](docs/PARAMETRIC_ARCHITECTURE.md).
+The [unbounded neural sampler](docs/UNBOUNDED_NEURAL_SAMPLING.md) describes
+long waiting times, the explicit computation safety budget and remaining
+envelope/FullyNN limitations.
 
 ---
 

@@ -1,0 +1,40 @@
+name: Unbounded neural sampling laws and pipelines
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Audit all models, preserving parametric references and explicit FullyNN failure
+        run: uv run --frozen --no-sync python -m scripts.unbounded_sampling_validation --output artifacts/unbounded-sampling/pipelines
+      - name: Independent laws including long waits and many rejections
+        run: |
+          uv run --frozen --no-sync python -m scripts.independent_simulator_validation --size 4096 --output artifacts/unbounded-sampling/laws
+          uv run --frozen --no-sync python -c "import json; d=json.load(open('artifacts/unbounded-sampling/laws/report.json'))['checks']; assert all(d[k]['passed'] for k in ('ANHN','ANHP','NHP','ODETPP','RMTPP','SAHP','THP','IntensityFree','small_initial_window','many_rejections','SelfCorrecting_small_growth')); assert d['SelfCorrecting']['native_simulator']['passed'] and d['SelfCorrecting']['post_event_intensity_api']['passed']"
+      - name: Exact conditional repetition and checkpoint resume
+        run: uv run --frozen --no-sync python -m scripts.conditional_reproducibility --model NHP --output artifacts/unbounded-sampling/repeat-NHP
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unbounded-sampling-linux
+          path: artifacts/unbounded-sampling
+          retention-days: 30

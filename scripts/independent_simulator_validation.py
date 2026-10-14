@@ -32,7 +32,7 @@ def history(size=1):
     )
 
 
-def create_model(name, output, cap=20.0, **kwargs):
+def create_model(name, output, initial_window=20.0, **kwargs):
     import new_ltpp.models  # noqa: F401 -- public registry
 
     torch.manual_seed(20261015)
@@ -44,7 +44,12 @@ def create_model(name, output, cap=20.0, **kwargs):
     model = ModelFactory.create_model_by_name(
         name,
         ModelConfig.model_validate(raw),
-        dict(num_event_types=2, pad_token_id=2, end_time_max=100.0, dtime_max=cap),
+        dict(
+            num_event_types=2,
+            pad_token_id=2,
+            end_time_max=100.0,
+            dtime_max=initial_window,
+        ),
         output / name,
         **kwargs,
     )
@@ -62,8 +67,8 @@ def zero_linear(module):
                     layer.bias.zero_()
 
 
-def constant_poisson_model(name, output, cap=20.0):
-    model = create_model(name, output, cap)
+def constant_poisson_model(name, output, initial_window=20.0):
+    model = create_model(name, output, initial_window)
     with torch.no_grad():
         if name == "RMTPP":
             zero_linear(model.hidden_to_intensity_logits)
@@ -231,17 +236,17 @@ def run(output, size=4096):
             mark_z=mark_z,
             passed=check["passed"] and abs(mark_z) < 6,
             rates=rates.tolist(),
-            cap=20.0,
-            expected_probability_beyond_cap=math.exp(-20 * rates.sum()),
+            initial_window=20.0,
+            expected_probability_beyond_initial_window=math.exp(-20 * rates.sum()),
         )
         report["checks"][name] = check
         print(name, check, flush=True)
         write_json(output / "report.json", report)
-    for case, cap, proposals, oversample in (
-        ("tight_cap", 0.25, 32, 5.0),
-        ("exhausted_rejections", 20.0, 1, 100.0),
+    for case, initial_window, proposals, oversample in (
+        ("small_initial_window", 0.25, 32, 5.0),
+        ("many_rejections", 20.0, 1, 100.0),
     ):
-        model, rates = constant_poisson_model("NHP", output, cap)
+        model, rates = constant_poisson_model("NHP", output, initial_window)
         sampler = model.get_event_sampler()
         sampler.num_exp = proposals
         sampler.over_sample_rate = oversample
@@ -249,9 +254,9 @@ def run(output, size=4096):
         gaps, _ = draws(model, size, events=1)
         check = distribution_check(gaps * rates.sum())
         check.update(
-            cap=cap,
-            cap_atom_fraction=float((gaps == cap).mean()),
-            expected_poisson_tail=math.exp(-cap * rates.sum()),
+            initial_window=initial_window,
+            initial_window_atom_fraction=float((gaps == initial_window).mean()),
+            expected_poisson_tail=math.exp(-initial_window * rates.sum()),
             num_exp=proposals,
             oversample=oversample,
         )

@@ -32,6 +32,10 @@ class ThinningConfig(Config):
     num_exp: PositiveInt
     num_samples_boundary: PositiveInt = 200
     over_sample_rate: float = Field(default=2.0, gt=1.0)
+    max_sampling_rounds: PositiveInt = Field(
+        default=10000,
+        description="Safety budget for proposal rounds; never a cap on event delays.",
+    )
 
     @model_validator(mode="before")
     @classmethod

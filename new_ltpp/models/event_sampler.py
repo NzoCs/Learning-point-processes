@@ -2,10 +2,32 @@
 # Compatible with intensity_fn(time_seq, time_delta_seq, event_seq, dtime, ...)
 # Includes: vectorized Exp sampling, vectorized uniform draws, stable accept step.
 
+import math
 from typing import Callable, Tuple
 
 import torch
 import torch.nn as nn
+
+
+class SamplingSafetyError(RuntimeError):
+    """Generation could not continue safely; no fabricated event is returned."""
+
+    def __init__(
+        self, reason, *, rounds, pending, accepted, offset, window_start, window_width
+    ):
+        self.reason = reason
+        self.rounds = rounds
+        self.pending_count = int(pending.sum())
+        self.state = {
+            "pending": pending.detach().clone(),
+            "accepted_dtimes": accepted.detach().clone(),
+            "offset": offset.detach().clone(),
+            "window_start": window_start.detach().clone(),
+            "window_width": window_width.detach().clone(),
+        }
+        super().__init__(
+            f"Neural event sampling stopped safely: {reason}; rounds={rounds}, pending={self.pending_count}. No unaccepted event was returned."
+        )
 
 
 class EventSampler(nn.Module):
@@ -16,6 +38,7 @@ class EventSampler(nn.Module):
         num_samples_boundary: int,
         dtime_max: float,
         device: torch.device,
+        max_sampling_rounds: int = 10000,
     ):
         super().__init__()
         self.num_exp = num_exp
@@ -23,6 +46,11 @@ class EventSampler(nn.Module):
         self.num_samples_boundary = num_samples_boundary
         self.dtime_max = dtime_max
         self.device = device
+        if max_sampling_rounds <= 0 or num_exp <= 0 or num_samples_boundary <= 0:
+            raise ValueError("Sampling budgets and sample counts must be positive")
+        if not math.isfinite(dtime_max) or dtime_max < 0:
+            raise ValueError("Initial sampling window must be finite and nonnegative")
+        self.max_sampling_rounds = max_sampling_rounds
 
     # ----------------------------------------------------------------------
     # 1. Compute intensity upper bound
@@ -35,6 +63,9 @@ class EventSampler(nn.Module):
         valid_event_mask: torch.Tensor,
         intensity_fn: Callable[..., torch.Tensor],
         compute_last_step_only: bool,
+        *,
+        window_start: torch.Tensor | None = None,
+        window_width: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Compute upper bound M(t) for thinning algorithm.
         Args:
@@ -50,11 +81,14 @@ class EventSampler(nn.Module):
         if compute_last_step_only and seq_len == 0:
             seq_len = 1  # One initial interval before the first event.
 
-        tnorm = torch.linspace(
-            0.0, self.dtime_max, self.num_samples_boundary, device=self.device
-        )[
-            None, None, :
-        ]  # [1,1,K]
+        fractions = torch.linspace(
+            0.0, 1.0, self.num_samples_boundary, device=self.device
+        )[None, None, :]
+        if window_start is None:
+            window_start = torch.zeros(batch_size, 1, device=self.device)
+        if window_width is None:
+            window_width = torch.full_like(window_start, self.dtime_max or 1.0)
+        tnorm = window_start.unsqueeze(-1) + window_width.unsqueeze(-1) * fractions
 
         tnorm = tnorm.expand(batch_size, seq_len, self.num_samples_boundary)  # [B,L,K]
 
@@ -108,6 +142,7 @@ class EventSampler(nn.Module):
     # ----------------------------------------------------------------------
     # 4. One thinning step (Rejection Sampling Loop)
     # ----------------------------------------------------------------------
+    @torch.no_grad()
     def draw_next_time_one_step(
         self,
         time_seqs: torch.Tensor,
@@ -132,7 +167,9 @@ class EventSampler(nn.Module):
             weights: [B,L,num_sample]
         """
 
-        # 1. upper bound M
+        if num_sample <= 0:
+            raise ValueError("num_sample must be positive")
+        # Grid envelopes are local to finite windows, never global time caps.
         upper_bound = self.compute_intensity_upper_bound(
             time_seqs,
             time_delta_seqs,
@@ -149,16 +186,48 @@ class EventSampler(nn.Module):
         )
         accepted_dtimes = torch.zeros(B, L_out, num_sample, device=self.device)
         current_offset = torch.zeros(B, L_out, device=self.device)
-
-        max_iters = 10
+        window_start = torch.zeros_like(current_offset)
+        window_width = torch.full_like(current_offset, self.dtime_max or 1.0)
         iters = 0
 
-        while unaccepted_mask.any() and iters < max_iters:
+        def stop(reason):
+            raise SamplingSafetyError(
+                reason,
+                rounds=iters,
+                pending=unaccepted_mask,
+                accepted=accepted_dtimes,
+                offset=current_offset,
+                window_start=window_start,
+                window_width=window_width,
+            )
+
+        while unaccepted_mask.any():
+            active_prefixes = unaccepted_mask.any(-1)
+            if iters >= self.max_sampling_rounds:
+                stop("proposal budget exhausted")
+            if (
+                (~torch.isfinite(upper_bound) | (upper_bound <= 0)) & active_prefixes
+            ).any():
+                stop("nonfinite or nonpositive intensity envelope")
+            window_end = window_start + window_width
+            if (
+                (~torch.isfinite(window_end) | (window_end <= window_start))
+                & active_prefixes
+            ).any():
+                stop(
+                    "sampling window cannot advance in the current floating-point precision"
+                )
             # 2. exp samples
             exp_j = self.sample_exp_distribution(upper_bound)  # [B, L_out, E]
             exp_j_cum = torch.cumsum(exp_j, dim=-1) + current_offset.unsqueeze(
                 -1
             )  # [B, L_out, E]
+            if ((~torch.isfinite(exp_j_cum)).any(-1) & active_prefixes).any() or (
+                (exp_j_cum[..., 0] <= current_offset) & active_prefixes
+            ).any():
+                stop("nonfinite proposals or floating-point stagnation")
+            inside = exp_j_cum < window_end.unsqueeze(-1)
+            evaluation_times = torch.minimum(exp_j_cum, window_end.unsqueeze(-1))
 
             # 3. evaluate intensity at sampled times
             intens = intensity_fn(
@@ -166,11 +235,25 @@ class EventSampler(nn.Module):
                 time_delta_seqs=time_delta_seqs,
                 type_seqs=type_seqs,
                 valid_event_mask=valid_event_mask,
-                sample_dtimes=exp_j_cum,
+                sample_dtimes=evaluation_times,
                 compute_last_step_only=compute_last_step_only,
             )
 
+            intens = intens.detach()
+            invalid_marks = (~torch.isfinite(intens) | (intens < 0)).any(-1)
             intens_total = intens.sum(-1)  # [B, L_out, E]
+            active_queries = unaccepted_mask.any(-1).unsqueeze(-1)
+            if ((invalid_marks | ~torch.isfinite(intens_total)) & active_queries).any():
+                stop("nonfinite or negative intensity")
+            tolerance = 32 * torch.finfo(intens_total.dtype).eps
+            if (
+                (intens_total > upper_bound.unsqueeze(-1) * (1 + tolerance))
+                & inside
+                & active_queries
+            ).any():
+                stop(
+                    "intensity exceeds the local envelope; increase boundary resolution or over_sample_rate"
+                )
 
             # 4. Tile for uniform evaluation
             intens_total_tiled = intens_total.unsqueeze(2).expand(
@@ -186,10 +269,9 @@ class EventSampler(nn.Module):
             )  # [B, L_out, num_sample, E]
 
             # criterion = U * λ / λ(t)
-            crit = (
-                u * upper_bound.unsqueeze(-1).unsqueeze(-1) / intens_total_tiled
-            )  # [B, L_out, num_sample, E]
-            mask = crit < 1  # [B, L_out, num_sample, E]
+            mask = (
+                u * upper_bound.unsqueeze(-1).unsqueeze(-1) < intens_total_tiled
+            ) & inside.unsqueeze(2)
 
             # 6. Check acceptance
             idx = mask.float().argmax(dim=-1)  # [B, L_out, num_sample]
@@ -208,16 +290,28 @@ class EventSampler(nn.Module):
             unaccepted_mask = unaccepted_mask & ~newly_accepted
 
             # Advance the offset for the unaccepted paths to the last evaluated proposal
-            current_offset = exp_j_cum[..., -1]
-            iters += 1
-
-        # Fallback for paths that never accepted after max_iters
-        if unaccepted_mask.any():
-            accepted_dtimes = torch.where(
-                unaccepted_mask, current_offset.unsqueeze(-1), accepted_dtimes
+            advance_window = (exp_j_cum[..., -1] >= window_end) & unaccepted_mask.any(
+                -1
             )
+            current_offset = torch.minimum(exp_j_cum[..., -1], window_end).detach()
+            iters += 1
+            if advance_window.any():
+                window_start = torch.where(advance_window, window_end, window_start)
+                window_width = torch.where(
+                    advance_window, window_width * 2, window_width
+                )
+                upper_bound = self.compute_intensity_upper_bound(
+                    time_seqs,
+                    time_delta_seqs,
+                    type_seqs,
+                    valid_event_mask,
+                    intensity_fn,
+                    compute_last_step_only,
+                    window_start=window_start,
+                    window_width=window_width,
+                ).detach()
 
         # uniform weights
         weights = torch.ones_like(accepted_dtimes) / num_sample
 
-        return accepted_dtimes.clamp(max=self.dtime_max), weights
+        return accepted_dtimes, weights

@@ -143,6 +143,7 @@ class NeuralModel(BaseModel, ABC):
         self.num_exp: int = thinning_config.num_exp
         self.num_samples_boundary: int = thinning_config.num_samples_boundary
         self.over_sample_rate: float = thinning_config.over_sample_rate
+        self.max_sampling_rounds: int = thinning_config.max_sampling_rounds
         self.num_mc_samples: int = thinning_config.num_sample
 
         # EventSampler est créé de manière paresseuse pour garantir le bon device (géré par Lightning)
@@ -172,6 +173,7 @@ class NeuralModel(BaseModel, ABC):
                 num_samples_boundary=self.num_samples_boundary,
                 dtime_max=self.dtime_max,
                 device=self.device,
+                max_sampling_rounds=self.max_sampling_rounds,
             )
         return self._event_sampler
 

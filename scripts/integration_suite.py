@@ -66,7 +66,7 @@ def compare(actual, expected, path="snapshot"):
         raise AssertionError(f"{path}: {actual!r} != {expected!r}")
 
 
-def run_model(model_name, output):
+def run_model(model_name, output, *, sampling_rounds=None):
     import numpy as np
     import pyarrow.parquet as pq
     import torch
@@ -83,6 +83,8 @@ def run_model(model_name, output):
     torch.set_num_threads(1)
     raw = json.loads((FIXTURES / "config.json").read_text(encoding="utf-8"))
     raw["model_id"] = raw["model_config"]["model_id"] = model_name
+    if sampling_rounds is not None:
+        raw["model_config"]["thinning_config"]["max_sampling_rounds"] = sampling_rounds
     raw["save_dir"] = str(output / "runs")
     for key in ("train_dir", "valid_dir", "test_dir"):
         raw["data_config"][key] = str(FIXTURES / "fixture.json")

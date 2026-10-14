@@ -26,6 +26,31 @@ class TrainingStepsMixin:
 
     eps: float = torch.finfo(torch.float32).eps
 
+    def ordered_valid_batch(self, batch: Batch):
+        """Keep actual event order, placing masked positions after the history.
+
+        The first valid event is conditioning history, regardless of pad side.
+        This does not sort/reorder real events or mutate the caller's batch.
+        """
+        mask = batch.valid_event_mask
+        counts = mask.sum(-1)
+        expected = (
+            torch.arange(mask.size(1), device=mask.device)[None, :] < counts[:, None]
+        )
+        if torch.equal(mask, expected):
+            return batch
+        indices = torch.argsort((~mask).long(), dim=1, stable=True)
+        return Batch(
+            batch.time_seqs.gather(1, indices).masked_fill(~expected, 0),
+            batch.time_delta_seqs.gather(1, indices).masked_fill(~expected, 0),
+            batch.type_seqs.gather(1, indices).masked_fill(
+                ~expected, self.pad_token_id
+            ),
+            expected,
+            sequence_ids=batch.sequence_ids,
+            no_next_event_mask=batch.no_next_event_mask,
+        )
+
     def terminal_loglikelihood_cost(self, batch: Batch):
         """Known permanent ends contribute -log P(no next event) = H(infinity).
 
@@ -41,6 +66,7 @@ class TrainingStepsMixin:
             )
         if not flags.any():
             return batch.time_seqs.new_zeros(())
+        batch = self.ordered_valid_batch(batch)
         mask = batch.valid_event_mask
         counts = mask.sum(-1)
         expected = (
@@ -69,6 +95,7 @@ class TrainingStepsMixin:
     # ------------------------------------------------------------------
 
     def training_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
+        batch = self.ordered_valid_batch(batch)
         loss, num_events = self.loglike_loss(batch)
         if num_events <= 0:
             raise ValueError(
@@ -91,6 +118,7 @@ class TrainingStepsMixin:
         return avg_loss
 
     def validation_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
+        batch = self.ordered_valid_batch(batch)
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
         self.log(
@@ -118,6 +146,7 @@ class TrainingStepsMixin:
         return avg_loss
 
     def test_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
+        batch = self.ordered_valid_batch(batch)
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
         self.log("test_loss", avg_loss.item(), prog_bar=True, sync_dist=True)

@@ -132,6 +132,7 @@ class RMTPP(TrainingMixin):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
+        batch = self.ordered_valid_batch(batch)
         ts_BN = batch.time_seqs
         dts_BN = batch.time_delta_seqs
         marks_BN = batch.type_seqs

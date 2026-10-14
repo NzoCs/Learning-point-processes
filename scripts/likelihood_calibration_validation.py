@@ -22,6 +22,17 @@ def run(output, trials=300, power_trials=100):
             checkpoint = Path(manifest["phases"]["train"]["checkpoint"]["path"])
             # 'last' distinguishes epochs even if the best checkpoint is epoch 1.
             checkpoint = checkpoint.parent / "last.ckpt"
+            import torch
+
+            from scripts.integration_suite import tensor_data
+
+            fitted_state = torch.load(
+                checkpoint, map_location="cpu", weights_only=False
+            )["state_dict"]
+            write_json(
+                target / "frozen_parameters.json",
+                {key: tensor_data(value) for key, value in fitted_state.items()},
+            )
             stopped = stopped_calibration(
                 name,
                 target / "stopped",
@@ -63,6 +74,7 @@ def run(output, trials=300, power_trials=100):
             report[f"{name}-{epochs}"] = dict(
                 checkpoint=str(checkpoint),
                 checkpoint_sha256=window["fit"]["sha256"],
+                model_state_sha256=window["fit"]["model_state_sha256"],
                 h0=evidence,
                 completed=True,
                 no_h0_excess_detected=not any(r["excess_detected"] for r in evidence),
@@ -72,6 +84,10 @@ def run(output, trials=300, power_trials=100):
         assert (
             report[f"{name}-1"]["checkpoint_sha256"]
             != report[f"{name}-2"]["checkpoint_sha256"]
+        )
+        assert (
+            report[f"{name}-1"]["model_state_sha256"]
+            != report[f"{name}-2"]["model_state_sha256"]
         )
     if any(not r["no_h0_excess_detected"] for r in report.values()):
         raise AssertionError("Predeclared H0 excess detected; raw results retained")

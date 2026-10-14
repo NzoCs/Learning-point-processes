@@ -139,7 +139,7 @@ def run(name, output):
     interrupted_raw["save_dir"] = str(interrupted / "runs")
     interrupted_config = RunnerConfig.model_validate(interrupted_raw)
     interrupted_path = interrupted / "effective.yaml"
-    interrupted_path.parent.mkdir(parents=True)
+    interrupted_path.parent.mkdir(parents=True, exist_ok=True)
     interrupted_config.save_to_yaml_file(interrupted_path)
     original_predict = TrainingStepsMixin.predict_step
 
@@ -173,7 +173,7 @@ def run(name, output):
     restart_raw["save_dir"] = str(restart / "runs")
     restart_config = RunnerConfig.model_validate(restart_raw)
     restart_path = restart / "effective.yaml"
-    restart_path.parent.mkdir(parents=True)
+    restart_path.parent.mkdir(parents=True, exist_ok=True)
     restart_config.save_to_yaml_file(restart_path)
     captured.clear()
     with patch.object(BatchStatisticsCollector, "compute", capture):

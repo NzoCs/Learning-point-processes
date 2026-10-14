@@ -8,7 +8,10 @@ request. This change makes no new claim about its mathematical certification.
 FullyNN and the shared neural likelihood utility count valid scored events from
 their masks, independently of the log-intensity value. The shared utility also
 masks event contributions. Per-event training rejects a batch with no scored
-events instead of dividing by zero.
+events instead of dividing by zero. Training/validation/test steps move valid
+events before masked padding, preserving actual event order. Direct FullyNN and
+RMTPP losses do the same. Left/right padding must produce the same likelihood,
+event counts and gradients; the first valid event is conditioning history.
 
 RMTPP keeps its marked intensity `exp(min(a + w*t, log(1e5)))`. An exact piecewise
 integral replaces Monte Carlo quadrature in training/validation/test losses and

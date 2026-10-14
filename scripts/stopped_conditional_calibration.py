@@ -52,10 +52,16 @@ def load_frozen_model(name, output, checkpoint=None):
     )
     model.eval()
     model.requires_grad_(False)
+    state_digest = hashlib.sha256()
+    for key, value in sorted(model.state_dict().items()):
+        state_digest.update(key.encode())
+        state_digest.update(str((value.shape, value.dtype)).encode())
+        state_digest.update(value.detach().cpu().contiguous().numpy().tobytes())
     return model, dict(
         source=str(source),
         sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
         independently_fitted_before_this_experiment=True,
+        model_state_sha256=state_digest.hexdigest(),
     )
 
 
@@ -254,7 +260,7 @@ def run(
     checkpoint=None,
     h0_family_size=8,
 ):
-    if min(trials, power_trials, permutations) < 1:
+    if min(trials, power_trials, permutations, h0_family_size) < 1:
         raise ValueError("Trial and permutation counts must be positive")
     torch.set_num_threads(1)
     output.mkdir(parents=True, exist_ok=True)

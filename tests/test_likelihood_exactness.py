@@ -146,3 +146,43 @@ def test_impossible_known_end_is_infinite_likelihood_not_forced_parameter(tmp_pa
     with pytest.raises(ValueError, match="zero probability"):
         model.training_step(batch, 0)
     assert (model.w_t == 0).all()
+
+
+@pytest.mark.parametrize("name", ["FullyNN", "RMTPP"])
+def test_loss_and_gradients_ignore_padding_side_for_known_ends(tmp_path, name):
+    from new_ltpp.shared_types import Batch
+
+    model = create_model(name, tmp_path)
+    if name == "RMTPP":
+        with torch.no_grad():
+            model.w_t.fill_(-0.5)
+    source = history()
+    results, gradients = [], []
+    for left in (False, True):
+
+        def padded(value, fill):
+            padding = torch.full((1, 2), fill, dtype=value.dtype)
+            return torch.cat((padding, value) if left else (value, padding), dim=1)
+
+        batch = Batch(
+            padded(source.time_seqs, 0),
+            padded(source.time_delta_seqs, 0),
+            padded(source.type_seqs, model.pad_token_id),
+            padded(source.valid_event_mask, False),
+            no_next_event_mask=torch.tensor([True]),
+            sequence_ids=["same-history"],
+        )
+        before = batch.time_seqs.clone()
+        loss, count = model.loglike_loss(batch)
+        results.append(loss.detach())
+        assert count == 2
+        gradients.append(
+            torch.autograd.grad(loss, tuple(model.parameters()), allow_unused=True)
+        )
+        torch.testing.assert_close(batch.time_seqs, before, rtol=0, atol=0)
+    torch.testing.assert_close(*results, rtol=0, atol=0)
+    for a, b in zip(*gradients):
+        if a is None or b is None:
+            assert a is b
+        else:
+            torch.testing.assert_close(a, b, rtol=0, atol=0)

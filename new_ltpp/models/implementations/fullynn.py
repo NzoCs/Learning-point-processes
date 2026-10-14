@@ -218,6 +218,7 @@ class FullyNN(TrainingMixin):
             tuple: loglike loss, num events.
         """
         # [batch_size, seq_len]
+        batch = self.ordered_valid_batch(batch)
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.valid_event_mask

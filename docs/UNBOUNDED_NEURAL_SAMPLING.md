@@ -53,11 +53,17 @@ improvement. Neither a larger safety budget nor a denser grid proves correctness
 for every possible intensity curve.
 
 FullyNN retains its previously identified batch/grid scaling and bounded-hazard
-issues. An integrable future intensity can give positive probability of no finite
+issues. RMTPP likewise has an integrable future intensity when every temporal
+slope is negative: the historical fixture slopes are approximately -0.50145 and
+-0.21242. For a fixed history, its total hazard is then the sum of initial marked
+intensities divided by their negative slopes, leaving a nonzero survival mass at
+infinity. A controlled case with total intensity `2 exp(-t)` has mass `exp(-2)`.
+An integrable future intensity can give positive probability of no finite
 next event. The new sampler exposes that limitation through safety failures;
 the old fallback hid it by inventing a finite time. The validation fixture uses
-a short explicit budget for this known failure and requires the phase to fail,
-rather than reporting FullyNN as successfully simulated.
+a short explicit budget for these two known failures and requires the phase to
+fail, rather than reporting either model as successfully simulated. Their
+likelihood/intensity definitions are deliberately not changed in this branch.
 
 ## Validation
 
@@ -79,7 +85,7 @@ records changes in newly fitted weights, predictions, simulations and statistics
 Refitted weights need not match historical CPU profiles exactly, particularly
 near numerically cancelling attention-bias gradients. That comparison is retained
 as evidence rather than silently replacing profiles or relaxing tolerances.
-FullyNN's explicit failure is reported.
+FullyNN and the negative-slope RMTPP fixture have explicit failures reported.
 
 The optional workflow `unbounded-sampling.yml` runs these checks on Linux when
 dispatched or requested by `[unbounded-sampling]` on a push to this branch. It

@@ -69,6 +69,22 @@ def fixed_reference_probe(name, target):
         },
     )
     compare(actual, {k: expected[k] for k in actual})
+    limitation = None
+    if name == "RMTPP" and (model.w_t < 0).all():
+        _, hidden = model.forward(
+            (batch.time_seqs, batch.time_delta_seqs, batch.type_seqs)
+        )
+        at_zero = model.evolve_and_get_intentsity(
+            hidden, torch.zeros(*batch.time_seqs.shape, 1)
+        ).squeeze(-2)
+        assert (
+            at_zero < 1e5
+        ).all()  # negative slopes stay below the unchanged exponent cap
+        total_hazard = (at_zero / (-model.w_t)).sum(-1)
+        limitation = dict(
+            temporal_slopes=model.w_t.detach().tolist(),
+            no_finite_next_event_probability=(-total_hazard).exp().detach().tolist(),
+        )
     write_json(
         target / "fixed_reference_probe.json",
         dict(
@@ -80,6 +96,7 @@ def fixed_reference_probe(name, target):
             ),
             checked_at_fixed_weights=True,
             actual=actual,
+            analytical_limitation=limitation,
         ),
     )
     return state
@@ -98,10 +115,12 @@ def run(output):
         target.mkdir(parents=True, exist_ok=True)
         try:
             actual = run_model(
-                name, target, sampling_rounds=128 if name == "FullyNN" else None
+                name,
+                target,
+                sampling_rounds=128 if name in ("FullyNN", "RMTPP") else None,
             )
         except RuntimeError as error:
-            if name != "FullyNN":
+            if name not in ("FullyNN", "RMTPP"):
                 raise
             cause = error
             while cause is not None and not isinstance(cause, SamplingSafetyError):
@@ -114,6 +133,13 @@ def run(output):
             assert any(p["status"] == "failed" for p in manifest["phases"].values())
             assert not (target / "snapshot.json").exists()
             fixed_reference_probe(name, target)
+            fixed = json.loads((target / "fixed_reference_probe.json").read_text())
+            if name == "RMTPP":
+                assert fixed["analytical_limitation"] is not None
+                assert cause.reason in (
+                    "proposal budget exhausted",
+                    "nonfinite proposals or floating-point stagnation",
+                )
             report[name] = dict(
                 status="known_model_limitation_explicit_safety_stop",
                 reason=cause.reason,
@@ -121,13 +147,14 @@ def run(output):
                 pending=cause.pending_count,
                 fabricated_events=False,
                 fixed_reference_formulas="passed",
+                analytical_limitation=fixed.get("analytical_limitation"),
                 phases=manifest["phases"],
                 code=manifest["code"],
             )
         else:
-            if name == "FullyNN":
+            if name in ("FullyNN", "RMTPP"):
                 raise AssertionError(
-                    "Review FullyNN: deterministic fixture unexpectedly completed despite its bounded hazard"
+                    f"Review {name}: deterministic fixture unexpectedly completed despite its integrable future hazard"
                 )
             if name == "Poisson":
                 report[name] = dict(

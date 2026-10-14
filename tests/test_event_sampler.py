@@ -131,6 +131,21 @@ def test_complete_sampling_repeats_exactly_with_seed():
     torch.testing.assert_close(first, second, rtol=0, atol=0)
 
 
+def test_rmtpp_negative_slopes_have_a_nonzero_probability_of_no_next_event(tmp_path):
+    from scripts.independent_simulator_validation import constant_poisson_model
+
+    model, _ = constant_poisson_model("RMTPP", tmp_path)
+    with torch.no_grad():
+        model.w_t.fill_(-1)
+    times = torch.linspace(0, 10, 101).reshape(1, 1, -1)
+    values = model.evolve_and_get_intentsity(
+        torch.zeros(1, 1, model.hidden_size), times
+    ).sum(-1)
+    torch.testing.assert_close(values, 2 * (-times).exp())
+    # Integral to infinity of 2 exp(-t) equals 2, leaving mass exp(-2) at infinity.
+    assert math.exp(-2) == pytest.approx(0.1353352832366127)
+
+
 @pytest.mark.parametrize("rounds", [0, -1, None])
 def test_safety_budget_configuration_requires_a_positive_integer(rounds):
     with pytest.raises(ValueError):

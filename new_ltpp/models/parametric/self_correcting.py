@@ -311,9 +311,8 @@ class SelfCorrecting(ParametricModel):
             x = mu * t.unsqueeze(1) - H  # [B, K]
 
             E = torch.empty((batch_size, K), device=dev).exponential_(1.0)
-            tau = (
-                torch.log1p(E * mu * torch.exp(-x)) / mu
-            )  # stable for small growth rates
+            # log(1 + E*mu*exp(-x)), stable near zero and for large penalties.
+            tau = torch.logaddexp(torch.zeros_like(x), E.log() + mu.log() - x) / mu
 
             dt, next_dim = torch.min(tau, dim=1)  # dt: [B], next_dim: [B]
             if horizon is not None:

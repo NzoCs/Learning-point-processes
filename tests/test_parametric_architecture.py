@@ -106,6 +106,27 @@ def test_self_correcting_likelihood_conditions_on_first_event(tmp_path):
     assert count == 1 and actual.item() == pytest.approx(expected, rel=1e-6)
 
 
+def test_self_correcting_large_history_does_not_overflow_inverse(tmp_path, monkeypatch):
+    from new_ltpp.shared_types import Batch
+
+    model = create_model(
+        "SelfCorrecting", tmp_path, mu=[0.2, 0.3], alpha=[[1, 1], [1, 1]]
+    )
+    times = torch.linspace(0, 1, 300).unsqueeze(0)
+    batch = Batch(
+        times,
+        torch.diff(times, prepend=torch.zeros(1, 1)),
+        torch.zeros(1, 300, dtype=torch.long),
+        torch.ones(1, 300, dtype=torch.bool),
+    )
+    monkeypatch.setattr(
+        torch.Tensor, "exponential_", lambda tensor, *args, **kwargs: tensor.fill_(1)
+    )
+    actual = model.simulate(batch, 1).time_delta_seqs.item()
+    expected = min(np.logaddexp(0, np.log(mu) + 300 - mu) / mu for mu in (0.2, 0.3))
+    assert np.isfinite(actual) and actual == pytest.approx(expected, rel=1e-6)
+
+
 @pytest.mark.skipif(
     not torch.cuda.is_available(),
     reason="CUDA hardware required; CPU is not a GPU proxy",

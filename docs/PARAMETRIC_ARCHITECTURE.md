@@ -43,9 +43,11 @@ left limit for both Hawkes and SelfCorrecting.
 
 SelfCorrecting additionally fixes two calculation errors: future intensities and
 interval integrals include the event at the beginning of the interval; the event
-likelihood still uses the intensity immediately before the event. `log1p` and
-`expm1` retain small increments that ordinary log/exp subtraction loses in
-float32. Its loss, gradients, fitted parameters and simulations can therefore
+likelihood still uses the intensity immediately before the event. The log-space
+inverse (`logaddexp`, equivalent to `log1p` without intermediate exponential
+overflow) and `expm1` retain small increments lost through ordinary log/exp
+subtraction. Long histories no longer overflow the inverse through accumulated
+penalties. Its loss, gradients, fitted parameters and simulations can therefore
 change for mathematical reasons as well as RNG ordering.
 
 Old parametric checkpoints contain an unused neural embedding and optimizer

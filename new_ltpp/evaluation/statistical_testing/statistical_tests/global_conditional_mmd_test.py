@@ -39,7 +39,7 @@ def copy_rows(batch, indices=None):
             None
             if batch.sequence_ids is None
             else (
-                list(batch.sequence_ids)
+                list(batch.sequence_ids)[indices]
                 if isinstance(indices, slice)
                 else [batch.sequence_ids[int(i)] for i in indices]
             )
@@ -91,7 +91,7 @@ class GlobalConditionalMMDTwoSampleTest(ConditionalMMDTwoSampleTest):
                 raise ValueError("Matched observations must share a device")
         if self._device is not None and self._device != batch_x.time_seqs.device:
             raise ValueError("Cannot change devices during global collection")
-        # These local diagnostics retain their historical law/RNG consumption.
+        # These diagnostics retain the historical statistic and local null stream.
         # They are not added to form the global statistic. A singleton has none.
         diagnostic = None
         if n >= 2:

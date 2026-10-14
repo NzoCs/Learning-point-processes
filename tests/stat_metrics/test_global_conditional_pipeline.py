@@ -164,6 +164,7 @@ def test_buffer_snapshot_identity_errors_and_append_invalidates_cache():
     add([2, 3, 4])
     result = test.global_results()
     x.time_seqs.fill_(123)  # Caller mutation must not alter a buffered observation.
+    test.total_observed_mmd = test.total_perm_mmds = None
     assert test.global_results() == result and len(result["global_pair_ids"]) == 5
     test.reset_accumulators()
     h, x, y = fixtures(True)
@@ -178,3 +179,13 @@ def test_block_size_and_non_signature_kernel_rejected():
             GlobalConditionalMMDTwoSampleTest(kernel(), 9, block_size=size)
     with pytest.raises(ValueError, match="sig_kernel"):
         GlobalConditionalMMDTwoSampleTest(object(), 9)
+
+
+def test_snapshot_slice_preserves_ordered_ids_and_has_no_storage_alias():
+    _, x, _ = fixtures(True)
+    selected = copy_rows(x, slice(1, 4))
+    assert selected.sequence_ids == x.sequence_ids[1:4]
+    assert len(selected.time_seqs) == len(selected.sequence_ids) == 3
+    x.time_seqs.fill_(99)
+    assert (selected.time_seqs < 99).all()
+    assert selected.no_next_event_mask.tolist() == [True, False, False]

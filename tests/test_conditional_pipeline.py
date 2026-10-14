@@ -168,6 +168,37 @@ def test_conditional_ddp_is_rejected_before_setup(tmp_path):
         callback.on_predict_start(SimpleNamespace(world_size=2), None)
 
 
+def test_singleton_prediction_batches_pool_globally_and_reset(tmp_path):
+    from new_ltpp.evaluation.statistical_testing.statistical_tests.global_conditional_mmd_test import (
+        copy_rows,
+    )
+
+    model = fake_model(tmp_path)
+    batch = identified_batch()
+    collector = model._simulator._statistics_collector
+
+    def simulate(history, num_events_to_simulate):
+        times = torch.tensor([[0.5, 1.0, 2.0]])
+        return Batch(
+            times,
+            torch.diff(times, prepend=torch.zeros(1, 1)),
+            torch.tensor([[0, 1, 0]]),
+            torch.ones(1, 3, dtype=torch.bool),
+        )
+
+    model.simulate = simulate
+    TrainingMixin.predict_step(model, copy_rows(batch, [0]), 0)
+    with pytest.raises(ValueError, match="in total"):
+        collector.compute()
+    TrainingMixin.predict_step(model, copy_rows(batch, [1]), 1)
+    stats = collector.compute()["statistical_tests"]
+    assert stats["num_sequences"] == 2 and stats["p_values"] == []
+    assert len(stats["global_permuted_statistic"]) == 3
+    collector.reset()
+    assert collector._batch_count == 0
+    assert collector.compute()["statistical_tests"]["num_sequences"] == 0
+
+
 def test_conditional_collector_requires_test_configuration(tmp_path):
     with pytest.raises(ValueError, match="statistical test configuration"):
         BatchStatisticsCollector(2, 10.0, tmp_path, conditional=True)

@@ -1,5 +1,11 @@
 # MMD global sur les futurs complets — 14 octobre 2026
 
+Ce rapport décrit l'expérience scientifique antérieure au raccordement de la
+pipeline. Le [raccordement ultérieur du MMD global](GLOBAL_CONDITIONAL_PIPELINE.md)
+change maintenant l'agrégation conditionnelle de production, sans modifier les
+modèles. Les résultats scientifiques ci-dessous restent ceux du protocole de
+fenêtre fixe, distinct des quotas de la pipeline.
+
 Le MMD conditionnel global avec le kernel de signature à huit points améliore
 la détection d'une accélération ×2 sans changer les modèles. À 2 048 paires,
 FullyNN atteint **42,5–45,5 %**, contre **7–8,5 %** avec la somme historique des

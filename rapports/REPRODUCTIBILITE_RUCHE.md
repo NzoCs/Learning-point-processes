@@ -1,5 +1,29 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Pipeline conditionnelle avec MMD global — 14 octobre 2026
+
+Le [contrat détaillé](../docs/GLOBAL_CONDITIONAL_PIPELINE.md) remplace la somme
+des MMD conditionnels de batches par une statistique globale incluant toutes
+les comparaisons entre batches. Les chemins sont normalisés sur l'ensemble des
+séquences avant le calcul par blocs. Les swaps suivent les identifiants stables
+triés, sur un générateur isolé des trajectoires. `signature_max_batch` borne les
+blocs, sans matérialiser une matrice globale quadratique. Les observations et
+chemins restent néanmoins conservés, et le coût de calcul reste quadratique.
+
+Les diagnostics locaux restent accessibles ; la p-value finale change
+volontairement. Les modèles, pertes, prédictions, simulateurs et observations
+restent identiques : quotas avec statut terminal explicite pour FullyNN/RMTPP,
+troncature symétrique par paire pour les autres. Un singleton final est accepté
+si l'évaluation entière contient au moins deux paires. Les statistiques globales,
+tirages nuls, graine et identifiants sont exportés dans un JSON dédié.
+
+La campagne optionnelle `global-pipeline.yml` compare les onze modèles historiques
+et Poisson au parent `5b41f13`, sur le même runner Linux, avec entraînement et
+futurs d'évaluation séparés. Elle contrôle aussi répétition, replay du checkpoint,
+reprise à la frontière d'époque et redémarrage après interruption de prédiction.
+Ce contrôle logiciel ne démontre pas la calibration scientifique de tous les
+quotas ou paramètres. Ruche/CUDA/DDP restent à valider.
+
 ### MMD global de signature sur les futurs complets — 14 octobre 2026
 
 Le [rapport détaillé](../docs/GLOBAL_SIGNATURE_CALIBRATION.md) compare les mêmes

@@ -200,9 +200,7 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
             raise ValueError("Conditional tests require the shared histories")
         n = len(batch_x.time_seqs)
         if n < 1 or n != len(batch_y.time_seqs) or n != len(histories.time_seqs):
-            raise ValueError(
-                "At least two matched history/continuation pairs are required"
-            )
+            raise ValueError("Nonempty matched history/continuation pairs are required")
         for batch in (batch_x, batch_y):
             if self.stopped_event_budget is not None:
                 self._validate_stopped_continuation(batch)

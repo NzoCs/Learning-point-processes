@@ -38,10 +38,12 @@ CHECKPOINTS = Path("docs/validation/unbounded-sampling-20261014")
 def load_frozen_model(name, output, checkpoint=None):
     source = Path(checkpoint) if checkpoint else CHECKPOINTS / f"{name}_snapshot.json"
     model = create_model(name, output)
-    if checkpoint:
+    if checkpoint and source.suffix != ".json":
         state = torch.load(source, map_location="cpu", weights_only=False)["state_dict"]
     else:
         saved = json.loads(source.read_text())
+        if saved.get("model", name) != name:
+            raise ValueError("Frozen parameter archive belongs to another model")
         state = {
             k: torch.tensor(v["values"]).reshape(v["shape"])
             for k, v in saved["trained_state"].items()

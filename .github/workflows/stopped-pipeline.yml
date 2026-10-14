@@ -49,14 +49,14 @@ jobs:
           uv run --frozen --no-sync python -m scripts.stopped_pipeline_validation
           --reference-dir artifacts/stopped-pipeline-before --output artifacts/stopped-pipeline
           --allow-rmtpp-likelihood-change
-      - name: Independent calibration on two separately trained checkpoints per model
-        run: |
-          uv run --frozen --no-sync python -m scripts.likelihood_calibration_validation --output artifacts/likelihood-calibration
       - name: Exact stopped conditional repetition and checkpoint resume
         run: |
           for model in FullyNN RMTPP; do
             uv run --frozen --no-sync python -m scripts.conditional_reproducibility --model "$model" --output "artifacts/stopped-pipeline/repeat-$model"
           done
+      - name: Independent calibration on two separately trained checkpoints per model
+        run: |
+          uv run --frozen --no-sync python -m scripts.likelihood_calibration_validation --output artifacts/likelihood-calibration
       - uses: actions/upload-artifact@v4
         if: always()
         with:

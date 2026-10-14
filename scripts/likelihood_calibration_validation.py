@@ -4,10 +4,32 @@ import argparse
 import json
 from pathlib import Path
 
+import torch
+
 from scripts.conditional_integration_suite import run_model
 from scripts.fixed_window_calibration import run as window_calibration
 from scripts.integration_suite import write_json
 from scripts.stopped_conditional_calibration import run as stopped_calibration
+
+
+def archive_fitted_parameters(name, checkpoint, destination):
+    """Keep the actual fitted tensors readable after CI checkpoint expiry."""
+    state = torch.load(checkpoint, map_location="cpu", weights_only=False)["state_dict"]
+    if any(not torch.isfinite(value).all() for value in state.values()):
+        raise ValueError("Cannot archive nonfinite fitted parameters")
+    write_json(
+        destination,
+        dict(
+            model=name,
+            trained_state={
+                key: dict(
+                    shape=list(value.shape),
+                    values=value.detach().cpu().reshape(-1).tolist(),
+                )
+                for key, value in state.items()
+            },
+        ),
+    )
 
 
 def run(output, trials=300, power_trials=100):
@@ -22,16 +44,8 @@ def run(output, trials=300, power_trials=100):
             checkpoint = Path(manifest["phases"]["train"]["checkpoint"]["path"])
             # 'last' distinguishes epochs even if the best checkpoint is epoch 1.
             checkpoint = checkpoint.parent / "last.ckpt"
-            import torch
-
-            from scripts.integration_suite import tensor_data
-
-            fitted_state = torch.load(
-                checkpoint, map_location="cpu", weights_only=False
-            )["state_dict"]
-            write_json(
-                target / "frozen_parameters.json",
-                {key: tensor_data(value) for key, value in fitted_state.items()},
+            archive_fitted_parameters(
+                name, checkpoint, target / "frozen_parameters.json"
             )
             stopped = stopped_calibration(
                 name,

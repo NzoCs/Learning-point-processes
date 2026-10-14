@@ -5,6 +5,12 @@ from typing import Any, Dict, List, NotRequired, TypedDict
 
 import torch
 
+STOPPED_OBSERVATION_PROTOCOL = "complete_stopped_event_budget_v1"
+
+
+def uses_stopped_event_budget(model_name: str) -> bool:
+    return model_name in ("FullyNN", "RMTPP")
+
 
 class TPPSequence(TypedDict):
     """A single temporal point process sequence.
@@ -19,6 +25,7 @@ class TPPSequence(TypedDict):
     time_delta_seqs: List[float]
     type_seqs: List[int]
     sequence_id: NotRequired[str]
+    no_next_event: NotRequired[bool]
 
 
 @dataclass
@@ -89,6 +96,8 @@ class Batch:
         self.time_delta_seqs = self.time_delta_seqs.to(device)
         self.type_seqs = self.type_seqs.to(device)
         self.valid_event_mask = self.valid_event_mask.to(device)
+        if self.no_next_event_mask is not None:
+            self.no_next_event_mask = self.no_next_event_mask.to(device)
         return self
 
 

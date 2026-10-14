@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
+import torch
+
 from new_ltpp.data.preprocess.event_tokenizer import EventTokenizer
 from new_ltpp.shared_types import Batch, TPPSequence
 
@@ -63,5 +65,21 @@ class TPPDataCollator:
             if any(value is None for value in identifiers):
                 raise ValueError("Cannot mix identified and unidentified sequences")
             batch.sequence_ids = identifiers
+        if any("no_next_event" in row for row in features):
+            flags = [row.get("no_next_event", False) for row in features]
+            if any(not isinstance(value, bool) for value in flags):
+                raise ValueError("no_next_event must be boolean")
+            if any(
+                flag
+                and int(batch.valid_event_mask[i].sum())
+                != len(features[i]["time_seqs"])
+                for i, flag in enumerate(flags)
+            ):
+                raise ValueError(
+                    "Truncating a known terminal sequence would lose its terminal observation"
+                )
+            batch.no_next_event_mask = torch.tensor(
+                flags, dtype=torch.bool, device=batch.time_seqs.device
+            )
 
         return batch

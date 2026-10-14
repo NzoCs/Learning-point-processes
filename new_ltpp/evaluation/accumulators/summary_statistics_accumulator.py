@@ -76,6 +76,8 @@ class BatchStatisticsCollector(Accumulator):
         min_sim_events: int = 1,
         metadata: Optional[Dict[str, Any]] = None,
         conditional: bool = False,
+        complete_stopped: bool = False,
+        stopped_event_budget: int | None = None,
     ):
         self.num_event_types = num_event_types
         self.conditional = conditional
@@ -105,6 +107,8 @@ class BatchStatisticsCollector(Accumulator):
                 statistical_test_config=statistical_test_config,
                 min_sim_events=min_sim_events,
                 conditional=conditional,
+                complete_stopped=complete_stopped,
+                stopped_event_budget=stopped_event_budget,
             )
 
         self._accumulators: AccumulatorContainer = base_accumulators

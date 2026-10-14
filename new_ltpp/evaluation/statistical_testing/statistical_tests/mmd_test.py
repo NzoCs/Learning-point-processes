@@ -188,6 +188,12 @@ class MMDTwoSampleTest:
                 [_pad(batch_x.valid_event_mask, L), _pad(batch_y.valid_event_mask, L)],
                 dim=0,
             ),
+            no_next_event_mask=(
+                torch.cat((batch_x.no_next_event_mask, batch_y.no_next_event_mask))
+                if batch_x.no_next_event_mask is not None
+                and batch_y.no_next_event_mask is not None
+                else None
+            ),
         )
 
     def _select_batch(self, pooled: Batch, indices: torch.Tensor) -> Batch:
@@ -205,6 +211,11 @@ class MMDTwoSampleTest:
             time_delta_seqs=pooled.time_delta_seqs[indices],
             type_seqs=pooled.type_seqs[indices],
             valid_event_mask=pooled.valid_event_mask[indices],
+            no_next_event_mask=(
+                None
+                if pooled.no_next_event_mask is None
+                else pooled.no_next_event_mask[indices]
+            ),
         )
 
     def _permutation_test(

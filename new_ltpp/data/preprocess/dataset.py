@@ -15,6 +15,12 @@ class TPPDataset(Dataset):
         self.time_seqs = data["time_seqs"]
         self.time_delta_seqs = data["time_delta_seqs"]
         self.type_seqs = data["type_seqs"]
+        self.no_next_event = data.get("no_next_event")
+        if self.no_next_event is not None and (
+            len(self.no_next_event) != len(self.time_seqs)
+            or any(not isinstance(v, bool) for v in self.no_next_event)
+        ):
+            raise ValueError("no_next_event must contain one boolean per dataset row")
         self.sequence_ids = data.get("sequence_ids")
         if self.sequence_ids is None:
             self.sequence_ids = sequence_ids(data)
@@ -47,9 +53,12 @@ class TPPDataset(Dataset):
             TPPSequence: A temporal point process sequence element
 
         """
-        return TPPSequence(
+        result = TPPSequence(
             time_seqs=self.time_seqs[index],
             time_delta_seqs=self.time_delta_seqs[index],
             type_seqs=self.type_seqs[index],
             sequence_id=self.sequence_ids[index],
         )
+        if self.no_next_event is not None:
+            result["no_next_event"] = self.no_next_event[index]
+        return result

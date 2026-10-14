@@ -16,7 +16,14 @@ CONDITIONAL_MMD_PROTOCOL = "within_history_pair_swaps_joint_kernel_v1"
 BATCH_AGGREGATION_PROTOCOL = "sum_statistics_product_randomization_v1"
 
 
-def split_history_future(batch: Batch, history_events: int, future_events: int):
+def split_history_future(
+    batch: Batch,
+    history_events: int,
+    future_events: int,
+    *,
+    allow_stopped=False,
+    pad_token_id=0,
+):
     """Select fixed valid-event counts and put the held-out future on origin zero.
 
     No filtering by future duration, no mutation, no fictitious padding events.
@@ -25,35 +32,68 @@ def split_history_future(batch: Batch, history_events: int, future_events: int):
     if history_events < 1 or future_events < 1:
         raise ValueError("History and future event counts must be positive")
     total = history_events + future_events
-    rows_t, rows_m = [], []
+    rows_t, rows_m, rows_valid = [], [], []
     for row in range(len(batch.time_seqs)):
         mask = batch.valid_event_mask[row]
         t, m = batch.time_seqs[row][mask], batch.type_seqs[row][mask]
         if len(t) < total:
-            raise ValueError("Not enough valid events for the requested holdout")
+            if (
+                len(t) < history_events
+                or not allow_stopped
+                or batch.no_next_event_mask is None
+                or not batch.no_next_event_mask[row]
+            ):
+                raise ValueError(
+                    "Not enough valid events for the requested holdout; a shorter future requires explicit no_next_event=True"
+                )
         if not torch.isfinite(t).all() or (t < 0).any() or (torch.diff(t) < 0).any():
             raise ValueError(
                 "Valid event times must be finite, nonnegative and ordered"
             )
-        rows_t.append(t[:total])
-        rows_m.append(m[:total])
+        length = min(len(t), total)
+        rows_t.append(
+            torch.cat(
+                (t[:total], torch.zeros(total - length, device=t.device, dtype=t.dtype))
+            )
+        )
+        rows_m.append(
+            torch.cat(
+                (
+                    m[:total],
+                    torch.full(
+                        (total - length,), pad_token_id, device=m.device, dtype=m.dtype
+                    ),
+                )
+            )
+        )
+        rows_valid.append(torch.arange(total, device=t.device) < length)
     times, marks = torch.stack(rows_t), torch.stack(rows_m)
+    valid = torch.stack(rows_valid)
     prefix_t = times[:, :history_events]
     future_t = times[:, history_events:] - prefix_t[:, -1:]
+    future_t = future_t.masked_fill(~valid[:, history_events:], 0)
 
-    def build(t, m):
+    def build(t, m, mask=None, stopped=None):
+        mask = torch.ones_like(t, dtype=torch.bool) if mask is None else mask
+        gaps = torch.diff(t, dim=1, prepend=torch.zeros_like(t[:, :1])).masked_fill(
+            ~mask, 0
+        )
         return Batch(
             t,
-            torch.diff(t, dim=1, prepend=torch.zeros_like(t[:, :1])),
+            gaps,
             m,
-            torch.ones_like(t, dtype=torch.bool),
+            mask,
+            no_next_event_mask=stopped,
             sequence_ids=(
                 None if batch.sequence_ids is None else list(batch.sequence_ids)
             ),
         )
 
     return build(prefix_t, marks[:, :history_events]), build(
-        future_t, marks[:, history_events:]
+        future_t,
+        marks[:, history_events:],
+        valid[:, history_events:],
+        valid[:, history_events:].sum(-1) < future_events if allow_stopped else None,
     )
 
 

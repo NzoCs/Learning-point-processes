@@ -24,12 +24,18 @@ class StatisticalTestAccumulator(Accumulator):
         min_sim_events: int = 1,
         *,
         conditional: bool = False,
+        complete_stopped: bool = False,
+        stopped_event_budget: int | None = None,
     ):
         super().__init__(min_sim_events)
 
         self.test = create_statistical_test(statistical_test_config)
         self.conditional = conditional
         if conditional:
+            if complete_stopped and stopped_event_budget is None:
+                raise ValueError(
+                    "Complete conditional collection requires an explicit stopped event budget"
+                )
             from new_ltpp.evaluation.statistical_testing.statistical_tests import (
                 ConditionalMMDTwoSampleTest,
                 MMDTwoSampleTest,
@@ -38,8 +44,16 @@ class StatisticalTestAccumulator(Accumulator):
             if not isinstance(self.test, MMDTwoSampleTest):
                 raise ValueError("Conditional resampling is implemented for MMD only")
             self.test = ConditionalMMDTwoSampleTest(
-                self.test.kernel, self.test.n_samples
+                self.test.kernel,
+                self.test.n_samples,
+                stopped_event_budget=stopped_event_budget if complete_stopped else None,
             )
+        elif complete_stopped:
+            from new_ltpp.evaluation.statistical_testing.statistical_tests.stopped_mmd_test import (
+                StoppedMMDTwoSampleTest,
+            )
+
+            self.test = StoppedMMDTwoSampleTest(self.test.kernel, self.test.n_samples)
         self.p_values: list[float] = []
         self.observed_statistic: list[float] = []
         self.perm_statistics: list[float] = []

@@ -44,7 +44,7 @@ def make_splits():
     return splits
 
 
-def run_model(name, output, *, epochs=1, checkpoint_path=None):
+def run_model(name, output, *, epochs=1, checkpoint_path=None, terminal_fixture=False):
     import pyarrow.parquet as pq
     import torch
     from typer.testing import CliRunner
@@ -65,6 +65,13 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
     assert set(models.__all__) == set(CATALOGUE), "Update the tested model catalogue"
     torch.set_num_threads(1)
     splits = make_splits()
+    stopped_model = name in ("FullyNN", "RMTPP")
+    if terminal_fixture:
+        assert stopped_model
+        for row, length in zip(splits["test"][:4], (2, 3, 2, 4)):
+            for key in ("time_since_start", "time_since_last_event", "type_event"):
+                row[key] = row[key][:length]
+            row["no_next_event"] = True
     raw = json.loads((FIXTURES / "config.json").read_text(encoding="utf-8"))
     raw["model_id"] = raw["model_config"]["model_id"] = name
     raw["save_dir"] = str(output / "runs")
@@ -94,6 +101,7 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
     exported = []
     simulated_ids = []
     captured = []
+    legacy_control = None
     prediction_calls = []
     predict = TrainingStepsMixin.predict_step
     update = BatchStatisticsCollector.update
@@ -125,17 +133,64 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
         return result
 
     def checked_update(collector, future, simulation, *, histories=None, pair_ids=None):
+        nonlocal legacy_control
         assert histories is not None and future.sequence_ids == pair_ids
         assert simulation.sequence_ids == pair_ids
-        assert future.time_seqs.shape == simulation.time_seqs.shape == (4, 3)
-        assert simulation.valid_event_mask.all()
+        assert future.time_seqs.shape == (4, 3)
+        assert simulation.time_seqs.shape[0] == 4 and simulation.time_seqs.shape[1] <= 3
+        if not stopped_model:
+            assert simulation.valid_event_mask.all()
+        else:
+            from new_ltpp.evaluation.accumulators.statistical_metrics_accumulator import (
+                MMD_NULL_RNG_SALT,
+            )
+            from new_ltpp.evaluation.statistical_testing.statistical_tests import (
+                ConditionalMMDTwoSampleTest,
+            )
+
+            accumulator = collector._accumulators["statistical_tests"]
+            assert accumulator.test.stopped_event_budget == 3
+            assert future.no_next_event_mask is not None
+            if legacy_control is None:
+                legacy_control = ConditionalMMDTwoSampleTest(
+                    accumulator.test.kernel, 99
+                )
+            with torch.random.fork_rng(devices=[]):
+                state = accumulator._null_rng_states.get("cpu")
+                if state is None:
+                    state = (
+                        torch.Generator()
+                        .manual_seed(
+                            (torch.initial_seed() + MMD_NULL_RNG_SALT) % (2**63)
+                        )
+                        .get_state()
+                    )
+                torch.set_rng_state(state)
+                before = legacy_control.compute_statistics(
+                    future, simulation, histories=histories, pair_ids=pair_ids
+                )
+                legacy_control._pipeline_batches = getattr(
+                    legacy_control, "_pipeline_batches", []
+                ) + [
+                    dict(
+                        observed=float(before["observed_statistic"]),
+                        p_value=float(before["p_value"]),
+                        null=before["permuted_statistics"].tolist(),
+                    )
+                ]
         assert torch.isfinite(simulation.time_seqs).all()
         assert (simulation.time_seqs >= 0).all()
-        assert (torch.diff(simulation.time_seqs, dim=1) >= 0).all()
-        assert ((simulation.type_seqs >= 0) & (simulation.type_seqs < 2)).all()
+        for row in range(len(simulation.time_seqs)):
+            valid_times = simulation.time_seqs[row][simulation.valid_event_mask[row]]
+            assert (torch.diff(valid_times) >= 0).all()
+        valid_marks = simulation.type_seqs[simulation.valid_event_mask]
+        assert ((valid_marks >= 0) & (valid_marks < 2)).all()
         for index, identifier in enumerate(pair_ids):
             source = torch.tensor(expected[identifier]["time_since_start"])
-            torch.testing.assert_close(future.time_seqs[index], source[2:] - source[1])
+            torch.testing.assert_close(
+                future.time_seqs[index][future.valid_event_mask[index]],
+                source[2:] - source[1],
+            )
             torch.testing.assert_close(histories.time_seqs[index], source[:2])
         simulated_ids.extend(pair_ids)
         exported.extend(
@@ -199,7 +254,8 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
     assert len(files) == 1
     events = pq.read_table(files[0]).to_pylist()
     compare(events, exported)
-    assert len(events) == 24 and len(prediction_calls) == 2
+    assert len(prediction_calls) == 2
+    assert len(events) <= 24 if stopped_model else len(events) == 24
     assert len(simulated_ids) == len(set(simulated_ids)) == 8
     assert set(simulated_ids) == set(expected)
     stats, seen_ids = captured[-1]
@@ -241,6 +297,20 @@ def run_model(name, output, *, epochs=1, checkpoint_path=None):
             "exported_events": len(events),
             "statistical_tests": stats,
             "scope": "software_integration_not_calibration_or_model_correctness",
+            **(
+                {
+                    "observation_protocol": manifest["phases"]["predict"][
+                        "statistical_protocol"
+                    ]["observation"],
+                    "known_terminal_fixture": terminal_fixture,
+                    "historical_truncation_control": dict(
+                        batches=legacy_control._pipeline_batches,
+                        pooled_p_value=float(legacy_control.get_final_p_value()),
+                    ),
+                }
+                if stopped_model
+                else {}
+            ),
         },
     )
 

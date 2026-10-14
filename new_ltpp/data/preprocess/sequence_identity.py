@@ -32,6 +32,15 @@ def sequence_ids(data, identifiers=None, *, global_ids=False):
 
 def identify_loaded_data(payload, source):
     columns = source.column_names if hasattr(source, "column_names") else source.keys()
+    if "no_next_event" in columns:
+        flags = list(source["no_next_event"])
+        if any(value is not None and not isinstance(value, bool) for value in flags):
+            raise ValueError(
+                "no_next_event must be boolean; missing means no known terminal status"
+            )
+        payload["no_next_event"] = [
+            False if value is None else value for value in flags
+        ]
     if "sequence_id" in columns:
         payload["sequence_ids"] = sequence_ids(
             payload, source["sequence_id"], global_ids=True

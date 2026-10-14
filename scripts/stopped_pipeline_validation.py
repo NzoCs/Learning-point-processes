@@ -1,0 +1,70 @@
+"""Audit all production pipelines against the last reviewed pre-wiring snapshots."""
+
+import argparse
+import json
+from pathlib import Path
+
+from scripts.conditional_integration_suite import run_model as run_conditional
+from scripts.integration_suite import CATALOGUE, compare, run_model, write_json
+
+
+def run(output):
+    output.mkdir(parents=True, exist_ok=True)
+    baseline = Path("docs/validation/unbounded-sampling-20261014")
+    report = {}
+    unchanged = (
+        "trained_state",
+        "probe_loss",
+        "probe_num_events",
+        "probe_intensities",
+        "probe_gradients",
+        "test_metrics",
+        "simulation_records",
+        "simulation_sequence_status",
+    )
+    for name in CATALOGUE:
+        target = output / "ordinary" / name
+        target.mkdir(parents=True, exist_ok=True)
+        complete = name in ("FullyNN", "RMTPP")
+        actual = run_model(name, target, allow_terminated=complete)
+        before = json.loads((baseline / (name + "_snapshot.json")).read_text())
+        if complete:
+            for field in unchanged:
+                compare(actual[field], before[field], field)
+            assert (
+                actual["statistical_protocol"]["observation"]
+                == "complete_stopped_event_budget_v1"
+            )
+            report[name] = dict(
+                status="passed",
+                models_predictions_and_trajectories_unchanged=True,
+                changes={
+                    field: dict(before=before[field], after=actual[field])
+                    for field in ("statistical_protocol", "simulation_numeric_results")
+                    if before[field] != actual[field]
+                },
+            )
+        else:
+            compare(actual, before)
+            report[name] = dict(status="passed_all_numerical_fields_unchanged")
+        conditional = output / "conditional" / name
+        conditional.mkdir(parents=True, exist_ok=True)
+        run_conditional(name, conditional)
+        checks = json.loads((conditional / "checks.json").read_text())
+        report[name]["conditional"] = checks
+        if complete:
+            terminal = output / "known-terminal" / name
+            terminal.mkdir(parents=True, exist_ok=True)
+            run_conditional(name, terminal, terminal_fixture=True)
+            report[name]["known_terminal"] = json.loads(
+                (terminal / "checks.json").read_text()
+            )
+        write_json(output / "report.json", report)
+        print(name, report[name]["status"], flush=True)
+    return report
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True)
+    run(parser.parse_args().output.resolve())

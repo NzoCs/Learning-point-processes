@@ -131,6 +131,18 @@ class RunManifest:
                 mmd_observation_protocol="paired_joint_history_future_u_mmd_v1",
                 mmd_null_method="within_history_pair_swaps_joint_kernel_v1",
             )
+        from new_ltpp.evaluation.statistical_testing.statistical_tests.stopped_mmd_test import (
+            STOPPED_OBSERVATION_PROTOCOL,
+            uses_stopped_event_budget,
+        )
+
+        if uses_stopped_event_budget(config.model_id):
+            self.value["numerics"][
+                "mmd_observation_protocol"
+            ] = STOPPED_OBSERVATION_PROTOCOL
+            self.value["numerics"][
+                "terminal_flag_kernel"
+            ] = "unit_bandwidth_gaussian_v1"
         config.save_to_yaml_file(config.base_dir / "effective_config.yaml")
         self.save()
 
@@ -170,6 +182,19 @@ class RunManifest:
                     "identity_guard": "stable_sequence_ids_no_reuse",
                     **conditional.model_dump(),
                 }
+            from new_ltpp.evaluation.statistical_testing.statistical_tests.stopped_mmd_test import (
+                STOPPED_OBSERVATION_PROTOCOL,
+                uses_stopped_event_budget,
+            )
+
+            if uses_stopped_event_budget(self.config.model_id):
+                self.value["phases"][phase]["statistical_protocol"][
+                    "observation"
+                ] = STOPPED_OBSERVATION_PROTOCOL
+                self.value["phases"][phase]["statistical_interpretation"].update(
+                    observed_status="quota_reached_or_explicit_no_next_event",
+                    terminal_status_inferred_from_quiet_time=False,
+                )
         self.save()
 
     def finish(self, phase, checkpoint=None, error=None):

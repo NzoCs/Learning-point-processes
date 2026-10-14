@@ -14,7 +14,12 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 from new_ltpp.evaluation.accumulators.acc_types import FinalResult
-from new_ltpp.shared_types import Batch, SimulationResult
+from new_ltpp.shared_types import (
+    STOPPED_OBSERVATION_PROTOCOL,
+    Batch,
+    SimulationResult,
+    uses_stopped_event_budget,
+)
 from new_ltpp.utils import logger
 
 if TYPE_CHECKING:
@@ -82,6 +87,9 @@ class PredictionSession:
             metadata["statistical_protocol"] = (
                 "within_history_pair_swaps_joint_kernel_v1"
             )
+        complete = uses_stopped_event_budget(model.__class__.__name__)
+        if complete:
+            metadata["observation_protocol"] = STOPPED_OBSERVATION_PROTOCOL
 
         self._statistics_collector = BatchStatisticsCollector(
             num_event_types=model.num_event_types,
@@ -91,6 +99,12 @@ class PredictionSession:
             statistical_test_config=stat_cfg,
             metadata=metadata,
             conditional=self.conditional_evaluation is not None,
+            complete_stopped=complete,
+            stopped_event_budget=(
+                self.conditional_evaluation.future_events
+                if self.conditional_evaluation is not None
+                else None
+            ),
         )
         logger.info(f"Simulator: BatchStatisticsCollector initialized at {base_dir}")
 

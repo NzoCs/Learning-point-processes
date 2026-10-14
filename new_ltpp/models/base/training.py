@@ -10,7 +10,7 @@ from pytorch_lightning.utilities.types import STEP_OUTPUT
 from new_ltpp.configs.model_config import ModelConfig
 from new_ltpp.evaluation.metrics_helper import MetricsManager
 from new_ltpp.models.simulation.simulator import Simulator
-from new_ltpp.shared_types import Batch, OneStepPred
+from new_ltpp.shared_types import Batch, OneStepPred, uses_stopped_event_budget
 
 from .prediction import PredictionMixin
 
@@ -102,11 +102,19 @@ class TrainingStepsMixin:
                 "No statistics collector. Call simulator.init_statistics_collector() first."
             )
         conditional = simulator.conditional_evaluation
+        from new_ltpp.evaluation.statistical_testing.statistical_tests.stopped_mmd_test import (
+            observe_event_budget,
+        )
+
         if conditional is None:
             sim = self.simulate(
                 batch=batch, num_events_to_simulate=batch.time_seqs.size(1)
             )
-            compared_batch = batch
+            compared_batch = (
+                observe_event_budget(batch, batch.time_seqs.size(1))
+                if uses_stopped_event_budget(self.__class__.__name__)
+                else batch
+            )
             histories = None
         else:
             from new_ltpp.evaluation.statistical_testing.statistical_tests import (
@@ -122,7 +130,15 @@ class TrainingStepsMixin:
                     "Conditional MMD requires at least two sequences per batch"
                 )
             histories, compared_batch = split_history_future(
-                batch, conditional.history_events, conditional.future_events
+                batch,
+                conditional.history_events,
+                conditional.future_events,
+                allow_stopped=uses_stopped_event_budget(self.__class__.__name__),
+                pad_token_id=(
+                    self.pad_token_id
+                    if uses_stopped_event_budget(self.__class__.__name__)
+                    else 0
+                ),
             )
             simulator._statistics_collector.validate_conditional_ids(
                 batch.sequence_ids, len(batch.time_seqs)

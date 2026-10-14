@@ -99,7 +99,10 @@ def test_nhp_conditional_epoch_resume_with_active_lr_scheduler(tmp_path):
     )
     assert len(a["lr_schedulers"]) == 1
     assert a["lr_schedulers"][0]["last_epoch"] == 2
-    assert a["optimizer_states"][0]["param_groups"][0]["lr"] == 0
+    assert (
+        a["optimizer_states"][0]["param_groups"][0]["lr"]
+        == continuous.model.scheduler_config.lr * 0.01
+    )
     for key in (
         "state_dict",
         "optimizer_states",

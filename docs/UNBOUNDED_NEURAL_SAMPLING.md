@@ -100,6 +100,9 @@ Use fresh output directories. Law tests include constant Poisson intensities wit
 long waits, increasing affine intensity checked via its analytical compensator,
 more than ten rejected rounds and zero-intensity safety failures. Independent
 model references additionally exercise a small initial window and many rejections.
+Rejected-proposal clocks accumulate in float64 so a positive small jump does not
+round back to a float32 offset; model queries and returned times retain their
+usual dtype. A zero/invalid jump still triggers the safety guard.
 The model audit tests all twelve catalogue entries, compares Hawkes and
 SelfCorrecting to the last parametric reference and checks neural likelihood,
 intensity and gradients with the reviewed historical weights fixed. It separately
@@ -118,3 +121,34 @@ dispatched or requested by `[unbounded-sampling]` on a push to this branch. It
 also verifies exact ANHN and NHP pipeline repetition, checkpoint replay and training
 resume. CUDA tests skip explicitly without GPU hardware. Historical reference
 files are not overwritten or replaced.
+
+## Validated evidence, 14 October 2026
+
+Code `5a9d35bbdcee6d0012b51e6eee362d516c5edc6b` passed Linux
+[tests and all model pipelines](https://github.com/NzoCs/Learning-point-processes/actions/runs/38575907685)
+and [lint](https://github.com/NzoCs/Learning-point-processes/actions/runs/38575907822).
+There are 297 passing core tests, 7 skips and 2 deselections, with 84.15% coverage.
+All eleven historical train/test/predict pipelines and the additional Poisson
+pipeline passed. ANHN and NHP conditional repetition, checkpoint replay,
+epoch-boundary resume, optimizer/scheduler state and all null draws/p-values
+matched exactly within the supported CPU environment.
+
+[Raw evidence](validation/unbounded-sampling-20261014/provenance.json) contains
+the complete before/after audit, twelve snapshots, fixed-weight probes,
+independent law checks and repeat reports. The downloaded archive SHA256 was
+verified against GitHub's digest. Historical baselines remain untouched.
+
+| Small synthetic fixture | Historical FullyNN | Corrected FullyNN |
+| --- | ---: | ---: |
+| Test loss | 7.433337 | 2.508382 |
+| Time MAE | 0.140183 | 0.531188 |
+| Mean probability of no next event | not reported | 0.785688 |
+| Exported future events across eight histories | 40 | 1 |
+
+The lower old time error does not validate the old clipped/fallback sampler.
+These are diagnostic fixture results, not a performance comparison. At fixed
+historical weights, the tested B*L*S=20 grid yields precisely twenty times the
+old erroneous FullyNN intensities. RMTPP's trained state stays identical on this
+fixture; its fixed-weight formulas pass the old numerical tolerances. Its changed
+time predictions and random sampling stream affect simulation and Monte Carlo
+test metrics. Full changes are retained rather than rebaselined.

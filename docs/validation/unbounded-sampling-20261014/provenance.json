@@ -1,0 +1,69 @@
+{
+  "validated_code_commit": "5a9d35bbdcee6d0012b51e6eee362d516c5edc6b",
+  "test_run": 38575907685,
+  "lint_run": 38575907822,
+  "conclusion": "success",
+  "artifact_id": 11899433839,
+  "artifact_zip_sha256": "e1bb257a4a3b76d498731ff628963e3d84e36a24bd6292f08b8503c3aa9e30c3",
+  "unit_tests": {
+    "passed": 297,
+    "skipped": 7,
+    "deselected": 2,
+    "coverage_percent": 84.15
+  },
+  "historical_models": 11,
+  "catalogue_models": 12,
+  "scope": "CPU Linux, synthetic fixture; no Ruche or CUDA validation",
+  "summary": {
+    "FullyNN": {
+      "before_metrics": {
+        "test_loss": 7.433337211608887,
+        "time_rmse": 0.17249436676502228,
+        "time_mae": 0.1401832401752472,
+        "type_accuracy": 50.0,
+        "macro_f1score": 33.333335876464844,
+        "recall": 50.0,
+        "precision": 25.0,
+        "cross_entropy": 0.8132617473602295
+      },
+      "after_metrics": {
+        "test_loss": 2.5083818435668945,
+        "time_rmse": 0.6633937358856201,
+        "time_mae": 0.5311875343322754,
+        "type_accuracy": 50.0,
+        "macro_f1score": 33.333335876464844,
+        "recall": 50.0,
+        "precision": 25.0,
+        "cross_entropy": 0.8132617473602295,
+        "no_event_probability": 0.7856882214546204
+      },
+      "exported_events": 1,
+      "no_next_event_sequences": 8
+    },
+    "RMTPP": {
+      "before_metrics": {
+        "test_loss": 1.2370328903198242,
+        "time_rmse": 0.18659892678260803,
+        "time_mae": 0.15316733717918396,
+        "type_accuracy": 50.0,
+        "macro_f1score": 33.333335876464844,
+        "recall": 50.0,
+        "precision": 25.0,
+        "cross_entropy": 0.8132617473602295
+      },
+      "after_metrics": {
+        "test_loss": 1.2481416463851929,
+        "time_rmse": 0.506854772567749,
+        "time_mae": 0.3774794340133667,
+        "type_accuracy": 50.0,
+        "macro_f1score": 33.333335876464844,
+        "recall": 50.0,
+        "precision": 25.0,
+        "cross_entropy": 0.8132617473602295,
+        "no_event_probability": 0.01258403342217207
+      },
+      "exported_events": 40,
+      "no_next_event_sequences": 0
+    }
+  }
+}

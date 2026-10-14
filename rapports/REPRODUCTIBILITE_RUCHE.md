@@ -24,6 +24,22 @@ vides. Les prévisions temporelles sont conditionnelles à l'existence d'un
 Les enveloppes sur grille ne constituent pas une certification pour tout modèle
 neuronal ; les violations observées interrompent la phase sans événement inventé.
 
+Le code `5a9d35b` passe la [validation Linux complète](https://github.com/NzoCs/Learning-point-processes/actions/runs/38575907685)
+et le lint : **297 tests réussis**, 7 ignorés, 2 désélectionnés, **84,15 % de
+couverture**. Les onze modèles historiques et Poisson terminent entraînement,
+test et prédiction. Les lois indépendantes, les rejets nombreux et les reprises
+conditionnelles ANHN/NHP passent ; poids, simulations, tirages nuls et p-values
+se répètent exactement sur le CPU Linux validé. Les [preuves brutes](../docs/validation/unbounded-sampling-20261014/provenance.json)
+conservent les résultats avant/après sans remplacer les références historiques.
+
+Sur la petite fixture, FullyNN passe d'une perte de test **7,433337** à
+**2,508382**, et d'une MAE **0,140183** à **0,531188**. Il rapporte une probabilité
+moyenne d'absence de prochain événement de **78,57 %** et ne produit qu'un
+événement futur pour huit historiques. Ce bilan révèle le comportement de son
+risque cumulé borné ; il ne constitue pas un classement scientifique des modèles.
+La calibration sur des processus terminants et les validations Ruche/CUDA
+restent à réaliser.
+
 ### Séparation paramétrique/neuronale — 14 octobre 2026
 
 La branche `codex/parametric-simulators` sépare les représentations et le thinning

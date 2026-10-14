@@ -1,0 +1,293 @@
+{
+  "validated_code_commit": "edc799abd014027c2c972abfde773bdfb2684c58",
+  "ci_run": 38581548433,
+  "lint_run": 38581548223,
+  "conclusion": "success",
+  "unit_tests": {
+    "passed": 301,
+    "skipped": 7,
+    "deselected": 2,
+    "coverage_percent": 84.21
+  },
+  "artifacts": {
+    "FullyNN": {
+      "id": 11903741754,
+      "zip_sha256": "f699eb07eb5b3df5dc862865b26a61ab919b6509466a7d264fb8deac227dfc68"
+    },
+    "RMTPP": {
+      "id": 11902943735,
+      "zip_sha256": "bdb22f539f528810dfb4aae07571a97839805375c04d581d6355082091ab00cd"
+    }
+  },
+  "scope": "Linux CPU, fixed learned checkpoints, independent NumPy/SciPy elapsed-time generator with shared fixed Torch encoder; event-budget observation with known terminal flags",
+  "summary": {
+    "FullyNN": [
+      {
+        "hypothesis": "H0",
+        "protocol": "historical_truncation",
+        "method": "single",
+        "rejections": 0,
+        "trials": 500,
+        "wilson_95": [
+          4.336808689942018e-19,
+          0.007624340461552241
+        ]
+      },
+      {
+        "hypothesis": "H0",
+        "protocol": "historical_truncation",
+        "method": "aggregated",
+        "rejections": 0,
+        "trials": 500,
+        "wilson_95": [
+          4.336808689942018e-19,
+          0.007624340461552241
+        ]
+      },
+      {
+        "hypothesis": "H0",
+        "protocol": "complete_stopped",
+        "method": "single",
+        "rejections": 11,
+        "trials": 500,
+        "wilson_95": [
+          0.012328008269927582,
+          0.03896086121131637
+        ]
+      },
+      {
+        "hypothesis": "H0",
+        "protocol": "complete_stopped",
+        "method": "aggregated",
+        "rejections": 15,
+        "trials": 500,
+        "wilson_95": [
+          0.018263213197913384,
+          0.04890366683594573
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "historical_truncation",
+        "method": "single",
+        "rejections": 2,
+        "trials": 200,
+        "wilson_95": [
+          0.0027466581335444384,
+          0.0357217617161768
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "historical_truncation",
+        "method": "aggregated",
+        "rejections": 10,
+        "trials": 200,
+        "wilson_95": [
+          0.02738264560076393,
+          0.08957814813877599
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "complete_stopped",
+        "method": "single",
+        "rejections": 200,
+        "trials": 200,
+        "wilson_95": [
+          0.9811546736227335,
+          1.0
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "complete_stopped",
+        "method": "aggregated",
+        "rejections": 200,
+        "trials": 200,
+        "wilson_95": [
+          0.9811546736227335,
+          1.0
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "historical_truncation",
+        "method": "single",
+        "rejections": 0,
+        "trials": 200,
+        "wilson_95": [
+          1.734723475976807e-18,
+          0.018845326377266575
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "historical_truncation",
+        "method": "aggregated",
+        "rejections": 0,
+        "trials": 200,
+        "wilson_95": [
+          1.734723475976807e-18,
+          0.018845326377266575
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "complete_stopped",
+        "method": "single",
+        "rejections": 9,
+        "trials": 200,
+        "wilson_95": [
+          0.023852543001492997,
+          0.0832967040018196
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "complete_stopped",
+        "method": "aggregated",
+        "rejections": 55,
+        "trials": 200,
+        "wilson_95": [
+          0.21779700329307355,
+          0.34068339357669647
+        ]
+      }
+    ],
+    "RMTPP": [
+      {
+        "hypothesis": "H0",
+        "protocol": "historical_truncation",
+        "method": "single",
+        "rejections": 31,
+        "trials": 500,
+        "wilson_95": [
+          0.044019209142681565,
+          0.08665971310163822
+        ]
+      },
+      {
+        "hypothesis": "H0",
+        "protocol": "historical_truncation",
+        "method": "aggregated",
+        "rejections": 23,
+        "trials": 500,
+        "wilson_95": [
+          0.030845108370816204,
+          0.06807779276827323
+        ]
+      },
+      {
+        "hypothesis": "H0",
+        "protocol": "complete_stopped",
+        "method": "single",
+        "rejections": 33,
+        "trials": 500,
+        "wilson_95": [
+          0.04737852635977387,
+          0.09123940116085351
+        ]
+      },
+      {
+        "hypothesis": "H0",
+        "protocol": "complete_stopped",
+        "method": "aggregated",
+        "rejections": 26,
+        "trials": 500,
+        "wilson_95": [
+          0.035730265115705276,
+          0.07510114393784553
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "historical_truncation",
+        "method": "single",
+        "rejections": 12,
+        "trials": 200,
+        "wilson_95": [
+          0.03465219425433187,
+          0.1019316929576627
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "historical_truncation",
+        "method": "aggregated",
+        "rejections": 14,
+        "trials": 200,
+        "wilson_95": [
+          0.042152171828342806,
+          0.11405480885610647
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "complete_stopped",
+        "method": "single",
+        "rejections": 17,
+        "trials": 200,
+        "wilson_95": [
+          0.05374575017747561,
+          0.13189587071565567
+        ]
+      },
+      {
+        "hypothesis": "never_stop",
+        "protocol": "complete_stopped",
+        "method": "aggregated",
+        "rejections": 14,
+        "trials": 200,
+        "wilson_95": [
+          0.042152171828342806,
+          0.11405480885610647
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "historical_truncation",
+        "method": "single",
+        "rejections": 0,
+        "trials": 200,
+        "wilson_95": [
+          1.734723475976807e-18,
+          0.018845326377266575
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "historical_truncation",
+        "method": "aggregated",
+        "rejections": 0,
+        "trials": 200,
+        "wilson_95": [
+          1.734723475976807e-18,
+          0.018845326377266575
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "complete_stopped",
+        "method": "single",
+        "rejections": 200,
+        "trials": 200,
+        "wilson_95": [
+          0.9811546736227335,
+          1.0
+        ]
+      },
+      {
+        "hypothesis": "always_stop",
+        "protocol": "complete_stopped",
+        "method": "aggregated",
+        "rejections": 200,
+        "trials": 200,
+        "wilson_95": [
+          0.9811546736227335,
+          1.0
+        ]
+      }
+    ]
+  }
+}

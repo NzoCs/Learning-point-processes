@@ -73,3 +73,53 @@ uv run --frozen --no-sync python -m scripts.stopped_conditional_calibration \
 Repeat for RMTPP with a fresh output directory. The optional Linux CPU workflow
 `stopped-calibration.yml` runs both models only on explicit dispatch or a branch
 push containing `[stopped-calibration]`. It does not require Ruche or GPU.
+
+## Results, 14 October 2026
+
+Commit `edc799abd014027c2c972abfde773bdfb2684c58` passed the
+[complete Linux workflow](https://github.com/NzoCs/Learning-point-processes/actions/runs/38581548433)
+and [lint](https://github.com/NzoCs/Learning-point-processes/actions/runs/38581548223).
+The main suite has 301 passing tests, 7 skips, 2 deselections and 84.21% coverage.
+Both calibration jobs and frozen-parameter checks passed. Archive digests are
+verified and [raw p-values/provenance](validation/stopped-calibration-20261014/provenance.json)
+are retained without replacing any historical reference.
+
+Complete stopped protocol, 500 H0 trials per model, nominal alpha=5%:
+
+| Model | First batch false positives | Aggregated false positives | Aggregated Wilson 95% interval |
+| --- | ---: | ---: | ---: |
+| FullyNN | 11/500 (2.2%) | 15/500 (3.0%) | 1.83–4.89% |
+| RMTPP | 33/500 (6.6%) | 26/500 (5.2%) | 3.57–7.51% |
+
+No H0 excess is detected by the predeclared criterion. FullyNN is conservative,
+not nominally uniform: many terminal empty paths produce ties and small batches
+have few informative pairs. RMTPP's intervals are compatible with 5%; the first
+batch's 6.6% is retained rather than discarded. These finite-sample results do
+not certify arbitrary checkpoints, kernels, history distributions or horizons.
+
+Across H0 there are 16000 observed and 16000 simulated rows per model. FullyNN
+has 13045/12975 empty rows and 15999/16000 terminal rows (observed/simulated).
+RMTPP has 446/471 empty rows and 2441/2372 terminal rows. Empty paths are retained,
+not filtered or replaced with a finite next event.
+
+Aggregated power, 200 trials per alternative:
+
+| Model | Protocol | Suppress every natural stop | Stop every future immediately |
+| --- | --- | ---: | ---: |
+| FullyNN | Complete stopped | 200/200 (100%) | 55/200 (27.5%) |
+| FullyNN | Historical truncation | 10/200 (5%) | 0/200 (0%) |
+| RMTPP | Complete stopped | 14/200 (7%) | 200/200 (100%) |
+| RMTPP | Historical truncation | 14/200 (7%) | 0/200 (0%) |
+
+The historical protocol is not a suitable stopping-probability diagnostic: it
+erases every immediately stopped alternative. The explicit complete mode keeps
+the missing-event information. Its power is still limited for RMTPP suppression
+of relatively rare natural stops and FullyNN's additional early stops; absence
+of rejection must not be interpreted as equivalence. Larger batches would be a
+separate predeclared power experiment, not an after-the-fact threshold change.
+
+This event-budget design requires a genuinely known terminal status. No events
+within a finite observation window alone cannot establish permanent termination.
+Data collected over a time window need a matched, predeclared horizon and a
+separate calibration of that observation design. The production fixed-event
+holdout loader is not silently converted to the stopped experiment's design.

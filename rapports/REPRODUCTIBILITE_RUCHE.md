@@ -1,5 +1,33 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Calibration des futurs terminants — 14 octobre 2026
+
+Le [protocole et les résultats détaillés](../docs/STOPPED_CALIBRATION.md) comparent
+FullyNN et RMTPP figés à un générateur de référence NumPy/SciPy, avec encodeur
+d'historique Torch partagé. Les futurs évalués sont indépendants des données
+d'apprentissage. Par modèle : 500 essais H0, 200 par alternative, 99 échanges
+dans chaque paire d'historique et trois batches indépendants de 16, 11 et 5 paires.
+Les deux marques, les futurs vides et les arrêts effectifs sont conservés.
+
+Avec `stopped_event_budget=6`, le mode conditionnel explicite conserve les futurs
+complets et leur statut terminal. Ses faux positifs agrégés sont **3,0 %** pour
+FullyNN (IC 95 % **1,83–4,89 %**) et **5,2 %** pour RMTPP (IC **3,57–7,51 %**),
+au seuil nominal de 5 %. Aucun excès n'est détecté par le critère fixé avant les
+essais. FullyNN est conservateur ; la validation porte sur ces checkpoints et
+ce contrat d'observation, pas sur toutes les données possibles.
+
+La troncature historique manque **100 % des alternatives d'arrêt immédiat**.
+Le mode complet détecte la suppression des arrêts FullyNN dans 100 % des essais
+et les arrêts forcés RMTPP dans 100 %. Sa puissance reste limitée : 27,5 % contre
+les arrêts forcés FullyNN et 7 % contre la suppression des arrêts RMTPP.
+Les défauts historiques et le loader de holdout à nombre fixe d'événements ne
+sont pas basculés automatiquement vers ce nouveau contrat explicite.
+
+Code validé `edc799a` : [CI Linux réussie](https://github.com/NzoCs/Learning-point-processes/actions/runs/38581548433),
+lint réussi, **301 tests**, **84,21 % de couverture**, paramètres figés vérifiés.
+Les [preuves et p-values brutes](../docs/validation/stopped-calibration-20261014/provenance.json)
+sont archivées avec les empreintes de checkpoints et les SHA256 des archives.
+
 ### Branche de délais neuronaux non plafonnés — 14 octobre 2026
 
 La branche `codex/unbounded-neural-sampling` retire le plafonnement des délais et
@@ -37,7 +65,8 @@ Sur la petite fixture, FullyNN passe d'une perte de test **7,433337** à
 moyenne d'absence de prochain événement de **78,57 %** et ne produit qu'un
 événement futur pour huit historiques. Ce bilan révèle le comportement de son
 risque cumulé borné ; il ne constitue pas un classement scientifique des modèles.
-La calibration sur des processus terminants et les validations Ruche/CUDA
+La calibration des futurs terminants selon le contrat explicite est documentée
+ci-dessus. Les validations Ruche/CUDA et l'observation à horizon temporel fixe
 restent à réaliser.
 
 ### Séparation paramétrique/neuronale — 14 octobre 2026

@@ -11,8 +11,16 @@ ce budget d'un horizon d'observation et décrit les limites encore présentes.
 
 Les preuves paramétriques ci-dessous concernent leur commit validé et restent
 archivées. Les nouvelles simulations neuronales peuvent changer volontairement.
-FullyNN n'est pas corrigé dans cette branche : sa possibilité de ne pas produire
-d'événement fini est exposée par la sécurité, plutôt que masquée par un fallback.
+FullyNN utilise désormais une dérivée individuelle (`.sum()` pour le produit
+vecteur-Jacobienne), indépendante du batch et de la grille, et une intégrale
+centrée en zéro. Ces corrections modifient volontairement sa perte, ses poids
+appris et ses résultats ; les anciennes références sont conservées pour audit.
+FullyNN et RMTPP conservent leurs architectures et leurs paramètres : une
+probabilité positive d'absence d'événement est représentée par un délai infini
+au tirage, puis par une terminaison de la seule séquence concernée. Les sorties
+stockées restent finies et masquées ; un statut conserve aussi les séquences
+vides. Les prévisions temporelles sont conditionnelles à l'existence d'un
+événement et leur probabilité d'absence est rapportée séparément.
 Les enveloppes sur grille ne constituent pas une certification pour tout modèle
 neuronal ; les violations observées interrompent la phase sans événement inventé.
 

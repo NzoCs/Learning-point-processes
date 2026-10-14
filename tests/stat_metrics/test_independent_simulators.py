@@ -56,10 +56,6 @@ def test_self_correcting_small_growth_inverse_retains_nonzero_delay(
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="FullyNN differentiates mean cumulative hazards, dividing per-event intensity by batch size",
-)
 def test_fullynn_intensity_is_independent_of_unrelated_batch_rows():
     from new_ltpp.models.implementations.fullynn import CumulHazardFunctionNetwork
 

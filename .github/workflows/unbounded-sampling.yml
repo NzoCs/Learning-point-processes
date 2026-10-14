@@ -31,7 +31,10 @@ jobs:
           uv run --frozen --no-sync python -m scripts.independent_simulator_validation --size 4096 --output artifacts/unbounded-sampling/laws
           uv run --frozen --no-sync python -c "import json; d=json.load(open('artifacts/unbounded-sampling/laws/report.json'))['checks']; assert all(d[k]['passed'] for k in ('ANHN','ANHP','NHP','ODETPP','RMTPP','SAHP','THP','IntensityFree','small_initial_window','many_rejections','SelfCorrecting_small_growth')); assert d['SelfCorrecting']['native_simulator']['passed'] and d['SelfCorrecting']['post_event_intensity_api']['passed']"
       - name: Exact conditional repetition and checkpoint resume
-        run: uv run --frozen --no-sync python -m scripts.conditional_reproducibility --model NHP --output artifacts/unbounded-sampling/repeat-NHP
+        run: |
+          for model in ANHN NHP; do
+            uv run --frozen --no-sync python -m scripts.conditional_reproducibility --model "$model" --output "artifacts/unbounded-sampling/repeat-$model"
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:

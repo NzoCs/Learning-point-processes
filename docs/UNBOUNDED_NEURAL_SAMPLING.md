@@ -73,12 +73,16 @@ long waits, increasing affine intensity checked via its analytical compensator,
 more than ten rejected rounds and zero-intensity safety failures. Independent
 model references additionally exercise a small initial window and many rejections.
 The model audit tests all twelve catalogue entries, compares Hawkes and
-SelfCorrecting to the last parametric reference and checks unchanged neural
-weights/likelihood/intensity calculations while recording intended changes to
-predictions, simulations and statistics. FullyNN's explicit failure is reported.
+SelfCorrecting to the last parametric reference and checks neural likelihood,
+intensity and gradients with the reviewed historical weights fixed. It separately
+records changes in newly fitted weights, predictions, simulations and statistics.
+Refitted weights need not match historical CPU profiles exactly, particularly
+near numerically cancelling attention-bias gradients. That comparison is retained
+as evidence rather than silently replacing profiles or relaxing tolerances.
+FullyNN's explicit failure is reported.
 
 The optional workflow `unbounded-sampling.yml` runs these checks on Linux when
 dispatched or requested by `[unbounded-sampling]` on a push to this branch. It
-also verifies exact NHP pipeline repetition, checkpoint replay and training
+also verifies exact ANHN and NHP pipeline repetition, checkpoint replay and training
 resume. CUDA tests skip explicitly without GPU hardware. Historical reference
 files are not overwritten or replaced.

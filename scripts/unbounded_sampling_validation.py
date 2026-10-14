@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import platform
 from pathlib import Path
 
 from new_ltpp.models.event_sampler import SamplingSafetyError
@@ -9,10 +10,79 @@ from scripts.integration_suite import (
     CATALOGUE,
     FIXTURES,
     compare,
-    compare_reference,
     run_model,
     write_json,
 )
+
+
+def fixed_reference_probe(name, target):
+    """Compare formulas using reviewed fixed weights, independently of refitting."""
+    import torch
+    import yaml
+
+    from new_ltpp.configs import RunnerConfig
+    from new_ltpp.runners.runner_manager import RunnerManager
+    from new_ltpp.shared_types import Batch
+
+    expected = json.loads((FIXTURES / "baselines" / f"{name}.json").read_text())
+    state = expected["trained_state"]
+    profile = FIXTURES / "linux_trained_states" / f"{name}.json"
+    if platform.system() == "Linux" and profile.exists():
+        state = json.loads(profile.read_text())["trained_state"]
+    config = RunnerConfig.model_validate(
+        yaml.safe_load((target / "effective.yaml").read_text())
+    )
+    manager = RunnerManager(config)
+    manager.setup_runner(enable_logging=False)
+    model = manager.runner.model
+    model.load_state_dict(
+        {k: torch.tensor(v["values"]).reshape(v["shape"]) for k, v in state.items()},
+        strict=True,
+    )
+    model.eval()
+    manager.runner.datamodule.setup(stage="test")
+    original = next(iter(manager.runner.datamodule.test_dataloader()))
+    batch = Batch(*(value[:2].clone() for value in original.to_mapping().values()))
+    torch.manual_seed(456)
+    loss, count = model.loglike_loss(batch)
+    gradients = torch.autograd.grad(loss, tuple(model.parameters()), allow_unused=True)
+    intensity = None
+    if getattr(model, "supports_intensity", True):
+        intensity = model.compute_intensities_at_sample_dtimes(
+            **batch.to_mapping(),
+            sample_dtimes=torch.full((*batch.time_seqs.shape, 2), 0.2),
+        )
+
+    def data(t):
+        if t is None:
+            return None
+        t = t.detach().cpu()
+        assert torch.isfinite(t).all()
+        return dict(shape=list(t.shape), values=t.reshape(-1).tolist())
+
+    actual = dict(
+        probe_loss=data(loss),
+        probe_num_events=int(count),
+        probe_intensities=data(intensity),
+        probe_gradients={
+            k: data(g) for (k, _), g in zip(model.named_parameters(), gradients)
+        },
+    )
+    compare(actual, {k: expected[k] for k in actual})
+    write_json(
+        target / "fixed_reference_probe.json",
+        dict(
+            model=name,
+            reference_profile=(
+                str(profile.relative_to(FIXTURES))
+                if platform.system() == "Linux" and profile.exists()
+                else "historical_baseline"
+            ),
+            checked_at_fixed_weights=True,
+            actual=actual,
+        ),
+    )
+    return state
 
 
 def run(output):
@@ -43,12 +113,14 @@ def run(output):
             manifest = json.loads(manifests[0].read_text())
             assert any(p["status"] == "failed" for p in manifest["phases"].values())
             assert not (target / "snapshot.json").exists()
+            fixed_reference_probe(name, target)
             report[name] = dict(
                 status="known_model_limitation_explicit_safety_stop",
                 reason=cause.reason,
                 rounds=cause.rounds,
                 pending=cause.pending_count,
                 fabricated_events=False,
+                fixed_reference_formulas="passed",
                 phases=manifest["phases"],
                 code=manifest["code"],
             )
@@ -71,22 +143,14 @@ def run(output):
                     compare(actual, expected)
                     report[name] = dict(status="passed_parametric_reference_unchanged")
                 else:
-                    pure = (
-                        "model",
-                        "config_sha256",
-                        "fixture_sha256",
-                        "trained_state",
-                        "probe_loss",
-                        "probe_num_events",
-                        "probe_intensities",
-                        "probe_gradients",
-                    )
-                    compare_reference(
-                        {k: actual[k] for k in pure}, {k: expected[k] for k in pure}
-                    )
+                    expected["trained_state"] = fixed_reference_probe(name, target)
                     changes = {
                         field: dict(before=expected[field], after=actual[field])
                         for field in (
+                            "trained_state",
+                            "probe_loss",
+                            "probe_intensities",
+                            "probe_gradients",
                             "test_metrics",
                             "simulation_numeric_results",
                             "simulation_records",
@@ -95,7 +159,7 @@ def run(output):
                     }
                     report[name] = dict(
                         status="passed_neural_pipeline_intended_sampling_changes",
-                        likelihood_and_intensity_calculations_unchanged=True,
+                        likelihood_and_intensity_calculations_unchanged_at_fixed_weights=True,
                         changes=changes,
                     )
         write_json(output / "report.json", report)

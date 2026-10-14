@@ -27,6 +27,8 @@ from scripts.independent_simulator_validation import (
         (0.0, 1.0, 20.0),
         (12.0, -1.0, 3.0),
         (12.0, 1.0, 3.0),
+        (-1000.0, 1.0, 2000.0),
+        (-1000.0, -1.0, 3.0),
     ],
 )
 def test_capped_integral_and_gradients_against_independent_quadrature(a, w, t):
@@ -108,6 +110,28 @@ def test_rmtpp_loss_matches_analytic_reference_and_does_not_draw_mc(tmp_path):
     assert all(
         p.grad is None or torch.isfinite(p.grad).all() for p in model.parameters()
     )
+
+
+def test_tiny_growing_rate_generates_real_finite_events_against_closed_form(tmp_path):
+    from new_ltpp.models.hazard_sampling import invert_hazard
+
+    model, _ = constant_poisson_model("RMTPP", tmp_path)
+    with torch.no_grad():
+        model.b_t.fill_(-1000.0)
+        model.w_t.fill_(1.0)
+    hazard, limit = model.next_event_hazard(
+        **history().to_mapping(), compute_last_step_only=True
+    )
+    torch.manual_seed(831)
+    target = torch.empty(1, 1, 256, dtype=limit.dtype).exponential_()
+    # H(t) = 2*(exp(t-1000)-exp(-1000)) before the cap. The second
+    # term is below float64's representable range, so the inverse is stable.
+    expected = 1000.0 + (target / 2).log()
+    assert ((expected - 1000.0) < math.log(1e5)).all()
+    torch.manual_seed(831)
+    actual = invert_hazard(hazard, limit, 256)
+    assert torch.isfinite(actual).all()
+    torch.testing.assert_close(actual, expected, rtol=0, atol=2e-12)
 
 
 @pytest.mark.parametrize("name", ["FullyNN", "RMTPP"])

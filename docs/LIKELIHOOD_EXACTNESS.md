@@ -19,6 +19,9 @@ is shared with the simulation hazard. A local `expm1(z)/z` series preserves the
 slope derivative at zero: `dH/dw = exp(a)*t**2/2` below the cap. Negative, zero and
 positive slopes, long durations and capped plateaus are tested against SciPy
 quadrature for both values and gradients. No slope sign constraint is imposed.
+Endpoint-rate differences avoid `0 * infinity` when a very small initial
+intensity grows over a long interval. The reproduced case `a=-1000, w=1, t=2000`
+must have a finite integral and finite gradients, despite `exp(a)` underflow.
 
 RMTPP training results can change because approximate gradients are replaced and
 integration sampling no longer consumes random draws. The architecture/intensity

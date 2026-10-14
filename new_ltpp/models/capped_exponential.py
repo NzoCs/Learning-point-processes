@@ -24,9 +24,14 @@ def capped_exponential_integral(a, w, t, cap=1e5):
     )
     z = w * duration
     small = z.abs() < 1e-4
-    safe_z = torch.where(small, torch.ones_like(z), z)
-    # Avoid overflow in an inactive branch of torch.where as well.
-    ordinary = torch.expm1(torch.where(small, torch.zeros_like(z), z)) / safe_z
+    start = a.clamp(max=log_cap)
+    rate = start.exp()
+    # For growing intensities, exp(start)*expm1(z) may be 0*infinity even
+    # though start+z is capped and the integral is finite. Subtract endpoint
+    # rates instead, and keep every inactive torch.where branch finite.
+    end = (start + z.clamp_min(0)).clamp(max=log_cap)
+    growing_integral = (end.exp() - rate) / safe_w
+    decreasing_integral = rate * torch.expm1(z.clamp(max=0)) / safe_w
     series_z = torch.where(small, z, torch.zeros_like(z))
     series = (
         1
@@ -35,8 +40,9 @@ def capped_exponential_integral(a, w, t, cap=1e5):
         + series_z.pow(3) / 24
         + series_z.pow(4) / 120
     )
-    ratio = torch.where(small, series, ordinary)
-    return a.clamp(max=log_cap).exp() * duration * ratio + cap * (t - duration)
+    ordinary = torch.where(z > 0, growing_integral, decreasing_integral)
+    integral = torch.where(small, rate * duration * series, ordinary)
+    return integral + cap * (t - duration)
 
 
 def capped_exponential_limit(a, w, cap=1e5):

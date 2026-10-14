@@ -150,7 +150,7 @@ class TrainingStepsMixin:
 
         # Update statistics
         if histories is None:
-            simulator._statistics_collector.update(batch, sim)
+            simulator._statistics_collector.update(compared_batch, sim)
         else:
             simulator._statistics_collector.update(
                 compared_batch, sim, histories=histories, pair_ids=batch.sequence_ids

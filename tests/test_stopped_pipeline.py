@@ -81,3 +81,48 @@ def test_terminal_flag_is_loaded_strictly_and_moves_with_the_batch():
     assert batch.no_next_event_mask.device == batch.time_seqs.device
     assert uses_stopped_event_budget("FullyNN") and uses_stopped_event_budget("RMTPP")
     assert not uses_stopped_event_budget("NHP")
+
+
+def test_ordinary_predict_step_passes_the_prepared_observation_to_statistics(tmp_path):
+    from types import SimpleNamespace
+
+    from new_ltpp.configs import StatisticalTestConfig
+    from new_ltpp.evaluation.accumulators.summary_statistics_accumulator import (
+        BatchStatisticsCollector,
+    )
+    from new_ltpp.models.base.training import TrainingStepsMixin
+
+    config = StatisticalTestConfig(
+        test_type="mmd",
+        point_process_kernel_type="sig_kernel",
+        space_kernel_type="rbf",
+        num_event_types=2,
+        n_samples=99,
+        num_discretization_points=8,
+    )
+    collector = BatchStatisticsCollector(
+        2,
+        1.0,
+        tmp_path / "statistics",
+        config,
+        complete_stopped=True,
+    )
+    t = torch.tensor([[0.1, 0.2, 0.3]]).repeat(8, 1)
+    batch = Batch(
+        t,
+        torch.diff(t, prepend=torch.zeros(8, 1)),
+        torch.zeros_like(t, dtype=torch.long),
+        torch.ones_like(t, dtype=torch.bool),
+    )
+    simulator = SimpleNamespace(
+        _statistics_collector=collector, conditional_evaluation=None
+    )
+    model = type("FullyNN", (), {})()
+    model._simulator = simulator
+    model._io_manager = None
+    model.simulate = lambda **kwargs: empty_continuations(8, 3)
+    TrainingStepsMixin.predict_step(model, batch, 0)
+    stats = collector.compute()["statistical_tests"]
+    assert stats["num_sequences"] == 8
+    assert stats["p_values"][0] <= 0.05
+    assert batch.no_next_event_mask is None

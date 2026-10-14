@@ -7,6 +7,10 @@ on:
     branches: [main, master]
 
 jobs:
+  stopped-calibration:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[stopped-calibration]')
+    uses: ./.github/workflows/stopped-calibration.yml
+
   unbounded-sampling:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[unbounded-sampling]')
     uses: ./.github/workflows/unbounded-sampling.yml

@@ -76,6 +76,32 @@ def paired_joint_statistic(gram, x, y):
 class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
     null_method = CONDITIONAL_MMD_PROTOCOL
 
+    def __init__(self, kernel, n_samples, *, stopped_event_budget=None):
+        super().__init__(kernel, n_samples)
+        if stopped_event_budget is not None and stopped_event_budget < 1:
+            raise ValueError("Stopped continuation event budget must be positive")
+        self.stopped_event_budget = stopped_event_budget
+        self.observation_protocol = (
+            "complete_stopped_event_budget_v1"
+            if stopped_event_budget is not None
+            else "pairwise_truncation_recomputed_v1"
+        )
+
+    def _validate_stopped_continuation(self, batch):
+        flag = batch.no_next_event_mask
+        n = len(batch.time_seqs)
+        if flag is None or flag.shape != (n,) or flag.dtype != torch.bool:
+            raise ValueError(
+                "Stopped continuations require one boolean no_next_event flag per row"
+            )
+        counts = batch.valid_event_mask.sum(-1)
+        if (counts > self.stopped_event_budget).any() or not torch.equal(
+            flag.to(counts.device), counts < self.stopped_event_budget
+        ):
+            raise ValueError(
+                "Each continuation must reach the event budget or explicitly terminate"
+            )
+
     def compute_statistics(
         self, batch_x, batch_y, accumulate=True, *, histories=None, pair_ids=None
     ):
@@ -87,6 +113,8 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
                 "At least two matched history/continuation pairs are required"
             )
         for batch in (batch_x, batch_y):
+            if self.stopped_event_budget is not None:
+                self._validate_stopped_continuation(batch)
             if batch.time_seqs.shape != batch.valid_event_mask.shape:
                 raise ValueError(
                     "Continuation mask and event times must have the same shape"
@@ -94,7 +122,13 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
             for row in range(n):
                 t = batch.time_seqs[row][batch.valid_event_mask[row]]
                 if (
-                    not len(t)
+                    (
+                        not len(t)
+                        and (
+                            batch.no_next_event_mask is None
+                            or not batch.no_next_event_mask[row]
+                        )
+                    )
                     or not torch.isfinite(t).all()
                     or (t < 0).any()
                     or (torch.diff(t) < 0).any()
@@ -128,9 +162,23 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
         common level-zero component without dropping the marginal information.
         No bandwidth is selected from labels or tuned against calibration results.
         """
-        px, py = self._truncate_to_min_time(batch_x, batch_y)
+        if self.stopped_event_budget is None:
+            px, py = self._truncate_to_min_time(batch_x, batch_y)
+        else:
+            self._validate_stopped_continuation(batch_x)
+            self._validate_stopped_continuation(batch_y)
+            px, py = batch_x, batch_y
         pool = self._concat_batches(px, py)
         future = self.kernel.compute_gram_matrix(pool, pool)
+        if self.stopped_event_budget is not None:
+            stopped = torch.cat(
+                (batch_x.no_next_event_mask, batch_y.no_next_event_mask)
+            ).to(future)
+            # Product with a unit-bandwidth Gaussian on the actual terminal flag.
+            # Complete futures and pooled normalization commute with pair swaps.
+            future = future * torch.exp(
+                -0.5 * (stopped[:, None] - stopped[None, :]).square()
+            )
         n = len(histories.time_seqs)
         if histories.time_seqs.shape[1] == 0:
             weight = torch.ones((n, n), dtype=future.dtype, device=future.device)

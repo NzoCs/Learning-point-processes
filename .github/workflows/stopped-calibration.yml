@@ -1,0 +1,51 @@
+name: Stopped learned continuation calibration
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [FullyNN, RMTPP]
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Check stopped observation and independent decoders
+        run: uv run --frozen --no-sync python -m pytest -o addopts= tests/stat_metrics/test_stopped_calibration.py -q
+      - name: Independent H0, no stopping and immediate stopping alternatives
+        run: >-
+          uv run --frozen --no-sync python -m scripts.stopped_conditional_calibration
+          --model ${{ matrix.model }} --trials 500 --power-trials 200 --permutations 99
+          --output artifacts/stopped-calibration/${{ matrix.model }}
+      - name: Verify completed fixed-model calibration without detected H0 excess
+        env:
+          CALIBRATION_MODEL: ${{ matrix.model }}
+        run: >-
+          uv run --frozen --no-sync python -c
+          "import json,os; d=json.load(open('artifacts/stopped-calibration/'+os.environ['CALIBRATION_MODEL']+'/report.json'));
+          assert d['status']=='completed' and d['model_frozen_verified'];
+          assert not any(r['h0_excess_detected'] for r in d['results'] if r['hypothesis']=='H0' and r['protocol']=='complete_stopped')"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stopped-calibration-${{ matrix.model }}
+          path: artifacts/stopped-calibration
+          retention-days: 30

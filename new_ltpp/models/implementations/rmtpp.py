@@ -95,6 +95,58 @@ class RMTPP(TrainingMixin):
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
 
+    def next_event_hazard(
+        self,
+        *,
+        time_seqs,
+        time_delta_seqs,
+        type_seqs,
+        compute_last_step_only=False,
+        **kwargs,
+    ):
+        """Exact compensator including the existing upper intensity clamp."""
+        _, hidden = self.forward((time_seqs, time_delta_seqs, type_seqs))
+        if compute_last_step_only:
+            hidden = hidden[:, -1:, :]
+        a = (self.hidden_to_intensity_logits(hidden) + self.b_t).double()
+        w = self.w_t.double()
+        cap = math.log(1e5)
+        rate = a.clamp(max=cap).exp()
+
+        # Integrate exp(min(a + w*t, cap)) piecewise. No slope is altered.
+        def hazard(dt):
+            t = dt.double().unsqueeze(-1)
+            slope = w.unsqueeze(-2)
+            start = a.unsqueeze(-2)
+            crossing = ((cap - start) / torch.where(slope == 0, 1, slope)).clamp_min(0)
+            growing = slope > 0
+            exponential_time = torch.where(
+                growing,
+                torch.minimum(t, crossing),
+                (t - torch.where(start > cap, crossing, 0)).clamp_min(0),
+            )
+            exponent_start = start.clamp(max=cap)
+            z = slope * exponential_time
+            integral = (
+                exponent_start.exp()
+                * torch.expm1(z.clamp(max=cap - exponent_start))
+                / torch.where(slope == 0, 1, slope)
+            )
+            integral = torch.where(slope == 0, exponent_start.exp() * t, integral)
+            plateau = torch.where(
+                growing,
+                (t - crossing).clamp_min(0),
+                torch.where(start > cap, torch.minimum(t, crossing), 0),
+            )
+            return (integral + 1e5 * plateau).sum(-1)
+
+        # A nonnegative slope gives an infinite integral. Negative slopes may
+        # initially spend some time at the cap before decaying exponentially.
+        crossing = ((a - cap) / (-w)).clamp_min(0)
+        tails = rate / (-w) + 1e5 * torch.where(a > cap, crossing, 0)
+        limit = torch.where((w >= 0).any(-1), torch.inf, tails.sum(-1))
+        return hazard, limit
+
     def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the log-likelihood loss.
 

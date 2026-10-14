@@ -36,7 +36,11 @@ class SequenceLengthAccumulator(Accumulator):
         sim_seq_lengths = sim_mask.sum(dim=1)
         sim_event_count = sim_seq_lengths.sum()
 
-        if sim_event_count < self.min_sim_events:
+        terminated = (
+            simulation.no_next_event_mask is not None
+            and simulation.no_next_event_mask.any()
+        )
+        if sim_event_count < self.min_sim_events and not terminated:
             logger.warning(
                 "SequenceLengthAccumulator: Too few simulated events (%d < %d), skipping batch",
                 sim_event_count,

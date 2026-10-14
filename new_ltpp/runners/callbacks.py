@@ -144,10 +144,36 @@ class PredictionStatsCallback(pl.Callback):
             model._io_manager.finalize()
 
         if getattr(model, "supports_intensity", True):
+            batch = simulator.last_result
+            if (
+                batch is not None
+                and batch.no_next_event_mask is not None
+                and batch.no_next_event_mask.any()
+            ):
+                eligible = (batch.valid_event_mask.sum(-1) >= 2).nonzero().flatten()
+                if not len(eligible):
+                    from new_ltpp.utils import save_json
+
+                    target = self.base_dir / "intensities"
+                    target.mkdir(parents=True, exist_ok=True)
+                    save_json(
+                        {
+                            "status": "skipped",
+                            "reason": "No simulated sequence has two events; trajectories can terminate without a next event",
+                        },
+                        target / "visualization_status.json",
+                    )
+                    return
+                from new_ltpp.shared_types import Batch
+
+                row = int(eligible[0])
+                batch = Batch(
+                    *(value[row : row + 1] for value in batch.to_mapping().values())
+                )
             visualizer = ModelVisualizer(model)
             visualizer.intensity_graph(
                 save_dir=self.base_dir / "intensities",
-                batch=simulator.last_result,
+                batch=batch,
                 save_plot=True,
                 save_data=True,
                 plot=False,

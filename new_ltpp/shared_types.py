@@ -40,6 +40,7 @@ class Batch:
     type_seqs: torch.Tensor
     valid_event_mask: torch.Tensor
     sequence_ids: List[str] | None = None
+    no_next_event_mask: torch.Tensor | None = None
 
     def __post_init__(self):
         """Validate and normalize batch after initialization."""
@@ -117,6 +118,7 @@ class OneStepPred(TypedDict):
 
     dtime_predict: torch.Tensor
     type_predict: torch.Tensor
+    no_event_probability: NotRequired[torch.Tensor]
 
 
 # Backward compatibility alias

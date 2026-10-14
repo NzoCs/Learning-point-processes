@@ -152,6 +152,7 @@ class EventSampler(nn.Module):
         intensity_fn: Callable[..., torch.Tensor],
         num_sample: int,
         compute_last_step_only: bool = False,
+        conditional_on_event: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Vectorized thinning step with Rejection Sampling loop
         Args:
@@ -169,6 +170,31 @@ class EventSampler(nn.Module):
 
         if num_sample <= 0:
             raise ValueError("num_sample must be positive")
+        owner = getattr(intensity_fn, "__self__", None)
+        hazard_factory = getattr(owner, "next_event_hazard", None)
+        if callable(hazard_factory):
+            from new_ltpp.models.hazard_sampling import invert_hazard
+
+            hazard, limit = hazard_factory(
+                time_seqs=time_seqs,
+                time_delta_seqs=time_delta_seqs,
+                type_seqs=type_seqs,
+                valid_event_mask=valid_event_mask,
+                compute_last_step_only=compute_last_step_only,
+            )
+            delays = invert_hazard(
+                hazard,
+                limit,
+                num_sample,
+                conditional=conditional_on_event,
+                max_rounds=self.max_sampling_rounds,
+            )
+            converted = delays.to(time_seqs.dtype)
+            if (torch.isfinite(delays) & ~torch.isfinite(converted)).any():
+                raise RuntimeError(
+                    "Finite waiting time exceeds output floating-point range"
+                )
+            return converted, torch.ones_like(converted) / num_sample
         # Grid envelopes are local to finite windows, never global time caps.
         upper_bound = self.compute_intensity_upper_bound(
             time_seqs,

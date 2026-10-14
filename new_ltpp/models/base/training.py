@@ -156,6 +156,10 @@ class TrainingStepsMixin:
     ):
         metrics_helper = MetricsManager(num_event_types=self.num_event_types)
         metrics = metrics_helper.compute_prediction_metrics(batch=batch, pred=pred)
+        if "no_event_probability" in pred:
+            metrics["no_event_probability"] = (
+                pred["no_event_probability"][batch.valid_event_mask].mean().item()
+            )
         for key, value in metrics.items():
             if key == "confusion_matrix":
                 continue

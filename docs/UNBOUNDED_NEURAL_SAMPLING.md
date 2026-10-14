@@ -1,8 +1,9 @@
 # Neural sampling without a waiting-time cap
 
 Branch `codex/unbounded-neural-sampling` starts from the validated parametric
-refactor (`b478a24`). It changes neural event generation, not likelihood formulas,
-FullyNN's representation, MMD calculations or parametric simulators.
+refactor (`b478a24`). It changes neural event generation and corrects FullyNN's
+pointwise differentiation and compensator. The network architecture, MMD
+calculations, parametric simulators and historical baseline files are preserved.
 
 ## Behavior
 
@@ -52,23 +53,44 @@ greater than one. Model-specific analytical envelopes remain a separate accuracy
 improvement. Neither a larger safety budget nor a denser grid proves correctness
 for every possible intensity curve.
 
-FullyNN retains its previously identified batch/grid scaling and bounded-hazard
-issues. RMTPP likewise has an integrable future intensity when every temporal
-slope is negative: the historical fixture slopes are approximately -0.50145 and
--0.21242. For a fixed history, its total hazard is then the sum of initial marked
-intensities divided by their negative slopes, leaving a nonzero survival mass at
-infinity. A controlled case with total intensity `2 exp(-t)` has mass `exp(-2)`.
-An integrable future intensity can give positive probability of no finite
-next event. The new sampler exposes that limitation through safety failures;
-the old fallback hid it by inventing a finite time. The validation fixture uses
-a short explicit budget for these two known failures and requires the phase to
-fail, rather than reporting either model as successfully simulated. Their
-likelihood/intensity definitions are deliberately not changed in this branch.
+## FullyNN correction and absence of a next event
+
+The paper defines a pointwise derivative (equation 13, section 2.4,
+https://arxiv.org/pdf/1905.09690). PyTorch must differentiate the sum of the
+independent outputs, not their mean: the previous mean divided each intensity
+by batch * sequence * grid size. Last-step queries now differentiate only the
+last history. The loss uses `Z(t)-Z(0)`, the integral of that derivative from
+zero; this preserves the corrected intensity and makes the compensator zero
+at zero. Retrain FullyNN; old fitted results are intentionally changed.
+
+For total intensity lambda, survival is `exp(-H(t))`. If its integral to infinity
+is finite, no next event exists with probability `exp(-H(infinity))`. For
+`lambda(t)=2 exp(-t)`, this probability is `exp(-2)`. RMTPP's negative temporal
+slopes and FullyNN's bounded tanh network are preserved.
+
+Both models now expose an integrated intensity and its analytic infinite-time
+limit. Independent Exp(1) thresholds above the limit produce infinite delays;
+finite thresholds are inverted by bracketing and bisection without a time cap.
+RMTPP integrates its existing intensity cap, including zero and mixed slopes.
+No failed computation or numerical tail cutoff is interpreted as absence.
+
+Simulation terminates only the affected row and continues other rows. Absent
+events remain masked padding; infinite times are never exported as events.
+`Batch.no_next_event_mask` and `simulations/sequence_status.jsonl` record actual
+termination, including rows with zero future events. Entirely empty event
+outputs remain valid empty Parquet tables.
+
+One-step forecasts explicitly condition on existence of the next event and
+include `no_event_probability` separately. Validation/test logs report its mean
+over valid histories. The finite conditional forecast is not an unconditional
+mean, which is infinite when absence has positive probability. Simulations
+retain the unconditional law. Scientific calibration on terminating processes
+still requires a separate validation.
 
 ## Validation
 
 ```bash
-uv run --frozen --no-sync python -m pytest tests/test_event_sampler.py tests/test_model_contracts.py
+uv run --frozen --no-sync python -m pytest tests/test_hazard_sampling.py tests/test_event_sampler.py tests/test_model_contracts.py
 uv run --frozen --no-sync python -m scripts.unbounded_sampling_validation --output artifacts/unbounded-new
 uv run --frozen --no-sync python -m scripts.independent_simulator_validation --size 4096 --output artifacts/laws-new
 uv run --frozen --no-sync python -m scripts.conditional_reproducibility --model NHP --output artifacts/repeat-new
@@ -85,7 +107,11 @@ records changes in newly fitted weights, predictions, simulations and statistics
 Refitted weights need not match historical CPU profiles exactly, particularly
 near numerically cancelling attention-bias gradients. That comparison is retained
 as evidence rather than silently replacing profiles or relaxing tolerances.
-FullyNN and the negative-slope RMTPP fixture have explicit failures reported.
+FullyNN's intended formula changes are audited separately. Independent checks
+test finite differences, batch/grid invariance, the atom at infinity and finite
+CDFs, RMTPP compensators against quadrature including capped intensities, and
+row-wise termination with preservation of empty sequence records. The eleven
+historical models plus Poisson must complete train/test/predict successfully.
 
 The optional workflow `unbounded-sampling.yml` runs these checks on Linux when
 dispatched or requested by `[unbounded-sampling]` on a push to this branch. It

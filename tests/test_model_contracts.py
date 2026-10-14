@@ -76,23 +76,6 @@ def test_likelihood_has_finite_gradients_and_can_be_optimized(model, batch):
 
 def test_prediction_has_valid_times_and_marks_and_repeats_with_seed(model, batch):
     model.eval()
-    if model.__class__.__name__ == "FullyNN":
-        from new_ltpp.models.event_sampler import SamplingSafetyError
-
-        # Its bounded hazard can have no finite next event; never fabricate one.
-        model.get_event_sampler().max_sampling_rounds = 128
-        errors = []
-        for _ in range(2):
-            torch.manual_seed(91)
-            with pytest.raises(SamplingSafetyError) as error:
-                model.predict_one_step_at_every_event(**batch.to_mapping())
-            errors.append(error.value)
-        assert errors[0].reason == errors[1].reason
-        for key in errors[0].state:
-            torch.testing.assert_close(
-                errors[0].state[key], errors[1].state[key], rtol=0, atol=0
-            )
-        return
     torch.manual_seed(91)
     first = model.predict_one_step_at_every_event(**batch.to_mapping())
     torch.manual_seed(91)
@@ -103,6 +86,10 @@ def test_prediction_has_valid_times_and_marks_and_repeats_with_seed(model, batch
     assert torch.isfinite(first["dtime_predict"]).all()
     assert (first["dtime_predict"] >= 0).all()
     assert ((first["type_predict"] >= 0) & (first["type_predict"] < 2)).all()
+    if "no_event_probability" in first:
+        p = first["no_event_probability"]
+        assert ((p >= 0) & (p <= 1)).all()
+        torch.testing.assert_close(p, second["no_event_probability"], rtol=0, atol=0)
 
 
 def test_intensity_is_finite_nonnegative_and_has_expected_axes(model, batch):

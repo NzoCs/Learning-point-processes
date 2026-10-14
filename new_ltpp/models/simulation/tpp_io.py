@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -53,6 +54,19 @@ class IncrementalParquetWriter:
 
     def close(self) -> None:
         """Properly close the Parquet writer."""
+        if self._writer is None and not self.filepath.exists():
+            # A valid run may contain only trajectories without future events.
+            schema = pa.schema(
+                [
+                    ("seq_idx", pa.int64()),
+                    ("event_idx", pa.int64()),
+                    ("dim_process", pa.int64()),
+                    ("time_since_start", pa.float64()),
+                    ("time_since_last_event", pa.float64()),
+                    ("type_event", pa.int64()),
+                ]
+            )
+            pq.write_table(pa.Table.from_pylist([], schema=schema), self.filepath)
         if self._writer:
             self._writer.close()
             self._writer = None
@@ -118,6 +132,29 @@ class SimulationIOManager:
             self._total_sequences,
             preserve_origin=self.preserve_origin,
         )
+        if result.no_next_event_mask is not None and self._writer is not None:
+            # Keep an explicit record even for a sequence with zero future events.
+            with (self.output_dir / "sequence_status.jsonl").open(
+                "a", encoding="utf-8"
+            ) as stream:
+                for row, stopped in enumerate(result.no_next_event_mask.cpu().tolist()):
+                    stream.write(
+                        json.dumps(
+                            dict(
+                                seq_idx=self._total_sequences + row,
+                                sequence_id=(
+                                    result.sequence_ids[row]
+                                    if result.sequence_ids
+                                    else None
+                                ),
+                                generated_events=int(
+                                    result.valid_event_mask[row].sum()
+                                ),
+                                no_next_event=stopped,
+                            )
+                        )
+                        + "\n"
+                    )
 
         if self._writer:
             self._writer.write_batch(formatted)

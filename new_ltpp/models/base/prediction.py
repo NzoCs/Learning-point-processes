@@ -68,6 +68,7 @@ class PredictionMixin(NeuralModel):
             self.compute_intensities_at_sample_dtimes,
             self.num_sample,
             compute_last_step_only=False,
+            conditional_on_event=True,
         )
 
         # Compute intensities at sampled times
@@ -76,7 +77,9 @@ class PredictionMixin(NeuralModel):
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
             valid_event_mask=valid_event_mask,
-            sample_dtimes=accepted_dtimes,
+            sample_dtimes=torch.where(
+                torch.isfinite(accepted_dtimes), accepted_dtimes, 0
+            ),
         )
 
         # Normalize intensities and compute weighted sum
@@ -91,8 +94,21 @@ class PredictionMixin(NeuralModel):
         # Get predictions
         types_pred = torch.argmax(intensities_weighted, dim=-1)
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)
+        types_pred = torch.where(
+            torch.isfinite(dtimes_pred), types_pred, self.pad_token_id
+        )
 
-        return OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)
+        prediction = OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)
+        hazard_factory = getattr(self, "next_event_hazard", None)
+        if callable(hazard_factory):
+            _, limit = hazard_factory(
+                time_seqs=time_seqs,
+                time_delta_seqs=time_delta_seqs,
+                type_seqs=type_seqs,
+                valid_event_mask=valid_event_mask,
+            )
+            prediction["no_event_probability"] = (-limit).exp().detach()
+        return prediction
 
     def simulate(
         self,

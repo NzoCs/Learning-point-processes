@@ -5,7 +5,6 @@ import json
 import platform
 from pathlib import Path
 
-from new_ltpp.models.event_sampler import SamplingSafetyError
 from scripts.integration_suite import (
     CATALOGUE,
     FIXTURES,
@@ -68,7 +67,15 @@ def fixed_reference_probe(name, target):
             k: data(g) for (k, _), g in zip(model.named_parameters(), gradients)
         },
     )
-    compare(actual, {k: expected[k] for k in actual})
+    if name == "FullyNN":
+        old = torch.tensor(expected["probe_intensities"]["values"])
+        new = intensity.detach().cpu().reshape(-1)
+        # The historical mean divided pointwise derivatives by B*L*S.
+        torch.testing.assert_close(
+            new, old * intensity.numel() / model.num_event_types, rtol=1e-5, atol=1e-6
+        )
+    else:
+        compare(actual, {k: expected[k] for k in actual})
     limitation = None
     if name == "RMTPP" and (model.w_t < 0).all():
         _, hidden = model.forward(
@@ -113,82 +120,44 @@ def run(output):
     for name in CATALOGUE:
         target = output / name
         target.mkdir(parents=True, exist_ok=True)
-        try:
-            actual = run_model(
-                name,
-                target,
-                sampling_rounds=128 if name in ("FullyNN", "RMTPP") else None,
-            )
-        except RuntimeError as error:
-            if name not in ("FullyNN", "RMTPP"):
-                raise
-            cause = error
-            while cause is not None and not isinstance(cause, SamplingSafetyError):
-                cause = cause.__cause__
-            if cause is None:
-                raise
-            manifests = list(target.rglob("manifest.json"))
-            assert len(manifests) == 1
-            manifest = json.loads(manifests[0].read_text())
-            assert any(p["status"] == "failed" for p in manifest["phases"].values())
-            assert not (target / "snapshot.json").exists()
-            fixed_reference_probe(name, target)
-            fixed = json.loads((target / "fixed_reference_probe.json").read_text())
-            if name == "RMTPP":
-                assert fixed["analytical_limitation"] is not None
-                assert cause.reason in (
-                    "proposal budget exhausted",
-                    "nonfinite proposals or floating-point stagnation",
-                )
+        actual = run_model(name, target, allow_terminated=name in ("FullyNN", "RMTPP"))
+        if name == "Poisson":
             report[name] = dict(
-                status="known_model_limitation_explicit_safety_stop",
-                reason=cause.reason,
-                rounds=cause.rounds,
-                pending=cause.pending_count,
-                fabricated_events=False,
-                fixed_reference_formulas="passed",
-                analytical_limitation=fixed.get("analytical_limitation"),
-                phases=manifest["phases"],
-                code=manifest["code"],
+                status="passed_new_parametric_pipeline_unchanged_algorithm"
             )
         else:
-            if name in ("FullyNN", "RMTPP"):
-                raise AssertionError(
-                    f"Review {name}: deterministic fixture unexpectedly completed despite its integrable future hazard"
-                )
-            if name == "Poisson":
-                report[name] = dict(
-                    status="passed_new_parametric_pipeline_unchanged_algorithm"
-                )
+            expected = json.loads((FIXTURES / "baselines" / f"{name}.json").read_text())
+            if name in ("Hawkes", "SelfCorrecting"):
+                for field, delta in previous[name]["changes"].items():
+                    expected[field] = delta["after"]
+                compare(actual, expected)
+                report[name] = dict(status="passed_parametric_reference_unchanged")
             else:
-                expected = json.loads(
-                    (FIXTURES / "baselines" / f"{name}.json").read_text()
-                )
-                if name in ("Hawkes", "SelfCorrecting"):
-                    for field, delta in previous[name]["changes"].items():
-                        expected[field] = delta["after"]
-                    compare(actual, expected)
-                    report[name] = dict(status="passed_parametric_reference_unchanged")
-                else:
-                    expected["trained_state"] = fixed_reference_probe(name, target)
-                    changes = {
-                        field: dict(before=expected[field], after=actual[field])
-                        for field in (
-                            "trained_state",
-                            "probe_loss",
-                            "probe_intensities",
-                            "probe_gradients",
-                            "test_metrics",
-                            "simulation_numeric_results",
-                            "simulation_records",
-                        )
-                        if actual[field] != expected[field]
-                    }
-                    report[name] = dict(
-                        status="passed_neural_pipeline_intended_sampling_changes",
-                        likelihood_and_intensity_calculations_unchanged_at_fixed_weights=True,
-                        changes=changes,
+                expected["trained_state"] = fixed_reference_probe(name, target)
+                changes = {
+                    field: dict(before=expected[field], after=actual[field])
+                    for field in (
+                        "trained_state",
+                        "probe_loss",
+                        "probe_intensities",
+                        "probe_gradients",
+                        "test_metrics",
+                        "simulation_numeric_results",
+                        "simulation_records",
                     )
+                    if actual[field] != expected[field]
+                }
+                report[name] = dict(
+                    status="passed_neural_pipeline_intended_sampling_changes",
+                    likelihood_and_intensity_calculations_unchanged_at_fixed_weights=name
+                    != "FullyNN",
+                    intentional_formula_changes=(
+                        "pointwise derivatives and zero-centered compensator"
+                        if name == "FullyNN"
+                        else None
+                    ),
+                    changes=changes,
+                )
         write_json(output / "report.json", report)
         print(name, report[name]["status"], flush=True)
 

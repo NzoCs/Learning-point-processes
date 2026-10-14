@@ -32,6 +32,7 @@ class Buffers(TypedDict):
 
 class SimulationState(TypedDict):
     step_count: int
+    no_next_event_mask: torch.Tensor
 
 
 class PredictionSession:
@@ -168,6 +169,7 @@ class Simulator(PredictionSession):
         event_buffer = torch.zeros(
             batch_size, max_seq_len, device=device, dtype=torch.long
         ).contiguous()
+        event_buffer.fill_(self._model.pad_token_id)
 
         time_buffer[:, :initial_len].copy_(batch.time_seqs)
         time_delta_buffer[:, :initial_len].copy_(batch.time_delta_seqs)
@@ -181,7 +183,9 @@ class Simulator(PredictionSession):
         )
 
     def _initialize_simulation_state(self) -> SimulationState:
-        return SimulationState(step_count=0)
+        return SimulationState(
+            step_count=0, no_next_event_mask=torch.empty(0, dtype=torch.bool)
+        )
 
     def _simulate_one_step(
         self,
@@ -217,16 +221,23 @@ class Simulator(PredictionSession):
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
             valid_event_mask=valid_event_mask,
-            sample_dtimes=dtimes_pred[:, :, None],
+            sample_dtimes=torch.where(torch.isfinite(dtimes_pred), dtimes_pred, 0)[
+                :, :, None
+            ],
             compute_last_step_only=True,
         ).view(batch_size, num_mark)
 
         total_intensities = intensities_at_times.sum(dim=-1)
-        if torch.any(total_intensities == 0):
+        finite = torch.isfinite(dtimes_pred).squeeze(-1)
+        if torch.any((total_intensities == 0) & finite):
             raise ValueError("Total intensities is null, simulation stops.")
 
-        probs = intensities_at_times / total_intensities[:, None]
+        probs = torch.where(
+            finite[:, None], intensities_at_times, torch.ones_like(intensities_at_times)
+        )
+        probs = probs / probs.sum(-1, keepdim=True)
         type_pred = torch.multinomial(probs, num_samples=1)
+        type_pred = torch.where(finite[:, None], type_pred, model.pad_token_id)
         return dtimes_pred, type_pred
 
     def _run_simulation_loop(
@@ -237,6 +248,10 @@ class Simulator(PredictionSession):
     ) -> None:
         initial_len = buffers["initial_len"]
         pad_token_id = self._model.pad_token_id
+        alive = torch.ones(
+            buffers["time"].shape[0], dtype=torch.bool, device=buffers["time"].device
+        )
+        sim_state["no_next_event_mask"] = ~alive
 
         with (
             torch.no_grad(),
@@ -248,32 +263,42 @@ class Simulator(PredictionSession):
             ) as pbar,
         ):
             for step in range(num_events_to_simulate):
+                if not alive.any():
+                    break
+                rows = alive.nonzero().squeeze(-1)
                 current_len = initial_len + sim_state["step_count"]
 
-                active_time_seq = buffers["time"][:, :current_len]
-                active_time_delta = buffers["time_delta"][:, :current_len]
-                active_event_seq = buffers["event"][:, :current_len]
+                active_time_seq = buffers["time"][rows, :current_len]
+                active_time_delta = buffers["time_delta"][rows, :current_len]
+                active_event_seq = buffers["event"][rows, :current_len]
                 active_valid_event_mask = active_event_seq != pad_token_id
 
-                try:
-                    dtimes_pred, type_pred = self._simulate_one_step(
-                        active_time_seq,
-                        active_time_delta,
-                        active_event_seq,
-                        active_valid_event_mask,
-                    )
-                except ValueError as e:
-                    logger.warning(e)
-                    break
+                dtimes_pred, type_pred = self._simulate_one_step(
+                    active_time_seq,
+                    active_time_delta,
+                    active_event_seq,
+                    active_valid_event_mask,
+                )
+                finite = torch.isfinite(dtimes_pred).squeeze(-1)
+                if torch.isnan(dtimes_pred).any() or (dtimes_pred < 0).any():
+                    raise ValueError("Invalid sampled waiting time")
+                alive[rows[~finite]] = False
+                sim_state["no_next_event_mask"] = ~alive
 
                 if current_len > 0:
                     new_times = active_time_seq[:, -1:] + dtimes_pred
                 else:
                     new_times = dtimes_pred
 
-                buffers["time"][:, current_len] = new_times.squeeze(-1)
-                buffers["time_delta"][:, current_len] = dtimes_pred.squeeze(-1)
-                buffers["event"][:, current_len] = type_pred.squeeze(-1)
+                buffers["time"][rows[finite], current_len] = new_times.squeeze(-1)[
+                    finite
+                ]
+                buffers["time_delta"][rows[finite], current_len] = dtimes_pred.squeeze(
+                    -1
+                )[finite]
+                buffers["event"][rows[finite], current_len] = type_pred.squeeze(-1)[
+                    finite
+                ]
 
                 sim_state["step_count"] += 1
                 pbar.update(1)
@@ -296,11 +321,13 @@ class Simulator(PredictionSession):
             final_time_seq = final_time_seq - offset
 
         # Valid mask is True for all generated events
-        simul_mask = torch.ones_like(final_time_seq, dtype=torch.bool)
+        simul_mask = final_event_seq != self._model.pad_token_id
+        final_time_seq = torch.where(simul_mask, final_time_seq, 0)
 
         return SimulationResult(
             time_seqs=final_time_seq,
             time_delta_seqs=final_time_delta,
             type_seqs=final_event_seq,
             valid_event_mask=simul_mask,
+            no_next_event_mask=sim_state["no_next_event_mask"],
         )

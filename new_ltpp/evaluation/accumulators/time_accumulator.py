@@ -62,7 +62,11 @@ class InterEventTimeAccumulator(Accumulator):
 
         # Quick validation
         sim_event_count = int(valid_sim.numel())
-        if sim_event_count < self.min_sim_events:
+        terminated = (
+            simulation.no_next_event_mask is not None
+            and simulation.no_next_event_mask.any()
+        )
+        if sim_event_count < self.min_sim_events and not terminated:
             logger.warning(
                 "InterEventTimeAccumulator: Too few simulated events (%d < %d), skipping batch",
                 sim_event_count,

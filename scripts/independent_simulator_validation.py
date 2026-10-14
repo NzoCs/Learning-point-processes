@@ -289,7 +289,7 @@ def run(output, size=4096):
         batch_intensity_ratio=(repeated[0] / base[0]).detach().tolist(),
         sample_grid_ratio=(grid[0, 0, 0] / base[0, 0, 0]).detach().tolist(),
         poisson_case="Not asserted: tanh cumulative hazard is bounded for finite weights, incompatible with positive constant hazard on an unbounded horizon",
-        cause="autograd differentiates a mean, dividing individual intensities by batch/time/grid size",
+        cause="pointwise sum differentiation; no batch/time/grid scaling",
     )
     hazard_at_zero, _ = hazard(torch.zeros(1, 1, 1, 4), torch.zeros(1, 1, 1))
     linear = hazard.layer_dense_3[0]

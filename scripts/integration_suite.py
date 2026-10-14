@@ -66,7 +66,7 @@ def compare(actual, expected, path="snapshot"):
         raise AssertionError(f"{path}: {actual!r} != {expected!r}")
 
 
-def run_model(model_name, output, *, sampling_rounds=None):
+def run_model(model_name, output, *, sampling_rounds=None, allow_terminated=False):
     import numpy as np
     import pyarrow.parquet as pq
     import torch
@@ -163,11 +163,17 @@ def run_model(model_name, output, *, sampling_rounds=None):
     records = pq.read_table(
         config.base_dir / "simulations" / "sim_batch.parquet"
     ).to_pylist()
-    assert len(records) == 40, "Expected eight complete simulations of five events"
-    assert {row["seq_idx"] for row in records} == set(range(8))
+    if allow_terminated:
+        assert len(records) <= 40
+        assert {row["seq_idx"] for row in records} <= set(range(8))
+    else:
+        assert len(records) == 40, "Expected eight complete simulations of five events"
+        assert {row["seq_idx"] for row in records} == set(range(8))
     for sequence in range(8):
         events = [row for row in records if row["seq_idx"] == sequence]
-        assert [row["event_idx"] for row in events] == list(range(5))
+        assert [row["event_idx"] for row in events] == list(
+            range(len(events) if allow_terminated else 5)
+        )
         assert all(row["type_event"] in (0, 1) for row in events)
         assert all(math.isfinite(row["time_since_start"]) for row in events)
         assert all(row["time_since_last_event"] >= 0 for row in events)
@@ -207,6 +213,16 @@ def run_model(model_name, output, *, sampling_rounds=None):
         "simulation_records": records,
         "simulation_numeric_results": numeric_csv,
     }
+    if allow_terminated:
+        statuses = [
+            json.loads(line)
+            for line in (config.base_dir / "simulations" / "sequence_status.jsonl")
+            .read_text()
+            .splitlines()
+        ]
+        assert [row["seq_idx"] for row in statuses] == list(range(8))
+        assert sum(row["generated_events"] for row in statuses) == len(records)
+        snapshot["simulation_sequence_status"] = statuses
     # allow_nan=False also catches nonfinite values in JSON/CSV/Parquet metrics.
     write_json(output / "snapshot.json", snapshot)
     write_json(

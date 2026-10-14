@@ -1,0 +1,272 @@
+{
+  "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+  "integration_commit": "4d07760046c94508146195df9700569ec015e961",
+  "final_control_commit": "c0ebac47a0edca17df2ad785bb09935d95520706",
+  "models": {
+    "ANHN": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/ANHN/run.log",
+      "model": "ANHN",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.11,
+          "after_p_value": 0.05,
+          "global_observed": 0.09297757338343236,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "ANHP": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/ANHP/run.log",
+      "model": "ANHP",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.55,
+          "after_p_value": 0.98,
+          "global_observed": -0.46303534868654317,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "FullyNN": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/FullyNN/run.log",
+      "model": "FullyNN",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.05,
+          "after_p_value": 0.01,
+          "global_observed": 0.5166760133363786,
+          "pairs": 8
+        },
+        "known-terminal": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.1,
+          "after_p_value": 0.05,
+          "global_observed": 0.16041073346691953,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "Hawkes": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/Hawkes/run.log",
+      "model": "Hawkes",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.05,
+          "after_p_value": 0.01,
+          "global_observed": 0.23509066139419385,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "IntensityFree": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/IntensityFree/run.log",
+      "model": "IntensityFree",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.45,
+          "after_p_value": 0.05,
+          "global_observed": 0.05609120267426392,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "NHP": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/NHP/run.log",
+      "model": "NHP",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.54,
+          "after_p_value": 1.0,
+          "global_observed": -0.4915504600940225,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "ODETPP": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/ODETPP/run.log",
+      "model": "ODETPP",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.19,
+          "after_p_value": 0.03,
+          "global_observed": 0.10396000519481842,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "RMTPP": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/RMTPP/run.log",
+      "model": "RMTPP",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.38,
+          "after_p_value": 0.06,
+          "global_observed": 0.21314935195028345,
+          "pairs": 8
+        },
+        "known-terminal": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.05,
+          "after_p_value": 0.01,
+          "global_observed": 0.21326760457986244,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "SAHP": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/SAHP/run.log",
+      "model": "SAHP",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.73,
+          "after_p_value": 0.96,
+          "global_observed": -0.3625454296503857,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "SelfCorrecting": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/SelfCorrecting/run.log",
+      "model": "SelfCorrecting",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.66,
+          "after_p_value": 0.77,
+          "global_observed": -0.13454910928198666,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "THP": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/THP/run.log",
+      "model": "THP",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.6,
+          "after_p_value": 0.92,
+          "global_observed": -0.5524249557866254,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    },
+    "Poisson": {
+      "status": "passed",
+      "log": "/home/runner/work/Learning-point-processes/Learning-point-processes/artifacts/global-pipeline-after/Poisson/run.log",
+      "model": "Poisson",
+      "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+      "ordinary": "all_numerical_fields_exact",
+      "conditional": {
+        "conditional": {
+          "weights_optimizer_losses_predictions_simulations": "exact",
+          "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+          "before_p_value": 0.91,
+          "after_p_value": 0.82,
+          "global_observed": -0.21910338462603754,
+          "pairs": 8
+        }
+      },
+      "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+      "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+    }
+  },
+  "local_statistic_max_absolute_differences": {
+    "ANHN:conditional": 8.604228440844963e-16,
+    "ANHP:conditional": 8.222589276130066e-16,
+    "FullyNN:conditional": 7.494005416219807e-16,
+    "FullyNN:known-terminal": 5.828670879282072e-16,
+    "Hawkes:conditional": 9.298117831235686e-16,
+    "IntensityFree:conditional": 1.096345236817342e-15,
+    "NHP:conditional": 7.771561172376096e-16,
+    "ODETPP:conditional": 6.522560269672795e-16,
+    "RMTPP:conditional": 5.967448757360216e-16,
+    "RMTPP:known-terminal": 5.967448757360216e-16,
+    "SAHP:conditional": 9.992007221626409e-16,
+    "SelfCorrecting:conditional": 9.992007221626409e-16,
+    "THP:conditional": 8.881784197001252e-16,
+    "Poisson:conditional": 5.967448757360216e-16
+  },
+  "core_tests": 349,
+  "core_skips": 7,
+  "core_deselected": 2,
+  "coverage_percent": 85.07,
+  "scope": "CPU Linux integration; not scientific calibration of all models or GPU validation"
+}

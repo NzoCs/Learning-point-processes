@@ -24,6 +24,21 @@ reprise à la frontière d'époque et redémarrage après interruption de prédi
 Ce contrôle logiciel ne démontre pas la calibration scientifique de tous les
 quotas ou paramètres. Ruche/CUDA/DDP restent à valider.
 
+Les douze modèles passent la [campagne Linux](https://github.com/NzoCs/Learning-point-processes/actions/runs/38637942297).
+Les résultats ordinaires, poids, optimiseur, pertes, prédictions, simulations et
+statuts conditionnels restent strictement identiques. Les p-values locales
+restent identiques ; l'arrondi des statistiques locales diffère au maximum de
+`1,10e-15`. Répétition, replay, reprise à la frontière d'époque et redémarrage
+après interruption sont exacts pour tous les modèles. Sur les huit paires
+d'intégration, FullyNN passe de `0,05` à `0,01`, RMTPP de `0,38` à `0,06`
+pour la p-value globale ; ce ne sont pas des taux de calibration.
+
+Contrôles finaux `c0ebac4` : [CI réussie](https://github.com/NzoCs/Learning-point-processes/actions/runs/38639044746),
+[lint réussi](https://github.com/NzoCs/Learning-point-processes/actions/runs/38639044668),
+**349 tests**, **85,07 % de couverture**. Les **134 preuves JSON** sont conservées
+dans `docs/validation/global-pipeline-20261014` : snapshots avant/après, états
+numériques des checkpoints, statistiques, tirages nuls, répétabilité et provenance.
+
 ### MMD global de signature sur les futurs complets — 14 octobre 2026
 
 Le [rapport détaillé](../docs/GLOBAL_SIGNATURE_CALIBRATION.md) compare les mêmes

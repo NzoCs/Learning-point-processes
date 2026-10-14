@@ -95,3 +95,51 @@ et deux marques. Ses taux de rejet et de puissance ne sont pas automatiquement
 transférables à tous les quotas, historiques ou paramètres. L'indépendance de
 l'entraînement reste une condition du protocole, pas une preuve que la pipeline
 peut inférer d'un checkpoint quelconque. Ruche, CUDA et DDP restent à valider.
+
+## Résultats Linux
+
+Les douze modèles passent la [campagne complète](https://github.com/NzoCs/Learning-point-processes/actions/runs/38637942297)
+sur le code de raccordement `4d07760`, face au parent `5b41f13`.
+Tous les résultats numériques ordinaires restent **strictement identiques**.
+Dans le parcours conditionnel, poids, optimiseur, scheduler, pertes, prédictions,
+événements simulés et statuts terminaux restent aussi strictement identiques.
+Les p-values locales restent toutes identiques ; l'écart maximal d'arrondi des
+statistiques et tirages locaux est `1,10e-15`.
+Répétition, replay du checkpoint, reprise à la frontière d'époque et redémarrage
+après interruption sont exacts pour chaque modèle.
+
+Sur les **huit paires** des petites données d'intégration et **99 swaps** :
+
+| Modèle | Somme historique | MMD global |
+|---|---:|---:|
+| ANHN | 0,11 | 0,05 |
+| ANHP | 0,55 | 0,98 |
+| FullyNN | 0,05 | 0,01 |
+| Hawkes | 0,05 | 0,01 |
+| IntensityFree | 0,45 | 0,05 |
+| NHP | 0,54 | 1,00 |
+| ODETPP | 0,19 | 0,03 |
+| RMTPP | 0,38 | 0,06 |
+| SAHP | 0,73 | 0,96 |
+| SelfCorrecting | 0,66 | 0,77 |
+| THP | 0,60 | 0,92 |
+| Poisson | 0,91 | 0,82 |
+
+Sur les cas supplémentaires avec futurs immédiatement terminés, FullyNN passe
+de `0,10` à `0,05`, RMTPP de `0,05` à `0,01`. Les événements et statuts sont
+strictement conservés. Ces p-values sur de petites données ne constituent ni
+des taux de faux positifs ni un classement des modèles.
+
+Les [contrôles finaux Linux](https://github.com/NzoCs/Learning-point-processes/actions/runs/38639044746)
+et le [lint](https://github.com/NzoCs/Learning-point-processes/actions/runs/38639044668)
+du commit `c0ebac4` passent : **349 tests réussis**, 7 ignorés, 2 désélectionnés,
+**85,07 % de couverture**. Ils ajoutent les contrôles du singleton en prediction,
+du reset complet et des copies d'identifiants. Le calcul du MMD est inchangé
+par rapport au raccordement testé dans la campagne des modèles.
+
+Les [134 preuves JSON](validation/global-pipeline-20261014/) conservent les
+snapshots avant/après, les états numériques des checkpoints conditionnels,
+les statistiques et tous les tirages nuls, les rapports de répétabilité et
+les empreintes des fichiers. La provenance donne aussi le SHA-256 du ZIP
+GitHub et les identifiants des jobs. Les images, Parquet et logs détaillés
+restent dans l'artefact `global-pipeline-linux` pendant trente jours.

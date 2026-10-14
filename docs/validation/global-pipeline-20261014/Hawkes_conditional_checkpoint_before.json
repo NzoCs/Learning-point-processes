@@ -1,0 +1,189 @@
+{
+  "state_dict": {
+    "mu": {
+      "dtype": "torch.float32",
+      "shape": [
+        2
+      ],
+      "values": [
+        0.10197071731090546,
+        0.10199198126792908
+      ]
+    },
+    "alpha": {
+      "dtype": "torch.float32",
+      "shape": [
+        2,
+        2
+      ],
+      "values": [
+        [
+          0.10200044512748718,
+          0.10199613869190216
+        ],
+        [
+          0.10193603485822678,
+          0.10198263823986053
+        ]
+      ]
+    },
+    "beta": {
+      "dtype": "torch.float32",
+      "shape": [
+        2,
+        2
+      ],
+      "values": [
+        [
+          1.0020009279251099,
+          1.0019861459732056
+        ],
+        [
+          1.0019017457962036,
+          1.0020004510879517
+        ]
+      ]
+    }
+  },
+  "optimizer_states": [
+    {
+      "state": {
+        "0": {
+          "step": {
+            "dtype": "torch.float32",
+            "shape": [],
+            "values": 2.0
+          },
+          "exp_avg": {
+            "dtype": "torch.float32",
+            "shape": [
+              2
+            ],
+            "values": [
+              -0.9139096736907959,
+              -1.133663535118103
+            ]
+          },
+          "exp_avg_sq": {
+            "dtype": "torch.float32",
+            "shape": [
+              2
+            ],
+            "values": [
+              0.049082767218351364,
+              0.07232141494750977
+            ]
+          }
+        },
+        "1": {
+          "step": {
+            "dtype": "torch.float32",
+            "shape": [],
+            "values": 2.0
+          },
+          "exp_avg": {
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              2
+            ],
+            "values": [
+              [
+                -0.34615179896354675,
+                -0.4065300524234772
+              ],
+              [
+                -0.46813422441482544,
+                -0.46083328127861023
+              ]
+            ]
+          },
+          "exp_avg_sq": {
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              2
+            ],
+            "values": [
+              [
+                0.006629076786339283,
+                0.009222595952451229
+              ],
+              [
+                0.013850593008100986,
+                0.012178892269730568
+              ]
+            ]
+          }
+        },
+        "2": {
+          "step": {
+            "dtype": "torch.float32",
+            "shape": [],
+            "values": 2.0
+          },
+          "exp_avg": {
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              2
+            ],
+            "values": [
+              [
+                -0.02010778896510601,
+                -0.022471770644187927
+              ],
+              [
+                -0.023569827899336815,
+                -0.01829368993639946
+              ]
+            ]
+          },
+          "exp_avg_sq": {
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              2
+            ],
+            "values": [
+              [
+                2.235045212728437e-05,
+                2.8754304366884753e-05
+              ],
+              [
+                3.7832312955288216e-05,
+                1.8515875126468018e-05
+              ]
+            ]
+          }
+        }
+      },
+      "param_groups": [
+        {
+          "lr": 0.001,
+          "betas": [
+            0.9,
+            0.999
+          ],
+          "eps": 1e-08,
+          "weight_decay": 0,
+          "amsgrad": false,
+          "maximize": false,
+          "foreach": null,
+          "capturable": false,
+          "differentiable": false,
+          "fused": null,
+          "decoupled_weight_decay": false,
+          "params": [
+            0,
+            1,
+            2
+          ]
+        }
+      ]
+    }
+  ],
+  "lr_schedulers": [],
+  "epoch": 0,
+  "global_step": 2
+}

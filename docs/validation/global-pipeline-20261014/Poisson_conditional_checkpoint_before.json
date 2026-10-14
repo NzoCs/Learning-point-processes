@@ -1,0 +1,71 @@
+{
+  "state_dict": {
+    "log_rates": {
+      "dtype": "torch.float32",
+      "shape": [
+        2
+      ],
+      "values": [
+        0.001930890022777021,
+        0.0019777119159698486
+      ]
+    }
+  },
+  "optimizer_states": [
+    {
+      "state": {
+        "0": {
+          "step": {
+            "dtype": "torch.float32",
+            "shape": [],
+            "values": 2.0
+          },
+          "exp_avg": {
+            "dtype": "torch.float32",
+            "shape": [
+              2
+            ],
+            "values": [
+              -0.022934913635253906,
+              -0.04668491333723068
+            ]
+          },
+          "exp_avg_sq": {
+            "dtype": "torch.float32",
+            "shape": [
+              2
+            ],
+            "values": [
+              3.361266863066703e-05,
+              0.00012625161616597325
+            ]
+          }
+        }
+      },
+      "param_groups": [
+        {
+          "lr": 0.001,
+          "betas": [
+            0.9,
+            0.999
+          ],
+          "eps": 1e-08,
+          "weight_decay": 0,
+          "amsgrad": false,
+          "maximize": false,
+          "foreach": null,
+          "capturable": false,
+          "differentiable": false,
+          "fused": null,
+          "decoupled_weight_decay": false,
+          "params": [
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "lr_schedulers": [],
+  "epoch": 0,
+  "global_step": 2
+}

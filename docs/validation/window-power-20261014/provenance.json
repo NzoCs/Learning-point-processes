@@ -1,0 +1,60 @@
+{
+  "code_full": "9882678723312cf972f29a222d26c5517168e54e",
+  "code_first_event_preliminary": "799f34ab7fbea921c7cce2c27f15dfeee58b151c",
+  "code_first_event_final": "cb16a690f5ca733ce120027da1d46d375e0bff74",
+  "full_linux_run": 38622375150,
+  "first_event_preliminary_linux_run": 38623421053,
+  "first_event_final_linux_run": 38624318432,
+  "final_lint_run": 38624318596,
+  "final_core_tests": {
+    "passed": 332,
+    "skipped": 7,
+    "deselected": 2,
+    "coverage_percent": 84.35
+  },
+  "local_controls_passed": 5,
+  "artifacts": [
+    {
+      "name": "window-power-FullyNN-1",
+      "artifact_id": 11921774143,
+      "zip_sha256": "77afe39c6ffff74773f34e8851872f94224b55cb673b680c9aa53e7a662a0547"
+    },
+    {
+      "name": "window-power-FullyNN-2",
+      "artifact_id": 11922359036,
+      "zip_sha256": "f54dff7e020bc6866209cb3b7eded67bf8c09c8f10261d0647cd45c2b2336579"
+    },
+    {
+      "name": "window-power-RMTPP-1",
+      "artifact_id": 11921989096,
+      "zip_sha256": "66bd70895f12611fbd1050ad4bc2ae58900b374e5a604beb644d4f3a950a9cf6"
+    },
+    {
+      "name": "window-power-RMTPP-2",
+      "artifact_id": 11922184105,
+      "zip_sha256": "96bed95b13ab79efc5d0d5b1a28749ea737e521c4f7e2776597563f47aa2a620"
+    },
+    {
+      "name": "window-first-event-1",
+      "artifact_id": 11923455432,
+      "zip_sha256": "038d4265f92b7e97994a2db20fc9ea355f6f6ad1ff4b89f85fa23f6ccb88c0e8"
+    },
+    {
+      "name": "window-first-event-2",
+      "artifact_id": 11923830281,
+      "zip_sha256": "7f77c211a0d3ba57848be0adc248f27aa1ab8c0b3e6120b9fc6d39e7ab84eddc"
+    },
+    {
+      "name": "window-pooled-1",
+      "artifact_id": 11922903134,
+      "zip_sha256": "91dfef2fe118b04b1bc53348f870e0ff9c824a6fdb45bf139ca97e554333b0fb"
+    },
+    {
+      "name": "window-pooled-2",
+      "artifact_id": 11923082369,
+      "zip_sha256": "b31ca795ca31bfcf8b87708340148d70891dde59bf24034d50222ce750f4ad16"
+    }
+  ],
+  "model_and_production_kernel_changed": false,
+  "ruche_cuda_ddp_validated": false
+}

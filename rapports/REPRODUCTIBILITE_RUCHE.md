@@ -1,5 +1,27 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Diagnostic de puissance FullyNN — 14 octobre 2026
+
+Le [diagnostic détaillé](../docs/WINDOW_POWER_DIAGNOSIS.md) compare les mêmes
+checkpoints figés, sans modifier les modèles ou le kernel de production.
+FullyNN produit environ 0,20 événement par fenêtre et 83 % de fenêtres vides
+sur ces fixtures. Une grille de signature de 64 points ne suffit pas à améliorer
+la détection de l'accélération à 128 paires : elle reste à 4–6 %.
+
+Un contrôle sur le premier événement isole l'effet du découpage : même kernel
+RBF, mêmes données et mêmes permutations, mais MMD sur toutes les 2 048 paires,
+**87–95 %** de détection contre **5–9 %** en additionnant les petits batches.
+Les rejets H0 du MMD global sont de 3–6 % à cette taille. La rareté des événements
+et la perte des comparaisons entre petits batches expliquent cette difficulté ;
+le kernel RBF peut détecter le signal sans changer FullyNN. Cette preuve concerne
+le premier événement et ne valide pas encore un MMD global de tous les futurs
+avec le kernel de signature. Le défaut de la pipeline reste inchangé.
+
+Code final `cb16a69` : [validation Linux réussie](https://github.com/NzoCs/Learning-point-processes/actions/runs/38624318432),
+[lint réussi](https://github.com/NzoCs/Learning-point-processes/actions/runs/38624318596),
+**332 tests**, **84,35 % de couverture**. Rapports et plans conservés dans
+`docs/validation/window-power-20261014`. Les diagnostics restent optionnels.
+
 ### Exactitude des pertes et nouvelles validations CPU — 14 octobre 2026
 
 Sur `codex/unbounded-neural-sampling`, le [contrat détaillé](../docs/LIKELIHOOD_EXACTNESS.md)

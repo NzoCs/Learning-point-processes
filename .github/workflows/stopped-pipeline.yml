@@ -17,6 +17,11 @@ jobs:
       HF_DATASETS_OFFLINE: "1"
     steps:
       - uses: actions/checkout@v4
+      - name: Check out the reviewed pre-wiring version for a same-runner comparison
+        uses: actions/checkout@v4
+        with:
+          ref: acd6f374cedfad47081b65d7cbe082ba1dc007cb
+          path: artifacts/stopped-pipeline-before-code
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -24,8 +29,25 @@ jobs:
         run: |
           python -m pip install uv==0.11.29
           uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Capture all pre-wiring models on this same CPU
+        run: |
+          cd "$GITHUB_WORKSPACE/artifacts/stopped-pipeline-before-code"
+          "$GITHUB_WORKSPACE/.venv/bin/python" - <<'PY'
+          import os
+          from pathlib import Path
+          import new_ltpp
+          from scripts.integration_suite import CATALOGUE, run_model
+          assert Path(new_ltpp.__file__).resolve().is_relative_to(Path.cwd())
+          for name in CATALOGUE:
+              target = Path(os.environ['GITHUB_WORKSPACE'])/'artifacts/stopped-pipeline-before'/name
+              target.mkdir(parents=True, exist_ok=True)
+              run_model(name, target, allow_terminated=name in ('FullyNN','RMTPP'))
+              print('Before', name, 'completed', flush=True)
+          PY
       - name: All production and conditional models with known empty terminal futures
-        run: uv run --frozen --no-sync python -m scripts.stopped_pipeline_validation --output artifacts/stopped-pipeline
+        run: >-
+          uv run --frozen --no-sync python -m scripts.stopped_pipeline_validation
+          --reference-dir artifacts/stopped-pipeline-before --output artifacts/stopped-pipeline
       - name: Exact stopped conditional repetition and checkpoint resume
         run: |
           for model in FullyNN RMTPP; do
@@ -35,5 +57,7 @@ jobs:
         if: always()
         with:
           name: stopped-pipeline-linux
-          path: artifacts/stopped-pipeline
+          path: |
+            artifacts/stopped-pipeline
+            artifacts/stopped-pipeline-before
           retention-days: 30

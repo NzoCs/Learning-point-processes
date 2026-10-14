@@ -72,9 +72,13 @@ uv run --frozen --no-sync python -m scripts.stopped_pipeline_validation \
 
 The optional Linux workflow runs train/test/predict for all eleven historical
 models plus Poisson, and their conditional pipelines on separately generated
-train/dev/test data. Ordinary output snapshots for the nine unaffected historical
-models and Poisson must match every prior numerical field at the existing
-tolerances. For FullyNN/RMTPP, fitted weights, losses, gradients, predictions,
+train/dev/test data. It first reruns the reviewed pre-wiring commit `acd6f37`
+on the same runner with the same locked runtime, independently loaded from its
+own checkout. This separates native-CPU refitting drift from the wiring change;
+old archived snapshots are not replaced and tolerances are not widened.
+Ordinary output snapshots for the nine unaffected historical models and Poisson
+must match every numerical field of that same-runner reference. For FullyNN/RMTPP,
+fitted weights, losses, gradients, predictions,
 trajectories and sequence termination statuses must match their pre-wiring
 snapshots; only the observation protocol and prediction statistics change.
 

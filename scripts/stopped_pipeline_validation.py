@@ -8,7 +8,7 @@ from scripts.conditional_integration_suite import run_model as run_conditional
 from scripts.integration_suite import CATALOGUE, compare, run_model, write_json
 
 
-def run(output):
+def run(output, reference_dir=None):
     output.mkdir(parents=True, exist_ok=True)
     baseline = Path("docs/validation/unbounded-sampling-20261014")
     report = {}
@@ -27,7 +27,12 @@ def run(output):
         target.mkdir(parents=True, exist_ok=True)
         complete = name in ("FullyNN", "RMTPP")
         actual = run_model(name, target, allow_terminated=complete)
-        before = json.loads((baseline / (name + "_snapshot.json")).read_text())
+        reference = (
+            reference_dir / name / "snapshot.json"
+            if reference_dir is not None
+            else baseline / (name + "_snapshot.json")
+        )
+        before = json.loads(reference.read_text())
         if complete:
             for field in unchanged:
                 compare(actual[field], before[field], field)
@@ -67,4 +72,6 @@ def run(output):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    run(parser.parse_args().output.resolve())
+    parser.add_argument("--reference-dir", type=Path)
+    args = parser.parse_args()
+    run(args.output.resolve(), args.reference_dir)

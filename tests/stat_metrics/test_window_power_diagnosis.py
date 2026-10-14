@@ -1,18 +1,23 @@
 """Controls for the opt-in diagnosis, independent of fitted model quality."""
 
-import torch
 import numpy as np
+import torch
 
 from new_ltpp.evaluation.statistical_testing.point_process_kernels import SIGKernel
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
     RBFKernel,
 )
-from new_ltpp.shared_types import Batch
-from scripts.window_power_diagnosis import feature_gram, summary_features
-from scripts.window_first_event_power import first_times, signed_statistics
 from new_ltpp.evaluation.statistical_testing.statistical_tests.conditional_mmd_test import (
     paired_joint_statistic,
 )
+from new_ltpp.shared_types import Batch
+from scripts.window_first_event_power import (
+    first_times,
+    p_value,
+    pooled_first_time_statistics,
+    signed_statistics,
+)
+from scripts.window_power_diagnosis import feature_gram, summary_features
 
 
 def batch(times, mask=None):
@@ -74,3 +79,20 @@ def test_first_event_oracle_matches_exact_censored_poisson_delays():
         2.0,
     )
     np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-12)
+
+
+def test_pooled_first_time_uses_the_same_kernel_and_permutation_statistic():
+    x, y = np.array([0.1, 2.0, 0.7, 2.0]), np.array([0.4, 0.8, 2.0, 2.0])
+    weights = np.exp(
+        -0.5 * (np.arange(4)[:, None] % 2 - np.arange(4)[None, :] % 2) ** 2
+    )
+    signs = 1 - 2 * np.random.default_rng(7).integers(2, size=(100, 4))
+    pool = np.concatenate((x, y)) / 2.0
+    gram = np.exp(-0.5 * (pool[:, None] - pool[None, :]) ** 2 / 0.1**2) * np.tile(
+        weights, (2, 2)
+    )
+    actual = pooled_first_time_statistics(x, y, weights, signs, 2.0)
+    np.testing.assert_allclose(
+        actual, signed_statistics(gram, signs), rtol=1e-12, atol=1e-14
+    )
+    assert p_value(np.array([1.0, 1.0 - 1e-13])) == 1.0

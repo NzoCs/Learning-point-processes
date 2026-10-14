@@ -271,9 +271,9 @@ def run(
                             rejection_rate=rejects / trials,
                             wilson_95=wilson_interval(rejects, trials),
                             h0_excess_binomial_p=excess,
-                            h0_excess_detected=bool(excess < 0.01 / 32)
-                            if excess is not None
-                            else None,
+                            h0_excess_detected=(
+                                bool(excess < 0.01 / 32) if excess is not None else None
+                            ),
                             p_values=values,
                         )
                     )
@@ -295,11 +295,11 @@ def run(
                             for k, v in zip(*np.unique(counts, return_counts=True))
                         },
                         censored_first_time_mean=float(np.mean(values["first_times"])),
-                        event_time_quantiles=np.quantile(
-                            values["event_times"], [0.1, 0.5, 0.9]
-                        ).tolist()
-                        if values["event_times"]
-                        else [],
+                        event_time_quantiles=(
+                            np.quantile(values["event_times"], [0.1, 0.5, 0.9]).tolist()
+                            if values["event_times"]
+                            else []
+                        ),
                     )
             for key, value in model.state_dict().items():
                 torch.testing.assert_close(value, frozen[key], rtol=0, atol=0)

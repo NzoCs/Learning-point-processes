@@ -14,10 +14,39 @@ références neuronales ne sont pas remplacées. Les changements paramétriques 
 archivés comme valeurs avant/après. Les anciens checkpoints paramétriques avec
 embedding neuronal inutilisé ne sont pas directement compatibles.
 
-La validation complète et ses preuves sont consignées dans ce document après
-exécution du workflow Linux dédié. Aucun résultat CPU ne vaut validation CUDA,
-DDP ou Ruche. FullyNN et le thinning générique neuronal conservent les limites
-d'exactitude signalées dans le contrat.
+Le [workflow Linux 38552101343](https://github.com/NzoCs/Learning-point-processes/actions/runs/38552101343),
+code `0dc9482`, passe : **267 tests**, 6 ignorés, 2 désélectionnés, un échec attendu
+pour FullyNN, et **83,81 %** de couverture. Les onze intégrations historiques et
+les douze intégrations conditionnelles passent. Les neuf références neuronales
+restent inchangées aux tolérances conservées. Hawkes, SelfCorrecting et Poisson
+retrouvent exactement poids, simulations, statistiques, tirages nuls et p-values
+après répétition, relecture du checkpoint et reprise à la frontière d'epoch.
+
+Sur la petite fixture, la MAE temporelle Hawkes passe de **0,141250 à 48,965034**,
+alors que sa perte reste **3,920192** : les délais réels de ce modèle peu entraîné
+ne sont plus artificiellement plafonnés. La perte SelfCorrecting passe de
+**0,717339 à 0,715839**, sa MAE de **0,129888 à 0,237720** et la précision des
+marques de **50 % à 75 %**. Ses calculs d'intensité et d'intégrale sont corrigés,
+ses prévisions sont natives et la consommation aléatoire change. Ces chiffres
+sur huit séquences ne constituent pas une mesure de performance scientifique.
+
+Les [preuves brutes](../docs/validation/parametric-refactor-20261014/) conservent
+les comparaisons avant/après, les contrôles conditionnels et les reprises, ainsi
+que la provenance et le SHA256 vérifié de l'archive CI. Les comparaisons de lois
+sur **4096 trajectoires par processus** passent contre les références indépendantes.
+
+Aucun résultat CPU ne vaut validation CUDA, DDP ou Ruche. FullyNN conserve une
+intensité divisée par la taille du batch/grille et un risque cumulé borné.
+Le thinning générique neuronal conserve le plafonnement des délais et le retour
+d'une proposition après épuisement des essais. Ces défauts sont reproduits dans
+les diagnostics indépendants, pas corrigés silencieusement ni cachés par la CI.
+Les anciens checkpoints paramétriques avec embedding inutilisé doivent être
+réentraînés pour la nouvelle architecture. La validation externe Hawkes est ici
+univariée, pas exhaustive sur toutes les matrices d'interactions.
+Le contrat de perte reste distinct : Hawkes compte tous les événements sur
+`[0,T]`, SelfCorrecting et Poisson conditionnent sur le premier événement.
+Ce choix historique n'est pas modifié ; classer les modèles par leur NLL exige
+d'abord d'aligner la fenêtre d'observation et le conditionnement.
 
 ### Répétabilité conditionnelle et calibration étendue — 14 octobre 2026
 

@@ -2,6 +2,50 @@
 
 Branch: `codex/parametric-simulators`, based on `cae9eb7`.
 
+## Validated results — 14 October 2026
+
+Code `0dc9482` passes [Linux CI](https://github.com/NzoCs/Learning-point-processes/actions/runs/38552101343)
+and [quality checks](https://github.com/NzoCs/Learning-point-processes/actions/runs/38552101339).
+The unit suite has 267 passed, 6 skipped, 2 deselected and one expected failure
+documenting FullyNN's known batch dependence. Coverage is 83.81%, above 80%.
+All eleven historical train/test/predict pipelines pass; all nine neural
+snapshots retain their historical values at the existing tolerances. All twelve
+conditional pipelines pass. Hawkes, SelfCorrecting and Poisson reproduce exactly
+the weights, simulated events, statistics, null draws and p-values after a
+complete repeat, checkpoint prediction replay and epoch-boundary training resume.
+
+The tiny integration fixture has eight sequences, two marks and only two
+optimizer steps. It is a regression fixture, not a prediction-quality benchmark.
+
+| Observable on that fixture | Before | After |
+|---|---:|---:|
+| Hawkes test NLL per event | 3.920192 | 3.920192 |
+| Hawkes time MAE | 0.141250 | 48.965034 |
+| Hawkes mean MMD | 16.321195 | 15.406283 |
+| SelfCorrecting test NLL per event | 0.717339 | 0.715839 |
+| SelfCorrecting time MAE | 0.129888 | 0.237720 |
+| SelfCorrecting mark accuracy | 50% | 75% |
+| SelfCorrecting mean MMD | 9.995576 | 11.800401 |
+
+Hawkes' large MAE increase exposes long delays from a barely trained model;
+the old generic sampler clipped those delays. This is not evidence that native
+generation is less correct. SelfCorrecting's differences combine corrected
+likelihood/intensity calculations, native prediction and changed random-number
+consumption. Neither the better mark accuracy nor the changed MMD on eight
+sequences establishes a scientific improvement. Both pooled historical p-values
+remain 0.25 with only three null draws; that coarse fixture cannot assess calibration.
+
+Independent fixed-horizon checks use 4096 trajectories per process and pass
+against HawkesPyLib, NumPy and the SciPy inversion oracle. The independent marked
+SelfCorrecting diagnostic additionally passes compensator rescaling and mark
+checks. Seven neural constant-intensity cases and the IntensityFree lognormal
+case pass their known-law diagnostics. These checks cover specified parameter
+regimes, not all possible learned models or multivariate Hawkes settings.
+
+[Raw before/after values, conditional controls, replay reports and provenance](validation/parametric-refactor-20261014/)
+are archived from artifact `11887177894`, whose SHA256 was verified before reading.
+CUDA was unavailable on these runners; CUDA tests are explicitly skipped.
+
 ## Architecture and observable behavior
 
 `BaseModel` shares the Lightning contract, configuration and optimizer setup.
@@ -104,6 +148,12 @@ of every neural model. Independent diagnostics still expose FullyNN's intensity
 dependence on batch/sample size and its bounded cumulative-hazard parameterization.
 The generic neural sampler still has proposal iteration limits and delay
 clipping. These paths are not changed or hidden by this parametric refactor.
+
+The likelihood observation contracts also differ: Hawkes scores every valid
+event over `[0,T]`, whereas SelfCorrecting and Poisson condition on the first
+event and score subsequent events. This historical distinction is preserved;
+their reported NLLs must not be used directly to rank models without aligning
+the observation window and conditioning contract first.
 
 Local and ordinary hosted Linux CPU checks do not validate CUDA, DDP or execution
 on Ruche. GPU behavior, reproducibility across devices and GPU execution times

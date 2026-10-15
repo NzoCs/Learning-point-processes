@@ -1,0 +1,76 @@
+{
+  "scope": "Frozen FullyNN/RMTPP CPU diagnostic only; no model/sampler/production-test change; no Ruche/CUDA/DDP validation",
+  "workflows": [
+    "https://github.com/NzoCs/Learning-point-processes/actions/runs/38718120167",
+    "https://github.com/NzoCs/Learning-point-processes/actions/runs/38718888764"
+  ],
+  "software_checks": {
+    "commit": "244b80436599aad95a343d671d6cf39de505be38",
+    "passed": 366,
+    "skipped": 7,
+    "deselected": 2,
+    "coverage_percent": 85.13
+  },
+  "proofs": [
+    {
+      "file": "acceleration-centering-FullyNN.json",
+      "sha256": "1fce1b3d5b329edff94214944a9045e8cf00192e62e686b401f3a01e7c9177b2",
+      "bytes": 412992,
+      "model": "FullyNN",
+      "source_commit": "244b80436599aad95a343d671d6cf39de505be38",
+      "source_lf_sha256": "481d552382aa7f16e132021b608e2de0d1fef9f0c195c31b700bf26834eb16e8",
+      "completed": true,
+      "H0_trials": 300,
+      "H1_trials": 200,
+      "pairs": 128,
+      "centered_followup": true,
+      "model_state_sha256": "c14bbb3ec5714f9edd7da7af569c54c13958365d7bbbc764c84dd3e858867c51",
+      "no_h0_excess_detected": true
+    },
+    {
+      "file": "acceleration-centering-RMTPP.json",
+      "sha256": "2ed6f865eff91fa020371d1da4f8e8dfa63bcde64872fca101aa3a845f16963b",
+      "bytes": 415596,
+      "model": "RMTPP",
+      "source_commit": "244b80436599aad95a343d671d6cf39de505be38",
+      "source_lf_sha256": "481d552382aa7f16e132021b608e2de0d1fef9f0c195c31b700bf26834eb16e8",
+      "completed": true,
+      "H0_trials": 300,
+      "H1_trials": 200,
+      "pairs": 128,
+      "centered_followup": true,
+      "model_state_sha256": "b23faf3c7e96c67ce0861317117e153a53ee19c25a50d60ca68488419c881dd0",
+      "no_h0_excess_detected": true
+    },
+    {
+      "file": "acceleration-diagnosis-FullyNN.json",
+      "sha256": "d38c63d0c3684153f4ca6a3a7d5031d3a5f3209c61081c0cddaa774e913a0783",
+      "bytes": 1147898,
+      "model": "FullyNN",
+      "source_commit": "9c448aeafca19d9830637c01ff8e2966ab2ecc2b",
+      "source_lf_sha256": "9f454229bf32e1115c0a8188b7adeedf6588472991140a5a9213c4cc867676d4",
+      "completed": true,
+      "H0_trials": 300,
+      "H1_trials": 200,
+      "pairs": 128,
+      "centered_followup": false,
+      "model_state_sha256": "c14bbb3ec5714f9edd7da7af569c54c13958365d7bbbc764c84dd3e858867c51",
+      "no_h0_excess_detected": true
+    },
+    {
+      "file": "acceleration-diagnosis-RMTPP.json",
+      "sha256": "a07acc3353ef79e41ef821d7087ad671b7cb9c9b9b2bc8b5c10e44abb64d3d68",
+      "bytes": 1147414,
+      "model": "RMTPP",
+      "source_commit": "9c448aeafca19d9830637c01ff8e2966ab2ecc2b",
+      "source_lf_sha256": "9f454229bf32e1115c0a8188b7adeedf6588472991140a5a9213c4cc867676d4",
+      "completed": true,
+      "H0_trials": 300,
+      "H1_trials": 200,
+      "pairs": 128,
+      "centered_followup": false,
+      "model_state_sha256": "b23faf3c7e96c67ce0861317117e153a53ee19c25a50d60ca68488419c881dd0",
+      "no_h0_excess_detected": true
+    }
+  ]
+}

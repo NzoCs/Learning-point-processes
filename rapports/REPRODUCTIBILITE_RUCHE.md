@@ -1,5 +1,36 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Sensibilité du MMD à l’accélération — 15 octobre 2026
+
+Le [diagnostic contrôlé](../docs/ACCELERATION_DIAGNOSIS.md) sépare grille,
+échelle du temps et quotas sur les mêmes futurs des checkpoints FullyNN/RMTPP
+actuels : 128 paires, 300 essais H0 et 200 essais H1 par cellule. Aucun modèle,
+poids, simulateur ni réglage de production ne change.
+
+Sur RMTPP quota 6, la puissance passe de 45 % avec la signature actuelle à
+83 % sur une grille de 32 points, puis 100 % sur 200 essais en combinant cette
+grille avec l’échelle de temps d’entraînement. À effectif identique, le quota
+3 donne 25 % avec la signature actuelle. Les chemins conservant tous les sauts
+donnent 14 % avec l’échelle du maximum commun et 99 % avec l’échelle fixe :
+la résolution et la pondération temporelle du kernel interagissent.
+
+FullyNN a 79,26 % de futurs vides, et passer de 3 à 6 événements apporte moins
+de 1 % d’événements supplémentaires ; les variantes de signature restent peu
+puissantes à cet effectif. Un contrôle temporel centré, déclaré ensuite et
+testé sur de nouveaux tirages indépendants, passe de 9,5 % à 36,5 % de détection
+pour les mêmes futurs FullyNN quota 6, avec 4,33 % de rejets H0. Le bruit de
+présence/comptage masque donc aussi un signal temporel exploitable. Ce contrôle
+ciblé ne remplace pas le test global des marques, arrêts et futurs complets.
+
+Aucun excès H0 n’est détecté aux critères familiaux déclarés, sans prétendre
+à une calibration universelle. Les quatre jobs scientifiques réussissent ;
+les rapports, p-values et empreintes sont archivés dans
+`docs/validation/acceleration-diagnosis-20261015`. La
+[CI du contrôle](https://github.com/NzoCs/Learning-point-processes/actions/runs/38718888764)
+passe **366 tests**, couverture **85,13 %**. Les variantes restent optionnelles.
+La campagne sur les autres modèles est distincte ; aucune validation Ruche,
+CUDA ou DDP supplémentaire n’est revendiquée.
+
 ### Pipeline conditionnelle avec MMD global — 14 octobre 2026
 
 Le [contrat détaillé](../docs/GLOBAL_CONDITIONAL_PIPELINE.md) remplace la somme

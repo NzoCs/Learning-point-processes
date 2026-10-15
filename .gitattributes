@@ -3,3 +3,4 @@
 *.sh text eol=lf
 # Preserve the archived Linux proof bytes and their SHA-256 on Windows too.
 docs/validation/global-pipeline-20261014/*.json text eol=lf
+docs/validation/acceleration-diagnosis-20261015/*.json text eol=lf

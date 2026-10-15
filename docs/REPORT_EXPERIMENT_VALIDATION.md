@@ -73,10 +73,10 @@ teste séparément ce contrat exact de la pipeline. Ses contrôles H0 internes
 sur certains modèles neuronaux ne certifient pas à eux seuls leur simulateur
 non constant ; les références indépendantes ont leur périmètre propre.
 
-Les courbes RMSE Hawkes du rapport demandent encore une référence commune
-entre prédicteurs. Elles ne sont pas remplacées par cette campagne. Une
-comparaison formelle de puissance MMD/RMSE nécessitera un test RMSE de même
-niveau, avec le même contrat d'observation et de prédiction.
+Le complément `scripts.report_rmse_validation` reprend les expériences RMSE
+avec une référence commune et compare leur détection au MMD sur les mêmes
+observations. Son contrat est détaillé dans `REPORT_RMSE_VALIDATION.md`.
+Il ne modifie pas les cellules MMD déjà lancées ni leur protocole figé.
 
 ## Critères de lecture
 

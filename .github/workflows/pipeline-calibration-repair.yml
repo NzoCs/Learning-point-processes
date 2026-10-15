@@ -45,11 +45,17 @@ jobs:
           uv run --frozen --no-sync python -m scripts.pipeline_protocol_calibration
           --model ${{ matrix.model }} --scenario ${{ matrix.scenario }}
           --output artifacts/pipeline-repair-${{ matrix.model }}-${{ matrix.scenario }}
-      - name: Compare all previously successful observed and null statistics exactly
+      - name: Check exact historical p-values RNG and dense-reference numerical equivalence
         run: >-
           uv run --frozen --no-sync python -m scripts.pipeline_calibration_regression
           --model ${{ matrix.model }} --scenario ${{ matrix.scenario }}
+          --numeric-reference
           --output artifacts/pipeline-repair-${{ matrix.model }}-${{ matrix.scenario }}
+      - name: Check original and fixed validators on the same runner and same trajectories
+        if: matrix.model == 'Hawkes'
+        run: |
+          git fetch --no-tags --depth=1 origin 3cb3e9917896d2984675a4102d805ba4295d233e
+          uv run --frozen --no-sync python -m scripts.continuation_precision_parent_check --output artifacts/pipeline-repair-Hawkes-quota6
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -49,7 +49,7 @@ p-values. Aucun clipping de délai, filtrage d’essai ou déplacement d’évé
 Les petits écarts d’arrondi ne sont pas corrigés dans les données : seul le
 contrôle de leur cohérence est adapté à leur précision réelle.
 
-## Plan du rejeu, fixé avant les nouveaux résultats
+## Plan initial du rejeu, fixé avant les nouveaux résultats
 
 Le workflow optionnel `pipeline-calibration-repair.yml` relance les trois jobs
 sur Linux CPU, avec les dépendances verrouillées : 500 H0 et 200 essais de
@@ -77,3 +77,45 @@ modifiée, un RNG modifié, un checkpoint modifié et des essais manquants.
 
 Les autres campagnes et les réglages de production du kernel restent
 inchangés. Ce rejeu ne constitue pas une validation CUDA/Ruche/DDP.
+
+## Complément après le premier rejeu : précision inter-exécutions
+
+Le premier rejeu `f8d16e1`, workflow `38757445347`, termine les 2 700 essais
+scientifiques sans erreur : les 50 rejets de validation disparaissent.
+Les deux jobs IntensityFree passent aussi leur contrôle bit à bit, soit
+897 et 878 anciens essais strictement identiques. Le job Hawkes échoue
+uniquement sur ce nouveau contrôle historique strict : les 875 anciens essais
+diffèrent en derniers bits, au maximum `4,996003610813204e-16` sur les
+statistiques observées et nulles, avec toutes les p-values et graines identiques.
+Les versions déclarées, dépendances verrouillées et checkpoints coïncident.
+La cause matérielle précise de cette variation n’est pas établie.
+
+Avant de modifier l’audit, un rejeu local dans le même processus compare le
+validateur original du commit `3cb3e9` au nouveau sur le premier essai de H0 et
+des deux alternatives : statistiques et simulations sont strictement identiques.
+Le calcul statistique, le kernel et les simulateurs n’ont pas changé.
+
+Le rejeu suivant conserve donc deux niveaux de contrôle explicites :
+
+- SHA-256 exact lorsqu’il coïncide ; sinon comparaison de toutes les valeurs
+  avec `rtol=1e-10, atol=1e-12`, **limites déjà présentes dans le contrôle public
+  Gram dense / calcul par blocs**, sans seuil ajusté à l’écart observé ;
+- p-values, graines, RNG nul, cardinalités, protocole et checkpoint toujours
+  strictement identiques. Les références numériques sont vérifiées contre
+  les SHA-256 originaux avant toute comparaison.
+
+Le mode strict sans référence numérique reste disponible pour l’audit ; le
+workflow active explicitement la comparaison inter-exécutions. Une p-value
+modifiée, une référence altérée ou une différence hors du contrat numérique
+fait échouer le job. Les résultats enregistrés ne sont ni arrondis ni remplacés.
+
+En complément, `continuation_precision_parent_check.py` vérifie sur le même
+runner Linux que les méthodes statistiques hors validation sont identiques au
+parent, que modèles/kernel/MMD global n’ont pas changé, puis compare les deux
+validateurs sur les mêmes futurs et les mêmes trois premiers essais. Ce contrôle
+exige encore l’égalité bit à bit des statistiques et trajectoires. Il utilise
+le validateur original lu dans Git, sans modifier le modèle.
+
+Les rapports initiaux et le premier rejeu Hawkes restent conservés. Le résultat
+du contrôle historique est séparé de celui des 900 essais scientifiques ; le
+premier échec d’audit n’est pas présenté comme une campagne GitHub réussie.

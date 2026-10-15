@@ -1,0 +1,20 @@
+{
+  "model": "Hawkes",
+  "scenario": "quota6",
+  "completed": true,
+  "baseline_sha256": "c73e28b040e9c9c04bfa9f213a93eff08b5b0a0dd68f4725bf8193f8b3a6f580",
+  "source_commit": "f8d16e135e49b7214f6b3bfe2f4695d98d70b8cb",
+  "checkpoint_unchanged": true,
+  "scientific_protocol_unchanged": true,
+  "previous_successful_draws_exact": 0,
+  "previous_successful_draws_numerically_equivalent": 875,
+  "historical_p_values_exact": 875,
+  "cross_run_precision": {
+    "rtol": 1e-10,
+    "atol": 1e-12,
+    "max_abs_difference": 4.996003610813204e-16
+  },
+  "original_failures_repaired": 25,
+  "total_trials": 900,
+  "comparison": "SHA256 first; optional cross-run comparison uses the existing public dense-reference tolerance, with exact RNG metadata and p-values"
+}

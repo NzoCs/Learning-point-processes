@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 
 BASELINES = Path("docs/validation/pipeline-repair-20261015")
@@ -16,9 +17,14 @@ def draw_hash(value):
     ).hexdigest()
 
 
-def verify(baseline, output):
+def verify(baseline, output, reference=None):
     before = json.loads(Path(baseline).read_text(encoding="utf8"))
     old = before["report"]
+    references = (
+        json.loads(Path(reference).read_text(encoding="utf8"))
+        if reference is not None
+        else None
+    )
     output = Path(output)
     after = json.loads((output / "report.json").read_text(encoding="utf8"))
     if after["status"] != "completed" or after["errors"]:
@@ -50,7 +56,8 @@ def verify(baseline, output):
         raise AssertionError(
             "Frozen checkpoint, parameters, training metadata or sampler settings changed"
         )
-    previous = repaired = total = 0
+    previous = equivalent = repaired = total = 0
+    max_abs_difference = 0.0
     if [row["hypothesis"] for row in after["results"]] != after["cases"]:
         raise AssertionError("Every declared hypothesis must be present exactly once")
     for row in after["results"]:
@@ -59,14 +66,60 @@ def verify(baseline, output):
             raise AssertionError(f"Incomplete trials for {case}")
         draws = json.loads((output / f"{case}_draws.json").read_text(encoding="utf8"))
         actual = {str(v["seed"]): draw_hash(v) for v in draws}
+        actual_records = {str(v["seed"]): v for v in draws}
         if len(actual) != len(draws) or len(draws) != row["planned_trials"]:
             raise AssertionError("Draws must contain every planned seed exactly once")
         for seed, expected_hash in before["successful_draw_sha256"][case].items():
             if actual.get(seed) != expected_hash:
-                raise AssertionError(
-                    f"Historical observed/null statistics or RNG changed: {case}, seed {seed}"
+                if references is None:
+                    raise AssertionError(
+                        f"Historical observed/null statistics or RNG changed: {case}, seed {seed}"
+                    )
+                expected = next(v for v in references[case] if str(v["seed"]) == seed)
+                if draw_hash(expected) != expected_hash:
+                    raise AssertionError(
+                        "Numeric reference does not match the original immutable ledger"
+                    )
+                current = actual_records[seed]
+                metadata = lambda v: {
+                    k: x for k, x in v.items() if k not in ("observed", "null")
+                }
+                if metadata(expected) != metadata(current) or len(
+                    expected["null"]
+                ) != len(current["null"]):
+                    raise AssertionError(
+                        "Historical RNG, seed or permutation count changed"
+                    )
+                old_values = [expected["observed"], *expected["null"]]
+                new_values = [current["observed"], *current["null"]]
+                # The existing public dense-vs-blocked reference checks use
+                # exactly these limits; do not tune a threshold to this run.
+                if not all(
+                    math.isfinite(a)
+                    and math.isfinite(b)
+                    and math.isclose(a, b, rel_tol=1e-10, abs_tol=1e-12)
+                    for a, b in zip(old_values, new_values)
+                ):
+                    raise AssertionError(
+                        "Historical statistics exceed the existing dense-reference precision contract"
+                    )
+                max_abs_difference = max(
+                    max_abs_difference,
+                    max(abs(a - b) for a, b in zip(old_values, new_values)),
                 )
-            previous += 1
+                equivalent += 1
+            else:
+                previous += 1
+            if references is not None:
+                old_row = next(v for v in old["results"] if v["hypothesis"] == case)
+                old_index = next(
+                    i for i, v in enumerate(references[case]) if str(v["seed"]) == seed
+                )
+                new_index = next(
+                    i for i, v in enumerate(draws) if str(v["seed"]) == seed
+                )
+                if old_row["p_values"][old_index] != row["p_values"][new_index]:
+                    raise AssertionError("A historical p-value changed")
         for failure in old["errors"]:
             if failure["case"] == case:
                 if str(failure["seed"]) not in actual:
@@ -75,7 +128,7 @@ def verify(baseline, output):
                     )
                 repaired += 1
         total += len(draws)
-    if previous + repaired != total or repaired != len(old["errors"]):
+    if previous + equivalent + repaired != total or repaired != len(old["errors"]):
         raise AssertionError(
             "Successful and previously failing trials must partition the rerun"
         )
@@ -88,9 +141,18 @@ def verify(baseline, output):
         checkpoint_unchanged=True,
         scientific_protocol_unchanged=True,
         previous_successful_draws_exact=previous,
+        previous_successful_draws_numerically_equivalent=equivalent,
+        historical_p_values_exact=(
+            previous + equivalent if references is not None else None
+        ),
+        cross_run_precision=(
+            dict(rtol=1e-10, atol=1e-12, max_abs_difference=max_abs_difference)
+            if references is not None
+            else None
+        ),
         original_failures_repaired=repaired,
         total_trials=total,
-        comparison="Canonical SHA256 of seed, observed statistic, all 99 null statistics and null RNG seed; no numerical tolerance",
+        comparison="SHA256 first; optional cross-run comparison uses the existing public dense-reference tolerance, with exact RNG metadata and p-values",
     )
     (output / "historical_regression.json").write_text(
         json.dumps(result, indent=2) + "\n", encoding="utf8"
@@ -103,11 +165,18 @@ if __name__ == "__main__":
     parser.add_argument("--model", required=True)
     parser.add_argument("--scenario", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--numeric-reference", action="store_true")
     args = parser.parse_args()
     print(
         json.dumps(
             verify(
-                BASELINES / f"{args.model}-{args.scenario}_before.json", args.output
+                BASELINES / f"{args.model}-{args.scenario}_before.json",
+                args.output,
+                (
+                    BASELINES / f"{args.model}-{args.scenario}_reference_draws.json"
+                    if args.numeric_reference
+                    else None
+                ),
             ),
             indent=2,
         )

@@ -94,3 +94,34 @@ def test_regression_does_not_allow_changed_science_or_filtered_failures(
     (output / "H0_draws.json").write_text(json.dumps(draws))
     with pytest.raises(AssertionError):
         verify(before, output)
+
+
+@pytest.mark.parametrize(
+    "change", ["roundoff", "large_error", "p_value", "rng", "reference"]
+)
+def test_cross_run_reference_keeps_p_values_and_rng_exact(tmp_path, change):
+    before, output, report, draws = files(tmp_path)
+    baseline = json.loads(before.read_text())
+    baseline["report"]["results"] = [dict(hypothesis="H0", p_values=[0.5])]
+    before.write_text(json.dumps(baseline))
+    original = json.loads(json.dumps(draws[0]))
+    reference = tmp_path / "reference.json"
+    if change == "reference":
+        original["null"][0] += 0.01
+    reference.write_text(json.dumps(dict(H0=[original])))
+    report["results"][0]["p_values"] = [0.5, 0.6]
+    draws[0]["null"][0] += 1e-15 if change != "large_error" else 1e-5
+    if change == "p_value":
+        report["results"][0]["p_values"][0] = 0.49
+    if change == "rng":
+        draws[0]["null_seed"] += 1
+    (output / "report.json").write_text(json.dumps(report))
+    (output / "H0_draws.json").write_text(json.dumps(draws))
+    if change == "roundoff":
+        result = verify(before, output, reference)
+        assert result["previous_successful_draws_numerically_equivalent"] == 1
+        assert result["historical_p_values_exact"] == 1
+        assert result["cross_run_precision"]["max_abs_difference"] > 0
+    else:
+        with pytest.raises(AssertionError):
+            verify(before, output, reference)

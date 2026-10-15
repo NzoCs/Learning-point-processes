@@ -18,6 +18,41 @@ CONDITIONAL_MMD_PROTOCOL = "within_history_pair_swaps_joint_kernel_v1"
 BATCH_AGGREGATION_PROTOCOL = "sum_statistics_product_randomization_v1"
 
 
+def _continuation_gaps_match(times, gaps, origin):
+    """Check the origin without confusing float-clock cancellation with a bug.
+
+    Simulators retain sampled gaps but round absolute event clocks; returned
+    relative times undergo another subtraction. Subtracting two such rounded
+    relative clocks need not recover a short sampled gap at a late event.
+
+    In round-to-nearest arithmetic the error of a rounded normal value y is
+    bounded by u/(1-u)*abs(y), u=eps/2. Account for the absolute-clock addition,
+    both origin subtractions and gap storage, in float64 (no input mutation).
+    The existing 1e-5 relative/absolute allowance covers near-zero/subnormal
+    values. The precision budget only extends that allowance where necessary;
+    it does not relax it globally or permit negative/nonfinite sampled gaps.
+    """
+    if not torch.isfinite(gaps).all() or (gaps < 0).any():
+        return False
+    t, d = times.double(), gaps.double()
+    previous = torch.cat((torch.zeros_like(t[:1]), t[:-1]))
+    expected = t - previous
+
+    def unit(tensor):
+        if not tensor.is_floating_point():
+            return 0.0
+        eps = torch.finfo(tensor.dtype).eps
+        return eps / (2.0 - eps)
+
+    clock_unit, gap_unit = unit(times), unit(gaps)
+    # The source absolute clock lies within the rounding interval of t+origin.
+    absolute_upper = (t + origin.double()).abs() + clock_unit * t.abs()
+    roundoff = clock_unit * (absolute_upper + t.abs() + previous.abs())
+    roundoff = roundoff + gap_unit * d.abs()
+    tolerance = torch.maximum(1e-5 + 1e-5 * expected.abs(), roundoff)
+    return bool(((d - expected).abs() <= tolerance).all())
+
+
 def split_history_future(
     batch: Batch,
     history_events: int,
@@ -229,8 +264,11 @@ class ConditionalMMDTwoSampleTest(MMDTwoSampleTest):
                         "Continuations must contain ordered finite relative times"
                     )
                 gaps = batch.time_delta_seqs[row][batch.valid_event_mask[row]]
-                expected = torch.diff(t, prepend=torch.zeros_like(t[:1]))
-                if not torch.allclose(gaps, expected, rtol=1e-5, atol=1e-5):
+                history_times = histories.time_seqs[row][
+                    histories.valid_event_mask[row]
+                ]
+                origin = history_times[-1] if len(history_times) else t.new_zeros(())
+                if not _continuation_gaps_match(t, gaps, origin):
                     raise ValueError(
                         "Continuation gaps must use the shared history endpoint as origin"
                     )

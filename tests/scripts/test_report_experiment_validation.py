@@ -7,6 +7,10 @@ import numpy as np
 import pytest
 import torch
 
+from new_ltpp.evaluation.statistical_testing.statistical_tests.conditional_mmd_test import (
+    paired_joint_statistic,
+)
+from scripts.report_experiment_summary import aggregate, holm_adjust
 from scripts.report_experiment_validation import (
     CASES,
     EXP,
@@ -24,10 +28,6 @@ from scripts.report_experiment_validation import (
     swap_statistics,
     uniformize_counts,
 )
-from new_ltpp.evaluation.statistical_testing.statistical_tests.conditional_mmd_test import (
-    paired_joint_statistic,
-)
-from scripts.report_experiment_summary import aggregate, holm_adjust
 
 
 @pytest.mark.parametrize(

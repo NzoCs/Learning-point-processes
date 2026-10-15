@@ -7,6 +7,9 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
+    monte_carlo_p_value,
+)
 from scripts.report_experiment_validation import (
     POISSON,
     method_grams,
@@ -16,9 +19,6 @@ from scripts.report_experiment_validation import (
     simulate_events,
     swap_statistics,
     write_json,
-)
-from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
-    monte_carlo_p_value,
 )
 
 

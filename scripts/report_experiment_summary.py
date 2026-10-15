@@ -9,6 +9,9 @@ import numpy as np
 import torch
 from scipy.stats import beta, binomtest
 
+from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
+    monte_carlo_p_value,
+)
 from scripts.report_experiment_validation import (
     CASES,
     FAMILY_SIZE,
@@ -17,9 +20,6 @@ from scripts.report_experiment_validation import (
     seed_entropy,
     summarize,
     write_json,
-)
-from new_ltpp.evaluation.statistical_testing.statistical_tests.mmd_test import (
-    monte_carlo_p_value,
 )
 
 

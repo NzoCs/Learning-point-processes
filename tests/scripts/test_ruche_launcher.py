@@ -82,3 +82,46 @@ def test_invalid_epoch_override_fails_in_dry_run(tmp_path):
     )
     assert result.returncode == 2
     assert "LTPP_EPOCHS" in result.stderr
+
+
+@pytest.mark.parametrize("backend_exit", [0, 37])
+def test_job_uses_installed_python_without_uv_and_propagates_failure(
+    tmp_path, backend_exit
+):
+    environment = tmp_path / "installed environment"
+    binary = environment / "bin"
+    binary.mkdir(parents=True)
+    python = binary / "python"
+    python.write_text(
+        '#!/bin/bash\nprintf "%s\\n" "$*" >> "$LTPP_TEST_LOG"\n'
+        'exit "$LTPP_TEST_EXIT"\n',
+        encoding="utf-8",
+    )
+    srun = binary / "srun"
+    srun.write_text('#!/bin/bash\nexec "$@"\n', encoding="utf-8")
+    uv = binary / "uv"
+    uv.write_text("#!/bin/bash\nexit 98\n", encoding="utf-8")
+    for executable in (python, srun, uv):
+        executable.chmod(0o755)
+    log = tmp_path / "calls.txt"
+    result = launch(
+        "smoke_ruche_gpu.sh",
+        tmp_path,
+        env={
+            "LTPP_REPO_DIR": ROOT.as_posix(),
+            "UV_PROJECT_ENVIRONMENT": environment.as_posix(),
+            "SLURM_JOB_ID": "123",
+            "PATH": str(binary) + os.pathsep + os.environ["PATH"],
+            "LTPP_TEST_LOG": log.as_posix(),
+            "LTPP_TEST_EXIT": str(backend_exit),
+        },
+    )
+    assert result.returncode == backend_exit, result.stderr
+    calls = log.read_text().splitlines()
+    assert calls[0] == "-m scripts.check_backend --device cuda"
+    if backend_exit:
+        assert len(calls) == 1, "Training must not follow a failed backend check"
+    else:
+        assert len(calls) == 2
+        assert calls[1].startswith("-m scripts.cli run ")
+        assert "--model NHP" in calls[1] and "--epochs 1" in calls[1]

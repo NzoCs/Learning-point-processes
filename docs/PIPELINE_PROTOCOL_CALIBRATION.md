@@ -1,5 +1,16 @@
 # Campagne scientifique du protocole courant — 15 octobre 2026
 
+Les trois jobs initialement en erreur (Hawkes quota 6, IntensityFree quotas 3/6)
+ont été [corrigés et rejoués](PIPELINE_CALIBRATION_REPAIR.md) sur les mêmes
+graines et modèles : 2 700 essais complets, 50 rejets numériques d’origine
+résolus, 2 650 anciennes p-values strictement identiques. Les modèles et le
+protocole scientifique restent inchangés. Les écarts float32 entre délais
+conservés et horloges relatives arrondies sont désormais validés selon leur
+précision réelle ; les faux décalages d’origine restent rejetés. Le contrôle
+inter-exécutions distingue les derniers bits des statistiques Hawkes de la
+répétition exacte sur un même runner. Aucun réglage n’a été choisi pour modifier
+la calibration ou la puissance.
+
 Cette campagne teste le protocole conditionnel de la pipeline après le
 raccordement du MMD global. Elle n'utilise ni Ruche ni GPU. Le modèle, ses poids,
 ses paramètres de thinning et la borne du sampler restent ceux du parcours

@@ -1,0 +1,71 @@
+{
+  "parent_commit": "3cb3e9917896d2984675a4102d805ba4295d233e",
+  "current_commit": "3e52a9e503f16facb49ed517c7ac75b3d60588af",
+  "original_source_lf_sha256": "816ba52cb50eae63144c98390ce02373543d5e529ef56239543bf4841d6d8d4e",
+  "only_validator_changed": true,
+  "same_process": true,
+  "checkpoint": {
+    "source": "docs/validation/global-pipeline-20261014/Hawkes_conditional_checkpoint_after.json",
+    "sha256": "7b8e149bd53b2f2bb07994b275279ce3d70ab64525cfbe97ab94d22087cd135c",
+    "model_state_sha256": "090a2144c35508cb141dce4d4d397e2bb67422c67960698dd136ec366de8ff36",
+    "independently_fitted": true,
+    "training_seeds": [
+      1701,
+      1702
+    ],
+    "effective_model_config": {
+      "model_id": "Hawkes",
+      "is_training": true,
+      "compute_simulation": false,
+      "compute_metrics": true,
+      "device": "cpu",
+      "gpu": -1,
+      "specs": {
+        "hidden_size": 4,
+        "dropout": 0.0,
+        "num_layers": 1,
+        "num_heads": 2,
+        "time_emb_size": 4,
+        "num_mix_components": 2,
+        "ode_num_sample_per_step": 2
+      },
+      "scheduler_config": {
+        "max_epochs": 1,
+        "lr": 0.001,
+        "lr_scheduler": false
+      },
+      "thinning_config": {
+        "num_sample": 5,
+        "num_exp": 10,
+        "num_samples_boundary": 5,
+        "over_sample_rate": 1.1
+      }
+    },
+    "data_info": {
+      "num_event_types": 2,
+      "end_time_max": 1.6338737728640484,
+      "dtime_max": 0.9153730397008173,
+      "pad_token_id": 2
+    }
+  },
+  "rows": [
+    {
+      "case": "H0",
+      "seed": 2336101523,
+      "all_statistics_exact": true,
+      "trajectories_exact": true
+    },
+    {
+      "case": "twice_speed",
+      "seed": 2337101523,
+      "all_statistics_exact": true,
+      "trajectories_exact": true
+    },
+    {
+      "case": "context_marks",
+      "seed": 2338101523,
+      "all_statistics_exact": true,
+      "trajectories_exact": true
+    }
+  ]
+}

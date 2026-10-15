@@ -1,5 +1,30 @@
 # Rapport et consignes — Reproductibilité scientifique, GPU et Ruche
 
+### Réparation des trois jobs de calibration — 15 octobre 2026
+
+Le [rejeu documenté](../docs/PIPELINE_CALIBRATION_REPAIR.md) corrige des faux
+rejets de cohérence entre délais tirés et temps relatifs arrondis en float32.
+Le contrôle tient compte du dtype et de l’erreur d’arrondi de l’horloge ; il
+rejette encore les délais négatifs/non finis et les vraies erreurs d’origine.
+Les modèles, poids, simulateurs, observations, kernel et paramètres du test
+restent inchangés.
+
+Les trois [jobs Linux](https://github.com/NzoCs/Learning-point-processes/actions/runs/38759901384)
+réussissent : 2 700 essais complets, 50 anciens échecs résolus. Rejets H0 sur
+500 essais : Hawkes quota 6 **5,8 %**, IntensityFree quota 3 **4 %**, quota 6
+**5,2 %** ; aucun excès au critère familial initial. Les 2 650 anciennes
+p-values restent strictement identiques. Toutes les anciennes statistiques
+IntensityFree sont identiques bit à bit ; les statistiques Hawkes diffèrent
+entre exécutions au plus de `5,00e-16`. Le contrôle parent/correctif sur le même
+runner Linux retrouve exactement simulations et statistiques Hawkes pour les
+trois premiers cas déclarés. Les valeurs brutes sont conservées, sans arrondi
+artificiel des résultats.
+
+La CI passe **391 tests**, couverture **85,16 %**, lint réussi. Rapports,
+tirages nuls et contrôles avant/après sont archivés dans
+`docs/validation/pipeline-repair-20261015`. La source testée est `3e52a9e`.
+La validation reste sur CPU, sans nouvelle preuve Ruche/CUDA/DDP.
+
 ### Sensibilité du MMD à l’accélération — 15 octobre 2026
 
 Le [diagnostic contrôlé](../docs/ACCELERATION_DIAGNOSIS.md) sépare grille,

@@ -1,5 +1,44 @@
 # Rejeu Hawkes / IntensityFree — 15 octobre 2026
 
+## Résultat final
+
+Le [rejeu Linux `38759901384`](https://github.com/NzoCs/Learning-point-processes/actions/runs/38759901384)
+réussit les trois jobs, au commit `3e52a9e`. Les **2 700 essais** sont complets,
+les **50 anciens rejets de validation** sont résolus, sans réentraînement ni
+modification des modèles, paramètres, simulateurs ou réglages statistiques.
+
+| Job | Essais complets | Anciens échecs résolus | Rejets H0 / 500 | Accélération / 200 | Marques / 200 |
+|---|---:|---:|---:|---:|---:|
+| Hawkes quota 6 | 900 | 25 | 29 (5,8 %) | 200 (100 %) | 200 (100 %) |
+| IntensityFree quota 3 | 900 | 3 | 20 (4 %) | 67 (33,5 %) | 184 (92 %) |
+| IntensityFree quota 6 | 900 | 22 | 26 (5,2 %) | 200 (100 %) | 200 (100 %) |
+
+Aucun excès H0 n’est détecté au critère initial `0.01 / 36`. Ces résultats
+concernent les checkpoints, observations et alternatives déclarés ; ils ne
+valident pas tous les paramètres, GPU ou modèles appris possibles.
+
+Les **2 650 p-values historiques** et graines nulles restent strictement
+identiques. Les 1 775 anciens essais IntensityFree gardent toutes leurs
+statistiques bit à bit ; les 875 anciens essais Hawkes restent équivalents
+numériquement avec un écart maximal de `4,996003610813204e-16`, selon le contrat
+public de précision décrit plus bas. Ce n’est pas une modification des valeurs
+enregistrées pour forcer une égalité.
+
+Sur le même runner Linux, le validateur original et le nouveau retrouvent
+exactement les mêmes simulations, statistiques observées et 99 statistiques
+nulles pour les premiers essais H0 et des deux alternatives Hawkes. Les AST
+des autres méthodes statistiques et les sources des modèles, simulateurs,
+kernel et MMD global sont vérifiés inchangés.
+
+La [CI](https://github.com/NzoCs/Learning-point-processes/actions/runs/38759901384)
+passe **391 tests**, 7 ignorés, 2 désélectionnés, couverture **85,16 %** ; le
+[lint](https://github.com/NzoCs/Learning-point-processes/actions/runs/38759901387)
+réussit. Les rapports avant/après, 2 700 tirages avec leurs 99 statistiques
+nulles, références historiques, audits et preuve du rejeu sur un même runner
+sont conservés dans `docs/validation/pipeline-repair-20261015`, avec manifeste
+SHA-256. Les anciens échecs et le premier contrôle historique trop strict
+restent visibles dans les preuves et dans l’explication ci-dessous.
+
 ## Problème confirmé
 
 La campagne Linux `38714040860` a terminé avec trois jobs en échec :

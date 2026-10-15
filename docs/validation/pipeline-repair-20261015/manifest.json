@@ -1,0 +1,160 @@
+{
+  "workflow": "https://github.com/NzoCs/Learning-point-processes/actions/runs/38759901384",
+  "source_commit": "3e52a9e503f16facb49ed517c7ac75b3d60588af",
+  "passed": 391,
+  "skipped": 7,
+  "deselected": 2,
+  "coverage_percent": 85.16,
+  "total_trials": 2700,
+  "original_failures_repaired": 50,
+  "historical_p_values_exact": 2650,
+  "historical_statistics_bit_exact": 1775,
+  "historical_statistics_numerically_equivalent": 875,
+  "model_changes": false,
+  "ruche_cuda_ddp_validated": false,
+  "records": [
+    {
+      "name": "Hawkes-quota6",
+      "report": "Hawkes-quota6_report.json",
+      "audit": "Hawkes-quota6_historical_regression.json",
+      "checkpoint_sha256": "7b8e149bd53b2f2bb07994b275279ce3d70ab64525cfbe97ab94d22087cd135c",
+      "model_state_sha256": "090a2144c35508cb141dce4d4d397e2bb67422c67960698dd136ec366de8ff36"
+    },
+    {
+      "name": "IntensityFree-quota3",
+      "report": "IntensityFree-quota3_report.json",
+      "audit": "IntensityFree-quota3_historical_regression.json",
+      "checkpoint_sha256": "48bbab36ced1031e7d59a67ab93271fc2e4bb8710d448a4ce5a5eaa5a8aa9e99",
+      "model_state_sha256": "57c97685082f0151aca06d84e72342021af34e2610d955feba57b8132a4a48da"
+    },
+    {
+      "name": "IntensityFree-quota6",
+      "report": "IntensityFree-quota6_report.json",
+      "audit": "IntensityFree-quota6_historical_regression.json",
+      "checkpoint_sha256": "48bbab36ced1031e7d59a67ab93271fc2e4bb8710d448a4ce5a5eaa5a8aa9e99",
+      "model_state_sha256": "57c97685082f0151aca06d84e72342021af34e2610d955feba57b8132a4a48da"
+    }
+  ],
+  "proofs": [
+    {
+      "file": "Hawkes-quota6_before.json",
+      "sha256": "c73e28b040e9c9c04bfa9f213a93eff08b5b0a0dd68f4725bf8193f8b3a6f580",
+      "bytes": 101596
+    },
+    {
+      "file": "Hawkes-quota6_context_marks_draws.json",
+      "sha256": "7a241f613a68b2ac00c216c567d4ac2dec80de6717fafb64564824e0d9417146",
+      "bytes": 588263
+    },
+    {
+      "file": "Hawkes-quota6_first_repair_comparison.json",
+      "sha256": "2d05f730c5471be52f7df7c4b288135005f42472e62a9d8a1188f718a0a524b1",
+      "bytes": 758
+    },
+    {
+      "file": "Hawkes-quota6_first_repair_report.json",
+      "sha256": "b8534e574de56dae75f56d2ba442ad3e29972d05a22967b57dbf2062d8efca35",
+      "bytes": 17705
+    },
+    {
+      "file": "Hawkes-quota6_H0_draws.json",
+      "sha256": "5e2d687a28da8096f446318843e5b1339ca10af2960bb9bfb21aea610bedeaec",
+      "bytes": 1478013
+    },
+    {
+      "file": "Hawkes-quota6_historical_regression.json",
+      "sha256": "4cc5949d17959f8dbc5e3cd302ef07afc2dc5836760c0385068949d5dca93cd4",
+      "bytes": 758
+    },
+    {
+      "file": "Hawkes-quota6_parent_same_runner.json",
+      "sha256": "7d3735ba321c7b41c917c75daeb27ee0512e40caff340bedafb65c7b7f102c39",
+      "bytes": 1937
+    },
+    {
+      "file": "Hawkes-quota6_reference_draws.json",
+      "sha256": "96449b279ad0f34936f6909687af8ab025214a5551e3f1765f5293f8cd465721",
+      "bytes": 1946723
+    },
+    {
+      "file": "Hawkes-quota6_report.json",
+      "sha256": "fada57fbd3779488ecad0a69f23c8a133935000088ba0ebb715bda3bf21775c7",
+      "bytes": 17710
+    },
+    {
+      "file": "Hawkes-quota6_twice_speed_draws.json",
+      "sha256": "9d1c7ccff23f53af901d81aae629915dceae38f0df6accb4e085a74a5bc117d9",
+      "bytes": 590989
+    },
+    {
+      "file": "IntensityFree-quota3_before.json",
+      "sha256": "0208b94ce35734fad48599f8d82852d6f678ef85c7f66fe12f19030fb2133921",
+      "bytes": 99834
+    },
+    {
+      "file": "IntensityFree-quota3_context_marks_draws.json",
+      "sha256": "e69ff09f11679259d2cb1f7d593845d4a2036e811d744244c5fdaabd1039d4b1",
+      "bytes": 578243
+    },
+    {
+      "file": "IntensityFree-quota3_H0_draws.json",
+      "sha256": "535f2496e43d9c294ea19d2558be846997f7eb4090d7f5c7871d2e8bf2787920",
+      "bytes": 1449817
+    },
+    {
+      "file": "IntensityFree-quota3_historical_regression.json",
+      "sha256": "666d9e3eefab947ec6fab0ffd85b34119bb48dae7470e0887ccab174db11522f",
+      "bytes": 746
+    },
+    {
+      "file": "IntensityFree-quota3_reference_draws.json",
+      "sha256": "d3c4c35c5e1fdeecc5af31d884628cd351f4eeeb2d751b09ca2ca8487e1127cc",
+      "bytes": 1945936
+    },
+    {
+      "file": "IntensityFree-quota3_report.json",
+      "sha256": "193efb143ae3b6633bad1dcf900a7aa14cb44c46ad4fc2e8f0e10de084439a09",
+      "bytes": 17854
+    },
+    {
+      "file": "IntensityFree-quota3_twice_speed_draws.json",
+      "sha256": "5fe0d95061c98d0f68938c2b0498a26f02551019f5e9c2358862cd18c327268e",
+      "bytes": 579549
+    },
+    {
+      "file": "IntensityFree-quota6_before.json",
+      "sha256": "c8268993f9d087dc22aee6bce6ec286c7be876224b736df0360f848d87a8abbb",
+      "bytes": 101476
+    },
+    {
+      "file": "IntensityFree-quota6_context_marks_draws.json",
+      "sha256": "9e383698adc72d4e91360fc2acc4543afec023a38c48b813232cb3f3b4341da8",
+      "bytes": 590539
+    },
+    {
+      "file": "IntensityFree-quota6_H0_draws.json",
+      "sha256": "a48c1c0bd26ea2a150b570a55d95261f11399a4f988714194e92b301ce830305",
+      "bytes": 1481294
+    },
+    {
+      "file": "IntensityFree-quota6_historical_regression.json",
+      "sha256": "08dbf309733b54653f19434e221d19f9623f6dfebb39e903365b1702f68c39d2",
+      "bytes": 747
+    },
+    {
+      "file": "IntensityFree-quota6_reference_draws.json",
+      "sha256": "c9b6b7dacd666f4995aab1ce21be367d47b24c0a3d868b61db28fdaa5d44a1d1",
+      "bytes": 1959907
+    },
+    {
+      "file": "IntensityFree-quota6_report.json",
+      "sha256": "e3c458147294571de84bfbb6cccae7a154cdd59a164071104d873bde1798f446",
+      "bytes": 17830
+    },
+    {
+      "file": "IntensityFree-quota6_twice_speed_draws.json",
+      "sha256": "cf6fad32bc8c5966599bfd05c9980e54637f41ea82ae6fa17a3ed529da62982d",
+      "bytes": 592308
+    }
+  ]
+}

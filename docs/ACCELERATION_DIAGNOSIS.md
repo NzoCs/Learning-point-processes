@@ -67,3 +67,21 @@ la stabilité après réentraînement ni le fonctionnement CUDA/Ruche.
 Le workflow `acceleration-diagnosis.yml` est facultatif (déclenchement manuel
 ou marqueur `[acceleration-diagnosis]` sur cette branche) et utilise les
 dépendances verrouillées sur un runner Linux CPU standard.
+
+## Contrôle complémentaire fixé après le premier résultat FullyNN
+
+Après les résultats FullyNN du premier plan (puissance 1,5–5,5 %), un second
+plan, distinct et conservé séparément, compare uniquement le RBF premier
+temps initial à sa version centrée sur les futurs non vides du pool. Les
+futurs vides ont le vecteur nul dans cet espace de caractéristiques ; ils ne
+sont pas exclus et aucun temps fictif ne leur est attribué. Le Gram est
+positif (translation puis multiplication des caractéristiques par l’indicateur
+de présence), et le centrage commun est invariant aux échanges. Les kernels
+des historiques et de l’arrêt sont conservés.
+
+Ce contrôle cherche à séparer manque d’information temporelle et bruit de
+présence/comptage dans la statistique. Nouvelle graine 2026101583, mêmes
+effectifs 300 H0 / 200 H1, 128 paires et quotas 3/6 ; famille H0 de 8 cellules,
+critère 0,01/8. Largeur RBF toujours 1, échelle d’entraînement inchangée, aucun
+ajustement selon les résultats du second plan. Il ne remplace pas le plan
+initial et ne constitue pas une validation d’un nouveau test de production.

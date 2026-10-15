@@ -131,3 +131,26 @@ def test_counts_control_is_identical_before_after_acceleration_and_single_pair_s
             rtol=1e-10,
             atol=1e-12,
         )
+
+
+def test_centered_time_gram_is_psd_empty_zero_and_swap_invariant():
+    x = example()
+    x.valid_event_mask[0] = False
+    x.no_next_event_mask[0] = True
+    y = speed_view(example())
+    pool = concat(x, y)
+    kernel = SIGKernel(RBFKernel(), "counting_grid", 8, 0, 2)
+    gram, _ = future_gram(kernel, pool, "first_time_centered", 0.9)
+    assert np.max(np.abs(gram[0])) == 0
+    assert np.linalg.eigvalsh(gram).min() >= -1e-12
+    present = pool.valid_event_mask.any(1).numpy()
+    np.testing.assert_allclose(gram[:, present].sum(1), 0, atol=1e-12)
+    from new_ltpp.evaluation.statistical_testing.statistical_tests.global_conditional_mmd_test import (
+        copy_rows,
+    )
+
+    order = np.array([2, 1, 0, 3])
+    swapped, _ = future_gram(
+        kernel, copy_rows(pool, order.tolist()), "first_time_centered", 0.9
+    )
+    np.testing.assert_allclose(swapped, gram[np.ix_(order, order)], atol=1e-12)

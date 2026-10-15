@@ -142,7 +142,7 @@ def future_gram(kernel, pool, variant, physical_scale):
             ],
             axis=1,
         )
-    elif variant == "first_time_physical":
+    elif variant in ("first_time_physical", "first_time_centered"):
         first = (
             pool.time_seqs.masked_fill(~pool.valid_event_mask, float("inf"))
             .min(1)
@@ -155,7 +155,21 @@ def future_gram(kernel, pool, variant, physical_scale):
     else:
         raise ValueError(variant)
     distance = ((features[:, None] - features[None, :]) ** 2).sum(-1)
-    return np.exp(-0.5 * distance), len(np.unique(features, axis=0))
+    gram = np.exp(-0.5 * distance)
+    if variant == "first_time_centered":
+        present = counts > 0
+        if not present.any():
+            return np.zeros_like(gram), 1
+        # Center RKHS features on the pooled nonempty observations. Empty
+        # futures have the zero feature, not an invented event time. This is
+        # a PSD Gram (a feature translation followed by a presence gate), and
+        # preprocessing depends only on the pool, hence commutes with swaps.
+        mean = gram[:, present].mean(1)
+        gram = (
+            gram - mean[:, None] - mean[None, :] + gram[np.ix_(present, present)].mean()
+        )
+        gram *= present[:, None] * present[None, :]
+    return gram, len(np.unique(features, axis=0))
 
 
 def statistics(kernel, hweight, x, y, signs, variant, physical_scale):
@@ -205,10 +219,15 @@ def mechanism(kernel, x, y):
     )
 
 
-def run(name, output, h0=300, h1=200, pairs=128):
+def run(name, output, h0=300, h1=200, pairs=128, centered_control=False):
     if min(h0, h1, pairs) < 2:
         raise ValueError("At least two trials/pairs required")
     torch.set_num_threads(1)
+    variants = (
+        ("first_time_physical", "first_time_centered") if centered_control else VARIANTS
+    )
+    base_seed = 2026101583 if centered_control else SEED
+    family_size = 4 * len(variants)
     output = Path(output)
     if (output / "plan.json").exists():
         raise FileExistsError("Use a fresh output folder")
@@ -216,16 +235,17 @@ def run(name, output, h0=300, h1=200, pairs=128):
         model=name,
         status="in_progress",
         code=code_provenance(__file__),
-        seed=SEED,
+        seed=base_seed,
+        centered_followup=centered_control,
         H0_trials=h0,
         H1_trials=h1,
         pairs=pairs,
         quotas=[3, 6],
-        variants=list(VARIANTS),
+        variants=list(variants),
         permutations=99,
         alpha=0.05,
-        family_size=32,
-        family_excess_threshold=0.01 / 32,
+        family_size=family_size,
+        family_excess_threshold=0.01 / family_size,
         scope="Same frozen current-pipeline checkpoint/config; native Y and independent NumPy/SciPy X, shared Torch encoder. Same trajectories and signs across quotas and variants; H1 halves X's complete path times without re-encoding. No model, sampler or production-kernel changes. Quotas only: no claim of a fully observed time window. CPU.",
         normalization="Physical grid variants rescale time channel only, keep pooled grid bins. Event paths keep all jumps and shared endpoint. Fixed scale is train data_info dtime_max, never selected using H1. History and terminal kernels always production defaults. First-time/count RBF controls use fixed bandwidth 1. All variants predeclared, report all; no winner tuning.",
     )
@@ -241,7 +261,7 @@ def run(name, output, h0=300, h1=200, pairs=128):
         (case, q, variant): []
         for case in ("H0", "twice_speed")
         for q in (3, 6)
-        for variant in VARIANTS
+        for variant in variants
     }
     digest = hashlib.sha256()
     started = time.monotonic()
@@ -250,7 +270,7 @@ def run(name, output, h0=300, h1=200, pairs=128):
     # trials than H1; no resampling or selecting successful trials.
     for trial in range(max(h0, h1)):
         try:
-            seed = SEED + (name == "RMTPP") * 10000000 + trial * 1000
+            seed = base_seed + (name == "RMTPP") * 10000000 + trial * 1000
             h = histories_for_trial(pairs, np.random.default_rng(seed), trial)
             x = analytic_continuations(
                 model, h, np.random.default_rng(seed + 100000000), 6
@@ -280,7 +300,7 @@ def run(name, output, h0=300, h1=200, pairs=128):
                     if not active:
                         continue
                     current = qx if case == "H0" else speed_view(qx)
-                    for variant in VARIANTS:
+                    for variant in variants:
                         kernel = kernels[32 if variant.startswith("grid32") else 8]
                         stats, unique, delta = statistics(
                             kernel, weights, current, qy, signs, variant, scale
@@ -367,5 +387,6 @@ if __name__ == "__main__":
     parser.add_argument("--h0", type=int, default=300)
     parser.add_argument("--h1", type=int, default=200)
     parser.add_argument("--pairs", type=int, default=128)
+    parser.add_argument("--centered-control", action="store_true")
     args = parser.parse_args()
-    run(args.model, args.output, args.h0, args.h1, args.pairs)
+    run(args.model, args.output, args.h0, args.h1, args.pairs, args.centered_control)

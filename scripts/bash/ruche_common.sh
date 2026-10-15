@@ -12,6 +12,8 @@ ltpp_launch() {
     esac
     local -a indices command
     local index model dataset output
+    local environment=${UV_PROJECT_ENVIRONMENT:-$repo_dir/.venv}
+    local python=$environment/bin/python
     if [[ ${1:-} == --dry-run && $# == 1 ]]; then
         mapfile -t indices < <(seq 0 "$((count - 1))")
     elif (( $# == 0 )); then
@@ -37,7 +39,7 @@ ltpp_launch() {
         model=${experiments[$((index / ${#datasets[@]}))]}
         dataset=${datasets[$((index % ${#datasets[@]}))]}
         output=${LTPP_OUTPUT_ROOT:-$repo_dir/artifacts/ruche}/$device/job-${SLURM_JOB_ID:-pending}-task-$index
-        command=(uv run --frozen --no-sync new-ltpp run
+        command=("$python" -m scripts.cli run
             --config "$repo_dir/yaml_configs/configs.yaml"
             --model "$model" --dataset-id "$dataset"
             --phase "$phase" --save-dir "$output")
@@ -51,8 +53,7 @@ ltpp_launch() {
             continue
         fi
         cd -- "$repo_dir"
-        local environment=${UV_PROJECT_ENVIRONMENT:-$repo_dir/.venv}
-        if [[ ! -f uv.lock || ! -d $environment ]]; then
+        if [[ ! -f uv.lock || ! -x $python ]]; then
             echo "Missing uv.lock or Python environment at $environment. Install with uv sync --frozen before submission." >&2; return 2
         fi
         if [[ $device == cpu ]]; then
@@ -61,8 +62,7 @@ ltpp_launch() {
         export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
         export MPLBACKEND=Agg
         export LTPP_RUN_ID="job-${SLURM_JOB_ID}-task-${index}"
-        srun uv run --frozen --no-sync python -m scripts.check_backend --device "$device"
-        uv run --frozen --no-sync new-ltpp run --help >/dev/null
+        srun "$python" -m scripts.check_backend --device "$device"
         srun "${command[@]}"
     done
 }

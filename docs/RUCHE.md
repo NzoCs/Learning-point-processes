@@ -1,8 +1,8 @@
 # Tester un clone neuf sur Ruche
 
 Cette procédure prépare la validation d'installation et d'exécution. Elle ne
-certifie pas encore la reproductibilité scientifique. La branche de migration
-utilise pySigLib 4.0.0 ; le profil GPU exige son plugin CUDA 4.0.0.
+certifie pas encore la reproductibilité scientifique. Le projet utilise
+pySigLib 4.0.0 ; le profil GPU exige son plugin CUDA 4.0.0.
 
 ## Espaces de stockage
 
@@ -12,8 +12,8 @@ consultée le 9 octobre 2026 :
 
 | Espace | Chemins équivalents | Quota annoncé | Usage de cette procédure |
 | --- | --- | --- | --- |
-| `$HOME` | `/home/<login>` ou `/gpfs/users/<login>` | 50 Go | Clone Git, scripts et environnement Python. |
-| `$WORKDIR` | `/workdir/<login>` ou `/gpfs/workdir/<login>` | 500 Go | Caches volumineux, données, logs, checkpoints et résultats. |
+| `$HOME` | `/home/<login>` ou `/gpfs/users/<login>` | 50 Go | Clone Git et scripts. |
+| `$WORKDIR` | `/workdir/<login>` ou `/gpfs/workdir/<login>` | 500 Go | Environnement Python, caches volumineux, données, logs, checkpoints et résultats. |
 
 Les deux espaces sont accessibles depuis les nœuds de calcul. Vérifier les
 quotas effectifs du compte avec `ruche-quota`. Les chemins ci-dessous sont une
@@ -26,14 +26,14 @@ Créer un nouveau clone et un environnement identifié hors du clone. Exporter
 les mêmes variables pour l'installation et la soumission :
 
 ```bash
-export UV_PROJECT_ENVIRONMENT="$HOME/envs/ltpp-pysiglib"
+export UV_PROJECT_ENVIRONMENT="$WORKDIR/envs/ltpp-pysiglib"
 export UV_CACHE_DIR="$WORKDIR/cache/uv"
 export HF_HOME="$WORKDIR/cache/huggingface"
 export LTPP_OUTPUT_ROOT="$WORKDIR/ltpp-artifacts"
-mkdir -p "$HOME/src" "$HOME/envs" "$WORKDIR/ltpp-logs"
+mkdir -p "$HOME/src" "$WORKDIR/envs" "$WORKDIR/ltpp-logs"
 cd "$HOME/src"
-git clone --branch codex/pysiglib-migration https://github.com/NzoCs/Learning-point-processes.git Learning-point-processes-pysiglib
-cd Learning-point-processes-pysiglib
+git clone --branch main https://github.com/NzoCs/Learning-point-processes.git Learning-point-processes-main
+cd Learning-point-processes-main
 git rev-parse HEAD
 git status --porcelain
 sha256sum pyproject.toml uv.lock
@@ -48,15 +48,18 @@ Les modifications décrites ici doivent être disponibles dans la référence cl
 Pour valider une branche de développement publiée, cloner cette branche avec
 `git clone --branch NOM_BRANCHE URL` et enregistrer son SHA exact.
 
-Python **3.11** est requis. `uv` doit être installé dans l'espace utilisateur ou
+Python **3.11** est requis. Utiliser `uv` **0.11.29**, comme en CI.
+`uv` doit être installé dans l'espace utilisateur ou
 fourni par un module du cluster. Noter les modules chargés avec `module list`.
 La procédure impose des wheels pour pySigLib et le plugin CUDA. Le wheel CPU
 Linux de pySigLib 4.0.0 exige au moins glibc 2.27 ; vérifier `ldd --version`,
 l'architecture x86_64 et le pilote GPU avant de déclarer le profil compatible.
 En cas d'incompatibilité, préparer une recette de conteneur versionnée plutôt
 qu'un retour CPU silencieux. D'autres dépendances, notamment `fastdtw`, peuvent
-encore nécessiter une compilation selon la plateforme. L'installation Linux/Ruche
-reste à valider. Ne pas installer des dépendances au début de chaque job.
+encore nécessiter une compilation selon la plateforme. Une installation neuve
+sur Ruche a réussi le 15 octobre 2026 : voir le
+[compte rendu et ses limites](RUCHE_VALIDATION_20261015.md).
+Ne pas installer des dépendances au début de chaque job.
 
 ## 2. Préparer les données
 
@@ -65,13 +68,14 @@ données dans le cache de ce nouveau parcours avant soumission, sur une machine
 où l'accès réseau et ce téléchargement sont autorisés :
 
 ```bash
-uv run --frozen --no-sync python -c 'from datasets import load_dataset; d = load_dataset("NzoCs/test_dataset"); print(d)'
+uv run --frozen --no-sync python -c 'from datasets import load_dataset; import yaml; c = yaml.safe_load(open("yaml_configs/configs.yaml"))["data_configs"]["test"]; print(load_dataset(c["src_dir"], revision=c["revision"]))'
 ```
 
 Si `HF_HOME` est personnalisé, conserver le même chemin accessible aux nœuds de
-calcul. Relever la révision et les comptages des splits pour le bilan. La révision
-des données n'est pas encore verrouillée dans le projet : ce préchargement est
-une vérification d'accès, pas une garantie d'identité scientifique des données.
+calcul. Relever la révision et les comptages des splits pour le bilan. Le preset
+verrouille la révision ; le test du 15 octobre retrouve 6 séquences de train,
+2 de validation et 2 de test. Le contrôle des identifiants et de l'indépendance
+de l'entraînement reste nécessaire pour une validation scientifique.
 
 ## 3. Vérifier les commandes avant de soumettre
 
@@ -90,7 +94,9 @@ bash scripts/bash/train_ruche_cpu.sh --dry-run
 Les dry-runs affichent respectivement 1, 3 et 28 commandes et ne réservent aucune
 ressource. Les indices hors grille sont rejetés. Les scripts n'activent aucun
 environnement personnel prédéfini : ils utilisent `UV_PROJECT_ENVIRONMENT`, ou
-le `.venv` du clone si cette variable est absente, avec le lock figé. Ils
+le `.venv` du clone si cette variable est absente. L'installation est faite
+avec le lock figé avant soumission ; le job appelle directement son
+`bin/python`, sans exécuter `uv run`, sans résolution ni installation de paquets. Ils
 conservent les modules choisis pour cette installation.
 
 ## 4. Petit job GPU

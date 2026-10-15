@@ -9,18 +9,17 @@ Intensity:
     (where μ_k, α, β are constrained to be positive via squaring)
 """
 
-from new_ltpp.models.base import TrainingMixin
-
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 
+from new_ltpp.models.base.parametric import ParametricModel
 from new_ltpp.shared_types import Batch, SimulationResult
 
 
-class Hawkes(TrainingMixin):
+class Hawkes(ParametricModel):
     """
     Multivariate Hawkes process with matrix-valued (α, β) parameters.
 
@@ -30,7 +29,7 @@ class Hawkes(TrainingMixin):
     Args:
         mu   : Baseline intensities.   Shape (K,)    — learnable.
         alpha: Excitation magnitudes.  Shape (K, K)  — α[k, m] = effect of type-m on type-k.
-        beta : Exponential decay rates.Shape (K, K)  — β[k, m] > 0 (enforced via softplus).
+        beta : Exponential decay rates.Shape (K, K)  — positive via squaring.
     """
 
     mu: nn.Parameter
@@ -117,8 +116,6 @@ class Hawkes(TrainingMixin):
         out = F.embedding(safe, weight)  # [B, L, K]
         return out * valid_mask.float().unsqueeze(-1)
 
-
-
     # ──────────────────────────────────────────────────────────────────────────
     # Core intensity computation
     # ──────────────────────────────────────────────────────────────────────────
@@ -167,13 +164,21 @@ class Hawkes(TrainingMixin):
 
         excitation = (alpha_src * beta_src) * torch.exp(-beta_src * tau)
 
-        # Causal mask — strictly lower triangular (past events only)
+        # At an event use its left limit; positive delays condition on that event.
         if compute_last_step_only:
             causal = torch.ones(1, 1, L, 1, 1, device=dev)
+            causal[:, :, -1] = 0
         else:
             causal = torch.tril(torch.ones(L, L, device=dev), diagonal=-1).view(
                 1, L, L, 1, 1
             )
+        if sample_dtimes is not None:
+            diagonal = torch.eye(L, device=dev).view(1, L, L, 1, 1)
+            delays = sample_dtimes
+            if compute_last_step_only:
+                diagonal = diagonal[:, -1:]
+                delays = delays[:, -1:]
+            causal = causal + diagonal * (delays[:, :, None, :, None] > 0)
 
         past_influence = (excitation * causal).sum(dim=2)  # [B, L_q, S, K]
         lambda_t = mu.view(1, 1, 1, -1) + past_influence
@@ -188,7 +193,7 @@ class Hawkes(TrainingMixin):
         self,
         time_seq: torch.Tensor,  # [B, L]
         type_seq: torch.Tensor,  # [B, L]
-        mask: torch.Tensor,      # [B, L]
+        mask: torch.Tensor,  # [B, L]
     ) -> torch.Tensor:
         """Computes the total integral of the intensity over the observation window [0, T]."""
         B, L = time_seq.shape
@@ -214,7 +219,7 @@ class Hawkes(TrainingMixin):
         # term = α * (1 - exp(-β * (T - t_i)))
         tau_3d = tau.unsqueeze(-1)  # [B, L, 1]
         excitation = alpha_src * (1.0 - torch.exp(-beta_src * tau_3d))  # [B, L, K]
-        
+
         # Only valid events contribute to the excitation integral
         excitation = excitation * mask.float().unsqueeze(-1)  # [B, L, K]
 
@@ -240,12 +245,16 @@ class Hawkes(TrainingMixin):
             type_seqs=safe_types,
             valid_event_mask=mask,
             compute_last_step_only=False,
-        ).squeeze(-2)  # [B, L, K]
+        ).squeeze(
+            -2
+        )  # [B, L, K]
 
         # Target ALL valid events
         target_types = safe_types.unsqueeze(-1)  # [B, L, 1]
-        lambda_target = torch.gather(intensities_full, -1, target_types).squeeze(-1) # [B, L]
-        
+        lambda_target = torch.gather(intensities_full, -1, target_types).squeeze(
+            -1
+        )  # [B, L]
+
         event_ll = torch.log(lambda_target + 1e-9)
         event_ll = (event_ll * mask).sum()
 
@@ -297,6 +306,18 @@ class Hawkes(TrainingMixin):
 
         return R
 
+    def continuation_intensities(self, batch, deltas):
+        start = (
+            batch.time_seqs.masked_fill(~batch.valid_event_mask, 0).max(1).values
+            if batch.time_seqs.size(1)
+            else torch.zeros(len(batch.time_seqs), device=self.device)
+        )
+        state = self.sync_state(batch, start)
+        excitation = self.alpha_pos * self.beta_pos * state
+        return self.mu_pos + (
+            excitation[:, None] * torch.exp(-self.beta_pos * deltas[:, :, None, None])
+        ).sum(-1)
+
     # ──────────────────────────────────────────────────────────────────────────
     # Simulation — Ogata thinning, fully vectorised, GPU-compatible
     # ──────────────────────────────────────────────────────────────────────────
@@ -305,6 +326,8 @@ class Hawkes(TrainingMixin):
         self,
         batch: Batch,
         num_events_to_simulate: Optional[int] = None,
+        *,
+        horizon: Optional[float] = None,
     ) -> SimulationResult:
         """
         Simulate via Ogata's thinning algorithm.
@@ -312,17 +335,28 @@ class Hawkes(TrainingMixin):
         Design principles
         -----------------
         - All tensor ops stay on `device` (GPU-compatible).
-        - mu/alpha/beta softplus computed ONCE before the loop.
+        - Positive mu/alpha/beta computed ONCE before the loop.
         - Exactly num_events_to_simulate events are generated for each sequence.
         """
         dev = getattr(self, "device", torch.device("cpu"))
         K = self.num_event_types
         B = batch.time_seqs.size(0)
-        
+
         if num_events_to_simulate is None:
             num_events_to_simulate = batch.time_seqs.size(1)
             if num_events_to_simulate == 0:
                 num_events_to_simulate = 100
+        if num_events_to_simulate < 0 or (horizon is not None and horizon < 0):
+            raise ValueError("Event count and horizon must be nonnegative")
+        if num_events_to_simulate == 0 or horizon == 0:
+            t = torch.empty(B, 0, device=dev)
+            return Batch(
+                t, t.clone(), t.long(), t.bool(), sequence_ids=batch.sequence_ids
+            )
+        if horizon is not None:
+            num_events_to_simulate = (
+                128  # initial capacity, grows without truncating events
+            )
 
         with torch.no_grad():
             # ── Precompute positive params (outside the loop) ──
@@ -346,15 +380,23 @@ class Hawkes(TrainingMixin):
             active = torch.ones(B, dtype=torch.bool, device=dev)
 
             # ── Pre-allocate tensors ──
-            all_times = torch.zeros((B, num_events_to_simulate), dtype=torch.float32, device=dev)
-            all_deltas = torch.zeros((B, num_events_to_simulate), dtype=torch.float32, device=dev)
-            all_types = torch.zeros((B, num_events_to_simulate), dtype=torch.long, device=dev)
+            all_times = torch.zeros(
+                (B, num_events_to_simulate), dtype=torch.float32, device=dev
+            )
+            all_deltas = torch.zeros(
+                (B, num_events_to_simulate), dtype=torch.float32, device=dev
+            )
+            all_types = torch.zeros(
+                (B, num_events_to_simulate), dtype=torch.long, device=dev
+            )
             lens = torch.zeros(B, dtype=torch.long, device=dev)
 
             # ── Ogata thinning loop ──
             while active.any():
                 # A. Upper-bound intensity  M[b] = Σ_k λ_k^{UB}(t)
-                M = ((mu + (alpha_beta * R).sum(dim=2)).sum(dim=1).clamp(min=self.eps))  # [B]
+                M = (
+                    (mu + (alpha_beta * R).sum(dim=2)).sum(dim=1).clamp(min=self.eps)
+                )  # [B]
 
                 # B. Sample candidate arrival
                 dt_prop = torch.empty(B, device=dev).exponential_(1.0) / M  # [B]
@@ -369,6 +411,8 @@ class Hawkes(TrainingMixin):
 
                 # E. Thinning acceptance
                 U = torch.rand(B, device=dev)
+                if horizon is not None:
+                    active &= t_cand - start_times < horizon
                 accept = active & (U * M <= lambda_sum)
                 current_time = t_cand
 
@@ -385,8 +429,13 @@ class Hawkes(TrainingMixin):
 
                 # H. Record accepted events
                 curr_lens = lens[acc_idx]
+                if horizon is not None and int(curr_lens.max()) >= all_times.size(1):
+                    for_buffer = torch.zeros_like(all_times)
+                    all_times = torch.cat((all_times, for_buffer), 1)
+                    all_deltas = torch.cat((all_deltas, for_buffer), 1)
+                    all_types = torch.cat((all_types, torch.zeros_like(all_types)), 1)
                 dt_acc = t_cand[acc_idx] - last_event_t[acc_idx]
-                
+
                 all_times[acc_idx, curr_lens] = t_cand[acc_idx]
                 all_deltas[acc_idx, curr_lens] = dt_acc
                 all_types[acc_idx, curr_lens] = k
@@ -395,16 +444,29 @@ class Hawkes(TrainingMixin):
                 lens[acc_idx] += 1
 
                 # Deactivate paths that have reached the required number of events
-                active[acc_idx] = lens[acc_idx] < num_events_to_simulate
+                if horizon is None:
+                    active[acc_idx] = lens[acc_idx] < num_events_to_simulate
 
         if batch.time_seqs.size(1) > 0:
             all_times = all_times - start_times.unsqueeze(1)
 
-        valid_event_mask = torch.ones_like(all_times, dtype=torch.bool)
+        if horizon is not None:
+            width = int(lens.max())
+            all_times, all_deltas, all_types = (
+                all_times[:, :width],
+                all_deltas[:, :width],
+                all_types[:, :width],
+            )
+            valid_event_mask = torch.arange(width, device=dev)[None, :] < lens[:, None]
+            all_times = all_times.masked_fill(~valid_event_mask, 0)
+            all_types = all_types.masked_fill(~valid_event_mask, self.pad_token_id)
+        else:
+            valid_event_mask = torch.ones_like(all_times, dtype=torch.bool)
 
         return SimulationResult(
             time_seqs=all_times,
             time_delta_seqs=all_deltas,
             type_seqs=all_types,
             valid_event_mask=valid_event_mask,
+            sequence_ids=batch.sequence_ids,
         )

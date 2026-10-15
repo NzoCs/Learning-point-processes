@@ -6,13 +6,13 @@ Extracted from VisualizationMixin. Takes a model and a Simulator as dependencies
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, List, Tuple
 from pathlib import Path
+from typing import TYPE_CHECKING, List, Tuple
 
 import torch
 from matplotlib import pyplot as plt
 
-from new_ltpp.utils import save_json, logger
+from new_ltpp.utils import logger, save_json
 
 if TYPE_CHECKING:
     from new_ltpp.models.model_protocol import ISimulableModel
@@ -37,6 +37,7 @@ class ModelVisualizer:
         save_dir: str | Path,
         *,
         precision: int = 100,
+        batch=None,
         plot: bool = False,
         save_plot: bool = True,
         save_data: bool = True,
@@ -55,7 +56,20 @@ class ModelVisualizer:
         """
         model = self._model
 
-        time_seq, time_delta_seq, type_seq, seq_non_pad_mask = self._get_simulation_data()
+        if batch is None:
+            time_seq, time_delta_seq, type_seq, seq_non_pad_mask = (
+                self._get_simulation_data()
+            )
+        else:
+            valid = batch.valid_event_mask[0].bool()
+            time_seq = batch.time_seqs[:1, valid]
+            time_delta_seq = batch.time_delta_seqs[:1, valid]
+            type_seq = batch.type_seqs[:1, valid]
+            seq_non_pad_mask = batch.valid_event_mask[:1, valid]
+        if time_seq.shape[1] < 2:
+            raise ValueError(
+                "Intensity visualization requires at least two valid events"
+            )
 
         time_points, time_deltas_sample = self._generate_intensity_time_points(
             time_seq, time_delta_seq, precision

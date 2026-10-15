@@ -89,17 +89,22 @@ class SimulationManager:
             valid_times = times[mask]
             valid_marks = marks[mask]
 
-            if len(valid_times) == 0:
-                continue
-
             # Sort by time (should already be sorted, but done for safety)
-            sort_idx = np.argsort(valid_times)
+            sort_idx = np.argsort(valid_times, kind="stable")
             sorted_times = valid_times[sort_idx]
             sorted_marks = valid_marks[sort_idx]
 
             # Compute time since start and time differences
-            time_since_start = sorted_times - sorted_times[0]
-            time_since_last_event = np.diff(sorted_times, prepend=sorted_times[0])
+            time_since_start = (
+                sorted_times - sorted_times[0]
+                if len(sorted_times)
+                else sorted_times.copy()
+            )
+            time_since_last_event = (
+                np.diff(sorted_times, prepend=sorted_times[0])
+                if len(sorted_times)
+                else sorted_times.copy()
+            )
 
             temp_dict = {
                 "dim_process": self.dim_process,

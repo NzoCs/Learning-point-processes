@@ -18,6 +18,7 @@ from abc import ABCMeta
 from typing import Dict, Optional, Type, cast
 
 from new_ltpp.utils import logger
+
 from .model_protocol import ITPPModel
 
 
@@ -96,7 +97,7 @@ class RegistryMeta(ABCMeta):
                 for base in bases
             )
 
-            if is_model_class:
+            if is_model_class and not getattr(cls, "__abstractmethods__", None):
                 ModelRegistry.register_model(name, cls)
                 logger.debug(f"Model registered: {name}")
 

@@ -1,9 +1,15 @@
-from typing import Optional, Any
-from new_ltpp.evaluation.statistical_testing.statistical_tests import create_statistical_test
-from new_ltpp.shared_types import Batch, SimulationResult
+import torch
+
 from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
-from .base_accumulator import Accumulator
+from new_ltpp.evaluation.statistical_testing.statistical_tests import (
+    create_statistical_test,
+)
+from new_ltpp.shared_types import Batch, SimulationResult
+
 from .acc_types import StatisticalTestData
+from .base_accumulator import Accumulator
+
+MMD_NULL_RNG_SALT = 0x4D4D44
 
 
 class StatisticalTestAccumulator(Accumulator):
@@ -16,18 +22,57 @@ class StatisticalTestAccumulator(Accumulator):
         self,
         statistical_test_config: StatisticalTestConfig,
         min_sim_events: int = 1,
-        simulator: Optional[Any] = None,
+        *,
+        conditional: bool = False,
+        complete_stopped: bool = False,
+        stopped_event_budget: int | None = None,
     ):
         super().__init__(min_sim_events)
 
         self.test = create_statistical_test(statistical_test_config)
-        self.simulator = simulator
+        self.conditional = conditional
+        if conditional:
+            if complete_stopped and stopped_event_budget is None:
+                raise ValueError(
+                    "Complete conditional collection requires an explicit stopped event budget"
+                )
+            from new_ltpp.evaluation.statistical_testing.statistical_tests import (
+                MMDTwoSampleTest,
+            )
+            from new_ltpp.evaluation.statistical_testing.statistical_tests.global_conditional_mmd_test import (
+                GlobalConditionalMMDTwoSampleTest,
+            )
+
+            if not isinstance(self.test, MMDTwoSampleTest):
+                raise ValueError("Conditional resampling is implemented for MMD only")
+            self.test = GlobalConditionalMMDTwoSampleTest(
+                self.test.kernel,
+                self.test.n_samples,
+                stopped_event_budget=stopped_event_budget if complete_stopped else None,
+                block_size=statistical_test_config.signature_max_batch,
+            )
+        elif complete_stopped:
+            from new_ltpp.evaluation.statistical_testing.statistical_tests.stopped_mmd_test import (
+                StoppedMMDTwoSampleTest,
+            )
+
+            self.test = StoppedMMDTwoSampleTest(self.test.kernel, self.test.n_samples)
         self.p_values: list[float] = []
         self.observed_statistic: list[float] = []
         self.perm_statistics: list[float] = []
         self.num_sequences: int = 0
+        self.null_sample_counts: list[int] = []
+        self.null_methods: list[str] = []
+        self._null_rng_states: dict[str, torch.Tensor] = {}
 
-    def update(self, batch: Batch, simulation: SimulationResult) -> None:
+    def update(
+        self,
+        batch: Batch,
+        simulation: SimulationResult,
+        *,
+        histories: Batch | None = None,
+        pair_ids=None,
+    ) -> None:
         """Accumulate statistical metrics from batch.
 
         Args:
@@ -35,47 +80,51 @@ class StatisticalTestAccumulator(Accumulator):
             simulation: Simulation result (required)
 
         """
-        from typing import Any
-        simulations = [simulation]
-        if self.simulator is not None and hasattr(self.test, "n_samples"):
-            n_samples = self.test.n_samples
-            if n_samples > 1:
-                N = n_samples - 1
-                B = batch.time_seqs.shape[0]
-                
-                # Stack the input batch N times along the batch dimension
-                batch_stacked = Batch(
-                    time_seqs=batch.time_seqs.repeat(N, 1),
-                    time_delta_seqs=batch.time_delta_seqs.repeat(N, 1),
-                    type_seqs=batch.type_seqs.repeat(N, 1),
-                    valid_event_mask=batch.valid_event_mask.repeat(N, 1),
-                )
-                
-                # Run the simulator in parallel on the GPU
-                sim_stacked = self.simulator.simulate(batch_stacked)
-                
-                # Split the stacked simulation results back into N individual batches
-                time_seqs_list = sim_stacked.time_seqs.split(B, dim=0)
-                time_delta_seqs_list = sim_stacked.time_delta_seqs.split(B, dim=0)
-                type_seqs_list = sim_stacked.type_seqs.split(B, dim=0)
-                valid_event_mask_list = sim_stacked.valid_event_mask.split(B, dim=0)
-                
-                for i in range(N):
-                    simulations.append(
-                        Batch(
-                            time_seqs=time_seqs_list[i],
-                            time_delta_seqs=time_delta_seqs_list[i],
-                            type_seqs=type_seqs_list[i],
-                            valid_event_mask=valid_event_mask_list[i],
-                        )
+        # Statistical resampling must not alter the generator used for trajectories.
+        if self.conditional != (histories is not None):
+            raise ValueError(
+                "Conditional mode requires shared histories; unconditional mode must not receive them"
+            )
+        devices = [batch.time_seqs.device] if batch.time_seqs.is_cuda else []
+        with torch.random.fork_rng(devices=devices):
+            # Separate persistent streams avoid reusing the trajectory draws.
+            seed = (torch.initial_seed() + MMD_NULL_RNG_SALT) % (2**63)
+            cpu_state = self._null_rng_states.get("cpu")
+            if cpu_state is None:
+                cpu_state = torch.Generator().manual_seed(seed).get_state()
+            torch.set_rng_state(cpu_state)
+            if batch.time_seqs.is_cuda:
+                device = batch.time_seqs.device
+                key = str(device)
+                cuda_state = self._null_rng_states.get(key)
+                if cuda_state is None:
+                    cuda_state = (
+                        torch.Generator(device=device).manual_seed(seed).get_state()
                     )
+                torch.cuda.set_rng_state(cuda_state, device)
+            if self.conditional:
+                stats = self.test.compute_statistics(
+                    batch, simulation, histories=histories, pair_ids=pair_ids
+                )
+            else:
+                if pair_ids is not None:
+                    stats = self.test.compute_statistics(
+                        batch, simulation, pair_ids=pair_ids
+                    )
+                else:
+                    stats = self.test.compute_statistics(batch, simulation)
+            self._null_rng_states["cpu"] = torch.get_rng_state()
+            if batch.time_seqs.is_cuda:
+                self._null_rng_states[str(batch.time_seqs.device)] = (
+                    torch.cuda.get_rng_state(batch.time_seqs.device)
+                )
 
-        # Compute MMD and p-value using the provided simulations
-        stats = self.test.compute_statistics(batch, simulation, simulations=simulations)
-
-        self.p_values.append(stats["p_value"].item())
-        self.observed_statistic.append(stats["observed_statistic"].item())
-        self.perm_statistics.extend(stats["permuted_statistics"].tolist())
+        if stats is not None:
+            self.null_sample_counts.append(stats["num_null_samples"])
+            self.null_methods.append(stats["null_method"])
+            self.p_values.append(stats["p_value"].item())
+            self.observed_statistic.append(stats["observed_statistic"].item())
+            self.perm_statistics.extend(stats["permuted_statistics"].tolist())
         self.num_sequences += batch.time_seqs.shape[0]
 
     def reset(self) -> None:
@@ -85,6 +134,9 @@ class StatisticalTestAccumulator(Accumulator):
         self.observed_statistic = []
         self.perm_statistics = []
         self.num_sequences = 0
+        self.null_sample_counts = []
+        self.null_methods = []
+        self._null_rng_states.clear()
         if hasattr(self.test, "reset_accumulators"):
             self.test.reset_accumulators()
 
@@ -96,10 +148,7 @@ class StatisticalTestAccumulator(Accumulator):
         """
         pooled_p_val = None
         if hasattr(self.test, "get_final_p_value"):
-            try:
-                pooled_p_val = self.test.get_final_p_value().item()
-            except Exception:
-                pass
+            pooled_p_val = self.test.get_final_p_value().item()
 
         return StatisticalTestData(
             p_values=self.p_values,
@@ -107,4 +156,7 @@ class StatisticalTestAccumulator(Accumulator):
             permuted_statistic=self.perm_statistics,
             pooled_p_value=pooled_p_val,
             num_sequences=self.num_sequences,
+            null_sample_counts=self.null_sample_counts,
+            null_methods=self.null_methods,
+            **(self.test.global_results() if self.conditional else {}),
         )

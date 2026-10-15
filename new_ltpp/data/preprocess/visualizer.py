@@ -3,15 +3,15 @@ Visualizer for Temporal Point Process Data.
 """
 
 import os
-from typing import Optional, List
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 from new_ltpp.data.preprocess.data_loader import TPPDataModule
-from new_ltpp.utils import logger
 from new_ltpp.globals import OUTPUT_DIR
+from new_ltpp.utils import logger
 
 
 class Visualizer:
@@ -253,6 +253,10 @@ class Visualizer:
             self.seq_lengths,
             stat="density",
             binwidth=binwidth,
+            binrange=(
+                float(self.seq_lengths.min()) - 0.5,
+                float(self.seq_lengths.max()) + 0.5,
+            ),
             color="royalblue",
             alpha=0.6,
             label=f"Data ({self.split})",

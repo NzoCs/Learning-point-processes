@@ -1,12 +1,16 @@
+from typing import Literal, TypedDict
+
 import torch
-from sigkernel import SigKernel
-from typing import TypedDict, Literal
+
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import (
+    LinearKernel,
+)
+from new_ltpp.shared_types import Batch, SimulationResult
 
 from .kernel_protocol import IPointProcessKernel, PointProcessKernel
-from .utils import _get_embedding
+from .signature_backend import PySigLibKernel
 from .space_kernels import ISpaceKernel
-from new_ltpp.shared_types import Batch, SimulationResult
-from new_ltpp.evaluation.statistical_testing.point_process_kernels.space_kernels import LinearKernel
+from .utils import _get_embedding
 
 
 class Embedding(TypedDict):
@@ -18,19 +22,22 @@ class SIGKernel(PointProcessKernel):
     def __init__(
         self,
         static_kernel: ISpaceKernel,
-        embedding_type: Literal["linear", "constant"],
+        embedding_type: Literal["counting_grid"],
         num_discretization_points: int,
         dyadic_order: int,
         num_event_types: int,
+        max_batch: int = 64,
     ):
+        if embedding_type != "counting_grid":
+            raise ValueError(
+                f"Unsupported signature path representation: {embedding_type}"
+            )
         self.embedding_type = embedding_type
         self.num_discretization_points = num_discretization_points
         self.dyadic_order = dyadic_order
 
-        # Initialize with a default kernel; will be set properly in compute_gram_matrix based on static_kernel_type
-        self.kernel = SigKernel(
-            static_kernel=static_kernel, dyadic_order=self.dyadic_order
-        )
+        self.backend_name = "pysiglib"
+        self.kernel = PySigLibKernel(static_kernel, dyadic_order, max_batch)
 
         self.embedding_type = embedding_type
         self.num_event_types = num_event_types
@@ -45,6 +52,11 @@ class SIGKernel(PointProcessKernel):
         psi_time_seqs = psi_batch.time_seqs
         psi_type_seqs = psi_batch.type_seqs
 
+        if phi_time_seqs.numel() == 0 or psi_time_seqs.numel() == 0:
+            raise ValueError(
+                "Use masked padding for empty sequences; empty batch tensors are unsupported."
+            )
+
         phi_time_seqs = phi_time_seqs.double()
         psi_time_seqs = psi_time_seqs.double()
 
@@ -56,7 +68,7 @@ class SIGKernel(PointProcessKernel):
         phi_time_seqs = phi_time_seqs / global_max
         psi_time_seqs = psi_time_seqs / global_max
 
-        # 1) Compute embeddings (stays in original dtype, float32 is fine for sigkernel)
+        # 1) Construct float64 paths from locally sorted, masked events.
         # ---------------------
         # phi : (B, D, C)
         # psi : (B, D, C)
@@ -81,7 +93,6 @@ class SIGKernel(PointProcessKernel):
 
         return phi_emb, psi_emb
 
-    
     def compute_gram_matrix(
         self,
         X: Batch | SimulationResult,
@@ -118,7 +129,7 @@ class SIGKernel(PointProcessKernel):
 if __name__ == "__main__":
     sig_kernel: IPointProcessKernel = SIGKernel(
         static_kernel=LinearKernel(),
-        embedding_type="linear",
+        embedding_type="counting_grid",
         num_discretization_points=100,
         dyadic_order=3,
         num_event_types=10,

@@ -1,0 +1,68 @@
+name: Complete stopped observation production pipelines
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the reviewed pre-wiring version for a same-runner comparison
+        uses: actions/checkout@v4
+        with:
+          ref: 27ac22234a497d6a662c79e26ede3ee9ba237bd4
+          path: artifacts/stopped-pipeline-before-code
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Capture all pre-wiring models on this same CPU
+        run: |
+          cd "$GITHUB_WORKSPACE/artifacts/stopped-pipeline-before-code"
+          "$GITHUB_WORKSPACE/.venv/bin/python" - <<'PY'
+          import os
+          from pathlib import Path
+          import new_ltpp
+          from scripts.integration_suite import CATALOGUE, run_model
+          assert Path(new_ltpp.__file__).resolve().is_relative_to(Path.cwd())
+          for name in CATALOGUE:
+              target = Path(os.environ['GITHUB_WORKSPACE'])/'artifacts/stopped-pipeline-before'/name
+              target.mkdir(parents=True, exist_ok=True)
+              run_model(name, target, allow_terminated=name in ('FullyNN','RMTPP'))
+              print('Before', name, 'completed', flush=True)
+          PY
+      - name: All production and conditional models with known empty terminal futures
+        run: >-
+          uv run --frozen --no-sync python -m scripts.stopped_pipeline_validation
+          --reference-dir artifacts/stopped-pipeline-before --output artifacts/stopped-pipeline
+          --allow-rmtpp-likelihood-change
+      - name: Exact stopped conditional repetition and checkpoint resume
+        run: |
+          for model in FullyNN RMTPP; do
+            uv run --frozen --no-sync python -m scripts.conditional_reproducibility --model "$model" --output "artifacts/stopped-pipeline/repeat-$model"
+          done
+      - name: Independent calibration on two separately trained checkpoints per model
+        run: |
+          uv run --frozen --no-sync python -m scripts.likelihood_calibration_validation --output artifacts/likelihood-calibration
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stopped-pipeline-linux
+          path: |
+            artifacts/stopped-pipeline
+            artifacts/stopped-pipeline-before
+            artifacts/likelihood-calibration
+          retention-days: 30

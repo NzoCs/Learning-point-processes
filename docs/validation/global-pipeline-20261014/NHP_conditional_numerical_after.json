@@ -1,0 +1,231 @@
+{
+  "test_metrics": {
+    "test_loss": 0.7482261657714844,
+    "time_rmse": 0.6907931566238403,
+    "time_mae": 0.41522133350372314,
+    "type_accuracy": 56.25,
+    "macro_f1score": 36.0,
+    "recall": 50.0,
+    "precision": 28.125,
+    "cross_entropy": 0.7507617473602295
+  },
+  "events": [
+    {
+      "seq_idx": 0,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.4785900413990021,
+      "time_since_last_event": 0.4785900413990021,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-0\""
+    },
+    {
+      "seq_idx": 0,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 1.9789592027664185,
+      "time_since_last_event": 1.5003690719604492,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-0\""
+    },
+    {
+      "seq_idx": 0,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 2.2103023529052734,
+      "time_since_last_event": 0.23134306073188782,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-0\""
+    },
+    {
+      "seq_idx": 1,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.8539872169494629,
+      "time_since_last_event": 0.8539872169494629,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-1\""
+    },
+    {
+      "seq_idx": 1,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 1.0958588123321533,
+      "time_since_last_event": 0.2418716996908188,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-1\""
+    },
+    {
+      "seq_idx": 1,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 1.705514669418335,
+      "time_since_last_event": 0.6096557378768921,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-1\""
+    },
+    {
+      "seq_idx": 2,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.4622367024421692,
+      "time_since_last_event": 0.4622367322444916,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-2\""
+    },
+    {
+      "seq_idx": 2,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 1.0277159214019775,
+      "time_since_last_event": 0.5654792785644531,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-2\""
+    },
+    {
+      "seq_idx": 2,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 1.0623712539672852,
+      "time_since_last_event": 0.034655194729566574,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-2\""
+    },
+    {
+      "seq_idx": 3,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.035610660910606384,
+      "time_since_last_event": 0.035610660910606384,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-3\""
+    },
+    {
+      "seq_idx": 3,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 0.19870181381702423,
+      "time_since_last_event": 0.16309116780757904,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-3\""
+    },
+    {
+      "seq_idx": 3,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 0.22282274067401886,
+      "time_since_last_event": 0.024120913818478584,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-3\""
+    },
+    {
+      "seq_idx": 4,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.34979015588760376,
+      "time_since_last_event": 0.34979018568992615,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-4\""
+    },
+    {
+      "seq_idx": 4,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 0.6605947613716125,
+      "time_since_last_event": 0.3108046054840088,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-4\""
+    },
+    {
+      "seq_idx": 4,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 1.124266266822815,
+      "time_since_last_event": 0.4636714458465576,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-4\""
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.8218674659729004,
+      "time_since_last_event": 0.8218675255775452,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-5\""
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 1.1805413961410522,
+      "time_since_last_event": 0.35867395997047424,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-5\""
+    },
+    {
+      "seq_idx": 5,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 1.2125638723373413,
+      "time_since_last_event": 0.03202248364686966,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-5\""
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.19612117111682892,
+      "time_since_last_event": 0.19612117111682892,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-6\""
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 0.27993786334991455,
+      "time_since_last_event": 0.08381667733192444,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-6\""
+    },
+    {
+      "seq_idx": 6,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 0.4138115644454956,
+      "time_since_last_event": 0.13387370109558105,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-6\""
+    },
+    {
+      "seq_idx": 7,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.6687180995941162,
+      "time_since_last_event": 0.6687180399894714,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-7\""
+    },
+    {
+      "seq_idx": 7,
+      "event_idx": 1,
+      "dim_process": 2,
+      "time_since_start": 1.1983776092529297,
+      "time_since_last_event": 0.5296595096588135,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-7\""
+    },
+    {
+      "seq_idx": 7,
+      "event_idx": 2,
+      "dim_process": 2,
+      "time_since_start": 2.9343619346618652,
+      "time_since_last_event": 1.7359843254089355,
+      "type_event": 0,
+      "sequence_id": "provided:\"conditional-test-7\""
+    }
+  ],
+  "terminal_status": null
+}

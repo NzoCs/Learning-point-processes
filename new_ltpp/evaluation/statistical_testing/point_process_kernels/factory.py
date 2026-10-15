@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
+
+from .kernel_protocol import IPointProcessKernel
 from .m_kernel import MKernel
 from .sig_kernel import SIGKernel
-from .kernel_protocol import IPointProcessKernel
-from .space_kernels.factory import create_space_kernel
 from .space_kernels.embedding import EmbeddingKernel
+from .space_kernels.factory import create_space_kernel
 
 if TYPE_CHECKING:
     from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
@@ -38,6 +39,7 @@ def create_point_process_kernel(config: "StatisticalTestConfig") -> IPointProces
             num_discretization_points=config.num_discretization_points,
             dyadic_order=config.dyadic_order,
             num_event_types=config.num_event_types,
+            max_batch=config.signature_max_batch,
         )
     else:
         raise ValueError(

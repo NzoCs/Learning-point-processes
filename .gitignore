@@ -46,6 +46,7 @@ log
 **.png
 **.jpg
 **.json
+!tests/integration/linux_trained_states/*.json
 **.csv
 
 # idea files
@@ -57,3 +58,8 @@ log
 
 # logs
 **lightning_logs/
+
+# Versioned offline integration inputs and numerical regression references.
+!tests/integration/*.json
+!tests/integration/baselines/*.json
+!docs/validation/*.json

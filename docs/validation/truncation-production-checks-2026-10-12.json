@@ -1,0 +1,39 @@
+{
+  "code_commit": "47b781df879857dc837512ca17709a640deb0636",
+  "linux_ci": "https://github.com/NzoCs/Learning-point-processes/actions/runs/38232855289",
+  "quality_ci": "https://github.com/NzoCs/Learning-point-processes/actions/runs/38232855294",
+  "passed": 203,
+  "skipped": 3,
+  "deselected": 2,
+  "coverage_percent": 80.61,
+  "integration_models_reviewed": 11,
+  "notebooks": [
+    {
+      "notebook": "Hawkes_MMD_Test.ipynb",
+      "sha256": "d35f96b3af5c7979f6de0308433e5cea0d6ba471f93f494f5796d851e3784177",
+      "executed_code_cells": 4,
+      "duration_seconds": 78.95299999997951,
+      "python": "3.11.15 (main, Jun 23 2026, 15:20:37) [MSC v.1944 64 bit (AMD64)]",
+      "status": "passed",
+      "execution": "all Python cells, shared namespace, fresh subprocess"
+    },
+    {
+      "notebook": "NewLTPP_Getting_Started.ipynb",
+      "sha256": "b9749cd83d833a5b39588a331087bf45f374f74ebab1783b69de4044fc24fb5f",
+      "executed_code_cells": 6,
+      "duration_seconds": 67.14100000006147,
+      "python": "3.11.15 (main, Jun 23 2026, 15:20:37) [MSC v.1944 64 bit (AMD64)]",
+      "status": "passed",
+      "execution": "all Python cells, shared namespace, fresh subprocess"
+    },
+    {
+      "notebook": "Test_MMD_Metric.ipynb",
+      "sha256": "a1e2213213bd7f28cbd63166a72a1d38953c3c5963beb725b0ade6e1aeafed24",
+      "executed_code_cells": 4,
+      "duration_seconds": 38.67200000002049,
+      "python": "3.11.15 (main, Jun 23 2026, 15:20:37) [MSC v.1944 64 bit (AMD64)]",
+      "status": "passed",
+      "execution": "all Python cells, shared namespace, fresh subprocess"
+    }
+  ]
+}

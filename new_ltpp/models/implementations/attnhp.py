@@ -168,9 +168,7 @@ class ANHP(TrainingMixin):
             sample_time_emb = time_emb
         else:
             sample_time_emb = self.compute_temporal_embedding(sample_times)
-        cur_layer_ = self.forward_pass(
-            sample_time_emb, event_emb, attention_mask
-        )
+        cur_layer_ = self.forward_pass(sample_time_emb, event_emb, attention_mask)
 
         return cur_layer_
 

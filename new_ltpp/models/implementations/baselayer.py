@@ -66,9 +66,7 @@ class MultiHeadAttention(nn.Module):
         k = self.input_proj(key)
         v = self.input_proj(value)
 
-        attn_out, attn_weights = self.mha(
-            q, k, v, attn_mask=attn_mask
-        )
+        attn_out, attn_weights = self.mha(q, k, v, attn_mask=attn_mask)
 
         out = self.out_proj(attn_out)
 
@@ -124,9 +122,7 @@ class EncoderLayer(nn.Module):
         if self.use_residual:
             x = self.sublayers[0](
                 x,
-                lambda x: self.self_attn(
-                    x, x, x, attn_mask=attn_mask
-                ),
+                lambda x: self.self_attn(x, x, x, attn_mask=attn_mask),
             )
             if self.feed_forward is not None:
                 x = self.sublayers[1](x, self.feed_forward)
@@ -187,7 +183,9 @@ class TimeShiftedPositionalEncoding(nn.Module):
             new_max_len = max(L, self.position.size(0) * 2)
             self.register_buffer(
                 "position",
-                torch.arange(new_max_len, device=self.position.device, dtype=self.position.dtype).unsqueeze(1)
+                torch.arange(
+                    new_max_len, device=self.position.device, dtype=self.position.dtype
+                ).unsqueeze(1),
             )
         arc = (self.position[:L] * self.div_term).unsqueeze(0)
         pe_sin = torch.sin(arc + phi)

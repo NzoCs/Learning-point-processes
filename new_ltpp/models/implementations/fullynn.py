@@ -5,9 +5,9 @@ from torch import nn
 from torch.autograd import grad
 from torch.nn import functional as F
 
+from new_ltpp.models.base.training import TrainingMixin
 from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
-from new_ltpp.models.base.training import TrainingMixin
 
 
 class CumulHazardFunctionNetwork(nn.Module):
@@ -105,7 +105,7 @@ class CumulHazardFunctionNetwork(nn.Module):
                 for i in range(integral_lambda.shape[-1]):  # iterate over marks
                     derivative_integral_lambdas.append(
                         grad(
-                            integral_lambda[..., i].mean(),
+                            integral_lambda[..., i].sum(),
                             time_delta_seqs,
                             create_graph=True,
                             retain_graph=True,
@@ -116,7 +116,7 @@ class CumulHazardFunctionNetwork(nn.Module):
                 )  # TODO: Check that it is okay to iterate over marks like this
             else:
                 derivative_integral_lambda = grad(
-                    integral_lambda.sum(dim=-1).mean(),
+                    integral_lambda.sum(),
                     time_delta_seqs,
                     create_graph=True,
                     retain_graph=True,
@@ -218,6 +218,7 @@ class FullyNN(TrainingMixin):
             tuple: loglike loss, num events.
         """
         # [batch_size, seq_len]
+        batch = self.ordered_valid_batch(batch)
         time_delta_seqs = batch.time_delta_seqs
         type_seqs = batch.type_seqs
         batch_non_pad_mask = batch.valid_event_mask
@@ -231,6 +232,10 @@ class FullyNN(TrainingMixin):
         integral_lambda, derivative_integral_lambda = self.layer_intensity.forward(
             hidden_states, time_delta_seqs[:, 1:]
         )
+        at_zero, _ = self.layer_intensity.forward(
+            hidden_states, torch.zeros_like(time_delta_seqs[:, 1:])
+        )
+        integral_lambda = integral_lambda - at_zero
 
         # First, add an epsilon to every marked intensity for stability
         derivative_integral_lambda += self.eps
@@ -251,8 +256,10 @@ class FullyNN(TrainingMixin):
         # [batch_size, seq_len]
         # multiplied by sequence mask
         non_event_ll = integral_lambda.sum(-1) * batch_non_pad_mask[:, 1:]
-        num_events = event_ll.ne(0.0).sum()
-        loss = -(event_ll - non_event_ll).sum()
+        num_events = batch_non_pad_mask[:, 1:].sum()
+        loss = -(event_ll - non_event_ll).sum() + self.terminal_loglikelihood_cost(
+            batch
+        )
 
         return loss, num_events
 
@@ -282,6 +289,9 @@ class FullyNN(TrainingMixin):
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
         )
+        if compute_last_step_only:
+            hidden_states = hidden_states[:, -1:, :]
+            sample_dtimes = sample_dtimes[:, -1:, :]
 
         num_samples = sample_dtimes.size()[-1]
         batch_size, seq_len, hidden_size = hidden_states.shape
@@ -300,6 +310,34 @@ class FullyNN(TrainingMixin):
             # [batch_size, seq_len, num_samples, num_event_types]
             lambdas = derivative_integral_lambda
         return lambdas
+
+    def next_event_hazard(
+        self, *, time_delta_seqs, type_seqs, compute_last_step_only=False, **kwargs
+    ):
+        """Integral of the corrected marked intensities and its analytic limit."""
+        hidden = self.forward(time_delta_seqs, type_seqs)
+        if compute_last_step_only:
+            hidden = hidden[:, -1:, :]
+        network = self.layer_intensity
+        # Keep the same positive weights as the intensity API.
+        for p in network.parameters():
+            p.data.clamp_(min=network.params_eps)
+
+        def output(dt):
+            h = hidden.unsqueeze(-2).expand(*dt.shape, hidden.shape[-1])
+            t = network.layer_dense_1(dt.unsqueeze(-1))
+            out = torch.tanh(network.layer_dense_2(torch.cat([h, t], -1)))
+            for layer in network.module_list:
+                out = torch.tanh(layer(out))
+            return network.layer_dense_3(out).sum(-1)
+
+        zero = output(torch.zeros(*hidden.shape[:-1], 1, device=hidden.device))
+        # Positive time connections make the first tanh layer tend to +1.
+        out = torch.ones_like(hidden)
+        for layer in network.module_list:
+            out = torch.tanh(layer(out))
+        limit = (network.layer_dense_3(out).sum(-1) - zero.squeeze(-1)).clamp_min(0)
+        return lambda dt: (output(dt) - zero).clamp_min(0), limit
 
 
 if __name__ == "__main__":

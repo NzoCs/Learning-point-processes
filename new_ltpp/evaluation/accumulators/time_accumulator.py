@@ -62,7 +62,11 @@ class InterEventTimeAccumulator(Accumulator):
 
         # Quick validation
         sim_event_count = int(valid_sim.numel())
-        if sim_event_count < self.min_sim_events:
+        terminated = (
+            simulation.no_next_event_mask is not None
+            and simulation.no_next_event_mask.any()
+        )
+        if sim_event_count < self.min_sim_events and not terminated:
             logger.warning(
                 "InterEventTimeAccumulator: Too few simulated events (%d < %d), skipping batch",
                 sim_event_count,
@@ -72,7 +76,9 @@ class InterEventTimeAccumulator(Accumulator):
 
         # Prepare bin edges as torch tensor on same device
         device = valid_gt.device if valid_gt.numel() > 0 else valid_sim.device
-        bin_edges_t = torch.from_numpy(self.bin_edges).to(device=device, dtype=valid_gt.dtype)
+        bin_edges_t = torch.from_numpy(self.bin_edges).to(
+            device=device, dtype=valid_gt.dtype
+        )
 
         # Compute bin indices and counts for ground truth using torch
         if valid_gt.numel() > 0:

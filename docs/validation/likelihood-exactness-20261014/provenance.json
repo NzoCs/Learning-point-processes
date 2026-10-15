@@ -1,0 +1,43 @@
+{
+  "validated_code_commit": "5f37648d46ba19ab7161b982d163929846f74b3e",
+  "before_code_commit": "27ac22234a497d6a662c79e26ede3ee9ba237bd4",
+  "same_runner_same_locked_runtime": true,
+  "ci_run": 38604105572,
+  "lint_run": 38604105502,
+  "artifact_id": 11916180685,
+  "artifact_zip_sha256": "b664bbbead1d450722e1764010ed5d88740e2b2c1f015fed4103f23c66ccd4ba",
+  "tests": {
+    "passed": 327,
+    "skipped": 7,
+    "deselected": 2,
+    "coverage_percent": 84.35
+  },
+  "historical_models": 11,
+  "catalogue_models": 12,
+  "rtol": 1e-05,
+  "atol": 1e-06,
+  "sampler_grid_bound_unchanged": true,
+  "calibration": {
+    "checkpoints_per_model": 2,
+    "designs": [
+      "stopped event quota 6",
+      "fixed time window 2"
+    ],
+    "trials_H0_per_experiment": 300,
+    "H1_trials_per_alternative": 100,
+    "permutations": 99,
+    "batch_sizes": [
+      16,
+      11,
+      5
+    ],
+    "nominal_alpha": 0.05,
+    "excess_family_threshold": 0.000625
+  },
+  "limitations": [
+    "CPU single process; no Ruche/CUDA/DDP",
+    "Mid-epoch training resume explicitly rejected",
+    "Window API requires known complete observation through the fixed horizon",
+    "Calibration conditions on frozen models; shared Torch history encoder, no fitting uncertainty"
+  ]
+}

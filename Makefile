@@ -14,12 +14,12 @@ help: ## Display available simplified commands
 
 install: ## Basic installation (main dependencies only)
 	@echo "Installing new_ltpp basic..."
-	@$(UV) sync
+	@$(UV) sync --frozen
 	@echo "Basic installation completed!"
 
 install-dev: ## Installation with development tools
 	@echo "Installing with development tools..."
-	@$(UV) sync --group dev
+	@$(UV) sync --frozen --group dev
 	@echo "Dev installation completed!"
 
 lint: ## Run linting (flake8)
@@ -43,7 +43,7 @@ run-demo: ## Run demo pipeline via CLI (fixed demo args)
 	@$(CLI) run --dataset-id test --general-specs-config quick_test \
 		--training-config quick_test --data-loading-config quick_test \
 		--simulation-config quick_test --thinning-config quick_test \
-		--logger-config tensorboard --model Hawkes --phase all --epochs 5
+		--logger-config tensorboard --model NHP --phase all --epochs 5
 
 # Generic run target with defaults for real runs
 run: ## Run full pipeline via CLI with real run defaults (pass variables to override)
@@ -60,7 +60,7 @@ endif
 		$(if $(MODEL_SPECS),--model-specs-config $(MODEL_SPECS),) \
 		$(if $(TRAINING),--training-config $(TRAINING),--training-config e1000_b4) \
 		$(if $(DATA_LOADING),--data-loading-config $(DATA_LOADING),--data-loading-config b32_w1) \
-		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config tw70_b15000_b32) \
+		$(if $(SIMULATION),--simulation-config $(SIMULATION),--simulation-config fixed_events) \
 		$(if $(THINNING),--thinning-config $(THINNING),--thinning-config e200_s60) \
 		$(if $(LOGGER),--logger-config $(LOGGER),--logger-config tensorboard) \
 		--model $(MODEL_ID) \

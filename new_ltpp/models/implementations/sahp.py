@@ -3,10 +3,10 @@ from typing import Optional
 import torch
 import torch.nn as nn
 
+from new_ltpp.models.base.training import TrainingMixin
 from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 from new_ltpp.utils.attention import get_causal_attn_mask
-from new_ltpp.models.base.training import TrainingMixin
 
 from .baselayer import (
     EncoderLayer,

@@ -12,7 +12,7 @@ generate
     {tmp_path}/train.json
     {tmp_path}/dev.json
     {tmp_path}/test.json
-    {tmp_path}/generation_metadata.json   ← JSON with generation_config + stats
+    {tmp_path}/metadata.json   ← JSON with generation_config + stats
 
 info --output <file>
     <file>                                ← JSON with keys: timestamp, system_info
@@ -43,7 +43,7 @@ def test_generate_hawkes_creates_json_files(tmp_path):
         tmp_path/train.json
         tmp_path/dev.json
         tmp_path/test.json
-        tmp_path/generation_metadata.json
+        tmp_path/metadata.json
     """
     result = runner.invoke(
         app,
@@ -66,11 +66,11 @@ def test_generate_hawkes_creates_json_files(tmp_path):
     assert (tmp_path / "train.json").exists()
     assert (tmp_path / "dev.json").exists()
     assert (tmp_path / "test.json").exists()
-    assert (tmp_path / "generation_metadata.json").exists()
+    assert (tmp_path / "metadata.json").exists()
 
 
 def test_generate_hawkes_metadata_content(tmp_path):
-    """generation_metadata.json must contain valid generation_config."""
+    """metadata.json must contain valid generation_config."""
     runner.invoke(
         app,
         [
@@ -88,15 +88,15 @@ def test_generate_hawkes_metadata_content(tmp_path):
         ],
     )
 
-    meta = json.loads((tmp_path / "generation_metadata.json").read_text())
-    assert meta["generation_config"]["generation_method"] == "hawkes"
-    assert meta["generation_config"]["num_simulations"] == 50
+    meta = json.loads((tmp_path / "metadata.json").read_text())
+    assert meta["simulation_info"]["simulator_type"] == "HawkesSimulator"
+    assert meta["simulation_info"]["num_simulations"] == 50
 
 
 def test_generate_self_correcting_creates_json_files(tmp_path):
     """
     Side effects:
-        tmp_path/train.json, dev.json, test.json, generation_metadata.json
+        tmp_path/train.json, dev.json, test.json, metadata.json
     """
     result = runner.invoke(
         app,
@@ -116,7 +116,7 @@ def test_generate_self_correcting_creates_json_files(tmp_path):
     )
 
     assert result.exit_code == 0, result.output
-    for fname in ("train.json", "dev.json", "test.json", "generation_metadata.json"):
+    for fname in ("train.json", "dev.json", "test.json", "metadata.json"):
         assert (tmp_path / fname).exists(), f"{fname} missing"
 
 

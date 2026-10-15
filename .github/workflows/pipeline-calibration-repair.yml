@@ -1,0 +1,64 @@
+name: Replay Hawkes and IntensityFree calibration with exact historical regression
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: Hawkes
+            scenario: quota6
+          - model: IntensityFree
+            scenario: quota3
+          - model: IntensityFree
+            scenario: quota6
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU dependencies
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Validate clock precision and genuine origin errors
+        run: >-
+          uv run --frozen --no-sync python -m pytest -o addopts=
+          tests/stat_metrics/test_continuation_clock_precision.py
+          tests/scripts/test_pipeline_protocol_calibration.py
+          tests/scripts/test_pipeline_calibration_regression.py -q
+      - name: Rerun every original trial and seed on the frozen model
+        run: >-
+          uv run --frozen --no-sync python -m scripts.pipeline_protocol_calibration
+          --model ${{ matrix.model }} --scenario ${{ matrix.scenario }}
+          --output artifacts/pipeline-repair-${{ matrix.model }}-${{ matrix.scenario }}
+      - name: Check exact historical p-values RNG and dense-reference numerical equivalence
+        run: >-
+          uv run --frozen --no-sync python -m scripts.pipeline_calibration_regression
+          --model ${{ matrix.model }} --scenario ${{ matrix.scenario }}
+          --numeric-reference
+          --output artifacts/pipeline-repair-${{ matrix.model }}-${{ matrix.scenario }}
+      - name: Check original and fixed validators on the same runner and same trajectories
+        if: matrix.model == 'Hawkes'
+        run: |
+          git fetch --no-tags --depth=1 origin 3cb3e9917896d2984675a4102d805ba4295d233e
+          uv run --frozen --no-sync python -m scripts.continuation_precision_parent_check --output artifacts/pipeline-repair-Hawkes-quota6
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-repair-${{ matrix.model }}-${{ matrix.scenario }}
+          path: artifacts/pipeline-repair-${{ matrix.model }}-${{ matrix.scenario }}/
+          retention-days: 30

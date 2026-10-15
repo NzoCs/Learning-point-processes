@@ -36,7 +36,11 @@ class SequenceLengthAccumulator(Accumulator):
         sim_seq_lengths = sim_mask.sum(dim=1)
         sim_event_count = sim_seq_lengths.sum()
 
-        if sim_event_count < self.min_sim_events:
+        terminated = (
+            simulation.no_next_event_mask is not None
+            and simulation.no_next_event_mask.any()
+        )
+        if sim_event_count < self.min_sim_events and not terminated:
             logger.warning(
                 "SequenceLengthAccumulator: Too few simulated events (%d < %d), skipping batch",
                 sim_event_count,
@@ -74,10 +78,16 @@ class SequenceLengthAccumulator(Accumulator):
         sim_time_ends = sim_time_seqs.max(dim=1).values
 
         sim_time_windows = sim_time_ends - sim_time_starts
-        
+
         # Check for sequences with <= 1 simulated events or non-finite windows to avoid division by zero/inf
-        invalid_sim_window = (sim_seq_lengths <= 1) | ~torch.isfinite(sim_time_windows) | (sim_time_windows <= 1e-8)
-        sim_time_windows = torch.where(invalid_sim_window, gt_time_windows, sim_time_windows)
+        invalid_sim_window = (
+            (sim_seq_lengths <= 1)
+            | ~torch.isfinite(sim_time_windows)
+            | (sim_time_windows <= 1e-8)
+        )
+        sim_time_windows = torch.where(
+            invalid_sim_window, gt_time_windows, sim_time_windows
+        )
 
         sim_event_count_normalized = sim_seq_lengths / sim_time_windows
 

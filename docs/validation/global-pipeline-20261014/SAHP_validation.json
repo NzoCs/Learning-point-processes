@@ -1,0 +1,17 @@
+{
+  "model": "SAHP",
+  "reviewed_parent": "5b41f13fb4eee9abba4754df45959cb5a1b0c46a",
+  "ordinary": "all_numerical_fields_exact",
+  "conditional": {
+    "conditional": {
+      "weights_optimizer_losses_predictions_simulations": "exact",
+      "historical_batch_diagnostics": "unchanged_with_float_tolerance",
+      "before_p_value": 0.73,
+      "after_p_value": 0.96,
+      "global_observed": -0.3625454296503857,
+      "pairs": 8
+    }
+  },
+  "repeat_checkpoint_replay_epoch_resume_and_restart": "exact",
+  "scope": "CPU software integration; independent train/dev/test data; not a scientific calibration of all model parameters"
+}

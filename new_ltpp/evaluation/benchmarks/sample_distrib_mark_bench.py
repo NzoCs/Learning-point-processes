@@ -45,13 +45,14 @@ class MarkDistributionBenchmark(TypeBenchmark):
         Build the empirical distribution of event marks from training data.
         """
 
-        test_loader = self.data_module.test_dataloader()
+        self.data_module.setup("fit")
+        train_loader = self.data_module.train_dataloader()
         mark_counts = torch.zeros(self.num_event_types, dtype=torch.int64)
         total_events = 0
 
-        logger.info("Collecting event marks from test data...")
+        logger.info("Collecting event marks from training data...")
 
-        for batch in test_loader:
+        for batch in train_loader:
             # Extract event types from batch
             type_seqs = batch.type_seqs  # Event types/marks
             batch_non_pad_mask = batch.valid_event_mask

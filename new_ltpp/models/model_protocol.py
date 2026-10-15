@@ -6,7 +6,7 @@ INeuralTPPModel  — extension for neural architectures.
 """
 
 from pathlib import Path
-from typing import Protocol, Union, Any, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional, Protocol, Union
 
 import torch
 import torch.optim as optim
@@ -43,8 +43,6 @@ class ISimulableModel(Protocol):
 
     @property
     def device(self) -> torch.device: ...
-
-    def get_event_sampler(self) -> EventSampler: ...
 
     def compute_intensities_at_sample_dtimes(
         self,
@@ -146,3 +144,5 @@ class INeuralTPPModel(ITPPModel, Protocol):
 
     hidden_size: int
     dropout: float
+
+    def get_event_sampler(self) -> EventSampler: ...

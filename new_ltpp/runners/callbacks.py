@@ -1,19 +1,20 @@
 """Lightning callbacks for simulation and statistics collection."""
 
-import pytorch_lightning as pl
-from typing import cast
 from pathlib import Path
+from typing import cast
+
+import pytorch_lightning as pl
 
 from new_ltpp.configs.statistical_test_config import (
     SimulationConfig,
     StatisticalTestConfig,
 )
+from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 from new_ltpp.globals import OUTPUT_DIR
 from new_ltpp.models.model_protocol import ISimulableModel
-from new_ltpp.models.simulation.simulator import Simulator
+from new_ltpp.models.simulation.simulator import PredictionSession, Simulator
 from new_ltpp.models.simulation.tpp_io import SimulationIOManager
 from new_ltpp.models.visualization.model_visualizer import ModelVisualizer
-from new_ltpp.evaluation.results_aggregator import ResultsAggregator
 
 
 def _get_simulator(pl_module: pl.LightningModule) -> "Simulator":
@@ -61,30 +62,59 @@ class PredictionStatsCallback(pl.Callback):
         self.simulation_config = simulation_config
         self.metadata = metadata or {}
         self.experiment_id = experiment_id or base_dir.name
-        self.aggregator = ResultsAggregator(csv_path=OUTPUT_DIR / "global_results.csv")
+        self.aggregator = ResultsAggregator(csv_path=base_dir / "results.csv")
         self.pbar = None
 
     def on_predict_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         from tqdm import tqdm
+
+        if (
+            self.simulation_config.conditional_evaluation is not None
+            and trainer.world_size != 1
+        ):
+            raise ValueError(
+                "Conditional aggregation currently requires a single process"
+            )
         dl = trainer.predict_dataloaders
-        total_batches = len(dl[0]) if isinstance(dl, list) and len(dl) > 0 else (len(dl) if dl else None)
+        total_batches = (
+            len(dl[0])
+            if isinstance(dl, list) and len(dl) > 0
+            else (len(dl) if dl else None)
+        )
         self.pbar = tqdm(total=total_batches, desc="Simulating Batches", leave=True)
 
         model = cast("ISimulableModel", pl_module)
-        simulator = Simulator(
+        session_type = (
+            PredictionSession
+            if getattr(model, "model_family", None) == "parametric"
+            else Simulator
+        )
+        simulator = session_type(
             model=model,
             statistical_test_config=self.statistical_test_config,
+            conditional_evaluation=self.simulation_config.conditional_evaluation,
         )
         model._simulator = simulator
 
         # Initialize and inject SimulationIOManager
-        io_manager = SimulationIOManager(num_event_types=model.num_event_types)
+        io_manager = SimulationIOManager(
+            num_event_types=model.num_event_types,
+            preserve_origin=self.simulation_config.conditional_evaluation is not None,
+        )
         io_manager.setup_io(output_dir=self.base_dir / "simulations")
         model._io_manager = io_manager
 
         simulator.init_statistics_collector(base_dir=self.base_dir)
 
-    def on_predict_batch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule, outputs, batch, batch_idx, dataloader_idx=0):
+    def on_predict_batch_end(
+        self,
+        trainer: pl.Trainer,
+        pl_module: pl.LightningModule,
+        outputs,
+        batch,
+        batch_idx,
+        dataloader_idx=0,
+    ):
         if self.pbar is not None:
             self.pbar.update(1)
 
@@ -113,13 +143,41 @@ class PredictionStatsCallback(pl.Callback):
         if model._io_manager is not None:
             model._io_manager.finalize()
 
-        visualizer = ModelVisualizer(model)
-        visualizer.intensity_graph(
-            save_dir=self.base_dir / "intensities",
-            save_plot=True,
-            save_data=True,
-            plot=False,
-        )
+        if getattr(model, "supports_intensity", True):
+            batch = simulator.last_result
+            if (
+                batch is not None
+                and batch.no_next_event_mask is not None
+                and batch.no_next_event_mask.any()
+            ):
+                eligible = (batch.valid_event_mask.sum(-1) >= 2).nonzero().flatten()
+                if not len(eligible):
+                    from new_ltpp.utils import save_json
+
+                    target = self.base_dir / "intensities"
+                    target.mkdir(parents=True, exist_ok=True)
+                    save_json(
+                        {
+                            "status": "skipped",
+                            "reason": "No simulated sequence has two events; trajectories can terminate without a next event",
+                        },
+                        target / "visualization_status.json",
+                    )
+                    return
+                from new_ltpp.shared_types import Batch
+
+                row = int(eligible[0])
+                batch = Batch(
+                    *(value[row : row + 1] for value in batch.to_mapping().values())
+                )
+            visualizer = ModelVisualizer(model)
+            visualizer.intensity_graph(
+                save_dir=self.base_dir / "intensities",
+                batch=batch,
+                save_plot=True,
+                save_data=True,
+                plot=False,
+            )
 
 
 class TestCallback(pl.Callback):
@@ -138,7 +196,9 @@ class TestCallback(pl.Callback):
         self.output_dir = Path(output_dir)
         self.metadata = metadata or {}
         self.experiment_id = experiment_id or self.output_dir.parent.name
-        self.aggregator = ResultsAggregator(csv_path=OUTPUT_DIR / "global_results.csv")
+        self.aggregator = ResultsAggregator(
+            csv_path=self.output_dir.parent / "results.csv"
+        )
 
     def on_test_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         pass

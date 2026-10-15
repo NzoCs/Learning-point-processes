@@ -1,22 +1,20 @@
 # new_ltpp/models/mixins/training_mixin.py
 """Mixin for PyTorch Lightning training, validation, test, and predict steps."""
 
-from typing import Tuple, cast
+from typing import Tuple
 
 import torch
 import torch.nn.functional as F
 from pytorch_lightning.utilities.types import STEP_OUTPUT
 
 from new_ltpp.evaluation.metrics_helper import MetricsManager
-from new_ltpp.shared_types import Batch, OneStepPred
-
 from new_ltpp.models.simulation.simulator import Simulator
-from new_ltpp.configs.model_config import ModelConfig
+from new_ltpp.shared_types import Batch, OneStepPred, uses_stopped_event_budget
 
 from .prediction import PredictionMixin
 
 
-class TrainingMixin(PredictionMixin):
+class TrainingStepsMixin:
     """Mixin providing Lightning training/validation/test/predict step implementations.
 
     Requires:
@@ -28,20 +26,86 @@ class TrainingMixin(PredictionMixin):
 
     eps: float = torch.finfo(torch.float32).eps
 
-    def __init__(self, **kwargs):
-        model_config = kwargs["model_config"]
-        model_config = cast(
-            ModelConfig, model_config
-        )  # For type checking; not used at runtime
-        num_samples = model_config.thinning_config.num_sample
-        super().__init__(num_samples=num_samples, **kwargs)
+    def ordered_valid_batch(self, batch: Batch):
+        """Keep actual event order, placing masked positions after the history.
+
+        The first valid event is conditioning history, regardless of pad side.
+        This does not sort/reorder real events or mutate the caller's batch.
+        """
+        mask = batch.valid_event_mask
+        counts = mask.sum(-1)
+        expected = (
+            torch.arange(mask.size(1), device=mask.device)[None, :] < counts[:, None]
+        )
+        if torch.equal(mask, expected):
+            return batch
+        indices = torch.argsort((~mask).long(), dim=1, stable=True)
+        return Batch(
+            batch.time_seqs.gather(1, indices).masked_fill(~expected, 0),
+            batch.time_delta_seqs.gather(1, indices).masked_fill(~expected, 0),
+            batch.type_seqs.gather(1, indices).masked_fill(
+                ~expected, self.pad_token_id
+            ),
+            expected,
+            sequence_ids=batch.sequence_ids,
+            no_next_event_mask=batch.no_next_event_mask,
+        )
+
+    def terminal_loglikelihood_cost(self, batch: Batch):
+        """Known permanent ends contribute -log P(no next event) = H(infinity).
+
+        Unknown status and quota/window censoring add no permanent-end term.
+        Like the transition likelihood, this conditions on the first event.
+        """
+        flags = batch.no_next_event_mask
+        if flags is None:
+            return batch.time_seqs.new_zeros(())
+        if flags.dtype != torch.bool or flags.shape != batch.time_seqs.shape[:1]:
+            raise ValueError(
+                "Terminal likelihood requires one boolean flag per sequence"
+            )
+        if not flags.any():
+            return batch.time_seqs.new_zeros(())
+        batch = self.ordered_valid_batch(batch)
+        mask = batch.valid_event_mask
+        counts = mask.sum(-1)
+        expected = (
+            torch.arange(mask.size(1), device=mask.device)[None, :] < counts[:, None]
+        )
+        if not torch.equal(mask, expected) or (counts[flags] == 0).any():
+            raise ValueError(
+                "Terminal likelihood requires nonempty histories with right padding"
+            )
+        # Use each actual last event; padded states must never contribute.
+        rows = flags.nonzero(as_tuple=True)[0]
+        cost = batch.time_seqs.new_zeros(())
+        for length in counts[rows].unique().tolist():
+            selected = rows[counts[rows] == length]
+            _, limit = self.next_event_hazard(
+                time_seqs=batch.time_seqs[selected, :length],
+                time_delta_seqs=batch.time_delta_seqs[selected, :length],
+                type_seqs=batch.type_seqs[selected, :length],
+                compute_last_step_only=True,
+            )
+            cost = cost + limit.sum()
+        return cost
 
     # ------------------------------------------------------------------
     # Lightning steps
     # ------------------------------------------------------------------
 
     def training_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
+        batch = self.ordered_valid_batch(batch)
         loss, num_events = self.loglike_loss(batch)
+        if num_events <= 0:
+            raise ValueError(
+                "Per-event training loss requires at least one valid scored event"
+            )
+        if not torch.isfinite(loss):
+            raise ValueError(
+                "Nonfinite training likelihood; known permanent termination may have "
+                "zero probability under the current model. No parameter is forced to change."
+            )
         avg_loss = loss / num_events
         self.log(
             "train_loss",
@@ -54,6 +118,7 @@ class TrainingMixin(PredictionMixin):
         return avg_loss
 
     def validation_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
+        batch = self.ordered_valid_batch(batch)
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
         self.log(
@@ -81,6 +146,7 @@ class TrainingMixin(PredictionMixin):
         return avg_loss
 
     def test_step(self, batch: Batch, batch_idx) -> STEP_OUTPUT:
+        batch = self.ordered_valid_batch(batch)
         loss, num_events = self.loglike_loss(batch)
         avg_loss = loss / num_events
         self.log("test_loss", avg_loss.item(), prog_bar=True, sync_dist=True)
@@ -106,20 +172,66 @@ class TrainingMixin(PredictionMixin):
                 "Simulator not initialized. PredictionStatsCallback should have injected a Simulator instance."
             )
         simulator: "Simulator" = self._simulator
-        sim = simulator.simulate(batch=batch)
-
         if simulator._statistics_collector is None:
             raise RuntimeError(
                 "No statistics collector. Call simulator.init_statistics_collector() first."
             )
-        
+        conditional = simulator.conditional_evaluation
+        from new_ltpp.evaluation.statistical_testing.statistical_tests.stopped_mmd_test import (
+            observe_event_budget,
+        )
+
+        if conditional is None:
+            sim = self.simulate(
+                batch=batch, num_events_to_simulate=batch.time_seqs.size(1)
+            )
+            compared_batch = (
+                observe_event_budget(batch, batch.time_seqs.size(1))
+                if uses_stopped_event_budget(self.__class__.__name__)
+                else batch
+            )
+            histories = None
+        else:
+            from new_ltpp.evaluation.statistical_testing.statistical_tests import (
+                split_history_future,
+            )
+
+            if batch.sequence_ids is None:
+                raise ValueError(
+                    "Conditional prediction requires sequence identifiers from the loader"
+                )
+            histories, compared_batch = split_history_future(
+                batch,
+                conditional.history_events,
+                conditional.future_events,
+                allow_stopped=uses_stopped_event_budget(self.__class__.__name__),
+                pad_token_id=(
+                    self.pad_token_id
+                    if uses_stopped_event_budget(self.__class__.__name__)
+                    else 0
+                ),
+            )
+            simulator._statistics_collector.validate_conditional_ids(
+                batch.sequence_ids, len(batch.time_seqs)
+            )
+            sim = self.simulate(
+                histories, num_events_to_simulate=conditional.future_events
+            )
+            sim.sequence_ids = list(batch.sequence_ids)
+
         # Update statistics
-        simulator._statistics_collector.update(batch, sim)
-        
+        if histories is None:
+            simulator._statistics_collector.update(compared_batch, sim)
+        else:
+            simulator._statistics_collector.update(
+                compared_batch, sim, histories=histories, pair_ids=batch.sequence_ids
+            )
+
         # Accumulate results for saving (via SimulationIOManager)
         if self._io_manager is not None:
             self._io_manager.update(sim)
-        
+
+        simulator.last_result = sim
         return None
 
     # ------------------------------------------------------------------
@@ -131,6 +243,10 @@ class TrainingMixin(PredictionMixin):
     ):
         metrics_helper = MetricsManager(num_event_types=self.num_event_types)
         metrics = metrics_helper.compute_prediction_metrics(batch=batch, pred=pred)
+        if "no_event_probability" in pred:
+            metrics["no_event_probability"] = (
+                pred["no_event_probability"][batch.valid_event_mask].mean().item()
+            )
         for key, value in metrics.items():
             if key == "confusion_matrix":
                 continue
@@ -144,7 +260,7 @@ class TrainingMixin(PredictionMixin):
             )
 
         simulator: "Simulator" = self._simulator
-        sim = simulator.simulate(batch=batch)
+        sim = self.simulate(batch=batch, num_events_to_simulate=batch.time_seqs.size(1))
 
         if simulator._statistics_collector is None:
             raise RuntimeError(
@@ -185,9 +301,19 @@ class TrainingMixin(PredictionMixin):
             ignore_index=self.pad_token_id,
             reduction="none",
         )
+        event_ll = event_ll * seq_mask
 
         total_sampled_lambdas = lambdas_loss_samples.sum(dim=-1)
         non_event_ll = total_sampled_lambdas.mean(dim=-1) * time_delta_seq * seq_mask
-        num_events = event_ll.ne(0.0).sum()
+        num_events = seq_mask.sum()
 
         return event_ll, non_event_ll, num_events
+
+
+class TrainingMixin(TrainingStepsMixin, PredictionMixin):
+    """Neural model adapter retaining the established prediction and training path."""
+
+    def __init__(self, **kwargs):
+        super().__init__(
+            num_samples=kwargs["model_config"].thinning_config.num_sample, **kwargs
+        )

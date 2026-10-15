@@ -8,7 +8,8 @@ statistics batch-by-batch during the prediction phase.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional, cast, Any, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict, cast
+
 import numpy as np
 
 from new_ltpp.configs.statistical_test_config import StatisticalTestConfig
@@ -20,10 +21,10 @@ from .acc_types import (
     FinalResult,
     PlotData,
 )
+from .base_accumulator import Accumulator, IAccumulator
 from .corr_accumulator import CorrAccumulator
 from .event_type_accumulator import EventTypeAccumulator
 from .len_accumulator import SequenceLengthAccumulator
-from .summary_stats.summary_stats_helper import SummaryStatsHelper
 from .plot_generators import (
     AutocorrelationPlotGenerator,
     EventTypePlotGenerator,
@@ -31,9 +32,9 @@ from .plot_generators import (
     SequenceLengthPlotGenerator,
     StatTestPlotGenerator,
 )
-from .time_accumulator import InterEventTimeAccumulator
-from .base_accumulator import IAccumulator, Accumulator
 from .statistical_metrics_accumulator import StatisticalTestAccumulator
+from .summary_stats.summary_stats_helper import SummaryStatsHelper
+from .time_accumulator import InterEventTimeAccumulator
 
 
 class AccumulatorContainer(TypedDict):
@@ -74,9 +75,16 @@ class BatchStatisticsCollector(Accumulator):
         dtime_min: float = 0.0,
         min_sim_events: int = 1,
         metadata: Optional[Dict[str, Any]] = None,
-        simulator: Optional[Any] = None,
+        conditional: bool = False,
+        complete_stopped: bool = False,
+        stopped_event_budget: int | None = None,
     ):
         self.num_event_types = num_event_types
+        self.conditional = conditional
+        if conditional and statistical_test_config is None:
+            raise ValueError(
+                "Conditional collection requires a statistical test configuration"
+            )
         self.base_dir = Path(base_dir)
         self.min_sim_events = int(min_sim_events)
         self.base_dir.mkdir(parents=True, exist_ok=True)
@@ -98,7 +106,9 @@ class BatchStatisticsCollector(Accumulator):
             base_accumulators["statistical_tests"] = StatisticalTestAccumulator(
                 statistical_test_config=statistical_test_config,
                 min_sim_events=min_sim_events,
-                simulator=simulator,
+                conditional=conditional,
+                complete_stopped=complete_stopped,
+                stopped_event_budget=stopped_event_budget,
             )
 
         self._accumulators: AccumulatorContainer = base_accumulators
@@ -131,7 +141,25 @@ class BatchStatisticsCollector(Accumulator):
             f"BatchStatisticsCollector initialized with {len(self._accumulators)} accumulators"
         )
 
-    def update(self, batch: Batch, simulation: SimulationResult) -> None:
+    def validate_conditional_ids(self, pair_ids, size):
+        if not self.conditional or pair_ids is None:
+            raise ValueError(
+                "Conditional collection requires stable sequence identifiers"
+            )
+        if size < 1:
+            raise ValueError("Conditional MMD requires a nonempty batch")
+        self._accumulators["statistical_tests"].test._check_pair_ids(
+            pair_ids, size, True
+        )
+
+    def update(
+        self,
+        batch: Batch,
+        simulation: SimulationResult,
+        *,
+        histories: Batch | None = None,
+        pair_ids=None,
+    ) -> None:
         """Update all accumulators with new batch data.
 
         This method should be called in the predict_step for each batch.
@@ -144,9 +172,18 @@ class BatchStatisticsCollector(Accumulator):
         """
 
         # Update all accumulators (each validates simulation independently)
+        if self.conditional:
+            if histories is None:
+                raise ValueError("Conditional collection requires shared histories")
+            self.validate_conditional_ids(pair_ids, len(batch.time_seqs))
         for key, accumulator in self._accumulators.items():
             if accumulator is not None:
-                cast(IAccumulator, accumulator).update(batch, simulation)
+                if key == "statistical_tests" and histories is not None:
+                    accumulator.update(
+                        batch, simulation, histories=histories, pair_ids=pair_ids
+                    )
+                else:
+                    cast(IAccumulator, accumulator).update(batch, simulation)
 
         self._batch_count += 1
 
@@ -231,7 +268,7 @@ class BatchStatisticsCollector(Accumulator):
             permuted_statistic=permuted_statistic,
             p_values=p_values,
             num_sequences=num_sequences,
-            kernel_name=kernel_name if 'kernel_name' in locals() else "unknown",
+            kernel_name="unknown",  # Filled from metadata below.
         )
 
         test_type = "stat"
@@ -328,19 +365,43 @@ class BatchStatisticsCollector(Accumulator):
                     metrics_dict[f"std_{test_type}_p_value"] = float(np.std(p_vals))
 
                 if stat_tests and stat_tests.get("pooled_p_value") is not None:
-                    metrics_dict[f"pooled_{test_type}_p_value"] = float(stat_tests["pooled_p_value"])
+                    metrics_dict[f"pooled_{test_type}_p_value"] = float(
+                        stat_tests["pooled_p_value"]
+                    )
 
                 if stat_tests and stat_tests.get("num_sequences") is not None:
-                    metrics_dict[f"{test_type}_num_sequences"] = int(stat_tests["num_sequences"])
+                    metrics_dict[f"{test_type}_num_sequences"] = int(
+                        stat_tests["num_sequences"]
+                    )
+
+                if stat_tests and "global_observed_statistic" in stat_tests:
+                    metrics_dict[f"global_{test_type}_value"] = stat_tests[
+                        "global_observed_statistic"
+                    ]
+                    proof = (
+                        self.base_dir
+                        / "simulation_results"
+                        / f"{test_type}_global_statistics.json"
+                    )
+                    proof.parent.mkdir(parents=True, exist_ok=True)
+                    proof.write_text(
+                        json.dumps(stat_tests, indent=2, allow_nan=False),
+                        encoding="utf-8",
+                    )
 
                 # Add kernel name and flatten metadata directly into the metrics dict before writing to CSV
                 kernel_name = "unknown"
                 if self.metadata and "statistical_test_config" in self.metadata:
-                    kernel_name = self.metadata["statistical_test_config"].get("point_process_kernel_type", "unknown")
+                    kernel_name = self.metadata["statistical_test_config"].get(
+                        "point_process_kernel_type", "unknown"
+                    )
                 metrics_dict["kernel_name"] = kernel_name
 
                 if self.metadata:
-                    def flatten_dict(d: dict, parent_key: str = '', sep: str = '_') -> dict:
+
+                    def flatten_dict(
+                        d: dict, parent_key: str = "", sep: str = "_"
+                    ) -> dict:
                         items = []
                         for k, v in d.items():
                             new_key = f"{parent_key}{sep}{k}" if parent_key else k
@@ -349,7 +410,7 @@ class BatchStatisticsCollector(Accumulator):
                             else:
                                 items.append((new_key, v))
                         return dict(items)
-                    
+
                     flat_metadata = flatten_dict(self.metadata)
                     for k, v in flat_metadata.items():
                         if k not in metrics_dict:
@@ -357,7 +418,10 @@ class BatchStatisticsCollector(Accumulator):
 
                 # Save metrics to CSV instead of JSON, appending if the file exists
                 import csv
-                metrics_path = self.base_dir / "simulation_results" / f"{test_type}_metrics.csv"
+
+                metrics_path = (
+                    self.base_dir / "simulation_results" / f"{test_type}_metrics.csv"
+                )
                 metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
                 try:
@@ -365,7 +429,9 @@ class BatchStatisticsCollector(Accumulator):
                     rows = []
                     if file_exists:
                         try:
-                            with open(metrics_path, "r", newline="", encoding="utf-8") as r_file:
+                            with open(
+                                metrics_path, "r", newline="", encoding="utf-8"
+                            ) as r_file:
                                 reader = csv.DictReader(r_file)
                                 rows = list(reader)
                         except Exception:
@@ -382,24 +448,32 @@ class BatchStatisticsCollector(Accumulator):
                                 if k not in seen:
                                     seen.add(k)
                                     all_fieldnames.append(k)
-                        
-                        with open(metrics_path, "w", newline="", encoding="utf-8") as w_file:
+
+                        with open(
+                            metrics_path, "w", newline="", encoding="utf-8"
+                        ) as w_file:
                             writer = csv.DictWriter(w_file, fieldnames=all_fieldnames)
                             writer.writeheader()
                             writer.writerows(rows)
                     else:
                         fieldnames = list(metrics_dict.keys())
-                        with open(metrics_path, "w", newline="", encoding="utf-8") as w_file:
+                        with open(
+                            metrics_path, "w", newline="", encoding="utf-8"
+                        ) as w_file:
                             writer = csv.DictWriter(w_file, fieldnames=fieldnames)
                             writer.writeheader()
                             writer.writerow(new_row)
                     logger.info(f"Saved metrics to {metrics_path}")
                 except Exception as e:
                     logger.error(f"Failed to save metrics to {metrics_path}: {e}")
-                
+
                 # Save metadata to JSON
                 if self.metadata:
-                    metadata_path = self.base_dir / "simulation_results" / f"{test_type}_metadata.json"
+                    metadata_path = (
+                        self.base_dir
+                        / "simulation_results"
+                        / f"{test_type}_metadata.json"
+                    )
                     try:
                         with open(metadata_path, "w") as f:
                             json.dump(self.metadata, f, indent=4)
@@ -410,7 +484,6 @@ class BatchStatisticsCollector(Accumulator):
         # Generate plots
         if generate_plots:
             self.generate_plots(statistics)
-
 
         self._is_finalized = True
 
@@ -425,8 +498,9 @@ class BatchStatisticsCollector(Accumulator):
 
     def reset(self) -> None:
         """Reset all accumulators and state."""
-        for accumulator in self._accumulators:
-            cast(IAccumulator, accumulator).reset()
+        for accumulator in self._accumulators.values():
+            if accumulator is not None:
+                accumulator.reset()
         self._batch_count = 0
         self._is_finalized = False
         logger.info("BatchStatisticsCollector reset")

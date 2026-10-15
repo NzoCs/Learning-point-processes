@@ -10,10 +10,10 @@ from typing import Protocol
 
 import torch
 
-from new_ltpp.shared_types import Batch, SimulationResult
 from new_ltpp.evaluation.statistical_testing.point_process_kernels.kernel_protocol import (
     IPointProcessKernel,
 )
+from new_ltpp.shared_types import Batch, SimulationResult
 
 
 class IStatMetric(Protocol):

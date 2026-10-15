@@ -1,7 +1,12 @@
-from new_ltpp.evaluation.accumulators import FinalResult
-import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
+import pandas as pd
+
+from new_ltpp.evaluation.accumulators import FinalResult
+from new_ltpp.evaluation.statistical_testing.point_process_kernels.utils import (
+    SIGNATURE_PATH_PREPARATION,
+)
 from new_ltpp.utils import logger
 
 
@@ -59,9 +64,15 @@ class ResultsAggregator:
                 row[f"sim_{k}"] = v
 
         new_df = pd.DataFrame([row])
-        
-        header = not self.csv_path.exists()
-        new_df.to_csv(self.csv_path, mode='a', index=True, header=header)
+
+        # Test and simulation rows have different columns. Appending their
+        # raw values under the first header produces a malformed CSV.
+        if self.csv_path.exists():
+            previous = pd.read_csv(self.csv_path)
+            new_df = pd.concat([previous, new_df], ignore_index=True, sort=False)
+        temporary = self.csv_path.with_suffix(".csv.tmp")
+        new_df.to_csv(temporary, index=False)
+        temporary.replace(self.csv_path)
         logger.info(f"✓ Results aggregated in {self.csv_path}")
 
     @staticmethod
@@ -70,6 +81,13 @@ class ResultsAggregator:
         meta = {
             "model_id": config.model_id,
             "dataset_id": config.data_config.dataset_id,
+            "run_id": config.run_id,
+            "training_seed": config.training_config.seed,
+            "dataset_revision": config.data_config.revision,
+            "mmd_estimator": "unbiased_off_diagonal_v2",
+            "signature_backend": "pysiglib",
+            "signature_path_preparation": SIGNATURE_PATH_PREPARATION,
+            "manifest": str(config.base_dir / "manifest.json"),
         }
 
         # Extract model specs if available

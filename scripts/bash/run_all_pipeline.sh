@@ -9,22 +9,11 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=150G
 #SBATCH --gres=gpu:1
-#SBATCH --array=0-4%5
+#SBATCH --array=0-2%3
 
-# Nettoie l'environnement module pour éviter les conflits
-module purge
-
-# Active l'environnement virtuel Python
-source /gpfs/workdir/regnaguen/LTPP/bin/activate
-
-# Définition des combinaisons exp/dataset
+set -euo pipefail
+repo_dir=${LTPP_REPO_DIR:-${SLURM_SUBMIT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}}
+source "$repo_dir/scripts/bash/ruche_common.sh"
 experiments=(IntensityFree)
 datasets=(taobao taxi amazon)
-
-# Mapping index → combinaison
-idx=$SLURM_ARRAY_TASK_ID
-exp=${experiments[$(( idx / ${#datasets[@]} ))]}
-data=${datasets[$(( idx % ${#datasets[@]} ))]}
-
-# Lancement avec srun utilisant le nouveau CLI new-ltpp
-srun new-ltpp run --model "${exp}" --data-config "${data}" --phase all --gpu 0
+ltpp_launch cuda "$@"

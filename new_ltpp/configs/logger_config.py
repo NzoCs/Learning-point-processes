@@ -2,15 +2,15 @@ import os
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Dict, List, Type, Union, Protocol, runtime_checkable
+from typing import Any, Dict, List, Protocol, Type, Union, runtime_checkable
 
+from pydantic import Field
 from pytorch_lightning.loggers import (
     CSVLogger,
     MLFlowLogger,
     TensorBoardLogger,
     WandbLogger,
 )
-from pydantic import Field
 
 from new_ltpp.configs.base_config import Config, ConfigValidationError
 from new_ltpp.utils import logger
@@ -152,8 +152,8 @@ class LoggerConfig(Config):
             raise ConfigValidationError(
                 f"No adapter available for logger type: {self.type}"
             )
-        self.config["save_dir"] = self.save_dir
-        return adapter.configure(self.config.copy())
+        resolved = {**self.config, "save_dir": self.save_dir}
+        return adapter.configure(resolved)
 
 
 class LoggerFactory:

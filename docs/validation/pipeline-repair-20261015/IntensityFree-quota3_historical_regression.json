@@ -1,0 +1,20 @@
+{
+  "model": "IntensityFree",
+  "scenario": "quota3",
+  "completed": true,
+  "baseline_sha256": "0208b94ce35734fad48599f8d82852d6f678ef85c7f66fe12f19030fb2133921",
+  "source_commit": "3e52a9e503f16facb49ed517c7ac75b3d60588af",
+  "checkpoint_unchanged": true,
+  "scientific_protocol_unchanged": true,
+  "previous_successful_draws_exact": 897,
+  "previous_successful_draws_numerically_equivalent": 0,
+  "historical_p_values_exact": 897,
+  "cross_run_precision": {
+    "rtol": 1e-10,
+    "atol": 1e-12,
+    "max_abs_difference": 0.0
+  },
+  "original_failures_repaired": 3,
+  "total_trials": 900,
+  "comparison": "SHA256 first; optional cross-run comparison uses the existing public dense-reference tolerance, with exact RNG metadata and p-values"
+}

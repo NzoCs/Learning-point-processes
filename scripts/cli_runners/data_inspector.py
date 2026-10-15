@@ -5,7 +5,7 @@ Runner for inspection and visualization of TPP data.
 """
 
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal, Optional
 
 from new_ltpp.data.preprocess import Visualizer
 
@@ -15,7 +15,7 @@ from .cli_base import CLIRunnerBase
 class DataInspector(CLIRunnerBase):
     """
     Runner for inspecting and visualizing data.
-    Uses `DataConfigBuilder` and the Visualizer API.
+    Uses validated DataConfig objects and the Visualizer API.
     """
 
     def __init__(self, debug: bool = False):

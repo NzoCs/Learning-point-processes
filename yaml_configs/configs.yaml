@@ -7,61 +7,73 @@ data_configs:
   taxi:
     data_format: hf
     src_dir: easytpp/taxi
+    revision: 31af59ee1ae184b5b7abbf0094099b1172d66e2a
     num_event_types: 10
   
   taobao:
     data_format: hf
     src_dir: easytpp/taobao
+    revision: a96ec6dc7ef311ca45993af9c8a80f78ed08ae47
     num_event_types: 17
 
   amazon:
     data_format: hf
     src_dir: easytpp/amazon
+    revision: 508e882349ce246c12e0cb288b456a11fb741b52
     num_event_types: 16
 
   retweet:
     data_format: hf
     src_dir: easytpp/retweet
+    revision: d2960029b7c5f6b154c9f1437140d49c3f8c0f0b
     num_event_types: 3
   
   volcano:
     data_format: hf
     src_dir: easytpp/volcano
+    revision: bff8dc1fc888e85fd2e5288199c4c9b1d9b4e5d7
     num_event_types: 1
   
   earthquake:
     data_format: hf
     src_dir: easytpp/earthquake
+    revision: 1c16ceff43689ab725fc95d69c58cba4d88af247
     num_event_types: 7
   
   stackoverflow:
     data_format: hf
     src_dir: easytpp/stackoverflow
+    revision: d356ab0d8bc4dd65f5e1f1f2ca9c0759bcfa7344
     num_event_types: 22
 
   test:
     data_format: hf
     src_dir: NzoCs/test_dataset
+    revision: 1ca2a24f16f377555175c99e5cc1704dc44b92db
     num_event_types: 2
       
   hawkes1:
     data_format: hf
     src_dir: NzoCs/hawkes1
+    revision: 6845adc4862eb756dfc756a17df41bd8a1fc26a3
     num_event_types: 1
 
   hawkes2:
     data_format: hf
     src_dir: NzoCs/hawkes2
+    revision: fc6bbcbc2b5071db1a3fd462674b629807eb7ff8
     num_event_types: 2
   
   H2expi:
     data_format: hf
     src_dir: NzoCs/H2expi
+    revision: e1ef9de1467ed3cb67e87c585c6a6b1a8a33d365
     num_event_types: 2
   
   H2expc:
     data_format: hf
     src_dir: NzoCs/H2expc
+    revision: 2fec1c44d538e66a8d604295b753c4e88f785dd3
     num_event_types: 2
 
 # ==== LOGGER CONFIGS =====
@@ -207,62 +219,13 @@ thinning_configs:
 # ===== SIMULATION CONFIGURATIONS =====
 simulation_configs:
 
-  quick_test:
-    time_window: 10
-    initial_buffer_size: 1000
-    batch_size: 4
-  
-  debug:
-    time_window: 20
-    initial_buffer_size: 2000
-    batch_size: 8
+  # Prediction generates input_batch_width events, using the data-loader batch
+  # size and exactly allocated buffers. Only the RNG seed is controlled here.
+  fixed_events: &fixed_event_simulation
+    seed: 42
+  quick_test: *fixed_event_simulation
+  debug: *fixed_event_simulation
 
-  # Fast simulation configuration (tests)
-  tw30_b5000_b16:
-    time_window: 30
-    initial_buffer_size: 5000
-    batch_size: 16
-
-  # Development simulation configuration
-  tw70_b15000_b32:
-    time_window: 70
-    initial_buffer_size: 15000
-    batch_size: 32
-
-  tw100_b50000_b128:
-    time_window: 100
-    initial_buffer_size: 50000
-    batch_size: 128
-
-  # Standard simulation configuration
-  tw100_b50000_b64:
-    time_window: 100
-    initial_buffer_size: 50000
-    batch_size: 64
-
-  # Extended simulation configuration
-  tw200_b100000_b128:
-    time_window: 200
-    initial_buffer_size: 100000
-    batch_size: 128
-
-  # Simulation configuration for large datasets
-  tw300_b150000_b256:
-    time_window: 300
-    initial_buffer_size: 150000
-    batch_size: 256
-
-  # Simulation configuration for cross-validation
-  tw80_b30000_b64:
-    time_window: 80
-    initial_buffer_size: 30000
-    batch_size: 64
-
-  # Simulation configuration for experiments
-  tw70_b15000_b32:
-    time_window: 70
-    initial_buffer_size: 15000
-    batch_size: 32
 
 # ===== DATA LOADING CONFIGURATIONS =====
 # These configurations contain only DataLoader parameters

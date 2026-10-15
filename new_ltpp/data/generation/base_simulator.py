@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Tuple, Protocol, runtime_checkable
+from typing import Dict, Optional, Protocol, Tuple, runtime_checkable
 
 import numpy as np
 
@@ -65,6 +65,7 @@ class Simulator(ABC):
                 "dimension": self.dim_process,
                 "num_events": self.num_events,
                 "burn_in": self.burn_in,
+                "seed": self.seed,
                 "simulator_type": self.__class__.__name__,
             }
         }

@@ -1,0 +1,33 @@
+{
+  "status": "in_progress",
+  "code": {
+    "commit": "9882678723312cf972f29a222d26c5517168e54e",
+    "tracked_working_tree_dirty": false,
+    "script_lf_sha256": "3870c512228136919a87e597aeb7fe5a7498d1e7d128409959d2d5fd6b6c1e61",
+    "lock_sha256": "ef46ad32e1aae94637655626629ad509448e3b9bb252cbe3cbc77d298ad1d8db",
+    "numpy": "2.3.3",
+    "pysiglib": "4.0.0",
+    "torch_threads": 1
+  },
+  "seed": 2026101407,
+  "trials_per_hypothesis": 100,
+  "permutations": 99,
+  "horizon": 2.0,
+  "plan": "Four archived checkpoints; H0 and twice_speed H1; paired identical datasets/orders across four kernels and 32/128 independent pairs. Fixed history kernel signature8. No model, production kernel, alpha or bandwidth tuning.",
+  "variants": [
+    "signature8",
+    "signature64",
+    "count",
+    "first_time"
+  ],
+  "sample_sizes": [
+    32,
+    128
+  ],
+  "h0_family_size": 32,
+  "h0_excess_threshold": 0.0003125,
+  "scope": "Exploratory diagnosis with predeclared comparisons, shared frozen encoder and NumPy/SciPy decoder. Independent trials, nested 32/128 samples; not a production kernel selection or general model ranking.",
+  "models": [],
+  "selected_model": "FullyNN",
+  "selected_epoch": 1
+}

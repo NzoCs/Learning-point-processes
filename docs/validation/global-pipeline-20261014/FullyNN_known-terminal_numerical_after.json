@@ -1,0 +1,74 @@
+{
+  "test_metrics": {
+    "test_loss": 2.443129062652588,
+    "time_rmse": 0.7328076362609863,
+    "time_mae": 0.5851578712463379,
+    "type_accuracy": 56.69643020629883,
+    "macro_f1score": 36.18181610107422,
+    "recall": 50.0,
+    "precision": 28.348215103149414,
+    "cross_entropy": 0.7462973594665527,
+    "no_event_probability": 0.7821232676506042
+  },
+  "events": [
+    {
+      "seq_idx": 6,
+      "event_idx": 0,
+      "dim_process": 2,
+      "time_since_start": 0.11170639097690582,
+      "time_since_last_event": 0.11170640587806702,
+      "type_event": 1,
+      "sequence_id": "provided:\"conditional-test-6\""
+    }
+  ],
+  "terminal_status": [
+    {
+      "seq_idx": 0,
+      "sequence_id": "provided:\"conditional-test-0\"",
+      "generated_events": 0,
+      "no_next_event": true
+    },
+    {
+      "seq_idx": 1,
+      "sequence_id": "provided:\"conditional-test-1\"",
+      "generated_events": 0,
+      "no_next_event": true
+    },
+    {
+      "seq_idx": 2,
+      "sequence_id": "provided:\"conditional-test-2\"",
+      "generated_events": 0,
+      "no_next_event": true
+    },
+    {
+      "seq_idx": 3,
+      "sequence_id": "provided:\"conditional-test-3\"",
+      "generated_events": 0,
+      "no_next_event": true
+    },
+    {
+      "seq_idx": 4,
+      "sequence_id": "provided:\"conditional-test-4\"",
+      "generated_events": 0,
+      "no_next_event": true
+    },
+    {
+      "seq_idx": 5,
+      "sequence_id": "provided:\"conditional-test-5\"",
+      "generated_events": 0,
+      "no_next_event": true
+    },
+    {
+      "seq_idx": 6,
+      "sequence_id": "provided:\"conditional-test-6\"",
+      "generated_events": 1,
+      "no_next_event": true
+    },
+    {
+      "seq_idx": 7,
+      "sequence_id": "provided:\"conditional-test-7\"",
+      "generated_events": 0,
+      "no_next_event": true
+    }
+  ]
+}

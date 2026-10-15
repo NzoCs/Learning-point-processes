@@ -1,12 +1,13 @@
 # new_ltpp/models/mixins/prediction_mixin.py
 """Mixin for prediction methods (one-step and multi-step)."""
 
-import torch
 from typing import Optional
+
+import torch
 
 from new_ltpp.models.simulation.simulator import Simulator
 from new_ltpp.models.simulation.tpp_io import SimulationIOManager
-from new_ltpp.shared_types import SimulationResult, Batch, OneStepPred
+from new_ltpp.shared_types import Batch, OneStepPred, SimulationResult
 
 from .base_model import NeuralModel
 
@@ -67,6 +68,7 @@ class PredictionMixin(NeuralModel):
             self.compute_intensities_at_sample_dtimes,
             self.num_sample,
             compute_last_step_only=False,
+            conditional_on_event=True,
         )
 
         # Compute intensities at sampled times
@@ -75,7 +77,9 @@ class PredictionMixin(NeuralModel):
             time_delta_seqs=time_delta_seqs,
             type_seqs=type_seqs,
             valid_event_mask=valid_event_mask,
-            sample_dtimes=accepted_dtimes,
+            sample_dtimes=torch.where(
+                torch.isfinite(accepted_dtimes), accepted_dtimes, 0
+            ),
         )
 
         # Normalize intensities and compute weighted sum
@@ -90,8 +94,21 @@ class PredictionMixin(NeuralModel):
         # Get predictions
         types_pred = torch.argmax(intensities_weighted, dim=-1)
         dtimes_pred = torch.sum(accepted_dtimes * weights, dim=-1)
+        types_pred = torch.where(
+            torch.isfinite(dtimes_pred), types_pred, self.pad_token_id
+        )
 
-        return OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)
+        prediction = OneStepPred(dtime_predict=dtimes_pred, type_predict=types_pred)
+        hazard_factory = getattr(self, "next_event_hazard", None)
+        if callable(hazard_factory):
+            _, limit = hazard_factory(
+                time_seqs=time_seqs,
+                time_delta_seqs=time_delta_seqs,
+                type_seqs=type_seqs,
+                valid_event_mask=valid_event_mask,
+            )
+            prediction["no_event_probability"] = (-limit).exp().detach()
+        return prediction
 
     def simulate(
         self,
@@ -104,13 +121,13 @@ class PredictionMixin(NeuralModel):
             )
 
         simulator: "Simulator" = self._simulator
-        sim = simulator.simulate(batch=batch, num_events_to_simulate=num_events_to_simulate)
+        sim = simulator.simulate(
+            batch=batch, num_events_to_simulate=num_events_to_simulate
+        )
 
         return sim
 
-    def _create_empty_batch(
-        self, batch_size: int, num_events: int = 100
-    ) -> Batch:
+    def _create_empty_batch(self, batch_size: int, num_events: int = 100) -> Batch:
         device = self.device
         return Batch(
             time_seqs=torch.zeros(

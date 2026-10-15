@@ -2,27 +2,161 @@ name: Test pipeline
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, codex/pysiglib-migration, codex/parametric-simulators, codex/unbounded-neural-sampling]
   pull_request:
     branches: [main, master]
 
 jobs:
+  pipeline-calibration-repair:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[pipeline-calibration-repair]')
+    uses: ./.github/workflows/pipeline-calibration-repair.yml
+
+  acceleration-centering:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[acceleration-centering]')
+    uses: ./.github/workflows/acceleration-centering.yml
+
+  acceleration-diagnosis:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[acceleration-diagnosis]')
+    uses: ./.github/workflows/acceleration-diagnosis.yml
+
+  pipeline-calibration:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[pipeline-calibration]')
+    uses: ./.github/workflows/pipeline-calibration.yml
+
+  global-pipeline:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[global-pipeline]')
+    uses: ./.github/workflows/global-pipeline.yml
+
+  global-signature-confirmation:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[global-signature-confirm]')
+    uses: ./.github/workflows/global-signature-confirmation.yml
+
+  global-signature-calibration:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[global-signature]')
+    uses: ./.github/workflows/global-signature-calibration.yml
+
+  window-first-event-power:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[window-first-event]')
+    uses: ./.github/workflows/window-first-event-power.yml
+
+  window-power-diagnosis:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[window-power]')
+    uses: ./.github/workflows/window-power-diagnosis.yml
+
+  stopped-pipeline:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[stopped-pipeline]')
+    uses: ./.github/workflows/stopped-pipeline.yml
+
+  stopped-calibration:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[stopped-calibration]')
+    uses: ./.github/workflows/stopped-calibration.yml
+
+  unbounded-sampling:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[unbounded-sampling]')
+    uses: ./.github/workflows/unbounded-sampling.yml
+
+  parametric-refactor:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[parametric-refactor]')
+    uses: ./.github/workflows/parametric-refactor.yml
+
+  independent-simulators:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[independent-simulators]')
+    uses: ./.github/workflows/independent-simulators.yml
+
+  conditional-validation:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[conditional-validation]')
+    uses: ./.github/workflows/conditional-validation.yml
+
+  conditional-integration-linux:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[conditional-integration]')
+    uses: ./.github/workflows/integration.yml
+    with:
+      model: all
+      linux_only: true
+      conditional: true
+
+  conditional-calibration:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[conditional-calibration]')
+    uses: ./.github/workflows/conditional-calibration.yml
+
+  scientific-extended:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[scientific-extended]')
+    uses: ./.github/workflows/scientific-extended.yml
+
+  integration-linux:
+    # Explicit opt-in for a published development branch, without a main merge.
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[integration-linux]')
+    uses: ./.github/workflows/integration.yml
+    with:
+      model: all
+      linux_only: true
+
+  signature-migration:
+    runs-on: ubuntu-latest
+    env:
+      OMP_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install locked pySigLib
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+          uv run --frozen --no-sync python -c 'import pysiglib; print(pysiglib.__version__)'
+      - name: Check CPU signature recurrence and gradients
+        run: >-
+          uv run --frozen --no-sync python -m pytest -o addopts=
+          tests/stat_metrics/test_signature_migration.py tests/stat_metrics/test_sig_kernel.py -q
+
+  packaging-and-launchers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install build tool
+        run: python -m pip install uv==0.11.29
+      - name: Build distribution
+        run: uv build --wheel --no-sources
+      - name: Check wheel and Ruche launch plans
+        run: >-
+          uv run --no-project --python 3.11
+          --with pytest==8.4.2 --with pyyaml==6.0.2
+          python -m pytest -o addopts=
+          tests/scripts/test_ruche_launcher.py tests/scripts/test_wheel_contents.py -q
+
   test:
     runs-on: ubuntu-latest
+    env:
+      OMP_NUM_THREADS: "1"
+      MPLBACKEND: Agg
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
 
       - name: Install dependencies
         run: |
-          pip install uv
-          uv sync
+          python -m pip install uv==0.11.29
+          uv sync --frozen --group dev
 
       - name: Run tests
         run: |
-          uv run tests
+          uv run --frozen --no-sync python -m pytest tests -m "not slow"
+
+      - name: Upload coverage diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-linux
+          path: |
+            coverage.xml
+            coverage_html/

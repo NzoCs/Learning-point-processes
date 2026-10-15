@@ -90,9 +90,7 @@ class CLIRunnerBase:
                         f"{prefix}.{config_name}"
                     )
                 else:
-                    self.print_error(
-                        f"Unrecognized configuration type: {config_type}"
-                    )
+                    self.print_error(f"Unrecognized configuration type: {config_type}")
 
         return config_paths
 

@@ -1,10 +1,12 @@
-from typing import Optional, Union
-from pydantic import ConfigDict, Field, PositiveInt, PositiveFloat, model_validator
 from pathlib import Path
+from typing import Optional, Union
+
+from pydantic import ConfigDict, Field, PositiveFloat, PositiveInt, model_validator
 
 from new_ltpp.utils import logger
+
 from .base_config import Config
-from .config_utils import load_yaml, extract
+from .config_utils import extract, load_yaml
 
 
 def get_available_gpu() -> int:
@@ -30,6 +32,10 @@ class ThinningConfig(Config):
     num_exp: PositiveInt
     num_samples_boundary: PositiveInt = 200
     over_sample_rate: float = Field(default=2.0, gt=1.0)
+    max_sampling_rounds: PositiveInt = Field(
+        default=10000,
+        description="Safety budget for proposal rounds; never a cap on event delays.",
+    )
 
     @model_validator(mode="before")
     @classmethod

@@ -42,7 +42,9 @@ class CorrAccumulator(Accumulator):
             return
 
         # Compute ACF for ground truth
-        acf_gt, bin_width = self.compute_acf_from_batch(batch, self.nb_bins, self.max_lag)
+        acf_gt, bin_width = self.compute_acf_from_batch(
+            batch, self.nb_bins, self.max_lag
+        )
         acf_gt_np = acf_gt.cpu().numpy()  # (B, max_lag+1)
         acf_gt_batch_mean = np.mean(acf_gt_np, axis=0)  # (max_lag+1,)
 

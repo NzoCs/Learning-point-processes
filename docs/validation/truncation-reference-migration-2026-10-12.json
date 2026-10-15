@@ -1,0 +1,340 @@
+{
+  "previous_reference_commit": "5156aa2",
+  "validated_code_commit": "47b781df879857dc837512ca17709a640deb0636",
+  "protected_fields": [
+    "schema",
+    "model",
+    "fixture_sha256",
+    "path_preparation",
+    "trained_state",
+    "probe_loss",
+    "probe_num_events",
+    "probe_intensities",
+    "probe_gradients",
+    "test_metrics"
+  ],
+  "models": {
+    "ANHN": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l1",
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "ANHP": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "FullyNN": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "Hawkes": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "IntensityFree": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "NHP": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "ODETPP": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "RMTPP": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l1",
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "SAHP": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "SelfCorrecting": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l1",
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_event_type_hist_l1",
+        "sim_event_type_hist_l2",
+        "sim_event_type_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    },
+    "THP": {
+      "status": "passed",
+      "protected_fields_exactly_unchanged": true,
+      "first_batch_trajectories_exactly_unchanged": true,
+      "changed_simulation_columns": [
+        "sim_time_hist_l1",
+        "sim_time_hist_l2",
+        "sim_time_hist_kl",
+        "sim_sequence_length_hist_l1",
+        "sim_sequence_length_hist_l2",
+        "sim_sequence_length_hist_kl",
+        "sim_acf_hist_l1",
+        "sim_acf_hist_l2",
+        "sim_mean_mmd_value",
+        "sim_std_mmd_value",
+        "sim_mean_mmd_p_value",
+        "sim_pooled_mmd_p_value"
+      ],
+      "old_mmd_p_values": [
+        null,
+        0.3333333432674408
+      ],
+      "new_mmd_p_values": [
+        null,
+        0.25
+      ]
+    }
+  },
+  "previous_reference_sha256": {
+    "ANHN.json": "b93608806bc69199b4ae9e7f8467f54528b464bb00dee3fca1b1fd494d26a766",
+    "ANHP.json": "13f4752f6cc554047758c35d728f47ea6b614315d2e347b54b89addc0549b1dc",
+    "FullyNN.json": "2aa467e1f7c5c6be9b8724a80d0fac852b3bc1c5e35b06978114a71f551842be",
+    "Hawkes.json": "25efd6d5e7ed30d6e86fba5cccf3a1dcec3b482c3b3ddff98ad49d3c9f92d868",
+    "IntensityFree.json": "f61cdf37ddb4fc349e684735c25b1ad79c8af2c58b5d3ebb29aba3c96fa3ed72",
+    "NHP.json": "cebdb645e69b66a04c02da099d1ed9a7dbe95bc0222c8e4b61b763fb05b80809",
+    "ODETPP.json": "a6786686aac9395a163860ced8b765f3eed411b18111abd92dde360052eeb2da",
+    "provenance.json": "fbaa312fd4c37989ef852a7e3b35dd34f9dcd79710672ff1733a132793069197",
+    "RMTPP.json": "e1f4e37ff555fb160d36377f6d76b4c8c7791058c4c0aedb680207fa8978f482",
+    "SAHP.json": "66d12e07548d81752402d226369a635d355629a5e3a16df3353948948487c513",
+    "SelfCorrecting.json": "dec60c4ee713bacb1563c23caa17fbe237657e85e1de20f6547aced0a440ae19",
+    "THP.json": "417c6933e45efad0d19e4cb9ffaf9929c40f8e6ac826563f436d016c20db27f1"
+  }
+}

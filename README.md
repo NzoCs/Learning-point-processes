@@ -27,24 +27,79 @@ New-LTPP is designed to be a comprehensive toolkit for TPP research, covering th
 
 ## 🛠️ Installation
 
-**Prerequisites:** Python 3.11+
+**Prerequisites:** Python **3.11** and `uv`.
 
 ### 1. Using `uv` (Recommended)
 
 This project uses `uv` for dependency management.
 
 ```bash
-# Install dependencies
-uv sync
+# Download into a fresh directory, then install the committed lock
+git clone --branch codex/pysiglib-migration https://github.com/NzoCs/Learning-point-processes.git
+cd Learning-point-processes
+uv sync --frozen --python 3.11 --no-default-groups --no-build-package pysiglib
+uv run --frozen --no-sync new-ltpp --help
 ```
 
-### 2. Using `pip`
+### 2. Development and native dependencies
 
 ```bash
-pip install -e .
+uv sync --frozen --group dev
+uv run --frozen --no-sync python -m pytest tests -m "not slow"
 ```
 
+This branch uses **pySigLib 4.0.0** for signature kernels, with the historical
+finite-difference solver and unbiased MMD² estimator. The Ruche GPU profile
+requires the locked CUDA plugin: `uv sync --frozen --no-default-groups --extra ruche
+--no-build-package pysiglib --no-build-package pysiglib-cuda`.
+There is no automatic CPU or legacy fallback. pySigLib is the only signature
+backend supported by this branch. The historical implementation is preserved on
+`codex/reproductibilite-ruche`. Read the [migration validation](docs/PYSIGLIB_MIGRATION.md)
+and the [Ruche storage and installation procedure](docs/RUCHE.md).
+
 ---
+
+## Reproducible runs
+
+Training accepts `--seed` and an explicit `--checkpoint`. Each attempt writes to
+its own run directory, containing `effective_config.yaml`, `manifest.json`,
+checkpoints and results. The manifest records versions, configuration, dataset
+revision, local data hashes and the checkpoint used by each completed phase.
+The saved effective configuration can be passed directly to `run --config`:
+
+```bash
+uv run --frozen --no-sync new-ltpp run --config /path/to/effective_config.yaml \
+  --seed 42 --phase all --save-dir artifacts/replayed
+# Resume at an epoch boundary from the last training checkpoint:
+uv run --frozen --no-sync new-ltpp run --config /path/to/effective_config.yaml \
+  --checkpoint /path/to/last.ckpt --epochs 10 --phase train --save-dir artifacts/resumed
+```
+
+The small complete CPU pipeline is tested offline with local fixture data:
+
+```bash
+OMP_NUM_THREADS=1 MPLBACKEND=Agg uv run --frozen --no-sync python -m pytest \
+  -o addopts= tests/test_reproducibility.py -q
+```
+
+`deterministic: true` in the training YAML enables strict PyTorch determinism.
+CPU repeatability and epoch-boundary resume are verified on the small NHP case
+with zero loader workers; CUDA, DDP and multi-worker resume still need validation.
+
+An opt-in integration regression suite covers every public model using fixed,
+small offline data and versioned numerical references. It is separate from the
+regular tests and runs manually through GitHub Actions or locally:
+
+```bash
+uv run --frozen --no-sync python -m scripts.integration_suite
+```
+
+See [integration tests](docs/INTEGRATION_TESTS.md) for the checked outputs,
+tolerances, artefacts and the explicit reference-update policy.
+The current global coverage is 62.86%, below the retained 80% gate, so the normal
+coverage command is expected to fail until coverage improves. See the
+[reproducibility report](rapports/REPRODUCTIBILITE_RUCHE.md) for remaining limits
+and the numerical changes to MKernel and p-values.
 
 ## ⚡ Quick Start
 
@@ -56,7 +111,10 @@ To verify everything is working, use the Makefile target that runs a quick end-t
 make run-demo
 ```
 
-*Creates artifacts in `artifacts/test/NHP_.../`*
+Run this after installation with `uv run --frozen --no-sync make run-demo`.
+The `test` dataset is downloaded from Hugging Face (`NzoCs/test_dataset`).
+This demo requires network access or a populated dataset cache.
+Outputs are written beneath `artifacts/test/NHP_.../` in the current working directory.
 
 ### 2. Run an Experiment via CLI
 
@@ -69,7 +127,7 @@ You can run experiments directly using the `new-ltpp` command (or `scripts/cli.p
 new-ltpp run --model THP --dataset-id taxi --phase train --epochs 50
 
 # OR using the python script directly
-python scripts/cli.py run --model THP --dataset-id taxi --phase train --epochs 50
+uv run --frozen --no-sync python -m scripts.cli run --model THP --dataset-id taxi --phase train --epochs 50
 ```
 
 ### 3. Interactive Setup
@@ -125,7 +183,23 @@ You can override configurations via CLI arguments (e.g., `--training-config quic
 
 * **Data Config**: Dataset paths and formats (`test`, `taxi`, `retweet`).
 * **Model Config**: Hyperparameters for each model (`NHP`, `THP`).
-* **Training Config**: Epochs, batch size, learning rate (`quick_test`, `full_training`).
+* **Training Config**: Epochs and learning rate (`quick_test`, `e500_b1`).
+* **Data Loading Config**: Batch size and workers (`quick_test`, `b32_w1`).
+* **Simulation Config**: RNG seed (`fixed_events`, `quick_test`, `debug`), with optional `conditional_evaluation` history/future counts.
+* **Signature representation**: `embedding_type: counting_grid`.
+
+For an offline CPU example using the current configuration API, open
+[the getting-started notebook](notebooks/NewLTPP_Getting_Started.ipynb).
+The [configuration contract](docs/CONFIGURATION_CONTRACTS.md) describes how to
+adapt a copy of an old configuration while preserving its archived provenance.
+For heldout conditional model evaluation, see the
+[conditional protocol and CLI configuration](docs/CONDITIONAL_CALIBRATION.md#évaluation-conditionnelle-dans-la-cli).
+For parametric Hawkes, SelfCorrecting and Poisson models, their dedicated
+simulators and architecture validation, see
+[the parametric model contract](docs/PARAMETRIC_ARCHITECTURE.md).
+The [unbounded neural sampler](docs/UNBOUNDED_NEURAL_SAMPLING.md) describes
+long waiting times, the explicit computation safety budget and remaining
+envelope/FullyNN limitations.
 
 ---
 

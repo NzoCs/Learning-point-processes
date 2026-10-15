@@ -1,2 +1,7 @@
 ./main/results/** filter=lfs diff=lfs merge=lfs -text
 ./main/results/**/* filter=lfs diff=lfs merge=lfs -text
+*.sh text eol=lf
+# Preserve the archived Linux proof bytes and their SHA-256 on Windows too.
+docs/validation/global-pipeline-20261014/*.json text eol=lf
+docs/validation/acceleration-diagnosis-20261015/*.json text eol=lf
+docs/validation/pipeline-repair-20261015/*.json text eol=lf

@@ -1,0 +1,82 @@
+name: Scientific calibration of current quota and stopping pipeline
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stopped:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [FullyNN, RMTPP]
+        scenario: [quota3, quota6]
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU dependencies
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Verify production observation and independent oracles
+        run: uv run --frozen --no-sync python -m pytest -o addopts= tests/scripts/test_pipeline_protocol_calibration.py -q
+      - name: Run 1000 H0 and 200 trials per alternative on frozen fitted model
+        run: >-
+          uv run --frozen --no-sync python -m scripts.pipeline_protocol_calibration
+          --model ${{ matrix.model }} --scenario ${{ matrix.scenario }}
+          --output artifacts/pipeline-calibration-${{ matrix.model }}-${{ matrix.scenario }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-calibration-${{ matrix.model }}-${{ matrix.scenario }}
+          path: artifacts/pipeline-calibration-${{ matrix.model }}-${{ matrix.scenario }}/
+          retention-days: 30
+  extension:
+    needs: stopped
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        model: [ANHN, ANHP, Hawkes, IntensityFree, NHP, ODETPP, SAHP, SelfCorrecting, THP, Poisson]
+        scenario: [quota3, quota6]
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked CPU dependencies
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Frozen-model calibration, power and independent references where available
+        run: >-
+          uv run --frozen --no-sync python -m scripts.pipeline_protocol_calibration
+          --model ${{ matrix.model }} --scenario ${{ matrix.scenario }}
+          --output artifacts/pipeline-calibration-${{ matrix.model }}-${{ matrix.scenario }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pipeline-calibration-${{ matrix.model }}-${{ matrix.scenario }}
+          path: artifacts/pipeline-calibration-${{ matrix.model }}-${{ matrix.scenario }}/
+          retention-days: 30

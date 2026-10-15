@@ -1,16 +1,18 @@
-from new_ltpp.configs import TokenizerConfig
 from typing import Iterator, Literal
 
 import numpy as np
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
+from new_ltpp.configs import TokenizerConfig
 from new_ltpp.configs.data_config import DataConfig
 from new_ltpp.data.preprocess.data_collator import TPPDataCollator
 from new_ltpp.data.preprocess.dataset import TPPDataset
 from new_ltpp.data.preprocess.event_tokenizer import EventTokenizer
 from new_ltpp.shared_types import Batch, DataInfo
 from new_ltpp.utils import load_pickle, logger, py_assert
+
+from .sequence_identity import identify_loaded_data, sequence_ids
 
 
 class TypedDataLoader:
@@ -229,12 +231,18 @@ class TPPDataModule(pl.LightningDataModule):
 
         try:
             # Try exact split name first (e.g., 'dev')
-            data = load_dataset(source_dir, split=split)
+            data = load_dataset(
+                source_dir, split=split, revision=self.data_config.revision
+            )
         except ValueError as e:
             # Fallback to 'validation' if 'dev' is not found
             if split == "dev":
                 try:
-                    data = load_dataset(source_dir, split="validation")
+                    data = load_dataset(
+                        source_dir,
+                        split="validation",
+                        revision=self.data_config.revision,
+                    )
                 except ValueError:
                     raise e
             else:
@@ -246,11 +254,14 @@ class TPPDataModule(pl.LightningDataModule):
             "Inconsistent dim_process in different splits.",
         )
 
-        return {
-            "time_seqs": data["time_since_start"],
-            "type_seqs": data["type_event"],
-            "time_delta_seqs": data["time_since_last_event"],
-        }
+        return identify_loaded_data(
+            {
+                "time_seqs": data["time_since_start"],
+                "type_seqs": data["type_event"],
+                "time_delta_seqs": data["time_since_last_event"],
+            },
+            data,
+        )
 
     def _build_input_from_pkl(self, source_dir: str, split: str) -> dict:
         """Load and process data from a pickle file.
@@ -270,13 +281,15 @@ class TPPDataModule(pl.LightningDataModule):
         )
 
         source_data = data[split]
-        return {
+        payload = {
             "time_seqs": [[x["time_since_start"] for x in seq] for seq in source_data],
             "type_seqs": [[x["type_event"] for x in seq] for seq in source_data],
             "time_delta_seqs": [
                 [x["time_since_last_event"] for x in seq] for seq in source_data
             ],
         }
+        payload["sequence_ids"] = sequence_ids(payload)
+        return payload
 
     def _build_input_from_json(self, source_dir: str, split: str) -> dict:
         """Load and process data from a JSON file.
@@ -299,11 +312,14 @@ class TPPDataModule(pl.LightningDataModule):
             "Inconsistent dim_process in different splits.",
         )
 
-        return {
-            "time_seqs": data["time_since_start"],
-            "type_seqs": data["type_event"],
-            "time_delta_seqs": data["time_since_last_event"],
-        }
+        return identify_loaded_data(
+            {
+                "time_seqs": data["time_since_start"],
+                "type_seqs": data["type_event"],
+                "time_delta_seqs": data["time_since_last_event"],
+            },
+            data,
+        )
 
     def prepare_data(self):
         """Prepare data if needed (download data, etc.)."""
@@ -380,7 +396,7 @@ class TPPDataModule(pl.LightningDataModule):
                 shuffle=True,
                 collate_fn=collate_fn,
                 num_workers=self.num_workers,
-                persistent_workers=True,
+                persistent_workers=self.num_workers > 0,
             )
         )
 
@@ -403,7 +419,7 @@ class TPPDataModule(pl.LightningDataModule):
                 shuffle=False,
                 collate_fn=collate_fn,
                 num_workers=self.num_workers,
-                persistent_workers=True,
+                persistent_workers=self.num_workers > 0,
             )
         )
 
@@ -426,7 +442,7 @@ class TPPDataModule(pl.LightningDataModule):
                 shuffle=False,
                 collate_fn=collate_fn,
                 num_workers=self.num_workers,
-                persistent_workers=True,
+                persistent_workers=self.num_workers > 0,
             )
         )
 

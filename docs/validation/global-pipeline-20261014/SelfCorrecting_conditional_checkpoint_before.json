@@ -1,0 +1,130 @@
+{
+  "state_dict": {
+    "mu": {
+      "dtype": "torch.float32",
+      "shape": [
+        2
+      ],
+      "values": [
+        0.0,
+        0.0
+      ]
+    },
+    "alpha": {
+      "dtype": "torch.float32",
+      "shape": [
+        2,
+        2
+      ],
+      "values": [
+        [
+          -0.0019520190544426441,
+          -0.0016331067308783531
+        ],
+        [
+          -0.0018987267976626754,
+          -0.0019462831551209092
+        ]
+      ]
+    }
+  },
+  "optimizer_states": [
+    {
+      "state": {
+        "0": {
+          "step": {
+            "dtype": "torch.float32",
+            "shape": [],
+            "values": 2.0
+          },
+          "exp_avg": {
+            "dtype": "torch.float32",
+            "shape": [
+              2
+            ],
+            "values": [
+              0.0,
+              0.0
+            ]
+          },
+          "exp_avg_sq": {
+            "dtype": "torch.float32",
+            "shape": [
+              2
+            ],
+            "values": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        "1": {
+          "step": {
+            "dtype": "torch.float32",
+            "shape": [],
+            "values": 2.0
+          },
+          "exp_avg": {
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              2
+            ],
+            "values": [
+              [
+                0.021180080249905586,
+                0.023655666038393974
+              ],
+              [
+                0.06743007898330688,
+                0.04990566894412041
+              ]
+            ]
+          },
+          "exp_avg_sq": {
+            "dtype": "torch.float32",
+            "shape": [
+              2,
+              2
+            ],
+            "values": [
+              [
+                2.740750278462656e-05,
+                7.730758079560474e-05
+              ],
+              [
+                0.00031171482987701893,
+                0.0001540149823995307
+              ]
+            ]
+          }
+        }
+      },
+      "param_groups": [
+        {
+          "lr": 0.001,
+          "betas": [
+            0.9,
+            0.999
+          ],
+          "eps": 1e-08,
+          "weight_decay": 0,
+          "amsgrad": false,
+          "maximize": false,
+          "foreach": null,
+          "capturable": false,
+          "differentiable": false,
+          "fused": null,
+          "decoupled_weight_decay": false,
+          "params": [
+            0,
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "lr_schedulers": [],
+  "epoch": 0,
+  "global_step": 2
+}

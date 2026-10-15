@@ -1,0 +1,44 @@
+{
+  "status": "in_progress",
+  "code": {
+    "commit": "2311860f9d55d55e66a088c2e1ac17deeeb148ed",
+    "tracked_working_tree_dirty": false,
+    "script_lf_sha256": "8916837423320b3b96888decfa1b22119063f4b968b246f0f37464bf7dcc23de",
+    "lock_sha256": "ef46ad32e1aae94637655626629ad509448e3b9bb252cbe3cbc77d298ad1d8db",
+    "numpy": "2.3.3",
+    "pysiglib": "4.0.0",
+    "torch_threads": 1
+  },
+  "model": "FullyNN",
+  "epoch": 1,
+  "seed": 2026101441,
+  "trials_H0": 1000,
+  "trials_H1": 200,
+  "permutations": 99,
+  "horizon": 2.0,
+  "observation_clock_dtype": "float64",
+  "model_input_dtype": "float32; gaps computed before casting the observation clock",
+  "sample_sizes": [
+    2048
+  ],
+  "selected_hypothesis": "H0",
+  "variants": [
+    "global"
+  ],
+  "independent_confirmation": true,
+  "kernel": {
+    "type": "signature",
+    "static": "RBF",
+    "sigma": 1.0,
+    "grid_points": 8,
+    "dyadic_order": 0,
+    "marks": 2,
+    "backend": "pysiglib"
+  },
+  "h0_family_size": 2,
+  "h0_excess_threshold": 0.005,
+  "plan": "Independent confirmation declared after FullyNN epoch 2 yielded 24/300 H0 rejections at 2048 pairs. Both archived FullyNN checkpoints, 1000 fresh H0 trials each, seed 2026101441, global signature8 only, 99 paired swaps, excess criterion 0.01/2. No parameter tuning, no replacing the initial 8% result, no retries until favorable.",
+  "scope": "Complete futures inside a fully observed fixed T=2 window, including empty windows; no inference of permanent termination. Production simulator versus independent NumPy/SciPy decoder/inversion/RNG, shared frozen Torch encoder. Two repeated heterogeneous histories, two checkpoints per model; no fitting uncertainty or CUDA/Ruche validation.",
+  "results": [],
+  "observations": {}
+}

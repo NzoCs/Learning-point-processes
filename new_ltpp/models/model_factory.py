@@ -18,8 +18,8 @@ from new_ltpp.configs import ModelConfig, ModelSpecsConfig
 from new_ltpp.shared_types import DataInfo
 from new_ltpp.utils import logger
 
-from .model_registry import ModelRegistry
 from .model_protocol import ITPPModel
+from .model_registry import ModelRegistry
 
 
 class ModelFactory:

@@ -179,7 +179,7 @@ class SystemInfo(CLIRunnerBase):
             new_ltpp_info["new_ltpp Version"] = getattr(
                 new_ltpp, "__version__", "Unknown"
             )
-            new_ltpp_info["Installation Path"] = str(Path(new_ltpp.__file__).parent) # type: ignore
+            new_ltpp_info["Installation Path"] = str(Path(new_ltpp.__file__).parent)  # type: ignore
 
             # Check main modules
             modules_to_check = [
@@ -191,11 +191,11 @@ class SystemInfo(CLIRunnerBase):
             ]
 
             for module_name in modules_to_check:
-                    try:
-                        __import__(module_name)
-                        new_ltpp_info[f"Module {module_name}"] = "✓ Available"
-                    except ImportError:
-                        new_ltpp_info[f"Module {module_name}"] = "✗ Missing"
+                try:
+                    __import__(module_name)
+                    new_ltpp_info[f"Module {module_name}"] = "✓ Available"
+                except ImportError:
+                    new_ltpp_info[f"Module {module_name}"] = "✗ Missing"
 
         except ImportError:
             new_ltpp_info["new_ltpp"] = "Not installed"

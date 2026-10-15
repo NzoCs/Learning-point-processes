@@ -1,0 +1,29 @@
+{
+  "status": "in_progress",
+  "code": {
+    "commit": "cb16a690f5ca733ce120027da1d46d375e0bff74",
+    "tracked_working_tree_dirty": false,
+    "script_lf_sha256": "bab9554276bd75748de99ccc36b2214072254acd7c69c4b014de00193ed851e0",
+    "lock_sha256": "ef46ad32e1aae94637655626629ad509448e3b9bb252cbe3cbc77d298ad1d8db",
+    "numpy": "2.3.3",
+    "pysiglib": "4.0.0",
+    "torch_threads": 1
+  },
+  "model": "FullyNN",
+  "epoch": 1,
+  "trials": 100,
+  "permutations": 99,
+  "seed": 2026101419,
+  "pairs": [
+    32,
+    128,
+    512,
+    2048
+  ],
+  "plan": "Stage three declared after stage-two targeted control. Exact NumPy/SciPy first-event law, same frozen parameters, two fixed histories. Same first-time RBF (bandwidth T/10) and signature8 history weights: 16/11/5 independent block aggregation versus pooled U-statistic, identical data and concatenated within-pair swaps. Additional targeted two-sided paired mean diagnostic. Production conservative numerical-tie rule for every p-value. No tuning or model change.",
+  "scope": "This isolates the first event and sample size, not the full continuation or production simulator calibration; H0 uses two independent analytic-oracle samples. No events are discarded or conditioned to exist.",
+  "h0_family_size": 24,
+  "h0_excess_threshold": 0.0004166666666666667,
+  "results": [],
+  "analytical": []
+}

@@ -1,13 +1,14 @@
+import json
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
 
-import torch
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import torch
 
-from new_ltpp.utils import logger
 from new_ltpp.shared_types import SimulationResult
+from new_ltpp.utils import logger
 
 
 class IncrementalParquetWriter:
@@ -53,6 +54,19 @@ class IncrementalParquetWriter:
 
     def close(self) -> None:
         """Properly close the Parquet writer."""
+        if self._writer is None and not self.filepath.exists():
+            # A valid run may contain only trajectories without future events.
+            schema = pa.schema(
+                [
+                    ("seq_idx", pa.int64()),
+                    ("event_idx", pa.int64()),
+                    ("dim_process", pa.int64()),
+                    ("time_since_start", pa.float64()),
+                    ("time_since_last_event", pa.float64()),
+                    ("type_event", pa.int64()),
+                ]
+            )
+            pq.write_table(pa.Table.from_pylist([], schema=schema), self.filepath)
         if self._writer:
             self._writer.close()
             self._writer = None
@@ -84,8 +98,10 @@ class SimulationIOManager:
         self,
         num_event_types: int,
         prefix: str = "sim_batch",
+        preserve_origin: bool = False,
     ):
         self.num_event_types = num_event_types
+        self.preserve_origin = preserve_origin
         self._accumulated_data: List[Dict] = []
         self._total_sequences = 0
         self.prefix = prefix
@@ -111,19 +127,51 @@ class SimulationIOManager:
     def append_batch(self, result: SimulationResult) -> None:
         """Format and accumulate/save a simulation batch."""
         formatted = self.format_simulation_result(
-            result, self.num_event_types, self._total_sequences
+            result,
+            self.num_event_types,
+            self._total_sequences,
+            preserve_origin=self.preserve_origin,
         )
+        if result.no_next_event_mask is not None and self._writer is not None:
+            # Keep an explicit record even for a sequence with zero future events.
+            with (self.output_dir / "sequence_status.jsonl").open(
+                "a", encoding="utf-8"
+            ) as stream:
+                for row, stopped in enumerate(result.no_next_event_mask.cpu().tolist()):
+                    stream.write(
+                        json.dumps(
+                            dict(
+                                seq_idx=self._total_sequences + row,
+                                sequence_id=(
+                                    result.sequence_ids[row]
+                                    if result.sequence_ids
+                                    else None
+                                ),
+                                generated_events=int(
+                                    result.valid_event_mask[row].sum()
+                                ),
+                                no_next_event=stopped,
+                            )
+                        )
+                        + "\n"
+                    )
 
         if self._writer:
             self._writer.write_batch(formatted)
         else:
             self._accumulated_data.extend(formatted)
 
-        self._total_sequences += len(formatted)
+        # Each formatted row is an event, not a sequence. Advance the sequence
+        # offset by batch size so IDs remain contiguous across saved batches.
+        self._total_sequences += result.time_seqs.size(0)
 
     @staticmethod
     def format_simulation_result(
-        result: SimulationResult, num_event_types: int, offset: int = 0
+        result: SimulationResult,
+        num_event_types: int,
+        offset: int = 0,
+        *,
+        preserve_origin: bool = False,
     ) -> List[Dict]:
         """Converts raw SimulationResult (Batch) tensors into a flattened list of events."""
         flattened_events = []
@@ -144,13 +192,20 @@ class SimulationIOManager:
                 continue
 
             t0 = seq_times[0].item()
-            
+
             # Compute relative times
             time_since_start = (seq_times - t0).tolist()
             time_since_last_event = torch.cat(
                 [torch.tensor([0.0]), seq_times[1:] - seq_times[:-1]]
             ).tolist()
             event_types = seq_types.tolist()
+            if preserve_origin:
+                time_since_start = seq_times.tolist()
+                time_since_last_event = (
+                    result.time_delta_seqs[i][mask_i.to(result.time_delta_seqs.device)]
+                    .cpu()
+                    .tolist()
+                )
 
             # Create one row per event
             for j in range(len(event_types)):
@@ -164,6 +219,8 @@ class SimulationIOManager:
                         "type_event": event_types[j],
                     }
                 )
+                if preserve_origin and result.sequence_ids is not None:
+                    flattened_events[-1]["sequence_id"] = result.sequence_ids[i]
 
         return flattened_events
 

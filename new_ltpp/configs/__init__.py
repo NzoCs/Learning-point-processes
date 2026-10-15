@@ -28,8 +28,8 @@ from new_ltpp.configs.runner_config import (
     TrainingConfig,
 )
 from new_ltpp.configs.statistical_test_config import (
-    StatisticalTestConfig,
     SimulationConfig,
+    StatisticalTestConfig,
 )
 
 __all__ = [

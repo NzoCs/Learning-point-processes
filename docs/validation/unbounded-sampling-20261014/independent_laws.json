@@ -1,0 +1,230 @@
+{
+  "status": "completed_with_findings",
+  "code": {
+    "commit": "5a9d35bbdcee6d0012b51e6eee362d516c5edc6b",
+    "tracked_working_tree_dirty": false,
+    "script_lf_sha256": "f4d50670bb632d05e9bcecee826f600163b1d722d68a65a963501348315feb70",
+    "lock_sha256": "ef46ad32e1aae94637655626629ad509448e3b9bb252cbe3cbc77d298ad1d8db",
+    "numpy": "2.3.3",
+    "pysiglib": "4.0.0",
+    "torch_threads": 1
+  },
+  "sequences": 4096,
+  "future_events": 4,
+  "checks": {
+    "SelfCorrecting": {
+      "native_simulator": {
+        "passed": true,
+        "hazard_rescaling": {
+          "n": 16384,
+          "mean": 0.999066179508725,
+          "ks_distance": 0.005370333349057788,
+          "dkw_bound": 0.017384776532773906,
+          "alpha": 0.0001,
+          "passed": true,
+          "zero_fraction": 0.0
+        },
+        "conditional_mark_z": 0.6961232296367128,
+        "independent_numpy_ks": 0.019287109375,
+        "independent_numpy_bound": 0.07193148165629265
+      },
+      "post_event_intensity_api": {
+        "passed": true,
+        "expected": [
+          0.5379444385565941,
+          0.9139311885397008
+        ],
+        "actual": [
+          0.5379444360733032,
+          0.9139311909675598
+        ],
+        "issue": "API omits the correction from the conditioning event; native simulate includes it"
+      }
+    },
+    "ANHN": {
+      "n": 16384,
+      "mean": 0.9934080923011576,
+      "ks_distance": 0.008016732905266832,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "mark_z": -1.125,
+      "rates": [
+        0.6931471805599453,
+        0.6931471805599453
+      ],
+      "initial_window": 20.0,
+      "expected_probability_beyond_initial_window": 9.094947017729282e-13
+    },
+    "ANHP": {
+      "n": 16384,
+      "mean": 0.9934080923011576,
+      "ks_distance": 0.008016732905266832,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "mark_z": -1.125,
+      "rates": [
+        0.6931471805599453,
+        0.6931471805599453
+      ],
+      "initial_window": 20.0,
+      "expected_probability_beyond_initial_window": 9.094947017729282e-13
+    },
+    "NHP": {
+      "n": 16384,
+      "mean": 0.9934080923011576,
+      "ks_distance": 0.008016732905266832,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "mark_z": -1.125,
+      "rates": [
+        0.6931471805599453,
+        0.6931471805599453
+      ],
+      "initial_window": 20.0,
+      "expected_probability_beyond_initial_window": 9.094947017729282e-13
+    },
+    "ODETPP": {
+      "n": 16384,
+      "mean": 0.9934080923011576,
+      "ks_distance": 0.008016732905266832,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "mark_z": -1.125,
+      "rates": [
+        0.6931471805599453,
+        0.6931471805599453
+      ],
+      "initial_window": 20.0,
+      "expected_probability_beyond_initial_window": 9.094947017729282e-13
+    },
+    "RMTPP": {
+      "n": 16384,
+      "mean": 0.9912891399328663,
+      "ks_distance": 0.006170155422330903,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "mark_z": -1.109375,
+      "rates": [
+        1.0,
+        1.0
+      ],
+      "initial_window": 20.0,
+      "expected_probability_beyond_initial_window": 4.248354255291589e-18
+    },
+    "SAHP": {
+      "n": 16384,
+      "mean": 0.9934080923011576,
+      "ks_distance": 0.008016732905266832,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "mark_z": -1.125,
+      "rates": [
+        0.6931471805599453,
+        0.6931471805599453
+      ],
+      "initial_window": 20.0,
+      "expected_probability_beyond_initial_window": 9.094947017729282e-13
+    },
+    "THP": {
+      "n": 16384,
+      "mean": 0.9934080923011576,
+      "ks_distance": 0.008016732905266832,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "mark_z": -1.125,
+      "rates": [
+        0.6931471805599453,
+        0.6931471805599453
+      ],
+      "initial_window": 20.0,
+      "expected_probability_beyond_initial_window": 9.094947017729282e-13
+    },
+    "small_initial_window": {
+      "n": 4096,
+      "mean": 0.9906200845667557,
+      "ks_distance": 0.009234627236445248,
+      "dkw_bound": 0.03476955306554781,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "initial_window": 0.25,
+      "initial_window_atom_fraction": 0.0,
+      "expected_poisson_tail": 0.7071067811865476,
+      "num_exp": 32,
+      "oversample": 5.0
+    },
+    "many_rejections": {
+      "n": 4096,
+      "mean": 1.0001015084416902,
+      "ks_distance": 0.01356133227654266,
+      "dkw_bound": 0.03476955306554781,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "initial_window": 20.0,
+      "initial_window_atom_fraction": 0.0,
+      "expected_poisson_tail": 9.094947017729282e-13,
+      "num_exp": 1,
+      "oversample": 100.0
+    },
+    "IntensityFree": {
+      "n": 16384,
+      "mean": 0.00956915123570264,
+      "ks_distance": 0.010036909190125454,
+      "dkw_bound": 0.017384776532773906,
+      "alpha": 0.0001,
+      "passed": true,
+      "zero_fraction": 0.0,
+      "reference": "lognormal independent of history, not Poisson",
+      "mark_zero_fraction": 0.4949951171875
+    },
+    "FullyNN": {
+      "batch_invariance_passed": true,
+      "sample_grid_invariance_passed": true,
+      "batch_intensity_ratio": [
+        [
+          [
+            1.0,
+            1.0
+          ]
+        ]
+      ],
+      "sample_grid_ratio": [
+        1.0,
+        1.0
+      ],
+      "poisson_case": "Not asserted: tanh cumulative hazard is bounded for finite weights, incompatible with positive constant hazard on an unbounded horizon",
+      "cause": "pointwise sum differentiation; no batch/time/grid scaling",
+      "cumulative_hazard_at_zero": [
+        1.555166244506836,
+        1.0785456895828247
+      ],
+      "finite_cumulative_hazard_upper_bound": [
+        1.7990078926086426,
+        1.1877549886703491
+      ],
+      "lower_bound_survival_at_infinity_if_centered": 0.7025412321090698
+    },
+    "SelfCorrecting_small_growth": {
+      "expected_delay": 0.0009999919950319607,
+      "actual_delay": 0.000999992131255567,
+      "passed": true,
+      "cause": "log(1+x) float32 cancellation; log1p would retain the increment"
+    }
+  },
+  "scope": "Independent distribution references; known mismatches reported without changing scientific calculations"
+}

@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List, NotRequired, TypedDict
 
 import torch
+
+STOPPED_OBSERVATION_PROTOCOL = "complete_stopped_event_budget_v1"
+
+
+def uses_stopped_event_budget(model_name: str) -> bool:
+    return model_name in ("FullyNN", "RMTPP")
 
 
 class TPPSequence(TypedDict):
@@ -18,6 +24,8 @@ class TPPSequence(TypedDict):
     time_seqs: List[float]
     time_delta_seqs: List[float]
     type_seqs: List[int]
+    sequence_id: NotRequired[str]
+    no_next_event: NotRequired[bool]
 
 
 @dataclass
@@ -38,18 +46,22 @@ class Batch:
     time_delta_seqs: torch.Tensor
     type_seqs: torch.Tensor
     valid_event_mask: torch.Tensor
+    sequence_ids: List[str] | None = None
+    no_next_event_mask: torch.Tensor | None = None
 
     def __post_init__(self):
         """Validate and normalize batch after initialization."""
         # Ensure all required tensors have the same batch size
         batch_size = self.time_seqs.shape[0]
-        assert self.time_delta_seqs.shape[0] == batch_size, (
-            "time_delta_seqs batch size mismatch"
-        )
+        if self.sequence_ids is not None and len(self.sequence_ids) != batch_size:
+            raise ValueError("sequence_ids must match the batch rows")
+        assert (
+            self.time_delta_seqs.shape[0] == batch_size
+        ), "time_delta_seqs batch size mismatch"
         assert self.type_seqs.shape[0] == batch_size, "type_seqs batch size mismatch"
-        assert self.valid_event_mask.shape[0] == batch_size, (
-            "valid_event_mask batch size mismatch"
-        )
+        assert (
+            self.valid_event_mask.shape[0] == batch_size
+        ), "valid_event_mask batch size mismatch"
 
     @classmethod
     def from_mapping(cls, mapping: Dict[str, torch.Tensor]) -> "Batch":
@@ -84,6 +96,8 @@ class Batch:
         self.time_delta_seqs = self.time_delta_seqs.to(device)
         self.type_seqs = self.type_seqs.to(device)
         self.valid_event_mask = self.valid_event_mask.to(device)
+        if self.no_next_event_mask is not None:
+            self.no_next_event_mask = self.no_next_event_mask.to(device)
         return self
 
 
@@ -113,6 +127,7 @@ class OneStepPred(TypedDict):
 
     dtime_predict: torch.Tensor
     type_predict: torch.Tensor
+    no_event_probability: NotRequired[torch.Tensor]
 
 
 # Backward compatibility alias

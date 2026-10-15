@@ -1,0 +1,17 @@
+{
+  "code_commit": "0dc9482a8df595275102da458730c0132d79bce7",
+  "test_run": "https://github.com/NzoCs/Learning-point-processes/actions/runs/38552101343",
+  "quality_run": "https://github.com/NzoCs/Learning-point-processes/actions/runs/38552101339",
+  "conclusion": "success",
+  "tests_passed": 267,
+  "tests_skipped": 6,
+  "tests_deselected": 2,
+  "expected_failures": 1,
+  "expected_failure_reason": "FullyNN intensity depends on unrelated batch rows",
+  "coverage_percent": 83.81,
+  "historical_pipelines_passed": 11,
+  "neural_historical_references_unchanged": 9,
+  "conditional_pipelines_passed": 12,
+  "parametric_repeat_replay_resume_exact": ["Hawkes", "SelfCorrecting", "Poisson"],
+  "cuda_status": "not_validated_no_cuda_hardware"
+}

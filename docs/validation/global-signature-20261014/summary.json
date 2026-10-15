@@ -1,0 +1,1912 @@
+{
+  "main": [
+    {
+      "model": "FullyNN",
+      "epoch": 1,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/FullyNN_1_frozen_parameters.json",
+        "sha256": "a78a39d377eec3821338b7b5878c2c16ed2314b66d182467775373a330e37261",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "e3aae676842bff18ab8e3e2474a5e03473c4f6fa3cae32ad19d317290e79b1dd"
+      },
+      "results": [
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 18,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.038286369524692054,
+            0.09283944515290843
+          ],
+          "h0_excess_binomial_p": 0.24673045084014075,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 10,
+          "rejection_rate": 0.03333333333333333,
+          "wilson_95": [
+            0.01820494733885481,
+            0.06026182580405482
+          ],
+          "h0_excess_binomial_p": 0.9350303191362112,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 15,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.03053164062934728,
+            0.08084703347274415
+          ],
+          "h0_excess_binomial_p": 0.536983409254929,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 7,
+          "rejection_rate": 0.023333333333333334,
+          "wilson_95": [
+            0.011347660299125234,
+            0.04737197226827532
+          ],
+          "h0_excess_binomial_p": 0.9934206255991985,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 16,
+          "rejection_rate": 0.05333333333333334,
+          "wilson_95": [
+            0.03309191251909646,
+            0.08486914177483133
+          ],
+          "h0_excess_binomial_p": 0.4318879640725799,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 13,
+          "rejection_rate": 0.043333333333333335,
+          "wilson_95": [
+            0.025496448084407246,
+            0.07271746563401146
+          ],
+          "h0_excess_binomial_p": 0.7387763436128036,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 7,
+          "rejection_rate": 0.023333333333333334,
+          "wilson_95": [
+            0.011347660299125234,
+            0.04737197226827532
+          ],
+          "h0_excess_binomial_p": 0.9934206255991985,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 16,
+          "rejection_rate": 0.05333333333333334,
+          "wilson_95": [
+            0.03309191251909646,
+            0.08486914177483133
+          ],
+          "h0_excess_binomial_p": 0.4318879640725799,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 18,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.038286369524692054,
+            0.09283944515290843
+          ],
+          "h0_excess_binomial_p": 0.24673045084014075,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 12,
+          "rejection_rate": 0.04,
+          "wilson_95": [
+            0.023027321487942308,
+            0.06860421203864003
+          ],
+          "h0_excess_binomial_p": 0.8220230244269304,
+          "h0_excess_detected": false
+        }
+      ],
+      "observations": {
+        "H0": {
+          "data_sha256": "439e260c1d3813756a5f5f1b7e29881471400b0dd7a703e0018a16a35532343a",
+          "elapsed_seconds": 389.583567624,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 5,
+              "mean": 8.83,
+              "max": 15,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 12,
+              "mean": 18.656666666666666,
+              "max": 27,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 25,
+              "mean": 36.913333333333334,
+              "max": 47,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 63,
+              "mean": 79.04333333333334,
+              "max": 97,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 614400,
+              "mean_events": 0.19412272135416667,
+              "empty_fraction": 0.8344222005208334
+            },
+            "y": {
+              "sequences": 614400,
+              "mean_events": 0.19488444010416667,
+              "empty_fraction": 0.8339469401041667
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "FullyNN",
+      "epoch": 1,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/FullyNN_1_frozen_parameters.json",
+        "sha256": "a78a39d377eec3821338b7b5878c2c16ed2314b66d182467775373a330e37261",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "e3aae676842bff18ab8e3e2474a5e03473c4f6fa3cae32ad19d317290e79b1dd"
+      },
+      "results": [
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 11,
+          "rejection_rate": 0.055,
+          "wilson_95": [
+            0.03098534170345884,
+            0.0957869987723084
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 16,
+          "rejection_rate": 0.08,
+          "wilson_95": [
+            0.049840585889759974,
+            0.12598948826714396
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 23,
+          "rejection_rate": 0.115,
+          "wilson_95": [
+            0.07786373232561955,
+            0.16664716898487572
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 91,
+          "rejection_rate": 0.455,
+          "wilson_95": [
+            0.387482193098835,
+            0.524213886275119
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 6,
+          "rejection_rate": 0.03,
+          "wilson_95": [
+            0.013820314340111346,
+            0.06389429245451925
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 11,
+          "rejection_rate": 0.055,
+          "wilson_95": [
+            0.03098534170345884,
+            0.0957869987723084
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 13,
+          "rejection_rate": 0.065,
+          "wilson_95": [
+            0.03837635464915299,
+            0.10801907929906895
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 12,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.03465219425433187,
+            0.1019316929576627
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 5,
+          "rejection_rate": 0.025,
+          "wilson_95": [
+            0.010724719651761264,
+            0.05717834040664198
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 10,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.02738264560076393,
+            0.08957814813877599
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 15,
+          "rejection_rate": 0.075,
+          "wilson_95": [
+            0.04597491718438201,
+            0.12004361023629456
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 14,
+          "rejection_rate": 0.07,
+          "wilson_95": [
+            0.042152171828342806,
+            0.11405480885610647
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        }
+      ],
+      "observations": {
+        "twice_speed": {
+          "data_sha256": "9c766240f58c32c0addb8a047c6dfe34d92cb9f5df335aeaf9ee2958d95047f1",
+          "elapsed_seconds": 161.54099328300003,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 4,
+              "mean": 8.555,
+              "max": 14,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 12,
+              "mean": 18.73,
+              "max": 31,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 29,
+              "mean": 39.025,
+              "max": 51,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 64,
+              "mean": 82.67,
+              "max": 100,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 409600,
+              "mean_events": 0.22334228515625,
+              "empty_fraction": 0.81806396484375
+            },
+            "y": {
+              "sequences": 409600,
+              "mean_events": 0.1942138671875,
+              "empty_fraction": 0.83444580078125
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "FullyNN",
+      "epoch": 2,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/FullyNN_2_frozen_parameters.json",
+        "sha256": "ff5beb297dbfa9b4813ab84bde0a7ed5657131e1423c6cbe988b54cf40094b58",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "016196ed04ae8ee9e2af819a628c49c758de786f3b21a4722294d3eca4ed07cc"
+      },
+      "results": [
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 11,
+          "rejection_rate": 0.03666666666666667,
+          "wilson_95": [
+            0.02059530516285303,
+            0.06445384817189295
+          ],
+          "h0_excess_binomial_p": 0.8876986065225043,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 12,
+          "rejection_rate": 0.04,
+          "wilson_95": [
+            0.023027321487942308,
+            0.06860421203864003
+          ],
+          "h0_excess_binomial_p": 0.8220230244269304,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 15,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.03053164062934728,
+            0.08084703347274415
+          ],
+          "h0_excess_binomial_p": 0.536983409254929,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 24,
+          "rejection_rate": 0.08,
+          "wilson_95": [
+            0.054346855395144764,
+            0.11627324043347391
+          ],
+          "h0_excess_binomial_p": 0.016844074417006333,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 8,
+          "rejection_rate": 0.02666666666666667,
+          "wilson_95": [
+            0.01357306980864708,
+            0.05172894295058982
+          ],
+          "h0_excess_binomial_p": 0.984031999202913,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 15,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.03053164062934728,
+            0.08084703347274415
+          ],
+          "h0_excess_binomial_p": 0.536983409254929,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 21,
+          "rejection_rate": 0.07,
+          "wilson_95": [
+            0.046236944827176336,
+            0.10463601042593323
+          ],
+          "h0_excess_binomial_p": 0.07763774484211024,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 18,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.038286369524692054,
+            0.09283944515290843
+          ],
+          "h0_excess_binomial_p": 0.24673045084014075,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 8,
+          "rejection_rate": 0.02666666666666667,
+          "wilson_95": [
+            0.01357306980864708,
+            0.05172894295058982
+          ],
+          "h0_excess_binomial_p": 0.984031999202913,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 16,
+          "rejection_rate": 0.05333333333333334,
+          "wilson_95": [
+            0.03309191251909646,
+            0.08486914177483133
+          ],
+          "h0_excess_binomial_p": 0.4318879640725799,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        }
+      ],
+      "observations": {
+        "H0": {
+          "data_sha256": "05c337b0b2602233d7eb1ff3ba74c258280b4c14c78281947fb970d33c856eb9",
+          "elapsed_seconds": 407.159063625,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 4,
+              "mean": 9.043333333333333,
+              "max": 15,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 12,
+              "mean": 19.153333333333332,
+              "max": 28,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 28,
+              "mean": 38.49333333333333,
+              "max": 50,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 66,
+              "mean": 82.94333333333333,
+              "max": 99,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 614400,
+              "mean_events": 0.20339192708333334,
+              "empty_fraction": 0.8280777994791667
+            },
+            "y": {
+              "sequences": 614400,
+              "mean_events": 0.2026123046875,
+              "empty_fraction": 0.8284895833333333
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "FullyNN",
+      "epoch": 2,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/FullyNN_2_frozen_parameters.json",
+        "sha256": "ff5beb297dbfa9b4813ab84bde0a7ed5657131e1423c6cbe988b54cf40094b58",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "016196ed04ae8ee9e2af819a628c49c758de786f3b21a4722294d3eca4ed07cc"
+      },
+      "results": [
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 14,
+          "rejection_rate": 0.07,
+          "wilson_95": [
+            0.042152171828342806,
+            0.11405480885610647
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 10,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.02738264560076393,
+            0.08957814813877599
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 21,
+          "rejection_rate": 0.105,
+          "wilson_95": [
+            0.06970748792681017,
+            0.1551803199112304
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 85,
+          "rejection_rate": 0.425,
+          "wilson_95": [
+            0.3585361254351385,
+            0.49429067352145145
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 13,
+          "rejection_rate": 0.065,
+          "wilson_95": [
+            0.03837635464915299,
+            0.10801907929906895
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 11,
+          "rejection_rate": 0.055,
+          "wilson_95": [
+            0.03098534170345884,
+            0.0957869987723084
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 18,
+          "rejection_rate": 0.09,
+          "wilson_95": [
+            0.05768744886219316,
+            0.13776571876716542
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 16,
+          "rejection_rate": 0.08,
+          "wilson_95": [
+            0.049840585889759974,
+            0.12598948826714396
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 13,
+          "rejection_rate": 0.065,
+          "wilson_95": [
+            0.03837635464915299,
+            0.10801907929906895
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 12,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.03465219425433187,
+            0.1019316929576627
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 17,
+          "rejection_rate": 0.085,
+          "wilson_95": [
+            0.05374575017747561,
+            0.13189587071565567
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 17,
+          "rejection_rate": 0.085,
+          "wilson_95": [
+            0.05374575017747561,
+            0.13189587071565567
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        }
+      ],
+      "observations": {
+        "twice_speed": {
+          "data_sha256": "0a11155bb73eb62d759cf5369b423505066e97733a917fb2fb6e47b35397ce7c",
+          "elapsed_seconds": 281.279760023,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 4,
+              "mean": 8.985,
+              "max": 15,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 12,
+              "mean": 19.385,
+              "max": 29,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 29,
+              "mean": 40.54,
+              "max": 53,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 69,
+              "mean": 86.685,
+              "max": 102,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 409600,
+              "mean_events": 0.232158203125,
+              "empty_fraction": 0.8128955078125
+            },
+            "y": {
+              "sequences": 409600,
+              "mean_events": 0.20296630859375,
+              "empty_fraction": 0.8281787109375
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "RMTPP",
+      "epoch": 1,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/RMTPP_1_frozen_parameters.json",
+        "sha256": "1ca673213d0840a0ea83d7504800abfcf1c858296ea90805ddbcf2eaa62b9856",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "c7fec988c1bb4ffcd57b7c7c313f345a1887e1c08a8ed4b98588adb50ba1340f"
+      },
+      "results": [
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 11,
+          "rejection_rate": 0.03666666666666667,
+          "wilson_95": [
+            0.02059530516285303,
+            0.06445384817189295
+          ],
+          "h0_excess_binomial_p": 0.8876986065225043,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 20,
+          "rejection_rate": 0.06666666666666667,
+          "wilson_95": [
+            0.043567515545158274,
+            0.10072305951611496
+          ],
+          "h0_excess_binomial_p": 0.1190468597146809,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 19,
+          "rejection_rate": 0.06333333333333334,
+          "wilson_95": [
+            0.040916882383915276,
+            0.09679131248552161
+          ],
+          "h0_excess_binomial_p": 0.17504495100143,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 21,
+          "rejection_rate": 0.07,
+          "wilson_95": [
+            0.046236944827176336,
+            0.10463601042593323
+          ],
+          "h0_excess_binomial_p": 0.07763774484211024,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 20,
+          "rejection_rate": 0.06666666666666667,
+          "wilson_95": [
+            0.043567515545158274,
+            0.10072305951611496
+          ],
+          "h0_excess_binomial_p": 0.1190468597146809,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 13,
+          "rejection_rate": 0.043333333333333335,
+          "wilson_95": [
+            0.025496448084407246,
+            0.07271746563401146
+          ],
+          "h0_excess_binomial_p": 0.7387763436128036,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 18,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.038286369524692054,
+            0.09283944515290843
+          ],
+          "h0_excess_binomial_p": 0.24673045084014075,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 15,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.03053164062934728,
+            0.08084703347274415
+          ],
+          "h0_excess_binomial_p": 0.536983409254929,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 14,
+          "rejection_rate": 0.04666666666666667,
+          "wilson_95": [
+            0.027998933682334012,
+            0.07679736022792105
+          ],
+          "h0_excess_binomial_p": 0.6417113878457248,
+          "h0_excess_detected": false
+        }
+      ],
+      "observations": {
+        "H0": {
+          "data_sha256": "5f836429e2ebf06a755bfb6a7f2c48da28e5c7ae43bd0f69850dfbeb5fd53cb6",
+          "elapsed_seconds": 973.54614074,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 41,
+              "mean": 51.74,
+              "max": 60,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 155,
+              "mean": 173.56666666666666,
+              "max": 193,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 487,
+              "mean": 523.7166666666667,
+              "max": 567,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 1383,
+              "mean": 1449.87,
+              "max": 1546,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 614400,
+              "mean_events": 2.9813037109375,
+              "empty_fraction": 0.11769368489583333
+            },
+            "y": {
+              "sequences": 614400,
+              "mean_events": 2.9887044270833334,
+              "empty_fraction": 0.11777180989583333
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "RMTPP",
+      "epoch": 1,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/RMTPP_1_frozen_parameters.json",
+        "sha256": "1ca673213d0840a0ea83d7504800abfcf1c858296ea90805ddbcf2eaa62b9856",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "c7fec988c1bb4ffcd57b7c7c313f345a1887e1c08a8ed4b98588adb50ba1340f"
+      },
+      "results": [
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 109,
+          "rejection_rate": 0.545,
+          "wilson_95": [
+            0.47578611372488105,
+            0.6125178069011651
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 56,
+          "rejection_rate": 0.28,
+          "wilson_95": [
+            0.22236889773949026,
+            0.3459230458665071
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 93,
+          "rejection_rate": 0.465,
+          "wilson_95": [
+            0.3971856415700402,
+            0.5341335312763685
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 170,
+          "rejection_rate": 0.85,
+          "wilson_95": [
+            0.7939442071583334,
+            0.89286406437758
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 60,
+          "rejection_rate": 0.3,
+          "wilson_95": [
+            0.24074744682371402,
+            0.36679068372719265
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 98,
+          "rejection_rate": 0.49,
+          "wilson_95": [
+            0.42156278331213176,
+            0.5588141232154135
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 168,
+          "rejection_rate": 0.84,
+          "wilson_95": [
+            0.7828592983793289,
+            0.8843258796841297
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        }
+      ],
+      "observations": {
+        "twice_speed": {
+          "data_sha256": "986e97433a668bd7af3da0399982e8a4477663b5055cdc477669699fe8979920",
+          "elapsed_seconds": 1025.464661479,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 49,
+              "mean": 56.815,
+              "max": 62,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 183,
+              "mean": 203.76,
+              "max": 226,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 651,
+              "mean": 686.405,
+              "max": 742,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 2103,
+              "mean": 2166.37,
+              "max": 2235,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 409600,
+              "mean_events": 5.56738037109375,
+              "empty_fraction": 0.0547119140625
+            },
+            "y": {
+              "sequences": 409600,
+              "mean_events": 2.98822265625,
+              "empty_fraction": 0.1169482421875
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "RMTPP",
+      "epoch": 2,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/RMTPP_2_frozen_parameters.json",
+        "sha256": "d6744100a0bc93ea4c979fbe6632384be75c8e8523442f010e7fbeaf2e2304e4",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "f50d2cba262add750683248a2bdfda43b17d50b1d4135023c7871184d44a892a"
+      },
+      "results": [
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 15,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.03053164062934728,
+            0.08084703347274415
+          ],
+          "h0_excess_binomial_p": 0.536983409254929,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 18,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.038286369524692054,
+            0.09283944515290843
+          ],
+          "h0_excess_binomial_p": 0.24673045084014075,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 16,
+          "rejection_rate": 0.05333333333333334,
+          "wilson_95": [
+            0.03309191251909646,
+            0.08486914177483133
+          ],
+          "h0_excess_binomial_p": 0.4318879640725799,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 15,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.03053164062934728,
+            0.08084703347274415
+          ],
+          "h0_excess_binomial_p": 0.536983409254929,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 20,
+          "rejection_rate": 0.06666666666666667,
+          "wilson_95": [
+            0.043567515545158274,
+            0.10072305951611496
+          ],
+          "h0_excess_binomial_p": 0.1190468597146809,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 15,
+          "rejection_rate": 0.05,
+          "wilson_95": [
+            0.03053164062934728,
+            0.08084703347274415
+          ],
+          "h0_excess_binomial_p": 0.536983409254929,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 11,
+          "rejection_rate": 0.03666666666666667,
+          "wilson_95": [
+            0.02059530516285303,
+            0.06445384817189295
+          ],
+          "h0_excess_binomial_p": 0.8876986065225043,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 18,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.038286369524692054,
+            0.09283944515290843
+          ],
+          "h0_excess_binomial_p": 0.24673045084014075,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 300,
+          "rejections": 16,
+          "rejection_rate": 0.05333333333333334,
+          "wilson_95": [
+            0.03309191251909646,
+            0.08486914177483133
+          ],
+          "h0_excess_binomial_p": 0.4318879640725799,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 300,
+          "rejections": 18,
+          "rejection_rate": 0.06,
+          "wilson_95": [
+            0.038286369524692054,
+            0.09283944515290843
+          ],
+          "h0_excess_binomial_p": 0.24673045084014075,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 300,
+          "rejections": 13,
+          "rejection_rate": 0.043333333333333335,
+          "wilson_95": [
+            0.025496448084407246,
+            0.07271746563401146
+          ],
+          "h0_excess_binomial_p": 0.7387763436128036,
+          "h0_excess_detected": false
+        },
+        {
+          "hypothesis": "H0",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 300,
+          "rejections": 17,
+          "rejection_rate": 0.056666666666666664,
+          "wilson_95": [
+            0.03567747646328951,
+            0.08886595802247463
+          ],
+          "h0_excess_binomial_p": 0.3333609842141329,
+          "h0_excess_detected": false
+        }
+      ],
+      "observations": {
+        "H0": {
+          "data_sha256": "85edefcd418a2c25da672917eb6296962fbc97dcca12ca7b93fd6249c0fa6750",
+          "elapsed_seconds": 979.642104936,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 42,
+              "mean": 52.06333333333333,
+              "max": 60,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 152,
+              "mean": 173.99,
+              "max": 194,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 480,
+              "mean": 526.63,
+              "max": 561,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 1367,
+              "mean": 1455.7633333333333,
+              "max": 1526,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 614400,
+              "mean_events": 2.9900211588541667,
+              "empty_fraction": 0.1160498046875
+            },
+            "y": {
+              "sequences": 614400,
+              "mean_events": 2.9881787109375,
+              "empty_fraction": 0.11602864583333333
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "RMTPP",
+      "epoch": 2,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/RMTPP_2_frozen_parameters.json",
+        "sha256": "d6744100a0bc93ea4c979fbe6632384be75c8e8523442f010e7fbeaf2e2304e4",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "f50d2cba262add750683248a2bdfda43b17d50b1d4135023c7871184d44a892a"
+      },
+      "results": [
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 106,
+          "rejection_rate": 0.53,
+          "wilson_95": [
+            0.4609168291500183,
+            0.5979524512673458
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 58,
+          "rejection_rate": 0.29,
+          "wilson_95": [
+            0.23154025607067882,
+            0.3563747810077731
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 96,
+          "rejection_rate": 0.48,
+          "wilson_95": [
+            0.411791663783233,
+            0.5489621492718576
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 174,
+          "rejection_rate": 0.87,
+          "wilson_95": [
+            0.8163364812775159,
+            0.9097179772033067
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_global_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 32,
+          "trials": 200,
+          "rejections": 58,
+          "rejection_rate": 0.29,
+          "wilson_95": [
+            0.23154025607067882,
+            0.3563747810077731
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 128,
+          "trials": 200,
+          "rejections": 96,
+          "rejection_rate": 0.48,
+          "wilson_95": [
+            0.411791663783233,
+            0.5489621492718576
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 512,
+          "trials": 200,
+          "rejections": 179,
+          "rejection_rate": 0.895,
+          "wilson_95": [
+            0.8448196800887696,
+            0.9302925120731899
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        },
+        {
+          "hypothesis": "twice_speed",
+          "variant": "blocks_local_normalization",
+          "pairs": 2048,
+          "trials": 200,
+          "rejections": 200,
+          "rejection_rate": 1.0,
+          "wilson_95": [
+            0.9811546736227335,
+            1.0
+          ],
+          "h0_excess_binomial_p": null,
+          "h0_excess_detected": null
+        }
+      ],
+      "observations": {
+        "twice_speed": {
+          "data_sha256": "8968fd2df555597721cc466d8a834ee3a472688fce8f096515e22e61a72d9952",
+          "elapsed_seconds": 606.047291595,
+          "exact_duplicate_compression": {
+            "32": {
+              "min": 48,
+              "mean": 56.825,
+              "max": 63,
+              "pooled_rows": 64
+            },
+            "128": {
+              "min": 188,
+              "mean": 203.865,
+              "max": 221,
+              "pooled_rows": 256
+            },
+            "512": {
+              "min": 650,
+              "mean": 689.245,
+              "max": 727,
+              "pooled_rows": 1024
+            },
+            "2048": {
+              "min": 2123,
+              "mean": 2181.7,
+              "max": 2263,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 409600,
+              "mean_events": 5.579716796875,
+              "empty_fraction": 0.0533251953125
+            },
+            "y": {
+              "sequences": 409600,
+              "mean_events": 2.99335205078125,
+              "empty_fraction": 0.1159765625
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    }
+  ],
+  "confirmation": [
+    {
+      "model": "FullyNN",
+      "epoch": 1,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/FullyNN_1_frozen_parameters.json",
+        "sha256": "a78a39d377eec3821338b7b5878c2c16ed2314b66d182467775373a330e37261",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "e3aae676842bff18ab8e3e2474a5e03473c4f6fa3cae32ad19d317290e79b1dd"
+      },
+      "results": [
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 1000,
+          "rejections": 44,
+          "rejection_rate": 0.044,
+          "wilson_95": [
+            0.0329382145884185,
+            0.058551789150407776
+          ],
+          "h0_excess_binomial_p": 0.8267089118605392,
+          "h0_excess_detected": false
+        }
+      ],
+      "observations": {
+        "H0": {
+          "data_sha256": "14e61653898b3a36761e3cb7b592d5dcb56011d27c7e0aa73d108b7a21a96dfb",
+          "elapsed_seconds": 906.7590181780001,
+          "exact_duplicate_compression": {
+            "2048": {
+              "min": 62,
+              "mean": 79.503,
+              "max": 99,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 2048000,
+              "mean_events": 0.19392529296875,
+              "empty_fraction": 0.83454443359375
+            },
+            "y": {
+              "sequences": 2048000,
+              "mean_events": 0.1941953125,
+              "empty_fraction": 0.83464599609375
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    },
+    {
+      "model": "FullyNN",
+      "epoch": 2,
+      "fit": {
+        "source": "docs/validation/likelihood-exactness-20261014/FullyNN_2_frozen_parameters.json",
+        "sha256": "ff5beb297dbfa9b4813ab84bde0a7ed5657131e1423c6cbe988b54cf40094b58",
+        "independently_fitted_before_this_experiment": true,
+        "model_state_sha256": "016196ed04ae8ee9e2af819a628c49c758de786f3b21a4722294d3eca4ed07cc"
+      },
+      "results": [
+        {
+          "hypothesis": "H0",
+          "variant": "global",
+          "pairs": 2048,
+          "trials": 1000,
+          "rejections": 46,
+          "rejection_rate": 0.046,
+          "wilson_95": [
+            0.03466249276326498,
+            0.06081220394161907
+          ],
+          "h0_excess_binomial_p": 0.7390356825085884,
+          "h0_excess_detected": false
+        }
+      ],
+      "observations": {
+        "H0": {
+          "data_sha256": "2406ba4c0b6886eaa8b92f3fb104144ffa62a5fcf7bb5e26809bafa3b12c6e3d",
+          "elapsed_seconds": 419.217271773,
+          "exact_duplicate_compression": {
+            "2048": {
+              "min": 67,
+              "mean": 82.79,
+              "max": 102,
+              "pooled_rows": 4096
+            }
+          },
+          "samples": {
+            "x": {
+              "sequences": 2048000,
+              "mean_events": 0.2024140625,
+              "empty_fraction": 0.828455078125
+            },
+            "y": {
+              "sequences": 2048000,
+              "mean_events": 0.2024814453125,
+              "empty_fraction": 0.82863818359375
+            }
+          },
+          "public_gram_and_all_permutation_statistics_verified_on_first_trial": true
+        }
+      }
+    }
+  ]
+}

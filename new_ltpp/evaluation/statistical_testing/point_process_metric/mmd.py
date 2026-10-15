@@ -1,16 +1,15 @@
 import torch
+
 from new_ltpp.shared_types import Batch, SimulationResult
 
-from .base_stat_metric import StatMetric, IStatMetric
+from .base_stat_metric import IStatMetric, StatMetric
 
 
 class MMD(StatMetric):
-
-    @torch.compile
     def __call__(
         self, X: Batch | SimulationResult, Y: Batch | SimulationResult
     ) -> torch.Tensor:
-        """Compute the Maximum Mean Discrepancy (MMD) between two batches of sequences.
+        """Compute off-diagonal unbiased MMD squared; finite estimates may be negative.
         args:
             X: Batch of sequences of shape (B1, L)
             Y: Batch of sequences of shape (B2, K)
@@ -30,7 +29,7 @@ if __name__ == "__main__":
     mmd: IStatMetric = MMD(
         SIGKernel(
             static_kernel=LinearKernel(),
-            embedding_type="linear",
+            embedding_type="counting_grid",
             num_discretization_points=100,
             dyadic_order=3,
             num_event_types=10,

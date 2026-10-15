@@ -1,11 +1,11 @@
+from .factory import create_point_process_kernel
+from .kernel_protocol import IPointProcessKernel
 from .m_kernel import MKernel, MKernelTransform
 from .sig_kernel import SIGKernel
-from .kernel_protocol import IPointProcessKernel
 from .space_kernels import (
-    RBFKernel,
     EmbeddingKernel,
+    RBFKernel,
 )
-from .factory import create_point_process_kernel
 
 __all__ = [
     "MKernel",
@@ -16,4 +16,3 @@ __all__ = [
     "EmbeddingKernel",
     "create_point_process_kernel",
 ]
-

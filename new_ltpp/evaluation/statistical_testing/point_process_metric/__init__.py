@@ -1,6 +1,6 @@
 from .base_stat_metric import IStatMetric, StatMetric
-from .mmd import MMD
 from .factory import create_stat_metric
+from .mmd import MMD
 
 __all__ = [
     "StatMetric",
@@ -8,4 +8,3 @@ __all__ = [
     "MMD",
     "create_stat_metric",
 ]
-

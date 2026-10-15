@@ -1,0 +1,72 @@
+name: Complete integration regression
+
+on:
+  workflow_call:
+    inputs:
+      model:
+        type: string
+        default: all
+      linux_only:
+        type: boolean
+        default: false
+      conditional:
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model name, or all for the complete catalogue
+        required: true
+        default: all
+        type: choice
+        options: [all, ANHN, ANHP, FullyNN, Hawkes, IntensityFree, NHP, ODETPP, RMTPP, SAHP, SelfCorrecting, THP]
+      linux_only:
+        description: Run Linux only
+        type: boolean
+        default: false
+      conditional:
+        description: Conditional holdout with independent training and evaluation datasets
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ inputs.linux_only && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "windows-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      PYTHONUTF8: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_DATASETS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install locked environment
+        run: |
+          python -m pip install uv==0.11.29
+          uv sync --frozen --no-default-groups --group dev --no-build-package pysiglib
+      - name: Verify all phases and numerical references
+        env:
+          INTEGRATION_MODEL: ${{ inputs.model }}
+          INTEGRATION_SUITE: ${{ inputs.conditional && 'scripts.conditional_integration_suite' || 'scripts.integration_suite' }}
+        run: >-
+          uv run --frozen --no-sync python -m ${{ env.INTEGRATION_SUITE }}
+          --output artifacts/integration-ci
+      - name: Preserve logs, snapshots, checkpoints and plots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.conditional && 'conditional-integration' || 'integration' }}-${{ matrix.os }}
+          path: artifacts/integration-ci
+          retention-days: 14

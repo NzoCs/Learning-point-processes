@@ -1,7 +1,9 @@
+import os
 from typing import List, Optional, Union
 
 from new_ltpp.configs import RunnerConfig
 from new_ltpp.runners.model_runner import Runner
+from new_ltpp.runners.run_manifest import RunManifest
 from new_ltpp.utils import logger
 
 
@@ -17,7 +19,6 @@ class RunnerManager:
         checkpoint_path: Optional[str] = None,
         output_dir: Optional[str] = None,
     ):
-
         self.config = config
         self.checkpoint_path = checkpoint_path
         self.output_dir = output_dir
@@ -29,7 +30,6 @@ class RunnerManager:
         )
 
     def setup_runner(self, enable_logging: bool = True):
-
         if not self.is_setup:
             # Create runner for the first time
             logger.critical(
@@ -39,6 +39,7 @@ class RunnerManager:
             self.runner = Runner(
                 config=self.config,
                 enable_logging=enable_logging,
+                checkpoint_path=self.checkpoint_path,
             )
 
             self.is_setup = True
@@ -96,22 +97,34 @@ class RunnerManager:
 
         logger.info(f"Runner executing phases: {phases}")
 
+        rank = int(
+            os.environ.get(
+                "RANK",
+                os.environ.get("LOCAL_RANK", os.environ.get("SLURM_PROCID", "0")),
+            )
+        )
+        manifest = RunManifest(self.config) if rank == 0 else None
         for current_phase in phases:
+            if current_phase not in ("train", "test", "predict"):
+                raise ValueError(f"Unknown phase: {current_phase}")
+            if manifest is not None:
+                manifest.start(current_phase)
+                if self.checkpoint_path:
+                    from new_ltpp.runners.run_manifest import sha256_file
 
-            if current_phase == "train":
-                self.train()
-                results[current_phase] = "completed"
-
-            elif current_phase == "test":
-                self.test()
-                results[current_phase] = "completed"
-
-            elif current_phase == "predict":
-                self.predict()
-                results[current_phase] = "completed"
-
-            else:
-                logger.error(f"Unknown phase: {current_phase}")
-                results[current_phase] = "error: unknown phase"
+                    manifest.value["resume_from"] = {
+                        "path": self.checkpoint_path,
+                        "sha256": sha256_file(self.checkpoint_path),
+                    }
+                    manifest.save()
+            try:
+                getattr(self, current_phase)()
+            except Exception as error:
+                if manifest is not None:
+                    manifest.finish(current_phase, error=error)
+                raise
+            if manifest is not None:
+                manifest.finish(current_phase, checkpoint=self.runner.checkpoint_path)
+            results[current_phase] = "completed"
 
         return results

@@ -5,6 +5,10 @@ import torch
 from torch import nn
 
 from new_ltpp.models.base.training import TrainingMixin
+from new_ltpp.models.capped_exponential import (
+    capped_exponential_integral,
+    capped_exponential_limit,
+)
 from new_ltpp.models.model_protocol import ITPPModel
 from new_ltpp.shared_types import Batch
 
@@ -95,6 +99,30 @@ class RMTPP(TrainingMixin):
         left_intensity_B_Nm1_M = left_intensity_B_Nm1_G_M.squeeze(-2)
         return left_intensity_B_Nm1_M, right_hiddens_BNH
 
+    def next_event_hazard(
+        self,
+        *,
+        time_seqs,
+        time_delta_seqs,
+        type_seqs,
+        compute_last_step_only=False,
+        **kwargs,
+    ):
+        """Exact compensator including the existing upper intensity clamp."""
+        _, hidden = self.forward((time_seqs, time_delta_seqs, type_seqs))
+        if compute_last_step_only:
+            hidden = hidden[:, -1:, :]
+        a = (self.hidden_to_intensity_logits(hidden) + self.b_t).double()
+        w = self.w_t.double()
+
+        def hazard(dt):
+            return capped_exponential_integral(
+                a.unsqueeze(-2), w.unsqueeze(-2), dt.double().unsqueeze(-1)
+            ).sum(-1)
+
+        limit = capped_exponential_limit(a, w).sum(-1)
+        return hazard, limit
+
     def loglike_loss(self, batch: Batch) -> Tuple[torch.Tensor, torch.Tensor]:
         """Compute the log-likelihood loss.
 
@@ -104,6 +132,7 @@ class RMTPP(TrainingMixin):
         Returns:
             tuple: loglikelihood loss and num of events.
         """
+        batch = self.ordered_valid_batch(batch)
         ts_BN = batch.time_seqs
         dts_BN = batch.time_delta_seqs
         marks_BN = batch.type_seqs
@@ -117,21 +146,23 @@ class RMTPP(TrainingMixin):
             ..., :-1, :
         ]  # discard right limit at t_N for logL
 
-        dts_sample_B_Nm1_G = self.make_dtime_loss_samples(dts_BN[:, 1:])
-        intensity_dts_B_Nm1_G_M = self.evolve_and_get_intentsity(
-            right_hiddens_B_Nm1_H, dts_sample_B_Nm1_G
+        mask = batch_non_pad_mask[:, 1:]
+        event_ll = (left_intensity_B_Nm1_M + self.eps).log().gather(
+            -1, marks_BN[:, 1:].clamp(max=self.num_event_types - 1).unsqueeze(-1)
+        ).squeeze(-1) * mask
+        a = (self.hidden_to_intensity_logits(right_hiddens_B_Nm1_H) + self.b_t).double()
+        non_event_ll = (
+            capped_exponential_integral(
+                a, self.w_t.double(), dts_BN[:, 1:].double().unsqueeze(-1)
+            ).sum(-1)
+            * mask
         )
-
-        event_ll, non_event_ll, num_events = self.compute_loglikelihood(
-            lambda_at_event=left_intensity_B_Nm1_M,
-            lambdas_loss_samples=intensity_dts_B_Nm1_G_M,
-            time_delta_seq=dts_BN[:, 1:],
-            seq_mask=batch_non_pad_mask[:, 1:],
-            type_seq=marks_BN[:, 1:],
-        )
+        num_events = mask.sum()
 
         # compute loss to minimize
-        loss = -(event_ll - non_event_ll).sum()
+        loss = -(event_ll - non_event_ll).sum() + self.terminal_loglikelihood_cost(
+            batch
+        )
         return loss, num_events
 
     def compute_intensities_at_sample_dtimes(

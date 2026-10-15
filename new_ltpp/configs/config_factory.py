@@ -1,10 +1,10 @@
 from enum import Enum
-from typing import Any, Dict, Type, Union, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional, Type, Union
 
 from new_ltpp.utils import logger
-from .base_config import Config
 
+from .base_config import Config
 from .data_config import DataConfig, DataLoadingSpecsConfig, TokenizerConfig
 from .logger_config import LoggerConfig
 from .model_config import (
@@ -12,7 +12,7 @@ from .model_config import (
     ModelSpecsConfig,
     ThinningConfig,
 )
-from .runner_config import RunnerConfig, TrainingConfig, SimulationConfig
+from .runner_config import RunnerConfig, SimulationConfig, TrainingConfig
 
 
 class ConfigType(Enum):

@@ -1,0 +1,221 @@
+{
+  "status": "completed",
+  "python": "3.11.17",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "torch": "2.8.0+cu128",
+  "cuda_available": false,
+  "gpu_name": null,
+  "gpu_status": "not_measured_no_cuda",
+  "libraries": {
+    "numpy": "2.3.3",
+    "scipy": "1.16.2",
+    "HawkesPyLib": "0.3.0",
+    "numba": "0.63.1"
+  },
+  "task": "univariate processes from empty history on the same fixed horizon",
+  "horizon": 20.0,
+  "sequences_for_distribution": 4096,
+  "results": {
+    "Hawkes": {
+      "reference": "HawkesPyLib 0.3.0",
+      "parameters": {
+        "mu": [
+          1.2
+        ],
+        "alpha": [
+          [
+            0.3
+          ]
+        ],
+        "beta": [
+          [
+            1.4
+          ]
+        ]
+      },
+      "consistency": {
+        "passed": true,
+        "count_ks": 0.0107421875,
+        "two_sample_dkw_bound": 0.07193148165629265,
+        "mean_events_torch": 33.665771484375,
+        "mean_events_reference": 33.7431640625,
+        "first_event_cdf_max_difference": 0.00732421875
+      },
+      "timings": [
+        {
+          "implementation": "reference",
+          "device": "cpu",
+          "batch_size": 1,
+          "median_seconds": 3.284100000655599e-05,
+          "min_seconds": 2.8503999999429652e-05,
+          "max_seconds": 5.702600000745406e-05,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "new_ltpp",
+          "device": "cpu",
+          "batch_size": 1,
+          "events": 33,
+          "host_transfer_excluded": true,
+          "median_seconds": 0.008727418000006537,
+          "min_seconds": 0.005998038000001316,
+          "max_seconds": 0.011063816000017823,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "reference",
+          "device": "cpu",
+          "batch_size": 128,
+          "median_seconds": 0.0011637609999866072,
+          "min_seconds": 0.0011557649999929254,
+          "max_seconds": 0.0011813939999854028,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "new_ltpp",
+          "device": "cpu",
+          "batch_size": 128,
+          "events": 4384,
+          "host_transfer_excluded": true,
+          "median_seconds": 0.01763520200000812,
+          "min_seconds": 0.01568003500000259,
+          "max_seconds": 0.0189379919999908,
+          "repeats": 7,
+          "warmup_excluded": true
+        }
+      ]
+    },
+    "SelfCorrecting": {
+      "reference": "SciPy brentq + NumPy exponential (numerical oracle, not a turnkey SelfCorrecting library)",
+      "parameters": {
+        "mu": [
+          0.2
+        ],
+        "alpha": [
+          [
+            0.5
+          ]
+        ]
+      },
+      "consistency": {
+        "passed": true,
+        "count_ks": 0.006103515625,
+        "two_sample_dkw_bound": 0.07193148165629265,
+        "mean_events_torch": 10.062744140625,
+        "mean_events_reference": 10.0576171875,
+        "first_event_cdf_max_difference": 0.0146484375
+      },
+      "timings": [
+        {
+          "implementation": "reference",
+          "device": "cpu",
+          "batch_size": 1,
+          "median_seconds": 0.00014103300000556374,
+          "min_seconds": 0.00013024300000097355,
+          "max_seconds": 0.00036621300000660995,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "new_ltpp",
+          "device": "cpu",
+          "batch_size": 1,
+          "events": 10,
+          "host_transfer_excluded": true,
+          "median_seconds": 0.001550882999993064,
+          "min_seconds": 0.0012618229999930008,
+          "max_seconds": 0.00178763400001003,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "reference",
+          "device": "cpu",
+          "batch_size": 128,
+          "median_seconds": 0.01687569499998176,
+          "min_seconds": 0.01676336500000275,
+          "max_seconds": 0.01772135199999525,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "new_ltpp",
+          "device": "cpu",
+          "batch_size": 128,
+          "events": 1303,
+          "host_transfer_excluded": true,
+          "median_seconds": 0.0021680030000084116,
+          "min_seconds": 0.0020585289999814904,
+          "max_seconds": 0.002346125999991955,
+          "repeats": 7,
+          "warmup_excluded": true
+        }
+      ]
+    },
+    "Poisson": {
+      "reference": "NumPy poisson + uniform sorted",
+      "parameters": {
+        "rates": [
+          1.2
+        ]
+      },
+      "consistency": {
+        "passed": true,
+        "count_ks": 0.02880859375,
+        "two_sample_dkw_bound": 0.07193148165629265,
+        "mean_events_torch": 24.1357421875,
+        "mean_events_reference": 23.912353515625,
+        "first_event_cdf_max_difference": 0.003662109375
+      },
+      "timings": [
+        {
+          "implementation": "reference",
+          "device": "cpu",
+          "batch_size": 1,
+          "median_seconds": 2.2331999986135997e-05,
+          "min_seconds": 2.0297999981266912e-05,
+          "max_seconds": 5.009299999869654e-05,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "new_ltpp",
+          "device": "cpu",
+          "batch_size": 1,
+          "events": 23,
+          "host_transfer_excluded": true,
+          "median_seconds": 0.0001678929999968659,
+          "min_seconds": 0.00015624100001332408,
+          "max_seconds": 0.00019361100001447085,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "reference",
+          "device": "cpu",
+          "batch_size": 128,
+          "median_seconds": 0.0005357089999904474,
+          "min_seconds": 0.0005308009999964725,
+          "max_seconds": 0.0005403680000028999,
+          "repeats": 7,
+          "warmup_excluded": true
+        },
+        {
+          "implementation": "new_ltpp",
+          "device": "cpu",
+          "batch_size": 128,
+          "events": 3094,
+          "host_transfer_excluded": true,
+          "median_seconds": 0.00036336799999503455,
+          "min_seconds": 0.0003500830000007227,
+          "max_seconds": 0.00039459600000668615,
+          "repeats": 7,
+          "warmup_excluded": true
+        }
+      ]
+    }
+  }
+}

@@ -7,6 +7,10 @@ on:
     branches: [main, master]
 
 jobs:
+  pipeline-calibration:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[pipeline-calibration]')
+    uses: ./.github/workflows/pipeline-calibration.yml
+
   global-pipeline:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[global-pipeline]')
     uses: ./.github/workflows/global-pipeline.yml

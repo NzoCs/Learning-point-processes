@@ -35,6 +35,46 @@ def launch(script, cwd, args=(), env=None):
     )
 
 
+def test_scientific_campaign_plan_keeps_independent_cohorts_and_no_execution(tmp_path):
+    output = tmp_path / "results with spaces"
+    result = launch(
+        "ruche_report_experiments.sh",
+        tmp_path,
+        ("--dry-run",),
+        env={"LTPP_SCIENCE_OUTPUT": str(output)},
+    )
+    assert result.returncode == 0, result.stderr
+    commands = [shlex.split(line) for line in result.stdout.splitlines()]
+    assert len(commands) == 20
+    groups = {}
+    for command in commands:
+        case = command[command.index("--case") + 1]
+        cohort = command[command.index("--cohort") + 1]
+        groups.setdefault(case, []).append(cohort)
+        assert command[command.index("--trials") + 1] == (
+            "1000" if case.endswith("H0") else "250"
+        )
+        assert command[command.index("--device") + 1] == "cuda"
+        assert command[command.index("--n") + 1] == "128"
+        assert command[command.index("--permutations") + 1] == "499"
+        assert "results with spaces" in command[command.index("--output") + 1]
+    assert len(groups) == 10 and sum(case.endswith("H0") for case in groups) == 4
+    assert all(sorted(cohorts) == ["0", "1"] for cohorts in groups.values())
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize("index", ["20", "-1", "abc"])
+def test_scientific_campaign_rejects_bad_array_before_python(index, tmp_path):
+    result = launch(
+        "ruche_report_experiments.sh",
+        tmp_path,
+        env={"SLURM_JOB_ID": "42", "SLURM_ARRAY_TASK_ID": index},
+    )
+    assert result.returncode == 2
+    assert "Slurm array" in result.stderr
+    assert not result.stdout and not list(tmp_path.iterdir())
+
+
 @pytest.mark.parametrize(
     "script,count",
     [("run_all_pipeline.sh", 3), ("train_ruche_cpu.sh", 28), ("smoke_ruche_gpu.sh", 1)],

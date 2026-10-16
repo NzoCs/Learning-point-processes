@@ -4,6 +4,11 @@ Ce complément scientifique ne modifie ni les modèles, ni les simulateurs,
 ni les observations du MMD. Les résultats historiques restent conservés.
 Il corrige la métrique d'évaluation et définit explicitement ce qui est comparé.
 
+Une seconde comparaison utilisant chaque événement et l'intervalle final
+censuré est décrite dans `REPORT_ALL_EVENT_RMSE.md`. Le présent document
+conserve le contrat de la première campagne à quatre dates ; ses chiffres
+ne suffisent pas à classer toutes les variantes possibles de RMSE face au MMD.
+
 ## Référence commune
 
 Pour chaque historique H et chaque candidat q, l'erreur normalisée devient

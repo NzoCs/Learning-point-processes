@@ -1,7 +1,7 @@
 """Opt-in RMSE replay on the report campaign's exact observations and swaps.
 
-Descriptive completed-gap RMSE and a separate fixed-landmark, censored-target
-loss test. No fitting, simulator changes or production-model changes.
+Descriptive completed-gap RMSE, fixed-landmark and all-event censored-target
+loss tests. No fitting, simulator changes or production-model changes.
 """
 
 import argparse
@@ -355,7 +355,17 @@ def regenerate(plan, row):
     return x, y
 
 
-def replay(source, output, *, descriptive=False):
+def replay(
+    source,
+    output,
+    *,
+    descriptive=False,
+    mode="landmarks",
+    device="cpu",
+    landmark_source=None,
+):
+    if mode not in ("landmarks", "all_events"):
+        raise ValueError("Unknown RMSE protocol")
     source, output = Path(source), Path(output)
     plan = json.loads((source / "plan.json").read_text())
     raw = (source / "trials.jsonl").read_bytes()
@@ -400,6 +410,62 @@ def replay(source, output, *, descriptive=False):
         descriptive=descriptive,
         reference=asdict(CASES[plan["case"]][0]),
     )
+    originals = None
+    if mode == "all_events":
+        from scripts.all_event_rmse import PROTOCOL as ALL_PROTOCOL
+
+        if landmark_source is None or descriptive:
+            raise ValueError(
+                "All-event comparison requires the original landmark archive and no gap diagnostic"
+            )
+        if device not in ("cpu", "cuda") or (
+            device == "cuda" and not torch.cuda.is_available()
+        ):
+            raise RuntimeError("Requested all-event backend unavailable; no fallback")
+        original_dir = Path(landmark_source)
+        original_report = json.loads((original_dir / "report.json").read_text())
+        original_raw = (original_dir / "trials.jsonl").read_bytes()
+        original_plan = original_report["design"]
+        if (
+            original_report["status"] != "completed"
+            or original_report["errors"]
+            or original_plan["protocol"] != PROTOCOL
+            or original_plan["landmarks"] != list(LANDMARKS)
+            or original_plan["cap"] != CAP
+            or original_plan["source_plan"] != plan
+            or original_plan["source_raw_sha256"] != design["source_raw_sha256"]
+            or not original_raw.endswith(b"\n")
+        ):
+            raise ValueError(
+                "Original landmark experiment is incomplete or uses different data"
+            )
+        originals = [json.loads(line) for line in original_raw.splitlines()]
+        if len(originals) != len(records) or any(
+            r["status"] != "completed" for r in originals
+        ):
+            raise ValueError("Original landmark trials incomplete")
+        design.update(
+            protocol=ALL_PROTOCOL,
+            landmarks=None,
+            cap=None,
+            device=device,
+            origins="zero_and_every_event_before_T",
+            control="four_dates_full_remaining_horizon",
+            engine_sha256=hashlib.sha256(
+                (ROOT / "scripts/all_event_rmse.py").read_text().encode()
+            ).hexdigest(),
+            landmark_source=str(original_dir.resolve()),
+            landmark_raw_sha256=hashlib.sha256(original_raw).hexdigest(),
+            landmark_plan=original_plan,
+        )
+        design["engine_source_committed"] = (
+            subprocess.run(
+                ["git", "cat-file", "-e", "HEAD:scripts/all_event_rmse.py"],
+                cwd=ROOT,
+                capture_output=True,
+            ).returncode
+            == 0
+        )
     output.mkdir(parents=True, exist_ok=True)
     if (output / "plan.json").exists() and json.loads(
         (output / "plan.json").read_text()
@@ -414,9 +480,19 @@ def replay(source, output, *, descriptive=False):
         try:
             x, y = regenerate(plan, record)
             ref, candidate = CASES[plan["case"]][:2]
+            if mode == "all_events":
+                from scripts.all_event_rmse import all_event_losses
+
+                scores = all_event_losses(
+                    x + y, ref, device=device, verify=record["trial"] == 0
+                )
+                n = len(x)
+                x_loss, y_loss = scores["path_mse"][:n], scores["path_mse"][n:]
+            else:
+                x_loss, y_loss = landmark_losses(x, ref), landmark_losses(y, ref)
             test = loss_test(
-                landmark_losses(x, ref),
-                landmark_losses(y, ref),
+                x_loss,
+                y_loss,
                 record["swap_seed"],
                 plan["permutations"],
             )
@@ -431,8 +507,32 @@ def replay(source, output, *, descriptive=False):
             # using the H0 reference denominator. No in-sample mean baseline.
             result["prediction_rmse_on_x"] = dict(
                 reference=float(np.sqrt(np.mean(test["path_mse_x"]))),
-                candidate=float(np.sqrt(np.mean(landmark_losses(x, ref, candidate)))),
+                candidate=(
+                    float(np.sqrt(np.mean(landmark_losses(x, ref, candidate))))
+                    if mode == "landmarks"
+                    else None
+                ),
             )
+            if mode == "all_events":
+                original = originals[record["trial"]]
+                if (
+                    original["trial"] != record["trial"]
+                    or original["mmd"] != record["methods"]
+                    or original["x_sha256"] != record["x_sha256"]
+                    or original["y_sha256"] != record["y_sha256"]
+                ):
+                    raise ValueError("Landmark/MMD trials do not match")
+                result["controls"] = dict(
+                    landmark_original=original["rmse"],
+                    landmark_full=loss_test(
+                        scores["landmark_full_mse"][:n],
+                        scores["landmark_full_mse"][n:],
+                        record["swap_seed"],
+                        plan["permutations"],
+                    ),
+                )
+                result["origins_per_path"] = scores["origins_per_path"].tolist()
+                result["events_per_path"] = [len(row) for row in x + y]
             if descriptive and record["trial"] == 0:
                 result["completed_gap_diagnostic"] = dict(
                     reference=gap_rmse(x, ref, ref),
@@ -462,9 +562,17 @@ def replay(source, output, *, descriptive=False):
     return report
 
 
-def aggregate(root):
+def aggregate(root, *, mode="landmarks"):
     """Strict 20-cell paired comparison; no optional stopping or filtered trials."""
     root = Path(root)
+    if mode not in ("landmarks", "all_events"):
+        raise ValueError("Unknown RMSE protocol")
+    all_events = mode == "all_events"
+    controls = ("landmark_original", "landmark_full") if all_events else ()
+    comparators = (*METHODS, *controls)
+    family = 6 * len(comparators)
+    calibration_family = 4 * (1 + len(comparators)) * 3
+    expected_protocol = "common_reference_all_event_rmse_v1" if all_events else PROTOCOL
     errors, calibration, power, predictions = [], [], [], []
     provenance, source_provenance = None, None
     for case in CASES:
@@ -493,11 +601,32 @@ def aggregate(root):
                     )
                 }
                 if (
-                    signature["protocol"] != PROTOCOL
-                    or signature["landmarks"] != list(LANDMARKS)
-                    or signature["cap"] != CAP
+                    signature["protocol"] != expected_protocol
+                    or signature["landmarks"]
+                    != (None if all_events else list(LANDMARKS))
+                    or signature["cap"] != (None if all_events else CAP)
                 ):
                     raise ValueError("Unrecognized RMSE protocol")
+                if all_events:
+                    signature.update(
+                        {
+                            k: design[k]
+                            for k in (
+                                "device",
+                                "engine_sha256",
+                                "origins",
+                                "control",
+                                "engine_source_committed",
+                            )
+                        }
+                    )
+                    if (
+                        design["origins"] != "zero_and_every_event_before_T"
+                        or design["control"] != "four_dates_full_remaining_horizon"
+                    ):
+                        raise ValueError("Changed forecast-origin contract")
+                    if not design["engine_source_committed"]:
+                        raise ValueError("All-event engine must be committed")
                 if not signature["source_committed"] or signature["tracked_dirty"]:
                     raise ValueError("Primary RMSE source must be committed and clean")
                 if provenance is not None and signature != provenance:
@@ -556,6 +685,28 @@ def aggregate(root):
                 originals = [json.loads(line) for line in raw.splitlines()]
                 if len(originals) != len(records):
                     raise ValueError("Original/replay trial counts disagree")
+                landmark_records = None
+                if all_events:
+                    landmark_raw = (
+                        Path(design["landmark_source"]) / "trials.jsonl"
+                    ).read_bytes()
+                    if (
+                        hashlib.sha256(landmark_raw).hexdigest()
+                        != design["landmark_raw_sha256"]
+                    ):
+                        raise ValueError("Original landmark archive changed")
+                    landmark_records = [
+                        json.loads(line) for line in landmark_raw.splitlines()
+                    ]
+                    if (
+                        json.loads(
+                            (Path(design["landmark_source"]) / "plan.json").read_text()
+                        )
+                        != design["landmark_plan"]
+                    ):
+                        raise ValueError("Original landmark plan changed")
+                    if len(landmark_records) != len(records):
+                        raise ValueError("Landmark/origin counts disagree")
                 for row in records:
                     origin = originals[row["trial"]]
                     if (
@@ -574,6 +725,34 @@ def aggregate(root):
                     )
                     if actual != row["rmse"]:
                         raise ValueError("RMSE summary differs from archived losses")
+                    if all_events:
+                        if (
+                            row["controls"]["landmark_original"]
+                            != landmark_records[row["trial"]]["rmse"]
+                        ):
+                            raise ValueError("Archived four-date baseline changed")
+                        for method in controls:
+                            stat = row["controls"][method]
+                            if (
+                                loss_test(
+                                    stat["path_mse_x"], stat["path_mse_y"], seed, 499
+                                )
+                                != stat
+                            ):
+                                raise ValueError(
+                                    "Control p-value differs from archived losses"
+                                )
+                        if (
+                            len(row["origins_per_path"]) != 256
+                            or min(row["origins_per_path"]) < 1
+                        ):
+                            raise ValueError("Missing all-event origins")
+                        if row["origins_per_path"] != [
+                            n + 1 for n in row["events_per_path"]
+                        ]:
+                            raise ValueError(
+                                "An observed interval or final censored interval was dropped"
+                            )
                     for method in METHODS:
                         draw = row["mmd"][method]
                         p = float(
@@ -586,8 +765,14 @@ def aggregate(root):
                             raise ValueError("MMD summary differs from archived swaps")
                 if case.endswith("H0"):
                     calibration.extend(
-                        calibration_row(case, cohort, records, method)
-                        for method in ("rmse", *METHODS)
+                        calibration_row(
+                            case,
+                            cohort,
+                            records,
+                            method,
+                            family_size=calibration_family,
+                        )
+                        for method in ("rmse", *comparators)
                     )
                 pooled.extend(records)
             except Exception as error:
@@ -596,17 +781,21 @@ def aggregate(root):
             continue
         if case.endswith("H0"):
             calibration.extend(
-                calibration_row(case, "pooled", pooled, method)
-                for method in ("rmse", *METHODS)
+                calibration_row(
+                    case, "pooled", pooled, method, family_size=calibration_family
+                )
+                for method in ("rmse", *comparators)
             )
         else:
-            for method in METHODS:
+            for method in comparators:
                 a = sum(
-                    r["rmse"]["p_value"] <= 0.05 and r["mmd"][method]["p_value"] > 0.05
+                    r["rmse"]["p_value"] <= 0.05
+                    and comparison_stat(r, method)["p_value"] > 0.05
                     for r in pooled
                 )
                 b = sum(
-                    r["rmse"]["p_value"] > 0.05 and r["mmd"][method]["p_value"] <= 0.05
+                    r["rmse"]["p_value"] > 0.05
+                    and comparison_stat(r, method)["p_value"] <= 0.05
                     for r in pooled
                 )
                 power.append(
@@ -616,41 +805,44 @@ def aggregate(root):
                         rmse_only=a,
                         mmd_only=b,
                         rmse=rate_row([r["rmse"]["p_value"] for r in pooled]),
-                        mmd=rate_row([r["mmd"][method]["p_value"] for r in pooled]),
+                        mmd=rate_row(
+                            [comparison_stat(r, method)["p_value"] for r in pooled]
+                        ),
                         paired_p=float(binomtest(a, a + b).pvalue) if a + b else 1.0,
                     )
                 )
-        predictions.append(
-            dict(
-                case=case,
-                trials=len(pooled),
-                reference_rmse=float(
-                    np.sqrt(
-                        np.mean(
-                            [
-                                r["prediction_rmse_on_x"]["reference"] ** 2
-                                for r in pooled
-                            ]
-                        )
+        prediction_row = dict(
+            case=case,
+            trials=len(pooled),
+            reference_rmse=float(
+                np.sqrt(
+                    np.mean(
+                        [r["prediction_rmse_on_x"]["reference"] ** 2 for r in pooled]
                     )
-                ),
-                candidate_rmse=float(
-                    np.sqrt(
-                        np.mean(
-                            [
-                                r["prediction_rmse_on_x"]["candidate"] ** 2
-                                for r in pooled
-                            ]
-                        )
-                    )
-                ),
-            )
+                )
+            ),
         )
+        if not all_events:
+            prediction_row["candidate_rmse"] = float(
+                np.sqrt(
+                    np.mean(
+                        [r["prediction_rmse_on_x"]["candidate"] ** 2 for r in pooled]
+                    )
+                )
+            )
+        predictions.append(prediction_row)
     for row, p in zip(
-        power, holm_adjust([r["paired_p"] for r in power], family_size=18)
+        power, holm_adjust([r["paired_p"] for r in power], family_size=family)
     ):
-        row["holm_p_over_18_comparisons"] = p
-    complete = not errors and len(calibration) == 48 and len(power) == 18
+        row[f"holm_p_over_{family}_comparisons"] = p
+    if all_events:
+        for row in power:
+            row["comparator"] = row.pop("mmd_method")
+            row["comparator_only"] = row.pop("mmd_only")
+            row["comparator_rate"] = row.pop("mmd")
+    complete = (
+        not errors and len(calibration) == calibration_family and len(power) == family
+    )
     result = dict(
         status="complete" if complete else "incomplete",
         errors=errors,
@@ -672,28 +864,35 @@ def rate_row(ps):
     return dict(rejected=k, trials=n, rate=k / n, ci95=[ci.low, ci.high])
 
 
-def calibration_row(case, cohort, records, method="rmse"):
-    row = rate_row(
-        [
-            r["rmse"]["p_value"] if method == "rmse" else r["mmd"][method]["p_value"]
-            for r in records
-        ]
-    )
+def comparison_stat(row, method):
+    if method == "rmse":
+        return row["rmse"]
+    if method in METHODS:
+        return row["mmd"][method]
+    if method in ("landmark_original", "landmark_full"):
+        return row["controls"][method]
+    raise ValueError("Unknown comparison method")
+
+
+def calibration_row(case, cohort, records, method="rmse", *, family_size=48):
+    row = rate_row([comparison_stat(r, method)["p_value"] for r in records])
     p = float(
         binomtest(row["rejected"], row["trials"], 0.05, alternative="greater").pvalue
     )
-    # Across original MMD (36) + this addition (12), a conservative family of 48.
+    # The family includes all methods and separate/pooled cohorts of the protocol.
     row.update(
         case=case,
         cohort=cohort,
         method=method,
         excess_p=p,
-        h0_excess_detected=p < 0.01 / 48,
+        h0_excess_detected=p < 0.01 / family_size,
     )
     if cohort == "pooled":
         k, n = row["rejected"], row["trials"]
-        row["simultaneous_upper_99_over_16"] = (
-            float(beta.ppf(1 - 0.01 / 16, k + 1, n - k)) if k < n else 1.0
+        row[f"simultaneous_upper_99_over_{family_size // 3}"] = (
+            float(beta.ppf(1 - 0.01 / (family_size // 3), k + 1, n - k))
+            if k < n
+            else 1.0
         )
     return row
 
@@ -705,8 +904,16 @@ if __name__ == "__main__":
     cell.add_argument("source", type=Path)
     cell.add_argument("output", type=Path)
     cell.add_argument("--descriptive", action="store_true")
+    cell.add_argument(
+        "--mode", choices=("landmarks", "all_events"), default="landmarks"
+    )
+    cell.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    cell.add_argument("--landmark-source", type=Path)
     summary = subs.add_parser("aggregate")
     summary.add_argument("root", type=Path)
+    summary.add_argument(
+        "--mode", choices=("landmarks", "all_events"), default="landmarks"
+    )
     curves = subs.add_parser("curves")
     curves.add_argument("source", type=Path)
     curves.add_argument("output", type=Path)
@@ -714,8 +921,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     torch.set_num_threads(1)
     if args.command == "replay":
-        replay(args.source, args.output, descriptive=args.descriptive)
+        replay(
+            args.source,
+            args.output,
+            descriptive=args.descriptive,
+            mode=args.mode,
+            device=args.device,
+            landmark_source=args.landmark_source,
+        )
     elif args.command == "aggregate":
-        aggregate(args.root)
+        aggregate(args.root, mode=args.mode)
     else:
         prediction_curves(args.source, args.output, completed_gaps=args.completed_gaps)

@@ -35,6 +35,25 @@ def launch(script, cwd, args=(), env=None):
     )
 
 
+def test_all_event_replay_plan_preserves_both_original_archives(tmp_path):
+    env = {
+        "LTPP_MMD_SOURCE": str(tmp_path / "mmd archive"),
+        "LTPP_LANDMARK_SOURCE": str(tmp_path / "landmark archive"),
+        "LTPP_ALL_EVENT_OUTPUT": str(tmp_path / "new output"),
+    }
+    result = launch("ruche_all_event_rmse.sh", tmp_path, ("--dry-run",), env)
+    assert result.returncode == 0, result.stderr
+    commands = [shlex.split(line) for line in result.stdout.splitlines()]
+    assert len(commands) == 20
+    for command in commands:
+        assert command[command.index("--mode") + 1] == "all_events"
+        assert command[command.index("--device") + 1] == "cuda"
+        assert "landmark archive" in command[command.index("--landmark-source") + 1]
+        assert any("mmd archive" in argument for argument in command)
+        assert any("new output" in argument for argument in command)
+    assert not list(tmp_path.iterdir())
+
+
 def test_scientific_campaign_plan_keeps_independent_cohorts_and_no_execution(tmp_path):
     output = tmp_path / "results with spaces"
     result = launch(

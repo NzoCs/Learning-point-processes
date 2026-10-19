@@ -135,6 +135,29 @@ def test_refuses_training_on_login_node(tmp_path):
     assert "sbatch" in result.stderr
 
 
+def test_learned_rmse_plan_uses_frozen_training_and_known_archive(tmp_path):
+    result = launch(
+        "ruche_learned_rmse.sh",
+        tmp_path,
+        ("--dry-run",),
+        env={
+            "LTPP_KNOWN_RMSE_SOURCE": "/tmp/known cells",
+            "LTPP_LEARNED_TRAINING": "/tmp/frozen training",
+            "LTPP_LEARNED_OUTPUT": "/tmp/new results",
+        },
+    )
+    assert result.returncode == 0, result.stderr
+    commands = [shlex.split(line) for line in result.stdout.splitlines()]
+    assert len(commands) == 20
+    for i, command in enumerate(commands):
+        assert command[0] == f"task={i}"
+        assert "scripts.report_learned_rmse" in command
+        assert "/tmp/frozen training" in command
+        assert command[-2:] == ["--device", "cuda"]
+        assert command[command.index("replay") + 1].endswith(f"/cohort-{i%2}")
+    assert not list(tmp_path.iterdir())
+
+
 def test_invalid_epoch_override_fails_in_dry_run(tmp_path):
     result = launch(
         "run_all_pipeline.sh", tmp_path, ("--dry-run",), {"LTPP_EPOCHS": "0"}

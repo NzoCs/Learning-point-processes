@@ -154,3 +154,21 @@ matters: the paper does not imply universal superiority, nor does our finite
 histogram representation have a guarantee to detect every alternative.
 Report unsupported cases, all numerical failures, training variability and
 computational costs. Do not hide errors by excluding trials.
+
+## Explicit Ruche pilot
+
+`scripts.ruche_trained_test_pilot` implements the first execution stages using
+the frozen `ruche_trained_pilot_20261108.json` plan. Its two oracle cells use the
+library Poisson generator on complete windows: a rate change and a mark-law
+change with identical total rate. Six methods share each pool, with 100 H0 and
+100 H1 repetitions per cell after 16/128-path cost gates. All trajectories and
+null vectors are retained. Warm-up has a separate 300-second allowance; an
+evaluated full pool must stay within 60 seconds.
+
+The existing trained NHP fixture is a separate CUDA capability/cost probe, not
+an experiment on a newly trained volcano/retweet model and not a calibration
+study. The dataset audit pins the registered revisions and records the available
+schema and split sizes. Its outputs require explicit exposure and independent
+unit certification before the real-data training/evaluation matrix can run.
+These stages never invent exposure from the last event. Cluster submissions are
+performed separately with receipts; importing this module submits nothing.

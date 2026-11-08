@@ -16,6 +16,7 @@ from new_ltpp.evaluation.statistical_testing.observations import (
 from new_ltpp.evaluation.statistical_testing.point_process_metric.ksd import KSD
 from new_ltpp.evaluation.statistical_testing.references import (
     HawkesReference,
+    IntegratedIntensityReference,
     NeuralIntensityReference,
     PoissonReference,
 )
@@ -133,6 +134,18 @@ def test_papangelou_ratio_includes_future_events(kind):
     assert ratio == pytest.approx(direct, rel=1e-10)
     causal = reference.intensities(t[:1], m[:1], 0.2, np.array([u - 0.2]))[0, 0]
     assert not np.isclose(ratio, causal)
+
+
+@pytest.mark.parametrize("kind", ["exp", "power"])
+@pytest.mark.parametrize("cap", [0.005, 0.2, 1.0])
+def test_hawkes_analytic_compensator_preserves_restricted_mean(kind, cap):
+    ref = HawkesReference(rate=7, beta=10, kind=kind, order=16, rtol=1e-10)
+    times = torch.tensor([0.02, 0.1, 0.25], dtype=torch.float64)
+    marks = torch.zeros(3, dtype=torch.long)
+    nested = IntegratedIntensityReference.restricted_mean(ref, times, marks, 0.3, cap)
+    assert ref.restricted_mean(times, marks, 0.3, cap) == pytest.approx(
+        nested, rel=1e-9, abs=1e-12
+    )
 
 
 def test_marked_stein_gram_is_exact_operator_sum_and_bootstrap_reproducible():

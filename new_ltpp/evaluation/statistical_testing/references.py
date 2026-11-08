@@ -5,10 +5,19 @@ the whole affected future after an insertion; training loss is not a density.
 """
 
 import math
+from functools import lru_cache
 from typing import Protocol
 
 import numpy as np
 import torch
+
+
+@lru_cache(maxsize=32)
+def legendre_rule(order):
+    nodes, weights = np.polynomial.legendre.leggauss(order)
+    nodes.setflags(write=False)
+    weights.setflags(write=False)
+    return nodes, weights
 
 
 class IntensityReference(Protocol):
@@ -35,7 +44,7 @@ class IntegratedIntensityReference:
             raise ValueError("Positive finite exposure required")
         previous = None
         for order in [self.order, self.order * 2, self.order * 4]:
-            z, w = np.polynomial.legendre.leggauss(order)
+            z, w = legendre_rule(order)
             value = float(np.asarray(function((z + 1) * cap / 2)) @ w * cap / 2)
             if not math.isfinite(value):
                 raise ValueError("Nonfinite intensity integral")
@@ -191,6 +200,39 @@ class HawkesReference(IntegratedIntensityReference):
             )
         )
         return (self.rate * (1 - self.branching) + g.sum(1))[:, None]
+
+    def restricted_mean(self, times, marks, origin, cap):
+        """Same survival integral, using the analytic integrated Hawkes kernel."""
+        ages = origin - np.asarray(torch.as_tensor(times).cpu())
+        if np.any(ages < 0):
+            raise ValueError("Future entered history")
+
+        def survival(delays):
+            u = np.asarray(delays)[:, None]
+            if self.kind == "exp":
+                excitation = (
+                    self.branching
+                    * np.exp(-self.beta * ages)[None, :]
+                    * (-np.expm1(-self.beta * u))
+                )
+            else:
+                base = 1 + self.beta * ages
+                excitation = (
+                    self.branching
+                    * base[None, :] ** (1 - self.exponent)
+                    * (
+                        -np.expm1(
+                            (1 - self.exponent)
+                            * np.log1p(self.beta * u / base[None, :])
+                        )
+                    )
+                )
+            return np.exp(
+                -self.rate * (1 - self.branching) * np.asarray(delays)
+                - excitation.sum(1)
+            )
+
+        return self._integrate(survival, cap)
 
 
 class NeuralIntensityReference(IntegratedIntensityReference):

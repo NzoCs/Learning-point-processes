@@ -22,6 +22,15 @@ endpoint padding. The signature solver remains finite differences at order0;
 same-path tiny controls also record orders1/2. No injectivity/exactness claim is
 made. The three-point grid collision in the handoff is tested explicitly.
 
+The first cost revision exposed expensive nested quadrature in the loss. The
+current reference reuses immutable Gauss–Legendre nodes and integrates the
+analytic Hawkes compensator inside the same outer survival integral. Direct
+comparisons against nested integration verify the unchanged restricted means
+for exponential and power kernels. A separate cost revision must match the
+original source-pool hashes, MMD statistics, null vectors and p-values before
+fresh evaluation runs. The earlier failure remains archived; no budget is
+increased and no failed method is dropped.
+
 The loss uses a common frozen exponential Hawkes empty-past working predictor,
 not the true oracle prediction given the hidden burn history. Its permutations
 still exchange whole independent trajectories. KSD is not applied to this

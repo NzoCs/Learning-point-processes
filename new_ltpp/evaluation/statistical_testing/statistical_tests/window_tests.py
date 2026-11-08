@@ -57,7 +57,7 @@ class FixedWindowSignatureKernel(PointProcessKernel):
         max_batch=16,
         space_kernel_type="rbf",
     ):
-        if representation not in {"counting_grid", "intervals"}:
+        if representation not in {"counting_grid", "intervals", "events"}:
             raise ValueError("Unknown fixed-window representation")
         for v in [horizon, count_scale, gap_scale, rank_scale, sigma]:
             if not math.isfinite(v) or v <= 0:
@@ -103,6 +103,27 @@ class FixedWindowSignatureKernel(PointProcessKernel):
                     ]
                 paths.append(torch.stack(values, dim=1))
             return torch.stack(paths)
+        if self.representation == "events":
+            width = 2 * max(len(t) for t, _ in rows) + 2
+            channels = 2 + (self.num_event_types if self.num_event_types > 1 else 0)
+            out = torch.zeros(
+                len(rows), width, channels, dtype=torch.float64, device=device
+            )
+            for i, (times, marks) in enumerate(rows):
+                point = torch.zeros(channels, dtype=torch.float64, device=device)
+                for j, (t, mark) in enumerate(zip(times, marks)):
+                    point = point.clone()
+                    point[1] = t
+                    out[i, 2 * j + 1] = point
+                    point = point.clone()
+                    point[0] += 1 / self.count_scale
+                    if channels > 2:
+                        point[2 + int(mark)] += 1 / self.count_scale
+                    out[i, 2 * j + 2] = point
+                point = point.clone()
+                point[1] = self.horizon
+                out[i, 2 * len(times) + 1 :] = point
+            return out
         width = 3 * max(len(t) + 1 for t, _ in rows) + 1
         channels = 2 + (self.num_event_types if self.num_event_types > 1 else 0)
         out = torch.empty(

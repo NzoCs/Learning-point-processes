@@ -48,7 +48,7 @@ def batch(rows):
     )
 
 
-@pytest.mark.parametrize("representation", ["counting_grid", "intervals"])
+@pytest.mark.parametrize("representation", ["counting_grid", "intervals", "events"])
 @pytest.mark.parametrize("space_kernel_type", ["rbf", "linear"])
 def test_public_signature_full_gram_matches_explicit_pair_swaps(
     representation, space_kernel_type

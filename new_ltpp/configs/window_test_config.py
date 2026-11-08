@@ -12,7 +12,7 @@ class WindowTestConfig(BaseModel):
     num_event_types: int = Field(ge=1)
     n_samples: int = Field(default=499, ge=1)
     seed: int = Field(default=42, ge=0, le=2**32 - 1)
-    representation: Literal["counting_grid", "intervals"] = "counting_grid"
+    representation: Literal["counting_grid", "intervals", "events"] = "counting_grid"
     point_process_kernel: Literal["signature", "count_rbf"] = "signature"
     space_kernel_type: Literal["rbf", "linear"] = "rbf"
     grid: int = Field(default=100, ge=2)

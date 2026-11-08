@@ -92,7 +92,8 @@ def oracle(plan, case, output):
             )
             torch.manual_seed(int(entropy.generate_state(1)[0]))
             drawn.append(m.simulate_until(n, 1.0))
-        return drawn
+        # Two-sample tests are symmetric; one-sample Stein scores the first pool.
+        return drawn[::-1] if hypothesis else drawn
 
     warm = pools(2, 0, 0, 0)
     evaluate(*warm, ref, settings, plan["warmup_timeout_seconds"])

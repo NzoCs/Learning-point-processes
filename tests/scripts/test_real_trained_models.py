@@ -3,7 +3,11 @@ import torch
 
 from new_ltpp.evaluation.statistical_testing.observations import configurations
 from scripts.independent_simulator_validation import constant_poisson_model
-from scripts.real_trained_models import fixed_window, normalize_rows
+from scripts.real_trained_models import (
+    fixed_window,
+    normalize_rows,
+    observed_reference_order,
+)
 from scripts.ruche_trained_test_pilot import model_for_rates
 
 
@@ -13,6 +17,15 @@ def test_normalization_uses_one_fixed_train_scale_and_preserves_real_origin():
     assert normalized["time_since_start"] == [0.0, 0.5, 1.5]
     assert normalized["time_since_last_event"] == [0.0, 0.5, 1.0]
     assert rows[0]["time_since_start"] == [0.0, 2.0, 6.0]
+
+
+def test_alternative_is_observed_for_one_sample_stein_and_receipts_follow():
+    pools = ["fixed_model_draw", "alternative_draw"]
+    receipts = [dict(law="Q"), dict(law="alternative")]
+    observed, proof = observed_reference_order(pools, receipts, True)
+    assert observed == ["alternative_draw", "fixed_model_draw"]
+    assert proof[0]["law"] == "alternative"
+    assert observed_reference_order(pools, receipts, False) == (pools, receipts)
 
 
 def test_fixed_window_requires_crossing_or_certified_termination(tmp_path):

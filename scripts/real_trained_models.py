@@ -139,6 +139,11 @@ def cell_spec(plan, index):
     )
 
 
+def observed_reference_order(pools, receipts, alternative):
+    """The alternative is stream1; Stein must score it as observed, against Q."""
+    return (pools[::-1], receipts[::-1]) if alternative else (pools, receipts)
+
+
 def fit(root, plan, index):
     import new_ltpp.models  # noqa: F401
     from new_ltpp.configs import RunnerConfig
@@ -374,7 +379,7 @@ def benchmark(root, plan, index):
             receipt["elapsed_seconds"] = time.perf_counter() - started
             pools.append(data)
             receipts.append(receipt)
-        return pools, receipts
+        return observed_reference_order(pools, receipts, hypothesis)
 
     try:
         availability = []

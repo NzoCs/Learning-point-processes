@@ -28,6 +28,8 @@ simulator fidelity remains part of the diagnostic scope.
 H0 compares two independent draws from that fixed trained generator. The known
 alternative compresses future time by0.8, first simulating through1/0.8. The
 reference history and fitted weights are fixed for all tests/permutations.
+The alternative pool is passed first as the observed pool; this matters for
+one-sample Stein, while the two-sample MMD/loss comparisons are symmetric.
 Seven methods share the same trajectories: signature RBF counting/interval/event
 paths, linear counting signature, count RBF, relative squared prediction loss
 and Stein–Papangelou. These answer distinct hypotheses. KSD uses the fixed model

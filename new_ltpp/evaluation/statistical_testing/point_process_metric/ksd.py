@@ -1,112 +1,119 @@
-# import torch
-# from new_ltpp.shared_types import Batch, SimulationResult
-# from new_ltpp.models.base.base_model import NeuralModel
-# from .base_stat_metric import StatMetric
+"""Stein-Papangelou Gram (Yang/Rao/Neville2019 eq7,12) for marked configurations.
+
+The histogram-RBF kernel is a deliberate finite representation, not claimed
+characteristic. Birth integration sums over every mark. Numerical failures raise.
+"""
+
+import math
+
+import numpy as np
+import torch
+
+from ..observations import configurations
 
 
-# class KSD(StatMetric):
-#     def __call__(self, model: NeuralModel, batch: Batch) -> float:
-#         pass  # TODO: Implement KSD metric calculation
+class KSD:
+    def __init__(
+        self,
+        reference,
+        *,
+        horizon=1.0,
+        bins=20,
+        scale=10.0,
+        sigma=1.0,
+        quadrature_order=8,
+        quadrature_rtol=2e-5,
+        max_states=50000,
+    ):
+        if (
+            bins < 1
+            or quadrature_order < 2
+            or max_states < 1
+            or not 0 < quadrature_rtol < 1
+        ):
+            raise ValueError("Invalid Stein quadrature or capacity")
+        if not all(math.isfinite(v) and v > 0 for v in [horizon, scale, sigma]):
+            raise ValueError("Positive finite scales and horizon required")
+        self.reference, self.horizon, self.bins = reference, horizon, bins
+        self.scale, self.sigma = scale, sigma
+        self.order, self.rtol, self.max_states = (
+            quadrature_order,
+            quadrature_rtol,
+            max_states,
+        )
 
-#     @staticmethod
-#     def batched_insert_samples(
-#         seqs: torch.Tensor, idx: torch.Tensor, values: torch.Tensor
-#     ) -> torch.Tensor:
-#         """
-#         Insert samples into sequences at specified indices.
-#         Args:
-#             seqs: (B, L)
-#             idx: (B, N) indices where to insert new values
-#             values: (B, N) values to insert
-#         Returns:
-#             (B, L + 1, N) sequences with inserted values
-#         """
-#         B, L = seqs.shape
-#         N = idx.shape[1]
-#         ar = torch.arange(L + 1, device=seqs.device)  # positions 0..L
+    def _births(self, times, marks, order):
+        num_marks = self.reference.num_event_types
+        cuts = np.unique(
+            np.r_[np.linspace(0, self.horizon, self.bins + 1), times.cpu().numpy()]
+        )
+        nodes, weights = np.polynomial.legendre.leggauss(order)
+        output = np.zeros(self.bins * num_marks)
+        for left, right in zip(cuts[:-1], cuts[1:]):
+            for z, w in zip(nodes, weights):
+                u = float((left + right) / 2 + (right - left) * z / 2)
+                bin_id = min(self.bins - 1, int(u / self.horizon * self.bins))
+                for mark in range(num_marks):
+                    value = float(
+                        self.reference.papangelou(u, mark, times, marks, self.horizon)
+                    )
+                    if not math.isfinite(value) or value < 0:
+                        raise ArithmeticError("Invalid Papangelou intensity")
+                    output[bin_id * num_marks + mark] += w * (right - left) / 2 * value
+        return output
 
-#         # mask[b, j] = True si j > idx[b]
-#         mask = ar.unsqueeze(0).unsqueeze(-1) > idx.unsqueeze(1)  # (B, L+1, N)
+    def features(self, batch):
+        rows = configurations(batch, self.horizon, self.reference.num_event_types)
+        dimension = self.bins * self.reference.num_event_types
+        if len(rows) * (2 * dimension + 1) > self.max_states:
+            raise ValueError(
+                "Stein state budget exceeded; choose explicit smaller bins/batch in the protocol"
+            )
+        counts, births = [], []
+        for times, marks in rows:
+            index = (
+                torch.floor(times.cpu() / self.horizon * self.bins).long()
+                * self.reference.num_event_types
+                + marks.cpu()
+            )
+            count = torch.bincount(index, minlength=dimension).double().numpy()
+            previous = self._births(times, marks, self.order)
+            accepted = None
+            for order in [self.order * 2, self.order * 4]:
+                current = self._births(times, marks, order)
+                if np.allclose(current, previous, rtol=self.rtol, atol=1e-8):
+                    accepted = current
+                    break
+                previous = current
+            if accepted is None:
+                raise ArithmeticError("Stein birth quadrature did not converge")
+            counts.append(count)
+            births.append(accepted)
+        count, birth = np.array(counts), np.array(births)
+        shifts = np.r_[np.zeros((1, dimension)), np.eye(dimension), -np.eye(dimension)]
+        states = (count[:, None, :] + shifts[None, :, :]) / self.scale
+        weights = np.c_[-(birth.sum(1) + count.sum(1)), birth, count]
+        return torch.as_tensor(states, device=batch.time_seqs.device), torch.as_tensor(
+            weights, device=batch.time_seqs.device
+        )
 
-#         # Nouveau batch vide
-#         out = torch.empty((B, L + 1, N), device=seqs.device, dtype=seqs.dtype)
-
-#         # 1. mettre la nouvelle valeur
-#         out[torch.arange(B), idx, :] = values
-
-#         # 2. copier l'ancienne séquence en décalant après idx
-#         # positions > idx, ici on veut seq[b, j-1] → out[b, j], car les seqs sont décalées d'1 vers la droite
-#         out[:, 1:, :] = torch.where(
-#             mask[:, 1:, :],  # positions > idx
-#             seqs,  # on prend seq[b, j-1]
-#             out[:, 1:, :],  # sinon on garde le déjà rempli (new value)
-#         )
-
-#         # 3. copier la partie avant idx
-#         # mask[:, :-1] = positions < idx
-#         # positions < idx, on veut seq[b, j] → out[b, j] car avant idx pas de décalage
-#         before_mask = ar.unsqueeze(0).unsqueeze(-1) < idx.unsqueeze(1)
-#         out[before_mask] = seqs[before_mask]
-
-#         return out
-
-#     @staticmethod
-#     def batched_delete(seqs: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
-#         """
-#         seqs: (B, L)
-#         idx: (B,)
-#         return: (B, L-1) avec value en idx[b] supprimé
-#         """
-
-#         B, L = seqs.shape
-#         ar = torch.arange(L, device=seqs.device)  # positions 0..L-1
-
-#         # mask[b, j] = True si j > idx[b]
-#         mask = ar.unsqueeze(0) > idx.unsqueeze(1)  # (B, L)
-
-#         # Nouveau batch vide
-#         out = torch.empty((B, L - 1), device=seqs.device, dtype=seqs.dtype)
-
-#         # 1. copier l'ancienne séquence en décalant après idx
-#         # positions >= idx, ici on veut seq[b, j+1] → out[b, j], car les seqs sont décalées d'1 vers la gauche
-#         out = torch.where(
-#             mask,  # positions >= idx
-#             seqs[:, 1:],  # on prend seq[b, j+1]
-#             out,  # sinon on garde le déjà rempli
-#         )
-
-#         # 2. copier la partie avant idx
-#         # mask[:, :-1] = positions < idx
-#         # positions < idx, on veut seq[b, j] → out[b, j] car avant idx pas de décalage
-#         before_mask = ar.unsqueeze(0) < idx.unsqueeze(1)
-#         out[before_mask] = seqs[before_mask]
-
-#         return out
-
-#     def _first_integrand(
-#         self,
-#         model: NeuralModel,
-#         phi_time_seqs: torch.Tensor,
-#         phi_type_seqs: torch.Tensor,
-#         psi_time_seqs: torch.Tensor,
-#         psi_type_seqs: torch.Tensor,
-#     ) -> float:
-#         """This is the function f(u,v) = [k(phi + delta_u, psi + delta_v) - k(phi,psi + delta_v)
-#         - k(phi + delta_u, psi) + k(phi, psi)]*roh(u|phi)roh(v|psi).
-#         args:
-#             model: NeuralModel
-#             phi_time_seqs: (B, L, N)
-#             phi_type_seqs: (B, L, N)
-#             psi_time_seqs: (B, K, N)
-#             psi_type_seqs: (B, K, N)
-#         returns:
-#             The approximation of the first integral over u and v.
-#         """
-
-#     def _first_integral(
-#         self,
-#         model: NeuralModel,
-#         phi: Batch | SimulationResult,
-#         psi: Batch | SimulationResult,
-#     ) -> torch.Tensor:
-#         pass  # TODO: Implement the first integral calculation
+    def gram(self, batch):
+        states, weights = self.features(batch)
+        n, atoms, dimension = states.shape
+        flat = states.reshape(-1, dimension)
+        norm = flat.square().sum(1)
+        gram = torch.empty(n, n, dtype=torch.float64, device=flat.device)
+        with torch.no_grad():
+            for i in range(n):
+                distance = (
+                    states[i].square().sum(1)[:, None]
+                    + norm[None, :]
+                    - 2 * states[i] @ flat.T
+                ).clamp_min(0)
+                kernel = torch.exp(-distance / (2 * self.sigma**2))
+                gram[i] = ((weights[i] @ kernel).reshape(n, atoms) * weights).sum(1)
+        if not torch.isfinite(gram).all():
+            raise ArithmeticError("Nonfinite Stein Gram")
+        if not torch.allclose(gram, gram.T, rtol=1e-7, atol=1e-7):
+            raise ArithmeticError("Stein Gram is not symmetric")
+        return (gram + gram.T) / 2

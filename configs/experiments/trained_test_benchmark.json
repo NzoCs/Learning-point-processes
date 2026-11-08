@@ -1,0 +1,158 @@
+{
+  "status": "prepared_not_submitted",
+  "source_base": "features/mmd-pool-size-validation@2acc5b990af6df0b242fee91cf83d9a8164def82",
+  "execution": {
+    "location": "Ruche",
+    "max_concurrent_gpus": 4,
+    "automatic_submission": false,
+    "cpu_fallback": false,
+    "pilot_cost_gate_seconds_per_pool": 60
+  },
+  "pilot": {
+    "models": [
+      "NHP",
+      "RMTPP"
+    ],
+    "datasets": [
+      "volcano",
+      "retweet"
+    ],
+    "training_seeds": [
+      202611051
+    ],
+    "n_per_group": 128,
+    "calibration_trials": 100,
+    "power_trials": 100
+  },
+  "extension": {
+    "models": [
+      "NHP",
+      "RMTPP",
+      "SAHP"
+    ],
+    "datasets": [
+      "volcano",
+      "retweet",
+      "taxi",
+      "stackoverflow"
+    ],
+    "training_seeds": [
+      202611051,
+      202611052,
+      202611053
+    ],
+    "only_after_pilot": true
+  },
+  "training": {
+    "api": "scripts.cli run",
+    "epochs_cap": 30,
+    "hyperparameter_selection": "validation split only",
+    "checkpoint_selection": "lowest validation loss; never test rejections",
+    "reuse_trained_weights": "inventory and current-class loading required; no retraining or compatibility aliases to repair old artifacts"
+  },
+  "data_sources": {
+    "volcano": "easytpp/volcano",
+    "retweet": "easytpp/retweet",
+    "taxi": "easytpp/taxi",
+    "stackoverflow": "easytpp/stackoverflow"
+  },
+  "data_availability": "Configured candidates in yaml_configs/configs.yaml; raw snapshots, versions, independent unit IDs and trained checkpoint manifests still required. No downloads/training have run.",
+  "observation": {
+    "design": "independent_fixed_windows_v1",
+    "windows": "Choose units and horizon from training only; same fixed horizon for every test in a cell",
+    "required": [
+      "known exposure end",
+      "all events and marks",
+      "terminal censor",
+      "empty paths",
+      "one window per independent unit",
+      "disjoint fit/validation/evaluation units"
+    ],
+    "prohibited": [
+      "first-event shifting pretending unconditional observation",
+      "selecting trajectories because enough future events exist",
+      "assuming a fixed event-budget tail is empty",
+      "overlapping windows treated as independent"
+    ]
+  },
+  "methods": [
+    {
+      "test_type": "window_mmd",
+      "representation": "counting_grid",
+      "sigma": 0.3,
+      "n_samples": 499
+    },
+    {
+      "test_type": "window_mmd",
+      "representation": "counting_grid",
+      "space_kernel_type": "linear",
+      "n_samples": 499
+    },
+    {
+      "test_type": "window_mmd",
+      "representation": "intervals",
+      "sigma": 0.3,
+      "n_samples": 499
+    },
+    {
+      "test_type": "window_mmd",
+      "point_process_kernel": "count_rbf",
+      "sigma": 1.0,
+      "n_samples": 499
+    },
+    {
+      "test_type": "relative_loss",
+      "n_samples": 499
+    },
+    {
+      "test_type": "ksd",
+      "stein_bins": 8,
+      "n_samples": 999
+    }
+  ],
+  "capability_gates": {
+    "all": "No excluded failed trials; stop and diagnose unsupported model/observation/test combinations",
+    "mmd": "Same frozen trained generator, identical observations, explicit horizon, complete pooled Gram",
+    "relative_loss": "Causal restricted mean including time zero and terminal origin",
+    "ksd": "Complete likelihood/insertion ratio, all later intensities recomputed, deterministic converged quadrature, all marks, state budget",
+    "neural_initial_law": "NHP empty-history tested. THP/SAHP/RMTPP tested with a fixed real conditioning history; unconditional KSD/loss marked unsupported, no fictitious BOS. Per-row distinct-history evaluation is not yet supported by the new reference adapter."
+  },
+  "blocks": [
+    {
+      "name": "oracle_size",
+      "purpose": "Calibration with known Poisson/Hawkes models and matching complete observation; no hidden burn mismatch"
+    },
+    {
+      "name": "trained_model_size",
+      "purpose": "Independent draws from exactly the same frozen trained model; report conditional calibration by training seed"
+    },
+    {
+      "name": "controlled_power",
+      "purpose": "Fresh held-out synthetic alternatives: rate, excitation, p3, timing dependence, mark law, time/mark dependence, equal-relative-loss counterexample"
+    },
+    {
+      "name": "real_model_criticism",
+      "purpose": "Frozen model vs held-out real data; report adequacy rejections, prediction errors and diagnostics, not Type I error or known power"
+    }
+  ],
+  "statistics": {
+    "alpha": 0.05,
+    "intervals": "Exact binomial95 for independent Monte Carlo draws per fixed training seed",
+    "calibration": "Predeclare family before execution and Bonferroni excess threshold0.01/family_size",
+    "paired_power": "Same observations and simulations across methods; exact McNemar and Holm over all declared comparisons",
+    "real_resampling": "Repeated reuse of one real dataset describes stability only, not independent binomial power",
+    "training_uncertainty": "Report every seed and stratify; no claim from only three trained models about general training uncertainty"
+  },
+  "outputs": [
+    "commit and dependency lock",
+    "complete artifact inventory",
+    "dataset revision and split hashes",
+    "checkpoint and simulation provenance",
+    "raw statistic and all null vectors",
+    "fit/test unit IDs",
+    "runtime and peak GPU memory",
+    "calibration and power by seed",
+    "effect sizes and corrected comparisons",
+    "failure/unsupported report"
+  ]
+}

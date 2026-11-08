@@ -1,0 +1,30 @@
+{
+  "seed": 202611051,
+  "pool_cost_gate_seconds": 60,
+  "warmup_timeout_seconds": 300,
+  "trials_per_hypothesis": 100,
+  "datasets": ["volcano", "retweet"],
+  "oracle_cases": [
+    {"name": "unmarked_poisson_rate", "rates": [4.0], "alternative_rates": [6.0]},
+    {"name": "marked_poisson_same_total_rate", "rates": [1.0, 1.0, 2.0], "alternative_rates": [2.0, 1.0, 1.0]}
+  ],
+  "methods": [
+    {"test_type": "window_mmd", "representation": "counting_grid", "sigma": 0.3, "n_samples": 499},
+    {"test_type": "window_mmd", "representation": "counting_grid", "space_kernel_type": "linear", "n_samples": 499},
+    {"test_type": "window_mmd", "representation": "intervals", "sigma": 0.3, "n_samples": 499},
+    {"test_type": "window_mmd", "point_process_kernel": "count_rbf", "sigma": 1.0, "n_samples": 499},
+    {"test_type": "relative_loss", "n_samples": 499},
+    {"test_type": "ksd", "stein_bins": 8, "n_samples": 999}
+  ],
+  "statistics": {
+    "alpha": 0.05,
+    "calibration_excess_family": 12,
+    "calibration_excess_threshold": "0.01/12",
+    "power_pairwise_family": 30,
+    "power_correction": "Exact paired McNemar, Holm30",
+    "interpretation": "100 independent trials per fixed oracle/cell is a pilot; exact binomial95 intervals, no training uncertainty claim"
+  },
+  "neural_probe": "Existing trained NHP fixture, capability and cost only; no new real-dataset training or calibration claim",
+  "real_data_gate": "Pin dataset revision and certify independent units and complete exposure before training/evaluation campaign; no invented exposure, first-event shifting or compatibility loading",
+  "execution": {"max_concurrent_gpus": 4, "cuda_required": true, "exclude_nodes": ["ruche-gpu16"], "retries": 0}
+}

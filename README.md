@@ -23,6 +23,12 @@ New-LTPP is designed to be a comprehensive toolkit for TPP research, covering th
 * **Prediction Metrics**: Standard metrics for next-event prediction (RMSE, Accuracy).
 * **🚧 Goodness of Fit (WIP)**: We are currently developing statistical tests (e.g., KS test, QQ plots) to rigorously quantify model fit.
 
+Fixed-window evaluation also provides paired signature MMD (count or interval
+paths), relative predictive-loss comparison and one-sample Stein–Papangelou tests
+through the public test factory. See the [trained-model test guide](docs/TRAINED_TEST_BENCHMARK.md)
+for observation contracts, model capability limits, artifact preflight and the
+prepared multi-dataset benchmark. No training or cluster jobs run automatically.
+
 ---
 
 ## 🛠️ Installation
